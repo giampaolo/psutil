@@ -13,7 +13,7 @@
 #include "common.h"
 
 
-/* psutil_kread() - read from kernel memory */
+// Read from kernel memory.
 int
 psutil_kread(
     int Kd,  // kernel memory file descriptor
@@ -38,6 +38,7 @@ psutil_kread(
     }
     return 0;
 }
+
 
 struct procentry64 *
 psutil_read_process_table(int *num) {
@@ -75,7 +76,7 @@ psutil_read_process_table(int *num) {
         p = (struct procentry64 *)((char *)processes + (np * PROCSIZE));
     }
 
-    /* add the number of processes read in the last iteration */
+    // add the number of processes read in the last iteration
     if (i > 0)
         np += i;
 

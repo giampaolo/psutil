@@ -173,10 +173,11 @@ class TestProcessIter(PsutilTestCase):
             assert name1 == p._prefetch["name"]
             break
 
-    def test_prefetch_empty_attrs(self):
+    def test_deprecated_prefetch_empty_attrs(self):
         # attrs=[] should prefetch all methods.
-        p = next(psutil.process_iter(attrs=[]))
-        assert p._prefetch.keys() == psutil._as_dict_attrnames
+        with pytest.warns(DeprecationWarning):
+            p = next(psutil.process_iter(attrs=[]))
+        assert p._prefetch.keys() == psutil.Process.attrs
 
     def test_prefetch_with_non_prefetched(self):
         # A method not in attrs should still do a live syscall.
@@ -185,6 +186,18 @@ class TestProcessIter(PsutilTestCase):
             # status() should still work via syscall
             assert p.status()
             break
+
+    def test_zombie_process_is_not_skipped(self):
+        # ZombieProcess is a subclass of NoSuchProcess; make sure
+        # process_iter() yields the process rather than removing it from
+        # the cache as if it had disappeared.
+        list(psutil.process_iter())  # populate the pmap cache
+        p = psutil._pmap[os.getpid()]
+        with mock.patch.object(
+            p, "as_dict", side_effect=psutil.ZombieProcess(p.pid)
+        ):
+            pids = [x.pid for x in psutil.process_iter(attrs=["name"])]
+        assert p.pid in pids
 
     def test_cache_clear(self):
         list(psutil.process_iter())  # populate cache
@@ -562,7 +575,7 @@ class TestCpuAPIs(PsutilTestCase):
         # Note: in theory CPU times are always supposed to increase over
         # time or remain the same but never go backwards. In practice
         # sometimes this is not the case.
-        # This issue seemd to be afflict Windows:
+        # This issue seemed to be afflict Windows:
         # https://github.com/giampaolo/psutil/issues/392
         # ...but it turns out also Linux (rarely) behaves the same.
         # last = psutil.cpu_times(percpu=True)

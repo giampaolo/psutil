@@ -128,7 +128,7 @@ PyObject *psutil_proc_wait(PyObject *self, PyObject *args);
 PyObject *psutil_QueryDosDevice(PyObject *self, PyObject *args);
 PyObject *psutil_sensors_battery(PyObject *self, PyObject *args);
 PyObject *psutil_swap_percent(PyObject *self, PyObject *args);
-PyObject *psutil_uptime(PyObject *self, PyObject *args);
+PyObject *psutil_boot_time(PyObject *self, PyObject *args);
 PyObject *psutil_users(PyObject *self, PyObject *args);
 PyObject *psutil_GetPerformanceInfo(PyObject *self, PyObject *args);
 PyObject *psutil_winservice_enumerate(PyObject *self, PyObject *args);

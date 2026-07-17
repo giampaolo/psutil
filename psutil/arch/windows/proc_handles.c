@@ -4,20 +4,20 @@
  * found in the LICENSE file.
  */
 
-/*
- * This module retrieves handles opened by a process.
- * We use NtQuerySystemInformation to enumerate them and NtQueryObject
- * to obtain the corresponding file name.
- * Since NtQueryObject hangs for certain handle types we call it in a
- * separate thread which gets killed if it doesn't complete within 100ms.
- * This is a limitation of the Windows API and ProcessHacker uses the
- * same trick: https://github.com/giampaolo/psutil/pull/597
- *
- * CREDITS: original implementation was written by Jeff Tang.
- * It was then rewritten by Giampaolo Rodola many years later.
- * Utility functions for getting the file handles and names were re-adapted
- * from the excellent ProcessHacker.
- */
+// This module retrieves handles opened by a process.
+//
+// We use NtQuerySystemInformation to enumerate them and NtQueryObject
+// to obtain the corresponding file name.
+//
+// Since NtQueryObject hangs for certain handle types we call it in a
+// separate thread which gets killed if it doesn't complete within
+// 100ms. This is a limitation of the Windows API and ProcessHacker
+// uses the same trick: https://github.com/giampaolo/psutil/pull/597
+//
+// CREDITS: original implementation was written by Jeff Tang. It was
+// then rewritten by Giampaolo Rodola many years later. Utility
+// functions for getting the file handles and names were re-adapted
+// from the excellent ProcessHacker.
 
 #include <windows.h>
 #include <Python.h>
@@ -26,6 +26,7 @@
 
 
 #define THREAD_TIMEOUT 100  // ms
+
 // Global object shared between the 2 threads.
 PUNICODE_STRING globalFileName = NULL;
 

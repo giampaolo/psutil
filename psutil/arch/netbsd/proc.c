@@ -3,8 +3,6 @@
  * All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Platform-specific module methods for NetBSD.
  */
 
 #include <Python.h>
@@ -223,6 +221,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
             if (errno == EBUSY) {
                 // Usually happens with TestProcess.test_long_cmdline. See:
                 // https://github.com/giampaolo/psutil/issues/2250
+                // psutil_sysctl_malloc() sets a Python exception before
+                // returning -1; clear it before retrying or returning so we
+                // don't leave a pending exception on a non-NULL return value.
+                PyErr_Clear();
                 attempt += 1;
                 if (attempt < max_attempts) {
                     psutil_debug("proc %zu cmdline(): retry on EBUSY", pid);
@@ -232,6 +234,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
                     psutil_debug(
                         "proc %zu cmdline(): return [] due to EBUSY", pid
                     );
+                    PyErr_Clear();
                     return py_retlist;
                 }
             }
@@ -251,6 +254,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     }
 
     free(procargs);
+    PyErr_Clear();
     return py_retlist;
 
 error:

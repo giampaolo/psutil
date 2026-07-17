@@ -2,10 +2,9 @@
  * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Helper functions related to fetching process information. Used by
- * _psutil_windows module methods.
  */
+
+// Helper functions related to fetching process information.
 
 #include <Python.h>
 #include <windows.h>
@@ -35,10 +34,8 @@ typedef NTSTATUS(NTAPI *__NtQueryInformationProcess)(
          : NULL)
 
 
-/*
- * Given a pointer into a process's memory, figure out how much
- * data can be read from it.
- */
+// Given a pointer into a process's memory, figure out how much data
+// can be read from it.
 static int
 psutil_get_process_region_size(HANDLE hProcess, LPCVOID src, SIZE_T *psize) {
     MEMORY_BASIC_INFORMATION info;
@@ -104,13 +101,11 @@ psutil_giveup_with_ad(NTSTATUS status, char *syscall) {
 }
 
 
-/*
- * Get data from the process with the given pid.  The data is returned
- * in the pdata output member as a nul terminated string which must be
- * freed on success.
- * On success 0 is returned.  On error the output parameter is not touched,
- * -1 is returned, and an appropriate Python exception is set.
- */
+// Get data from the process with the given pid.  The data is returned
+// in the pdata output member as a nul terminated string which must be
+// freed on success. On success 0 is returned.  On error the output
+// parameter is not touched, -1 is returned, and an appropriate Python
+// exception is set.
 static int
 psutil_get_process_data(
     DWORD pid, enum psutil_process_data_kind kind, WCHAR **pdata, SIZE_T *psize
@@ -160,8 +155,8 @@ psutil_get_process_data(
         return -1;
 
 #ifdef _WIN64
-    /* 64 bit case.  Check if the target is a 32 bit process running in WoW64
-     * mode. */
+    // 64 bit case.  Check if the target is a 32 bit process running in
+    // WoW64 mode.
     status = NtQueryInformationProcess(
         hProcess, ProcessWow64Information, &ppeb32, sizeof(LPVOID), NULL
     );
@@ -174,7 +169,7 @@ psutil_get_process_data(
     }
 
     if (ppeb32 != NULL) {
-        /* We are 64 bit.  Target process is 32 bit running in WoW64 mode. */
+        // We are 64 bit.  Target process is 32 bit running in WoW64 mode.
         PEB32 peb32;
         RTL_USER_PROCESS_PARAMETERS32 procParameters32;
 
@@ -238,7 +233,7 @@ psutil_get_process_data(
     }
 
     if (weAreWow64 && !theyAreWow64) {
-        /* We are 32 bit running in WoW64 mode.  Target process is 64 bit. */
+        // We are 32 bit running in WoW64 mode.  Target process is 64 bit.
         PROCESS_BASIC_INFORMATION64 pbi64;
         PEB64 peb64;
         RTL_USER_PROCESS_PARAMETERS64 procParameters64;
@@ -272,11 +267,9 @@ psutil_get_process_data(
             hProcess, ProcessBasicInformation, &pbi64, sizeof(pbi64), NULL
         );
         if (!NT_SUCCESS(status)) {
-            /*
-            psutil_convert_ntstatus_err(
-                status,
-                "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
-            */
+            // psutil_convert_ntstatus_err(
+            // status,
+            // "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
             psutil_giveup_with_ad(
                 status,
                 "NtWow64QueryInformationProcess64(ProcessBasicInformation)"
@@ -289,10 +282,8 @@ psutil_get_process_data(
             hProcess, pbi64.PebBaseAddress, &peb64, sizeof(peb64), NULL
         );
         if (!NT_SUCCESS(status)) {
-            /*
-            psutil_convert_ntstatus_err(
-                status, "NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress)");
-            */
+            // psutil_convert_ntstatus_err(
+            // status, "NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress)");
             psutil_giveup_with_ad(
                 status, "NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress)"
             );
@@ -308,10 +299,8 @@ psutil_get_process_data(
             NULL
         );
         if (!NT_SUCCESS(status)) {
-            /*
-            psutil_convert_ntstatus_err(
-                status, "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)");
-            */
+            // psutil_convert_ntstatus_err(
+            // status, "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)");
             psutil_giveup_with_ad(
                 status, "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)"
             );
@@ -334,7 +323,7 @@ psutil_get_process_data(
     }
     else
 #endif
-    /* Target process is of the same bitness as us. */
+    // Target process is of the same bitness as us.
     {
         PROCESS_BASIC_INFORMATION pbi;
         PEB_ peb;
@@ -449,11 +438,9 @@ error:
 }
 
 
-/*
- * Get process cmdline by using NtQueryInformationProcess. This is a
- * method alternative to PEB which is less likely to result in
- * AccessDenied. Requires Windows 8.1+.
- */
+// Get process cmdline by using NtQueryInformationProcess. This is a
+// method alternative to PEB which is less likely to result in
+// AccessDenied. Requires Windows 8.1+.
 static int
 psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     HANDLE hProcess = NULL;
@@ -541,10 +528,6 @@ error:
 }
 
 
-/*
- * Return a Python list representing the arguments for the process
- * with given pid or NULL on error.
- */
 PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     WCHAR *data = NULL;
@@ -580,15 +563,13 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
 
     use_peb = (py_usepeb == Py_True) ? 1 : 0;
 
-    /*
-    Reading the PEB to get the cmdline seem to be the best method if
-    somebody has tampered with the parameters after creating the process.
-    For instance, create a process as suspended, patch the command line
-    in its PEB and unfreeze it. It requires more privileges than
-    NtQueryInformationProcess though (the fallback):
-    - https://github.com/giampaolo/psutil/pull/1398
-    - https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/
-    */
+    // Reading the PEB to get the cmdline seem to be the best method if
+    // somebody has tampered with the parameters after creating the
+    // process. For instance, create a process as suspended, patch the
+    // command line in its PEB and unfreeze it. It requires more
+    // privileges than NtQueryInformationProcess though (the fallback):
+    // - https://github.com/giampaolo/psutil/pull/1398
+    // - https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/
     if (use_peb == 1)
         func_ret = psutil_get_process_data(pid, KIND_CMDLINE, &data, &size);
     else
@@ -664,10 +645,6 @@ out:
 }
 
 
-/*
- * returns a Python string containing the environment variable data for the
- * process with given pid or NULL on error.
- */
 PyObject *
 psutil_proc_environ(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -700,15 +677,12 @@ out:
 }
 
 
-/*
- * Given a process PID and a PSYSTEM_PROCESS_INFORMATION structure
- * fills the structure with various process information in one shot
- * by using NtQuerySystemInformation.
- * We use this as a fallback when faster functions fail with access
- * denied. This is slower because it iterates over all processes
- * but it doesn't require any privilege (also work for PID 0).
- * On success return 0, else -1 with Python exception already set.
- */
+// Given a PID and a PSYSTEM_PROCESS_INFORMATION struct, fills it with
+// various process information by using NtQuerySystemInformation. We
+// use this as a fallback when faster functions fail with access
+// denied. This is slower because it iterates over all processes but it
+// doesn't require any privilege (also work for PID 0). Return 0 on
+// success, else -1 with Python exception set.
 int
 psutil_get_proc_info(
     DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retBuffer
@@ -774,20 +748,9 @@ error:
 }
 
 
-/*
- * Get various process information by using NtQuerySystemInformation.
- * We use this as a fallback when faster functions fail with access
- * denied. This is slower because it iterates over all processes.
- * Returned dict includes the following process info:
- *
- * - num_threads()
- * - ctx_switches()
- * - num_handles() (fallback)
- * - cpu_times() (fallback)
- * - create_time() (fallback)
- * - io_counters() (fallback)
- * - memory_info() (fallback)
- */
+// Get various process info by using NtQuerySystemInformation. We use
+// this as a fallback when faster functions fail with access denied.
+// This is slower because it iterates over all processes.
 PyObject *
 psutil_proc_oneshot(PyObject *self, PyObject *args) {
     DWORD pid;

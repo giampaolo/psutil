@@ -1,33 +1,47 @@
-.. currentmodule:: psutil
-.. include:: _links.rst
-
 Migration guide
 ===============
 
-This page summarises the breaking changes introduced in each major
-release and shows the code changes required to upgrade.
+This page summarises the breaking changes introduced in each major release and
+shows the code changes required to upgrade.
 
 .. note::
-  Minor and patch releases (e.g. 6.1.x, 7.1.x) never contain
-  breaking changes. Only major releases are listed here.
-
-.. contents::
-   :local:
-   :depth: 2
+  Minor and patch releases (e.g. 6.1.x, 7.1.x) never contain breaking changes.
+  Only major releases are listed here.
 
 .. _migration-8.0:
 
 Migrating to 8.0
 -----------------
 
+Key breaking changes in 8.0:
+
+- :func:`process_iter` pre-fetches values
+- :attr:`Process.info` is deprecated: use direct methods.
+- Named tuple field order changed: stop positional unpacking.
+- Some return types are now enums instead of strings.
+- :meth:`Process.memory_full_info` deprecated: use
+  :meth:`Process.memory_footprint`.
+- New :meth:`Process.memory_info_ex` (unrelated to the old method deprecated in
+  4.0 and removed in 7.0).
+- New :attr:`Process.attrs`: :class:`frozenset` of valid attribute names;
+  ``process_iter(attrs=[])`` is deprecated.
+- Python 3.6 dropped.
+
+.. important::
+
+  Do not rely on positional unpacking of named tuples. Always use attribute
+  access (e.g. ``t.rss``).
+
 process_iter(): p.info is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:func:`process_iter` now caches pre-fetched values internally, so they
-can be accessed via normal method calls instead of the :attr:`Process.info`
-dict. ``p.info`` still works but raises :exc:`DeprecationWarning`:
+:func:`process_iter` now caches pre-fetched values internally, so they can be
+accessed via normal method calls instead of the :attr:`Process.info` dict.
+``p.info`` still works, but raises :exc:`DeprecationWarning`.
 
 .. code-block:: python
+
+  import psutil
 
   # before
   for p in psutil.process_iter(attrs=["name", "status"]):
@@ -35,51 +49,42 @@ dict. ``p.info`` still works but raises :exc:`DeprecationWarning`:
 
   # after
   for p in psutil.process_iter(attrs=["name", "status"]):
-      print(p.name(), p.status())
+      print(p.name(), p.status())  # return cached values, never raise
 
-When ``attrs`` are specified, method calls return cached values
-(no extra syscall), and :exc:`AccessDenied` / :exc:`ZombieProcess`
-are handled transparently (returning the ``ad_value``, which defaults
-to ``None``):
+When ``attrs`` are specified, method calls return cached values (no extra
+syscall), and :exc:`AccessDenied` / :exc:`ZombieProcess` are handled
+transparently (returning ``ad_value``).
+
+If you relied on :attr:`Process.info` because you needed a dict structure, use
+:meth:`Process.as_dict` instead.
 
 .. code-block:: python
 
+  import psutil
+
   # before
-  for p in psutil.process_iter(attrs=["exe"], ad_value="access-denied"):
-      print(p.info["exe"])
+  for p in psutil.process_iter(attrs=["name", "status"]):
+      print(p.info)
 
   # after
-  for p in psutil.process_iter(attrs=["exe"], ad_value="access-denied"):
-      print(p.exe())
+  attrs = ["name", "status"]
+  for p in psutil.process_iter(attrs=attrs):
+      print(p.as_dict(attrs))  # return cached values, never raise
 
 .. note::
-
-  This is a silent behavior change. Before, calling ``p.exe()``
-  directly could raise :exc:`AccessDenied`. Now, if ``"exe"`` was
-  pre-fetched via ``attrs``, the same call returns ``ad_value``
-  (default ``None``) instead. Code that relied on catching
-  exceptions will silently stop seeing them:
-
-  .. code-block:: python
-
-    # this no longer raises AccessDenied if "exe" was prefetched
-    for p in psutil.process_iter(attrs=["exe"]):
-        try:
-            print(p.exe())
-        except psutil.AccessDenied:
-            pass  # never reached
-
-  If you need the exception, do not include the method in ``attrs``,
-  or call it on a fresh :class:`Process` instance.
+  If ``"name"`` was pre-fetched via ``attrs``, calling ``p.name()`` no longer
+  raises :exc:`AccessDenied`. It returns ``ad_value`` instead. If you need the
+  exception, do not include the method in ``attrs``.
 
 Named tuple field order changed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- :func:`cpu_times`: ``user, system, idle`` fields changed order on Linux,
-  macOS and BSD. They are now always the first 3 fields on all platforms, with
-  platform-specific fields (e.g. ``nice``) following. Positional access (e.g.
-  ``cpu_times()[3]``) will silently return the wrong field. Always use
-  attribute access instead (e.g. ``cpu_times().idle``).
+- :func:`cpu_times`: :field:`user`, :field:`system`, :field:`idle` fields
+  changed order on Linux, macOS and BSD. They are now always the first 3 fields
+  on all platforms, with platform-specific fields (e.g. :field:`nice`)
+  following. Positional access (e.g. ``cpu_times()[3]``) will silently return
+  the wrong field. Always use attribute access instead (e.g.
+  ``cpu_times().idle``).
 
   .. code-block:: python
 
@@ -90,45 +95,23 @@ Named tuple field order changed
     t = psutil.cpu_times()
     user, system, idle = t.user, t.system, t.idle
 
-- :meth:`Process.memory_info`:
+- :meth:`Process.memory_info`: the returned named tuple changed size and field
+  order. Always use attribute access (e.g. ``p.memory_info().rss``) instead of
+  positional unpacking.
 
-  - The returned named tuple changed size and field
-    order. Positional access (e.g. ``p.memory_info()[3]`` or ``a, b, c =
-    p.memory_info()``) may break or silently return the wrong field. Always use
-    attribute access instead (e.g. ``p.memory_info().rss``). Also, ``lib`` and ``dirty`` on Linux were removed and turned into aliases emitting `DeprecationWarning`.
+  - Linux: :field:`lib` and :field:`dirty` fields removed (aliases emitting
+    :exc:`DeprecationWarning` are kept).
+  - macOS: :field:`pfaults` and :field:`pageins` removed with **no aliases**.
+    Use :meth:`Process.page_faults` instead.
+  - Windows: old aliases (:field:`wset`, :field:`peak_wset`, :field:`pagefile`,
+    :field:`private`, :field:`peak_pagefile`, :field:`num_page_faults`) were
+    renamed. Old names still work but raise :exc:`DeprecationWarning`.
+    :field:`paged_pool`, :field:`nonpaged_pool`, :field:`peak_paged_pool`,
+    :field:`peak_nonpaged_pool` were moved to :meth:`Process.memory_info_ex`.
+  - BSD: a new :field:`peak_rss` field was added.
 
-    .. code-block:: python
-
-      # Linux before
-      rss, vms, shared, text, lib, data, dirty = p.memory_info()
-
-      # Linux after
-      t = p.memory_info()
-      rss, vms, shared, text, data = t.rss, t.vms, t.shared, t.text, t.data
-
-  - macOS: ``pfaults`` and ``pageins`` fields were removed with **no
-    backward-compatible aliases**. Use :meth:`page_faults` instead.
-
-    .. code-block:: python
-
-      # before
-      rss, vms, pfaults, pageins = p.memory_info()
-
-      # after
-      rss, vms = p.memory_info()
-      minor, major = p.page_faults()
-
-  - Windows: eliminated old aliases: ``wset`` → ``rss``, ``peak_wset`` →
-    ``peak_rss``, ``pagefile`` / ``private`` → ``vms``, ``peak_pagefile`` →
-    ``peak_vms``, ``num_page_faults`` → :meth:`page_faults` method. At the same
-    time ``paged_pool``, ``nonpaged_pool``, ``peak_paged_pool``,
-    ``peak_nonpaged_pool`` were moved to :meth:`memory_info_ex`. All these old
-    names still work but raise `DeprecationWarning`.
-
-  - BSD: a new ``peak_rss`` field was added.
-
-- :func:`virtual_memory`: on Windows, new ``cached`` and ``wired`` fields were
-  added. Code using positional unpacking will break:
+- :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired`
+  fields were added. Code using positional unpacking will break:
 
   .. code-block:: python
 
@@ -142,83 +125,82 @@ Named tuple field order changed
 cpu_times() interrupt renamed to irq on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``interrupt`` field of :func:`cpu_times` on Windows was renamed to ``irq``
-to match the name used on Linux and BSD. The old name still works but raises
-:exc:`DeprecationWarning`:
-
-.. code-block:: python
-
-  # before
-  t = psutil.cpu_times()
-  print(t.interrupt)
-
-  # after
-  t = psutil.cpu_times()
-  print(t.irq)
+The :field:`interrupt` field of :func:`cpu_times` on Windows was renamed to
+:field:`irq` to match the name used on Linux and BSD. The old name still works
+but raises :exc:`DeprecationWarning`.
 
 Status and connection fields are now enums
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- :meth:`Process.status` now returns a :class:`psutil.ProcessStatus` member
-  instead of a plain ``str``.
-- :meth:`Process.net_connections` and :func:`net_connections` ``status`` field
-  now returns a :class:`psutil.ConnectionStatus` member instead of a plain
+- :meth:`Process.status` now returns a :class:`ProcessStatus` member instead of
+  a plain ``str``.
+- :meth:`Process.net_connections` and :func:`net_connections` :field:`status`
+  field now returns a :class:`ConnectionStatus` member instead of a plain
   ``str``.
 
 Because both are :class:`enum.StrEnum` subclasses they compare equal to their
-string values, so existing comparisons continue to work unchanged:
-
-.. code-block:: python
-
-  # these still work
-  p.status() == "running"
-  p.status() == psutil.STATUS_RUNNING
-
-  # repr() and type() differ, so code inspecting these may need updating
-
-
-The individual constants (e.g. :data:`psutil.STATUS_RUNNING`) are kept as
-aliases for the enum members, and should be preferred over accessing them via
-the enum class:
-
-.. code-block:: python
-
-  # prefer this
-  p.status() == psutil.STATUS_RUNNING
-
-  # not this
-  p.status() == psutil.ProcessStatus.STATUS_RUNNING
+string values, so existing comparisons like
+``p.status() == psutil.STATUS_RUNNING`` continue to work unchanged. Code
+inspecting :func:`repr` or :class:`type` may need updating.
 
 memory_full_info() is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`Process.memory_full_info` is deprecated. Use the new
-:meth:`Process.memory_footprint` instead:
+:meth:`Process.memory_full_info` is deprecated. Use
+:meth:`Process.memory_footprint` instead (same fields).
+
+New memory_info_ex() method
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+8.0 introduces a new :meth:`Process.memory_info_ex` method that extends
+:meth:`Process.memory_info` with platform-specific metrics (e.g.
+:field:`peak_rss`, :field:`swap`, :field:`rss_anon` on Linux). This is
+**unrelated** to the old :meth:`Process.memory_info_ex` that was deprecated in
+4.0 and removed in 7.0 (which corresponded to what later became
+:meth:`Process.memory_full_info`).
+
+New Process.attrs class attribute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:attr:`Process.attrs` is a new :class:`frozenset` exposing the valid attribute
+names accepted by :meth:`Process.as_dict` and :func:`process_iter`. It replaces
+the previous pattern of creating a throwaway process just to discover available
+names:
 
 .. code-block:: python
 
   # before
-  mem = p.memory_full_info()
-  uss = mem.uss
+  attrs = list(psutil.Process().as_dict().keys())
 
   # after
-  mem = p.memory_footprint()
-  uss = mem.uss
+  attrs = psutil.Process.attrs
 
-Git tags renamed
-^^^^^^^^^^^^^^^^^
+It also makes it easy to pass all or a subset of attributes.
+``process_iter(attrs=[])`` (empty list meaning "all") is now deprecated; use
+:attr:`Process.attrs` instead:
 
-Git tags were renamed from ``release-X.Y.Z`` to ``vX.Y.Z``
-(e.g. ``release-7.2.2`` → ``v7.2.2``). Old tags are kept for
-backward compatibility. If you reference psutil tags in scripts or
-URLs, update them to the new format. See :gh:`2788`.
+.. code-block:: python
+
+  # all attrs
+  psutil.process_iter(attrs=psutil.Process.attrs)
+
+  # all except connections
+  psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
 
 Python 3.6 dropped
 ^^^^^^^^^^^^^^^^^^^^
 
 Python 3.6 is no longer supported. Minimum version is Python 3.7.
 
-----
+Git tags renamed
+^^^^^^^^^^^^^^^^^
+
+Git tags were renamed from ``release-X.Y.Z`` to ``vX.Y.Z`` (e.g.
+``release-7.2.2`` → ``v7.2.2``). Old tags are kept for backward compatibility.
+If you reference psutil tags in scripts or URLs, update them to the new format.
+See :gh:`2788`.
+
+-------------------------------------------------------------------------------
 
 .. _migration-7.0:
 
@@ -229,8 +211,13 @@ Process.memory_info_ex() removed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The long-deprecated :meth:`Process.memory_info_ex` was removed (it was
-deprecated since 4.0.0 in 2016). Use :meth:`Process.memory_full_info`
-instead:
+deprecated since 4.0.0 in 2016). Use :meth:`Process.memory_full_info` instead.
+
+.. note::
+
+  In 8.0, a new :meth:`Process.memory_info_ex` method was introduced with
+  different semantics: it extends :meth:`Process.memory_info` with
+  platform-specific metrics. It is unrelated to the old method documented here.
 
 .. code-block:: python
 
@@ -243,14 +230,14 @@ instead:
 Python 2.7 dropped
 ^^^^^^^^^^^^^^^^^^^^
 
-Python 2.7 is no longer supported. The last release to support Python
-2.7 is psutil 6.1.x:
+Python 2.7 is no longer supported. The last release to support Python 2.7 is
+psutil 6.1.x:
 
 .. code-block:: bash
 
   pip2 install "psutil==6.1.*"
 
-----
+-------------------------------------------------------------------------------
 
 .. _migration-6.0:
 
@@ -260,10 +247,9 @@ Migrating to 6.0
 Process.connections() renamed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`Process.connections` was renamed to
-:meth:`Process.net_connections` for consistency with the system-level
-:func:`net_connections`. The old name triggers a ``DeprecationWarning``
-and will be removed in a future release:
+:meth:`Process.connections` was renamed to :meth:`Process.net_connections` for
+consistency with the system-level :func:`net_connections`. The old name
+triggers a :exc:`DeprecationWarning` and will be removed in a future release:
 
 .. code-block:: python
 
@@ -278,8 +264,8 @@ and will be removed in a future release:
 disk_partitions() lost two fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``maxfile`` and ``maxpath`` fields were removed from the named tuple
-returned by :func:`disk_partitions`. Code unpacking the tuple
+The :field:`maxfile` and :field:`maxpath` fields were removed from the named
+tuple returned by :func:`disk_partitions`. Code unpacking the tuple
 positionally will break:
 
 .. code-block:: python
@@ -295,9 +281,9 @@ positionally will break:
 process_iter() no longer checks for PID reuse
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:func:`process_iter` no longer pre-emptively checks whether yielded
-PIDs have been reused (this made it ~20× faster). If you need to verify
-that a process object is still alive and refers to the same process, use
+:func:`process_iter` no longer preemptively checks whether yielded PIDs have
+been reused (this made it ~20× faster). If you need to verify that a process
+object is still alive and refers to the same process, use
 :meth:`Process.is_running` explicitly:
 
 .. code-block:: python
@@ -306,19 +292,19 @@ that a process object is still alive and refers to the same process, use
       if p.is_running():
           print(p.pid, p.name())
 
-----
+-------------------------------------------------------------------------------
 
 .. _migration-5.0:
 
 Migrating to 5.0
 -----------------
 
-5.0.0 was the largest renaming in psutil history. All ``get_*`` and
-``set_*`` :class:`Process` methods lost their prefix, and several
-module-level names were changed.
+5.0.0 was the largest renaming in psutil history. All ``get_*`` and ``set_*``
+:class:`Process` methods lost their prefix, and several module-level names were
+changed.
 
 Old :class:`Process` method names still worked but raised
-``DeprecationWarning``. They were fully removed in 6.0.
+:exc:`DeprecationWarning`. They were fully removed in 6.0.
 
 Process methods
 ^^^^^^^^^^^^^^^^

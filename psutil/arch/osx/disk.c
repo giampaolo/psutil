@@ -21,10 +21,6 @@
 #include "../../arch/all/init.h"
 
 
-/*
- * Return a list of tuples including device, mount point and fs type
- * for all partitions mounted on the system.
- */
 PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     int num;
@@ -183,7 +179,7 @@ psutil_disk_usage_used(PyObject *self, PyObject *args) {
     }
 
 #ifdef ATTR_VOL_SPACEUSED
-    /* Call getattrlist(ATTR_VOL_SPACEUSED) to get used space info. */
+    // Call getattrlist(ATTR_VOL_SPACEUSED) to get used space info.
     int ret;
     struct {
         uint32_t size;
@@ -212,9 +208,6 @@ psutil_disk_usage_used(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return a Python dict of tuples for disk I/O information
- */
 PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
     CFDictionaryRef parent_dict = NULL;

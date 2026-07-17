@@ -42,6 +42,9 @@ typedef LONG NTSTATUS;
 #define ProcessWow64Information 26
 #undef  SystemProcessIdInformation
 #define SystemProcessIdInformation 88
+#undef  SystemTimeOfDayInformation
+#define SystemTimeOfDayInformation 3
+
 
 // process suspend() / resume()
 typedef enum _KTHREAD_STATE {
@@ -449,6 +452,20 @@ typedef struct _SYSTEM_PROCESS_ID_INFORMATION {
     HANDLE ProcessId;
     UNICODE_STRING ImageName;
 } SYSTEM_PROCESS_ID_INFORMATION, *PSYSTEM_PROCESS_ID_INFORMATION;
+
+// boot_time()
+typedef struct _SYSTEM_TIMEOFDAY_INFORMATION2 {
+    LARGE_INTEGER BootTime;
+    LARGE_INTEGER CurrentTime;
+    LARGE_INTEGER TimeZoneBias;
+    ULONG TimeZoneId;
+    ULONG Reserved;
+    ULONGLONG BootTimeBias;
+    ULONGLONG SleepTimeBias;
+} SYSTEM_TIMEOFDAY_INFORMATION2, *PSYSTEM_TIMEOFDAY_INFORMATION2;
+
+#define SYSTEM_TIMEOFDAY_INFORMATION SYSTEM_TIMEOFDAY_INFORMATION2
+#define PSYSTEM_TIMEOFDAY_INFORMATION PSYSTEM_TIMEOFDAY_INFORMATION2
 
 // ====================================================================
 // PEB structs for cmdline(), cwd(), environ()

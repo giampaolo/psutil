@@ -43,7 +43,7 @@ jobs:
           python-version: ${{ runner.os == 'macOS' && runner.arch == 'ARM64' && '3.8' || '3.11' }}
 
       - name: Build wheels + run tests
-        uses: pypa/cibuildwheel@v3.2.1
+        uses: pypa/cibuildwheel@v3.4.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENABLE: "cpython-freethreading ${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
@@ -54,8 +54,8 @@ jobs:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: wheelhouse
 
-  # Run linters and build doc.
-  linters-and-doc:
+  # Run linters
+  linters:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -65,10 +65,20 @@ jobs:
       - name: "Run linters"
         run: |
           make ci-lint
-      - name: "Build doc"
+
+  # Test docs
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+      - name: "Test docs"
         run: |
+          make install-pydeps-test
           pip install -r docs/requirements.txt
-          cd docs && make html
+          make test-docs
 
   # Merge wheels and check sanity of the package distribution.
   merge-and-check-dist:

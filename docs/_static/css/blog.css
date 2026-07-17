@@ -1,0 +1,400 @@
+/*
+ * psutil-sphinx-theme: blog sub-site.
+ *
+ * Loaded for every page; rules are scoped to blog pages via
+ * `body:has(.blog-section-banner)` (any page under the blog path
+ * renders the banner) or `.article:has(.post-meta-banner)` (only
+ * blog posts) so non-blog pages stay unaffected.
+ */
+
+/* ---- Tokens ---------------------------------------------------------- */
+
+:root {
+    --font-post-body: "Merriweather", Charter, Georgia, serif;
+    --blog-accent: #9a3412;       /* warm rust, editorial */
+    --blog-accent-deep: #7c2d12;
+}
+
+[data-theme="dark"] {
+    --blog-accent: #fb923c;
+    --blog-accent-deep: #fdba74;
+}
+
+/* ---- Section banner (top of every blog page) ------------------------ */
+
+.blog-section-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.7em;
+    flex-wrap: wrap;
+    padding: 0.3em 0;
+    margin: 1.5em 0 0.3em 0;
+    border-bottom: 1px solid var(--border);
+}
+
+@media (min-width: 1280px) {
+    .main:has(.article-with-toc:not(.no-toc)) .blog-section-banner {
+        max-width: calc(100% - var(--right-sidebar-width) - 32px);
+    }
+}
+
+.blog-section-banner .blog-rss {
+    margin-left: auto;
+}
+
+.blog-section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+}
+
+.blog-section-icon {
+    grid-area: icon;
+    width: 1.7em;
+    height: 1.7em;
+    color: var(--blog-accent);
+    flex-shrink: 0;
+}
+
+a.blog-section-title,
+a.blog-section-title:visited {
+    grid-area: title;
+    font-size: 1.9em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    text-decoration: none;
+    line-height: 1.1;
+}
+
+a.blog-section-title:hover,
+.blog-card-title a:hover {
+    color: var(--blog-accent);
+    text-decoration: none;
+}
+
+.blog-section-subtitle {
+    grid-area: subtitle;
+    font-size: 0.85em;
+    color: var(--text-muted);
+    opacity: 0.8;
+    margin-top: 0.15em;
+}
+
+/* RSS subscribe button (orange outlined). */
+a.blog-rss,
+a.blog-rss:visited {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.35em 0.75em;
+    background: transparent;
+    color: var(--blog-accent);
+    border: 1px solid var(--blog-accent);
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9em;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+a.blog-rss:hover {
+    background: color-mix(in srgb, var(--blog-accent) 12%, transparent);
+    color: var(--blog-accent);
+    text-decoration: none;
+}
+
+.blog-rss-icon {
+    width: 1.1em;
+    height: 1.1em;
+    flex: 0 0 auto;
+    transform: translateY(-0.05em);
+}
+
+/* ---- Blog listing (post cards) -------------------------------------- */
+
+.blog-listing-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1em;
+    margin-bottom: 1.5em;
+}
+
+.blog-listing-title {
+    font-size: 2.2em;
+    margin: 0;
+}
+
+.blog-listing-title-value,
+.blog-listing-title-value:visited {
+    color: var(--text);
+    font-weight: 500;
+    border-bottom: none;
+    text-decoration: none;
+}
+
+ol.blog-cards {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+ol.blog-cards > li.blog-card {
+    list-style: none;
+    margin: 0;
+}
+
+.blog-card {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+        "date"
+        "title"
+        "summary"
+        "tags";
+    padding: 1.6em 0;
+    margin: 0;
+    background: none;
+    border: none;
+}
+
+.blog-card:first-child {
+    padding-top: 0;
+}
+
+.blog-card-head {
+    display: contents;
+}
+
+.blog-card-meta {
+    grid-area: date;
+    color: color-mix(in srgb, var(--text-muted) 75%, transparent);
+    font-size: 0.78em;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+    margin: 0 0 0.05em 0;
+}
+
+.blog-card-draft {
+    font-style: italic;
+}
+
+.blog-card-titlerow {
+    grid-area: title;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75em;
+}
+
+.blog-card .blog-card-title {
+    min-width: 0;
+    font-family: var(--font-body);
+    font-size: 1.3em;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 0.4em 0;
+    padding: 0;
+}
+
+.blog-card-title a,
+.blog-card-title a:visited {
+    text-decoration: none;
+    color: var(--text);
+}
+
+/* Match the article banner's effective size (0.78em inside a 0.9em
+   banner = 0.702em) so the listing badge is identical to it. */
+.blog-card-titlerow .post-meta-featured {
+    font-size: 0.702em;
+}
+
+.blog-card-summary {
+    grid-area: summary;
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 1.05em;
+    line-height: 1.6;
+    margin: 0.3em 0 0 0;
+}
+
+.blog-card-summary a,
+.blog-card-summary a:visited {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border);
+}
+
+.blog-card-summary a:hover {
+    color: var(--blog-accent);
+    border-bottom-color: var(--blog-accent);
+    text-decoration: none;
+}
+
+.blog-card-summary code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font-size: 0.92em;
+}
+
+.blog-card-summary p:empty {
+    display: none;
+}
+
+.blog-card-summary p {
+    margin: 0;
+}
+
+.blog-card .blog-card-tags {
+    grid-area: tags;
+    justify-self: start;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3em;
+    margin: 0.9em 0 0 0;
+    padding-left: 0;
+}
+
+.blog-card-tags li {
+    list-style: none;
+    margin: 0;
+}
+
+/* ---- Post meta banner (date + tags below the H1 of a post) --------- */
+
+.post-meta-banner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    align-items: center;
+    margin: 0 0 2em 0;
+    padding: 0.4em 0 0 0;
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+.post-meta-banner > *:not(:first-child)::before {
+    content: "·";
+    color: var(--text-muted);
+    opacity: 0.6;
+    margin: 0 0.5em 0 0.15em;
+}
+
+.post-meta-featured,
+a.post-meta-featured,
+a.post-meta-featured:visited {
+    padding: 0.15em 0.65em;
+    border-radius: 999px;
+    font-size: 0.78em;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.6;
+    color: var(--blog-accent);
+    background: color-mix(in srgb, var(--blog-accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--blog-accent) 28%, transparent);
+    text-decoration: none;
+}
+
+a.post-meta-featured:hover {
+    background: color-mix(in srgb, var(--blog-accent) 22%, transparent);
+    border-color: color-mix(in srgb, var(--blog-accent) 50%, transparent);
+}
+
+.post-meta-author {
+    font-style: italic;
+}
+
+.post-meta-date,
+.post-meta-readtime {
+    font-variant-numeric: tabular-nums;
+}
+
+.post-meta-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.3em;
+    align-items: center;
+}
+
+/* Shared tag-pill style: card listing + post banner. */
+.post-meta-tags a,
+.post-meta-tags a:visited,
+.blog-card-tags a,
+.blog-card-tags a:visited {
+    display: inline-block;
+    padding: 0.05em 0.55em;
+    border-radius: 999px;
+    font-size: 0.82em;
+    line-height: 1.6;
+    color: var(--text-muted);
+    background: color-mix(in srgb, var(--text-muted) 7%, transparent);
+    text-decoration: none;
+}
+
+.post-meta-tags a:hover,
+.blog-card-tags a:hover {
+    color: var(--blog-accent);
+    background: color-mix(in srgb, var(--blog-accent) 10%, transparent);
+    text-decoration: none;
+}
+
+/* ---- Blog post body: switch to serif typography -------------------- */
+
+.article:has(.post-meta-banner) p,
+.article:has(.post-meta-banner) li,
+.article:has(.post-meta-banner) blockquote,
+.article:has(.post-meta-banner) dd {
+    font-family: var(--font-post-body);
+    line-height: 1.75;
+}
+
+.article:has(.post-meta-banner) h1 {
+    font-size: 2.1em;
+    line-height: 1.25;
+    margin-bottom: 0.4em;
+}
+
+.article:has(.post-meta-banner) h2 {
+    font-size: 1.5em;
+    line-height: 1.3;
+    margin-top: 1.8em;
+    padding-top: 0.5em;
+}
+
+.article:has(.post-meta-banner) h3 {
+    font-size: 1.2em;
+    line-height: 1.35;
+    margin-top: 1.5em;
+}
+
+/* GitHub-style blockquotes inside posts. */
+.article:has(.post-meta-banner) blockquote {
+    margin: 1em 0;
+    padding: 0 1em;
+    border-left: 0.25em solid var(--border);
+    color: var(--text-muted);
+    background: transparent;
+    font-style: normal;
+}
+
+.article:has(.post-meta-banner) blockquote p {
+    margin: 0.5em 0;
+}
+
+/* ---- Blog-scoped accent: redefine the link tokens inside the blog
+   sub-site so every link picks up the rust hue without needing
+   per-element overrides. */
+
+body:has(.blog-section-banner) {
+    --accent: var(--blog-accent);
+    --links-api: var(--blog-accent-deep);
+    --links-api-underline: var(--blog-accent-deep);
+}

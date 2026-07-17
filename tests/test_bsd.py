@@ -138,6 +138,114 @@ class TestProcessAPIs(PsutilTestCase):
         assert start_ps == start_psutil
 
 
+@pytest.mark.skipif(not BSD, reason="BSD only")
+class TestVmstat(PsutilTestCase):
+
+    @staticmethod
+    def vmstat(labels):
+        out = sh(["vmstat", "-s"], env={"LANG": "C.UTF-8"})
+        for line in out.split("\n"):
+            line = line.strip()
+            num, _, what = line.partition(" ")
+            for label in labels:
+                if label == what:
+                    return int(num)
+        return pytest.skip(f"can't find {labels} in vmstat output")
+
+    # --- virtual_memory()
+
+    def test_vmem_free(self):
+        vmstat_value = self.vmstat(['pages free']) * PAGESIZE
+        psutil_value = psutil.virtual_memory().free
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_active(self):
+        vmstat_value = self.vmstat(['pages active']) * PAGESIZE
+        psutil_value = psutil.virtual_memory().active
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_inactive(self):
+        vmstat_value = self.vmstat(['pages inactive']) * PAGESIZE
+        psutil_value = psutil.virtual_memory().inactive
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_cached(self):
+        # NetBSD / OpenBSD
+        vmstat_value = (
+            self.vmstat(['cached file pages'])
+            + self.vmstat(['cached executable pages'])
+        ) * PAGESIZE
+        psutil_value = psutil.virtual_memory().cached
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_wired(self):
+        vmstat_value = (
+            self.vmstat(['pages wired', 'pages wired down']) * PAGESIZE
+        )
+        psutil_value = psutil.virtual_memory().wired
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    @pytest.mark.skipif(
+        not (OPENBSD or NETBSD), reason="NETBSD / OPENBSD only"
+    )
+    def test_vmem_shared(self):
+        out = sh("vmstat -t")
+        if "vm-sh" not in out:
+            return pytest.skip("can't find 'vm-sh' in vmstat output")
+        lines = out.splitlines()
+        headers = lines[1].split()
+        values = lines[2].split()
+        row = dict(zip(headers, values))
+        expected = int(row["vm-sh"]) * PAGESIZE
+        assert (
+            abs(psutil.virtual_memory().shared - expected) < TOLERANCE_SYS_MEM
+        )
+
+    # --- swap_memory()
+
+    def test_swap_total(self):
+        vmstat_value = self.vmstat(['swap pages']) * PAGESIZE
+        psutil_value = psutil.swap_memory().total
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_swap_used(self):
+        vmstat_value = self.vmstat(['swap pages in use']) * PAGESIZE
+        psutil_value = psutil.swap_memory().used
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_swap_sin(self):
+        vmstat_value = self.vmstat(['pages swapped in']) * PAGESIZE
+        psutil_value = psutil.swap_memory().sin
+        assert abs(vmstat_value - psutil_value) < 1024
+
+    def test_swap_sout(self):
+        vmstat_value = self.vmstat(['pages swapped oud']) * PAGESIZE
+        psutil_value = psutil.swap_memory().sout
+        assert abs(vmstat_value - psutil_value) < 1024
+
+    # --- cpu_stats()
+
+    def test_cpu_stats_interrupts(self):
+        vmstat_value = self.vmstat(['device interrupts', 'interrupts'])
+        psutil_value = psutil.cpu_stats().interrupts
+        assert abs(vmstat_value - psutil_value) <= 100
+
+    def test_cpu_stats_soft_interrupts(self):
+        vmstat_value = self.vmstat(['software interrupts'])
+        psutil_value = psutil.cpu_stats().soft_interrupts
+        assert abs(vmstat_value - psutil_value) <= 100
+
+    def test_cpu_stats_syscalls(self):
+        vmstat_value = self.vmstat(['system calls', 'syscalls'])
+        psutil_value = psutil.cpu_stats().syscalls
+        assert abs(vmstat_value - psutil_value) <= 100
+
+    def test_cpu_stats_ctx_switches(self):
+        vmstat_value = self.vmstat(['cpu context switches'])
+        psutil_value = psutil.cpu_stats().ctx_switches
+        assert abs(vmstat_value - psutil_value) <= 100
+
+
 # =====================================================================
 # --- FreeBSD
 # =====================================================================
@@ -467,7 +575,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 
 
 @pytest.mark.skipif(not OPENBSD, reason="OPENBSD only")
-class OpenBSDTestCase(PsutilTestCase):
+class OpenBSDSystemTestCase(PsutilTestCase):
     def test_boot_time(self):
         s = sysctl('kern.boottime')
         sys_bt = datetime.datetime.strptime(s, "%a %b %d %H:%M:%S %Y")
@@ -483,84 +591,40 @@ class OpenBSDTestCase(PsutilTestCase):
 @pytest.mark.skipif(not NETBSD, reason="NETBSD only")
 class NetBSDTestCase(PsutilTestCase):
     @staticmethod
-    def parse_meminfo(look_for):
-        with open('/proc/meminfo') as f:
-            for line in f:
-                if line.startswith(look_for):
-                    return int(line.split()[1]) * 1024
-        raise ValueError(f"can't find {look_for}")
+    def parse_vmstat(look_for):
+        """Parse a cumulative field from 'vmstat -s' output.
+        Lines are formatted as: '<value> <description>'
+        Mirrors the same uvmexp_sysctl fields that psutil reads via
+        sysctl(CTL_VM, VM_UVMEXP2) in C, without requiring procfs.
+        """
+        out = sh("vmstat -s")
+        for line in out.splitlines():
+            line = line.strip()
+            if look_for in line:
+                return int(line.split()[0])
+        raise ValueError(f"can't find {look_for!r} in vmstat -s output")
 
     # --- virtual mem
 
-    def test_vmem_total(self):
-        assert psutil.virtual_memory().total == self.parse_meminfo("MemTotal:")
-
-    def test_vmem_free(self):
-        assert (
-            abs(psutil.virtual_memory().free - self.parse_meminfo("MemFree:"))
-            < TOLERANCE_SYS_MEM
-        )
-
+    @retry_on_failure()
     def test_vmem_buffers(self):
+        # uv.filepages: file-backed pages excluding executable mappings
         assert (
             abs(
                 psutil.virtual_memory().buffers
-                - self.parse_meminfo("Buffers:")
+                - self.parse_vmstat("cached file pages") * PAGESIZE
             )
-            < TOLERANCE_SYS_MEM
-        )
-
-    def test_vmem_shared(self):
-        assert (
-            abs(
-                psutil.virtual_memory().shared
-                - self.parse_meminfo("MemShared:")
-            )
-            < TOLERANCE_SYS_MEM
-        )
-
-    def test_vmem_cached(self):
-        assert (
-            abs(psutil.virtual_memory().cached - self.parse_meminfo("Cached:"))
             < TOLERANCE_SYS_MEM
         )
 
     # --- swap mem
 
+    @retry_on_failure()
     def test_swapmem_total(self):
         assert (
-            abs(psutil.swap_memory().total - self.parse_meminfo("SwapTotal:"))
+            abs(
+                psutil.swap_memory().total
+                - self.parse_vmstat("swap pages") * PAGESIZE
+            )
             < TOLERANCE_SYS_MEM
         )
-
-    def test_swapmem_free(self):
-        assert (
-            abs(psutil.swap_memory().free - self.parse_meminfo("SwapFree:"))
-            < TOLERANCE_SYS_MEM
-        )
-
-    def test_swapmem_used(self):
-        smem = psutil.swap_memory()
-        assert smem.used == smem.total - smem.free
-
-    # --- others
-
-    def test_cpu_stats_interrupts(self):
-        with open('/proc/stat', 'rb') as f:
-            for line in f:
-                if line.startswith(b'intr'):
-                    interrupts = int(line.split()[1])
-                    break
-            else:
-                raise ValueError("couldn't find line")
-        assert abs(psutil.cpu_stats().interrupts - interrupts) < 1000
-
-    def test_cpu_stats_ctx_switches(self):
-        with open('/proc/stat', 'rb') as f:
-            for line in f:
-                if line.startswith(b'ctxt'):
-                    ctx_switches = int(line.split()[1])
-                    break
-            else:
-                raise ValueError("couldn't find line")
-        assert abs(psutil.cpu_stats().ctx_switches - ctx_switches) < 1000

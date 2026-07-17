@@ -27,7 +27,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     endutxent();
     UTXENT_MUTEX_UNLOCK();
     if (fabs(boot_time) < 0.000001) {
-        /* could not find BOOT_TIME in getutxent loop */
+        // could not find BOOT_TIME in getutxent loop
         psutil_runtime_error("can't determine boot time");
         return NULL;
     }

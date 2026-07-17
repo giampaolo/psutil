@@ -28,7 +28,6 @@ from psutil import ConnectionStatus
 from psutil import NicDuplex
 from psutil import ProcessStatus
 
-from . import AARCH64
 from . import GITHUB_ACTIONS
 from . import HAS_CPU_FREQ
 from . import HAS_NET_IO_COUNTERS
@@ -256,9 +255,6 @@ class TestAvailSystemAPIs(PsutilTestCase):
     def test_win_service_get(self):
         assert hasattr(psutil, "win_service_get") == WINDOWS
 
-    @pytest.mark.skipif(
-        MACOS and AARCH64 and not HAS_CPU_FREQ, reason="not supported"
-    )
     def test_cpu_freq(self):
         assert hasattr(psutil, "cpu_freq") == (
             LINUX or MACOS or WINDOWS or FREEBSD or OPENBSD

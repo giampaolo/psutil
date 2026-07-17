@@ -430,7 +430,7 @@ def broadcast_addr(addr):
 
 def deprecated_method(replacement):
     """A decorator which can be used to mark a method as deprecated
-    'replcement' is the method name which will be called instead.
+    'replacement' is the method name which will be called instead.
     """
 
     def outer(fun):

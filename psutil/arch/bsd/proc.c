@@ -19,10 +19,8 @@
 #include "../../arch/all/init.h"
 
 
-/*
- * Collect different info about a process in one shot and return
- * them as a Python dict.
- */
+// Collect different info about a process in one shot and return them
+// as a Python dict.
 PyObject *
 psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -122,7 +120,6 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     // were. Not supported.
     oncpu = -1;
 #endif
-
         // clang-format off
 
 #ifdef PSUTIL_FREEBSD
@@ -350,12 +347,10 @@ error:
 }
 
 
-/*
- * Return files opened by process as a list of (path, fd) tuples.
- * TODO: this is broken as it may report empty paths. 'procstat'
- * utility has the same problem see:
- * https://github.com/giampaolo/psutil/issues/595
- */
+// Return files opened by process as a list of (path, fd) tuples.
+// TODO: this is broken as it may report empty paths. 'procstat'
+// utility has the same problem see:
+// https://github.com/giampaolo/psutil/issues/595
 PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     pid_t pid;

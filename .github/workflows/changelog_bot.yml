@@ -15,18 +15,25 @@ jobs:
       github.event.issue.pull_request != null
     runs-on: ubuntu-latest
 
+    # Don't let two /changelog comments on the same PR race the
+    # checkout/push. Queue the second one instead of cancelling.
+    concurrency:
+      group: changelog-${{ github.event.issue.number }}
+      cancel-in-progress: false
+
     steps:
       - name: Check commenter permissions
         id: check-perms
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENTER: ${{ github.event.comment.user.login }}
         run: |
           PERMISSION=$(gh api \
-            repos/${{ github.repository }}/collaborators/${{ github.event.comment.user.login }}/permission \
+            "repos/${{ github.repository }}/collaborators/$COMMENTER/permission" \
             --jq '.permission')
           echo "permission=$PERMISSION"
           if [[ "$PERMISSION" != "write" && "$PERMISSION" != "admin" ]]; then
-            echo "User ${{ github.event.comment.user.login }} does not have write/admin permission"
+            echo "User $COMMENTER does not have write/admin permission"
             exit 1
           fi
 
@@ -34,48 +41,110 @@ jobs:
         id: pr-info
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
         run: |
-          PR_NUMBER=${{ github.event.issue.number }}
-          PR_JSON=$(gh pr view $PR_NUMBER \
-            --repo ${{ github.repository }} \
-            --json headRefName,headRepository,headRepositoryOwner)
+          PR_JSON=$(gh pr view "$PR_NUMBER" \
+            --repo "${{ github.repository }}" \
+            --json headRefName,headRepository,headRepositoryOwner,headRefOid)
           HEAD_BRANCH=$(echo "$PR_JSON" | jq -r '.headRefName')
           HEAD_OWNER=$(echo "$PR_JSON" | jq -r '.headRepositoryOwner.login')
           HEAD_REPO=$(echo "$PR_JSON" | jq -r '.headRepository.name')
+          HEAD_SHA=$(echo "$PR_JSON" | jq -r '.headRefOid')
           echo "branch=$HEAD_BRANCH" >> "$GITHUB_OUTPUT"
           echo "head_repo=$HEAD_OWNER/$HEAD_REPO" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Checkout PR branch
         uses: actions/checkout@v5
         with:
-          ref: refs/pull/${{ github.event.issue.number }}/head
+          ref: ${{ steps.pr-info.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Full history so we can compute the merge-base with master.
+          fetch-depth: 0
 
       - name: Install dependencies
-        run: pip install anthropic
+        run: pip install anthropic rstwrap
 
       - name: Run changelog bot
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PR_NUMBER: ${{ github.event.issue.number }}
         run: |
-          python .github/workflows/changelog_bot.py \
-            --pr-number ${{ github.event.issue.number }} \
-            --repo ${{ github.repository }} \
-            --token ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Commit and push if changelog changed
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
+          # Run the trusted script from master, not the PR's copy, so a
+          # malicious PR can't get arbitrary code executed on the runner.
+          git fetch origin master
+          git show origin/master:.github/workflows/changelog_bot.py > /tmp/changelog_bot.py
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # changelog.rst/credits.rst are bot-owned. To keep the PR
+          # mergeable via the GitHub button: drop the PR's changes to
+          # these two files, update the branch to master, then add the
+          # entry on top so it applies against master with no conflict.
+          git checkout origin/master -- docs/changelog.rst docs/credits.rst
+          git commit -q -m "Sync changelog/credits to master" \
+            -- docs/changelog.rst docs/credits.rst || true
+          if ! git merge --no-edit origin/master; then
+            git merge --abort
+            printf '%s\n' "⚠️ This PR conflicts with master outside \`changelog.rst\`/\`credits.rst\` (code). Resolve them, then re-run \`/changelog\`." > "$RUNNER_TEMP/changelog_error.md"
+            exit 1
+          fi
+          python /tmp/changelog_bot.py \
+            --pr-number "$PR_NUMBER" \
+            --repo "${{ github.repository }}" \
+            --token "${{ secrets.GITHUB_TOKEN }}" \
+            --comment-file "$RUNNER_TEMP/changelog_comment.md" \
+            --error-file "$RUNNER_TEMP/changelog_error.md"
+
+      - name: Commit and push if changelog changed
+        id: push
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          # Pass fork-controlled values through env, never interpolate
+          # ${{ }} into the shell: a branch named "x$(cmd)" would
+          # otherwise run as a command.
+          HEAD_REPO: ${{ steps.pr-info.outputs.head_repo }}
+          HEAD_BRANCH: ${{ steps.pr-info.outputs.branch }}
+        run: |
+          make fix-rst
           git add docs/changelog.rst docs/credits.rst
-          if git diff --cached --quiet; then
-            echo "No changes, skipping commit"
+          git diff --cached --quiet \
+            || git commit --no-verify -m "Update changelog for PR #$PR_NUMBER"
+          # Push whatever advanced the branch: the entry and/or the
+          # master-sync + merge commits from the previous step.
+          PUSH_URL="https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git"
+          git push "$PUSH_URL" "HEAD:refs/heads/${HEAD_BRANCH}"
+
+      - name: Post confirmation comment
+        # Best-effort: a comment hiccup must not mislabel a landed
+        # push as a failure.
+        if: success()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" \
+            --repo "${{ github.repository }}" \
+            --body-file "$RUNNER_TEMP/changelog_comment.md"
+
+      - name: Report failure on the PR
+        if: failure() && steps.check-perms.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # A validation error leaves a specific message; anything else
+          # (e.g. a failed push) only gets the generic pointer, never a
+          # stale success body.
+          ERROR_FILE="$RUNNER_TEMP/changelog_error.md"
+          if [ -s "$ERROR_FILE" ]; then
+            gh pr comment "$PR_NUMBER" \
+              --repo "${{ github.repository }}" \
+              --body-file "$ERROR_FILE"
           else
-            git commit -m "Update changelog for PR #${{ github.event.issue.number }}"
-            HEAD_REPO="${{ steps.pr-info.outputs.head_repo }}"
-            HEAD_BRANCH="${{ steps.pr-info.outputs.branch }}"
-            PUSH_URL="https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git"
-            git push "$PUSH_URL" "HEAD:refs/heads/${HEAD_BRANCH}"
+            gh pr comment "$PR_NUMBER" \
+              --repo "${{ github.repository }}" \
+              --body "⚠️ The /changelog bot failed. See the run log: $RUN_URL"
           fi

@@ -38,7 +38,6 @@ psutil_get_drive_type(int type) {
 }
 
 
-// Return path's disk total, used, and free space.
 PyObject *
 psutil_disk_usage(PyObject *self, PyObject *args) {
     PyObject *py_path;
@@ -73,10 +72,6 @@ psutil_disk_usage(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return a Python dict of tuples for disk I/O information. This may
- * require running "diskperf -y" command first.
- */
 PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
     DISK_PERFORMANCE diskPerformance;
@@ -138,8 +133,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             }
             else if (GetLastError() == ERROR_INVALID_FUNCTION) {
                 // This happens on AppVeyor:
-                // https://ci.appveyor.com/project/giampaolo/psutil/build/
-                //      1364/job/ascpdi271b06jle3
+                // https://ci.appveyor.com/project/giampaolo/psutil/build/1364/job/ascpdi271b06jle3
                 // Assume it means we're dealing with some exotic disk
                 // and go on.
                 psutil_debug(
@@ -159,9 +153,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 goto next;
             }
             // XXX: it seems we should also catch ERROR_INVALID_PARAMETER:
-            // https://sites.ualberta.ca/dept/aict/uts/software/openbsd/
-            //     ports/4.1/i386/openafs/w-openafs-1.4.14-transarc/
-            //     openafs-1.4.14/src/usd/usd_nt.c
+            // https://sites.ualberta.ca/dept/aict/uts/software/openbsd/ports/4.1/i386/openafs/w-openafs-1.4.14-transarc/openafs-1.4.14/src/usd/usd_nt.c
 
             // XXX: we can also bump into ERROR_MORE_DATA in which case
             // (quoting doc) we're supposed to retry with a bigger buffer
@@ -203,10 +195,6 @@ error:
 }
 
 
-/*
- * Return disk partitions as a list of tuples such as
- * (drive_letter, drive_letter, type, "")
- */
 PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     DWORD num_bytes;
@@ -371,11 +359,9 @@ error:
 }
 
 
-/*
- Accept a filename's drive in native  format like "\Device\HarddiskVolume1\"
- and return the corresponding drive letter (e.g. "C:\\").
- If no match is found return an empty string.
-*/
+// Accept a filename's drive in native  format like "\Device\HarddiskVolume1\"
+// and return the corresponding drive letter (e.g. "C:\\").
+// If no match is found return an empty string.
 PyObject *
 psutil_QueryDosDevice(PyObject *self, PyObject *args) {
     LPCTSTR lpDevicePath;

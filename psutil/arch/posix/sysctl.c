@@ -28,7 +28,7 @@ psutil_sysctl(int *mib, u_int miblen, void *buf, size_t buflen) {
         return -1;
     }
 
-    if (len != buflen) {
+    if (len > buflen) {
         psutil_runtime_error("sysctl() size mismatch");
         return -1;
     }
@@ -139,7 +139,7 @@ psutil_sysctlbyname(const char *name, void *buf, size_t buflen) {
         return -1;
     }
 
-    if (len != buflen) {
+    if (len > buflen) {
         str_format(
             errbuf,
             sizeof(errbuf),

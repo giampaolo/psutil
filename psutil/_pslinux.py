@@ -375,8 +375,11 @@ def swap_memory():
     mems = {}
     with open_binary(f"{get_procfs_path()}/meminfo") as f:
         for line in f:
-            fields = line.split()
-            mems[fields[0]] = int(fields[1]) * 1024
+            # Note: some fields (e.g. "ShadowCallStack:10373888 kB")
+            # may not have a space after the colon, see:
+            # https://github.com/giampaolo/psutil/issues/2809
+            key, value = line.split(b':', 1)
+            mems[key + b':'] = int(value.split()[0]) * 1024
     # We prefer /proc/meminfo over sysinfo() syscall so that
     # psutil.PROCFS_PATH can be used in order to allow retrieval
     # for linux containers, see:
@@ -619,9 +622,11 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                 curr = bcat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
                 if curr is None:
                     online_path = f"/sys/devices/system/cpu/cpu{i}/online"
-                    # if cpu core is offline, set to all zeroes
+                    # If the CPU core is offline skip it instead of
+                    # reporting it as all zeroes, otherwise it drags
+                    # down the average frequency. See:
+                    # https://github.com/giampaolo/psutil/issues/2628
                     if cat(online_path, fallback=None) == "0\n":
-                        ret.append(ntp.scpufreq(0.0, 0.0, 0.0))
                         continue
                     msg = "can't find current frequency file"
                     raise NotImplementedError(msg)

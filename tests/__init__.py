@@ -1119,6 +1119,7 @@ class process_namespace:
 
     ignored = [
         ('as_dict', (), {}),
+        ('attrs', (), {}),
         ('children', (), {'recursive': True}),
         ('connections', (), {}),  # deprecated
         ('info', (), {}),

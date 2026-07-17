@@ -60,14 +60,11 @@ convert_status(struct extern_proc *p, struct eproc *e) {
 }
 
 
-/*
- * Return multiple process info as a Python dict in one shot by
- * using sysctl() and filling up a kinfo_proc struct.
- * It should be possible to do this for all processes without
- * incurring into permission (EPERM) errors.
- * This will also succeed for zombie processes returning correct
- * information.
- */
+// Return multiple process info as a Python dict in one shot by using
+// `sysctl()` and filling up a `kinfo_proc` struct. It should be
+// possible to do this for all processes without incurring into
+// permission (EPERM) errors. This will also succeed for zombie
+// processes returning correct information.
 PyObject *
 psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -118,14 +115,12 @@ error:
 }
 
 
-/*
- * Return multiple process info as a Python dict in one shot by
- * using proc_pidinfo(PROC_PIDTASKINFO) and filling a proc_taskinfo
- * struct.
- * Contrarily from proc_kinfo above this function will fail with
- * EACCES for PIDs owned by another user and with ESRCH for zombie
- * processes.
- */
+// Return multiple process info as a Python dict in one shot by
+// using `proc_pidinfo(PROC_PIDTASKINFO)` and filling a proc_taskinfo
+// struct.
+// Contrarily from `proc_kinfo` above this function will fail with
+// EACCES for PIDs owned by another user and with ESRCH for zombie
+// processes.
 PyObject *
 psutil_proc_oneshot_pidtaskinfo(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -175,9 +170,6 @@ error:
 }
 
 
-/*
- * Return process name from kinfo_proc as a Python string.
- */
 PyObject *
 psutil_proc_name(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -191,10 +183,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     return PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
 }
 
-/*
- * Return process current working directory.
- * Raises NSP in case of zombie process.
- */
+
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -215,9 +204,6 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return path of the process executable.
- */
 PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -249,10 +235,8 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Indicates if the given virtual address on the given architecture is in the
- * shared VM region.
- */
+// Return true if the given virtual address on the given architecture
+// is in the shared VM region.
 static bool
 psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
     mach_vm_address_t base;
@@ -279,9 +263,6 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 }
 
 
-/*
- * Return extended memory info via task_info(TASK_VM_INFO).
- */
 PyObject *
 psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -333,11 +314,8 @@ error:
 }
 
 
-/*
- * Returns the USS (unique set size) of the process. Reference:
- * https://dxr.mozilla.org/mozilla-central/source/xpcom/base/
- *     nsMemoryReporterManager.cpp
- */
+// Return process USS (unique set size) memory. Reference:
+// https://dxr.mozilla.org/mozilla-central/source/xpcom/base/nsMemoryReporterManager.cpp
 PyObject *
 psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -439,9 +417,6 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process threads
- */
 PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -556,12 +531,10 @@ error:
 }
 
 
-/*
- * Return process open files as a Python tuple.
- * See lsof source code:
- * https://github.com/apple-opensource/lsof/blob/28/lsof/dialects/darwin/libproc/dproc.c#L342
- * ...and /usr/include/sys/proc_info.h
- */
+// Return process open files as a Python tuple.
+// See lsof source code:
+// https://github.com/apple-opensource/lsof/blob/28/lsof/dialects/darwin/libproc/dproc.c#L342
+// ...and /usr/include/sys/proc_info.h
 PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -644,13 +617,10 @@ error:
 }
 
 
-/*
- * Return process TCP and UDP connections as a list of tuples.
- * Raises NSP in case of zombie process.
- * See lsof source code:
- * https://github.com/apple-opensource/lsof/blob/28/lsof/dialects/darwin/libproc/dproc.c#L342
- * ...and /usr/include/sys/proc_info.h
- */
+// Return process TCP and UDP connections as a list of tuples.
+// See lsof source code:
+// https://github.com/apple-opensource/lsof/blob/28/lsof/dialects/darwin/libproc/dproc.c#L342
+// ...and /usr/include/sys/proc_info.h
 PyObject *
 psutil_proc_net_connections(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -907,7 +877,6 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 }
 
 
-// return process args as a python list
 PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;

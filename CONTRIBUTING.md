@@ -14,20 +14,20 @@
   keeping the issues properly organized and searchable (by OS, issue type,
   etc.).
 - When reporting a malfunction, consider enabling
-  [debug mode](https://psutil.readthedocs.io/en/latest/#debug-mode) first.
+  [debug mode](https://psutil.readthedocs.io/latest/devguide.html#debug-mode)
+  first.
 - To report a **security vulnerability**, use the
   [Tidelift security contact](https://tidelift.com/security). Tidelift will
   coordinate the fix and the disclosure of the reported problem.
 
 ## Pull Requests
 
+- In order to get acquainted with the code base and tooling, take a look at the
+  **[Development Guide](https://psutil.readthedocs.io/latest/devguide.html)**.
 - The PR system is for fixing bugs or make enhancements related to the
   **program code**.
 - If you wish to implement a new feature or add support for a new platform it's
   better to **discuss it first**, either on the issue tracker, the forum or via
   private email.
-- In order to get acquainted with the code base and tooling, take a look at the
-  **[Development Guide](https://psutil.readthedocs.io/devguide)**.
-- If you can, remember to update
-  [changelog.rst](https://github.com/giampaolo/psutil/blob/master/docs/changelog.rst)
-  and [CREDITS](https://github.com/giampaolo/psutil/blob/master/CREDITS) file.
+- No need to touch the changelog or credits files. A bot automatically adds
+  those entries for you before merging.

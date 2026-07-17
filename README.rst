@@ -1,83 +1,52 @@
-|  |downloads| |stars| |forks| |contributors| |packages|
-|  |version| |license| |tidelift|
-|  |github-actions-wheels| |github-actions-bsd|
-
-.. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
-    :target: https://clickpy.clickhouse.com/dashboard/psutil
-    :alt: Downloads
-
-.. |stars| image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
-    :target: https://github.com/giampaolo/psutil/stargazers
-    :alt: Github stars
-
-.. |forks| image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
-    :target: https://github.com/giampaolo/psutil/network/members
-    :alt: Github forks
-
-.. |contributors| image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
-    :target: https://github.com/giampaolo/psutil/graphs/contributors
-    :alt: Contributors
-
-.. |stackoverflow| image:: https://img.shields.io/badge/stackoverflow-Ask%20questions-blue.svg
-    :target: https://stackoverflow.com/questions/tagged/psutil
-    :alt: Stackoverflow
-
-.. |github-actions-wheels| image:: https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml.svg?label=Linux%2C%20macOS%2C%20Windows
-    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild
-    :alt: Linux, macOS, Windows
-
-.. |github-actions-bsd| image:: https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=BSD
-    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Absd-tests
-    :alt: FreeBSD, NetBSD, OpenBSD
-
-.. |version| image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=yellowgreen
-    :target: https://pypi.org/project/psutil
-    :alt: Latest version
-
-.. |packages| image:: https://repology.org/badge/tiny-repos/python:psutil.svg
-    :target: https://repology.org/metapackage/python:psutil/versions
-    :alt: Binary packages
-
-.. |license| image:: https://img.shields.io/pypi/l/psutil.svg
-    :target: https://github.com/giampaolo/psutil/blob/master/LICENSE
-    :alt: License
-
-.. |twitter| image:: https://img.shields.io/twitter/follow/grodola?style=flat
-    :target: https://twitter.com/grodola
-    :alt: Twitter Follow
-
-.. |tidelift| image:: https://tidelift.com/badges/github/giampaolo/psutil?style=flat
-    :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
-    :alt: Tidelift
-
------
+.. <PYPI-EXCLUDE>
 
 .. raw:: html
 
     <div align="center">
-        <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/psutil-logo.png" /></a>
-        <br />
-        <br />
-        <a href="https://github.com/giampaolo/psutil"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/images/logo-psutil-readme.svg" alt="psutil" /></a>
+        <p align="center">Process and System Utilities for Python</p>
         <a href="https://psutil.readthedocs.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://psutil.readthedocs.io/adoption"><b>Who uses psutil</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://pypi.org/project/psutil/#files"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="#funding"><b>Funding</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.readthedocs.io/latest/blog.html"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.readthedocs.io/latest/adoption.html"><b>Who uses psutil</b></a>&nbsp;&nbsp;&nbsp;
     </div>
 
-Summary
-=======
+    <br/>
 
-psutil (process and system utilities) is a cross-platform library for
-retrieving information about **running processes** and **system utilization**
-(CPU, memory, disks, network, sensors) in Python. It is useful mainly for
-**system monitoring**, **profiling**, **limiting process resources**, and
-**managing running processes**. It implements many functionalities offered by
-classic UNIX command line tools such as
-*ps, top, free, iotop, netstat, ifconfig, lsof*
-and others (see `shell equivalents`_).
-psutil currently supports the following platforms:
+    <div align="center">
+      <a href="https://clickpy.clickhouse.com/dashboard/psutil">
+        <img src="https://static.pepy.tech/badge/psutil/month" alt="Downloads">
+      </a>
+
+      <a href="https://repology.org/metapackage/python:psutil/versions">
+        <img src="https://repology.org/badge/tiny-repos/python:psutil.svg" alt="Binary packages">
+      </a>
+
+      <a href="https://pypi.org/project/psutil">
+        <img src="https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=yellowgreen" alt="Latest version">
+      </a>
+
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild">
+        <img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml.svg?label=Linux%2C%20macOS%2C%20Win" alt="Linux, macOS, Windows">
+      </a>
+
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Absd-tests">
+        <img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=BSD" alt="FreeBSD, NetBSD, OpenBSD">
+      </a>
+    </div>
+
+.. </PYPI-EXCLUDE>
+
+About
+=====
+
+psutil is a cross-platform library for retrieving information about running
+**processes** and **system utilization** (CPU, memory, disks, network, sensors)
+in Python. It is useful mainly for **system monitoring**, **profiling**,
+**limiting process resources**, and **managing running processes**.
+
+It implements many functionalities offered by UNIX command line tool such as
+*ps, top, free, iotop, netstat, ifconfig, lsof* and others (see
+`shell equivalents`_). psutil supports the following platforms:
 
 - **Linux**
 - **Windows**
@@ -86,6 +55,33 @@ psutil currently supports the following platforms:
 - **Sun Solaris**
 - **AIX**
 
+Adoption
+========
+
+psutil is among the
+`top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__ most-downloaded
+packages on PyPI, with **370+ million** downloads per month and **780,000+**
+`GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__
+using it.
+
+See also `adoptions <https://psutil.readthedocs.io/latest/adoption.html>`__ and
+`alternatives <https://psutil.readthedocs.io/latest/alternatives.html>`__.
+
+Install
+=======
+
+.. code-block::
+
+    pip install psutil
+
+For platform-specific details see
+`installation <https://psutil.readthedocs.io/latest/install.html>`_.
+
+Documentation
+=============
+
+psutil documentation is available at https://psutil.readthedocs.io/latest.
+
 .. <PYPI-EXCLUDE>
 
 Sponsors
@@ -93,468 +89,120 @@ Sponsors
 
 .. raw:: html
 
-    <table border="0" cellpadding="10" cellspacing="0">
+    <table border="0" cellpadding="10" cellspacing="0" class="sponsor-table">
       <tr>
-        <td align="center">
+        <td align="center" style="vertical-align: middle;">
           <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img width="200" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg">
+            <img width="160" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-tidelift.svg" class="sponsor-logo">
           </a>
         </td>
-        <td align="center">
+        <td align="center" style="vertical-align: middle;">
           <a href="https://sansec.io/">
-            <img src="https://sansec.io/assets/images/logo.svg">
+            <img width="145" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-sansec.svg" class="sponsor-logo">
           </a>
         </td>
-        <td align="center">
+        <td align="center" style="vertical-align: middle;">
           <a href="https://www.apivoid.com/">
-            <img width="180" src="https://gmpy.dev/images/apivoid-logo.svg">
+            <img width="130" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-apivoid.svg" class="sponsor-logo">
           </a>
         </td>
       </tr>
     </table>
 
-    <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
+    <div style="text-align: center;"><sup><a href="https://psutil.readthedocs.io/latest/funding.html">add your logo</a></sup></div>
 
 .. </PYPI-EXCLUDE>
-
-Funding
-=======
-
-While psutil is free software and will always remain so, the project would benefit
-immensely from some funding. psutil is among the `top 100`_ most-downloaded
-Python packages, and keeping up with bug reports, user support, and ongoing
-maintenance has become increasingly difficult to sustain as a one-person
-effort. If you're a company that's making significant use of psutil you can
-consider becoming a sponsor via `GitHub
-<https://github.com/sponsors/giampaolo>`_, `Open Collective
-<https://opencollective.com/psutil>`_ or `PayPal
-<https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`_.
-Sponsors can have their logo displayed here and in the psutil `documentation
-<https://psutil.readthedocs.io>`_.
-
-Projects using psutil
-=====================
-
-psutil is one of the `top 100`_ most-downloaded packages on PyPI, with 280+
-million downloads per month, `760,000+ GitHub repositories
-<https://github.com/giampaolo/psutil/network/dependents>`_ using it, and
-14,000+ packages depending on it. Some notable projects using psutil:
-
-- `TensorFlow <https://github.com/tensorflow/tensorflow>`_,
-  `PyTorch <https://github.com/pytorch/pytorch>`_,
-- `Home Assistant <https://github.com/home-assistant/core>`_,
-  `Ansible <https://github.com/ansible/ansible>`_,
-  `Apache Airflow <https://github.com/apache/airflow>`_,
-  `Sentry <https://github.com/getsentry/sentry>`_
-- `Celery <https://github.com/celery/celery>`_,
-  `Dask <https://github.com/dask/dask>`_
-- `Glances <https://github.com/nicolargo/glances>`_,
-  `bpytop <https://github.com/aristocratos/bpytop>`_,
-  `Ajenti <https://github.com/ajenti/ajenti>`_,
-  `GRR <https://github.com/google/grr>`_
-- `psleak`_
-
-`Full list <https://psutil.readthedocs.io/adoption>`_
-
-
-
-Ports
-=====
-
-- Go: `gopsutil <https://github.com/shirou/gopsutil>`_
-- C: `cpslib <https://github.com/hamon-in/cpslib>`_
-- Rust: `rust-psutil <https://github.com/rust-psutil/rust-psutil>`_
-- Nim: `psutil-nim <https://github.com/johnscillieri/psutil-nim>`_
-
-.. <PYPI-EXCLUDE>
-
-Supporters
-==========
-
-People who donated money over the years:
-
-.. raw:: html
-
-    <div>
-      <a href="https://github.com/codingjoe"><img height="35" width="35" title="Johannes Maron" src="https://avatars.githubusercontent.com/u/1772890?v=4" /></a>
-      <a href="https://github.com/eallrich"><img height="35" width="35" title="Evan Allrich" src="https://avatars.githubusercontent.com/u/17393?v=4" /></a>
-      <a href="https://github.com/ofek"><img height="35" width="35" title="Ofek Lev" src="https://avatars.githubusercontent.com/u/9677399?v=4" /></a>
-      <a href="https://github.com/roboflow"><img height="35" width="35" title="roboflow.com" src="https://avatars.githubusercontent.com/u/53104118?s=200&v=4" /></a>
-      <a href="https://github.com/sansecio"><img height="35" width="35" title="sansec.io" src="https://avatars.githubusercontent.com/u/60706188?s=200&v=4" /></a>
-      <a href="https://github.com/Trash-Nothing"><img height="35" width="35" title="trashnothing.com" src="https://avatars.githubusercontent.com/u/230028908?s=200&v=4" /></a>
-
-      <a href="https://github.com/abramov-v"><img height="35" width="35" title="Valeriy Abramov" src="https://avatars.githubusercontent.com/u/76448042?v=4" /></a>
-      <a href="https://github.com/alexdlaird"><img height="35" width="35" title="Alex Laird" src="https://avatars.githubusercontent.com/u/1660326?v=4" /></a>
-      <a href="https://github.com/aristocratos"><img height="35" width="35" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
-      <a href="https://github.com/ArtyomVancyan"><img height="35" width="35" title="Artyom Vancyan" src="https://avatars.githubusercontent.com/u/44609997?v=4" /></a>
-      <a href="https://github.com/c0m4r"><img height="35" width="35" title="c0m4r" src="https://avatars.githubusercontent.com/u/6292788?v=4" /></a>
-      <a href="https://github.com/coskundeniz"><img height="35" width="35" title="Coşkun Deniz" src="https://avatars.githubusercontent.com/u/4516210?v=4" /></a>
-      <a href="https://github.com/cybersecgeek"><img height="35" width="35" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
-      <a href="https://github.com/dbwiddis"><img height="35" width="35" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
-      <a href="https://github.com/getsentry"><img height="35" width="35" title="getsentry" src="https://avatars.githubusercontent.com/u/1396951?s=200&v=4" /></a>
-      <a href="https://github.com/great-work-told-is"><img height="35" width="35" title="great-work-told-is" src="https://avatars.githubusercontent.com/u/113922084?v=4" /></a>
-      <a href="https://github.com/guilt"><img height="35" width="35" title="Karthik Kumar Viswanathan" src="https://avatars.githubusercontent.com/u/195178?v=4" /></a>
-      <a href="https://github.com/inarikami"><img height="35" width="35" title="inarikami" src="https://avatars.githubusercontent.com/u/22864465?v=4" /></a>
-      <a href="https://github.com/indeedeng"><img height="35" width="35" title="indeedeng" src="https://avatars.githubusercontent.com/u/2905043?s=200&v=4" /></a>
-      <a href="https://github.com/JeremyGrosser"><img height="35" width="35" title="JeremyGrosser" src="https://avatars.githubusercontent.com/u/2151?v=4" /></a>
-      <a href="https://github.com/maxesisn"><img height="35" width="35" title="Maximilian Wu" src="https://avatars.githubusercontent.com/u/20412597?v=4" /></a>
-      <a href="https://github.com/Mehver"><img height="35" width="35" title="Mehver" src="https://avatars.githubusercontent.com/u/75297777?v=4" /></a>
-      <a href="https://github.com/mirbyte"><img height="35" width="35" title="mirko" src="https://avatars.githubusercontent.com/u/83219244?v=4" /></a>
-      <a href="https://github.com/PySimpleGUI"><img height="35" width="35" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
-      <a href="https://github.com/robusta-dev"><img height="35" width="35" title="Robusta" src="https://avatars.githubusercontent.com/u/82757710?s=200&v=4" /></a>
-      <a href="https://github.com/sasozivanovic"><img height="35" width="35" title="Sašo Živanović" src="https://avatars.githubusercontent.com/u/3317028?v=4" /></a>
-      <a href="https://github.com/scoutapm-sponsorships"><img height="35" width="35" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
-      <a href="https://github.com/u93"><img height="35" width="35" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
-      <a href="https://opencollective.com/alexey-vazhnov"><img height="35" width="35" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
-      <a href="https://opencollective.com/chenyoo-hao"><img height="35" width="35" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
-    </div>
-
-    <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
-
-.. </PYPI-EXCLUDE>
-
-----
 
 Example usages
 ==============
 
-Below are interactive examples demonstrating all parts of the psutil API,
-including CPU, memory, disks, network, sensors, and process management.
+For the full API with more examples, see the
+`API overview <https://psutil.readthedocs.io/latest/api-overview.html>`_ and
+`API reference <https://psutil.readthedocs.io/latest/api.html>`_.
 
-CPU
----
+**CPU**
 
 .. code-block:: python
 
     >>> import psutil
-    >>>
-    >>> psutil.cpu_times()
-    scputimes(user=3961.46, nice=169.729, system=2150.659, idle=16900.540, iowait=629.59, irq=0.0, softirq=19.42, steal=0.0, guest=0, guest_nice=0.0)
-    >>>
-    >>> for x in range(3):
-    ...     psutil.cpu_percent(interval=1)
-    ...
-    4.0
-    5.9
-    3.8
-    >>>
-    >>> for x in range(3):
-    ...     psutil.cpu_percent(interval=1, percpu=True)
-    ...
+    >>> psutil.cpu_percent(interval=1, percpu=True)
     [4.0, 6.9, 3.7, 9.2]
-    [7.0, 8.5, 2.4, 2.1]
-    [1.2, 9.0, 9.9, 7.2]
-    >>>
-    >>> for x in range(3):
-    ...     psutil.cpu_times_percent(interval=1, percpu=False)
-    ...
-    scputimes(user=1.5, nice=0.0, system=0.5, idle=96.5, iowait=1.5, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
-    scputimes(user=1.0, nice=0.0, system=0.0, idle=99.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
-    scputimes(user=2.0, nice=0.0, system=0.0, idle=98.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
-    >>>
-    >>> psutil.cpu_count()
-    4
     >>> psutil.cpu_count(logical=False)
     2
-    >>>
-    >>> psutil.cpu_stats()
-    scpustats(ctx_switches=20455687, interrupts=6598984, soft_interrupts=2134212, syscalls=0)
-    >>>
     >>> psutil.cpu_freq()
-    scpufreq(current=931.42925, min=800.0, max=3500.0)
-    >>>
-    >>> psutil.getloadavg()  # also on Windows (emulated)
-    (3.14, 3.89, 4.67)
+    scpufreq(current=931.42, min=800.0, max=3500.0)
 
-Memory
-------
+**Memory**
 
 .. code-block:: python
 
     >>> psutil.virtual_memory()
-    svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
+    svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, ...)
     >>> psutil.swap_memory()
     sswap(total=2097147904, used=296128512, free=1801019392, percent=14.1, sin=304193536, sout=677842944)
-    >>>
 
-Disks
------
+**Disks**
 
 .. code-block:: python
 
     >>> psutil.disk_partitions()
     [sdiskpart(device='/dev/sda1', mountpoint='/', fstype='ext4', opts='rw,nosuid'),
      sdiskpart(device='/dev/sda2', mountpoint='/home', fstype='ext', opts='rw')]
-    >>>
     >>> psutil.disk_usage('/')
     sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
-    >>>
-    >>> psutil.disk_io_counters(perdisk=False)
-    sdiskio(read_count=719566, write_count=1082197, read_bytes=18626220032, write_bytes=24081764352, read_time=5023392, write_time=63199568, read_merged_count=619166, write_merged_count=812396, busy_time=4523412)
-    >>>
 
-Network
--------
+**Network**
 
 .. code-block:: python
 
     >>> psutil.net_io_counters(pernic=True)
-    {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, packets_sent=3251564, packets_recv=4787798, errin=0, errout=0, dropin=0, dropout=0),
-     'lo': netio(bytes_sent=2838627, bytes_recv=2838627, packets_sent=30567, packets_recv=30567, errin=0, errout=0, dropin=0, dropout=0)}
-    >>>
+    {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, ...),
+     'lo': netio(bytes_sent=2838627, bytes_recv=2838627, ...)}
     >>> psutil.net_connections(kind='tcp')
-    [sconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED', pid=1254),
-     sconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING', pid=2987),
+    [sconn(fd=115, family=2, type=1, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED', pid=1254),
      ...]
-    >>>
-    >>> psutil.net_if_addrs()
-    {'lo': [snicaddr(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1', ptp=None),
-            snicaddr(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None, ptp=None),
-            snicaddr(family=<AddressFamily.AF_LINK: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00', ptp=None)],
-     'wlan0': [snicaddr(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255', ptp=None),
-               snicaddr(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None, ptp=None),
-               snicaddr(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
-    >>>
-    >>> psutil.net_if_stats()
-    {'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536, flags='up,loopback,running'),
-     'wlan0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500, flags='up,broadcast,running,multicast')}
-    >>>
 
-Sensors
--------
+**Sensors**
 
 .. code-block:: python
 
-    >>> import psutil
     >>> psutil.sensors_temperatures()
-    {'acpitz': [shwtemp(label='', current=47.0, high=103.0, critical=103.0)],
-     'asus': [shwtemp(label='', current=47.0, high=None, critical=None)],
-     'coretemp': [shwtemp(label='Physical id 0', current=52.0, high=100.0, critical=100.0),
+    {'coretemp': [shwtemp(label='Physical id 0', current=52.0, high=100.0, critical=100.0),
                   shwtemp(label='Core 0', current=45.0, high=100.0, critical=100.0)]}
-    >>>
-    >>> psutil.sensors_fans()
-    {'asus': [sfan(label='cpu_fan', current=3200)]}
-    >>>
     >>> psutil.sensors_battery()
     sbattery(percent=93, secsleft=16628, power_plugged=False)
-    >>>
 
-Other system info
------------------
+**Processes**
 
 .. code-block:: python
 
-    >>> import psutil
-    >>> psutil.users()
-    [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0, pid=1352),
-     suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
-    >>>
-    >>> psutil.boot_time()
-    1365519115.0
-    >>>
-
-Process management
-------------------
-
-.. code-block:: python
-
-    >>> import psutil
-    >>> psutil.pids()
-    [1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224, 268, 1215,
-     1216, 1220, 1221, 1243, 1244, 1301, 1601, 2237, 2355, 2637, 2774, 3932,
-     4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245, 4263, 4282, 4306, 4311,
-     4312, 4313, 4314, 4337, 4339, 4357, 4358, 4363, 4383, 4395, 4408, 4433,
-     4443, 4445, 4446, 5167, 5234, 5235, 5252, 5318, 5424, 5644, 6987, 7054,
-     7055, 7071]
-    >>>
     >>> p = psutil.Process(7055)
-    >>> p
-    psutil.Process(pid=7055, name='python3', status=<ProcessStatus.STATUS_RUNNING: 'running'>, started='09:04:44')
-    >>> p.pid
-    7055
     >>> p.name()
     'python3'
     >>> p.exe()
     '/usr/bin/python3'
-    >>> p.cwd()
-    '/home/giampaolo'
-    >>> p.cmdline()
-    ['/usr/bin/python3', 'main.py']
-    >>>
-    >>> p.ppid()
-    7054
-    >>> p.parent()
-    psutil.Process(pid=4699, name='bash', status=<ProcessStatus.STATUS_SLEEPING: 'sleeping'>, started='09:06:44')
-    >>> p.parents()
-    [psutil.Process(pid=4699, name='bash', started='09:06:44'),
-     psutil.Process(pid=4689, name='gnome-terminal-server', status=<ProcessStatus.STATUS_SLEEPING: 'sleeping'>, started='0:06:44'),
-     psutil.Process(pid=1, name='systemd', status=<ProcessStatus.STATUS_SLEEPING: 'sleeping'>, started='05:56:55')]
-    >>> p.children(recursive=True)
-    [psutil.Process(pid=29835, name='python3', status=<ProcessStatus.STATUS_SLEEPING: 'sleeping'>, started='11:45:38'),
-     psutil.Process(pid=29836, name='python3', status=<ProcessStatus.STATUS_WAKING: 'waking'>, started='11:43:39')]
-    >>>
-    >>> p.status()
-    <ProcessStatus.STATUS_RUNNING: 'running'>
-    >>> p.create_time()
-    1267551141.5019531
-    >>> p.terminal()
-    '/dev/pts/0'
-    >>>
-    >>> p.username()
-    'giampaolo'
-    >>> p.uids()
-    puids(real=1000, effective=1000, saved=1000)
-    >>> p.gids()
-    pgids(real=1000, effective=1000, saved=1000)
-    >>>
-    >>> p.cpu_times()
-    pcputimes(user=1.02, system=0.31, children_user=0.32, children_system=0.1, iowait=0.0)
     >>> p.cpu_percent(interval=1.0)
     12.1
-    >>> p.cpu_affinity()
-    [0, 1, 2, 3]
-    >>> p.cpu_affinity([0, 1])  # set
-    >>> p.cpu_num()
-    1
-    >>>
     >>> p.memory_info()
     pmem(rss=3164160, vms=4410163, shared=897433, text=302694, data=2422374)
-    >>> p.memory_info_ex()
-    pmem_ex(rss=3164160, vms=4410163, shared=897433, text=302694, data=2422374, peak_rss=4172190, peak_vms=6399001, rss_anon=2266726, rss_file=897433, rss_shmem=0, swap=0, hugetlb=0)
-    >>> p.memory_footprint()  # "real" USS memory usage
-    pfootprint(uss=2355200, pss=2483712, swap=0)
-    >>> p.memory_percent()
-    0.7823
-    >>> p.memory_maps()
-    [pmmap_grouped(path='/lib/x8664-linux-gnu/libutil-2.15.so', rss=32768, size=2125824, pss=32768, shared_clean=0, shared_dirty=0, private_clean=20480, private_dirty=12288, referenced=32768, anonymous=12288, swap=0),
-     pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so', rss=3821568, size=3842048, pss=3821568, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=3821568, referenced=3575808, anonymous=3821568, swap=0),
-     pmmap_grouped(path='[heap]',  rss=32768, size=139264, pss=32768, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=32768, referenced=32768, anonymous=32768, swap=0),
-     pmmap_grouped(path='[stack]', rss=2465792, size=2494464, pss=2465792, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=2465792, referenced=2277376, anonymous=2465792, swap=0),
-     ...]
-    >>>
-    >>> p.page_faults()
-    ppagefaults(minor=5905, major=3)
-    >>>
-    >>> p.io_counters()
-    pio(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632, read_chars=456232, write_chars=517543)
-    >>>
-    >>> p.open_files()
-    [popenfile(path='/home/giampaolo/monit.py', fd=3, position=0, mode='r', flags=32768),
-     popenfile(path='/var/log/monit.log', fd=4, position=235542, mode='a', flags=33793)]
-    >>>
     >>> p.net_connections(kind='tcp')
-    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>),
-     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>)]
+    [pconn(fd=115, family=2, type=1, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED')]
+    >>> p.open_files()
+    [popenfile(path='/home/giampaolo/monit.py', fd=3, position=0, mode='r', flags=32768)]
     >>>
-    >>> p.threads()
-    [pthread(id=5234, user_time=22.5, system_time=9.2891),
-     pthread(id=5237, user_time=0.0707, system_time=1.1)]
-    >>>
-    >>> p.num_threads()
-    4
-    >>> p.num_fds()
-    8
-    >>> p.num_ctx_switches()
-    pctxsw(voluntary=78, involuntary=19)
-    >>>
-    >>> p.nice()
-    0
-    >>> p.nice(10)  # set
-    >>>
-    >>> p.ionice(psutil.IOPRIO_CLASS_IDLE)  # IO priority (Win and Linux only)
-    >>> p.ionice()
-    pionice(ioclass=<ProcessIOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
-    >>>
-    >>> p.rlimit(psutil.RLIMIT_NOFILE, (5, 5))  # set resource limits (Linux only)
-    >>> p.rlimit(psutil.RLIMIT_NOFILE)
-    (5, 5)
-    >>>
-    >>> p.environ()
-    {'LC_PAPER': 'it_IT.UTF-8', 'SHELL': '/bin/bash', 'GREP_OPTIONS': '--color=auto',
-    'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg',
-     ...}
-    >>>
-    >>> p.as_dict()
-    {'status': <ProcessStatus.STATUS_RUNNING: 'running'>, 'num_ctx_switches': pctxsw(voluntary=63, involuntary=1), 'pid': 5457, ...}
-    >>> p.is_running()
-    True
-    >>> p.suspend()
-    >>> p.resume()
-    >>>
-    >>> p.terminate()
-    >>> p.kill()
-    >>> p.wait(timeout=3)
-    <Exitcode.EX_OK: 0>
-    >>>
-    >>> psutil.test()
-    USER         PID %CPU %MEM     VSZ     RSS TTY        START    TIME  COMMAND
-    root           1  0.0  0.0   24584    2240            Jun17   00:00  init
-    root           2  0.0  0.0       0       0            Jun17   00:00  kthreadd
+    >>> for p in psutil.process_iter(['pid', 'name']):
+    ...     print(p.pid, p.name())
     ...
-    giampaolo  31475  0.0  0.0   20760    3024 /dev/pts/0 Jun19   00:00  python2.4
-    giampaolo  31721  0.0  2.2  773060  181896            00:04   10:30  chrome
-    root       31763  0.0  0.0       0       0            00:05   00:00  kworker/0:1
-    >>>
-
-Further process APIs
---------------------
-
-.. code-block:: python
-
-    >>> import psutil
-    >>> for proc in psutil.process_iter(['pid', 'name']):
-    ...     print(proc.info)
+    1 systemd
+    2 kthreadd
+    3 ksoftirqd/0
     ...
-    {'pid': 1, 'name': 'systemd'}
-    {'pid': 2, 'name': 'kthreadd'}
-    {'pid': 3, 'name': 'ksoftirqd/0'}
-    ...
-    >>>
-    >>> psutil.pid_exists(3)
-    True
-    >>>
-    >>> def on_terminate(proc):
-    ...     print("process {} terminated".format(proc))
-    ...
-    >>> # waits for multiple processes to terminate
-    >>> gone, alive = psutil.wait_procs(procs_list, timeout=3, callback=on_terminate)
-    >>>
 
-Heap info
----------
+.. _`shell equivalents`: https://psutil.readthedocs.io/latest/shell-equivalents.html
 
-.. code-block:: python
+.. <PYPI-EXCLUDE>
 
-    >>> import psutil
-    >>> psutil.heap_info()
-    pheap(heap_used=5177792, mmap_used=819200)
-    >>> psutil.heap_trim()
+License
+=======
 
-See also `psleak`_.
-
-Windows services
-----------------
-
-.. code-block:: python
-
-    >>> list(psutil.win_service_iter())
-    [<WindowsService(name='AeLookupSvc', display_name='Application Experience') at 38850096>,
-     <WindowsService(name='ALG', display_name='Application Layer Gateway Service') at 38850128>,
-     <WindowsService(name='APNMCP', display_name='Ask Update Service') at 38850160>,
-     <WindowsService(name='AppIDSvc', display_name='Application Identity') at 38850192>,
-     ...]
-    >>> s = psutil.win_service_get('alg')
-    >>> s.as_dict()
-    {'binpath': 'C:\\Windows\\System32\\alg.exe',
-     'description': 'Provides support for 3rd party protocol plug-ins for Internet Connection Sharing',
-     'display_name': 'Application Layer Gateway Service',
-     'name': 'alg',
-     'pid': None,
-     'start_type': 'manual',
-     'status': 'stopped',
-     'username': 'NT AUTHORITY\\LocalService'}
-
-
-.. _`psleak`: https://github.com/giampaolo/psleak
-.. _`shell equivalents`: https://psutil.readthedocs.io/en/latest/shell_equivalents.html
-.. _`top 100`: https://clickpy.clickhouse.com/dashboard/psutil
+BSD-3

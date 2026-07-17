@@ -18,8 +18,8 @@
 
 // Return low-level heap statistics from the C allocator. Return
 // jemalloc heap stats via `mallctl()`. Mimics Linux `mallinfo2()`:
-//   - heap_used  ~ stats.allocated  (like `uordblks`)
-//   - mmap_used  ~ stats.mapped     (like `hblkhd`)
+// - heap_used  ~ stats.allocated  (like `uordblks`)
+// - mmap_used  ~ stats.mapped     (like `hblkhd`)
 PyObject *
 psutil_heap_info(PyObject *self, PyObject *args) {
     uint64_t epoch = 0;

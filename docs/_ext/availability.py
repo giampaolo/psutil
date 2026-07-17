@@ -47,10 +47,10 @@ class Availability(SphinxDirective):
 
     def run(self):
         title = sphinx_gettext("Availability")
-        sep = nodes.Text(": ")
+        sep = nodes.Text(" ")
         parsed, msgs = self.state.inline_text(self.arguments[0], self.lineno)
         pnode = nodes.paragraph(
-            title, "", nodes.emphasis(title, title), sep, *parsed, *msgs
+            title, "", nodes.emphasis(title, title + ":"), sep, *parsed, *msgs
         )
         self.set_source_info(pnode)
         cnode = nodes.container("", pnode, classes=["availability"])
@@ -66,8 +66,7 @@ class Availability(SphinxDirective):
 
         Arguments is a comma-separated string of platforms. A platform may
         be prefixed with "not " to indicate that a feature is not available.
-        Example::
-
+        Example:
            .. availability:: Windows, Linux >= 4.2, not glibc
         """
         platforms = {}
@@ -98,8 +97,4 @@ class Availability(SphinxDirective):
 
 def setup(app):
     app.add_directive("availability", Availability)
-    return {
-        "version": "1.0",
-        "parallel_read_safe": True,
-        "parallel_write_safe": True,
-    }
+    return {"parallel_read_safe": True, "parallel_write_safe": True}

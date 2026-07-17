@@ -122,9 +122,7 @@ get_state_string(DWORD state) {
 // APIs
 // ==================================================================
 
-/*
- * Enumerate all services.
- */
+// Enumerate all services.
 PyObject *
 psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     ENUM_SERVICE_STATUS_PROCESSW *lpService = NULL;
@@ -209,13 +207,8 @@ error:
 }
 
 
-/*
- * Get service config information. Returns:
- * - display_name
- * - binpath
- * - username
- * - startup_type
- */
+// Get service config information. Returns:
+// (display_name, binpath, username, startup_type)
 PyObject *
 psutil_winservice_query_config(PyObject *self, PyObject *args) {
     wchar_t *service_name = NULL;
@@ -311,11 +304,7 @@ error:
 }
 
 
-/*
- * Get service status information. Returns:
- * - status
- * - pid
- */
+// Get service status information. Returns (status, pid)
 PyObject *
 psutil_winservice_query_status(PyObject *self, PyObject *args) {
     wchar_t *service_name = NULL;
@@ -472,10 +461,8 @@ error:
 }
 
 
-/*
- * Start service.
- * XXX - note: this is exposed but not used.
- */
+// Start service.
+// XXX - note: this is exposed but not used.
 PyObject *
 psutil_winservice_start(PyObject *self, PyObject *args) {
     BOOL ok;
@@ -507,10 +494,8 @@ error:
 }
 
 
-/*
- * Stop service.
- * XXX - note: this is exposed but not used.
- */
+// Stop service.
+// XXX - note: this is exposed but not used.
 PyObject *
 psutil_winservice_stop(PyObject *self, PyObject *args) {
     wchar_t *service_name = NULL;

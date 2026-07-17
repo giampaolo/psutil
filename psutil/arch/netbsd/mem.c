@@ -5,14 +5,12 @@
  * found in the LICENSE file.
  */
 
-/*
-Memory related functions. Original code was refactored and moved from
-psutil/arch/netbsd/specific.c in 2023 (and was moved in there previously
-already) from cset 84219ad. For reference, here's the git history with
-original(ish) implementations:
-- virtual memory: 0749a69c01b374ca3e2180aaafc3c95e3b2d91b9 (Oct 2016)
-- swap memory: 312442ad2a5b5d0c608476c5ab3e267735c3bc59 (Jan 2016)
-*/
+// Memory related functions. Original code was refactored and moved from
+// psutil/arch/netbsd/specific.c in 2023 (and was moved in there previously
+// already) from cset 84219ad. For reference, here's the git history with
+// original(ish) implementations:
+// - virtual memory: 0749a69c01b374ca3e2180aaafc3c95e3b2d91b9 (Oct 2016)
+// - swap memory: 312442ad2a5b5d0c608476c5ab3e267735c3bc59 (Jan 2016)
 
 #include <Python.h>
 #include <stdio.h>
@@ -24,8 +22,6 @@ original(ish) implementations:
 #include "../../arch/all/init.h"
 
 
-// Virtual memory stats, taken from:
-// https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/netbsd/memory.c
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     struct uvmexp_sysctl uv;
@@ -36,8 +32,6 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     unsigned long long buffers, shared, used, avail;
     double percent;
     long pagesize = psutil_getpagesize();
-    FILE *f;
-    char line[256];
     PyObject *dict = PyDict_New();
 
     if (dict == NULL)
@@ -48,34 +42,25 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     if (psutil_sysctl(vmmeter_mib, 2, &vmdata, sizeof(vmdata)) != 0)
         goto error;
 
-    // get buffers from /proc/meminfo
-    buffers = 0;
-    f = fopen("/proc/meminfo", "r");
-    if (f != NULL) {
-        while (fgets(line, sizeof(line), f) != NULL) {
-            if (strncmp(line, "Buffers:", 8) == 0) {
-                sscanf(line + 8, "%llu", &buffers);
-                break;
-            }
-        }
-        fclose(f);
-        buffers *= 1024;
-    }
-
     total = (unsigned long long)uv.npages << uv.pageshift;
     free = (unsigned long long)uv.free << uv.pageshift;
     active = (unsigned long long)uv.active << uv.pageshift;
     inactive = (unsigned long long)uv.inactive << uv.pageshift;
     wired = (unsigned long long)uv.wired << uv.pageshift;
-    // Also in /proc/meminfo as MemShared
-    shared = (unsigned long long)(vmdata.t_vmshr + vmdata.t_rmshr) * pagesize;
 
-    // Note: zabbix does not include anonpages, but that doesn't match
-    // the "Cached" value in /proc/meminfo.
-    // https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/
-    //   zbxsysinfo/netbsd/memory.c#L182
-    cached = (unsigned long long)(uv.filepages + uv.execpages + uv.anonpages)
-             << uv.pageshift;
+    // Updated by kernel every 5 secs. We have:
+    //   u_int32_t t_vmshr;  /* shared virtual memory */
+    //   u_int32_t t_avmshr; /* active shared virtual memory */
+    //   u_int32_t t_rmshr;  /* shared real memory */
+    // We return `t_rmshr` (real shared). Reason: report physical
+    // resource pressure rather than just kernel bookkeeping.
+    shared = (unsigned long long)vmdata.t_rmshr * pagesize;
+
+    // Note: on OpenBSD 'cached' and 'buffers' are aliases; not on NetBSD.
+    buffers = (unsigned long long)uv.filepages << uv.pageshift;
+
+    // same as 'vmstat -s' (2 distinct values)
+    cached = (unsigned long long)(uv.filepages + uv.execpages) * pagesize;
 
     // Before avail was calculated as (inactive + cached + free), same
     // as zabbix, but it turned out it could exceed total (see #2233),

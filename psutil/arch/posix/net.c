@@ -46,10 +46,8 @@
 #include "../../arch/all/init.h"
 
 
-/*
- * Translate a sockaddr struct into a Python string.
- * Return None if address family is not AF_INET* or AF_PACKET.
- */
+// Translate a sockaddr struct into a Python string.
+// Return None if address family is not AF_INET* or AF_PACKET.
 PyObject *
 psutil_convert_ipaddr(struct sockaddr *addr, int family) {
     char buf[NI_MAXHOST];
@@ -119,10 +117,8 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
 }
 
 
-/*
- * Return NICs information a-la ifconfig as a list of tuples.
- * TODO: on Solaris we won't get any MAC address.
- */
+// Return NICs information a-la ifconfig as a list of tuples.
+// TODO: on Solaris we won't get any MAC address.
 PyObject *
 psutil_net_if_addrs(PyObject *self, PyObject *args) {
     struct ifaddrs *ifaddr, *ifa;
@@ -231,10 +227,8 @@ error:
 }
 
 
-/*
- * Return NIC MTU. References:
- * http://www.i-scream.org/libstatgrab/
- */
+// Return NIC MTU. References:
+// http://www.i-scream.org/libstatgrab/
 PyObject *
 psutil_net_if_mtu(PyObject *self, PyObject *args) {
     char *nic_name;
@@ -268,9 +262,7 @@ append_flag(PyObject *py_retlist, const char *flag_name) {
     return pylist_append_obj(py_retlist, PyUnicode_FromString(flag_name));
 }
 
-/*
- * Get all of the NIC flags and return them.
- */
+// Get all of the NIC flags and return them.
 PyObject *
 psutil_net_if_flags(PyObject *self, PyObject *args) {
     char *nic_name;
@@ -456,11 +448,9 @@ error:
 }
 
 
-/*
- * Inspect NIC flags, returns a bool indicating whether the NIC is
- * running. References:
- * http://www.i-scream.org/libstatgrab/
- */
+// Inspect NIC flags, returns a bool indicating whether the NIC is
+// running. References:
+// http://www.i-scream.org/libstatgrab/
 PyObject *
 psutil_net_if_is_running(PyObject *self, PyObject *args) {
     char *nic_name;
@@ -635,11 +625,9 @@ psutil_get_nic_speed(int ifm_active) {
 }
 
 
-/*
- * Return stats about a particular network interface.
- * References:
- * http://www.i-scream.org/libstatgrab/
- */
+// Return stats about a particular network interface.
+// References:
+// http://www.i-scream.org/libstatgrab/
 PyObject *
 psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
     char *nic_name;

@@ -143,7 +143,7 @@ def swap_memory():
     total_phys = info["PhysicalTotal"] * pagesize
     # CommitLimit == Maximum pages that can be committed into RAM +
     # page file (swap). In the context of swap, it's the total "system
-    # memory" (physical + virtual), thus substract the physical part
+    # memory" (physical + virtual), thus subtract the physical part
     # from it to get the "total swap".
     total_system = info["CommitLimit"] * pagesize  # physical + swap
     total = total_system - total_phys
@@ -360,23 +360,11 @@ def sensors_battery():
 # =====================================================================
 
 
-_last_btime = 0
-
-
 def boot_time():
     """The system boot time expressed in seconds since the epoch. This
-    also includes the time spent during hybernate / suspend.
+    also includes the time spent during hibernate / suspend.
     """
-    # This dirty hack is to adjust the precision of the returned
-    # value which may have a 1 second fluctuation, see:
-    # https://github.com/giampaolo/psutil/issues/1007
-    global _last_btime
-    ret = time.time() - cext.uptime()
-    if abs(ret - _last_btime) <= 1:
-        return _last_btime
-    else:
-        _last_btime = ret
-        return ret
+    return cext.boot_time()
 
 
 def users():

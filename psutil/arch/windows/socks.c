@@ -17,6 +17,7 @@
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
 #define STATUS_UNSUCCESSFUL 0xC0000001
 
+
 // Note about GetExtended[Tcp|Udp]Table syscalls: due to other processes
 // being active on the machine, it's possible that the size of the table
 // increases between the moment we query the size and the moment we query
@@ -90,10 +91,10 @@ __GetExtendedUdpTable(ULONG family) {
 
 
 #define psutil_conn_decref_objs() \
-    Py_DECREF(_AF_INET);          \
-    Py_DECREF(_AF_INET6);         \
-    Py_DECREF(_SOCK_STREAM);      \
-    Py_DECREF(_SOCK_DGRAM);
+    Py_XDECREF(_AF_INET);         \
+    Py_XDECREF(_AF_INET6);        \
+    Py_XDECREF(_SOCK_STREAM);     \
+    Py_XDECREF(_SOCK_DGRAM);
 
 
 /*
@@ -451,7 +452,7 @@ error:
     psutil_conn_decref_objs();
     Py_XDECREF(py_addr_tuple_local);
     Py_XDECREF(py_addr_tuple_remote);
-    Py_DECREF(py_retlist);
+    Py_XDECREF(py_retlist);
     if (table != NULL)
         free(table);
     return NULL;
