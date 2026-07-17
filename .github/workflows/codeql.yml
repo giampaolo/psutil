@@ -1,5 +1,8 @@
 # Run https://codeql.github.com/, a static C code analyzer.
 on:
+  # Manual trigger (Actions tab or `gh workflow run`); ignores the path
+  # filters below, so it runs even when no C file changed.
+  workflow_dispatch:
   push:
     branches: [master]
     paths: &c_paths

@@ -5,6 +5,7 @@
 # https://github.com/vmactions/netbsd-vm
 
 on:
+  workflow_dispatch:
   push:
     # only run this job if the following files are modified
     paths: &bsd_paths

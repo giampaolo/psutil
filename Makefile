@@ -397,5 +397,11 @@ bench-oneshot-2:  ## Same as above but using perf module (supposed to be more pr
 find-broken-links:  ## Look for broken links in source files.
 	git ls-files | xargs $(PYTHON) -Wa scripts/internal/find_broken_links.py
 
+_CI_JOBS := $(patsubst .github/workflows/%.yml,%,$(shell grep -l workflow_dispatch .github/workflows/*.yml))
+
+ci-run:  ## Manually run a CI workflow, e.g. `make ci-run JOB=bsd`
+	@echo "$(_CI_JOBS)" | tr ' ' '\n' | grep -qx "$(JOB)" || { echo "Usage: make ci-run JOB=<$$(echo $(_CI_JOBS) | tr ' ' '|')>"; exit 1; }
+	gh workflow run $(JOB).yml --ref $$(git rev-parse --abbrev-ref HEAD)
+
 help: ## Display callable targets.
 	@awk -F':.*?## ' '/^[a-zA-Z0-9_.-]+:.*?## / {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort

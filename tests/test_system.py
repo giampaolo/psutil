@@ -606,7 +606,8 @@ class TestCpuAPIs(PsutilTestCase):
                     return None
 
     @pytest.mark.skipif(
-        (CI_TESTING and OPENBSD) or MACOS or SUNOS, reason="unreliable on OPENBSD + CI"
+        (CI_TESTING and OPENBSD) or MACOS or SUNOS,
+        reason="unreliable on OPENBSD + CI",
     )
     @retry_on_failure(30)
     def test_cpu_times_comparison(self):
