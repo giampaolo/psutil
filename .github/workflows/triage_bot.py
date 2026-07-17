@@ -20,9 +20,7 @@ from github import Github
 
 ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 SCRIPTS_DIR = ROOT_DIR / 'scripts'
-
-
-# --- constants
+MAINTAINERS = {"giampaolo"}
 
 # fmt: off
 LABELS_MAP = {
@@ -116,6 +114,40 @@ ILLOGICAL_PAIRS = [
     ('bsd', 'netbsd'),
 ]
 
+PATH_LABELS = {
+    "linux": (
+        "psutil/_pslinux.py",
+        "psutil/_psutil_linux.c",
+        "psutil/arch/linux/",
+    ),
+    "windows": (
+        "psutil/_pswindows.py",
+        "psutil/_psutil_windows.c",
+        "psutil/arch/windows/",
+    ),
+    "macos": (
+        "psutil/_psosx.py",
+        "psutil/_psutil_osx.c",
+        "psutil/arch/osx/",
+    ),
+    "freebsd": ("psutil/arch/freebsd/",),
+    "openbsd": ("psutil/arch/openbsd/",),
+    "netbsd": ("psutil/arch/netbsd/",),
+    "sunos": (
+        "psutil/_pssunos.py",
+        "psutil/_psutil_sunos.c",
+        "psutil/arch/sunos/",
+    ),
+    "aix": (
+        "psutil/_psaix.py",
+        "psutil/_psutil_aix.c",
+        "psutil/arch/aix/",
+    ),
+    "doc": ("docs/",),
+    "tests": ("tests/",),
+    "scripts": ("scripts/",),
+}
+
 # --- replies
 
 REPLY_MISSING_PYTHON_HEADERS = """\
@@ -129,8 +161,14 @@ If this was a mistake or you think there's a bug with psutil installation \
 process, please add a comment to reopen this issue.
 """
 
-# REPLY_UPDATE_CHANGELOG = """\
-# """
+REPLY_MAINTAINER_OWNED_FILES = """\
+⚠️ Please **remove** your changes to `docs/changelog.rst` and / or \
+`docs/credits.rst`. ⚠️
+These two files are maintained by the project, and a \
+maintainer edits them before the PR is merged. \
+Editing them in a PR tends to cause merge conflicts. \
+This is an auto-generated response.
+"""
 
 
 # --- github API utils
@@ -317,11 +355,26 @@ def on_new_issue(issue):
 
 
 def on_new_pr(issue):
-    pass
-    # pr = get_repo().get_pull(issue.number)
-    # files = [x.filename for x in list(pr.get_files())]
-    # if "changelog.rst" not in files:
-    #     issue.create_comment(REPLY_UPDATE_CHANGELOG)
+    if issue.user.login in MAINTAINERS:
+        return
+    pr = get_repo().get_pull(issue.number)
+    files = [x.filename for x in pr.get_files()]
+
+    # Label by changed file paths (title/body keywords often miss). For
+    # OS labels only fill in if text guessing (which runs first) found
+    # none, so an explicit [OS] tag wins over a PR touching many OSes.
+    has_os = any(x.name in OS_LABELS for x in issue.get_labels())
+    for label, prefixes in PATH_LABELS.items():
+        if label in OS_LABELS and has_os:
+            continue
+        if any(f.startswith(prefixes) for f in files):
+            add_label(issue, label)
+
+    # changelog.rst / credits.rst are maintainer-owned; ask to drop them.
+    owned = ("docs/changelog.rst", "docs/credits.rst")
+    if any(f in files for f in owned):
+        log("PR edits maintainer-owned changelog/credits files")
+        issue.create_comment(REPLY_MAINTAINER_OWNED_FILES)
 
 
 def main():
