@@ -277,7 +277,7 @@ ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	mv wheelhouse/* dist/
 	$(MAKE) check-dist
 	$(MAKE) install
-	$(MAKE) print-dist
+	$(PYTHON) scripts/internal/print_dist.py --check
 
 # ===================================================================
 # Distribution
