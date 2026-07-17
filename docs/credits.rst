@@ -117,6 +117,7 @@ Code contributors by year
 * :user:`Ehtesham Siddiqui <EhteshamSid>` - :gh:`2793`
 * :user:`Felix Yan <felixonmars>` - :gh:`2732`
 * :user:`Gabriel Changamire <gabrielchangamire-arch>` - :gh:`2809`
+* :user:`Hanson Wang <hansonw>` - :gh:`2810`
 * :user:`Karl Hill <karlhillx>` - :gh:`2857`
 * :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`
 * :user:`Santhosh Raju <fraggerfox>` - :gh:`2805`

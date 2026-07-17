@@ -271,10 +271,10 @@ Others:
 - :gh:`2795`, [FreeBSD]: fix :func:`cpu_freq` failing with
   ``RuntimeError: sysctlbyname('dev.cpu.0.freq_levels') size mismatch`` on some
   systems.
-- :gh:`2809`, [Linux]: :func:`swap_memory` raises ``ValueError`` if
-  :proc:`/proc/meminfo` contains a field with no space after the colon, e.g.
-  ``ShadowCallStack:10373888 kB``, which occurs on arm64 when shadow call
-  stacks exceed 10 GB.
+- :gh:`2809`, [Linux]: :func:`swap_memory` and :func:`virtual_memory` raise
+  ``ValueError`` if :proc:`/proc/meminfo` contains a field with no space after
+  the colon, e.g. ``ShadowCallStack:10373888 kB``, which occurs on arm64 when
+  shadow call stacks exceed 10 GB.
 - :gh:`2811`, [OpenBSD]: :func:`virtual_memory` :field:`shared` field returned
   pages instead of bytes, plus it was overvalued (summed shared ``virtual`` +
   ``real``, now we only return ``real``).
