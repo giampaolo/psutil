@@ -59,6 +59,8 @@ jobs:
         with:
           ref: ${{ steps.pr-info.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Full history so we can compute the merge-base with master.
+          fetch-depth: 0
 
       - name: Install dependencies
         run: pip install anthropic rstwrap
@@ -70,8 +72,14 @@ jobs:
         run: |
           # Run the trusted script from master, not the PR's copy, so a
           # malicious PR can't get arbitrary code executed on the runner.
-          git fetch --depth 1 origin master
+          git fetch origin master
           git show origin/master:.github/workflows/changelog_bot.py > /tmp/changelog_bot.py
+          # changelog.rst/credits.rst are bot-owned: reset them to the PR's
+          # fork point (merge-base) so the added entry shows as a clean
+          # one-line diff instead of master's churn, and any stale/bloated
+          # state from earlier runs gets wiped.
+          MB=$(git merge-base HEAD origin/master)
+          git checkout "$MB" -- docs/changelog.rst docs/credits.rst
           python /tmp/changelog_bot.py \
             --pr-number "$PR_NUMBER" \
             --repo "${{ github.repository }}" \
