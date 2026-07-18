@@ -16,12 +16,12 @@
       <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
       <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
     </svg>
-    <a class="blog-section-title" href="{{ pathto(ablog.blog_path) }}">Blog</a>
-    <div class="blog-section-subtitle">Releases, deep dives, war stories</div>
+    <a class="blog-section-title" href="{{ pathto(ablog.blog_path) }}">{{ _('Blog') }}</a>
+    <div class="blog-section-subtitle">{{ _('Releases, deep dives, war stories') }}</div>
   </div>
   <a class="blog-rss"
      href="{{ pathto(ablog.blog_path ~ '/atom', 1) }}.xml"
-     title="Subscribe (Atom feed)">
+     title="{{ _('Subscribe (Atom feed)') }}">
     <span class="rss-icon blog-rss-icon"></span>
     <span>RSS</span>
   </a>

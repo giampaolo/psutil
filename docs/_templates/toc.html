@@ -17,8 +17,8 @@
 {%- endif -%}
 <aside class="{{ _aside_class }}"
        {% if glossary_terms %}data-toc-mode="glossary"{% endif %}
-       aria-label="{% if _is_blog_collection %}Browse blog{% else %}On this page{% endif %}">
-  <div class="right-sidebar-title">{% if _is_blog_collection %}Tags{% else %}On this page{% endif %}</div>
+       aria-label="{% if _is_blog_collection %}{{ _('Browse blog') }}{% else %}{{ _('On this page') }}{% endif %}">
+  <div class="right-sidebar-title">{% if _is_blog_collection %}{{ _('Tags') }}{% else %}{{ _('On this page') }}{% endif %}</div>
 
   {#- Blog ----------------------------------------------------------------- #}
   {%- if _is_blog_collection and ablog.tags %}

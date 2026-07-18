@@ -5,12 +5,12 @@
 -#}
 {% set post = ablog[pagename] %}
 {% if post.published and ablog.post_show_prev_next and (post.prev or post.next) %}
-<nav class="prev-next no-visited" aria-label="Previous and next posts">
+<nav class="prev-next no-visited" aria-label="{{ _('Previous and next posts') }}">
   {% if post.prev %}
   <a class="prev-next-prev" href="{{ pathto(post.prev.docname) }}{{ anchor(post.prev) }}" rel="prev">
     <span class="prev-next-arrow" aria-hidden="true">&lsaquo;</span>
     <span class="prev-next-block">
-      <span class="prev-next-label">Previous</span>
+      <span class="prev-next-label">{{ _('Previous') }}</span>
       <span class="prev-next-title">{{ post.prev.title|striptags|e }}</span>
     </span>
   </a>
@@ -18,7 +18,7 @@
   {% if post.next %}
   <a class="prev-next-next" href="{{ pathto(post.next.docname) }}{{ anchor(post.next) }}" rel="next">
     <span class="prev-next-block">
-      <span class="prev-next-label">Next</span>
+      <span class="prev-next-label">{{ _('Next') }}</span>
       <span class="prev-next-title">{{ post.next.title|striptags|e }}</span>
     </span>
     <span class="prev-next-arrow" aria-hidden="true">&rsaquo;</span>
