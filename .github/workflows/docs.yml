@@ -1,0 +1,83 @@
+# Builds the docs from master and deploys them to GitHub Pages.
+#
+# Single version, served at the site root (psutil.io). Nothing is
+# committed: the built site is uploaded as an artifact and served
+# directly (no gh-pages branch, no separate repo).
+#
+# Repo setup: Settings -> Pages -> Source = "GitHub Actions", and set
+# the custom domain to psutil.io.
+#
+# Prior art if we ever add versioning. Preferred path is the Salt
+# model: keep this artifact method and single repo, but fan the build
+# out over master + the last few supported release tags (master -> /,
+# each tag -> /vX.Y/) and rebuild that set every run. No separate repo,
+# no committed HTML, EOL versions drop off. Root stays master so the
+# blog keeps publishing; the /vX.Y/ dirs are frozen API snapshots. A
+# JS flyout reads a generated versions.json.
+#   Salt (this model, in production):
+#     https://github.com/saltstack/builddocs/blob/main/.github/workflows/gh-pages-builddocs.yml
+#   NumPy (heavier: separate repo, one committed dir per release, by
+#   hand) - only for a permanent archive of every past release:
+#     https://github.com/numpy/numpy.org/blob/main/.github/workflows/gh-pages.yml
+#     https://github.com/numpy/doc
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "docs/**"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+name: docs-deploy
+
+concurrency:
+  group: docs-deploy
+  cancel-in-progress: false
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies
+        run: |
+          pip install -r docs/requirements.txt
+          pip install .                   # codeautolink imports psutil
+
+      - name: Build HTML
+        # Build from docs/ so the in-tree psutil/ source doesn't shadow
+        # the pip-installed build that sphinx-codeautolink imports.
+        run: |
+          cd docs
+          python -m sphinx -b html --fail-on-warning \
+            -D html_baseurl=https://psutil.io/ \
+            . _build/html
+
+      - name: Add GitHub Pages control files
+        run: |
+          echo "psutil.io" > docs/_build/html/CNAME    # custom domain
+          touch docs/_build/html/.nojekyll              # serve _static/ as-is
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build/html
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
