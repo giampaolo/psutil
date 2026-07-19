@@ -84,6 +84,8 @@
 <div class="page">
   {% include "sidebar.html" %}
   <main class="main" id="main-content" role="main">
+    {# TEMPORARY: remove before release. See dev-banner.html. #}
+    {% include "dev-banner.html" %}
     {% include "breadcrumbs.html" %}
     <div class="article-with-toc{% if not _has_toc %} no-toc{% endif %}">
       <div class="article-column">

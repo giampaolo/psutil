@@ -309,9 +309,8 @@ class TestCanonicalUrl:
 
     def test_link_on_pages(self, subtests):
         # Sphinx emits <link rel="canonical"> using html_baseurl. If
-        # html_baseurl is misconfigured (e.g. lacks the /latest/
-        # prefix while the deploy is version-pathed), every shared
-        # URL points at a 404.
+        # html_baseurl is misconfigured, every shared URL points at a
+        # 404.
         for page in (
             "index.html",
             "api.html",
