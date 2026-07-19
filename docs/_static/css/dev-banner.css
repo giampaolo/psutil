@@ -1,0 +1,59 @@
+/* TEMPORARY: development-version notice.
+
+   Remove before the release, together with
+   _templates/dev-banner.html and its include in layout.html. */
+
+/* Top of the content column, not spanning the sidebar. The negative
+   margins cancel .main's horizontal padding so the bar reaches both
+   edges of the column. */
+.dev-banner {
+    margin: 0 -24px;
+    padding: 9px 14px;
+    background: #fff8e1;
+    border-bottom: 1px solid #f0d98c;
+    color: #6b5618;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    text-align: center;
+}
+
+@media (max-width: 1024px) {
+    .dev-banner {
+        margin: 0 -16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .dev-banner {
+        margin: 0 -12px;
+    }
+}
+
+/* Paired with :visited so the theme's visited-link rule can't leak
+   through and recolor it mid-sentence. */
+.dev-banner a,
+.dev-banner a:visited {
+    color: #8a6d1f;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.dev-banner a:hover {
+    color: #5c470f;
+}
+
+[data-theme="dark"] .dev-banner {
+    background: #2b2415;
+    border-bottom-color: #4a3c1d;
+    color: #ddcb98;
+}
+
+[data-theme="dark"] .dev-banner a,
+[data-theme="dark"] .dev-banner a:visited {
+    color: #f0d98c;
+}
+
+[data-theme="dark"] .dev-banner a:hover {
+    color: #fbecc0;
+}

@@ -13,31 +13,19 @@
     <br/>
 
     <div align="center">
-      <a href="https://clickpy.clickhouse.com/dashboard/psutil">
-        <img src="https://static.pepy.tech/badge/psutil/month" alt="Downloads">
-      </a>
+      <a href="https://clickpy.clickhouse.com/dashboard/psutil"><img src="https://static.pepy.tech/badge/psutil/month" alt="Downloads"></a>
 
-      <a href="https://repology.org/metapackage/python:psutil/versions">
-        <img src="https://repology.org/badge/tiny-repos/python:psutil.svg" alt="Binary packages">
-      </a>
+      <a href="https://repology.org/metapackage/python:psutil/versions"><img src="https://repology.org/badge/tiny-repos/python:psutil.svg" alt="Binary packages"></a>
 
-      <a href="https://pypi.org/project/psutil">
-        <img src="https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=yellowgreen" alt="Latest version">
-      </a>
+      <a href="https://pypi.org/project/psutil"><img src="https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=yellowgreen" alt="Latest version"></a>
     </div>
 
     <div align="center">
-      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild">
-        <img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml.svg?label=Linux%2C%20macOS%2C%20Win" alt="Linux, macOS, Windows">
-      </a>
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml.svg?label=Linux%2C%20macOS%2C%20Win" alt="Linux, macOS, Windows"></a>
 
-      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Absd-tests">
-        <img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=BSD" alt="FreeBSD, NetBSD, OpenBSD">
-      </a>
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Absd"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=BSD" alt="FreeBSD, NetBSD, OpenBSD"></a>
 
-      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Adocs">
-        <img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/docs.yml.svg?label=docs" alt="Documentation">
-      </a>
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Adocs"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/docs.yml.svg?label=docs" alt="Documentation"></a>
     </div>
 
 .. </PYPI-EXCLUDE>
@@ -97,19 +85,13 @@ Sponsors
     <table border="0" cellpadding="10" cellspacing="0" class="sponsor-table">
       <tr>
         <td align="center" style="vertical-align: middle;">
-          <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img width="160" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-tidelift.svg" class="sponsor-logo">
-          </a>
+          <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme"><img width="160" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-tidelift.svg" class="sponsor-logo"></a>
         </td>
         <td align="center" style="vertical-align: middle;">
-          <a href="https://sansec.io/">
-            <img width="145" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-sansec.svg" class="sponsor-logo">
-          </a>
+          <a href="https://sansec.io/"><img width="145" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-sansec.svg" class="sponsor-logo"></a>
         </td>
         <td align="center" style="vertical-align: middle;">
-          <a href="https://www.apivoid.com/">
-            <img width="130" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-apivoid.svg" class="sponsor-logo">
-          </a>
+          <a href="https://www.apivoid.com/"><img width="130" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-apivoid.svg" class="sponsor-logo"></a>
         </td>
       </tr>
     </table>

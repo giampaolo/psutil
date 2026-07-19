@@ -15,6 +15,7 @@ from psleak import LeakTest
 from psleak import MemoryLeakTestCase
 
 import psutil
+from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import OPENBSD
@@ -547,7 +548,10 @@ class TestBadargs2(MemoryLeakTestCase):
 
     @cext_has("proc_cpu_affinity_get")
     def test_proc_cpu_affinity_get(self):
-        self.execute_w_exc(OSError, cext.proc_cpu_affinity_get, -1)
+        # FreeBSD's cpuset_getaffinity() reads -1 as "the current
+        # process", so it succeeds. Use another negative PID.
+        pid = -2 if FREEBSD else -1
+        self.execute_w_exc(OSError, cext.proc_cpu_affinity_get, pid)
 
     @cext_has("net_if_flags")
     def test_net_if_flags(self):

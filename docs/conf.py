@@ -188,12 +188,12 @@ html_js_files = _js_files()
 # =====================================================================
 
 # Force UTC for build-time timestamps so atom feed entries are
-# the same across build hosts (RTD runs UTC; local devs may not).
+# the same across build hosts (CI runs UTC; local devs may not).
 os.environ["TZ"] = "UTC"
 if hasattr(time, "tzset"):
     time.tzset()
 
-# Fix for ablog which shows local dates locally (not on RTD)
+# Fix for ablog, which otherwise formats dates in the local locale.
 try:
     locale.setlocale(locale.LC_TIME, "C")
 except locale.Error:

@@ -7,8 +7,8 @@
 """Refresh the dynamic numbers in docs/adoption.rst and README.rst
 (monthly downloads and GitHub repository dependents).
 
-Intended to run locally before tagging a release. RTD's build does NOT
-call this.
+Intended to run locally before tagging a release. The docs build does
+NOT call this.
 """
 
 import json

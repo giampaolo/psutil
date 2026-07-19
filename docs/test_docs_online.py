@@ -285,3 +285,36 @@ class TestLiveSite:
         assert not re.search(
             r'<meta[^>]*name="robots"[^>]*noindex', html, re.IGNORECASE
         )
+
+
+class TestReadTheDocsRedirects:
+    """The old RTD site now redirects to psutil.io."""
+
+    HOST = "psutil.readthedocs.io"
+
+    def get(self, path):
+        # Raw connection, so the redirect isn't followed.
+        conn = http.client.HTTPSConnection(self.HOST, timeout=30)
+        try:
+            conn.request(
+                "GET", path, headers={"User-Agent": "psutil-docs-test"}
+            )
+            resp = conn.getresponse()
+            return resp.status, resp.getheader("Location", "")
+        finally:
+            conn.close()
+
+    def test_dev_urls_redirect_to_psutil_io(self, subtests):
+        # 301, not 302: search engines only transfer ranking on a
+        # permanent redirect, and these URLs are linked all over.
+        for path in ("/en/latest/", "/latest/"):
+            with subtests.test(path=path):
+                status, location = self.get(path)
+                assert status == 301
+                assert location == ORIGIN
+
+    def test_stable_still_serves_released_docs(self):
+        # TEMPORARY, remove with the dev banner: it links here, so a
+        # catch-all redirect on the RTD side would break it.
+        status, _ = self.get("/stable/")
+        assert status == 200
