@@ -56,6 +56,7 @@ _third_party_exts = [
     "ablog",
     "notfound.extension",  # custom 404 page
     "sphinx.ext.extlinks",
+    "sphinx.ext.githubpages",  # writes .nojekyll + CNAME from html_baseurl
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "sphinx_codeautolink",

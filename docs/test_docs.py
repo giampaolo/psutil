@@ -185,6 +185,12 @@ class TestHtmlBuild:
         assert (HTML_DIR / "index.html").exists()
         assert (HTML_DIR / "blog" / "index.html").exists()
 
+    def test_github_pages_control_files(self):
+        # sphinx.ext.githubpages writes these: .nojekyll stops Jekyll
+        # from dropping _static/, CNAME is derived from html_baseurl.
+        assert (HTML_DIR / ".nojekyll").is_file()
+        assert (HTML_DIR / "CNAME").read_text().strip() == "psutil.io"
+
     def test_changelog_anchors(self):
         # Indirectly test _ext/changelog_anchors.py. Every X.Y.Z
         # version heading in changelog.rst must get an `id="XYZ"`
