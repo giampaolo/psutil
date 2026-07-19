@@ -9,11 +9,14 @@ Run with:
   PSUTIL_DOCS_ONLINE=1 python3 -m pytest docs/test_docs_online.py
 """
 
+import http.client
 import os
 import pathlib
 import re
 import sys
+import urllib.error
 import urllib.request
+import xml.etree.ElementTree as ET
 from urllib.parse import urlsplit
 
 import pytest
@@ -69,13 +72,14 @@ class TestLiveSite:
                 assert status == 200
 
     def test_homepage_canonical_matches_baseurl(self):
-        _, body = fetch(BASE)
+        html = fetch(BASE)[1].decode("utf-8", "replace")
         m = re.search(
-            r'<link rel="canonical" href="([^"]+)"',
-            body.decode("utf-8", "replace"),
+            r'<link rel="canonical" href="([^"]+)"'
+            r'|<link href="([^"]+)" rel="canonical"',
+            html,
         )
-        assert m
-        assert m.group(1).startswith(BASE)
+        assert m is not None
+        assert (m.group(1) or m.group(2)).startswith(BASE)
 
     def test_homepage_has_og_tags(self, subtests):
         html = fetch(BASE)[1].decode("utf-8", "replace")
@@ -83,6 +87,64 @@ class TestLiveSite:
             with subtests.test(prop=prop):
                 assert f'property="{prop}"' in html
 
+    def test_og_urls_match_baseurl(self, subtests):
+        html = fetch(BASE)[1].decode("utf-8", "replace")
+        og_url = re.search(r'<meta[^>]*property="og:url"[^>]*>', html)
+        with subtests.test(prop="og:url"):
+            assert og_url is not None
+            m = re.search(r'content="([^"]*)"', og_url.group(0))
+            assert m is not None
+            assert m.group(1).startswith(BASE)
+        og_img = re.search(r'<meta[^>]*property="og:image"[^>]*>', html)
+        with subtests.test(prop="og:image"):
+            assert og_img is not None
+            m = re.search(r'content="([^"]*)"', og_img.group(0))
+            assert m is not None
+            assert m.group(1).startswith(ORIGIN)
+
     def test_search_index_reachable(self):
         status, _ = fetch(BASE + "searchindex.js")
         assert status == 200
+
+    def test_http_redirects_to_https(self):
+        # Enforce-HTTPS: http must redirect to https.
+        conn = http.client.HTTPConnection(urlsplit(BASE).netloc, timeout=30)
+        try:
+            conn.request(
+                "GET", "/", headers={"User-Agent": "psutil-docs-test"}
+            )
+            resp = conn.getresponse()
+            assert resp.status in {301, 302, 307, 308}
+            assert resp.getheader("Location", "").startswith("https://")
+        finally:
+            conn.close()
+
+    def test_custom_404_page(self):
+        # A missing path returns the custom 404, not a bare error.
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            fetch(BASE + "no-such-page-zzz.html")
+        assert exc.value.code == 404
+        assert b"psutil" in exc.value.read().lower()
+
+    def test_content_pages_reachable(self, subtests):
+        for page in ("api.html", "faq.html"):
+            with subtests.test(page=page):
+                status, body = fetch(BASE + page)
+                assert status == 200
+                assert b"psutil" in body.lower()
+
+    def test_atom_feed_rooted_at_baseurl(self):
+        body = fetch(BASE + "blog/atom.xml")[1]
+        ns = {"a": "http://www.w3.org/2005/Atom"}
+        root = ET.fromstring(body)
+        urls = [link.get("href") for link in root.findall("a:link", ns)]
+        urls.extend(
+            e.find("a:id", ns).text for e in root.findall("a:entry", ns)
+        )
+        bad = [u for u in urls if u and not u.startswith(BASE)]
+        assert bad == []
+
+    def test_no_readthedocs_in_metadata(self):
+        html = fetch(BASE)[1].decode("utf-8", "replace")
+        head = html.split("</head>", 1)[0]
+        assert "readthedocs" not in head.lower()

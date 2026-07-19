@@ -295,6 +295,18 @@ class TestCanonicalUrl:
                 url = m.group(1) or m.group(2)
                 assert url.startswith(conf.html_baseurl)
 
+    def test_og_urls_rooted_at_baseurl(self, subtests):
+        # og:url + og:image must point at the deployed domain; they
+        # once lagged html_baseurl and pointed at the old host.
+        html = read_html("api.html")
+        for prop in ("og:url", "og:image"):
+            tag = re.search(rf'<meta[^>]*property="{prop}"[^>]*>', html)
+            with subtests.test(prop=prop):
+                assert tag is not None
+                m = re.search(r'content="([^"]*)"', tag.group(0))
+                assert m is not None
+                assert m.group(1).startswith(conf.html_baseurl)
+
 
 @pytest.mark.usefixtures("build_html")
 class TestRightToc:
@@ -388,11 +400,9 @@ class TestAtomFeed:
         assert non_utc == []
 
     def test_uses_canonical_url(self):
-        # Regression: feed-level + per-entry URLs must include the
-        # RTD version path (/latest/) so they match the deployed
-        # location. Without it, feed readers 404. This check needs
-        # updating when the Single Version toggle is flipped at
-        # 8.0.0 — see the TODO on html_baseurl in conf.py.
+        # Regression: feed-level + per-entry URLs must be rooted at
+        # html_baseurl so they match the deployed location. Without
+        # it, feed readers 404.
         feed = HTML_DIR / "blog" / "atom.xml"
         ns = {"a": "http://www.w3.org/2005/Atom"}
         root = ET.parse(feed).getroot()
@@ -400,7 +410,7 @@ class TestAtomFeed:
         for e in root.findall("a:entry", ns):
             urls.append(e.find("a:id", ns).text)
             urls.extend(link.get("href") for link in e.findall("a:link", ns))
-        bad = [u for u in urls if u and "/latest/" not in u]
+        bad = [u for u in urls if u and not u.startswith(conf.html_baseurl)]
         assert bad == []
 
     def test_link_on_every_page_exactly_once(self, subtests):

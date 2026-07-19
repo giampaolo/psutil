@@ -122,19 +122,11 @@ rst_prolog = ".. currentmodule:: psutil\n"  # Prepended to every .rst file
 # Canonical site URL. Picked up by Sphinx for <link rel="canonical">
 # tags. Reused below by sphinxext-opengraph (og:url), sphinx-sitemap,
 # and (via blog_baseurl) ablog's atom feed.
-#
-#         -------- TODO / IMPORTANT -------
-#
-# At 8.0.0 release, change this to the final base URL
-# (https://psutil.readthedocs.io/ or https://psutil.org/) and flip the
-# RTD Single Version toggle at the same time.
-html_baseurl = "https://psutil.readthedocs.io/latest/"
+html_baseurl = "https://psutil.io/"
 
-#         -------- TODO / IMPORTANT -------
-#
 # sphinx-notfound-page: absolute URL prefix for static files and
-# nav links on 404.html. Will become "/" when we switch domain.
-notfound_urls_prefix = "/latest/"
+# nav links on 404.html.
+notfound_urls_prefix = "/"
 
 html_title = PROJECT_NAME
 html_favicon = "_static/images/favicon.svg"
@@ -164,6 +156,7 @@ html_theme_options = {
     "globaltoc_includehidden": True,
 }
 html_static_path = ["_static"]
+html_extra_path = ["_extra"]  # robots.txt, copied verbatim to site root
 templates_path = ["_templates"]
 pygments_style = "tango"  # base palette (overridden by css/code.css)
 

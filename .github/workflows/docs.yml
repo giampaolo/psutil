@@ -56,9 +56,7 @@ jobs:
         # the pip-installed build that sphinx-codeautolink imports.
         run: |
           cd docs
-          python -m sphinx -b html --fail-on-warning \
-            -D html_baseurl=https://psutil.io/ \
-            . _build/html
+          python -m sphinx -b html --fail-on-warning . _build/html
 
       - name: Add GitHub Pages control files
         run: |
