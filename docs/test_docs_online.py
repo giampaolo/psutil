@@ -25,6 +25,9 @@ import pytest
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import conf  # noqa: E402
+from testutil import feed_urls  # noqa: E402
+from testutil import find_canonical  # noqa: E402
+from testutil import og_value  # noqa: E402
 
 BASE = conf.html_baseurl.rstrip("/") + "/"
 _parts = urlsplit(BASE)
@@ -73,14 +76,9 @@ class TestLiveSite:
                 assert status == 200
 
     def test_homepage_canonical_matches_baseurl(self):
-        html = fetch(BASE)[1].decode("utf-8", "replace")
-        m = re.search(
-            r'<link rel="canonical" href="([^"]+)"'
-            r'|<link href="([^"]+)" rel="canonical"',
-            html,
-        )
-        assert m is not None
-        assert (m.group(1) or m.group(2)).startswith(BASE)
+        url = find_canonical(fetch(BASE)[1].decode("utf-8", "replace"))
+        assert url is not None
+        assert url.startswith(BASE)
 
     def test_homepage_has_og_tags(self, subtests):
         html = fetch(BASE)[1].decode("utf-8", "replace")
@@ -90,18 +88,11 @@ class TestLiveSite:
 
     def test_og_urls_match_baseurl(self, subtests):
         html = fetch(BASE)[1].decode("utf-8", "replace")
-        og_url = re.search(r'<meta[^>]*property="og:url"[^>]*>', html)
-        with subtests.test(prop="og:url"):
-            assert og_url is not None
-            m = re.search(r'content="([^"]*)"', og_url.group(0))
-            assert m is not None
-            assert m.group(1).startswith(BASE)
-        og_img = re.search(r'<meta[^>]*property="og:image"[^>]*>', html)
-        with subtests.test(prop="og:image"):
-            assert og_img is not None
-            m = re.search(r'content="([^"]*)"', og_img.group(0))
-            assert m is not None
-            assert m.group(1).startswith(ORIGIN)
+        for prop, prefix in (("og:url", BASE), ("og:image", ORIGIN)):
+            with subtests.test(prop=prop):
+                val = og_value(html, prop)
+                assert val is not None
+                assert val.startswith(prefix)
 
     def test_search_index_reachable(self):
         status, _ = fetch(BASE + "searchindex.js")
@@ -135,14 +126,8 @@ class TestLiveSite:
                 assert b"psutil" in body.lower()
 
     def test_atom_feed_rooted_at_baseurl(self):
-        body = fetch(BASE + "blog/atom.xml")[1]
-        ns = {"a": "http://www.w3.org/2005/Atom"}
-        root = ET.fromstring(body)
-        urls = [link.get("href") for link in root.findall("a:link", ns)]
-        urls.extend(
-            e.find("a:id", ns).text for e in root.findall("a:entry", ns)
-        )
-        bad = [u for u in urls if u and not u.startswith(BASE)]
+        root = ET.fromstring(fetch(BASE + "blog/atom.xml")[1])
+        bad = [u for u in feed_urls(root) if not u.startswith(BASE)]
         assert bad == []
 
     def test_no_readthedocs_in_metadata(self):

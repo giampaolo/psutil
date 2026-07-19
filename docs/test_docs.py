@@ -49,6 +49,9 @@ VALID_BLOG_TAGS = frozenset({
 
 sys.path.insert(0, str(HERE))  # so that "import conf" wins
 import conf  # noqa: E402
+from testutil import feed_urls  # noqa: E402
+from testutil import find_canonical  # noqa: E402
+from testutil import og_value  # noqa: E402
 
 HTML_DIR = None
 
@@ -114,18 +117,6 @@ def source_rst_for(html_path):
     rel = html_path.relative_to(HTML_DIR).with_suffix(".rst")
     src = DOCS / rel
     return src if src.is_file() else None
-
-
-def og_value(html, prop):
-    """Pull the `content` of a `<meta property="og:..." ...>` tag.
-    Sphinx and ablog don't agree on attribute order, so accept both.
-    """
-    m = re.search(
-        rf'<meta (?:property="{prop}" content="([^"]*)"'
-        rf'|content="([^"]*)" property="{prop}")',
-        html,
-    )
-    return (m.group(1) or m.group(2)) if m else None
 
 
 def all_html_pages():
@@ -280,19 +271,14 @@ class TestCanonicalUrl:
         # html_baseurl is misconfigured (e.g. lacks the /latest/
         # prefix while the deploy is version-pathed), every shared
         # URL points at a 404.
-        pattern = re.compile(
-            r'<link (?:rel="canonical" href="([^"]*)"'
-            r'|href="([^"]*)" rel="canonical")'
-        )
         for page in (
             "index.html",
             "api.html",
             "blog/2026/event-driven-process-waiting.html",
         ):
-            m = pattern.search(read_html(page))
+            url = find_canonical(read_html(page))
             with subtests.test(page=page):
-                assert m is not None
-                url = m.group(1) or m.group(2)
+                assert url is not None
                 assert url.startswith(conf.html_baseurl)
 
     def test_og_urls_rooted_at_baseurl(self, subtests):
@@ -300,12 +286,10 @@ class TestCanonicalUrl:
         # once lagged html_baseurl and pointed at the old host.
         html = read_html("api.html")
         for prop in ("og:url", "og:image"):
-            tag = re.search(rf'<meta[^>]*property="{prop}"[^>]*>', html)
+            val = og_value(html, prop)
             with subtests.test(prop=prop):
-                assert tag is not None
-                m = re.search(r'content="([^"]*)"', tag.group(0))
-                assert m is not None
-                assert m.group(1).startswith(conf.html_baseurl)
+                assert val is not None
+                assert val.startswith(conf.html_baseurl)
 
 
 @pytest.mark.usefixtures("build_html")
@@ -404,13 +388,10 @@ class TestAtomFeed:
         # html_baseurl so they match the deployed location. Without
         # it, feed readers 404.
         feed = HTML_DIR / "blog" / "atom.xml"
-        ns = {"a": "http://www.w3.org/2005/Atom"}
         root = ET.parse(feed).getroot()
-        urls = [link.get("href") for link in root.findall("a:link", ns)]
-        for e in root.findall("a:entry", ns):
-            urls.append(e.find("a:id", ns).text)
-            urls.extend(link.get("href") for link in e.findall("a:link", ns))
-        bad = [u for u in urls if u and not u.startswith(conf.html_baseurl)]
+        bad = [
+            u for u in feed_urls(root) if not u.startswith(conf.html_baseurl)
+        ]
         assert bad == []
 
     def test_link_on_every_page_exactly_once(self, subtests):
