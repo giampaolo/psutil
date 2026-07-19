@@ -50,6 +50,7 @@ VALID_BLOG_TAGS = frozenset({
 
 sys.path.insert(0, str(HERE))  # so that "import conf" wins
 import conf  # noqa: E402
+import substitutions  # noqa: E402
 from testutil import feed_urls  # noqa: E402
 from testutil import find_canonical  # noqa: E402
 from testutil import og_value  # noqa: E402
@@ -144,6 +145,32 @@ def all_html_pages():
         yield p
 
 
+class TestSourceRefs:
+    """Checks on the .rst sources, no build needed."""
+
+    def test_src_role_targets_exist(self, subtests):
+        # :src:`path` links to the file on GitHub. Nothing validates
+        # the path: rename or move the file and the link 404s, with
+        # no build warning. Both the bare and the labelled
+        # (`text <path>`) forms are used.
+        pat = re.compile(r":src:`([^`]+)`")
+        for rst in sorted(DOCS.rglob("*.rst")):
+            for target in pat.findall(rst.read_text()):
+                m = re.search(r"<([^>]+)>", target)
+                if m:
+                    target = m.group(1)
+                with subtests.test(rst=rst.relative_to(ROOT), ref=target):
+                    assert (ROOT / target).exists()
+
+    def test_first_commit_date(self):
+        # _ext/substitutions.py hardcodes it to keep git out of the
+        # build. Check it against the real history.
+        cmd = ["git", "log", "--reverse", "--format=%ct"]
+        out = subprocess.check_output(cmd, cwd=ROOT).split(b"\n", 1)[0]
+        first = datetime.fromtimestamp(int(out), tz=timezone.utc)
+        assert first.date() == substitutions.FIRST_COMMIT
+
+
 class TestBlogPostFiles:
 
     def test_every_file_has_directives(self):
@@ -191,6 +218,13 @@ class TestHtmlBuild:
         # from dropping _static/, CNAME is derived from html_baseurl.
         assert (HTML_DIR / ".nojekyll").is_file()
         assert (HTML_DIR / "CNAME").read_text().strip() == "psutil.io"
+
+    def test_substitutions_expanded(self):
+        # _ext/substitutions.py expands {{years_in_development}}. If
+        # the hook breaks, the literal token ships instead.
+        html = read_html("index.html")
+        assert f"{substitutions.years_in_development()} years" in html
+        assert "{{" not in html
 
     def test_changelog_anchors(self):
         # Indirectly test _ext/changelog_anchors.py. Every X.Y.Z

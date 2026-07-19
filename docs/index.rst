@@ -237,7 +237,7 @@
        <span class="home-stat-label">GitHub repositories</span>
      </a>
      <a class="home-stat" href="timeline/">
-       <span class="home-stat-num">17 years</span>
+       <span class="home-stat-num">{{years_in_development}} years</span>
        <span class="home-stat-label">in active development</span>
      </a>
    </div>

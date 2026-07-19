@@ -78,6 +78,7 @@ _local_exts = [  # defined in the _ext/ folder
     "opengraph_override",
     "post_banner",
     "proc_role",
+    "substitutions",
 ]
 
 extensions = _third_party_exts + _local_exts
