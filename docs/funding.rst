@@ -34,8 +34,8 @@ For companies
 If your company relies on psutil in production, consider becoming a sponsor.
 Benefits include:
 
-- Your logo displayed on the `psutil homepage <https://psutil.readthedocs.io>`_
-  and the `GitHub repository <https://github.com/giampaolo/psutil>`_.
+- Your logo displayed on the `psutil homepage <https://psutil.io>`_ and the
+  `GitHub repository <https://github.com/giampaolo/psutil>`_.
 - Priority response to bug reports and feature requests.
 - The assurance that the library you depend on is actively maintained.
 

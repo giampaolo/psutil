@@ -5,9 +5,9 @@
     <div align="center">
         <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/images/logo-psutil-readme.svg" alt="psutil" /></a>
         <p align="center">Process and System Utilities for Python</p>
-        <a href="https://psutil.readthedocs.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://psutil.readthedocs.io/latest/blog.html"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://psutil.readthedocs.io/latest/adoption.html"><b>Who uses psutil</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.readthedocs.io"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.io/blog.html"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.io/adoption.html"><b>Who uses psutil</b></a>&nbsp;&nbsp;&nbsp;
     </div>
 
     <br/>
@@ -64,8 +64,8 @@ packages on PyPI, with **370+ million** downloads per month and **780,000+**
 `GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__
 using it.
 
-See also `adoptions <https://psutil.readthedocs.io/latest/adoption.html>`__ and
-`alternatives <https://psutil.readthedocs.io/latest/alternatives.html>`__.
+See also `adoptions <https://psutil.io/adoption.html>`__ and
+`alternatives <https://psutil.io/alternatives.html>`__.
 
 Install
 =======
@@ -75,12 +75,12 @@ Install
     pip install psutil
 
 For platform-specific details see
-`installation <https://psutil.readthedocs.io/latest/install.html>`_.
+`installation <https://psutil.io/install.html>`_.
 
 Documentation
 =============
 
-psutil documentation is available at https://psutil.readthedocs.io/latest.
+psutil documentation is available at https://psutil.io.
 
 .. <PYPI-EXCLUDE>
 
@@ -109,7 +109,7 @@ Sponsors
       </tr>
     </table>
 
-    <div style="text-align: center;"><sup><a href="https://psutil.readthedocs.io/latest/funding.html">add your logo</a></sup></div>
+    <div style="text-align: center;"><sup><a href="https://psutil.io/funding.html">add your logo</a></sup></div>
 
 .. </PYPI-EXCLUDE>
 
@@ -117,8 +117,8 @@ Example usages
 ==============
 
 For the full API with more examples, see the
-`API overview <https://psutil.readthedocs.io/latest/api-overview.html>`_ and
-`API reference <https://psutil.readthedocs.io/latest/api.html>`_.
+`API overview <https://psutil.io/api-overview.html>`_ and
+`API reference <https://psutil.io/api.html>`_.
 
 **CPU**
 
@@ -198,7 +198,7 @@ For the full API with more examples, see the
     3 ksoftirqd/0
     ...
 
-.. _`shell equivalents`: https://psutil.readthedocs.io/latest/shell-equivalents.html
+.. _`shell equivalents`: https://psutil.io/shell-equivalents.html
 
 .. <PYPI-EXCLUDE>
 

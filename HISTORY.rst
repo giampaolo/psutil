@@ -1,3 +1,3 @@
 History has moved to:
 
-- https://psutil.readthedocs.io/latest/changelog.html
+- https://psutil.io/changelog.html

@@ -152,7 +152,7 @@ extension. Add psutil to ``intersphinx_mapping`` in your ``conf.py``:
 .. code-block:: python
 
    intersphinx_mapping = {
-       "psutil": ("https://psutil.readthedocs.io/latest/", None),
+       "psutil": ("https://psutil.io/", None),
    }
 
 You can then reference any psutil object and it links straight here, e.g.:

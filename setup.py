@@ -441,8 +441,8 @@ def main():
             'Homepage': 'https://github.com/giampaolo/psutil',
             'Source': 'https://github.com/giampaolo/psutil',
             'Issues': 'https://github.com/giampaolo/psutil/issues',
-            'Documentation': 'https://psutil.readthedocs.io/',
-            'Changelog': 'https://psutil.readthedocs.io/latest/changelog.html',
+            'Documentation': 'https://psutil.io/',
+            'Changelog': 'https://psutil.io/changelog.html',
             'Funding': 'https://github.com/sponsors/giampaolo',
         },
         # https://pypi.org/classifiers/

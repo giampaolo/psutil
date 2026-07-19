@@ -157,16 +157,8 @@ Documentation
      python3 -m pip install -r requirements.txt
      make html
 
-- Doc is hosted at https://psutil.readthedocs.io (redirects to `/stable`_).
-- There's 2 versions of the doc (can be selected via dropdown on the top left):
-
-  - `/stable`_: latest release published on `PyPI`_
-  - `/latest`_: ``master`` development branch
-
-.. note::
-
-   ``/latest`` may contain unreleased changes. Use ``/stable`` for production
-   docs.
+- Doc is hosted at https://psutil.io. It's a single version, rebuilt and
+  deployed automatically on every push to ``master``.
 
 Releases
 --------
@@ -175,8 +167,6 @@ Releases
 - Git tags use the ``vX.Y.Z`` format (e.g. ``v7.2.2``).
 - The version string is defined in :src:`psutil/__init__.py` (``__version__``).
 
-.. _`/latest`: https://psutil.readthedocs.io/latest
-.. _`/stable`: https://psutil.readthedocs.io/stable
 .. _`Git for Windows`: https://git-scm.com/install/windows
 .. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/
 .. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/

@@ -431,6 +431,27 @@
     text-align: center;
 }
 
+/* Full-bleed band: on mobile .main's side padding shrinks, so match
+   the pull-out to it or the band overflows and the page drags
+   sideways. */
+@media (max-width: 1024px) {
+    .home-page #sponsors {
+        margin-left: -16px;
+        margin-right: -16px;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .home-page #sponsors {
+        margin-left: -12px;
+        margin-right: -12px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}
+
 .home-page #sponsors > .home-section-label {
     margin-top: 1.2em;
 }

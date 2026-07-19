@@ -13,6 +13,10 @@ import re
 
 ATOM_NS = {"a": "http://www.w3.org/2005/Atom"}
 
+# Sphinx-generated utility pages (search box, general index, module
+# index). Not real content, so link checks skip them.
+UTILITY_PAGES = {"search.html", "genindex.html", "py-modindex.html"}
+
 
 def find_canonical(html):
     """The <link rel="canonical"> href, or None. Attribute order

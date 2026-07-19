@@ -25,6 +25,7 @@ import pytest
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import conf  # noqa: E402
+from testutil import UTILITY_PAGES  # noqa: E402
 from testutil import feed_urls  # noqa: E402
 from testutil import find_canonical  # noqa: E402
 from testutil import og_value  # noqa: E402
@@ -136,18 +137,19 @@ class TestLiveSite:
         assert "readthedocs" not in head.lower()
 
     def test_homepage_internal_links_resolve(self, subtests):
-        # Nav / logo / sidebar / footer links must not 404 (guards
-        # migration + relative-path regressions). Anchors stripped and
-        # pages de-duplicated so each target is hit once.
         html = fetch(BASE)[1].decode("utf-8", "replace")
-        pages = sorted({
-            urljoin(BASE, h.split("#", 1)[0])
-            for h in re.findall(r'href="([^"]+)"', html)
-            if not h.startswith(("http://", "https://", "//", "mailto:", "#"))
-            and "_static/" not in h
-            and "_images/" not in h
-        })
-        for url in pages:
+        pages = set()
+        for h in re.findall(r'href="([^"]+)"', html):
+            path = h.split("#", 1)[0]
+            if (
+                h.startswith(("http://", "https://", "//", "mailto:", "#"))
+                or "_static/" in h
+                or "_images/" in h
+                or path.rsplit("/", 1)[-1] in UTILITY_PAGES
+            ):
+                continue
+            pages.add(urljoin(BASE, path))
+        for url in sorted(pages):
             with subtests.test(link=url):
                 status, _ = fetch(url)
                 assert status == 200
@@ -157,3 +159,45 @@ class TestLiveSite:
         # the sitemap without <lastmod>. Needs fetch-depth: 0.
         body = fetch(BASE + "sitemap.xml")[1]
         assert b"<lastmod>" in body
+
+    def test_sitemap_urls_resolve(self, subtests):
+        # A page left in the sitemap after removal is a dead link handed
+        # to search engines. Spot-check a sample (homepage-links covers
+        # the linked pages; this covers the sitemap itself).
+        body = fetch(BASE + "sitemap.xml")[1].decode("utf-8", "replace")
+        for url in re.findall(r"<loc>([^<]+)</loc>", body)[::4]:
+            with subtests.test(url=url):
+                assert fetch(url)[0] == 200
+
+    def test_og_image_resolves(self):
+        # The social-card image must exist, else shared links render a
+        # blank preview.
+        img = og_value(fetch(BASE)[1].decode("utf-8", "replace"), "og:image")
+        assert img is not None
+        assert fetch(img)[0] == 200
+
+    def test_robots_references_sitemap(self):
+        body = fetch(ORIGIN + "robots.txt")[1].decode("utf-8", "replace")
+        assert "sitemap.xml" in body.lower()
+
+    def test_no_external_stylesheets(self):
+        # Stylesheets / preloads must be self-hosted (analytics
+        # <script>s are deliberately external and don't count).
+        html = fetch(BASE)[1].decode("utf-8", "replace")
+        tags = re.findall(
+            r'<link\b[^>]*\brel="(?:stylesheet|preload)"[^>]*>', html
+        )
+        hrefs = [h for t in tags for h in re.findall(r'\bhref="([^"]+)"', t)]
+        external = [
+            u for u in hrefs if u.startswith(("http://", "https://", "//"))
+        ]
+        assert external == []
+
+    def test_utility_pages_noindex(self, subtests):
+        noindex = re.compile(
+            r'<meta[^>]*name="robots"[^>]*content="noindex"', re.IGNORECASE
+        )
+        for name in ("genindex.html", "404.html"):
+            body = fetch(BASE + name)[1].decode("utf-8", "replace")
+            with subtests.test(page=name):
+                assert noindex.search(body)
