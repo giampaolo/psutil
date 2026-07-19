@@ -70,22 +70,39 @@ def set_og_type_article(app, pagename, templatename, context, doctree):
         meta["og:type"] = "article"
 
 
+def blog_index_meta(app, pagename):
+    """Title and description for an ablog-generated index page."""
+    blog_path = app.config.blog_path
+    if pagename == blog_path:
+        return app.config.project + " blog", BLOG_DESCRIPTION
+    m = re.fullmatch(re.escape(blog_path) + r"/(\d{4})", pagename)
+    if m:
+        year = m.group(1)
+        return (
+            f"{app.config.project} blog: {year}",
+            f"psutil blog posts published in {year}.",
+        )
+    return None
+
+
 def emit_blog_index_meta(app, pagename, templatename, context, doctree):
-    # ablog renders blog.html without a doctree, so sphinxext-opengraph
-    # skips it and emits no og:* tags.
-    if pagename != app.config.blog_path:
+    # ablog renders the blog index and the year archives without a
+    # doctree, so sphinxext-opengraph skips them: no description, no
+    # og:* tags at all.
+    meta = blog_index_meta(app, pagename)
+    if meta is None:
         return
+    og_title, description = meta
     project = app.config.project
     base = app.config.html_baseurl.rstrip("/") + "/"
-    feed_title = app.config.blog_title or "Blog"
     fields = [
-        ("name", "description", BLOG_DESCRIPTION),
-        ("property", "og:title", project + " blog"),
+        ("name", "description", description),
+        ("property", "og:title", og_title),
         ("property", "og:type", "website"),
         # Builder-derived: dirhtml serves this as blog/, not blog.html.
         ("property", "og:url", base + app.builder.get_target_uri(pagename)),
         ("property", "og:site_name", project),
-        ("property", "og:description", BLOG_DESCRIPTION),
+        ("property", "og:description", description),
         ("property", "og:image", base + "_static/images/logo-psutil.png"),
         (
             "property",
@@ -100,7 +117,8 @@ def emit_blog_index_meta(app, pagename, templatename, context, doctree):
     tags = "\n".join(
         f'<meta {attr}="{key}" content="{val}" />' for attr, key, val in fields
     )
-    context["feed_title"] = feed_title
+    if pagename == app.config.blog_path:
+        context["feed_title"] = app.config.blog_title or "Blog"
     context["metatags"] = context.get("metatags", "") + tags + "\n"
 
 

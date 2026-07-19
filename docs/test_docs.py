@@ -280,6 +280,30 @@ class TestSitemap:
             with subtests.test(page=page):
                 assert conf.html_baseurl + page in urls
 
+    def test_no_duplicate_urls(self):
+        # ablog re-renders the blog index on top of blog.rst, so
+        # sphinx-sitemap lists that URL twice unless we dedupe.
+        sitemap = HTML_DIR / "sitemap.xml"
+        ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        urls = [
+            u.text
+            for u in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns)
+        ]
+        dupes = sorted({u for u in urls if urls.count(u) > 1})
+        assert dupes == []
+
+    def test_listed_pages_have_description(self, subtests):
+        # ablog's generated pages come with no doctree, so
+        # sphinxext-opengraph skips them and emits no description.
+        pat = re.compile(r'<meta[^>]*name="description"', re.IGNORECASE)
+        sitemap = HTML_DIR / "sitemap.xml"
+        ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        for url in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns):
+            rel = url.text.replace(conf.html_baseurl, "")
+            page = HTML_DIR / rel / "index.html"
+            with subtests.test(page=rel or "/"):
+                assert pat.search(page.read_text(errors="replace"))
+
     def test_excludes_utility_pages(self, subtests):
         # sitemap_excludes must use the dirhtml dir form ("search/",
         # not "search.html") or utility + ablog pages leak in.
