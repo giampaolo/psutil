@@ -83,7 +83,14 @@ def blog_posts():
 
 
 def read_html(*parts):
-    return HTML_DIR.joinpath(*parts).read_text()
+    # dirhtml writes each page as <slug>/index.html; only the root
+    # index.html stays flat. Translate the historical "<slug>.html".
+    rel = pathlib.Path(*parts)
+    if rel.name == "index.html":
+        path = HTML_DIR / rel
+    else:
+        path = HTML_DIR / rel.with_suffix("") / "index.html"
+    return path.read_text()
 
 
 def post_title(rst):
@@ -105,17 +112,23 @@ def post_tags(rst):
 
 def blog_html(rst):
     """Read the built HTML for a blog post given its source .rst."""
-    rel = rst.relative_to(BLOG).with_suffix(".html")
-    return (HTML_DIR / "blog" / rel).read_text()
+    rel = rst.relative_to(BLOG).with_suffix("")
+    return (HTML_DIR / "blog" / rel / "index.html").read_text()
 
 
 def source_rst_for(html_path):
-    """Return the .rst source for an HTML page, or None for pages
+    """Return the .rst source for a built page, or None for pages
     generated without a source (ablog archives, sphinx auto-pages
     like genindex/search/py-modindex).
     """
-    rel = html_path.relative_to(HTML_DIR).with_suffix(".rst")
-    src = DOCS / rel
+    rel = html_path.relative_to(HTML_DIR)
+    if rel.name != "index.html":
+        return None
+    if rel.parent == pathlib.Path("."):
+        slug = "index"  # root home page
+    else:
+        slug = rel.parent.as_posix()
+    src = DOCS / (slug + ".rst")
     return src if src.is_file() else None
 
 
@@ -170,7 +183,7 @@ class TestHtmlBuild:
 
     def test_files_exist(self):
         assert (HTML_DIR / "index.html").exists()
-        assert (HTML_DIR / "blog.html").exists()
+        assert (HTML_DIR / "blog" / "index.html").exists()
 
     def test_changelog_anchors(self):
         # Indirectly test _ext/changelog_anchors.py. Every X.Y.Z
@@ -229,21 +242,35 @@ class TestSitemap:
 
     def test_known_pages_listed(self, subtests):
         # sphinx-sitemap should emit one <url> per built HTML page
-        # (source docs + blog posts + ablog-generated pages),
-        # rooted at html_baseurl.
+        # (source docs + blog posts + ablog-generated pages), rooted at
+        # html_baseurl. dirhtml gives directory-style URLs (trailing
+        # slash); the home page is the bare root.
         sitemap = HTML_DIR / "sitemap.xml"
         assert sitemap.exists()
         ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
         tree = ET.parse(sitemap)
         urls = {u.text for u in tree.getroot().findall("s:url/s:loc", ns)}
         for page in (
-            "index.html",
-            "api.html",
-            "changelog.html",
-            "blog/2026/event-driven-process-waiting.html",
+            "",
+            "api/",
+            "changelog/",
+            "blog/2026/event-driven-process-waiting/",
         ):
             with subtests.test(page=page):
                 assert conf.html_baseurl + page in urls
+
+    def test_urls_are_extensionless(self):
+        # dirhtml emits directory-style URLs, so no <loc> ends in .html;
+        # they match the canonical URLs. A stray .html means the two
+        # disagree.
+        sitemap = HTML_DIR / "sitemap.xml"
+        ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        urls = [
+            u.text
+            for u in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns)
+        ]
+        assert urls
+        assert not [u for u in urls if u.endswith(".html")]
 
     def test_has_every_blog_post(self, subtests):
         # Catches drift between ablog's post registry and
@@ -257,8 +284,8 @@ class TestSitemap:
             for u in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns)
         }
         for rst in blog_posts():
-            rel = rst.relative_to(BLOG).with_suffix(".html")
-            expected = conf.html_baseurl + "blog/" + rel.as_posix()
+            rel = rst.relative_to(BLOG).with_suffix("")
+            expected = conf.html_baseurl + "blog/" + rel.as_posix() + "/"
             with subtests.test(rst=rst):
                 assert expected in urls
 
@@ -280,6 +307,11 @@ class TestCanonicalUrl:
             with subtests.test(page=page):
                 assert url is not None
                 assert url.startswith(conf.html_baseurl)
+
+    def test_home_canonical_is_root(self):
+        # The home page canonicalizes to the bare domain, not /index
+        # (dirhtml).
+        assert find_canonical(read_html("index.html")) == conf.html_baseurl
 
     def test_og_urls_rooted_at_baseurl(self, subtests):
         # og:url + og:image must point at the deployed domain; they
@@ -355,7 +387,7 @@ class TestCodeAutoLink:
         html = read_html("api-overview.html")
         assert (
             '<a class="sphinx-codeautolink-a" '
-            'href="api.html#psutil.Process.name"'
+            'href="../api/#psutil.Process.name"'
             in html
         )
 
@@ -414,8 +446,11 @@ class TestOpenGraph:
         for rst in sorted(DOCS.rglob("*.rst")):
             if rst.name == "blog.rst":
                 continue
-            rel = rst.relative_to(DOCS).with_suffix(".html")
-            html_path = HTML_DIR / rel
+            rel = rst.relative_to(DOCS)
+            if rel.name == "index.rst" and rel.parent == pathlib.Path("."):
+                html_path = HTML_DIR / "index.html"
+            else:
+                html_path = HTML_DIR / rel.with_suffix("") / "index.html"
             html = html_path.read_text()
             with subtests.test(rst=rst):
                 for needle in (
@@ -610,8 +645,8 @@ class TestNoIndex:
     )
 
     def test_utility_pages_noindex(self, subtests):
-        for name in ("genindex.html", "py-modindex.html", "404.html"):
-            path = HTML_DIR / name
+        for name in ("genindex", "py-modindex", "404"):
+            path = HTML_DIR / name / "index.html"
             if not path.is_file():
                 continue
             with subtests.test(page=name):

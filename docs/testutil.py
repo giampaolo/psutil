@@ -14,8 +14,9 @@ import re
 ATOM_NS = {"a": "http://www.w3.org/2005/Atom"}
 
 # Sphinx-generated utility pages (search box, general index, module
-# index). Not real content, so link checks skip them.
-UTILITY_PAGES = {"search.html", "genindex.html", "py-modindex.html"}
+# index). Not real content, so link checks skip them. Slugs, matching
+# the dirhtml URLs (e.g. /genindex/).
+UTILITY_PAGES = {"search", "genindex", "py-modindex"}
 
 
 def find_canonical(html):

@@ -66,17 +66,19 @@ jobs:
         run: make -C docs test
 
       - name: Build HTML
-        # Build from docs/ so the in-tree psutil/ source doesn't shadow
-        # the pip-installed build that sphinx-codeautolink imports.
-        run: |
-          cd docs
-          python -m sphinx -b html --fail-on-warning . _build/html
+        # dirhtml build, warnings-as-errors. Runs from docs/ so the
+        # in-tree psutil/ doesn't shadow the pip-installed build that
+        # sphinx-codeautolink imports.
+        run: make -C docs html
 
       - name: Add GitHub Pages control files
         run: |
           echo "psutil.io" > docs/_build/html/CNAME     # custom domain
           touch docs/_build/html/.nojekyll               # serve _static/ as-is
           echo "${{ github.sha }}" > docs/_build/html/build-sha.txt
+          # dirhtml emits 404/index.html; GitHub Pages serves its custom
+          # 404 only from /404.html at the root.
+          cp docs/_build/html/404/index.html docs/_build/html/404.html
 
       - uses: actions/upload-pages-artifact@v3
         with:

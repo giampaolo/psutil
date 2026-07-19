@@ -17,10 +17,10 @@ Quick links
 
 - `Home page <https://github.com/giampaolo/psutil>`_
 - `Documentation <https://psutil.io>`_
-- `Who uses psutil <https://psutil.io/adoption.html>`_
+- `Who uses psutil <https://psutil.io/adoption/>`_
 - `Download <https://pypi.org/project/psutil/#files>`_
-- `Blog <https://psutil.io/blog.html>`_
-- `What's new <https://psutil.io/changelog.html>`_
+- `Blog <https://psutil.io/blog/>`_
+- `What's new <https://psutil.io/changelog/>`_
 """
 
 

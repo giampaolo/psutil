@@ -53,16 +53,16 @@
 .. raw:: html
 
    <div class="home-platforms">
-     <a class="home-platforms-label" href="platform.html">Runs on</a>
+     <a class="home-platforms-label" href="platform/">Runs on</a>
      <div class="home-platforms-pills">
-       <a class="home-platform-pill" href="platform.html">Linux</a>
-       <a class="home-platform-pill" href="platform.html">Windows</a>
-       <a class="home-platform-pill" href="platform.html">macOS</a>
-       <a class="home-platform-pill" href="platform.html">FreeBSD</a>
-       <a class="home-platform-pill" href="platform.html">OpenBSD</a>
-       <a class="home-platform-pill" href="platform.html">NetBSD</a>
-       <a class="home-platform-pill" href="platform.html">Solaris</a>
-       <a class="home-platform-pill" href="platform.html">AIX</a>
+       <a class="home-platform-pill" href="platform/">Linux</a>
+       <a class="home-platform-pill" href="platform/">Windows</a>
+       <a class="home-platform-pill" href="platform/">macOS</a>
+       <a class="home-platform-pill" href="platform/">FreeBSD</a>
+       <a class="home-platform-pill" href="platform/">OpenBSD</a>
+       <a class="home-platform-pill" href="platform/">NetBSD</a>
+       <a class="home-platform-pill" href="platform/">Solaris</a>
+       <a class="home-platform-pill" href="platform/">AIX</a>
      </div>
    </div>
 
@@ -74,27 +74,27 @@
 
    <div class="home-section-label">Explore the API</div>
    <div class="home-feature-cards">
-     <a class="home-feature-card" href="api.html#cpu">
+     <a class="home-feature-card" href="api/#cpu">
        <img class="home-icon-svg" src="_static/images/icon-cpu.svg" alt="">
        <div class="home-feature-title">CPU</div>
      </a>
-     <a class="home-feature-card" href="api.html#memory">
+     <a class="home-feature-card" href="api/#memory">
        <img class="home-icon-svg" src="_static/images/icon-memory.svg" alt="">
        <div class="home-feature-title">Memory</div>
      </a>
-     <a class="home-feature-card" href="api.html#disks">
+     <a class="home-feature-card" href="api/#disks">
        <img class="home-icon-svg" src="_static/images/icon-disks.svg" alt="">
        <div class="home-feature-title">Disks</div>
      </a>
-     <a class="home-feature-card" href="api.html#network">
+     <a class="home-feature-card" href="api/#network">
        <img class="home-icon-svg" src="_static/images/icon-network.svg" alt="">
        <div class="home-feature-title">Network</div>
      </a>
-     <a class="home-feature-card" href="api.html#sensors">
+     <a class="home-feature-card" href="api/#sensors">
        <img class="home-icon-svg" src="_static/images/icon-sensors.svg" alt="">
        <div class="home-feature-title">Sensors</div>
      </a>
-     <a class="home-feature-card" href="api.html#processes">
+     <a class="home-feature-card" href="api/#processes">
        <img class="home-icon-svg" src="_static/images/icon-processes.svg" alt="">
        <div class="home-feature-title">Processes</div>
      </a>
@@ -236,7 +236,7 @@
        <span class="home-stat-num">780,000+</span>
        <span class="home-stat-label">GitHub repositories</span>
      </a>
-     <a class="home-stat" href="timeline.html">
+     <a class="home-stat" href="timeline/">
        <span class="home-stat-num">17 years</span>
        <span class="home-stat-label">in active development</span>
      </a>

@@ -442,7 +442,7 @@ def main():
             'Source': 'https://github.com/giampaolo/psutil',
             'Issues': 'https://github.com/giampaolo/psutil/issues',
             'Documentation': 'https://psutil.io/',
-            'Changelog': 'https://psutil.io/changelog.html',
+            'Changelog': 'https://psutil.io/changelog/',
             'Funding': 'https://github.com/sponsors/giampaolo',
         },
         # https://pypi.org/classifiers/

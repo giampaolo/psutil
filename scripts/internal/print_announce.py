@@ -25,7 +25,7 @@ PRJ_VERSION = __version__
 PRJ_URL_HOME = 'https://github.com/giampaolo/psutil'
 PRJ_URL_DOC = 'https://psutil.io'
 PRJ_URL_DOWNLOAD = 'https://pypi.org/project/psutil/#files'
-PRJ_URL_WHATSNEW = 'https://psutil.io/changelog.html'
+PRJ_URL_WHATSNEW = 'https://psutil.io/changelog/'
 
 template = """\
 Hello all,

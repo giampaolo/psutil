@@ -28,6 +28,8 @@ so this file is the map.
 ## Notable choices
 
 - Single version, served at the site root (no `/en/`, no `/latest/`).
+- Built with the `dirhtml` builder, so URLs are extensionless directories
+  (`psutil.io/faq/`, no `.html`).
 - Self-hosted on GitHub Pages under the custom domain psutil.io.
 - Fonts, CSS and JS are all self-hosted; no external assets.
 - Social cards, sitemap and Atom feed are generated at build time and rooted at

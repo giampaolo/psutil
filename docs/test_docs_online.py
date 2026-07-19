@@ -120,7 +120,9 @@ class TestLiveSite:
         assert b"psutil" in exc.value.read().lower()
 
     def test_content_pages_reachable(self, subtests):
-        for page in ("api.html", "faq.html"):
+        # dirhtml serves /api/; the no-slash /api 301-redirects to it
+        # (urllib follows). The .html form no longer exists.
+        for page in ("api/", "faq/", "api", "faq"):
             with subtests.test(page=page):
                 status, body = fetch(BASE + page)
                 assert status == 200
@@ -145,7 +147,7 @@ class TestLiveSite:
                 h.startswith(("http://", "https://", "//", "mailto:", "#"))
                 or "_static/" in h
                 or "_images/" in h
-                or path.rsplit("/", 1)[-1] in UTILITY_PAGES
+                or path.rstrip("/").rsplit("/", 1)[-1] in UTILITY_PAGES
             ):
                 continue
             pages.add(urljoin(BASE, path))

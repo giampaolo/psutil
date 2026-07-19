@@ -124,11 +124,6 @@ rst_prolog = ".. currentmodule:: psutil\n"  # Prepended to every .rst file
 # and (via blog_baseurl) ablog's atom feed.
 html_baseurl = "https://psutil.io/"
 
-# Drop the .html from generated links, canonical, og:url and the
-# sitemap. Files stay .html; GitHub Pages serves them at both /page
-# and /page.html, so clean URLs and old .html links both work.
-html_link_suffix = ""
-
 # sphinx-notfound-page: absolute URL prefix for static files and
 # nav links on 404.html.
 notfound_urls_prefix = "/"

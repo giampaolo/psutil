@@ -12,15 +12,15 @@ clean:  ## Remove all build files
 	rm -rf $(BUILDDIR)
 
 html:  ## Generate doc in HTML format. Warnings are turned into failures.
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 autoreload:  ## Rebuild HTML + live-reload browser on file changes (requires sphinx-autobuild)
-	sphinx-autobuild -d $(BUILDDIR)/doctrees . $(BUILDDIR)/html
+	sphinx-autobuild -b dirhtml -d $(BUILDDIR)/doctrees . $(BUILDDIR)/html
 
 autoreload-hard:  ## Same as above but re-writes all files on every refresh
 	make clean
-	sphinx-autobuild -a -d $(BUILDDIR)/doctrees . $(BUILDDIR)/html
+	sphinx-autobuild -b dirhtml -a -d $(BUILDDIR)/doctrees . $(BUILDDIR)/html
 
 # --- checkers
 

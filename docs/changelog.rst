@@ -88,7 +88,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 
   - Doc is no longer hosted on Read the Docs. It's now self-hosted on GitHub
     Pages under a new domain: https://psutil.io. URLs no longer carry the
-    ``/en`` language and version prefixes (e.g. https://psutil.io/faq.html).
+    ``/en`` language and version prefixes (e.g. https://psutil.io/faq/).
   - Doc is rebuilt and deployed automatically on every push to ``master``.
 
 - Misc:
