@@ -72,6 +72,7 @@ _local_exts = [  # defined in the _ext/ folder
     "field_role",
     "genindex_filter",
     "glossary_toc",
+    "notfound_extras",
     "opengraph_override",
     "post_banner",
     "proc_role",
@@ -226,19 +227,21 @@ ogp_social_cards = {"image": _logo, "image_mini": _logo}
 # the default {lang}{version} prefix (we don't use either in URLs).
 sitemap_url_scheme = "{link}"
 sitemap_show_lastmod = True
+# dirhtml URLs are directories, so match the dir form (e.g. "search/",
+# not "search.html") or these leak into the sitemap.
 sitemap_excludes = [
-    "search.html",
-    "genindex.html",
-    "py-modindex.html",
-    "404.html",
+    "search/",
+    "genindex/",
+    "py-modindex/",
+    "404/",
     "_modules/*",
-    "blog/archive.html",
-    "blog/drafts.html",
-    "blog/tag.html",
+    "blog/archive/",
+    "blog/drafts/",
+    "blog/tag/",
     "blog/tag/*",
-    "blog/category.html",
+    "blog/category/",
     "blog/category/*",
-    "blog/author.html",
+    "blog/author/",
     "blog/author/*",
 ]
 # Suppress sphinx-sitemap warning (turned into error by

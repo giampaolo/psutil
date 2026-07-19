@@ -119,6 +119,38 @@ class TestLiveSite:
         assert exc.value.code == 404
         assert b"psutil" in exc.value.read().lower()
 
+    def test_old_html_urls_are_gone(self):
+        # dirhtml serves content at /faq/, not /faq.html. The old .html
+        # form must 404, not silently serve a stale duplicate.
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            fetch(BASE + "faq.html")
+        assert exc.value.code == 404
+
+    def test_404_deep_path_links_absolute(self, subtests):
+        # The custom 404 is served for any missing path, deep ones
+        # included. Every link on it must be absolute, else it resolves
+        # against the request path and 404s again. Regression: dirhtml
+        # left the body cross-references and logo relative.
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            fetch(BASE + "no/such/deep/page-zzz")
+        assert exc.value.code == 404
+        html = exc.value.read().decode("utf-8", "replace")
+        links = re.findall(r'(?:href|src)="([^"]+)"', html)
+        rel = [
+            u
+            for u in links
+            if not u.startswith(
+                ("/", "http://", "https://", "//", "#", "mailto:")
+            )
+        ]
+        assert rel == []
+        # The absolute nav links must actually resolve.
+        targets = sorted(set(re.findall(r'"(/[a-z][a-z-]*/)"', html)))[:5]
+        assert targets
+        for t in targets:
+            with subtests.test(url=t):
+                assert fetch(ORIGIN.rstrip("/") + t)[0] == 200
+
     def test_content_pages_reachable(self, subtests):
         # dirhtml serves /api/; the no-slash /api 301-redirects to it
         # (urllib follows). The .html form no longer exists.

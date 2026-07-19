@@ -272,6 +272,26 @@ class TestSitemap:
         assert urls
         assert not [u for u in urls if u.endswith(".html")]
 
+    def test_excludes_utility_pages(self, subtests):
+        # sitemap_excludes must use the dirhtml dir form ("search/",
+        # not "search.html") or utility + ablog pages leak in.
+        sitemap = HTML_DIR / "sitemap.xml"
+        ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        urls = {
+            u.text
+            for u in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns)
+        }
+        for slug in (
+            "genindex",
+            "py-modindex",
+            "search",
+            "404",
+            "blog/archive",
+            "blog/drafts",
+        ):
+            with subtests.test(slug=slug):
+                assert conf.html_baseurl + slug + "/" not in urls
+
     def test_has_every_blog_post(self, subtests):
         # Catches drift between ablog's post registry and
         # sphinx-sitemap. If sphinx-sitemap stops listing some posts
@@ -656,3 +676,104 @@ class TestNoIndex:
         for name in ("index.html", "api.html", "install.html"):
             with subtests.test(page=name):
                 assert not self.NOINDEX_RE.search(read_html(name))
+
+
+@pytest.mark.usefixtures("build_html")
+class TestLogo:
+    """The top-bar logo must land on the site root from every page."""
+
+    LOGO_RE = re.compile(r'<a class="topbar-logo" href="([^"]+)"')
+
+    def logo_href(self, *parts):
+        m = self.LOGO_RE.search(read_html(*parts))
+        assert m
+        return m.group(1)
+
+    def test_home_logo_targets_root(self):
+        # Not "#", which would strand the user on /# (regression).
+        assert self.logo_href("index.html") == "./"
+
+    def test_content_page_logo_targets_root(self):
+        assert self.logo_href("faq.html") == "../"
+
+    def test_404_logo_is_absolute_root(self):
+        # The 404 is served from arbitrary paths, so a relative/self
+        # link breaks; it must be the absolute root.
+        assert self.logo_href("404.html") == "/"
+
+
+@pytest.mark.usefixtures("build_html")
+class TestNotFound:
+    """The 404 is served from arbitrary paths, so every link on it must
+    be absolute; a relative one resolves against the request path and
+    404s again.
+    """
+
+    def test_root_404_html_exists(self):
+        # notfound_extras copies 404/index.html -> /404.html so static
+        # servers (GitHub Pages, Starlette) serve it for missing paths.
+        assert (HTML_DIR / "404.html").is_file()
+
+    def test_content_root_is_absolute(self):
+        # data-content_root drives JS-built URLs (search, highlight).
+        # On the 404, served from any depth, it must be absolute or a
+        # deep-path 404's search results resolve against the wrong base.
+        m = re.search(r'data-content_root="([^"]+)"', read_html("404.html"))
+        assert m
+        assert m.group(1) == "/"
+
+    def test_all_links_absolute(self):
+        html = read_html("404.html")
+        links = re.findall(r'(?:href|src)="([^"]+)"', html)
+        rel = [
+            u
+            for u in links
+            if not u.startswith(
+                ("/", "http://", "https://", "//", "#", "mailto:")
+            )
+        ]
+        assert rel == []
+
+    def test_helpful_links_present(self, subtests):
+        # Body "jump to ..." cross-references. Regression: notfound
+        # leaves these relative, so they used to break from deep paths.
+        html = read_html("404.html")
+        for target in ("/install/", "/api/", "/faq/", "/recipes/", "/blog/"):
+            with subtests.test(target=target):
+                assert f'href="{target}"' in html
+
+
+@pytest.mark.usefixtures("build_html")
+class TestSearch:
+
+    def test_builder_is_dirhtml(self):
+        # searchtools.js builds result URLs as "<docname>/" only when
+        # BUILDER == "dirhtml"; otherwise it appends LINK_SUFFIX
+        # (.html) and every search result 404s under dirhtml.
+        opts = (HTML_DIR / "_static" / "documentation_options.js").read_text()
+        assert "BUILDER: 'dirhtml'" in opts
+
+
+@pytest.mark.usefixtures("build_html")
+class TestSidebarIcons:
+    """Left-sidebar icons attach via href-based selectors in
+    doc-icons.css. When the URL scheme changed (.html -> dirhtml dirs)
+    the selectors silently stopped matching and every icon vanished.
+    """
+
+    def test_every_sidebar_link_has_icon_selector(self, subtests):
+        css = (HTML_DIR / "_static" / "css" / "doc-icons.css").read_text()
+        fragments = re.findall(r'href\*="([^"]+)"', css)
+        assert fragments
+        nav = re.search(
+            r'<nav[^>]*class="[^"]*left-sidebar.*?</nav>',
+            read_html("faq.html"),
+            re.DOTALL,
+        )
+        assert nav, "left-sidebar not found"
+        # Non-current page links look like "../<slug>/".
+        hrefs = re.findall(r'href="(\.\./[a-z-]+/)"', nav.group(0))
+        assert hrefs
+        for href in sorted(set(hrefs)):
+            with subtests.test(href=href):
+                assert any(frag in href for frag in fragments)
