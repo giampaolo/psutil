@@ -34,7 +34,7 @@ on:
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
-name: docs-deploy
+name: docs
 
 concurrency:
   group: docs-deploy
@@ -71,7 +71,7 @@ jobs:
       - name: Add deploy marker
         run: echo "${{ github.sha }}" > docs/_build/html/build-sha.txt
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: docs/_build/html
 
@@ -87,7 +87,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   test-online:
     needs: deploy

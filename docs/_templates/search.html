@@ -7,7 +7,9 @@
 {# Replace the basic theme's tiny default form with our prominent
    one. The hidden inputs preserve search semantics. #}
 {% block searchbox %}
-<form class="search-page-form" action="search.html" method="get">
+{# Empty action submits to the current URL, so this works under any
+   builder (dirhtml serves this page as /search/, not search.html). #}
+<form class="search-page-form" action="" method="get">
   <i class="fa-solid fa-magnifying-glass search-page-icon" aria-hidden="true"></i>
   <input type="text"
          name="q"

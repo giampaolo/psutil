@@ -39,9 +39,11 @@ def replace(m):
 
 
 def on_build_finished(app, exception):
-    if exception or app.builder.name != "html":
+    # format (not name) so this also runs under dirhtml, which writes
+    # genindex/index.html rather than genindex.html.
+    if exception or app.builder.format != "html":
         return
-    genindex = pathlib.Path(app.outdir) / "genindex.html"
+    genindex = pathlib.Path(app.builder.get_outfilename("genindex"))
     if not genindex.exists():
         return
     original = genindex.read_text(encoding="utf-8")

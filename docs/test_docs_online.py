@@ -231,7 +231,7 @@ class TestLiveSite:
         noindex = re.compile(
             r'<meta[^>]*name="robots"[^>]*content="noindex"', re.IGNORECASE
         )
-        for name in ("genindex.html", "404.html"):
+        for name in ("genindex/", "404/"):
             body = fetch(BASE + name)[1].decode("utf-8", "replace")
             with subtests.test(page=name):
                 assert noindex.search(body)

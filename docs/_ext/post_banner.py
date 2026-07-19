@@ -11,7 +11,6 @@ and inserts a small container after the first section's title.
 """
 
 import math
-import posixpath
 
 from ablog.blog import Blog
 from docutils import nodes
@@ -40,19 +39,21 @@ def reading_minutes(doctree):
     return max(1, math.ceil(count_words(doctree) / WPM))
 
 
-def tag_ref(blog, docname, label, text, classes=None):
+def tag_ref(app, blog, docname, label, text, classes=None):
     """Return a nodes.reference from `docname` to the tag page for
     `label`.
     """
     coll = blog.tags[label]
-    base = posixpath.dirname(docname)
-    target = posixpath.relpath(coll.docname, base) + ".html"
+    # Let the builder compute this: dirhtml serves each page as a
+    # directory, so a hand-rolled relpath + ".html" lands a level off
+    # and points at a file that doesn't exist.
+    target = app.builder.get_relative_uri(docname, coll.docname)
     return nodes.reference(
         text, text, refuri=target, internal=True, classes=classes or []
     )
 
 
-def featured_inline(blog, post, docname):
+def featured_inline(app, blog, post, docname):
     tags = [str(t) for t in post.get("tags") or []]
     if "featured" not in tags:
         return None
@@ -60,7 +61,7 @@ def featured_inline(blog, post, docname):
     # this). Wrap in an inline like tags_inline does.
     container = nodes.inline()
     container += tag_ref(
-        blog, docname, "featured", "Featured", ["post-meta-featured"]
+        app, blog, docname, "featured", "Featured", ["post-meta-featured"]
     )
     return container
 
@@ -86,13 +87,13 @@ def readtime_inline(doctree):
     return nodes.inline(text, text, classes=["post-meta-readtime"])
 
 
-def tags_inline(blog, post, docname):
+def tags_inline(app, blog, post, docname):
     tags = [t for t in post.get("tags") or [] if str(t) != "featured"]
     if not tags:
         return None
     container = nodes.inline(classes=["post-meta-tags"])
     for label in sorted(tags, key=str):
-        container += tag_ref(blog, docname, label, str(blog.tags[label]))
+        container += tag_ref(app, blog, docname, label, str(blog.tags[label]))
     return container
 
 
@@ -144,11 +145,11 @@ def insert_banner(app, doctree, docname):
     blog = Blog(app)
     banner = post_banner(classes=["post-meta-banner"])
     for child in (
-        featured_inline(blog, post, docname),
+        featured_inline(app, blog, post, docname),
         author_inline(post),
         date_inline(post),
         readtime_inline(doctree),
-        tags_inline(blog, post, docname),
+        tags_inline(app, blog, post, docname),
     ):
         if child is not None:
             banner += child

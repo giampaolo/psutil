@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
+import zlib
 from datetime import datetime
 from datetime import timezone
 
@@ -265,19 +266,6 @@ class TestSitemap:
             with subtests.test(page=page):
                 assert conf.html_baseurl + page in urls
 
-    def test_urls_are_extensionless(self):
-        # dirhtml emits directory-style URLs, so no <loc> ends in .html;
-        # they match the canonical URLs. A stray .html means the two
-        # disagree.
-        sitemap = HTML_DIR / "sitemap.xml"
-        ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-        urls = [
-            u.text
-            for u in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns)
-        ]
-        assert urls
-        assert not [u for u in urls if u.endswith(".html")]
-
     def test_excludes_utility_pages(self, subtests):
         # sitemap_excludes must use the dirhtml dir form ("search/",
         # not "search.html") or utility + ablog pages leak in.
@@ -333,11 +321,6 @@ class TestCanonicalUrl:
             with subtests.test(page=page):
                 assert url is not None
                 assert url.startswith(conf.html_baseurl)
-
-    def test_home_canonical_is_root(self):
-        # The home page canonicalizes to the bare domain, not /index
-        # (dirhtml).
-        assert find_canonical(read_html("index.html")) == conf.html_baseurl
 
     def test_og_urls_rooted_at_baseurl(self, subtests):
         # og:url + og:image must point at the deployed domain; they
@@ -750,17 +733,6 @@ class TestNotFound:
 
 
 @pytest.mark.usefixtures("build_html")
-class TestSearch:
-
-    def test_builder_is_dirhtml(self):
-        # searchtools.js builds result URLs as "<docname>/" only when
-        # BUILDER == "dirhtml"; otherwise it appends LINK_SUFFIX
-        # (.html) and every search result 404s under dirhtml.
-        opts = (HTML_DIR / "_static" / "documentation_options.js").read_text()
-        assert "BUILDER: 'dirhtml'" in opts
-
-
-@pytest.mark.usefixtures("build_html")
 class TestSidebarIcons:
     """Left-sidebar icons attach via href-based selectors in
     doc-icons.css. When the URL scheme changed (.html -> dirhtml dirs)
@@ -783,3 +755,114 @@ class TestSidebarIcons:
         for href in sorted(set(hrefs)):
             with subtests.test(href=href):
                 assert any(frag in href for frag in fragments)
+
+
+@pytest.mark.usefixtures("build_html")
+class TestUrlScheme:
+    """dirhtml URL-scheme invariants.
+
+    Pages are served as directories (/faq/), so any hand-rolled
+    "<page>.html" link is dead. These guard the scheme site-wide
+    rather than one feature at a time.
+    """
+
+    SKIP = ("http://", "https://", "//", "mailto:", "data:", "#")
+
+    def resolve(self, page, url):
+        """On-disk path a link points at, or None if not checkable."""
+        url = url.split("#", 1)[0].split("?", 1)[0]
+        if not url or url.startswith(self.SKIP):
+            return None
+        if url.startswith("/"):
+            return HTML_DIR / url.lstrip("/")
+        return (page.parent / url).resolve()
+
+    def test_no_broken_internal_links(self):
+        # Offline link checker over every built page. This is the net
+        # that catches ".html" URLs dirhtml turned into 404s: blog tag
+        # refs, the search form action, raw-HTML blocks, extensions.
+        broken = []
+        pages = sorted(HTML_DIR.rglob("*.html"))
+        assert pages
+        for page in pages:
+            rel = page.relative_to(HTML_DIR)
+            if any(part.startswith("_") for part in rel.parts):
+                continue
+            html = page.read_text(encoding="utf-8", errors="replace")
+            for url in re.findall(r'(?:href|src)="([^"]*)"', html):
+                target = self.resolve(page, url)
+                if target is None:
+                    continue
+                if not (target.is_file() or (target / "index.html").is_file()):
+                    broken.append(f"{rel} -> {url}")
+        assert broken == []
+
+    def test_pages_canonicalize_to_directory_urls(self, subtests):
+        for page, slug in (
+            ("faq.html", "faq/"),
+            ("api.html", "api/"),
+            ("blog.html", "blog/"),
+        ):
+            with subtests.test(page=page):
+                expected = conf.html_baseurl + slug
+                assert find_canonical(read_html(page)) == expected
+
+    def test_blog_index_og_url_is_directory(self):
+        # opengraph_override hand-builds this one; it used to emit
+        # blog.html, a URL dirhtml never writes.
+        val = og_value(read_html("blog.html"), "og:url")
+        assert val == conf.html_baseurl + "blog/"
+
+    def test_home_canonical_is_root(self):
+        # The home page canonicalizes to the bare domain, not /index.
+        assert find_canonical(read_html("index.html")) == conf.html_baseurl
+
+    def test_sitemap_urls_are_extensionless(self):
+        # The sitemap must agree with the canonical URLs; a stray
+        # .html means the two disagree.
+        sitemap = HTML_DIR / "sitemap.xml"
+        ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        urls = [
+            u.text
+            for u in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns)
+        ]
+        assert urls
+        assert not [u for u in urls if u.endswith(".html")]
+
+    def test_search_builder_is_dirhtml(self):
+        # searchtools.js builds result URLs as "<docname>/" only when
+        # BUILDER == "dirhtml"; otherwise it appends LINK_SUFFIX
+        # (.html) and every search result 404s.
+        opts = (HTML_DIR / "_static" / "documentation_options.js").read_text()
+        assert "BUILDER: 'dirhtml'" in opts
+
+    def test_no_absolute_self_links_with_html(self):
+        # The link checker skips absolute http(s) URLs, so a hardcoded
+        # "https://psutil.io/faq.html" would slip straight past it.
+        base = conf.html_baseurl.rstrip("/")
+        pat = re.compile(re.escape(base) + r"/[^\s\"'<>]*\.html")
+        bad = []
+        for page in sorted(HTML_DIR.rglob("*.html")):
+            rel = page.relative_to(HTML_DIR)
+            if any(part.startswith("_") for part in rel.parts):
+                continue
+            text = page.read_text(encoding="utf-8", errors="replace")
+            bad += [f"{rel} -> {hit}" for hit in pat.findall(text)]
+        assert bad == []
+
+    def test_atom_feed_urls_are_extensionless(self):
+        # Feed readers persist these; a .html entry id is a dead link
+        # that stays dead in every subscriber's reader.
+        root = ET.parse(HTML_DIR / "blog" / "atom.xml").getroot()
+        urls = feed_urls(root)
+        assert urls
+        assert [u for u in urls if ".html" in u] == []
+
+    def test_objects_inv_uris_are_extensionless(self):
+        # Other projects intersphinx against this inventory; a stale
+        # .html URI breaks every cross-reference they make into us.
+        raw = (HTML_DIR / "objects.inv").read_bytes()
+        # 4 plain-text header lines, then zlib-compressed entries.
+        entries = zlib.decompress(raw.split(b"\n", 4)[4]).decode("utf-8")
+        assert entries
+        assert ".html" not in entries

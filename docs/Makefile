@@ -32,10 +32,9 @@ autoreload-hard:  ## Same as above but re-writes all files on every refresh
 
 # --- checkers
 
-check-links:  ## Check links
-	$(SPHINXBUILD) $(SPHINXOPTS) -b linkcheck -d $(DOCTREES) . $(BUILDDIR)/linkcheck
-	@echo "Link check complete; look for any errors in the above output " \
-	      "or in $(BUILDDIR)/linkcheck/output.txt."
+check-links:  ## Check links. Prints only broken URLs / warnings.
+	$(SPHINXBUILD) $(SPHINXOPTS) --quiet -b linkcheck -d $(DOCTREES) . $(BUILDDIR)/linkcheck
+	@echo "Link check complete; full report in $(BUILDDIR)/linkcheck/output.txt."
 
 check-codeautolink:  ## Report sphinx-codeautolink resolution failures (non-fatal).
 	$(MAKE) clean

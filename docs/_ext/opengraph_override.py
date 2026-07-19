@@ -82,7 +82,8 @@ def emit_blog_index_meta(app, pagename, templatename, context, doctree):
         ("name", "description", BLOG_DESCRIPTION),
         ("property", "og:title", project + " blog"),
         ("property", "og:type", "website"),
-        ("property", "og:url", base + pagename + ".html"),
+        # Builder-derived: dirhtml serves this as blog/, not blog.html.
+        ("property", "og:url", base + app.builder.get_target_uri(pagename)),
         ("property", "og:site_name", project),
         ("property", "og:description", BLOG_DESCRIPTION),
         ("property", "og:image", base + "_static/images/logo-psutil.png"),
