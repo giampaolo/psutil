@@ -17,6 +17,7 @@ import sys
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
+from urllib.parse import urljoin
 from urllib.parse import urlsplit
 
 import pytest
@@ -148,3 +149,26 @@ class TestLiveSite:
         html = fetch(BASE)[1].decode("utf-8", "replace")
         head = html.split("</head>", 1)[0]
         assert "readthedocs" not in head.lower()
+
+    def test_homepage_internal_links_resolve(self, subtests):
+        # Nav / logo / sidebar / footer links must not 404 (guards
+        # migration + relative-path regressions). Anchors stripped and
+        # pages de-duplicated so each target is hit once.
+        html = fetch(BASE)[1].decode("utf-8", "replace")
+        pages = sorted({
+            urljoin(BASE, h.split("#", 1)[0])
+            for h in re.findall(r'href="([^"]+)"', html)
+            if not h.startswith(("http://", "https://", "//", "mailto:", "#"))
+            and "_static/" not in h
+            and "_images/" not in h
+        })
+        for url in pages:
+            with subtests.test(link=url):
+                status, _ = fetch(url)
+                assert status == 200
+
+    def test_sitemap_has_lastmod(self):
+        # Regression: a shallow CI checkout drops git dates, leaving
+        # the sitemap without <lastmod>. Needs fetch-depth: 0.
+        body = fetch(BASE + "sitemap.xml")[1]
+        assert b"<lastmod>" in body

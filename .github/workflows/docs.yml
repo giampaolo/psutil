@@ -1,8 +1,9 @@
-# Builds the docs from master and deploys them to GitHub Pages.
+# Builds and tests the docs, then deploys them to GitHub Pages.
 #
-# Single version, served at the site root (psutil.io). Nothing is
-# committed: the built site is uploaded as an artifact and served
-# directly (no gh-pages branch, no separate repo).
+# Flow: sanity tests -> build -> deploy -> live-site tests. Single
+# version, served at the site root (psutil.io). Nothing is committed:
+# the built site is uploaded as an artifact and served directly (no
+# gh-pages branch, no separate repo).
 #
 # Repo setup: Settings -> Pages -> Source = "GitHub Actions", and set
 # the custom domain to psutil.io.
@@ -27,6 +28,10 @@ on:
     paths:
       - "docs/**"
       - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - ".github/workflows/docs.yml"
   workflow_dispatch:
 
 name: docs-deploy
@@ -41,6 +46,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0    # full history for sphinx-last-updated-by-git
 
       - uses: actions/setup-python@v6
         with:
@@ -48,8 +55,16 @@ jobs:
 
       - name: Install dependencies
         run: |
+          make install-pydeps-test
+          make install-pydeps-lint
           pip install -r docs/requirements.txt
           pip install .                   # codeautolink imports psutil
+
+      - name: Lint rst
+        run: make lint-rst
+
+      - name: Doc sanity tests
+        run: make -C docs test
 
       - name: Build HTML
         # Build from docs/ so the in-tree psutil/ source doesn't shadow
@@ -60,8 +75,9 @@ jobs:
 
       - name: Add GitHub Pages control files
         run: |
-          echo "psutil.io" > docs/_build/html/CNAME    # custom domain
-          touch docs/_build/html/.nojekyll              # serve _static/ as-is
+          echo "psutil.io" > docs/_build/html/CNAME     # custom domain
+          touch docs/_build/html/.nojekyll               # serve _static/ as-is
+          echo "${{ github.sha }}" > docs/_build/html/build-sha.txt
 
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -69,6 +85,7 @@ jobs:
 
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -79,3 +96,36 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  test-online:
+    needs: deploy
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+      - name: Install dependencies
+        run: |
+          make install-pydeps-test
+          pip install -r docs/requirements.txt
+
+      - name: Wait for the live site to serve this commit
+        # deploy-pages reports "live" before the CDN edge catches up,
+        # so poll build-sha.txt (cache-busted) until it matches.
+        run: |
+          for i in $(seq 1 60); do
+            live=$(curl -fsS "https://psutil.io/build-sha.txt?cb=$i" || true)
+            if [ "$live" = "${{ github.sha }}" ]; then
+              echo "live site is serving ${{ github.sha }}"
+              exit 0
+            fi
+            echo "waiting for CDN propagation ($i)..."
+            sleep 5
+          done
+          echo "timed out waiting for the deploy to go live"
+          exit 1
+
+      - name: Live-site tests
+        run: make -C docs test-online-doc

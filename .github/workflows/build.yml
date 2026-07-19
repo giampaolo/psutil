@@ -12,7 +12,11 @@
 on:
   workflow_dispatch:
   push:
+    paths-ignore:
+      - "docs/**"
   pull_request:
+    paths-ignore:
+      - "docs/**"
 name: build
 concurrency:
   # Cancel build if a new one starts, but don't interrupt all jobs on the first
@@ -68,20 +72,6 @@ jobs:
       - name: "Run linters"
         run: |
           make ci-lint
-
-  # Test docs
-  docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
-        with:
-          python-version: 3.x
-      - name: "Test docs"
-        run: |
-          make install-pydeps-test
-          pip install -r docs/requirements.txt
-          make test-docs
 
   # Merge wheels and check sanity of the package distribution.
   merge-and-check-dist:
