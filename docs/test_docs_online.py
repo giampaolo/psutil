@@ -13,10 +13,14 @@ import http.client
 import os
 import pathlib
 import re
+import socket
+import ssl
 import sys
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
+from datetime import datetime
+from datetime import timezone
 from urllib.parse import urljoin
 from urllib.parse import urlsplit
 
@@ -235,3 +239,49 @@ class TestLiveSite:
             body = fetch(BASE + name)[1].decode("utf-8", "replace")
             with subtests.test(page=name):
                 assert noindex.search(body)
+
+    def test_tls_certificate_is_valid(self):
+        # create_default_context verifies chain + hostname, so an
+        # expired or mismatched cert raises here. Custom-domain certs
+        # are re-provisioned whenever the Pages domain is touched,
+        # which is exactly when they break.
+        host = urlsplit(BASE).netloc
+        ctx = ssl.create_default_context()
+        with socket.create_connection((host, 443), timeout=30) as sock:
+            with ctx.wrap_socket(sock, server_hostname=host) as ssock:
+                cert = ssock.getpeercert()
+        assert cert
+        expires = datetime.strptime(
+            cert["notAfter"], "%b %d %H:%M:%S %Y %Z"
+        ).replace(tzinfo=timezone.utc)
+        left = (expires - datetime.now(timezone.utc)).days
+        assert left > 20, f"TLS cert expires in {left} days"
+
+    def test_no_slash_url_redirects_to_directory(self):
+        # /api/ is the canonical dirhtml URL. The no-slash form must
+        # 301 to it; serving 200 at both would be the same page under
+        # two URLs.
+        conn = http.client.HTTPSConnection(urlsplit(BASE).netloc, timeout=30)
+        try:
+            conn.request(
+                "GET", "/api", headers={"User-Agent": "psutil-docs-test"}
+            )
+            resp = conn.getresponse()
+            assert resp.status in {301, 302, 307, 308}
+            assert resp.getheader("Location", "").endswith("/api/")
+        finally:
+            conn.close()
+
+    def test_robots_allows_indexing(self):
+        # A stray "Disallow: /" would deindex the whole site, silently.
+        body = fetch(ORIGIN + "robots.txt")[1].decode("utf-8", "replace")
+        rules = [line.strip().lower() for line in body.splitlines()]
+        assert "disallow: /" not in rules
+
+    def test_homepage_is_indexable(self):
+        # A global noindex (say a bad layout.html edit) would quietly
+        # drop the entire site from search results.
+        html = fetch(BASE)[1].decode("utf-8", "replace")
+        assert not re.search(
+            r'<meta[^>]*name="robots"[^>]*noindex', html, re.IGNORECASE
+        )

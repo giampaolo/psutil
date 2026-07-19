@@ -24,17 +24,19 @@
       <a href="https://pypi.org/project/psutil">
         <img src="https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=yellowgreen" alt="Latest version">
       </a>
+    </div>
 
-      <a href="https://github.com/giampaolo/psutil/actions/workflows/build.yml">
-        <img src="https://github.com/giampaolo/psutil/actions/workflows/build.yml/badge.svg" alt="Linux, macOS, Windows">
+    <div align="center">
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild">
+        <img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml.svg?label=Linux%2C%20macOS%2C%20Win" alt="Linux, macOS, Windows">
       </a>
 
-      <a href="https://github.com/giampaolo/psutil/actions/workflows/bsd.yml">
-        <img src="https://github.com/giampaolo/psutil/actions/workflows/bsd.yml/badge.svg" alt="FreeBSD, NetBSD, OpenBSD">
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Absd-tests">
+        <img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=BSD" alt="FreeBSD, NetBSD, OpenBSD">
       </a>
 
-      <a href="https://github.com/giampaolo/psutil/actions/workflows/docs.yml">
-        <img src="https://github.com/giampaolo/psutil/actions/workflows/docs.yml/badge.svg" alt="Documentation">
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Adocs">
+        <img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/docs.yml.svg?label=docs" alt="Documentation">
       </a>
     </div>
 

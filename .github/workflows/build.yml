@@ -17,7 +17,7 @@ on:
   pull_request:
     paths-ignore:
       - "docs/**"
-name: "Linux, macOS, Windows"
+name: build
 concurrency:
   # Cancel build if a new one starts, but don't interrupt all jobs on the first
   # failure.
