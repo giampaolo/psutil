@@ -36,11 +36,10 @@ About
 psutil is a cross-platform library for retrieving information about running
 **processes** and **system utilization** (CPU, memory, disks, network, sensors)
 in Python. It is useful mainly for **system monitoring**, **profiling**,
-**limiting process resources**, and **managing running processes**.
-
-It implements many functionalities offered by UNIX command line tool such as
+**limiting process resources**, and **managing running processes**. It
+implements many functionalities offered by UNIX command line tool such as
 *ps, top, free, iotop, netstat, ifconfig, lsof* and others (see
-`shell equivalents`_). psutil supports the following platforms:
+`shell equivalents`_). Psutil supports the following platforms:
 
 - **Linux**
 - **Windows**
@@ -56,9 +55,7 @@ psutil is among the
 `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__ most-downloaded
 packages on PyPI, with **370+ million** downloads per month and **780,000+**
 `GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__
-using it.
-
-See also `adoptions <https://psutil.io/adoption/>`__ and
+using it. See also `adoptions <https://psutil.io/adoption/>`__ and
 `alternatives <https://psutil.io/alternatives/>`__.
 
 Install

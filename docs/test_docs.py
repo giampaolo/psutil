@@ -225,7 +225,7 @@ class TestHtmlBuild:
         # walks those deps and picks the latest commit timestamp,
         # which we don't replicate here.
         dep_pat = re.compile(r"^\.\. (?:include|raw)::", re.MULTILINE)
-        date_pat = re.compile(r"<span>Updated: (\d{4}-\d{2}-\d{2})</span>")
+        date_pat = re.compile(r"Updated: <a\b[^>]*>(\d{4}-\d{2}-\d{2})</a>")
         for html in all_html_pages():
             src = source_rst_for(html)
             if dep_pat.search(src.read_text()):
@@ -242,6 +242,20 @@ class TestHtmlBuild:
             ).strftime("%Y-%m-%d")
             with subtests.test(page=html.relative_to(HTML_DIR)):
                 assert m.group(1) == expected
+
+    def test_footer_github_links_resolve(self, subtests):
+        # ablog and codeautolink generate pages with no .rst behind
+        # them (blog/tag/*, blog/2025, _modules/*). Their footer
+        # links used to be built from the page name anyway, so they
+        # 404ed on GitHub.
+        pat = re.compile(
+            r'github\.com/giampaolo/psutil/(?:edit|commits)/master/(\S+?)"'
+        )
+        for page in sorted(HTML_DIR.rglob("*.html")):
+            html = page.read_text(encoding="utf-8", errors="replace")
+            for target in set(pat.findall(html)):
+                with subtests.test(page=page.relative_to(HTML_DIR)):
+                    assert (ROOT / target).is_file()
 
 
 @pytest.mark.usefixtures("build_html")
@@ -712,7 +726,7 @@ class TestNotFound:
 
     def test_all_links_absolute(self):
         html = read_html("404.html")
-        links = re.findall(r'(?:href|src)="([^"]+)"', html)
+        links = re.findall(r'(?:href|src|action)="([^"]+)"', html)
         rel = [
             u
             for u in links
@@ -788,7 +802,7 @@ class TestUrlScheme:
             if any(part.startswith("_") for part in rel.parts):
                 continue
             html = page.read_text(encoding="utf-8", errors="replace")
-            for url in re.findall(r'(?:href|src)="([^"]*)"', html):
+            for url in re.findall(r'(?:href|src|action)="([^"]*)"', html):
                 target = self.resolve(page, url)
                 if target is None:
                     continue

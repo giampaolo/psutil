@@ -67,6 +67,7 @@ _third_party_exts = [
 ]
 
 _local_exts = [  # defined in the _ext/ folder
+    "ablog_extras",
     "availability",
     "changelog_anchors",
     "check_python_syntax",
@@ -280,13 +281,12 @@ def setup(app):
     # collection of docs/test_docs.py doesn't hit it.
     import psutil  # noqa: F401
 
-    # Monkey patch ablog to support parallel builds:
-    # https://github.com/sunpy/ablog/pull/330.
-    def merge_ablog_posts(app, env, docnames, other):
-        if hasattr(other, "ablog_posts"):
-            if not hasattr(env, "ablog_posts"):
-                env.ablog_posts = {}
-            env.ablog_posts.update(other.ablog_posts)
+    # ablog and sphinx-codeautolink synthesize pages (blog/tag/*,
+    # blog/2025, _modules/*) with no .rst behind them. The footer's
+    # "Edit on GitHub" / "Updated" links would point at files that
+    # don't exist.
+    def set_has_rst_source(app, pagename, templatename, context, doctree):
+        path = pathlib.Path(app.env.doc2path(pagename))
+        context["has_rst_source"] = path.is_file()
 
-    app.connect("env-merge-info", merge_ablog_posts)
-    app.extensions["ablog"].parallel_read_safe = True
+    app.connect("html-page-context", set_has_rst_source)

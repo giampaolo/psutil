@@ -10,10 +10,8 @@ psutil is among the
 packages on PyPI, with **370+ million** downloads per month and **780,000+**
 `GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__
 using it. The projects below are a small sample of notable software that
-depends on psutil.
-
-See also :doc:`alternatives` for related Python libraries and equivalents in
-other languages.
+depends on psutil. See also :doc:`alternatives` for related Python libraries
+and equivalents in other languages.
 
 Infrastructure / automation
 ---------------------------
