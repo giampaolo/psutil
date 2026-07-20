@@ -80,10 +80,10 @@ Support history
 * psutil 5.9.6 (2023-10): drop Python 3.4 and 3.5
 * psutil 5.9.1 (2022-05): drop Python 2.6
 * psutil 5.9.0 (2021-12): add **MidnightBSD**
-* psutil 5.8.0 (2020-12): add **PyPy 2** on Windows
+* psutil 5.8.0 (2020-12): add **PyPy2** on Windows
 * psutil 5.7.1 (2020-07): add **Windows Nano**
 * psutil 5.7.0 (2020-02): drop Windows XP & Windows Server 2003
-* psutil 5.7.0 (2020-02): add **PyPy 3** on Windows
+* psutil 5.7.0 (2020-02): add **PyPy3** on Windows
 * psutil 5.4.0 (2017-11): add **AIX**
 * psutil 3.4.1 (2016-01): add **NetBSD**
 * psutil 3.3.0 (2015-11): add **OpenBSD**
