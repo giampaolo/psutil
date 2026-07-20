@@ -1126,8 +1126,8 @@ class RootFsDeviceFinder:
         with open_text(path) as f:
             for line in f:
                 if line.startswith("DEVNAME="):
-                    name = line.strip().rpartition("DEVNAME=")[2]
-                    if name:  # just for extra safety
+                    # just for extra safety
+                    if name := line.strip().rpartition("DEVNAME=")[2]:
                         return f"/dev/{name}"
 
     def ask_sys_class_block(self):
@@ -2100,8 +2100,7 @@ class Process:
         ):
             # See: https://github.com/giampaolo/psutil/issues/956
             data = self._read_status_file()
-            match = _re.findall(data)
-            if match:
+            if match := _re.findall(data):
                 return list(range(int(match[0][0]), int(match[0][1]) + 1))
             else:
                 return list(range(len(per_cpu_times())))

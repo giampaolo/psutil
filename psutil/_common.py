@@ -121,8 +121,7 @@ class Error(Exception):
 
     def __str__(self):
         # invoked on `raise Error`
-        info = self._infodict(("pid", "ppid", "name"))
-        if info:
+        if info := self._infodict(("pid", "ppid", "name")):
             details = "({})".format(
                 ", ".join([f"{k}={v!r}" for k, v in info.items()])
             )
