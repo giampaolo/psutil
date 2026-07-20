@@ -4,16 +4,21 @@ Platform support
 Python
 ^^^^^^
 
-**Current Python:** 3.8 and PyPy3.
+.. table::
+   :class: wide-table
 
-**Python 2.7**: latest psutil version supporting it is
-`psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`_ (Dec 2024). The 6.1.X
-series may still receive critical bug-fixes but no new features. To install
-psutil on Python 2.7 run:
-
-.. code-block:: none
-
-    python2 -m pip install psutil==6.1.*
+   ==============================  =========  ========================================================================================================
+   Feature                         Supported  Notes
+   ==============================  =========  ========================================================================================================
+   Minimum Python version          3.8        last version supporting 3.6 / 3.7 is `psutil 7.2.2 <https://pypi.org/project/psutil/7.2.2/>`_ (Jan 2026)
+   PyPy3                           yes        not tested on CI
+   Free threading (no-GIL)         yes        ``cp313t`` and ``cp314t`` wheels are published
+   Stable ABI (abi3)               yes        one ``cp38-abi3`` wheel serves 3.8 and above
+   Inline type hints               yes
+   Sub-interpreters                no         C extensions use single-phase init, so ``concurrent.interpreters`` can't import psutil
+   PEP 561 (``py.typed``)          no
+   Python 2.7                      no         last version supporting it is `psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`_ (Dec 2024)
+   ==============================  =========  ========================================================================================================
 
 Operating systems
 ^^^^^^^^^^^^^^^^^
@@ -64,7 +69,7 @@ Notes:
 Support history
 ^^^^^^^^^^^^^^^
 
-* psutil 8.0.0 (2026-XX): drop Python 3.6
+* psutil 8.0.0 (2026-XX): drop Python 3.6 and 3.7
 * psutil 7.2.0 (2025-12): publish wheels for **Linux musl**
 * psutil 7.1.2 (2025-10): publish wheels for **free-threaded Python**
 * psutil 7.1.2 (2025-10): no longer publish wheels for 32-bit Python (Linux and
