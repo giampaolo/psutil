@@ -479,6 +479,7 @@ def main():
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
             'Programming Language :: Python',
+            'Programming Language :: Python :: Free Threading',
             'Topic :: Software Development :: Libraries :: Python Modules',
             'Topic :: Software Development :: Libraries',
             'Topic :: System :: Benchmark',
