@@ -19,9 +19,11 @@ import pytest
 from . import ROOT_DIR
 from . import import_module_by_path
 
-cb = import_module_by_path(
+BOT_PATH = (
     pathlib.Path(ROOT_DIR) / ".github" / "workflows" / "changelog_bot.py"
 )
+
+cb = import_module_by_path(BOT_PATH)
 
 CHANGELOG = """\
 Changelog
