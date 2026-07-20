@@ -1,5 +1,5 @@
 [tool.black]
-target-version = ["py37"]
+target-version = ["py38"]
 line-length = 79
 skip-string-normalization = true
 preview = true
@@ -10,7 +10,7 @@ ignore = ["docs", "docs/**"]
 
 [tool.ruff]
 # https://beta.ruff.rs/docs/settings/
-target-version = "py37"
+target-version = "py38"
 line-length = 79
 
 [tool.ruff.lint]

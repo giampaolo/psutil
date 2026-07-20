@@ -474,6 +474,7 @@ def main():
             'Operating System :: POSIX :: SunOS/Solaris',
             'Operating System :: POSIX',
             'Programming Language :: C',
+            'Programming Language :: Python :: 3 :: Only',
             'Programming Language :: Python :: 3',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
@@ -498,7 +499,7 @@ def main():
             "dev": DEV_DEPS,
         }
         kwargs.update(
-            python_requires=">=3.7",
+            python_requires=">=3.8",
             extras_require=extras_require,
             zip_safe=False,
         )
