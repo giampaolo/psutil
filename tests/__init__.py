@@ -10,7 +10,7 @@ import ctypes
 import enum
 import errno
 import functools
-import importlib
+import importlib.util
 import ipaddress
 import os
 import pathlib
@@ -180,7 +180,7 @@ ASCII_FS = sys.getfilesystemencoding().lower() in {"ascii", "us-ascii"}
 
 # --- paths
 
-ROOT_DIR = os.environ.get("PSUTIL_ROOT") or str(
+ROOT_DIR = os.environ.get("PSUTIL_ROOT_DIR") or str(
     pathlib.Path(__file__).resolve().parent.parent
 )
 
@@ -1800,9 +1800,11 @@ def reload_module(module):
 
 
 def import_module_by_path(path):
-    from _bootstrap import load_module
-
-    return load_module(path)
+    name = os.path.splitext(os.path.basename(path))[0]
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 # ===================================================================
