@@ -172,8 +172,8 @@ New APIs:
 
 Others:
 
-- Dropped support for Python 3.6 and 3.7. Minimum version is now 3.8. See
-  :ref:`migration guide <migration-8.0>`.
+- :gh:`2872`: Dropped support for Python 3.6 and 3.7. Minimum version is now
+  3.8.
 - :gh:`2687`, [SunOS]: :func:`users` fails with ``ValueError``.
 - :gh:`2747`: the field order of the named tuple returned by :func:`cpu_times`
   has been normalized on all platforms, and the first 3 fields are now always

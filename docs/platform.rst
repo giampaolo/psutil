@@ -7,18 +7,18 @@ Python
 .. table::
    :class: wide-table
 
-   ==============================  =========  ========================================================================================================
-   Feature                         Supported  Notes
-   ==============================  =========  ========================================================================================================
-   Minimum Python version          3.8        last version supporting 3.6 / 3.7 is `psutil 7.2.2 <https://pypi.org/project/psutil/7.2.2/>`_ (Jan 2026)
-   PyPy3                           yes        not tested on CI
-   Free threading (no-GIL)         yes        ``cp313t`` and ``cp314t`` wheels are published
-   Stable ABI (abi3)               yes        one ``cp38-abi3`` wheel serves 3.8 and above
-   Inline type hints               yes
-   Sub-interpreters                no         C extensions use single-phase init, so ``concurrent.interpreters`` can't import psutil
-   PEP 561 (``py.typed``)          no
-   Python 2.7                      no         last version supporting it is `psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`_ (Dec 2024)
-   ==============================  =========  ========================================================================================================
+   =======================  =========  ========================================================================================================
+   Feature                  Supported  Notes
+   =======================  =========  ========================================================================================================
+   Minimum Python version   3.8        last version supporting 3.6 / 3.7 is `psutil 7.2.2 <https://pypi.org/project/psutil/7.2.2/>`_ (Jan 2026)
+   PyPy3                    yes        not tested on CI
+   Free threading (no-GIL)  yes        ``cp313t`` and ``cp314t`` wheels are published
+   Stable ABI (abi3)        yes        one ``cp38-abi3`` wheel serves 3.8 and above
+   Inline type hints        yes
+   Sub-interpreters         no         only legacy shared-GIL ones; ``concurrent.interpreters`` fails (:gh:`2576`)
+   PEP 561 (``py.typed``)   no
+   Python 2.7               no         last version supporting it is `psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`_ (Dec 2024)
+   =======================  =========  ========================================================================================================
 
 Operating systems
 ^^^^^^^^^^^^^^^^^
