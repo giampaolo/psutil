@@ -363,6 +363,7 @@ class Process:
         self._last_proc_cpu_times = None
         self._exitcode = _SENTINEL
         self._prefetch = {}
+        self._ad_value = _SENTINEL
         self._ident = (self.pid, None)
         try:
             self._ident = self._get_ident()
@@ -380,6 +381,12 @@ class Process:
                 msg = "process PID not found"
                 raise NoSuchProcess(pid, msg=msg) from None
             self._gone = True
+
+    def _is_ad_value(self, value):
+        """Whether `value` is the `ad_value` that process_iter(attrs=...)
+        stored in place of a getter which raised AccessDenied.
+        """
+        return self._ad_value is not _SENTINEL and value is self._ad_value
 
     def _get_ident(self):
         """Return a `(pid, uid)` tuple which is supposed to identify a
@@ -814,7 +821,10 @@ class Process:
                 # might happen if python was installed from sources
                 msg = "requires pwd module shipped with standard python"
                 raise ImportError(msg)
-            real_uid = self.uids().real
+            uids = self.uids()
+            if self._is_ad_value(uids):
+                return uids
+            real_uid = uids.real
             try:
                 return pwd.getpwuid(real_uid).pw_name
             except KeyError:
@@ -1225,6 +1235,8 @@ class Process:
         All numbers are expressed in bytes.
         """
         base = self.memory_info()
+        if self._is_ad_value(base):
+            return base
         if hasattr(self._proc, "memory_info_ex"):
             extras = self._proc.memory_info_ex()
             return _ntp.pmem_ex(**base._asdict(), **extras)
@@ -1263,11 +1275,16 @@ class Process:
         )
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         basic_mem = self.memory_info()
+        if self._is_ad_value(basic_mem):
+            return basic_mem
         if hasattr(self, "memory_footprint"):
             fp = self.memory_footprint()
+            if self._is_ad_value(fp):
+                return fp
             return _ntp.pfullmem(*basic_mem + fp)
         return _ntp.pfullmem(*basic_mem)
 
+    @_use_prefetch
     def memory_percent(self, memtype: str = "rss") -> float:
         """Compare process memory to total physical system memory and
         calculate process memory utilization as a percentage.
@@ -1303,6 +1320,8 @@ class Process:
         else:
             fun = self.memory_info_ex
         metrics = fun()
+        if self._is_ad_value(metrics):
+            return metrics
         value = getattr(metrics, memtype)
 
         # use cached value if available
@@ -1742,10 +1761,12 @@ def process_iter(
                 if proc is None:  # new process
                     proc = add(pid)
                 proc._prefetch = {}  # clear cache
+                proc._ad_value = _SENTINEL
                 if attrs is not None:
                     proc._prefetch = proc.as_dict(
                         attrs=attrs, ad_value=ad_value
                     )
+                    proc._ad_value = ad_value
                 yield proc
             except ZombieProcess:
                 if proc is not None:

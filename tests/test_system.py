@@ -127,6 +127,47 @@ class TestProcessIter(PsutilTestCase):
             assert p.name() == p._prefetch["name"]
             assert p.status() == p._prefetch["status"]
 
+    def test_prefetch_memory_percent(self):
+        # It used to skip its own cached value, run the body, and
+        # crash on memory_info()'s ad_value.
+        with mock.patch(
+            "psutil._psplatform.Process.memory_info",
+            side_effect=psutil.AccessDenied(0, ""),
+        ):
+            for p in psutil.process_iter(attrs=["memory_percent"]):
+                assert p.memory_percent() is None
+
+    def test_prefetch_derived_methods(self):
+        # The derived method is not in attrs, so its body runs and
+        # reads the denied one's ad_value.
+        with mock.patch(
+            "psutil._psplatform.Process.memory_info",
+            side_effect=psutil.AccessDenied(0, ""),
+        ):
+            for p in psutil.process_iter(attrs=["memory_info"]):
+                assert p.memory_percent() is None
+                assert p.memory_info_ex() is None
+
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    def test_prefetch_derived_username(self):
+        # username() derives from uids(), which is POSIX only.
+        with mock.patch(
+            "psutil._psplatform.Process.uids",
+            side_effect=psutil.AccessDenied(0, ""),
+        ):
+            for p in psutil.process_iter(attrs=["uids"]):
+                assert p.username() is None
+
+    def test_prefetch_ad_value_is_not_none(self):
+        # ad_value can be any object, not just None.
+        flag = object()
+        with mock.patch(
+            "psutil._psplatform.Process.memory_info",
+            side_effect=psutil.AccessDenied(0, ""),
+        ):
+            for p in psutil.process_iter(attrs=["memory_info"], ad_value=flag):
+                assert p.memory_percent() is flag
+
     def test_info_deprecation(self):
         for p in psutil.process_iter(attrs=["name"]):
             with warnings.catch_warnings(record=True) as ws:
