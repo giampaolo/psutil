@@ -1453,9 +1453,7 @@ def tcp_socketpair(family, addr=("", 0)):
     """Build a pair of TCP sockets connected to each other.
     Return a (server, client) tuple.
     """
-    with socket.socket(family, SOCK_STREAM) as ll:
-        ll.bind(addr)
-        ll.listen(5)
+    with socket.create_server(addr, family=family, backlog=5) as ll:
         addr = ll.getsockname()
         c = socket.socket(family, SOCK_STREAM)
         try:

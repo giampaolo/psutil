@@ -4,7 +4,7 @@ Platform support
 Python
 ^^^^^^
 
-**Current Python:** 3.7 and PyPy3.
+**Current Python:** 3.8 and PyPy3.
 
 **Python 2.7**: latest psutil version supporting it is
 `psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`_ (Dec 2024). The 6.1.X
