@@ -176,6 +176,7 @@ include tests/README.md
 include tests/__init__.py
 include tests/test_aix.py
 include tests/test_bsd.py
+include tests/test_changelog_bot.py
 include tests/test_connections.py
 include tests/test_contracts.py
 include tests/test_heap.py
