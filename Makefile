@@ -19,8 +19,8 @@ DPRINT = ~/.dprint/bin/dprint
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
 
-# install git hook
-_ := $(shell mkdir -p .git/hooks/ && ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit)
+# install git hook (skipped in worktrees, where .git is a file)
+_ := $(shell test -d .git && mkdir -p .git/hooks/ && ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit)
 
 # ===================================================================
 # Install
@@ -37,7 +37,7 @@ clean:  ## Remove all build files.
 		-o -type f -name \*.rej \
 		-o -type f -name \*.so \
 		-o -type f -name \*.~ \
-		-o -type f -name \*\$testfn`
+		-o -name \*@psutil-\*`
 	@rm -rfv \
 		*.core \
 		*.egg-info \
@@ -65,7 +65,7 @@ build:  ## Compile (in parallel) without installing.
 install:  ## Install this package as current user in "edit" mode.
 	$(MAKE) build
 	# If not in a virtualenv, add --user to the install command.
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop $(SETUP_INSTALL_ARGS) `$(PYTHON) -c \
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop `$(PYTHON) -c \
 		"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
 
 uninstall:  ## Uninstall this package via pip.
@@ -75,7 +75,7 @@ uninstall:  ## Uninstall this package via pip.
 install-pip:  ## Install pip (no-op if already installed).
 	$(PYTHON) scripts/internal/install_pip.py
 
-install-sysdeps:
+install-sysdeps:  ## Install system deps needed to compile psutil.
 	./scripts/internal/install-sysdeps.sh
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
@@ -106,7 +106,7 @@ test:  ## Run all tests (except memleak tests).
 	$(RUN_TEST) $(ARGS)
 
 test-parallel:  ## Run all tests (except memleak tests) in parallel.
-	$(RUN_TEST) -p xdist -n auto --dist loadgroup $(ARGS)
+	$(RUN_TEST) -n auto --dist loadgroup $(ARGS)
 
 test-process:  ## Run process-related tests.
 	$(RUN_TEST) -k "test_process.py or test_proc or test_pid or Process or pids or pid_exists" $(ARGS)
@@ -185,11 +185,11 @@ black:  ## Run black formatter.
 lint-c:  ## Run C linter.
 	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format --dry-run --Werror {}
 
-dprint:
+dprint:  ## Run linter for .md / .json / .yml files.
 	@$(DPRINT) check
 
 lint-rst:  ## Run linter for .rst files.
-	@$(call _ls,'*.rst') | xargs python3 scripts/internal/rst_unused_targets.py
+	@$(call _ls,'*.rst') | xargs $(PYTHON) scripts/internal/rst_unused_targets.py
 	@$(call _ls,'*.rst') | xargs sphinx-lint --enable all --disable line-too-long
 	@$(call _ls,'*.rst') | xargs rstwrap --check
 
@@ -207,36 +207,38 @@ lint-all:  ## Run all linters
 # --- not mandatory linters (just run from time to time)
 
 pylint:  ## Python pylint
-	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=0 $(ARGS)
+	@$(call _ls,'*.py') | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=0 $(ARGS)
 
 vulture:  ## Find unused code
-	@git ls-files '*.py' | xargs $(PYTHON) -m vulture $(ARGS)
+	@$(call _ls,'*.py') | xargs $(PYTHON) -m vulture $(ARGS)
 
 # ===================================================================
 # Fixers
 # ===================================================================
 
-fix-black:
-	@git ls-files '*.py' | xargs $(PYTHON) -m black
+fix-black:  ## Reformat python code with black.
+	@$(call _ls,'*.py') | xargs $(PYTHON) -m black
 
-fix-ruff:
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --fix --output-format=concise $(ARGS)
+fix-ruff:  ## Fix ruff errors.
+	@$(call _ls,'*.py') | xargs $(PYTHON) -m ruff check --fix --output-format=concise $(ARGS)
 
-fix-c:
-	@git ls-files '*.c' '*.h' | xargs -P0 -I{} clang-format -i {}  # parallel exec
+fix-c:  ## Reformat C code with clang-format.
+	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format -i {}  # parallel exec
 
 fix-toml:  ## Fix pyproject.toml
-	@git ls-files '*.toml' | xargs toml-sort
+	@$(call _ls,'*.toml') | xargs toml-sort
 
-fix-rst:
-	@git ls-files '*.rst' | xargs rstwrap
+fix-rst:  ## Re-wrap .rst files.
+	@$(call _ls,'*.rst') | xargs rstwrap
 
-fix-dprint:
+fix-dprint:  ## Reformat .md / .json / .yml files.
 	@$(DPRINT) fmt
 
 fix-all:  ## Run all code fixers.
 	$(MAKE) fix-ruff
 	$(MAKE) fix-black
+	$(MAKE) fix-c
+	$(MAKE) fix-rst
 	$(MAKE) fix-toml
 	$(MAKE) fix-dprint
 
@@ -353,7 +355,7 @@ release:  ## Upload a new release.
 	$(MAKE) git-tag-release
 
 git-tag-release:  ## Git-tag a new release.
-	git tag -a v`python3 -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
+	git tag -a v`$(PYTHON) -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
 	git push --follow-tags
 
 # ===================================================================
