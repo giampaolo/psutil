@@ -54,10 +54,7 @@ WINDOWS = _common.WINDOWS
 hilite = _common.hilite
 
 PYPY = '__pypy__' in sys.builtin_module_names
-PY36_PLUS = sys.version_info[:2] >= (3, 6)
-PY37_PLUS = sys.version_info[:2] >= (3, 7)
-CP36_PLUS = PY36_PLUS and sys.implementation.name == "cpython"
-CP37_PLUS = PY37_PLUS and sys.implementation.name == "cpython"
+CPYTHON = sys.implementation.name == "cpython"
 Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 
 # Test deps, installable via `pip install .[test]` or
@@ -133,17 +130,14 @@ VERSION = get_version()
 macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
 # Py_LIMITED_API lets us create a single wheel which works with multiple
-# python versions, including unreleased ones.
-if setuptools and CP36_PLUS and (MACOS or LINUX) and not Py_GIL_DISABLED:
+# python versions, including unreleased ones. Keep the version in sync
+# with python_requires: it's the oldest interpreter the wheel claims to
+# run on.
+abi3_platform = MACOS or LINUX or WINDOWS  # the ones we ship wheels for
+if setuptools and CPYTHON and abi3_platform and not Py_GIL_DISABLED:
     py_limited_api = {"py_limited_api": True}
-    options = {"bdist_wheel": {"py_limited_api": "cp36"}}
-    macros.append(('Py_LIMITED_API', '0x03060000'))
-elif setuptools and CP37_PLUS and WINDOWS and not Py_GIL_DISABLED:
-    # PyErr_SetFromWindowsErr / PyErr_SetFromWindowsErrWithFilename are
-    # part of the stable API/ABI starting with CPython 3.7
-    py_limited_api = {"py_limited_api": True}
-    options = {"bdist_wheel": {"py_limited_api": "cp37"}}
-    macros.append(('Py_LIMITED_API', '0x03070000'))
+    options = {"bdist_wheel": {"py_limited_api": "cp38"}}
+    macros.append(('Py_LIMITED_API', '0x03080000'))
 else:
     py_limited_api = {}
     options = {}
@@ -474,10 +468,12 @@ def main():
             'Operating System :: POSIX :: SunOS/Solaris',
             'Operating System :: POSIX',
             'Programming Language :: C',
+            'Programming Language :: Python :: 3 :: Only',
             'Programming Language :: Python :: 3',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
             'Programming Language :: Python',
+            'Programming Language :: Python :: Free Threading',
             'Topic :: Software Development :: Libraries :: Python Modules',
             'Topic :: Software Development :: Libraries',
             'Topic :: System :: Benchmark',
@@ -498,7 +494,7 @@ def main():
             "dev": DEV_DEPS,
         }
         kwargs.update(
-            python_requires=">=3.7",
+            python_requires=">=3.8",
             extras_require=extras_require,
             zip_safe=False,
         )

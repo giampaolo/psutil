@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import functools
-import sys
 import types
 
 import pytest
@@ -22,9 +21,6 @@ from . import process_namespace
 from . import system_namespace
 
 
-@pytest.mark.skipif(
-    sys.version_info[:2] <= (3, 7), reason="not supported on Python <= 3.7"
-)
 class TypeHintTestCase(PsutilTestCase):
     pass
 

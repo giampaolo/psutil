@@ -28,14 +28,14 @@ print_color = _common.print_color
 # this so CI goes red instead of shipping an incomplete release. Update
 # when adding/dropping a Python version or platform.
 EXPECTED_WHEELS = [
-    "*-cp36-abi3-manylinux*_x86_64.whl",
-    "*-cp36-abi3-manylinux*_aarch64.whl",
-    "*-cp36-abi3-musllinux*_x86_64.whl",
-    "*-cp36-abi3-musllinux*_aarch64.whl",
-    "*-cp36-abi3-macosx*_x86_64.whl",
-    "*-cp36-abi3-macosx*_arm64.whl",
-    "*-cp37-abi3-win_amd64.whl",
-    "*-cp37-abi3-win_arm64.whl",
+    "*-cp38-abi3-manylinux*_x86_64.whl",
+    "*-cp38-abi3-manylinux*_aarch64.whl",
+    "*-cp38-abi3-musllinux*_x86_64.whl",
+    "*-cp38-abi3-musllinux*_aarch64.whl",
+    "*-cp38-abi3-macosx*_x86_64.whl",
+    "*-cp38-abi3-macosx*_arm64.whl",
+    "*-cp38-abi3-win_amd64.whl",
+    "*-cp38-abi3-win_arm64.whl",
     "*-cp313-cp313t-manylinux*_x86_64.whl",
     "*-cp313-cp313t-manylinux*_aarch64.whl",
     "*-cp313-cp313t-macosx*_x86_64.whl",

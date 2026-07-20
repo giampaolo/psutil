@@ -233,13 +233,13 @@ def _get_py_exe():
 
     env = os.environ.copy()
 
-    # On Windows, starting with python 3.7, virtual environments use a
-    # venv launcher startup process. This does not play well when
-    # counting spawned processes, or when relying on the PID of the
-    # spawned process to do some checks, e.g. connections check per PID.
-    # Let's use the base python in this case.
+    # On Windows virtual environments use a venv launcher startup
+    # process. This does not play well when counting spawned processes,
+    # or when relying on the PID of the spawned process to do some
+    # checks, e.g. connections check per PID. Let's use the base python
+    # in this case.
     base = getattr(sys, "_base_executable", None)
-    if WINDOWS and sys.version_info >= (3, 7) and base is not None:
+    if WINDOWS and base is not None:
         # We need to set __PYVENV_LAUNCHER__ to sys.executable for the
         # base python executable to know about the environment.
         env["__PYVENV_LAUNCHER__"] = sys.executable
@@ -1453,9 +1453,7 @@ def tcp_socketpair(family, addr=("", 0)):
     """Build a pair of TCP sockets connected to each other.
     Return a (server, client) tuple.
     """
-    with socket.socket(family, SOCK_STREAM) as ll:
-        ll.bind(addr)
-        ll.listen(5)
+    with socket.create_server(addr, family=family, backlog=5) as ll:
         addr = ll.getsockname()
         c = socket.socket(family, SOCK_STREAM)
         try:
@@ -1672,11 +1670,6 @@ class TypeHintsChecker:
         """Flatten a type hint into a tuple of concrete types suitable
         for isinstance(). Returns None if the hint cannot be checked.
         """
-        if not hasattr(typing, "get_origin") and sys.version_info[:2] <= (
-            3,
-            7,
-        ):
-            return None
         origin = typing.get_origin(hint)
         if origin in TypeHintsChecker.UNION_TYPES:
             result = []
