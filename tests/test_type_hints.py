@@ -119,7 +119,7 @@ class TestEnumDeclarations(TypeHintTestCase):
 
     @staticmethod
     def get_declared_names():
-        with open(psutil.__file__) as f:
+        with open(psutil.__file__, encoding="utf8") as f:
             tree = ast.parse(f.read())
         names = {}
         for node in tree.body:
