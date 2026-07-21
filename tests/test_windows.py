@@ -507,6 +507,15 @@ class TestSensorsBattery(WindowsTestCase):
         else:
             assert bat.secsleft == status.BatteryLifeTime
 
+    def test_emulate_secsleft_unknown(self):
+        with mock.patch(
+            "psutil._pswindows.cext.sensors_battery",
+            return_value=(0, 0, 50, -1),
+        ) as m:
+            bat = psutil.sensors_battery()
+            assert m.called
+        assert bat.secsleft == psutil.POWER_TIME_UNKNOWN
+
     def test_emulate_no_battery(self):
         with mock.patch(
             "psutil._pswindows.cext.sensors_battery",
