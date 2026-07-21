@@ -61,8 +61,9 @@ psutil_users(PyObject *self, PyObject *args) {
         }
         else {
             // ut_host might not be null-terminated if the hostname is
-            // very long, so we do it.
-            char hostbuf[sizeof(ut->ut_host)];
+            // very long, so we do it. The extra byte is for the
+            // terminator, since host_len can be sizeof(ut_host).
+            char hostbuf[sizeof(ut->ut_host) + 1];
             memcpy(hostbuf, ut->ut_host, host_len);
             hostbuf[host_len] = '\0';
             py_hostname = PyUnicode_DecodeFSDefault(hostbuf);
