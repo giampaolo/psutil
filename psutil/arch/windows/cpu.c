@@ -327,16 +327,14 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         interrupts += sppi[i].InterruptCount;
     }
 
-    // done
+    // done; save values before freeing spi
+    unsigned long ctx_switches = spi->ContextSwitches;
+    unsigned long syscalls = spi->SystemCalls;
     free(spi);
     free(InterruptInformation);
     free(sppi);
     return Py_BuildValue(
-        "kkkk",
-        spi->ContextSwitches,
-        interrupts,
-        (unsigned long)dpcs,
-        spi->SystemCalls
+        "kkkk", ctx_switches, interrupts, (unsigned long)dpcs, syscalls
     );
 
 error:

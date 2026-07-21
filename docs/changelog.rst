@@ -214,6 +214,9 @@ Others:
 
 **Bug fixes**
 
+- :gh:`2847`, [Windows]: fix use-after-free in :func:`cpu_stats`; ``spi``
+  fields are now saved into local variables before ``free(spi)`` is called.
+  (patch by :user:`HoraDomu`)
 - :gh:`1007`, [Windows]: :func:`boot_time` no longer fluctuates by ~1 second
   across calls or across processes. It is now read atomically from the kernel
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the

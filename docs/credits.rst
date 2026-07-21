@@ -62,6 +62,7 @@ People:
 * Florian Bruhin
 * :user:`great-work-told-is`
 * Gyula Áfra
+* HoraDomu
 * HTB Industries
 * :user:`inarikami`
 * :user:`JeremyGrosser`
