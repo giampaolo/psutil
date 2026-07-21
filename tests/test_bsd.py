@@ -14,6 +14,7 @@ import os
 import re
 import shutil
 import time
+from unittest import mock
 
 import psutil
 from psutil import BSD
@@ -390,6 +391,19 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         min_freq = int(sysctl_result.split()[-1].split("/")[0])
         assert psutil.cpu_freq().max == max_freq
         assert psutil.cpu_freq().min == min_freq
+
+    def test_cpu_freq_no_levels(self):
+        # No freq_levels means we can't tell min / max. It used to
+        # raise NameError, or reuse the previous CPU's values.
+        with mock.patch(
+            "psutil._psbsd.cext.cpu_freq", return_value=(100, "")
+        ) as m:
+            ret = psutil._psbsd.cpu_freq()
+            assert m.called
+        for nt in ret:
+            assert nt.current == 100
+            assert nt.min is None
+            assert nt.max is None
 
     # --- virtual_memory(); tests against sysctl
 

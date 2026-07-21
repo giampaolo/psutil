@@ -644,7 +644,7 @@ else:
 
     def cpu_freq():
         """Alternate implementation using /proc/cpuinfo.
-        min and max frequencies are not available and are set to None.
+        min and max frequencies are not available and are set to 0.
         """
         return [ntp.scpufreq(x, 0.0, 0.0) for x in _cpu_get_cpuinfo_freq()]
 

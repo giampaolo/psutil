@@ -2255,9 +2255,9 @@ if hasattr(_psplatform, "cpu_freq"):
                 set_none = False
                 for cpu in ret:
                     currs += cpu.current
-                    # On Linux if /proc/cpuinfo is used min/max are set
-                    # to None.
-                    if LINUX and cpu.min is None:
+                    # On FreeBSD min/max are None if the sysctl value
+                    # can't be parsed.
+                    if cpu.min is None or cpu.max is None:
                         set_none = True
                         continue
                     mins += cpu.min

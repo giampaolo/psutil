@@ -192,6 +192,7 @@ if FREEBSD:
                 current, available_freq = cext.cpu_freq(cpu)
             except NotImplementedError:
                 continue
+            min_freq = max_freq = None
             if available_freq:
                 try:
                     min_freq = int(available_freq.split(" ")[-1].split("/")[0])

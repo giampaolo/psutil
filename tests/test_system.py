@@ -771,6 +771,20 @@ class TestCpuAPIs(PsutilTestCase):
         if LINUX:
             assert len(ls) == psutil.cpu_count()
 
+    def test_cpu_freq_none_minmax(self):
+        # min / max are None on FreeBSD when the sysctl is unparsable.
+        # Averaging them across CPUs used to raise TypeError.
+        ret = [
+            psutil._ntuples.scpufreq(100.0, None, None),
+            psutil._ntuples.scpufreq(200.0, None, None),
+        ]
+        with mock.patch("psutil._psplatform.cpu_freq", return_value=ret):
+            with mock.patch("psutil.LINUX", False):
+                nt = psutil.cpu_freq()
+        assert nt.current == 150.0
+        assert nt.min is None
+        assert nt.max is None
+
     def test_getloadavg(self):
         loadavg = psutil.getloadavg()
         assert len(loadavg) == 3
