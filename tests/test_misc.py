@@ -357,6 +357,13 @@ class TestMisc(PsutilTestCase):
                 reload_module(psutil)
             assert "version conflict" in str(cm.value).lower()
 
+    def test_reload_keeps_all(self):
+        # A reload reuses the module dict, so the enum constants are
+        # already there and used to not make it back into __all__.
+        before = sorted(psutil.__all__)
+        reload_module(psutil)
+        assert sorted(psutil.__all__) == before
+
 
 # ===================================================================
 # --- psutil/_common.py utils

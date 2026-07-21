@@ -771,6 +771,7 @@ class TestCpuAPIs(PsutilTestCase):
         if LINUX:
             assert len(ls) == psutil.cpu_count()
 
+    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq_none_minmax(self):
         # min / max are None on FreeBSD when the sysctl is unparsable.
         # Averaging them across CPUs used to raise TypeError.

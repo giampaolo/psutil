@@ -263,9 +263,8 @@ _globals = globals()
 def _export_enum(cls):
     __all__.append(cls.__name__)
     for name, member in cls.__members__.items():
-        if name not in _globals:  # noqa: F821
-            _globals[name] = member  # noqa: F821
-            __all__.append(name)
+        _globals[name] = member  # noqa: F821
+        __all__.append(name)
 
 
 # Populate global namespace with enums and CONSTANTs.
