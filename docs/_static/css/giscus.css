@@ -1,0 +1,95 @@
+/*
+ * Giscus widget theme.
+ */
+
+@import url("https://giscus.app/themes/light.css")
+    screen and (prefers-color-scheme: light);
+@import url("https://giscus.app/themes/dark.css")
+    screen and (prefers-color-scheme: dark);
+
+main {
+    --color-canvas-default: #ffffff;
+    --color-canvas-overlay: #ffffff;
+    --color-canvas-subtle: #f0f4f7;
+    --color-canvas-inset: #f0f4f7;
+
+    --color-fg-default: #404040;
+    --color-fg-muted: #555555;
+    --color-fg-subtle: #555555;
+
+    --color-border-default: #dddddd;
+    --color-border-muted: #dddddd;
+
+    --color-accent-fg: #2371a8;
+    --color-accent-emphasis: #2371a8;
+
+    --color-btn-text: #404040;
+    --color-btn-bg: #f0f4f7;
+    --color-btn-border: #dddddd;
+    --color-btn-hover-bg: #e5ebf0;
+
+    /* The "Comment" button, green by default. */
+    --color-btn-primary-bg: #2371a8;
+    --color-btn-primary-hover-bg: #1d5f8e;
+    --color-btn-primary-disabled-bg: #a9c8dd;
+    --color-btn-primary-border: #2371a8;
+    --color-btn-primary-text: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+    main {
+        --color-canvas-default: #1a1a1a;
+        --color-canvas-overlay: #1a1a1a;
+        --color-canvas-subtle: #2c2c2c;
+        --color-canvas-inset: #2c2c2c;
+
+        --color-fg-default: #c8c8c8;
+        --color-fg-muted: #9b9b9b;
+        --color-fg-subtle: #9b9b9b;
+
+        --color-border-default: #2e2e2e;
+        --color-border-muted: #2e2e2e;
+
+        --color-accent-fg: #6ab0de;
+        --color-accent-emphasis: #6ab0de;
+
+        --color-btn-text: #c8c8c8;
+        --color-btn-bg: #2c2c2c;
+        --color-btn-border: #2e2e2e;
+        --color-btn-hover-bg: #383838;
+
+        --color-btn-primary-hover-bg: #2a83c2;
+        --color-btn-primary-disabled-bg: #2c4a5e;
+    }
+}
+
+main .gsc-reactions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+}
+
+main .gsc-reactions-count {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 400;
+    text-align: left;
+    color: var(--color-fg-muted);
+}
+
+main .gsc-reactions > * {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    margin-top: 0;
+}
+
+main .gsc-main {
+    gap: 1rem;
+}
+
+main .gsc-comment-box,
+main .gsc-comment-box-textarea,
+main .btn {
+    border-radius: 6px;
+}

@@ -1,16 +1,11 @@
 {#-
-  Blog comments (giscus, backed by GitHub Discussions). Post pages
-  only. Config comes from conf.py via _ext/giscus.py.
+  Blog comments (giscus). Post pages only, unless the post carries a
+  bare ":no_comments:" field. Config comes from conf.py via
+  _ext/giscus.py.
 
-  Starts hidden; static/js/giscus.js unhides it once the widget is in.
-  With JS off, readers get nothing instead of an empty box under a
-  heading.
-
-  data-term is the source file path, not the URL, so moving the site
-  to another domain keeps threads attached to their posts.
-
-  A post opts out with a bare ":no_comments:" field at the top of its
-  .rst file.
+  Hidden until js/giscus.js has the widget up, so a reader with JS
+  off gets nothing rather than an empty box. data-term is the source
+  path, not the URL, so a domain change keeps threads attached.
 -#}
 {% if is_blog_post and giscus_repo %}
 <section class="comments" aria-labelledby="comments-heading" hidden>
@@ -27,6 +22,7 @@
        data-repo-id="{{ giscus_repo_id|e }}"
        data-category="{{ giscus_category|e }}"
        data-category-id="{{ giscus_category_id|e }}"
-       data-term="{{ pagename|e }}"></div>
+       data-term="{{ pagename|e }}"
+       data-theme-url="{{ pathto('_static/css/giscus.css', 1)|e }}"></div>
 </section>
 {% endif %}

@@ -318,3 +318,24 @@ class TestReadTheDocsRedirects:
         # catch-all redirect on the RTD side would break it.
         status, _ = self.get("/stable/")
         assert status == 200
+
+
+class TestGiscus:
+    WIDGET = "https://giscus.app/en/widget?repo=x&term=t"
+
+    def test_selectors_still_exist(self):
+        # The layout rules in giscus.css lean on giscus' internal
+        # class names, which aren't a public API. A rename would
+        # silently revert the widget to its stock look.
+        ours = (HERE / "_static" / "css" / "giscus.css").read_text()
+        selectors = sorted(set(re.findall(r"\.gsc-[a-z-]+", ours)))
+        assert selectors, "no .gsc-* selectors found in giscus.css"
+
+        html = fetch(self.WIDGET)[1].decode("utf-8", "replace")
+        match = re.search(r"/_next/static/css/[a-z0-9]+\.css", html)
+        assert match, "giscus stylesheet not linked from the widget page"
+        css = fetch("https://giscus.app" + match.group(0))[1]
+        css = css.decode("utf-8", "replace")
+
+        missing = [s for s in selectors if s not in css]
+        assert missing == []

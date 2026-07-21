@@ -168,7 +168,12 @@ pygments_style = "tango"  # base palette (overridden by css/code.css)
 
 def _css_files():
     css_dir = _HERE / "_static" / "css"
-    files = sorted(p.name for p in css_dir.glob("*.css"))
+    # giscus.css is loaded inside the giscus iframe (see
+    # _templates/comments.html), never by our own pages. Linking it
+    # here would make every page fetch its @import from giscus.app.
+    files = sorted(
+        p.name for p in css_dir.glob("*.css") if p.name != "giscus.css"
+    )
     head = ["base.css", "fonts.css", "fontawesome.css", "typography.css"]
     tail = ["home.css"]
     middle = [f for f in files if f not in head + tail]
@@ -215,9 +220,9 @@ giscus_repo_id = "R_kgDOTfVGLA"
 giscus_category = "User Comments"
 giscus_category_id = "DIC_kwDOTfVGLM4DBrKC"
 # linked above the widget
-giscus_policy_url = (
-    "https://github.com/giampaolo/psutil-blog-comments/discussions/2"
-)
+# giscus_policy_url = (
+#     "https://github.com/giampaolo/psutil-blog-comments/discussions/2"
+# )
 
 # =====================================================================
 # sphinxext-opengraph
