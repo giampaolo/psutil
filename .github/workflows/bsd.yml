@@ -5,6 +5,7 @@
 # https://github.com/vmactions/netbsd-vm
 
 on:
+  workflow_dispatch:
   push:
     # only run this job if the following files are modified
     paths: &bsd_paths
@@ -33,7 +34,7 @@ jobs:
     # if: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Run tests
         uses: vmactions/freebsd-vm@v1
         with:
@@ -45,7 +46,7 @@ jobs:
     # if: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Run tests
         uses: vmactions/openbsd-vm@v1
         with:
@@ -57,7 +58,7 @@ jobs:
     # if: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Run tests
         uses: vmactions/netbsd-vm@v1
         with:

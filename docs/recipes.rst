@@ -1,5 +1,3 @@
-.. include:: _links.rst
-
 Recipes
 =======
 
@@ -9,15 +7,13 @@ adapted to real-world code. The examples are intentionally short and avoid
 unnecessary abstractions so that the underlying psutil APIs are easy to
 understand. Most of them are not meant to be used in production.
 
-.. contents::
-   :local:
-   :depth: 3
-
 Processes
 ---------
 
 Finding processes
 ^^^^^^^^^^^^^^^^^
+
+.. _recipe_find_process_by_name:
 
 Find process by name:
 
@@ -28,32 +24,31 @@ Find process by name:
   def find_procs_by_name(name):
       ls = []
       for p in psutil.process_iter(["name"]):
-          if p.info["name"] == name:
+          if p.name() == name:
               ls.append(p)
       return ls
 
-----
+-------------------------------------------------------------------------------
 
-A bit more advanced, check string against :meth:`Process.name()`,
-:meth:`Process.exe()` and :meth:`Process.cmdline()`:
+A bit more advanced, check string against :meth:`Process.name`,
+:meth:`Process.exe` and :meth:`Process.cmdline`:
 
 .. code-block:: python
 
-  import os
-  import psutil
+  import os, psutil
 
   def find_procs_by_name_ex(name):
       ls = []
       for p in psutil.process_iter(["name", "exe", "cmdline"]):
           if (
-              name == p.info["name"]
-              or (p.info["exe"] and os.path.basename(p.info["exe"]) == name)
-              or (p.info["cmdline"] and p.info["cmdline"][0] == name)
+              name == p.name()
+              or (p.exe() and os.path.basename(p.exe()) == name)
+              or (p.cmdline() and p.cmdline()[0] == name)
           ):
               ls.append(p)
       return ls
 
-----
+-------------------------------------------------------------------------------
 
 Find the process listening on a given TCP port:
 
@@ -73,7 +68,7 @@ Find the process listening on a given TCP port:
                       return proc
       return None
 
-----
+-------------------------------------------------------------------------------
 
 Find all processes that have an active connection to a given remote IP:
 
@@ -94,7 +89,7 @@ Find all processes that have an active connection to a given remote IP:
                       ls.append(proc)
       return ls
 
-----
+-------------------------------------------------------------------------------
 
 Find all processes that have a given file open (useful on Windows):
 
@@ -105,7 +100,7 @@ Find all processes that have a given file open (useful on Windows):
   def find_procs_using_file(path):
       ls = []
       for p in psutil.process_iter(["open_files"]):
-          for f in p.info["open_files"]:
+          for f in p.open_files() or []:
               if f.path == path:
                   ls.append(p)
                   break
@@ -118,84 +113,80 @@ Processes owned by user:
 
 .. code-block:: python
 
-  >>> import getpass
-  >>> import psutil
-  >>> from pprint import pprint as pp
-  >>> pp([(p.pid, p.info["name"]) for p in psutil.process_iter(["name", "username"]) if p.info["username"] == getpass.getuser()])
-  (16832, 'bash'),
-  (19772, 'ssh'),
-  (20492, 'python')]
+  import getpass, psutil
 
-----
+  def procs_by_user(user=None):
+      if user is None:
+          user = getpass.getuser()
+      return [
+          (p.pid, p.name())
+          for p in psutil.process_iter(["name", "username"])
+          if p.username() == user
+      ]
 
-Processes actively running:
-
-.. code-block:: python
-
-  >>> pp([(p.pid, p.info) for p in psutil.process_iter(["name", "status"]) if p.info["status"] == psutil.STATUS_RUNNING])
-  [(1150, {'name': 'Xorg', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
-   (1776, {'name': 'unity-panel-service', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
-   (20492, {'name': 'python', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>})]
-
-----
+-------------------------------------------------------------------------------
 
 Processes using log files:
 
-.. code-block:: python
+.. code-block:: pycon
 
   >>> for p in psutil.process_iter(["name", "open_files"]):
-  ...      for file in p.info["open_files"] or []:
+  ...      for file in p.open_files() or []:
   ...          if file.path.endswith(".log"):
-  ...               print("{:<5} {:<10} {}".format(p.pid, p.info["name"][:10], file.path))
+  ...               print("{:<5} {:<10} {}".format(p.pid, p.name()[:10], file.path))
   ...
   1510  upstart    /home/giampaolo/.cache/upstart/unity-settings-daemon.log
   2174  nautilus   /home/giampaolo/.local/share/gvfs-metadata/home-ce08efac.log
   2650  chrome     /home/giampaolo/.config/google-chrome/Default/data_reduction_proxy_leveldb/000003.log
 
-----
+-------------------------------------------------------------------------------
 
 Processes consuming more than 500M of memory:
 
 .. code-block:: python
 
-  >>> pp([(p.pid, p.info["name"], p.info["memory_info"].rss) for p in psutil.process_iter(["name", "memory_info"]) if p.info["memory_info"].rss > 500 * 1024 * 1024])
-  [(2650, 'chrome', 532324352),
-   (3038, 'chrome', 1120088064),
-   (21915, 'sublime_text', 615407616)]
+  import psutil
 
-----
+  def procs_by_memory(min_bytes=500 * 1024 * 1024):
+      return [
+          (p.pid, p.name(), p.memory_info().rss)
+          for p in psutil.process_iter(["name", "memory_info"])
+          if p.memory_info().rss > min_bytes
+      ]
 
-Top 3 processes which consumed the most CPU time:
+-------------------------------------------------------------------------------
 
-.. code-block:: python
-
-  >>> pp([(p.pid, p.info["name"], sum(p.info["cpu_times"])) for p in sorted(psutil.process_iter(["name", "cpu_times"]), key=lambda p: sum(p.info["cpu_times"][:2]))][-3:])
-  [(2721, 'chrome', 10219.73),
-   (1150, 'Xorg', 11116.989999999998),
-   (2650, 'chrome', 18451.97)]
-
-----
-
-Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
+Top N processes by :term:`cumulative <cumulative counter>` CPU time:
 
 .. code-block:: python
 
   import psutil
 
+  def top_cpu_procs(n=3):
+      procs = sorted(
+          psutil.process_iter(["name", "cpu_times"]),
+          key=lambda p: sum(p.cpu_times()[:2]),
+      )
+      return [(p.pid, p.name(), sum(p.cpu_times())) for p in procs[-n:]]
+
+-------------------------------------------------------------------------------
+
+Top N processes by :term:`cumulative <cumulative counter>` disk read + write
+bytes (similar to ``iotop``):
+
+.. code-block:: python
+
+  import psutil
 
   def top_io_procs(n=5):
       procs = []
       for p in psutil.process_iter(["io_counters"]):
-          try:
-              io = p.io_counters()
-          except psutil.Error:
-              pass
-          else:
-              procs.append((io.read_bytes + io.write_bytes, p))
+          io = p.io_counters()
+          procs.append((io.read_bytes + io.write_bytes, p))
       procs.sort(key=lambda x: x[0], reverse=True)
       return procs[:n]
 
-----
+-------------------------------------------------------------------------------
 
 Top N processes by open file descriptors (useful for diagnosing fd leaks):
 
@@ -205,11 +196,8 @@ Top N processes by open file descriptors (useful for diagnosing fd leaks):
 
   def top_open_files(n=5):
       procs = []
-      for p in psutil.process_iter():
-          try:
-              procs.append((p.num_fds(), p))
-          except (psutil.NoSuchProcess, psutil.AccessDenied):
-              pass
+      for p in psutil.process_iter(["num_fds"]):
+          procs.append((p.num_fds(), p))
       procs.sort(key=lambda x: x[0], reverse=True)
       return procs[:n]
 
@@ -221,8 +209,7 @@ Periodically monitor CPU and memory usage of a process using
 
 .. code-block:: python
 
-  import time
-  import psutil
+  import time, psutil
 
   def monitor(pid, interval=1):
       p = psutil.Process(pid)
@@ -241,15 +228,13 @@ Periodically monitor CPU and memory usage of a process using
 Controlling processes
 ^^^^^^^^^^^^^^^^^^^^^
 
+.. _recipe_kill_proc_tree:
+
 Kill a process tree (including grandchildren):
 
 .. code-block:: python
 
-  import os
-  import signal
-
-  import psutil
-
+  import os, signal, psutil
 
   def kill_proc_tree(
       pid,
@@ -278,41 +263,10 @@ Kill a process tree (including grandchildren):
       )
       return (gone, alive)
 
-----
+-------------------------------------------------------------------------------
 
-Kill / reap zombie (defunct) processes:
-
-
-.. code-block:: python
-
-  import psutil
-
-  def kill_zombies():
-      for p in psutil.process_iter(["status"]):
-          if p.info["status"] == psutil.STATUS_ZOMBIE:
-              parent = p.parent()
-              if parent:
-                  parent.terminate()
-                  parent.wait()
-                  p.wait()
-
-----
-
-Terminate all processes matching a given name:
-
-.. code-block:: python
-
-  import psutil
-
-  def terminate_procs_by_name(name):
-      for p in psutil.process_iter(["name"]):
-          if p.info["name"] == name:
-              p.terminate()
-
-----
-
-Terminate a process gracefully, falling back to ``SIGKILL`` if it does not
-exit within the timeout:
+Terminate a process gracefully, falling back to ``SIGKILL`` if it does not exit
+within the timeout:
 
 .. code-block:: python
 
@@ -326,30 +280,13 @@ exit within the timeout:
       except psutil.TimeoutExpired:
           p.kill()
 
-----
-
-Restart a process:
-
-.. code-block:: python
-
-  import subprocess
-  import psutil
-
-  def restart_process(pid):
-      p = psutil.Process(pid)
-      cmd = p.cmdline()
-      p.terminate()
-      p.wait()
-      return subprocess.Popen(cmd)
-
-----
+-------------------------------------------------------------------------------
 
 Temporarily pause and resume a process using a context manager:
 
 .. code-block:: python
 
-  import contextlib
-  import psutil
+  import contextlib, psutil
 
   @contextlib.contextmanager
   def suspended(pid):
@@ -364,15 +301,14 @@ Temporarily pause and resume a process using a context manager:
   with suspended(pid):
       pass  # process is paused here
 
-----
+-------------------------------------------------------------------------------
 
-CPU throttle: limit a process's CPU usage to a target percentage by
-alternating :meth:`Process.suspend` and :meth:`Process.resume`:
+CPU throttle: limit a process's CPU usage to a target percentage by alternating
+:meth:`Process.suspend` and :meth:`Process.resume`:
 
 .. code-block:: python
 
-  import time
-  import psutil
+  import time, psutil
 
   def throttle(pid, max_cpu_percent=50, interval=0.1):
       """Slow down a process so it uses at most max_cpu_percent% CPU."""
@@ -384,17 +320,13 @@ alternating :meth:`Process.suspend` and :meth:`Process.resume`:
               time.sleep(interval * cpu / max_cpu_percent)
               p.resume()
 
-----
+-------------------------------------------------------------------------------
 
 Restart a process automatically if it dies:
 
 .. code-block:: python
 
-  import subprocess
-  import time
-
-  import psutil
-
+  import subprocess, time, psutil
 
   def watchdog(cmd, max_restarts=None, interval=1):
       """Run cmd as a persistent process. Restart on failure, optionally
@@ -426,7 +358,6 @@ Restart a process automatically if it dies:
   if __name__ == "__main__":
       watchdog(["python3", "script.py"])
 
-
 System
 ------
 
@@ -453,41 +384,6 @@ them to a human-readable string:
               return "{:.1f}{}".format(value, s)
       return "{}B".format(n)
 
-Memory
-^^^^^^
-
-Show both RAM and swap usage in human-readable form:
-
-.. code-block:: python
-
-  import psutil
-
-  def print_memory():
-      ram = psutil.virtual_memory()
-      swap = psutil.swap_memory()
-      print(
-          "RAM:  total={}, used={}, free={}, percent={}%".format(
-              bytes2human(ram.total),
-              bytes2human(ram.used),
-              bytes2human(ram.available),
-              ram.percent,
-          )
-      )
-      print(
-          "Swap: total={}, used={}, free={}, percent={}%".format(
-              bytes2human(swap.total),
-              bytes2human(swap.used),
-              bytes2human(swap.free),
-              swap.percent,
-          )
-      )
-
-
-.. code-block:: none
-
-  RAM:  total=8.0G, used=4.5G, free=3.0G, percent=56.2%
-  Swap: total=2.0G, used=0.1G, free=1.9G, percent=4.1%
-
 CPU
 ^^^
 
@@ -506,50 +402,41 @@ Print real-time CPU usage percentage:
   CPU: 1.4%
   CPU: 0.9%
 
-----
+Memory
+^^^^^^
 
-For each CPU core:
+.. _recipe_swap_activity:
+
+Show real-time swap activity *(Linux, BSD)*. ``sout`` (:term:`swap-out`) is the
+key metric: a non-zero and growing rate means the OS is moving memory from RAM
+to disk because RAM is full. ``sin`` (:term:`swap-in`) alone is not alarming;
+it just means the system is moving previously evicted pages back into RAM. High
+``sin`` and ``sout`` together may indicate heavy swapping (:term:`thrashing`).
 
 .. code-block:: python
 
-  import psutil
+  import psutil, time
 
-  while True:
-      for i, pct in enumerate(psutil.cpu_percent(percpu=True, interval=1)):
-          print("CPU-{}: {}%".format(i, pct))
-      print()
+  def swap_activity(interval=1):
+      before = psutil.swap_memory()
+      while True:
+          time.sleep(interval)
+          after = psutil.swap_memory()
+          sin  = after.sin  - before.sin
+          sout = after.sout - before.sout
+          print("swap-in={}/s  swap-out={}/s  used={}%".format(
+              bytes2human(sin), bytes2human(sout), after.percent))
+          before = after
 
 .. code-block:: none
 
-  CPU-0: 1.0%
-  CPU-1: 2.1%
-  CPU-2: 3.0%
+  swap-in=0.0B/s  swap-out=0.0B/s  used=23%
+  swap-in=0.0B/s  swap-out=1.2M/s  used=24%
 
 Disks
 ^^^^^
 
-Show disk usage for all mounted partitions:
-
-.. code-block:: python
-
-  import psutil
-
-  def print_disk_usage():
-      for part in psutil.disk_partitions():
-          usage = psutil.disk_usage(part.mountpoint)
-          print("{:<20} total={:<8} used={:<8} free={:<8} percent={}%".format(
-              part.mountpoint,
-              bytes2human(usage.total), bytes2human(usage.used),
-              bytes2human(usage.free), usage.percent))
-
-.. code-block:: none
-
-  /               total=47.8G    used=17.4G    free=27.9G    percent=38.4%
-  /boot/efi       total=256.0M   used=73.6M    free=182.4M   percent=28.8%
-  /home           total=878.7G   used=497.5G   free=336.5G   percent=59.7%
-
-
-----
+.. _recipe_disk_io:
 
 Show real-time disk I/O:
 
@@ -571,31 +458,32 @@ Show real-time disk I/O:
   Read: 1.2M/s, Write: 256.0K/s
   Read: 0.0B/s, Write: 128.0K/s
 
-Network
-^^^^^^^
+-------------------------------------------------------------------------------
 
-List IP addresses for each network interface:
+.. _recipe_disk_io_percent:
+
+Show real-time disk utilization percentage *(Linux, FreeBSD)*:
 
 .. code-block:: python
 
-  import psutil, socket
+  import psutil, time
 
-  def print_net_addrs():
-      for iface, addrs in psutil.net_if_addrs().items():
-          for addr in addrs:
-              if addr.family == socket.AF_INET:
-                  print(
-                      "{:<15} address={:<15} netmask={}".format(
-                          iface, addr.address, addr.netmask
-                      )
-                  )
+  def disk_io_percent(interval=1):
+      while True:
+          before = psutil.disk_io_counters()
+          time.sleep(interval)
+          after = psutil.disk_io_counters()
+          busy_ms = after.busy_time - before.busy_time
+          util = min(busy_ms / (interval * 1000) * 100, 100)
+          print("Disk: {:.1f}%".format(util))
 
 .. code-block:: none
 
-  lo              address=127.0.0.1       netmask=255.0.0.0
-  eth0            address=10.0.0.4        netmask=255.255.255.0
+  Disk: 3.2%
+  Disk: 78.5%
 
-----
+Network
+^^^^^^^
 
 Show real-time network I/O per interface:
 
@@ -623,7 +511,7 @@ Show real-time network I/O per interface:
   lo         sent=0.0B/s    recv=0.0B/s
   eth0       sent=12.3K/s   recv=45.6K/s
 
-----
+-------------------------------------------------------------------------------
 
 List all active TCP connections with their status:
 

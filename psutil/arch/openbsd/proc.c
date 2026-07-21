@@ -169,8 +169,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     // Reference:
-    // https://github.com/openbsd/src/blob/
-    //     588f7f8c69786211f2d16865c552afb91b1c7cba/bin/ps/print.c#L191
+    // https://github.com/openbsd/src/blob/588f7f8c69786211f2d16865c552afb91b1c7cba/bin/ps/print.c#L191
     pid_t pid;
     struct kinfo_proc kp;
     char path[MAXPATHLEN];
@@ -185,7 +184,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     if (sysctl(name, 3, path, &pathlen, NULL, 0) != 0) {
         if (errno == ENOENT) {
             psutil_debug("sysctl(KERN_PROC_CWD) -> ENOENT converted to ''");
-            return Py_BuildValue("s", "");
+            return PyUnicode_FromString("");
         }
         else {
             psutil_oserror();

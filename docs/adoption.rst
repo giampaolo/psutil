@@ -1,0 +1,213 @@
+Who uses psutil
+===============
+
+.. Numbers below are refreshed by `make refresh-adoption-stats`,
+   which writes them in-place from PyPI / GitHub. Run it before
+   tagging a release.
+
+psutil is among the
+`top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__ most-downloaded
+packages on PyPI, with **370+ million** downloads per month and **780,000+**
+`GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__
+using it. The projects below are a small sample of notable software that
+depends on psutil. See also :doc:`alternatives` for related Python libraries
+and equivalents in other languages.
+
+Infrastructure / automation
+---------------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 28 32 14 26
+
+   * - Project
+     - Description
+     - Stars
+     - psutil usage
+   * - `Home Assistant <https://github.com/home-assistant/core>`__
+     - Open source home automation platform
+     - |homeassistant-stars|
+     - system monitor integration
+   * - `Ansible <https://github.com/ansible/ansible>`__
+     - IT automation platform
+     - |ansible-stars|
+     - system fact gathering
+   * - `Apache Airflow <https://github.com/apache/airflow>`__
+     - Workflow orchestration platform
+     - |airflow-stars|
+     - process supervisor, unit testing
+   * - `Celery <https://github.com/celery/celery>`__
+     - Distributed task queue
+     - |celery-stars|
+     - worker process monitoring, memleak detection
+   * - `Salt <https://github.com/saltstack/salt>`__
+     - Infrastructure automation at scale
+     - |salt-stars|
+     - deep system data collection (grains)
+   * - `Dask <https://github.com/dask/dask>`__
+     - Parallel computing with task scheduling
+     - |dask-stars|
+     - `metrics dashboard <https://github.com/dask/dask/blob/0d40a604284e021d098682b71c55d0387a414925/docs/source/dashboard.rst#L147>`__, profiling
+   * - `Ajenti <https://github.com/ajenti/ajenti>`__
+     - Web-based server administration panel
+     - |ajenti-stars|
+     - monitoring plugins, deep integration
+
+AI / machine learning
+---------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 28 32 14 26
+
+   * - Project
+     - Description
+     - Stars
+     - psutil usage
+   * - `TensorFlow <https://github.com/tensorflow/tensorflow>`__
+     - Open source machine learning framework by Google
+     - |tensorflow-stars|
+     - unit tests
+   * - `PyTorch <https://github.com/pytorch/pytorch>`__
+     - Tensors and dynamic neural networks with GPU acceleration
+     - |pytorch-stars|
+     - benchmark scripts
+   * - `Ray <https://github.com/ray-project/ray>`__
+     - AI compute engine with distributed runtime
+     - |ray-stars|
+     - metrics dashboard
+   * - `MLflow <https://github.com/mlflow/mlflow>`__
+     - AI/ML engineering platform
+     - |mlflow-stars|
+     - deep system monitoring integration
+
+Developer tools
+---------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 28 32 14 26
+
+   * - Project
+     - Description
+     - Stars
+     - psutil usage
+   * - `Sentry <https://github.com/getsentry/sentry>`__
+     - Error tracking and performance monitoring
+     - |sentry-stars|
+     - send telemetry metrics
+   * - `Locust <https://github.com/locustio/locust>`__
+     - Scalable load testing in Python
+     - |locust-stars|
+     - monitoring of the Locust process
+   * - `Spyder <https://github.com/spyder-ide/spyder>`__
+     - Scientific Python IDE
+     - |spyder-stars|
+     - deep integration, UI stats, process management
+   * - `psleak <https://github.com/giampaolo/psleak>`__
+     - Test framework to detect memory leaks in Python C extensions
+     - |psleak-stars|
+     - heap process memory (:func:`heap_info()`)
+
+System monitoring
+-----------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 28 32 14 26
+
+   * - Project
+     - Description
+     - Stars
+     - psutil usage
+   * - `Glances <https://github.com/nicolargo/glances>`__
+     - System monitoring tool (top/htop alternative)
+     - |glances-stars|
+     - core dependency for all metrics
+   * - `bpytop <https://github.com/aristocratos/bpytop>`__
+     - Terminal resource monitor
+     - |bpytop-stars|
+     - core dependency for all metrics
+   * - `auto-cpufreq <https://github.com/AdnanHodzic/auto-cpufreq>`__
+     - Automatic CPU speed and power optimizer for Linux
+     - |auto-cpufreq-stars|
+     - core dependency for CPU monitoring
+   * - `GRR <https://github.com/google/grr>`__
+     - Remote live forensics by Google
+     - |grr-stars|
+     - core dependency for system data collection
+   * - `s-tui <https://github.com/amanusk/s-tui>`__
+     - Terminal CPU stress and monitoring utility
+     - |stui-stars|
+     - core dependency for metrics
+   * - `asitop <https://github.com/tlkh/asitop>`__
+     - Apple Silicon performance monitoring CLI
+     - |asitop-stars|
+     - core dependency for system metrics
+   * - `psdash <https://github.com/Jahaja/psdash>`__
+     - Web dashboard using psutil and Flask
+     - |psdash-stars|
+     - core dependency for all metrics
+   * - `dd-agent <https://github.com/DataDog/dd-agent>`__
+     - Original monitoring agent by Datadog
+     - |dd-agent-stars|
+     - system metrics collection
+   * - `dd-trace-py <https://github.com/DataDog/dd-trace-py>`__
+     - Python tracing and profiling library
+     - |ddtrace-stars|
+     - system metrics collection
+
+How this list was compiled
+--------------------------
+
+- `GitHub dependency graph <https://github.com/giampaolo/psutil/network/dependents>`__
+  was used to identify packages and repositories that depend on psutil.
+- GitHub code search with query "psutil in:readme language:Python", sorted by
+  stars, was used to find additional projects that mention psutil in their
+  README.
+- Each candidate was then manually verified by checking the project's
+  pyproject.toml, setup.py, setup.cfg or requirements.txt to confirm that
+  psutil is an actual dependency (direct, build-time, or optional), not just a
+  passing mention.
+- Projects were excluded if they only mention psutil in documentation or
+  examples without declaring it as a dependency.
+- Star counts are pulled dynamically from `shields.io <https://shields.io/>`__
+  badges.
+- The final list was manually curated to include notable projects and
+  meaningful usages of psutil across different areas of the Python ecosystem.
+
+.. ============================================================================
+.. ============================================================================
+.. ============================================================================
+
+.. Star badges
+.. ============================================================================
+
+.. |airflow-stars| image:: https://img.shields.io/github/stars/apache/airflow.svg?style=social&label=%20
+.. |ajenti-stars| image:: https://img.shields.io/github/stars/ajenti/ajenti.svg?style=social&label=%20
+.. |ansible-stars| image:: https://img.shields.io/github/stars/ansible/ansible.svg?style=social&label=%20
+.. |asitop-stars| image:: https://img.shields.io/github/stars/tlkh/asitop.svg?style=social&label=%20
+.. |auto-cpufreq-stars| image:: https://img.shields.io/github/stars/AdnanHodzic/auto-cpufreq.svg?style=social&label=%20
+.. |bpytop-stars| image:: https://img.shields.io/github/stars/aristocratos/bpytop.svg?style=social&label=%20
+.. |celery-stars| image:: https://img.shields.io/github/stars/celery/celery.svg?style=social&label=%20
+.. |dask-stars| image:: https://img.shields.io/github/stars/dask/dask.svg?style=social&label=%20
+.. |ddtrace-stars| image:: https://img.shields.io/github/stars/DataDog/dd-trace-py.svg?style=social&label=%20
+.. |dd-agent-stars| image:: https://img.shields.io/github/stars/DataDog/dd-agent.svg?style=social&label=%20
+.. |glances-stars| image:: https://img.shields.io/github/stars/nicolargo/glances.svg?style=social&label=%20
+.. |grr-stars| image:: https://img.shields.io/github/stars/google/grr.svg?style=social&label=%20
+.. |homeassistant-stars| image:: https://img.shields.io/github/stars/home-assistant/core.svg?style=social&label=%20
+.. |locust-stars| image:: https://img.shields.io/github/stars/locustio/locust.svg?style=social&label=%20
+.. |mlflow-stars| image:: https://img.shields.io/github/stars/mlflow/mlflow.svg?style=social&label=%20
+.. |psdash-stars| image:: https://img.shields.io/github/stars/Jahaja/psdash.svg?style=social&label=%20
+.. |psleak-stars| image:: https://img.shields.io/github/stars/giampaolo/psleak.svg?style=social&label=%20
+.. |pytorch-stars| image:: https://img.shields.io/github/stars/pytorch/pytorch.svg?style=social&label=%20
+.. |ray-stars| image:: https://img.shields.io/github/stars/ray-project/ray.svg?style=social&label=%20
+.. |salt-stars| image:: https://img.shields.io/github/stars/saltstack/salt.svg?style=social&label=%20
+.. |sentry-stars| image:: https://img.shields.io/github/stars/getsentry/sentry.svg?style=social&label=%20
+.. |spyder-stars| image:: https://img.shields.io/github/stars/spyder-ide/spyder.svg?style=social&label=%20
+.. |stui-stars| image:: https://img.shields.io/github/stars/amanusk/s-tui.svg?style=social&label=%20
+.. |tensorflow-stars| image:: https://img.shields.io/github/stars/tensorflow/tensorflow.svg?style=social&label=%20
+
+.. --- Notes
+.. Stars shield:
+.. https://shields.io/badges/git-hub-repo-stars

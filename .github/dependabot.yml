@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    # Bundle all action bumps into one PR instead of one each.
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    # Stay on cibuildwheel 3.x: 4.x drops prebuilt 3.13 free-threaded wheels.
+    ignore:
+      - dependency-name: "pypa/cibuildwheel"
+        update-types: ["version-update:semver-major"]

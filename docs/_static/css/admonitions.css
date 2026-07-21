@@ -1,0 +1,82 @@
+/* ---- Shared structure (defaults to Note) ---------------------------- */
+
+div.admonition {
+    margin: 10px 0;
+    padding: var(--adm-padding-y) 10px;
+    background-color: var(--adm-note-bg);
+    border: 1px solid var(--adm-note-border);
+    border-left: 4px solid var(--adm-note-accent-border);
+    border-radius: 4px;
+}
+
+div.admonition + div.admonition {
+    margin-top: 16px;
+}
+
+div.admonition p {
+    margin-bottom: var(--adm-padding-y);
+}
+
+/* ---- Per-type color overrides --------------------------------------- */
+
+div.warning {
+    background-color: var(--adm-warning-bg);
+    border-color: var(--adm-warning-border);
+    border-left-color: var(--adm-warning-border);
+}
+
+div.tip {
+    background-color: var(--adm-tip-bg);
+    border-color: var(--adm-tip-border);
+    border-left-color: var(--adm-tip-border);
+}
+
+div.important {
+    background-color: var(--adm-important-bg);
+    border-color: var(--adm-important-border);
+    border-left-color: var(--adm-important-border);
+}
+
+div.seealso {
+    background-color: var(--adm-seealso-bg);
+    border-color: var(--adm-seealso-border);
+    border-left-color: var(--adm-seealso-accent-border);
+}
+
+div.seealso a.reference {
+    color: var(--adm-seealso-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+div.seealso a.reference:has(code) {
+    text-decoration: none;
+}
+
+div.seealso a.reference:hover {
+    color: var(--adm-seealso-hover);
+}
+
+div.admonition a {
+    text-decoration: none;
+}
+
+/* ---- Title (inline with the first paragraph of content) ------------ */
+
+p.admonition-title,
+p.admonition-title + p {
+    display: inline;
+    margin: 0;
+    padding: 0;
+}
+
+p.admonition-title {
+    background: none;
+    color: var(--adm-title);
+    font-weight: 700;
+    margin-right: 0.4em;
+}
+
+p.admonition-title::after {
+    content: ":";
+}

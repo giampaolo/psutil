@@ -82,8 +82,8 @@ def main():
     tot_perc = round((tot_ads / tot_calls) * 100, 1)
     print("-" * 50)
     print(
-        "Totals: access-denied={} ({}%%), calls={}, processes={}, elapsed={}s"
-        .format(tot_ads, tot_perc, tot_calls, tot_procs, round(elapsed, 2))
+        f"Totals: access-denied={tot_ads} ({tot_perc}%%), calls={tot_calls},"
+        f" processes={tot_procs}, elapsed={round(elapsed, 2)}s"
     )
 
 

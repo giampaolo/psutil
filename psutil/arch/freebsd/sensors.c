@@ -4,14 +4,11 @@
  * found in the LICENSE file.
  */
 
-/*
-Original code was refactored and moved from psutil/arch/freebsd/specific.c
-For reference, here's the git history with original(ish) implementations:
-- sensors_battery(): 022cf0a05d34f4274269d4f8002ee95b9f3e32d2
-- sensors_cpu_temperature(): bb5d032be76980a9e110f03f1203bd35fa85a793
-  (patch by Alex Manuskin)
-*/
-
+// Original code was refactored and moved from psutil/arch/freebsd/specific.c
+// For reference, here's the git history with original(ish) implementations:
+// - sensors_battery(): 022cf0a05d34f4274269d4f8002ee95b9f3e32d2
+// - sensors_cpu_temperature(): bb5d032be76980a9e110f03f1203bd35fa85a793
+//   (patch by Alex Manuskin)
 
 #include <Python.h>
 #include <sys/sysctl.h>

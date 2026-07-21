@@ -1,0 +1,30 @@
+{#-
+  Breadcrumbs / section banner. Currently used only by the blog
+  sub-site to render a "Blog" banner at the top of every blog page,
+  so the visitor knows they're in the blog area. Other pages render
+  nothing here.
+-#}
+{%- if ablog is defined %}
+{%- set in_blog = pagename == ablog.blog_path or pagename.startswith(ablog.blog_path ~ '/') %}
+{%- if in_blog %}
+<div class="blog-section-banner">
+  <div class="blog-section-label">
+    <svg class="blog-section-icon" viewBox="0 0 24 24" aria-hidden="true"
+         xmlns="http://www.w3.org/2000/svg" fill="none"
+         stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+    </svg>
+    <a class="blog-section-title" href="{{ pathto(ablog.blog_path) }}">{{ _('Blog') }}</a>
+    <div class="blog-section-subtitle">{{ _('Releases, deep dives, war stories') }}</div>
+  </div>
+  <a class="blog-rss"
+     href="{{ pathto(ablog.blog_path ~ '/atom', 1) }}.xml"
+     title="{{ _('Subscribe (Atom feed)') }}">
+    <span class="rss-icon blog-rss-icon"></span>
+    <span>RSS</span>
+  </a>
+</div>
+{%- endif %}
+{%- endif %}

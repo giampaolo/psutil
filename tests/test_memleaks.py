@@ -8,12 +8,14 @@
 extension. Requires https://github.com/giampaolo/psleak.
 """
 
-import functools
+import inspect
 import os
 
+from psleak import LeakTest
 from psleak import MemoryLeakTestCase
 
 import psutil
+from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import OPENBSD
@@ -59,7 +61,7 @@ FEW_TIMES = int(TIMES / 10)
 # ===================================================================
 
 
-class TestProcessObjectLeaks(MemoryLeakTestCase):
+class TestProcess(MemoryLeakTestCase):
     """Test leaks of Process class methods."""
 
     proc = thisproc
@@ -111,12 +113,6 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
             self.execute(lambda: self.proc.ionice(value))
         else:
             self.execute(lambda: self.proc.ionice(psutil.IOPRIO_CLASS_NONE))
-
-    @pytest.mark.skipif(not HAS_PROC_IONICE, reason="not supported")
-    @pytest.mark.skipif(WINDOWS, reason="not on WINDOWS")
-    def test_ionice_set_badarg(self):
-        fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
-        self.execute_w_exc(OSError, fun, retries=20)
 
     @pytest.mark.skipif(not HAS_PROC_IO_COUNTERS, reason="not supported")
     def test_io_counters(self):
@@ -188,12 +184,6 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
         affinity = thisproc.cpu_affinity()
         self.execute(lambda: self.proc.cpu_affinity(affinity))
 
-    @pytest.mark.skipif(not HAS_PROC_CPU_AFFINITY, reason="not supported")
-    def test_cpu_affinity_set_badarg(self):
-        self.execute_w_exc(
-            ValueError, lambda: self.proc.cpu_affinity([-1]), retries=20
-        )
-
     def test_open_files(self):
         kw = {"times": 10, "retries": 30} if WINDOWS else {}
         with open(get_testfn(), 'w'):
@@ -218,13 +208,6 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
         limit = thisproc.rlimit(psutil.RLIMIT_NOFILE)
         self.execute(lambda: self.proc.rlimit(psutil.RLIMIT_NOFILE, limit))
 
-    @pytest.mark.skipif(not LINUX, reason="LINUX only")
-    @pytest.mark.skipif(not HAS_PROC_RLIMIT, reason="not supported")
-    def test_rlimit_set_badarg(self):
-        self.execute_w_exc(
-            (OSError, ValueError), lambda: self.proc.rlimit(-1), retries=20
-        )
-
     # Windows implementation is based on a single system-wide
     # function (tested later).
     @pytest.mark.skipif(WINDOWS, reason="worthless on WINDOWS")
@@ -246,7 +229,7 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
         self.execute(lambda: cext.proc_oneshot(os.getpid()))
 
 
-class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
+class TestTerminatedProcess(TestProcess):
     """Repeat the tests above looking for leaks occurring when dealing
     with terminated processes raising NoSuchProcess exception.
     The C functions are still invoked but will follow different code
@@ -271,9 +254,6 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
             fun()
         except psutil.NoSuchProcess:
             pass
-
-    def test_cpu_affinity_set_badarg(self):
-        raise pytest.skip("skip")
 
     if WINDOWS:
 
@@ -317,7 +297,7 @@ class TestProcessDualImplementation(MemoryLeakTestCase):
 # ===================================================================
 
 
-class TestModuleFunctionsLeaks(MemoryLeakTestCase):
+class TestModuleFunctions(MemoryLeakTestCase):
     """Test leaks of psutil module functions."""
 
     def test_coverage(self):
@@ -481,3 +461,136 @@ class TestModuleFunctionsLeaks(MemoryLeakTestCase):
         def test_win_service_get_description(self):
             name = next(psutil.win_service_iter()).name()
             self.execute(lambda: cext.winservice_query_descr(name))
+
+
+# ===================================================================
+# bad arguments
+# ===================================================================
+
+
+class TestBadargs(MemoryLeakTestCase):
+    """Pass a bad argument to each C function that accepts one, and make
+    sure the resulting `PyArg_ParseTuple` failure path doesn't leak
+    memory: a C function may allocate its return object before parsing
+    its arguments, see: https://github.com/giampaolo/psutil/pull/2857/.
+    """
+
+    retries = 20
+    badargs = (object(),) * 20
+
+    def execute(self, fun, *args, **kwargs):
+        # Every function here is called with a bad arg and must raise
+        # TypeError (the parse-failure path we check for leaks).
+        def call():
+            try:
+                fun(*args)
+            except TypeError:
+                pass
+            else:
+                pytest.fail(f"{fun} did not raise TypeError")
+
+        super().execute(call, **kwargs)
+
+    @classmethod
+    def cext_arg_funcs(cls):
+        # Names of the C functions that actually parse at least one
+        # argument.
+        names = []
+        for name in dir(cext):
+            if name.startswith("_"):
+                continue
+            func = getattr(cext, name)
+            if not inspect.isbuiltin(func):  # skip exception classes
+                continue
+            try:
+                func(*cls.badargs)
+            except NotImplementedError:
+                pass
+            except TypeError as err:
+                # "takes no arguments" => METH_NOARGS (no arg to test).
+                if "takes no arguments" not in str(err):
+                    names.append(name)
+        return names
+
+    @classmethod
+    def auto_generate(cls):
+        return {
+            name: LeakTest(getattr(cext, name), *cls.badargs)
+            for name in cls.cext_arg_funcs()
+        }
+
+
+def cext_has(name):
+    return pytest.mark.skipif(
+        not hasattr(cext, name), reason=f"no cext.{name}()"
+    )
+
+
+class TestBadargs2(MemoryLeakTestCase):
+    """Like TestBadargsMemleaks, but for the error paths reached
+    *after* `PyArg_ParseTuple` succeeds, by passing an invalid arg like
+    a negative PID, a bogus NIC name etc., making the C function fail
+    deeper.
+    """
+
+    retries = 20
+    pid = os.getpid()
+
+    # --- portable: same signature and error everywhere they exist
+
+    @cext_has("proc_priority_get")
+    def test_proc_priority_get(self):
+        self.execute_w_exc(OSError, cext.proc_priority_get, -1)
+
+    @cext_has("proc_priority_set")
+    def test_proc_priority_set(self):
+        self.execute_w_exc(OSError, cext.proc_priority_set, -1, 0)
+
+    @cext_has("proc_cpu_affinity_get")
+    def test_proc_cpu_affinity_get(self):
+        # FreeBSD's cpuset_getaffinity() reads -1 as "the current
+        # process", so it succeeds. Use another negative PID.
+        pid = -2 if FREEBSD else -1
+        self.execute_w_exc(OSError, cext.proc_cpu_affinity_get, pid)
+
+    @cext_has("net_if_flags")
+    def test_net_if_flags(self):
+        self.execute_w_exc(OSError, cext.net_if_flags, "nonexistent0")
+
+    @cext_has("net_if_mtu")
+    def test_net_if_mtu(self):
+        self.execute_w_exc(OSError, cext.net_if_mtu, "nonexistent0")
+
+    @cext_has("net_if_is_running")
+    def test_net_if_is_running(self):
+        self.execute_w_exc(OSError, cext.net_if_is_running, "nonexistent0")
+
+    # --- Linux only
+
+    @cext_has("proc_ioprio_set")
+    def test_proc_ioprio_set(self):
+        self.execute_w_exc(OSError, cext.proc_ioprio_set, self.pid, -1, 0)
+
+    @cext_has("proc_ioprio_get")
+    def test_proc_ioprio_get(self):
+        self.execute_w_exc(OSError, cext.proc_ioprio_get, -1)
+
+    @pytest.mark.skipif(not LINUX, reason="LINUX only")
+    def test_disk_partitions(self):
+        self.execute_w_exc(OSError, cext.disk_partitions, "/does/not/exist")
+
+    @pytest.mark.skipif(not LINUX, reason="LINUX only")
+    def test_net_if_duplex_speed(self):
+        self.execute_w_exc(OSError, cext.net_if_duplex_speed, "nonexistent0")
+
+    # --- other platform-specific behavior
+
+    @pytest.mark.skipif(not LINUX, reason="LINUX only")
+    def test_proc_cpu_affinity_set(self):
+        self.execute_w_exc(
+            ValueError, cext.proc_cpu_affinity_set, self.pid, [-1]
+        )
+
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    def test_check_pid_range(self):
+        self.execute_w_exc(ValueError, cext.check_pid_range, -1)

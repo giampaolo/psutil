@@ -1232,6 +1232,27 @@ class TestProcess(PsutilTestCase):
         with pytest.raises(ValueError):
             p.as_dict(['foo', 'bar'])
 
+    def test_attrs(self):
+        # The `Process.attrs` attribute to use with `as_dict()`.
+        p = psutil.Process()
+        assert p.as_dict().keys() == p.attrs
+
+        for g in process_namespace.getters:
+            name = g[0]
+            if name != 'rlimit':
+                assert name in p.attrs
+
+        for g in process_namespace.ignored + process_namespace.killers:
+            name = g[0]
+            if name != 'pid':
+                assert name not in p.attrs
+
+        # test excluded attrs
+        assert "net_connections" in list(p.as_dict(p.attrs))
+        assert "net_connections" not in list(
+            p.as_dict(p.attrs - {"net_connections"})
+        )
+
     def test_oneshot(self):
         p = psutil.Process()
         with mock.patch("psutil._psplatform.Process.cpu_times") as m:
@@ -1247,7 +1268,7 @@ class TestProcess(PsutilTestCase):
 
     def test_oneshot_twice(self):
         # Test the case where the ctx manager is __enter__ed twice.
-        # The second __enter__ is supposed to resut in a NOOP.
+        # The second __enter__ is supposed to result in a NOOP.
         p = psutil.Process()
         with mock.patch("psutil._psplatform.Process.cpu_times") as m1:
             with mock.patch("psutil._psplatform.Process.oneshot_enter") as m2:

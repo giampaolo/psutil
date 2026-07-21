@@ -59,8 +59,8 @@ get_zones(malloc_zone_t ***out_zones, unsigned int *out_count) {
 // Compatible with macOS 10.6+ (Sierra and earlier).
 //
 // Mapping:
-//   - heap_used  ~ size_in_use          (live allocated bytes)
-//   - mmap_used  ~ 0                    (no direct stat)
+// - heap_used  ~ size_in_use          (live allocated bytes)
+// - mmap_used  ~ 0                    (no direct stat)
 PyObject *
 psutil_heap_info(PyObject *self, PyObject *args) {
     malloc_zone_t **zones = NULL;

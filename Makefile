@@ -9,6 +9,7 @@
 # Configurable
 PYTHON = python3
 ARGS =
+FILES =
 
 PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade --upgrade-strategy eager
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
@@ -18,8 +19,8 @@ DPRINT = ~/.dprint/bin/dprint
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
 
-# install git hook
-_ := $(shell mkdir -p .git/hooks/ && ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit)
+# install git hook (skipped in worktrees, where .git is a file)
+_ := $(shell test -d .git && mkdir -p .git/hooks/ && ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit)
 
 # ===================================================================
 # Install
@@ -36,7 +37,7 @@ clean:  ## Remove all build files.
 		-o -type f -name \*.rej \
 		-o -type f -name \*.so \
 		-o -type f -name \*.~ \
-		-o -type f -name \*\$testfn`
+		-o -name \*@psutil-\*`
 	@rm -rfv \
 		*.core \
 		*.egg-info \
@@ -64,7 +65,7 @@ build:  ## Compile (in parallel) without installing.
 install:  ## Install this package as current user in "edit" mode.
 	$(MAKE) build
 	# If not in a virtualenv, add --user to the install command.
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop $(SETUP_INSTALL_ARGS) `$(PYTHON) -c \
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop `$(PYTHON) -c \
 		"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
 
 uninstall:  ## Uninstall this package via pip.
@@ -74,7 +75,7 @@ uninstall:  ## Uninstall this package via pip.
 install-pip:  ## Install pip (no-op if already installed).
 	$(PYTHON) scripts/internal/install_pip.py
 
-install-sysdeps:
+install-sysdeps:  ## Install system deps needed to compile psutil.
 	./scripts/internal/install-sysdeps.sh
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
@@ -82,14 +83,15 @@ install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[test]
 
-install-pydeps-dev:  ## Install python deps meant for local development.
-	$(MAKE) install-git-hooks
+install-pydeps-lint:  ## Install python deps necessary to run linters.
 	$(MAKE) install-pip
-	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[dev]
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[lint]
 
-install-git-hooks:  ## Install GIT pre-commit hook.
-	ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit
-	chmod +x .git/hooks/pre-commit
+install-pydeps-dev:  ## Install python deps meant for local development.
+	$(MAKE) install-pip
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[dev]
 
 # ===================================================================
 # Tests
@@ -104,7 +106,7 @@ test:  ## Run all tests (except memleak tests).
 	$(RUN_TEST) $(ARGS)
 
 test-parallel:  ## Run all tests (except memleak tests) in parallel.
-	$(RUN_TEST) -p xdist -n auto --dist loadgroup $(ARGS)
+	$(RUN_TEST) -n auto --dist loadgroup $(ARGS)
 
 test-process:  ## Run process-related tests.
 	$(RUN_TEST) -k "test_process.py or test_proc or test_pid or Process or pids or pid_exists" $(ARGS)
@@ -129,6 +131,9 @@ test-unicode:  ## Test APIs dealing with strings.
 
 test-contracts:  ## APIs sanity tests.
 	$(RUN_TEST) tests/test_contracts.py $(ARGS)
+
+test-docs:  ## Run doc sanity tests (outside testpaths, run on demand).
+	$(MAKE) -C docs test ARGS="$(ARGS)"
 
 test-type-hints:  ## Test type hints
 	$(RUN_TEST) tests/test_type_hints.py $(ARGS)
@@ -167,23 +172,29 @@ coverage:  ## Run test coverage.
 # Linters
 # ===================================================================
 
+# Return a shell pipeline that outputs one file per line. Uses
+# $(FILES) if set, else "git ls-files" with given pattern(s).
+_ls = $(if $(FILES), printf '%s\n' $(FILES), git ls-files $(1))
+
 ruff:  ## Run ruff linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --output-format=concise
+	@$(call _ls,'*.py') | xargs $(PYTHON) -m ruff check --output-format=concise
 
 black:  ## Run black formatter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
+	@$(call _ls,'*.py') | xargs $(PYTHON) -m black --check --safe
 
 lint-c:  ## Run C linter.
-	@git ls-files '*.c' '*.h' | xargs -P0 -I{} clang-format --dry-run --Werror {}
+	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format --dry-run --Werror {}
 
-dprint:
+dprint:  ## Run linter for .md / .json / .yml files.
 	@$(DPRINT) check
 
 lint-rst:  ## Run linter for .rst files.
-	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
+	@$(call _ls,'*.rst') | xargs $(PYTHON) scripts/internal/rst_unused_targets.py
+	@$(call _ls,'*.rst') | xargs sphinx-lint --enable all --disable line-too-long
+	@$(call _ls,'*.rst') | xargs rstwrap --check
 
 lint-toml:  ## Run linter for pyproject.toml.
-	@git ls-files '*.toml' | xargs toml-sort --check
+	@$(call _ls,'*.toml') | xargs toml-sort --check
 
 lint-all:  ## Run all linters
 	$(MAKE) black
@@ -196,33 +207,38 @@ lint-all:  ## Run all linters
 # --- not mandatory linters (just run from time to time)
 
 pylint:  ## Python pylint
-	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=0 $(ARGS)
+	@$(call _ls,'*.py') | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=0 $(ARGS)
 
 vulture:  ## Find unused code
-	@git ls-files '*.py' | xargs $(PYTHON) -m vulture $(ARGS)
+	@$(call _ls,'*.py') | xargs $(PYTHON) -m vulture $(ARGS)
 
 # ===================================================================
 # Fixers
 # ===================================================================
 
-fix-black:
-	@git ls-files '*.py' | xargs $(PYTHON) -m black
+fix-black:  ## Reformat python code with black.
+	@$(call _ls,'*.py') | xargs $(PYTHON) -m black
 
-fix-ruff:
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --fix --output-format=concise $(ARGS)
+fix-ruff:  ## Fix ruff errors.
+	@$(call _ls,'*.py') | xargs $(PYTHON) -m ruff check --fix --output-format=concise $(ARGS)
 
-fix-c:
-	@git ls-files '*.c' '*.h' | xargs -P0 -I{} clang-format -i {}  # parallel exec
+fix-c:  ## Reformat C code with clang-format.
+	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format -i {}  # parallel exec
 
 fix-toml:  ## Fix pyproject.toml
-	@git ls-files '*.toml' | xargs toml-sort
+	@$(call _ls,'*.toml') | xargs toml-sort
 
-fix-dprint:
+fix-rst:  ## Re-wrap .rst files.
+	@$(call _ls,'*.rst') | xargs rstwrap
+
+fix-dprint:  ## Reformat .md / .json / .yml files.
 	@$(DPRINT) fmt
 
 fix-all:  ## Run all code fixers.
 	$(MAKE) fix-ruff
 	$(MAKE) fix-black
+	$(MAKE) fix-c
+	$(MAKE) fix-rst
 	$(MAKE) fix-toml
 	$(MAKE) fix-dprint
 
@@ -231,7 +247,7 @@ fix-all:  ## Run all code fixers.
 # ===================================================================
 
 ci-lint:  ## Run all linters on GitHub CI.
-	$(PYTHON) -m pip install -U black ruff rstcheck toml-sort sphinx
+	$(MAKE) install-pydeps-lint
 	curl -fsSL https://dprint.dev/install.sh | sh
 	$(DPRINT) --version
 	clang-format --version
@@ -263,7 +279,7 @@ ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	mv wheelhouse/* dist/
 	$(MAKE) check-dist
 	$(MAKE) install
-	$(MAKE) print-dist
+	$(PYTHON) scripts/internal/print_dist.py --check
 
 # ===================================================================
 # Distribution
@@ -339,7 +355,7 @@ release:  ## Upload a new release.
 	$(MAKE) git-tag-release
 
 git-tag-release:  ## Git-tag a new release.
-	git tag -a release-`python3 -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
+	git tag -a v`$(PYTHON) -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
 	git push --follow-tags
 
 # ===================================================================
@@ -382,6 +398,12 @@ bench-oneshot-2:  ## Same as above but using perf module (supposed to be more pr
 
 find-broken-links:  ## Look for broken links in source files.
 	git ls-files | xargs $(PYTHON) -Wa scripts/internal/find_broken_links.py
+
+_CI_JOBS := $(patsubst .github/workflows/%.yml,%,$(shell grep -l workflow_dispatch .github/workflows/*.yml))
+
+ci-run:  ## Manually run a CI workflow, e.g. `make ci-run JOB=bsd`
+	@echo "$(_CI_JOBS)" | tr ' ' '\n' | grep -qx "$(JOB)" || { echo "Usage: make ci-run JOB=<$$(echo $(_CI_JOBS) | tr ' ' '|')>"; exit 1; }
+	gh workflow run $(JOB).yml --ref $$(git rev-parse --abbrev-ref HEAD)
 
 help: ## Display callable targets.
 	@awk -F':.*?## ' '/^[a-zA-Z0-9_.-]+:.*?## / {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort

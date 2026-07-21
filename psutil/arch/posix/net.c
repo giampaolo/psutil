@@ -46,10 +46,8 @@
 #include "../../arch/all/init.h"
 
 
-/*
- * Translate a sockaddr struct into a Python string.
- * Return None if address family is not AF_INET* or AF_PACKET.
- */
+// Translate a sockaddr struct into a Python string.
+// Return None if address family is not AF_INET* or AF_PACKET.
 PyObject *
 psutil_convert_ipaddr(struct sockaddr *addr, int family) {
     char buf[NI_MAXHOST];
@@ -61,8 +59,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
     char *ptr;
 
     if (addr == NULL) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     else if (family == AF_INET || family == AF_INET6) {
         if (family == AF_INET)
@@ -78,11 +75,10 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
             // ifconfig does not show anything BTW.
             // psutil_runtime_error(gai_strerror(err));
             // return NULL;
-            Py_INCREF(Py_None);
-            return Py_None;
+            Py_RETURN_NONE;
         }
         else {
-            return Py_BuildValue("s", buf);
+            return PyUnicode_FromString(buf);
         }
     }
 #ifdef PSUTIL_LINUX
@@ -102,8 +98,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
 #endif
     else {
         // unknown family
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 
     // AF_PACKET or AF_LINK
@@ -114,19 +109,16 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
             ptr += 3;
         }
         *--ptr = '\0';
-        return Py_BuildValue("s", buf);
+        return PyUnicode_FromString(buf);
     }
     else {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 }
 
 
-/*
- * Return NICs information a-la ifconfig as a list of tuples.
- * TODO: on Solaris we won't get any MAC address.
- */
+// Return NICs information a-la ifconfig as a list of tuples.
+// TODO: on Solaris we won't get any MAC address.
 PyObject *
 psutil_net_if_addrs(PyObject *self, PyObject *args) {
     struct ifaddrs *ifaddr, *ifa;
@@ -146,16 +138,19 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     }
 
     for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-        if (!ifa->ifa_addr)
-            continue;
+        if (!ifa->ifa_addr)  // virtual NIC
+            goto append_none;
+
         family = ifa->ifa_addr->sa_family;
+
         py_address = psutil_convert_ipaddr(ifa->ifa_addr, family);
-        // If the primary address can't be determined just skip it.
-        // I've never seen this happen on Linux but I did on FreeBSD.
-        if (py_address == Py_None)
-            continue;
+        if (py_address == Py_None) {  // virtual NIC
+            Py_CLEAR(py_address);
+            goto append_none;
+        }
         if (py_address == NULL)
             goto error;
+
         py_netmask = psutil_convert_ipaddr(ifa->ifa_netmask, family);
         if (py_netmask == NULL)
             goto error;
@@ -196,6 +191,25 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
         Py_CLEAR(py_netmask);
         Py_CLEAR(py_broadcast);
         Py_CLEAR(py_ptp);
+        continue;
+
+    append_none:
+        // When the primary address can't be determined, still include
+        // the NIC with None values. These are usually virtual
+        // IPv4/IPv6 tunnel interfaces.
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(siOOOO)",
+                ifa->ifa_name,
+                AF_UNSPEC,
+                Py_None,
+                Py_None,
+                Py_None,
+                Py_None
+            ))
+        {
+            goto error;
+        }
     }
 
     freeifaddrs(ifaddr);
@@ -213,10 +227,8 @@ error:
 }
 
 
-/*
- * Return NIC MTU. References:
- * http://www.i-scream.org/libstatgrab/
- */
+// Return NIC MTU. References:
+// http://www.i-scream.org/libstatgrab/
 PyObject *
 psutil_net_if_mtu(PyObject *self, PyObject *args) {
     char *nic_name;
@@ -250,9 +262,7 @@ append_flag(PyObject *py_retlist, const char *flag_name) {
     return pylist_append_obj(py_retlist, PyUnicode_FromString(flag_name));
 }
 
-/*
- * Get all of the NIC flags and return them.
- */
+// Get all of the NIC flags and return them.
 PyObject *
 psutil_net_if_flags(PyObject *self, PyObject *args) {
     char *nic_name;
@@ -438,11 +448,9 @@ error:
 }
 
 
-/*
- * Inspect NIC flags, returns a bool indicating whether the NIC is
- * running. References:
- * http://www.i-scream.org/libstatgrab/
- */
+// Inspect NIC flags, returns a bool indicating whether the NIC is
+// running. References:
+// http://www.i-scream.org/libstatgrab/
 PyObject *
 psutil_net_if_is_running(PyObject *self, PyObject *args) {
     char *nic_name;
@@ -617,11 +625,9 @@ psutil_get_nic_speed(int ifm_active) {
 }
 
 
-/*
- * Return stats about a particular network interface.
- * References:
- * http://www.i-scream.org/libstatgrab/
- */
+// Return stats about a particular network interface.
+// References:
+// http://www.i-scream.org/libstatgrab/
 PyObject *
 psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
     char *nic_name;

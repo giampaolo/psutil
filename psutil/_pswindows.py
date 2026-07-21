@@ -123,27 +123,29 @@ def getpagesize():
 
 
 def virtual_memory():
-    """System virtual memory as a namedtuple."""
+    """System virtual memory as a named tuple."""
     info = cext.GetPerformanceInfo()
-    page = info["PageSize"]
-    total = info["PhysicalTotal"] * page
-    avail = info["PhysicalAvailable"] * page
+    pagesize = info["PageSize"]
+    total = info["PhysicalTotal"] * pagesize
+    avail = info["PhysicalAvailable"] * pagesize
+    cached = info["SystemCache"] * pagesize
+    wired = info["KernelNonpaged"] * pagesize
     free = avail
     used = total - avail
     percent = usage_percent((total - avail), total, round_=1)
-    return ntp.svmem(total, avail, percent, used, free)
+    return ntp.svmem(total, avail, percent, used, free, cached, wired)
 
 
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     info = cext.GetPerformanceInfo()
-    page = info["PageSize"]
-    total_phys = info["PhysicalTotal"] * page
+    pagesize = info["PageSize"]
+    total_phys = info["PhysicalTotal"] * pagesize
     # CommitLimit == Maximum pages that can be committed into RAM +
     # page file (swap). In the context of swap, it's the total "system
-    # memory" (physical + virtual), thus substract the physical part
+    # memory" (physical + virtual), thus subtract the physical part
     # from it to get the "total swap".
-    total_system = info["CommitLimit"] * page  # physical + swap
+    total_system = info["CommitLimit"] * pagesize  # physical + swap
     total = total_system - total_phys
 
     # commit total is incremented immediately (decrementing free_system)
@@ -181,7 +183,12 @@ def disk_usage(path):
         # XXX: do we want to use "strict"? Probably yes, in order
         # to fail immediately. After all we are accepting input here...
         path = path.decode(ENCODING, errors="strict")
-    total, used, free = cext.disk_usage(path)
+    try:
+        total, used, free = cext.disk_usage(path)
+    except NotADirectoryError:
+        if not os.path.isabs(path):
+            path = os.path.join(os.getcwd(), path)
+        total, used, free = cext.disk_usage(os.path.dirname(path))
     percent = usage_percent(used, total, round_=1)
     return ntp.sdiskusage(total, used, free, percent)
 
@@ -207,15 +214,15 @@ def cpu_times():
         *[sum(n) for n in zip(*cext.per_cpu_times())]
     )
     return ntp.scputimes(
-        user, system, idle, percpu_summed.interrupt, percpu_summed.dpc
+        user, system, idle, percpu_summed.irq, percpu_summed.dpc
     )
 
 
 def per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = []
-    for user, system, idle, interrupt, dpc in cext.per_cpu_times():
-        item = ntp.scputimes(user, system, idle, interrupt, dpc)
+    for user, system, idle, irq, dpc in cext.per_cpu_times():
+        item = ntp.scputimes(user, system, idle, irq, dpc)
         ret.append(item)
     return ret
 
@@ -353,27 +360,15 @@ def sensors_battery():
 # =====================================================================
 
 
-_last_btime = 0
-
-
 def boot_time():
     """The system boot time expressed in seconds since the epoch. This
-    also includes the time spent during hybernate / suspend.
+    also includes the time spent during hibernate / suspend.
     """
-    # This dirty hack is to adjust the precision of the returned
-    # value which may have a 1 second fluctuation, see:
-    # https://github.com/giampaolo/psutil/issues/1007
-    global _last_btime
-    ret = time.time() - cext.uptime()
-    if abs(ret - _last_btime) <= 1:
-        return _last_btime
-    else:
-        _last_btime = ret
-        return ret
+    return cext.boot_time()
 
 
 def users():
-    """Return currently connected users as a list of namedtuples."""
+    """Return currently connected users as a list of named tuples."""
     retlist = []
     rawlist = cext.users()
     for item in rawlist:

@@ -125,8 +125,14 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     cpucount_s = CPU_COUNT_S(setsize, mask);
     for (cpu = 0, count = cpucount_s; count; cpu++) {
         if (CPU_ISSET_S(cpu, setsize, mask)) {
-            if (!pylist_append_obj(py_list, PyLong_FromLong(cpu)))
+            PyObject *py_cpu = PyLong_FromLong(cpu);
+            if (py_cpu == NULL)
                 goto error;
+            if (!pylist_append_obj(py_list, py_cpu)) {
+                Py_DECREF(py_cpu);
+                goto error;
+            }
+            Py_DECREF(py_cpu);
             --count;
         }
     }

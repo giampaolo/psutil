@@ -14,6 +14,7 @@ import os
 import re
 import shutil
 import time
+from unittest import mock
 
 import psutil
 from psutil import BSD
@@ -30,13 +31,7 @@ from . import sh
 from . import spawn_subproc
 from . import terminate
 
-if BSD:
-    PAGESIZE = psutil._psplatform.cext.getpagesize()
-    # muse requires root privileges
-    MUSE_AVAILABLE = os.getuid() == 0 and shutil.which("muse")
-else:
-    PAGESIZE = None
-    MUSE_AVAILABLE = False
+PAGESIZE = psutil._psplatform.cext.getpagesize() if BSD else None
 
 
 def sysctl(cmdline):
@@ -54,43 +49,14 @@ def sysctl(cmdline):
         return result
 
 
-def muse(field):
-    """Thin wrapper around 'muse' cmdline utility."""
-    out = sh('muse')
-    for line in out.split('\n'):
-        if line.startswith(field):
-            break
-    else:
-        raise ValueError("line not found")
-    return int(line.split()[1])
-
-
 # =====================================================================
 # --- All BSD*
 # =====================================================================
 
 
 @pytest.mark.skipif(not BSD, reason="BSD only")
-class BSDTestCase(PsutilTestCase):
-    """Generic tests common to all BSD variants."""
-
-    @classmethod
-    def setUpClass(cls):
-        cls.pid = spawn_subproc().pid
-
-    @classmethod
-    def tearDownClass(cls):
-        terminate(cls.pid)
-
-    @pytest.mark.skipif(NETBSD, reason="-o lstart doesn't work on NETBSD")
-    def test_process_create_time(self):
-        output = sh(f"ps -o lstart -p {self.pid}")
-        start_ps = output.replace('STARTED', '').strip()
-        start_psutil = psutil.Process(self.pid).create_time()
-        start_psutil = time.strftime(
-            "%a %b %e %H:%M:%S %Y", time.localtime(start_psutil)
-        )
-        assert start_ps == start_psutil
+class TestSystemAPIs(PsutilTestCase):
+    """System tests common to all BSD variants."""
 
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
@@ -151,13 +117,143 @@ class BSDTestCase(PsutilTestCase):
                     assert stats.mtu == int(re.findall(r'mtu (\d+)', out)[0])
 
 
+@pytest.mark.skipif(not BSD, reason="BSD only")
+class TestProcessAPIs(PsutilTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc().pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
+
+    @pytest.mark.skipif(NETBSD, reason="-o lstart doesn't work on NETBSD")
+    def test_create_time(self):
+        output = sh(f"ps -o lstart -p {self.pid}")
+        start_ps = output.replace('STARTED', '').strip()
+        start_psutil = psutil.Process(self.pid).create_time()
+        start_psutil = time.strftime(
+            "%a %b %e %H:%M:%S %Y", time.localtime(start_psutil)
+        )
+        assert start_ps == start_psutil
+
+
+@pytest.mark.skipif(not BSD, reason="BSD only")
+class TestVmstat(PsutilTestCase):
+
+    @staticmethod
+    def vmstat(labels):
+        out = sh(["vmstat", "-s"], env={"LANG": "C.UTF-8"})
+        for line in out.split("\n"):
+            line = line.strip()
+            num, _, what = line.partition(" ")
+            for label in labels:
+                if label == what:
+                    return int(num)
+        return pytest.skip(f"can't find {labels} in vmstat output")
+
+    # --- virtual_memory()
+
+    def test_vmem_free(self):
+        vmstat_value = self.vmstat(['pages free']) * PAGESIZE
+        psutil_value = psutil.virtual_memory().free
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_active(self):
+        vmstat_value = self.vmstat(['pages active']) * PAGESIZE
+        psutil_value = psutil.virtual_memory().active
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_inactive(self):
+        vmstat_value = self.vmstat(['pages inactive']) * PAGESIZE
+        psutil_value = psutil.virtual_memory().inactive
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_cached(self):
+        # NetBSD / OpenBSD
+        vmstat_value = (
+            self.vmstat(['cached file pages'])
+            + self.vmstat(['cached executable pages'])
+        ) * PAGESIZE
+        psutil_value = psutil.virtual_memory().cached
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_wired(self):
+        vmstat_value = (
+            self.vmstat(['pages wired', 'pages wired down']) * PAGESIZE
+        )
+        psutil_value = psutil.virtual_memory().wired
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    @pytest.mark.skipif(
+        not (OPENBSD or NETBSD), reason="NETBSD / OPENBSD only"
+    )
+    def test_vmem_shared(self):
+        out = sh("vmstat -t")
+        if "vm-sh" not in out:
+            return pytest.skip("can't find 'vm-sh' in vmstat output")
+        lines = out.splitlines()
+        headers = lines[1].split()
+        values = lines[2].split()
+        row = dict(zip(headers, values))
+        expected = int(row["vm-sh"]) * PAGESIZE
+        assert (
+            abs(psutil.virtual_memory().shared - expected) < TOLERANCE_SYS_MEM
+        )
+
+    # --- swap_memory()
+
+    def test_swap_total(self):
+        vmstat_value = self.vmstat(['swap pages']) * PAGESIZE
+        psutil_value = psutil.swap_memory().total
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_swap_used(self):
+        vmstat_value = self.vmstat(['swap pages in use']) * PAGESIZE
+        psutil_value = psutil.swap_memory().used
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_swap_sin(self):
+        vmstat_value = self.vmstat(['pages swapped in']) * PAGESIZE
+        psutil_value = psutil.swap_memory().sin
+        assert abs(vmstat_value - psutil_value) < 1024
+
+    def test_swap_sout(self):
+        vmstat_value = self.vmstat(['pages swapped oud']) * PAGESIZE
+        psutil_value = psutil.swap_memory().sout
+        assert abs(vmstat_value - psutil_value) < 1024
+
+    # --- cpu_stats()
+
+    def test_cpu_stats_interrupts(self):
+        vmstat_value = self.vmstat(['device interrupts', 'interrupts'])
+        psutil_value = psutil.cpu_stats().interrupts
+        assert abs(vmstat_value - psutil_value) <= 100
+
+    def test_cpu_stats_soft_interrupts(self):
+        vmstat_value = self.vmstat(['software interrupts'])
+        psutil_value = psutil.cpu_stats().soft_interrupts
+        assert abs(vmstat_value - psutil_value) <= 100
+
+    def test_cpu_stats_syscalls(self):
+        vmstat_value = self.vmstat(['system calls', 'syscalls'])
+        psutil_value = psutil.cpu_stats().syscalls
+        assert abs(vmstat_value - psutil_value) <= 100
+
+    def test_cpu_stats_ctx_switches(self):
+        vmstat_value = self.vmstat(['cpu context switches'])
+        psutil_value = psutil.cpu_stats().ctx_switches
+        assert abs(vmstat_value - psutil_value) <= 100
+
+
 # =====================================================================
 # --- FreeBSD
 # =====================================================================
 
 
 @pytest.mark.skipif(not FREEBSD, reason="FREEBSD only")
-class FreeBSDTestCase(PsutilTestCase):
+class FreeBSDProcessTestCase(PsutilTestCase):
     @classmethod
     def setUpClass(cls):
         cls.pid = spawn_subproc().pid
@@ -260,6 +356,22 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         total, used, free = (int(p) * 1024 for p in parts[1:4])
         return total, used, free
 
+    def test_cpu_count_cores(self):
+        cores = sysctl("kern.smp.cores")
+        assert psutil.cpu_count(logical=False) == cores
+
+    @retry_on_failure()
+    def test_cpu_times(self):
+        clk_tck = os.sysconf("SC_CLK_TCK")
+        ticks = [int(x) for x in sysctl("kern.cp_time").split()]
+        ct = psutil.cpu_times()
+        tolerance = 0.5
+        assert abs(ct.user - ticks[0] / clk_tck) < tolerance
+        assert abs(ct.nice - ticks[1] / clk_tck) < tolerance
+        assert abs(ct.system - ticks[2] / clk_tck) < tolerance
+        assert abs(ct.irq - ticks[3] / clk_tck) < tolerance
+        assert abs(ct.idle - ticks[4] / clk_tck) < tolerance
+
     def test_cpu_frequency_against_sysctl(self):
         # Currently only cpu 0 is frequency is supported in FreeBSD
         # All other cores use the same frequency.
@@ -279,6 +391,19 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         min_freq = int(sysctl_result.split()[-1].split("/")[0])
         assert psutil.cpu_freq().max == max_freq
         assert psutil.cpu_freq().min == min_freq
+
+    def test_cpu_freq_no_levels(self):
+        # No freq_levels means we can't tell min / max. It used to
+        # raise NameError, or reuse the previous CPU's values.
+        with mock.patch(
+            "psutil._psbsd.cext.cpu_freq", return_value=(100, "")
+        ) as m:
+            ret = psutil._psbsd.cpu_freq()
+            assert m.called
+        for nt in ret:
+            assert nt.current == 100
+            assert nt.min is None
+            assert nt.max is None
 
     # --- virtual_memory(); tests against sysctl
 
@@ -311,49 +436,6 @@ class FreeBSDSystemTestCase(PsutilTestCase):
     def test_vmem_buffers(self):
         syst = sysctl("vfs.bufspace")
         assert abs(psutil.virtual_memory().buffers - syst) < TOLERANCE_SYS_MEM
-
-    # --- virtual_memory(); tests against muse
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    def test_muse_vmem_total(self):
-        num = muse('Total')
-        assert psutil.virtual_memory().total == num
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    @retry_on_failure()
-    def test_muse_vmem_active(self):
-        num = muse('Active')
-        assert abs(psutil.virtual_memory().active - num) < TOLERANCE_SYS_MEM
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    @retry_on_failure()
-    def test_muse_vmem_inactive(self):
-        num = muse('Inactive')
-        assert abs(psutil.virtual_memory().inactive - num) < TOLERANCE_SYS_MEM
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    @retry_on_failure()
-    def test_muse_vmem_wired(self):
-        num = muse('Wired')
-        assert abs(psutil.virtual_memory().wired - num) < TOLERANCE_SYS_MEM
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    @retry_on_failure()
-    def test_muse_vmem_cached(self):
-        num = muse('Cache')
-        assert abs(psutil.virtual_memory().cached - num) < TOLERANCE_SYS_MEM
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    @retry_on_failure()
-    def test_muse_vmem_free(self):
-        num = muse('Free')
-        assert abs(psutil.virtual_memory().free - num) < TOLERANCE_SYS_MEM
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    @retry_on_failure()
-    def test_muse_vmem_buffers(self):
-        num = muse('Buffer')
-        assert abs(psutil.virtual_memory().buffers - num) < TOLERANCE_SYS_MEM
 
     def test_cpu_stats_ctx_switches(self):
         assert (
@@ -400,6 +482,25 @@ class FreeBSDSystemTestCase(PsutilTestCase):
     def test_swapmem_total(self):
         total, _used, _free = self.parse_swapinfo()
         assert abs(psutil.swap_memory().total - total) < TOLERANCE_SYS_MEM
+
+    # --- net
+
+    @retry_on_failure()
+    def test_net_io_counters(self):
+        out = sh("netstat -ib")
+        netstat = {}
+        for line in out.splitlines():
+            fields = line.split()
+            if len(fields) == 12 and "<Link#" in fields[2]:
+                name = fields[0]
+                netstat[name] = (int(fields[7]), int(fields[10]))
+        ps = psutil.net_io_counters(pernic=True)
+        tolerance = 1 * 1024 * 1024  # 1 MB
+        for name, (ibytes, obytes) in netstat.items():
+            if name not in ps:
+                continue
+            assert abs(ps[name].bytes_recv - ibytes) < tolerance
+            assert abs(ps[name].bytes_sent - obytes) < tolerance
 
     # --- others
 
@@ -488,7 +589,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 
 
 @pytest.mark.skipif(not OPENBSD, reason="OPENBSD only")
-class OpenBSDTestCase(PsutilTestCase):
+class OpenBSDSystemTestCase(PsutilTestCase):
     def test_boot_time(self):
         s = sysctl('kern.boottime')
         sys_bt = datetime.datetime.strptime(s, "%a %b %d %H:%M:%S %Y")
@@ -504,84 +605,40 @@ class OpenBSDTestCase(PsutilTestCase):
 @pytest.mark.skipif(not NETBSD, reason="NETBSD only")
 class NetBSDTestCase(PsutilTestCase):
     @staticmethod
-    def parse_meminfo(look_for):
-        with open('/proc/meminfo') as f:
-            for line in f:
-                if line.startswith(look_for):
-                    return int(line.split()[1]) * 1024
-        raise ValueError(f"can't find {look_for}")
+    def parse_vmstat(look_for):
+        """Parse a cumulative field from 'vmstat -s' output.
+        Lines are formatted as: '<value> <description>'
+        Mirrors the same uvmexp_sysctl fields that psutil reads via
+        sysctl(CTL_VM, VM_UVMEXP2) in C, without requiring procfs.
+        """
+        out = sh("vmstat -s")
+        for line in out.splitlines():
+            line = line.strip()
+            if look_for in line:
+                return int(line.split()[0])
+        raise ValueError(f"can't find {look_for!r} in vmstat -s output")
 
     # --- virtual mem
 
-    def test_vmem_total(self):
-        assert psutil.virtual_memory().total == self.parse_meminfo("MemTotal:")
-
-    def test_vmem_free(self):
-        assert (
-            abs(psutil.virtual_memory().free - self.parse_meminfo("MemFree:"))
-            < TOLERANCE_SYS_MEM
-        )
-
+    @retry_on_failure()
     def test_vmem_buffers(self):
+        # uv.filepages: file-backed pages excluding executable mappings
         assert (
             abs(
                 psutil.virtual_memory().buffers
-                - self.parse_meminfo("Buffers:")
+                - self.parse_vmstat("cached file pages") * PAGESIZE
             )
-            < TOLERANCE_SYS_MEM
-        )
-
-    def test_vmem_shared(self):
-        assert (
-            abs(
-                psutil.virtual_memory().shared
-                - self.parse_meminfo("MemShared:")
-            )
-            < TOLERANCE_SYS_MEM
-        )
-
-    def test_vmem_cached(self):
-        assert (
-            abs(psutil.virtual_memory().cached - self.parse_meminfo("Cached:"))
             < TOLERANCE_SYS_MEM
         )
 
     # --- swap mem
 
+    @retry_on_failure()
     def test_swapmem_total(self):
         assert (
-            abs(psutil.swap_memory().total - self.parse_meminfo("SwapTotal:"))
+            abs(
+                psutil.swap_memory().total
+                - self.parse_vmstat("swap pages") * PAGESIZE
+            )
             < TOLERANCE_SYS_MEM
         )
-
-    def test_swapmem_free(self):
-        assert (
-            abs(psutil.swap_memory().free - self.parse_meminfo("SwapFree:"))
-            < TOLERANCE_SYS_MEM
-        )
-
-    def test_swapmem_used(self):
-        smem = psutil.swap_memory()
-        assert smem.used == smem.total - smem.free
-
-    # --- others
-
-    def test_cpu_stats_interrupts(self):
-        with open('/proc/stat', 'rb') as f:
-            for line in f:
-                if line.startswith(b'intr'):
-                    interrupts = int(line.split()[1])
-                    break
-            else:
-                raise ValueError("couldn't find line")
-        assert abs(psutil.cpu_stats().interrupts - interrupts) < 1000
-
-    def test_cpu_stats_ctx_switches(self):
-        with open('/proc/stat', 'rb') as f:
-            for line in f:
-                if line.startswith(b'ctxt'):
-                    ctx_switches = int(line.split()[1])
-                    break
-            else:
-                raise ValueError("couldn't find line")
-        assert abs(psutil.cpu_stats().ctx_switches - ctx_switches) < 1000

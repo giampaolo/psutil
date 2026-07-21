@@ -16,6 +16,7 @@ import signal
 import socket
 import sys
 import time
+import warnings
 from unittest import mock
 
 import psutil
@@ -95,10 +96,10 @@ class TestProcessIter(PsutilTestCase):
 
     def test_attrs(self):
         for p in psutil.process_iter(attrs=['pid']):
-            assert list(p.info.keys()) == ['pid']
+            assert list(p._prefetch.keys()) == ['pid']
         # yield again
         for p in psutil.process_iter(attrs=['pid']):
-            assert list(p.info.keys()) == ['pid']
+            assert list(p._prefetch.keys()) == ['pid']
         with pytest.raises(ValueError):
             list(psutil.process_iter(attrs=['foo']))
         with mock.patch(
@@ -106,8 +107,8 @@ class TestProcessIter(PsutilTestCase):
             side_effect=psutil.AccessDenied(0, ""),
         ) as m:
             for p in psutil.process_iter(attrs=["pid", "cpu_times"]):
-                assert p.info['cpu_times'] is None
-                assert p.info['pid'] >= 0
+                assert p._prefetch['cpu_times'] is None
+                assert p._prefetch['pid'] >= 0
             assert m.called
         with mock.patch(
             "psutil._psplatform.Process.cpu_times",
@@ -117,9 +118,127 @@ class TestProcessIter(PsutilTestCase):
             for p in psutil.process_iter(
                 attrs=["pid", "cpu_times"], ad_value=flag
             ):
-                assert p.info['cpu_times'] is flag
-                assert p.info['pid'] >= 0
+                assert p._prefetch['cpu_times'] is flag
+                assert p._prefetch['pid'] >= 0
             assert m.called
+
+    def test_prefetch(self):
+        for p in psutil.process_iter(attrs=["name", "status"]):
+            assert p.name() == p._prefetch["name"]
+            assert p.status() == p._prefetch["status"]
+
+    def test_prefetch_memory_percent(self):
+        # It used to skip its own cached value, run the body, and
+        # crash on memory_info()'s ad_value.
+        with mock.patch(
+            "psutil._psplatform.Process.memory_info",
+            side_effect=psutil.AccessDenied(0, ""),
+        ):
+            for p in psutil.process_iter(attrs=["memory_percent"]):
+                assert p.memory_percent() is None
+
+    def test_prefetch_derived_methods(self):
+        # The derived method is not in attrs, so its body runs and
+        # reads the denied one's ad_value.
+        with mock.patch(
+            "psutil._psplatform.Process.memory_info",
+            side_effect=psutil.AccessDenied(0, ""),
+        ):
+            for p in psutil.process_iter(attrs=["memory_info"]):
+                assert p.memory_percent() is None
+                assert p.memory_info_ex() is None
+
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    def test_prefetch_derived_username(self):
+        # username() derives from uids(), which is POSIX only.
+        with mock.patch(
+            "psutil._psplatform.Process.uids",
+            side_effect=psutil.AccessDenied(0, ""),
+        ):
+            for p in psutil.process_iter(attrs=["uids"]):
+                assert p.username() is None
+
+    def test_prefetch_ad_value_is_not_none(self):
+        # ad_value can be any object, not just None.
+        flag = object()
+        with mock.patch(
+            "psutil._psplatform.Process.memory_info",
+            side_effect=psutil.AccessDenied(0, ""),
+        ):
+            for p in psutil.process_iter(attrs=["memory_info"], ad_value=flag):
+                assert p.memory_percent() is flag
+
+    def test_info_deprecation(self):
+        for p in psutil.process_iter(attrs=["name"]):
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                p.info  # noqa: B018
+                assert len(ws) == 1
+                assert issubclass(ws[0].category, DeprecationWarning)
+                assert "deprecated" in str(ws[0].message)
+            break
+
+    def test_prefetch_ad_value(self):
+        with mock.patch(
+            "psutil._psplatform.Process.cpu_times",
+            side_effect=psutil.AccessDenied(0, ""),
+        ):
+            for p in psutil.process_iter(attrs=["cpu_times"]):
+                assert p.cpu_times() is None
+
+    def test_prefetch_cleared(self):
+        # Prefetch cache is cleared when attrs is not specified.
+        for p in psutil.process_iter(attrs=["name"]):
+            assert p._prefetch
+        for p in psutil.process_iter():
+            assert not p._prefetch
+
+    def test_prefetch_with_args_bypasses_cache(self):
+        # Methods called with args should bypass the prefetch cache
+        # (e.g. nice(10) is a setter, not a getter).
+        p = psutil.Process()
+        p._prefetch["nice"] = -999
+        # Without args: returns cached value.
+        assert p.nice() == -999
+        # With args: bypasses cache, calls real method.
+        real_nice = psutil.Process().nice()
+        assert p.nice(real_nice) is None
+        assert p.nice() == -999
+
+    def test_prefetch_double_call(self):
+        # Multiple calls should return the same cached value.
+        for p in psutil.process_iter(attrs=["name"]):
+            name1 = p.name()
+            name2 = p.name()
+            assert name1 == name2
+            assert name1 == p._prefetch["name"]
+            break
+
+    def test_deprecated_prefetch_empty_attrs(self):
+        # attrs=[] should prefetch all methods.
+        with pytest.warns(DeprecationWarning):
+            p = next(psutil.process_iter(attrs=[]))
+        assert p._prefetch.keys() == psutil.Process.attrs
+
+    def test_prefetch_with_non_prefetched(self):
+        # A method not in attrs should still do a live syscall.
+        for p in psutil.process_iter(attrs=["name"]):
+            assert "status" not in p._prefetch
+            # status() should still work via syscall
+            assert p.status()
+            break
+
+    def test_zombie_process_is_not_skipped(self):
+        # ZombieProcess is a subclass of NoSuchProcess; make sure
+        # process_iter() yields the process rather than removing it from
+        # the cache as if it had disappeared.
+        list(psutil.process_iter())  # populate the pmap cache
+        p = psutil._pmap[os.getpid()]
+        with mock.patch.object(
+            p, "as_dict", side_effect=psutil.ZombieProcess(p.pid)
+        ):
+            pids = [x.pid for x in psutil.process_iter(attrs=["name"])]
+        assert p.pid in pids
 
     def test_cache_clear(self):
         list(psutil.process_iter())  # populate cache
@@ -372,7 +491,12 @@ class TestMemoryAPIs(PsutilTestCase):
                 "shared",
                 "wired",
             )
-        elif WINDOWS or SUNOS or AIX:
+        elif WINDOWS:
+            assert mem._fields[5:] == (
+                "cached",
+                "wired",
+            )
+        elif SUNOS or AIX:
             assert mem._fields[5:] == ()
 
     def test_swap_memory(self):
@@ -492,7 +616,7 @@ class TestCpuAPIs(PsutilTestCase):
         # Note: in theory CPU times are always supposed to increase over
         # time or remain the same but never go backwards. In practice
         # sometimes this is not the case.
-        # This issue seemd to be afflict Windows:
+        # This issue seemed to be afflict Windows:
         # https://github.com/giampaolo/psutil/issues/392
         # ...but it turns out also Linux (rarely) behaves the same.
         # last = psutil.cpu_times(percpu=True)
@@ -523,7 +647,8 @@ class TestCpuAPIs(PsutilTestCase):
                     return None
 
     @pytest.mark.skipif(
-        (CI_TESTING and OPENBSD) or MACOS, reason="unreliable on OPENBSD + CI"
+        (CI_TESTING and OPENBSD) or MACOS or SUNOS,
+        reason="unreliable on OPENBSD + CI",
     )
     @retry_on_failure(30)
     def test_cpu_times_comparison(self):
@@ -646,6 +771,21 @@ class TestCpuAPIs(PsutilTestCase):
         if LINUX:
             assert len(ls) == psutil.cpu_count()
 
+    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    def test_cpu_freq_none_minmax(self):
+        # min / max are None on FreeBSD when the sysctl is unparsable.
+        # Averaging them across CPUs used to raise TypeError.
+        ret = [
+            psutil._ntuples.scpufreq(100.0, None, None),
+            psutil._ntuples.scpufreq(200.0, None, None),
+        ]
+        with mock.patch("psutil._psplatform.cpu_freq", return_value=ret):
+            with mock.patch("psutil.LINUX", False):
+                nt = psutil.cpu_freq()
+        assert nt.current == 150.0
+        assert nt.min is None
+        assert nt.max is None
+
     def test_getloadavg(self):
         loadavg = psutil.getloadavg()
         assert len(loadavg) == 3
@@ -673,11 +813,14 @@ class TestDiskAPIs(PsutilTestCase):
             # see https://github.com/giampaolo/psutil/issues/2147
             assert abs(usage.used - shutil_usage.used) < tolerance
 
-        # if path does not exist OSError ENOENT is expected across
+        # if path does not exist FileNotFoundError is expected across
         # all platforms
         fname = self.get_testfn()
         with pytest.raises(FileNotFoundError):
             psutil.disk_usage(fname)
+
+        # we should also be able to use a file path
+        psutil.disk_usage(__file__)
 
     @pytest.mark.skipif(not ASCII_FS, reason="not an ASCII fs")
     def test_disk_usage_unicode(self):
@@ -844,13 +987,20 @@ class TestNetAPIs(PsutilTestCase):
         #     psutil.net_io_counters(pernic=True).keys()
         # )
 
-        families = {socket.AF_INET, socket.AF_INET6, psutil.AF_LINK}
+        families = {
+            socket.AF_INET,
+            socket.AF_INET6,
+            socket.AF_UNSPEC,
+            psutil.AF_LINK,
+        }
         for nic, addrs in nics.items():
             assert isinstance(nic, str)
             assert len(set(addrs)) == len(addrs)
             for addr in addrs:
                 assert isinstance(addr.family, int)
-                assert isinstance(addr.address, str)
+                assert isinstance(addr.address, (str, type(None)))
+                if addr.address is None:  # virtual NIC
+                    assert addr.family == socket.AF_UNSPEC
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
                 assert addr.family in families
@@ -955,6 +1105,13 @@ class TestNetAPIs(PsutilTestCase):
             ret = psutil.net_if_stats()
             assert ret == {}
             assert m.called
+
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    def test_nic_names(self):
+        stdlib_names = {name for _, name in socket.if_nameindex()}
+        assert stdlib_names == set(psutil.net_io_counters(pernic=True).keys())
+        assert stdlib_names == set(psutil.net_if_addrs().keys())
+        assert stdlib_names == set(psutil.net_if_stats().keys())
 
 
 class TestSensorsAPIs(PsutilTestCase):

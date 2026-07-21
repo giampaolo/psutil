@@ -1,0 +1,288 @@
+body {
+    margin: 0;
+}
+
+html {
+    /* Extra room below the topbar height so anchored headings clear
+       the topbar's drop shadow instead of landing inside it. */
+    scroll-padding-top: calc(var(--topbar-height) + 0.5rem);
+}
+
+/* ---- Topbar (fixed at the top of the viewport) ---------------------- */
+
+.topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--topbar-height);
+    z-index: 100;
+}
+
+/* ---- Page grid (sidebar + main column), centered -------------------- */
+
+.page {
+    display: grid;
+    grid-template-columns:
+        var(--left-sidebar-width)
+        minmax(0, var(--content-max-width));
+    max-width: var(--layout-width);
+    margin: 0 auto;
+    padding-top: var(--topbar-height);
+    background: var(--bg);
+}
+
+.main {
+    min-width: 0;
+    padding: 0 24px;
+}
+
+/* ---- Article + right sidebar grid (inside .main) -------------------- */
+
+.article-with-toc {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    padding: 24px 0 24px 16px;
+    min-height: calc(100vh - var(--topbar-height));
+}
+
+/* No-TOC pages don't get the extra left indent; index.html etc.
+   handle their own horizontal padding via .article-column below. */
+.article-with-toc.no-toc {
+    padding-left: 0;
+}
+
+@media (min-width: 1280px) {
+    .article-with-toc {
+        grid-template-columns:
+            minmax(0, 1fr)
+            var(--right-sidebar-width);
+    }
+
+    .article-with-toc.no-toc {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* No-TOC pages get extra horizontal padding so prose isn't
+       hugging the wide column edge. */
+    .article-with-toc.no-toc > .article-column {
+        padding-left: 32px;
+        padding-right: 32px;
+    }
+}
+
+.article-column {
+    min-width: 0;
+}
+
+.article {
+    min-width: 0;
+}
+
+/* ---- Mobile: collapse to single column, sidebar slides in --------- */
+
+@media (max-width: 1024px) {
+    .page {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sidebar-backdrop {
+        position: fixed;
+        inset: var(--topbar-height) 0 0 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 80;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+
+    body.sidebar-open .sidebar-backdrop {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Don't let the page scroll behind an open sidebar. */
+    body.sidebar-open {
+        overflow: hidden;
+    }
+
+    .main {
+        padding: 0 16px;
+    }
+
+    .article-with-toc {
+        padding: 16px 0;
+    }
+}
+
+@media (max-width: 600px) {
+    :root {
+        --topbar-height: 48px;
+    }
+
+    .main {
+        padding: 0 12px;
+    }
+}
+
+/* ---- Keyboard shortcut flyout (triggered by "?") ----------------- */
+
+.shortcut-flyout {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: none;
+}
+
+.shortcut-flyout.is-open {
+    display: block;
+}
+
+.shortcut-flyout-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.shortcut-flyout-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-sizing: border-box;
+    min-width: min(320px, 90vw);
+    max-width: 90vw;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+    padding: 1.2em 1.4em 1.4em;
+}
+
+.shortcut-flyout-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.8em;
+}
+
+.shortcut-flyout-list {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.55em 1.2em;
+    margin: 0;
+}
+
+.shortcut-flyout-list dt {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    font-weight: 400;
+}
+
+.shortcut-flyout-list dd {
+    margin: 0;
+    padding: 0;
+    color: var(--text);
+    align-self: center;
+}
+
+/* Pill style is shared with the search-input hint
+   (.search-kbd kbd in search.css). */
+
+/* ---- "Back to top" floating button ------------------------------- */
+
+.back-to-top {
+    position: fixed;
+    right: max(20px, calc((100vw - var(--layout-width)) / 2 + 20px));
+    bottom: 24px;
+    z-index: 90;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: var(--bg-topbar);
+    color: var(--text-on-dark);
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    /* Visible state below uses opacity 0.55, muted at rest so it
+       doesn't grab attention; pops on hover. */
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        opacity 0.2s ease,
+        background 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.back-to-top.is-visible {
+    opacity: 0.55;
+    pointer-events: auto;
+}
+
+/* Dark mode: --bg-topbar (#181818) blends into the page bg. Use a
+   lighter gray + full opacity so the button stands out. */
+[data-theme="dark"] .back-to-top {
+    background: #525252;
+    color: #f5f5f5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .back-to-top.is-visible {
+    opacity: 1;
+}
+
+/* Mobile: bump size + opacity. The 28px gap-tucked button is way
+   too small/subtle for touch + small screens. */
+@media (max-width: 1024px) {
+    .back-to-top {
+        right: 14px;
+        bottom: 14px;
+        width: 36px;
+        height: 36px;
+        font-size: 13px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+    }
+
+    .back-to-top.is-visible,
+    [data-theme="dark"] .back-to-top.is-visible {
+        opacity: 1;
+    }
+}
+
+/* Wide viewports: tuck the button into the 32px gap between the
+   article column and the right TOC. Button is 28px, so 2px clear
+   on each side. */
+@media (min-width: 1280px) {
+    .back-to-top {
+        right: calc(
+            max(0px, (100vw - var(--layout-width)) / 2)
+            + var(--right-sidebar-width)
+            + 44px
+        );
+    }
+}
+
+.back-to-top.is-visible:hover {
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.back-to-top:focus-visible {
+    outline: 2px solid var(--accent-ring);
+    outline-offset: 3px;
+}

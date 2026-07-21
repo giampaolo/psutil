@@ -116,7 +116,7 @@ class sconn(NamedTuple):
 # psutil.net_if_addrs()
 class snicaddr(NamedTuple):
     family: socket.AddressFamily
-    address: str
+    address: str | None
     netmask: str | None
     broadcast: str | None
     ptp: str | None
@@ -150,8 +150,14 @@ class scputimes(NamedTuple):
     if SUNOS or AIX:
         iowait: float
     if WINDOWS:
-        interrupt: float
+        irq: float
         dpc: float
+
+        @property
+        def interrupt(self):
+            msg = "'interrupt' field is deprecated, use 'irq' instead"
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            return self.irq
 
 
 # psutil.cpu_stats()
@@ -220,6 +226,9 @@ class svmem(NamedTuple):
         buffers: int
         cached: int
         shared: int
+        wired: int
+    elif WINDOWS:
+        cached: int
         wired: int
     elif MACOS:
         active: int

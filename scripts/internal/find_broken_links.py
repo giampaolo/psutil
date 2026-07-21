@@ -48,7 +48,6 @@ import traceback
 
 import requests
 
-HERE = os.path.abspath(os.path.dirname(__file__))
 REGEX = re.compile(
     r'(?:http|ftp|https)?://'
     r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
@@ -241,7 +240,7 @@ def main():
     else:
         for fail in fails:
             fname, url = fail
-            print("{:<30}: {} ".format(fname, url))
+            print(f"{fname:<30}: {url} ")
         print('-' * 20)
         print(f"total: {len(fails)} fails!")
         sys.exit(1)

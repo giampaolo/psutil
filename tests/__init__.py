@@ -10,9 +10,10 @@ import ctypes
 import enum
 import errno
 import functools
-import importlib
+import importlib.util
 import ipaddress
 import os
+import pathlib
 import platform
 import random
 import re
@@ -65,7 +66,7 @@ if POSIX:
 __all__ = [
     # constants
     'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
-    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR', 'SCRIPTS_DIR',
+    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR',
     'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_PROC_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_PROC_ENVIRON",
@@ -179,11 +180,9 @@ ASCII_FS = sys.getfilesystemencoding().lower() in {"ascii", "us-ascii"}
 
 # --- paths
 
-ROOT_DIR = os.environ.get("PSUTIL_ROOT_DIR") or os.path.realpath(
-    os.path.join(os.path.dirname(__file__), "..")
+ROOT_DIR = os.environ.get("PSUTIL_ROOT_DIR") or str(
+    pathlib.Path(__file__).resolve().parent.parent
 )
-SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
-HERE = os.path.realpath(os.path.dirname(__file__))
 
 # --- support
 
@@ -234,13 +233,13 @@ def _get_py_exe():
 
     env = os.environ.copy()
 
-    # On Windows, starting with python 3.7, virtual environments use a
-    # venv launcher startup process. This does not play well when
-    # counting spawned processes, or when relying on the PID of the
-    # spawned process to do some checks, e.g. connections check per PID.
-    # Let's use the base python in this case.
+    # On Windows virtual environments use a venv launcher startup
+    # process. This does not play well when counting spawned processes,
+    # or when relying on the PID of the spawned process to do some
+    # checks, e.g. connections check per PID. Let's use the base python
+    # in this case.
     base = getattr(sys, "_base_executable", None)
-    if WINDOWS and sys.version_info >= (3, 7) and base is not None:
+    if WINDOWS and base is not None:
         # We need to set __PYVENV_LAUNCHER__ to sys.executable for the
         # base python executable to know about the environment.
         env["__PYVENV_LAUNCHER__"] = sys.executable
@@ -1120,8 +1119,10 @@ class process_namespace:
 
     ignored = [
         ('as_dict', (), {}),
+        ('attrs', (), {}),
         ('children', (), {'recursive': True}),
         ('connections', (), {}),  # deprecated
+        ('info', (), {}),
         ('is_running', (), {}),
         ('memory_full_info', (), {}),  # deprecated
         ('oneshot', (), {}),
@@ -1452,9 +1453,7 @@ def tcp_socketpair(family, addr=("", 0)):
     """Build a pair of TCP sockets connected to each other.
     Return a (server, client) tuple.
     """
-    with socket.socket(family, SOCK_STREAM) as ll:
-        ll.bind(addr)
-        ll.listen(5)
+    with socket.create_server(addr, family=family, backlog=5) as ll:
         addr = ll.getsockname()
         c = socket.socket(family, SOCK_STREAM)
         try:
@@ -1546,7 +1545,7 @@ def check_net_address(addr, family):
 
 
 def check_connection_ntuple(conn):
-    """Check validity of a connection namedtuple."""
+    """Check validity of a connection named tuple."""
 
     def check_ntuple(conn):
         has_pid = len(conn) == 7
@@ -1671,11 +1670,6 @@ class TypeHintsChecker:
         """Flatten a type hint into a tuple of concrete types suitable
         for isinstance(). Returns None if the hint cannot be checked.
         """
-        if not hasattr(typing, "get_origin") and sys.version_info[:2] <= (
-            3,
-            7,
-        ):
-            return None
         origin = typing.get_origin(hint)
         if origin in TypeHintsChecker.UNION_TYPES:
             result = []
@@ -1824,7 +1818,7 @@ def warn(msg):
 
 
 def is_namedtuple(x):
-    """Check if object is an instance of namedtuple."""
+    """Check if object is an instance of named tuple."""
     t = type(x)
     if tuple not in t.__mro__:
         return False

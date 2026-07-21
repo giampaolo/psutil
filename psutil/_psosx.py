@@ -67,7 +67,7 @@ PROC_STATUSES = {
 
 
 def virtual_memory():
-    """System virtual memory as a namedtuple."""
+    """System virtual memory as a named tuple."""
     d = cext.virtual_mem()
     d["percent"] = usage_percent(
         (d["total"] - d["available"]), d["total"], round_=1
@@ -93,7 +93,7 @@ heap_trim = cext.heap_trim
 
 
 def cpu_times():
-    """Return system CPU times as a namedtuple."""
+    """Return system CPU times as a named tuple."""
     user, nice, system, idle = cext.cpu_times()
     return ntp.scputimes(user, system, idle, nice)
 
@@ -125,16 +125,17 @@ def cpu_stats():
     return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
-if cext.has_cpu_freq():  # not always available on ARM64
-
-    def cpu_freq():
-        """Return CPU frequency.
-        On macOS per-cpu frequency is not supported.
-        Also, the returned frequency never changes, see:
-        https://arstechnica.com/civis/viewtopic.php?f=19&t=465002.
-        """
-        curr, min_, max_ = cext.cpu_freq()
-        return [ntp.scpufreq(curr, min_, max_)]
+def cpu_freq():
+    """Return CPU frequency.
+    On macOS per-cpu frequency is not supported.
+    Also, the returned frequency never changes, see:
+    https://arstechnica.com/civis/viewtopic.php?f=19&t=465002.
+    """
+    ret = cext.cpu_freq()
+    if ret is None:  # not available on virtualized ARM64, see #2382
+        return []
+    curr, min_, max_ = ret
+    return [ntp.scpufreq(curr, min_, max_)]
 
 
 # =====================================================================
@@ -147,7 +148,7 @@ disk_io_counters = cext.disk_io_counters
 
 
 def disk_partitions(all=False):
-    """Return mounted disk partitions as a list of namedtuples."""
+    """Return mounted disk partitions as a list of named tuples."""
     retlist = []
     partitions = cext.disk_partitions()
     for partition in partitions:
@@ -266,7 +267,7 @@ def adjust_proc_create_time(ctime):
 
 
 def users():
-    """Return currently connected users as a list of namedtuples."""
+    """Return currently connected users as a list of named tuples."""
     retlist = []
     rawlist = cext.users()
     for item in rawlist:

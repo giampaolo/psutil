@@ -6,13 +6,15 @@
 
 from __future__ import annotations
 
+import ast
+import enum
 import functools
-import sys
 import types
 
 import pytest
 
 import psutil
+import psutil._enums
 
 from . import PsutilTestCase
 from . import check_fun_type_hints
@@ -22,9 +24,6 @@ from . import process_namespace
 from . import system_namespace
 
 
-@pytest.mark.skipif(
-    sys.version_info[:2] <= (3, 7), reason="not supported on Python <= 3.7"
-)
 class TypeHintTestCase(PsutilTestCase):
     pass
 
@@ -35,7 +34,7 @@ class TypeHintTestCase(PsutilTestCase):
 
 
 class TestTypeHintsNtuples(TypeHintTestCase):
-    """Check that namedtuple field values match the type annotations
+    """Check that named tuple field values match the type annotations
     defined in psutil/_ntuples.py.
     """
 
@@ -104,6 +103,53 @@ class TestTypeHintsReturned(TypeHintTestCase):
         for fun, name in ns.iter(ns.getters):
             with self.subTest(name=name, fun=str(fun)):
                 self.check(fun, name)
+
+
+# ===================================================================
+# --- enum constants type hints
+# ===================================================================
+
+
+class TestEnumDeclarations(TypeHintTestCase):
+    """psutil/__init__.py injects the enum members into the module
+    namespace at run time. Type checkers can't see that, so they rely
+    on the declarations in the `if TYPE_CHECKING` block. Make sure
+    those don't fall behind.
+    """
+
+    @staticmethod
+    def get_declared_names():
+        with open(psutil.__file__) as f:
+            tree = ast.parse(f.read())
+        names = {}
+        for node in tree.body:
+            if not isinstance(node, ast.If):
+                continue
+            if getattr(node.test, "id", None) != "_TYPE_CHECKING":
+                continue
+            for child in node.body:
+                if isinstance(child, ast.AnnAssign):
+                    names[child.target.id] = child.annotation.id
+        return names
+
+    @staticmethod
+    def get_enum_classes():
+        return [
+            obj
+            for obj in vars(psutil._enums).values()
+            if isinstance(obj, type)
+            and issubclass(obj, enum.Enum)
+            and obj.__members__
+        ]
+
+    def test_members_are_declared(self):
+        declared = self.get_declared_names()
+        classes = self.get_enum_classes()
+        assert classes
+        for cls in classes:
+            for name in cls.__members__:
+                with self.subTest(name=name, cls=cls.__name__):
+                    assert declared.get(name) == cls.__name__
 
 
 # =====================================================================

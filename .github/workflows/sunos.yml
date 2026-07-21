@@ -3,6 +3,7 @@
 
 name: sunos
 on:
+  workflow_dispatch:
   push:
     # only run this job if the following files are modified
     paths: &sunos_paths
@@ -22,7 +23,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Run tests
         id: test
         uses: vmactions/solaris-vm@v1

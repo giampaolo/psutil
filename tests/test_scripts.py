@@ -8,9 +8,8 @@
 
 import ast
 import os
-import shutil
+import pathlib
 import stat
-import subprocess
 
 import pytest
 
@@ -28,31 +27,25 @@ from . import HAS_SENSORS_TEMPERATURES
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
 from . import ROOT_DIR
-from . import SCRIPTS_DIR
 from . import PsutilTestCase
 from . import import_module_by_path
 from . import psutil
 from . import sh
 
-INTERNAL_SCRIPTS_DIR = os.path.join(SCRIPTS_DIR, "internal")
-SETUP_PY = os.path.join(ROOT_DIR, 'setup.py')
+SCRIPTS_DIR = pathlib.Path(ROOT_DIR) / "scripts"
+INTERNAL_SCRIPTS_DIR = SCRIPTS_DIR / "internal"
 
 
-# ===================================================================
-# --- Tests scripts in scripts/ directory
-# ===================================================================
+class ScriptsTestCase(PsutilTestCase):
+    scripts_dir = SCRIPTS_DIR
 
-
-@pytest.mark.skipif(
-    CI_TESTING and not os.path.exists(SCRIPTS_DIR),
-    reason="can't find scripts/ directory",
-)
-class TestExampleScripts(PsutilTestCase):
-    @staticmethod
-    def assert_stdout(exe, *args):
+    def assert_stdout(self, exe, *args):
+        """Execute the script, make sure it doesn't crash and prints
+        something.
+        """
+        exe = os.path.join(self.scripts_dir, exe)
         env = PYTHON_EXE_ENV.copy()
         env.pop("PSUTIL_DEBUG", None)  # avoid spamming to stderr
-        exe = os.path.join(SCRIPTS_DIR, exe)
         cmd = [PYTHON_EXE, exe, *args]
         try:
             out = sh(cmd, env=env).strip()
@@ -64,12 +57,24 @@ class TestExampleScripts(PsutilTestCase):
         assert out, out
         return out
 
-    @staticmethod
-    def assert_syntax(exe):
-        exe = os.path.join(SCRIPTS_DIR, exe)
+    def assert_syntax(self, exe):
+        """Check script's syntax without executing it."""
+        exe = os.path.join(self.scripts_dir, exe)
         with open(exe, encoding="utf8") as f:
             src = f.read()
         ast.parse(src)
+
+
+# ===================================================================
+# --- Tests scripts in scripts/ directory
+# ===================================================================
+
+
+@pytest.mark.skipif(
+    CI_TESTING and not os.path.exists(SCRIPTS_DIR),
+    reason="can't find scripts/ directory",
+)
+class TestExampleScripts(ScriptsTestCase):
 
     def test_coverage(self):
         # make sure all example scripts have a test method defined
@@ -183,7 +188,9 @@ class TestExampleScripts(PsutilTestCase):
     CI_TESTING and not os.path.exists(INTERNAL_SCRIPTS_DIR),
     reason="can't find scripts/internal/ directory",
 )
-class TestInternalScripts(PsutilTestCase):
+class TestInternalScripts(ScriptsTestCase):
+    scripts_dir = INTERNAL_SCRIPTS_DIR
+
     @staticmethod
     def ls():
         for name in os.listdir(INTERNAL_SCRIPTS_DIR):
@@ -206,37 +213,8 @@ class TestInternalScripts(PsutilTestCase):
             except SystemExit:
                 pass
 
+    def test_print_api_speed(self):
+        self.assert_stdout("print_api_speed.py", "-t", "2")
 
-# ===================================================================
-# --- Tests for setup.py script
-# ===================================================================
-
-
-@pytest.mark.skipif(
-    CI_TESTING and not os.path.exists(SETUP_PY), reason="can't find setup.py"
-)
-class TestSetupScript(PsutilTestCase):
-    def test_invocation(self):
-        module = import_module_by_path(SETUP_PY)
-        with pytest.raises(SystemExit):
-            module.setup()
-        assert module.get_version() == psutil.__version__
-
-    @pytest.mark.skipif(
-        not shutil.which("python2.7"), reason="python2.7 not installed"
-    )
-    def test_python2(self):
-        # There's a duplicate of this test in scripts/internal
-        # directory, which is only executed by CI. We replicate it here
-        # to run it when developing locally.
-        p = subprocess.Popen(
-            [shutil.which("python2.7"), SETUP_PY],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-        )
-        stdout, stderr = p.communicate()
-        assert p.wait() == 1
-        assert not stdout
-        assert "psutil no longer supports Python 2.7" in stderr
-        assert "Latest version supporting Python 2.7 is" in stderr
+    def test_print_sysinfo(self):
+        self.assert_stdout("print_sysinfo.py")

@@ -6,12 +6,11 @@
 
 """Print system information. Run before CI test run."""
 
-import collections
 import datetime
 import getpass
-import importlib.util
 import locale
 import os
+import pathlib
 import platform
 import shlex
 import shutil
@@ -31,7 +30,9 @@ except ImportError:
     wheel = None
 
 
-HERE = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT_DIR))
+from _bootstrap import load_module  # noqa: E402
 
 
 def sh(cmd):
@@ -40,23 +41,13 @@ def sh(cmd):
     return subprocess.check_output(cmd, universal_newlines=True).strip()
 
 
-def import_module_by_path(path):
-    name = os.path.splitext(os.path.basename(path))[0]
-    spec = importlib.util.spec_from_file_location(name, path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+tests_init = ROOT_DIR / "tests" / "__init__.py"
 
-
-tests_init = os.path.realpath(
-    os.path.join(HERE, "..", "..", "tests", "__init__.py")
-)
-
-tests_init_mod = import_module_by_path(tests_init)
+tests_init_mod = load_module(tests_init)
 
 
 def main():
-    info = collections.OrderedDict()
+    info = {}
 
     # python
     info['python'] = ', '.join([
@@ -115,8 +106,9 @@ def main():
 
     # metrics
     info['cpus'] = psutil.cpu_count()
-    info['loadavg'] = "{:.1f}%, {:.1f}%, {:.1f}%".format(
-        *tuple(x / psutil.cpu_count() * 100 for x in psutil.getloadavg())
+    loadavg = tuple(x / psutil.cpu_count() * 100 for x in psutil.getloadavg())
+    info['loadavg'] = (
+        f"{loadavg[0]:.1f}%, {loadavg[1]:.1f}%, {loadavg[2]:.1f}%"
     )
     mem = psutil.virtual_memory()
     info['memory'] = "{}%%, used={}, total={}".format(
@@ -147,10 +139,10 @@ def main():
     # info['proc'] = pprint.pformat(pinfo)
 
     # print
-    print("=" * 70, file=sys.stderr)
+    print("=" * 70)
     for k, v in info.items():
-        print("{:<17} {}".format(k + ":", v), file=sys.stderr)
-    print("=" * 70, file=sys.stderr)
+        print("{:<17} {}".format(k + ":", v))
+    print("=" * 70)
     sys.stdout.flush()
 
 

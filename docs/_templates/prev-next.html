@@ -1,0 +1,26 @@
+{#-
+  Prev / next page navigation. Renders below the article, full width
+  of the main column. Styled by static/css/prev-next.css.
+-#}
+{% if prev or next %}
+<nav class="prev-next no-visited" aria-label="{{ _('Previous and next pages') }}">
+  {% if prev %}
+  <a class="prev-next-prev" href="{{ prev.link|e }}" rel="prev">
+    <span class="prev-next-arrow" aria-hidden="true">&lsaquo;</span>
+    <span class="prev-next-block">
+      <span class="prev-next-label">{{ _('Previous') }}</span>
+      <span class="prev-next-title">{{ prev.title|striptags|e }}</span>
+    </span>
+  </a>
+  {% endif %}
+  {% if next %}
+  <a class="prev-next-next" href="{{ next.link|e }}" rel="next">
+    <span class="prev-next-block">
+      <span class="prev-next-label">{{ _('Next') }}</span>
+      <span class="prev-next-title">{{ next.title|striptags|e }}</span>
+    </span>
+    <span class="prev-next-arrow" aria-hidden="true">&rsaquo;</span>
+  </a>
+  {% endif %}
+</nav>
+{% endif %}

@@ -247,17 +247,10 @@ error:
 }
 
 
-/*
- * Return TCP and UDP connections opened by process.
- * UNIX sockets are excluded.
- *
- * Thanks to:
- * https://github.com/DavidGriffith/finx/blob/master/
- *     nxsensor-3.5.0-1/src/sysdeps/solaris.c
- * ...and:
- * https://hg.java.net/hg/solaris~on-src/file/tip/usr/src/cmd/
- *     cmd-inet/usr.bin/netstat/netstat.c
- */
+// Return TCP and UDP connections opened by process. UNIX sockets are excluded.
+// Thanks to:
+// https://github.com/DavidGriffith/finx/blob/master/nxsensor-3.5.0-1/src/sysdeps/solaris.c
+// https://hg.java.net/hg/solaris~on-src/file/tip/usr/src/cmd/cmd-inet/usr.bin/netstat/netstat.c
 PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     long pid;

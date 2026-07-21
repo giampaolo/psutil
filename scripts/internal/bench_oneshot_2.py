@@ -29,20 +29,20 @@ def call_oneshot(funs):
 
 
 def main():
-    from bench_oneshot import names
+    from bench_oneshot import NAMES
 
     runner = pyperf.Runner()
 
     args = runner.parse_args()
     if not args.worker:
         print(
-            f"{len(names)} methods involved on platform"
+            f"{len(NAMES)} methods involved on platform"
             f" {sys.platform!r} (psutil {psutil.__version__}):"
         )
-        for name in sorted(names):
+        for name in sorted(NAMES):
             print("    " + name)
 
-    funs = [getattr(p, n) for n in names]
+    funs = [getattr(p, n) for n in NAMES]
     runner.bench_func("normal", call_normal, funs)
     runner.bench_func("oneshot", call_oneshot, funs)
 

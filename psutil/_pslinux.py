@@ -66,6 +66,10 @@ PAGESIZE = cext.getpagesize()
 LITTLE_ENDIAN = sys.byteorder == 'little'
 UNSET = object()
 
+# Python 3.15 changed resource.prlimit() to return RLIM_INFINITY as the
+# unsigned 2**64-1 instead of -1; used to map it back to -1.
+RLIM_INFINITY_UNSIGNED = cext.RLIM_INFINITY & 0xFFFFFFFFFFFFFFFF
+
 # "man iostat" states that sectors are equivalent with blocks and have
 # a size of 512 bytes. Despite this value can be queried at runtime
 # via /sys/block/{DISK}/queue/hw_sector_size and results may vary
@@ -255,8 +259,8 @@ def virtual_memory():
     mems = {}
     with open_binary(f"{get_procfs_path()}/meminfo") as f:
         for line in f:
-            fields = line.split()
-            mems[fields[0]] = int(fields[1]) * 1024
+            key, value = line.split(b':', 1)
+            mems[key + b':'] = int(value.split()[0]) * 1024
 
     # /proc doc states that the available fields in /proc/meminfo vary
     # by architecture and compile options, but these 3 values are also
@@ -375,8 +379,11 @@ def swap_memory():
     mems = {}
     with open_binary(f"{get_procfs_path()}/meminfo") as f:
         for line in f:
-            fields = line.split()
-            mems[fields[0]] = int(fields[1]) * 1024
+            # Note: some fields (e.g. "ShadowCallStack:10373888 kB")
+            # may not have a space after the colon, see:
+            # https://github.com/giampaolo/psutil/issues/2809
+            key, value = line.split(b':', 1)
+            mems[key + b':'] = int(value.split()[0]) * 1024
     # We prefer /proc/meminfo over sysinfo() syscall so that
     # psutil.PROCFS_PATH can be used in order to allow retrieval
     # for linux containers, see:
@@ -467,7 +474,7 @@ def cpu_times():
 
 
 def per_cpu_times():
-    """Return a list of namedtuple representing the CPU times
+    """Return a list of named tuples representing the CPU times
     for every CPU available on the system.
     """
     procfs_path = get_procfs_path()
@@ -550,8 +557,8 @@ def cpu_count_cores():
                 current_info = {}
             elif line.startswith((b'physical id', b'cpu cores')):
                 # ongoing section
-                key, value = line.split(b'\t:', 1)
-                current_info[key] = int(value)
+                key, value = line.split(b':', 1)
+                current_info[key.strip()] = int(value)
 
     result = sum(mapping.values())
     return result or None  # mimic os.cpu_count()
@@ -619,9 +626,11 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                 curr = bcat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
                 if curr is None:
                     online_path = f"/sys/devices/system/cpu/cpu{i}/online"
-                    # if cpu core is offline, set to all zeroes
+                    # If the CPU core is offline skip it instead of
+                    # reporting it as all zeroes, otherwise it drags
+                    # down the average frequency. See:
+                    # https://github.com/giampaolo/psutil/issues/2628
                     if cat(online_path, fallback=None) == "0\n":
-                        ret.append(ntp.scpufreq(0.0, 0.0, 0.0))
                         continue
                     msg = "can't find current frequency file"
                     raise NotImplementedError(msg)
@@ -635,7 +644,7 @@ else:
 
     def cpu_freq():
         """Alternate implementation using /proc/cpuinfo.
-        min and max frequencies are not available and are set to None.
+        min and max frequencies are not available and are set to 0.
         """
         return [ntp.scpufreq(x, 0.0, 0.0) for x in _cpu_get_cpuinfo_freq()]
 
@@ -1117,8 +1126,8 @@ class RootFsDeviceFinder:
         with open_text(path) as f:
             for line in f:
                 if line.startswith("DEVNAME="):
-                    name = line.strip().rpartition("DEVNAME=")[2]
-                    if name:  # just for extra safety
+                    # just for extra safety
+                    if name := line.strip().rpartition("DEVNAME=")[2]:
                         return f"/dev/{name}"
 
     def ask_sys_class_block(self):
@@ -1160,7 +1169,7 @@ class RootFsDeviceFinder:
 
 
 def disk_partitions(all=False):
-    """Return mounted disk partitions as a list of namedtuples."""
+    """Return mounted disk partitions as a list of named tuples."""
     fstypes = set()
     procfs_path = get_procfs_path()
     if not all:
@@ -1445,7 +1454,7 @@ def sensors_battery():
 
 
 def users():
-    """Return currently connected users as a list of namedtuples."""
+    """Return currently connected users as a list of named tuples."""
     retlist = []
     rawlist = cext.users()
     for item in rawlist:
@@ -2091,8 +2100,7 @@ class Process:
         ):
             # See: https://github.com/giampaolo/psutil/issues/956
             data = self._read_status_file()
-            match = _re.findall(data)
-            if match:
+            if match := _re.findall(data):
                 return list(range(int(match[0][0]), int(match[0][1]) + 1))
             else:
                 return list(range(len(per_cpu_times())))
@@ -2157,7 +2165,14 @@ class Process:
             try:
                 if limits is None:
                     # get
-                    return resource.prlimit(self.pid, resource_)
+                    soft, hard = resource.prlimit(self.pid, resource_)
+                    # Python 3.15 returns RLIM_INFINITY as the unsigned
+                    # 2**64-1 instead of -1; map it back for consistency.
+                    if soft == RLIM_INFINITY_UNSIGNED:
+                        soft = cext.RLIM_INFINITY
+                    if hard == RLIM_INFINITY_UNSIGNED:
+                        hard = cext.RLIM_INFINITY
+                    return soft, hard
                 else:
                     # set
                     if len(limits) != 2:

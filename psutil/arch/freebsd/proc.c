@@ -13,11 +13,6 @@
 #include "../../arch/all/init.h"
 
 
-// ============================================================================
-// Utility functions
-// ============================================================================
-
-
 // remove spaces from string
 static void
 psutil_remove_spaces(char *str) {
@@ -30,14 +25,6 @@ psutil_remove_spaces(char *str) {
 }
 
 
-// ============================================================================
-// APIS
-// ============================================================================
-
-/*
- * Borrowed from psi Python System Information project
- * Based on code from ps.
- */
 PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -83,11 +70,9 @@ error:
     return NULL;
 }
 
-/*
- * Return process pathname executable.
- * Thanks to Robert N. M. Watson:
- * http://fxr.googlebit.com/source/usr.bin/procstat/procstat_bin.c?v=8-CURRENT
- */
+
+// Return process pathname executable. Thanks to Robert N. M. Watson:
+// http://fxr.googlebit.com/source/usr.bin/procstat/procstat_bin.c?v=8-CURRENT
 PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -150,8 +135,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     // Retrieves all threads used by process returning a list of tuples
     // including thread id, user time and system time.
     // Thanks to Robert N. M. Watson:
-    // http://code.metager.de/source/xref/freebsd/usr.bin/procstat/
-    //     procstat_threads.c
+    // http://code.metager.de/source/xref/freebsd/usr.bin/procstat/procstat_threads.c
     pid_t pid;
     int mib[4];
     struct kinfo_proc *kip = NULL;
@@ -411,11 +395,10 @@ error:
 }
 
 
+// Get process CPU affinity. Reference:
+// http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
 PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
-    // Get process CPU affinity.
-    // Reference:
-    // http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
     pid_t pid;
     int ret;
     int i;
@@ -449,11 +432,10 @@ error:
 }
 
 
+// Set process CPU affinity. Reference:
+// http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
 PyObject *
 psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
-    // Set process CPU affinity.
-    // Reference:
-    // http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
     pid_t pid;
     int i;
     int seq_len;
@@ -499,9 +481,7 @@ error:
 }
 
 
-/*
- * An emulation of Linux prlimit(). Returns a (soft, hard) tuple.
- */
+// An emulation of Linux prlimit(). Returns a (soft, hard) tuple.
 PyObject *
 psutil_proc_getrlimit(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -531,9 +511,7 @@ psutil_proc_getrlimit(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * An emulation of Linux prlimit() (set).
- */
+// An emulation of Linux prlimit() (set).
 PyObject *
 psutil_proc_setrlimit(PyObject *self, PyObject *args) {
     pid_t pid;

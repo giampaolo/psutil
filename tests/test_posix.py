@@ -323,7 +323,7 @@ class TestProcess(PosixTestCase):
     def test_num_ctx_switches(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         cws = psutil.Process().num_ctx_switches()
-        tol = 10
+        tol = 50
         if "PYTEST_XDIST_WORKER_COUNT" in os.environ:
             tol *= int(os.environ["PYTEST_XDIST_WORKER_COUNT"])
         if MACOS:

@@ -1,20 +1,395 @@
-.. include:: _links.rst
+FAQ
+===
 
-FAQs
-====
+This section answers common questions and pitfalls when using psutil.
 
-* Q: Why do I get :class:`AccessDenied` for certain processes?
-* A: This may happen when you query processes owned by another user,
-  especially on macOS (see issue :gh:`883`) and Windows.
-  Unfortunately there's not much you can do about this except running the
-  Python process with higher privileges.
-  On Unix you may run the Python process as root or use the SUID bit
-  (``ps`` and ``netstat`` does this).
-  On Windows you may run the Python process as NT AUTHORITY\\SYSTEM or install
-  the Python script as a Windows service (ProcessHacker does this).
+General
+-------
 
-----
+.. _faq_named_tuple_unpacking:
 
-* Q: is MinGW supported on Windows?
-* A: no, Visual Studio is the only compiler support on Windows (see
-  :doc:`devguide`).
+Why should I avoid positional unpacking of named tuples?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Most psutil functions return named tuples. It is tempting to unpack them
+positionally, but **field order may change across major releases** (as happened
+in 8.0 with :func:`cpu_times` and :meth:`Process.memory_info`). Always use
+attribute access instead:
+
+.. code-block:: python
+
+  # bad
+  rss, vms = p.memory_info()
+
+  # good
+  m = p.memory_info()
+  print(m.rss, m.vms)
+
+See the :ref:`migration guide <migration-8.0>` for the full list of field-order
+changes in 8.0.
+
+Exceptions
+----------
+
+.. _faq_access_denied:
+
+Why do I get AccessDenied?
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:exc:`AccessDenied` is raised when the OS refuses to return information about a
+process because the calling user does not have sufficient privileges. This is
+expected behavior and is not a bug. It typically happens when:
+
+- querying processes owned by other users (e.g. *root*)
+- calling certain methods like :meth:`Process.memory_maps`,
+  :meth:`Process.open_files` or :meth:`Process.net_connections` for privileged
+  processes
+
+You have two options to deal with it.
+
+- Option 1: call the method directly and catch the exception:
+
+  .. code-block:: python
+
+    import psutil
+
+    p = psutil.Process(pid)
+    try:
+        print(p.memory_maps())
+    except (psutil.AccessDenied, psutil.NoSuchProcess):
+        pass
+
+- Option 2: use :func:`process_iter` with a list of attribute names to
+  pre-fetch. Both :exc:`AccessDenied` and :exc:`NoSuchProcess` are handled
+  internally: the corresponding method returns ``None`` (or ``ad_value``)
+  instead of raising. This also avoids the race condition where a process
+  disappears between iteration and method call:
+
+  .. code-block:: python
+
+    import psutil
+
+    for p in psutil.process_iter(["name", "username"], ad_value="N/A"):
+        print(p.name(), p.username())  # no try/except needed
+
+.. _faq_no_such_process:
+
+Why do I get NoSuchProcess?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:exc:`NoSuchProcess` is raised when a process no longer exists. The most common
+cause is a TOCTOU (time-of-check / time-of-use) race condition: a process can
+die between the moment its PID is obtained and the moment it is queried. The
+following two naive patterns are racy:
+
+.. code-block:: python
+
+  import psutil
+
+  for pid in psutil.pids():
+      p = psutil.Process(pid)  # may raise NoSuchProcess
+      print(p.name())  # may raise NoSuchProcess
+
+.. code-block:: python
+
+  import psutil
+
+  if psutil.pid_exists(pid):
+      p = psutil.Process(pid)  # may raise NoSuchProcess
+      print(p.name())  # may raise NoSuchProcess
+
+The correct approach is to use :func:`process_iter`, which handles
+:exc:`NoSuchProcess` internally and skips processes that disappear during
+iteration:
+
+.. code-block:: python
+
+  import psutil
+
+  for p in psutil.process_iter(["name"]):
+      print(p.name())
+
+If you have a specific PID (e.g. a known child process), wrap the call in a
+try/except:
+
+.. code-block:: python
+
+  import psutil
+
+  try:
+      p = psutil.Process(pid)
+      print(p.name(), p.status())
+  except (psutil.NoSuchProcess, psutil.AccessDenied):
+      pass
+
+An even simpler pattern is to catch :exc:`Error`, which implies both
+:exc:`AccessDenied` and :exc:`NoSuchProcess`:
+
+.. code-block:: python
+
+  import psutil
+
+  try:
+      p = psutil.Process(pid)
+      print(p.name(), p.status())
+  except psutil.Error:
+      pass
+
+Processes
+---------
+
+.. _faq_pid_reuse:
+
+PID reuse
+^^^^^^^^^
+
+Operating systems recycle PIDs. A :class:`Process` object obtained now may
+later refer to a different process if the original one terminated and a new one
+was assigned the same PID.
+
+**How psutil handles this:**
+
+- *Most read-only methods* (e.g. :meth:`Process.name`,
+  :meth:`Process.cpu_percent`) do **not** check for PID reuse and instead query
+  whatever process currently holds that PID.
+
+- *Signal methods* (e.g. :meth:`Process.send_signal`, :meth:`Process.suspend`,
+  :meth:`Process.resume`, :meth:`Process.terminate`, :meth:`Process.kill`)
+  **do** check for PID reuse (via PID + creation time) before acting, raising
+  :exc:`NoSuchProcess` if the PID was recycled. This prevents accidentally
+  killing the wrong process (:bpo:`6973`).
+
+- *Set methods* :meth:`Process.nice` (set), :meth:`Process.ionice` (set),
+  :meth:`Process.cpu_affinity` (set), and :meth:`Process.rlimit` (set) also
+  perform this check before applying changes.
+
+:meth:`Process.is_running` is the recommended way to verify whether a
+:class:`Process` instance still refers to the same process. It compares PID and
+creation time, and returns ``False`` if the PID was reused. Prefer it over
+:func:`pid_exists`.
+
+.. _faq_zombie_process:
+
+What is a zombie process?
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A :term:`zombie process` is a process that has finished execution but whose
+entry remains in the process table until the parent calls ``wait()``. When
+psutil encounters a :term:`zombie process` it raises :exc:`ZombieProcess`, a
+subclass of :exc:`NoSuchProcess`.
+
+**What you can and cannot do with a zombie:**
+
+- A zombie process can be instantiated via :class:`Process` (pid) without
+  error.
+- :meth:`Process.status` always returns :data:`STATUS_ZOMBIE`.
+- :meth:`Process.is_running` and :func:`pid_exists` return ``True``.
+- The zombie appears in :func:`process_iter` and :func:`pids`.
+- Sending signals (:meth:`Process.terminate`, :meth:`Process.kill`, etc.) has
+  no effect.
+- Most methods (:meth:`Process.cmdline`, :meth:`Process.exe`,
+  :meth:`Process.memory_maps`, etc.) may raise :exc:`ZombieProcess`, return a
+  meaningful value, or return a null/empty value depending on the platform.
+- :meth:`Process.as_dict` will not crash.
+
+**How to create a zombie:**
+
+.. code-block:: python
+
+  import os, time
+
+  pid = os.fork()  # the zombie
+  if pid == 0:
+      os._exit(0)  # child exits immediately
+  else:
+      time.sleep(1000)  # parent does NOT call wait()
+
+**How to detect zombies:**
+
+.. code-block:: python
+
+  import psutil
+
+  for p in psutil.process_iter(["status"]):
+      if p.status() == psutil.STATUS_ZOMBIE:
+          print(f"zombie: pid={p.pid}")
+
+**How to get rid of a zombie:**
+
+The only way is to have its parent process call ``wait()`` (or ``waitpid()``).
+If the parent never does this, killing the parent will cause the zombie to be
+re-parented to ``init`` / ``systemd``, which will reap it automatically.
+
+.. _faq_open_files_windows:
+
+Why does open_files() not return all files on Windows?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:meth:`Process.open_files` on Windows is not guaranteed to enumerate all
+regular file handles. The underlying Windows API may hang when retrieving
+certain :term:`handle` names, so psutil spawns a thread to query each handle
+and kills it if it doesn't respond within 100 ms. This means some entries can
+be missed. This is a known OS-level limitation shared by tools like Process
+Hacker (see `issue 597 <https://github.com/giampaolo/psutil/pull/597>`_).
+
+.. _faq_pid_exists_vs_isrunning:
+
+What is the difference between pid_exists() and Process.is_running()?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:func:`pid_exists` checks whether a PID is present in the process list.
+:meth:`Process.is_running` does the same, but also detects
+:ref:`PID reuse <faq_pid_reuse>` by comparing the process creation time. Use
+:func:`pid_exists` when you have a bare PID and don't need to guard against
+reuse (it's faster). Use :meth:`Process.is_running` when you hold a
+:class:`Process` object and want to confirm it still refers to the same
+process.
+
+CPU
+---
+
+.. _faq_cpu_percent:
+
+Why does cpu_percent() return 0.0 on first call?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:func:`cpu_percent` (and :meth:`Process.cpu_percent`) measures CPU usage
+*between two calls*. The very first call has no prior sample to compare
+against, so it always returns ``0.0``. The fix is to call it once to initialize
+the baseline, discard the result, then call it again after a short sleep:
+
+.. code-block:: python
+
+  import time
+  import psutil
+
+  psutil.cpu_percent()          # discard first call
+  time.sleep(0.5)
+  print(psutil.cpu_percent())   # meaningful value
+
+Alternatively, pass ``interval`` to make it block internally:
+
+.. code-block:: python
+
+  print(psutil.cpu_percent(interval=0.5))
+
+The same applies to :meth:`Process.cpu_percent`:
+
+.. code-block:: python
+
+  p = psutil.Process()
+  p.cpu_percent()               # discard
+  time.sleep(0.5)
+  print(p.cpu_percent())        # meaningful value
+
+.. _faq_cpu_percent_gt_100:
+
+Can Process.cpu_percent() return a value higher than 100%?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Yes. On a multi-core system a process can run threads on several CPUs at the
+same time. The maximum value is ``psutil.cpu_count() * 100``. For example, on a
+4-core machine a fully-loaded process can reach 400%. The system-wide
+:func:`cpu_percent` (without a :class:`Process`) always stays in the 0–100%
+range because it averages across all cores.
+
+The returned value is explicitly *not* split evenly between all available CPUs.
+This is consistent with the ``top`` UNIX utility: a busy loop on a system with
+2 :term:`logical CPUs <logical CPU>` is reported as 100%, not 50%. Note that
+Windows ``taskmgr.exe`` behaves differently (it would report 50%). To emulate
+that: ``p.cpu_percent() / psutil.cpu_count()``.
+
+.. _faq_cpu_count:
+
+What is the difference between psutil, os, and multiprocessing cpu_count()?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- :func:`os.cpu_count` returns the number of :term:`logical CPUs <logical CPU>`
+  (including hyperthreads). It is the same as
+  ``psutil.cpu_count(logical=True)``, but psutil does not honour
+  :envvar:`PYTHON_CPU_COUNT` environment variable introduced in Python 3.13.
+- :func:`os.process_cpu_count` (Python 3.13+) returns the number of CPUs the
+  calling process is **allowed to use** (respects :term:`CPU affinity` and
+  cgroups). The psutil equivalent is ``len(psutil.Process().cpu_affinity())``.
+- :func:`multiprocessing.cpu_count` returns the same value as
+  :func:`os.process_cpu_count` (Python 3.13+).
+- :func:`psutil.cpu_count` with ``logical=False`` returns the number of
+  :term:`physical cores <physical CPU>`, which has no stdlib equivalent.
+
+Memory
+------
+
+.. _faq_virtual_memory_available:
+
+What is the difference between virtual_memory() available and free?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:func:`virtual_memory` returns both :field:`free` and :field:`available`, but
+they measure different things:
+
+- :field:`free`: memory that is not being used at all.
+- :field:`available`: how much memory can be given to processes without
+  :term:`swapping <swap memory>`. This includes reclaimable
+  :term:`caches <page cache>` and :term:`buffers` that the OS can reclaim under
+  pressure.
+
+In practice, :field:`available` is almost always the metric you want when
+monitoring memory. :field:`free` can be misleadingly low on systems where the
+OS aggressively uses RAM for caches (which is normal and healthy). On Windows,
+:field:`free` and :field:`available` are the same value.
+
+.. _faq_memory_rss_vs_vms:
+
+What is the difference between RSS and VMS?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- :field:`rss` (:term:`Resident Set Size <RSS>`) is the amount of physical
+  memory (RAM) currently mapped into the process.
+- :field:`vms` (:term:`Virtual Memory Size <VMS>`) is the total virtual address
+  space of the process, including memory that has been
+  :term:`swapped out <swap-out>`, shared libraries, and
+  :term:`memory-mapped files <mapped memory>`.
+
+:field:`rss` is the go-to metric for answering "how much RAM is this process
+using?". Note that it includes :term:`shared memory`, so it may overestimate
+actual usage when compared across processes. :field:`vms` is generally larger
+and can be misleadingly high, as it includes memory that is not resident in
+physical RAM. Both values are portable across platforms and are returned by
+:meth:`Process.memory_info`.
+
+.. _faq_memory_footprint:
+
+When should I use memory_footprint() vs memory_info()?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:meth:`Process.memory_info` returns :field:`rss`
+(:term:`Resident Set Size <RSS>`), which includes
+:term:`shared libraries <shared memory>` counted in every process that uses
+them. For example, if ``libc`` uses 2 MB and 100 processes map it, each process
+includes those 2 MB in its :field:`rss`.
+
+:meth:`Process.memory_footprint` returns :field:`uss`
+(:term:`Unique Set Size <USS>`), i.e. :term:`private memory` of the process. It
+represents the amount of memory that would be freed if the process were
+terminated right now. It is more accurate than :term:`RSS`, but substantially
+slower and requires higher privileges. On Linux it also returns :field:`pss`
+(:term:`Proportional Set Size <PSS>`) and :term:`swap <swap memory>`.
+
+.. _faq_used_plus_free:
+
+Why does virtual_memory() used + free != total?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Because some memory (like :term:`page cache` and :term:`buffers`) is
+reclaimable and accounted separately:
+
+.. code-block:: pycon
+
+  >>> import psutil
+  >>> m = psutil.virtual_memory()
+  >>> m.used + m.free == m.total
+  False
+
+The :field:`available` field already includes this reclaimable memory and is
+the best indicator of memory pressure. See :ref:`faq_virtual_memory_available`.
+

@@ -10,6 +10,7 @@ Some of these are duplicates of tests test_system.py and test_process.py.
 """
 
 import platform
+import socket
 
 import psutil
 from psutil import AIX
@@ -27,7 +28,6 @@ from psutil import ConnectionStatus
 from psutil import NicDuplex
 from psutil import ProcessStatus
 
-from . import AARCH64
 from . import GITHUB_ACTIONS
 from . import HAS_CPU_FREQ
 from . import HAS_NET_IO_COUNTERS
@@ -255,9 +255,6 @@ class TestAvailSystemAPIs(PsutilTestCase):
     def test_win_service_get(self):
         assert hasattr(psutil, "win_service_get") == WINDOWS
 
-    @pytest.mark.skipif(
-        MACOS and AARCH64 and not HAS_CPU_FREQ, reason="not supported"
-    )
     def test_cpu_freq(self):
         assert hasattr(psutil, "cpu_freq") == (
             LINUX or MACOS or WINDOWS or FREEBSD or OPENBSD
@@ -421,7 +418,9 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(ifname, str)
             for addr in addrs:
                 assert isinstance(addr.family, enum.IntEnum)
-                assert isinstance(addr.address, str)
+                assert isinstance(addr.address, (str, type(None)))
+                if addr.address is None:  # virtual NIC
+                    assert addr.family == socket.AF_UNSPEC
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
 

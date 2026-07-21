@@ -1,0 +1,52 @@
+{#-
+  Right-side per-page TOC. Three modes:
+
+    1. Blog: show tags sorted by post count.
+    2. Glossary page: show list of terms.
+    3. Default: Sphinx's {{ toc }} headings tree.
+
+  Renders nothing when there's no content (e.g. py-modindex, blog
+  landing pages with an empty toc).
+-#}
+{%- set _is_blog_collection = collection is defined and collection -%}
+{%- if _is_blog_collection or glossary_terms or (toc and toc.strip()) -%}
+{%- if glossary_terms -%}
+{%- set _aside_class = "right-sidebar right-sidebar--glossary" -%}
+{%- else -%}
+{%- set _aside_class = "right-sidebar" -%}
+{%- endif -%}
+<aside class="{{ _aside_class }}"
+       {% if glossary_terms %}data-toc-mode="glossary"{% endif %}
+       aria-label="{% if _is_blog_collection %}{{ _('Browse blog') }}{% else %}{{ _('On this page') }}{% endif %}">
+  <div class="right-sidebar-title">{% if _is_blog_collection %}{{ _('Tags') }}{% else %}{{ _('On this page') }}{% endif %}</div>
+
+  {#- Blog ----------------------------------------------------------------- #}
+  {%- if _is_blog_collection and ablog.tags %}
+  {%- set tag_pairs = [] %}
+  {%- for tag in ablog.tags %}
+    {%- if tag|string != 'featured' %}
+      {%- set _ = tag_pairs.append((tag|length, tag)) %}
+    {%- endif %}
+  {%- endfor %}
+  <ul class="blog-tags">
+    {%- for count, tag in tag_pairs|sort(reverse=true) %}
+    <li>
+      <a href="{{ pathto(tag.docname) }}">{{ tag }}<span class="blog-tag-count">{{ count }}</span></a>
+    </li>
+    {%- endfor %}
+  </ul>
+
+  {#- Glossary ----------------------------------------------------------------- #}
+  {%- elif glossary_terms %}
+  <ul class="glossary-toc">
+    {%- for t in glossary_terms %}
+    <li><a href="#{{ t.id }}">{{ t.text }}</a></li>
+    {%- endfor %}
+  </ul>
+
+  {#- Page ----------------------------------------------------------------- #}
+  {%- else %}
+  {{ toc }}
+  {%- endif %}
+</aside>
+{%- endif -%}

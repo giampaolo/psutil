@@ -10,7 +10,6 @@ import functools
 import os
 from collections import defaultdict
 from collections import namedtuple
-from xml.etree import ElementTree  # noqa: ICN001
 
 from . import _ntuples as ntp
 from . import _psposix
@@ -131,13 +130,13 @@ if hasattr(cext, "heap_info"):
 
 
 def cpu_times():
-    """Return system per-CPU times as a namedtuple."""
+    """Return system per-CPU times as a named tuple."""
     user, nice, system, idle, irq = cext.cpu_times()
     return ntp.scputimes(user, system, idle, nice, irq)
 
 
 def per_cpu_times():
-    """Return system CPU times as a namedtuple."""
+    """Return system CPU times as a named tuple."""
     ret = []
     for cpu_t in cext.per_cpu_times():
         user, nice, system, idle, irq = cpu_t
@@ -161,29 +160,7 @@ else:
 
     def cpu_count_cores():
         """Return the number of CPU cores in the system."""
-        # From the C module we'll get an XML string similar to this:
-        # http://manpages.ubuntu.com/manpages/precise/man4/smp.4freebsd.html
-        # We may get None in case "sysctl kern.sched.topology_spec"
-        # is not supported on this BSD version, in which case we'll mimic
-        # os.cpu_count() and return None.
-        ret = None
-        s = cext.cpu_topology()
-        if s is not None:
-            # get rid of padding chars appended at the end of the string
-            index = s.rfind("</groups>")
-            if index != -1:
-                s = s[: index + 9]
-                root = ElementTree.fromstring(s)
-                try:
-                    ret = len(root.findall('group/children/group/cpu')) or None
-                finally:
-                    # needed otherwise it will memleak
-                    root.clear()
-        if not ret:
-            # If logical CPUs == 1 it's obvious we' have only 1 core.
-            if cpu_count_logical() == 1:
-                return 1
-        return ret
+        return cext.cpu_count_cores()
 
 
 def cpu_stats():
@@ -192,24 +169,7 @@ def cpu_stats():
         # Note: the C ext is returning some metrics we are not exposing:
         # traps.
         ctxsw, intrs, soft_intrs, syscalls, _traps = cext.cpu_stats()
-    elif NETBSD:
-        # XXX
-        # Note about intrs: the C extension returns 0. intrs
-        # can be determined via /proc/stat; it has the same value as
-        # soft_intrs thought so the kernel is faking it (?).
-        #
-        # Note about syscalls: the C extension always sets it to 0 (?).
-        #
-        # Note: the C ext is returning some metrics we are not exposing:
-        # traps, faults and forks.
-        ctxsw, intrs, soft_intrs, syscalls, _traps, _faults, _forks = (
-            cext.cpu_stats()
-        )
-        with open('/proc/stat', 'rb') as f:
-            for line in f:
-                if line.startswith(b'intr'):
-                    intrs = int(line.split()[1])
-    elif OPENBSD:
+    elif NETBSD or OPENBSD:
         # Note: the C ext is returning some metrics we are not exposing:
         # traps, faults and forks.
         ctxsw, intrs, soft_intrs, syscalls, _traps, _faults, _forks = (
@@ -232,6 +192,7 @@ if FREEBSD:
                 current, available_freq = cext.cpu_freq(cpu)
             except NotImplementedError:
                 continue
+            min_freq = max_freq = None
             if available_freq:
                 try:
                     min_freq = int(available_freq.split(" ")[-1].split("/")[0])
@@ -257,7 +218,7 @@ elif OPENBSD:
 
 
 def disk_partitions(all=False):
-    """Return mounted disk partitions as a list of namedtuples.
+    """Return mounted disk partitions as a list of named tuples.
     'all' argument is ignored, see:
     https://github.com/giampaolo/psutil/issues/906.
     """
@@ -399,7 +360,7 @@ if NETBSD:
 
 
 def users():
-    """Return currently connected users as a list of namedtuples."""
+    """Return currently connected users as a list of named tuples."""
     retlist = []
     rawlist = cext.users()
     for item in rawlist:
@@ -579,15 +540,13 @@ class Process:
             try:
                 return cext.proc_cmdline(self.pid)
             except OSError as err:
-                if err.errno == errno.EINVAL:
+                if err.errno in {errno.EINVAL, errno.EFAULT}:
+                    debug(f"cmdline(): ignoring {err!r}")
                     pid, name, ppid = self.pid, self._name, self._ppid
                     if cext.proc_is_zombie(self.pid):
                         raise ZombieProcess(pid, name, ppid) from err
                     if not pid_exists(self.pid):
                         raise NoSuchProcess(pid, name, ppid) from err
-                    # XXX: this happens with unicode tests. It means the C
-                    # routine is unable to decode invalid unicode chars.
-                    debug(f"ignoring {err!r} and returning an empty list")
                     return []
                 else:
                     raise
@@ -751,7 +710,7 @@ class Process:
 
     @wrap_exceptions
     def open_files(self):
-        """Return files opened by process as a list of namedtuples."""
+        """Return files opened by process as a list of named tuples."""
         rawlist = cext.proc_open_files(self.pid)
         return [ntp.popenfile(path, fd) for path, fd in rawlist]
 
@@ -773,7 +732,7 @@ class Process:
 
         @wrap_exceptions
         def cpu_affinity_set(self, cpus):
-            # Pre-emptively check if CPUs are valid because the C
+            # preemptively check if CPUs are valid because the C
             # function has a weird behavior in case of invalid CPUs,
             # see: https://github.com/giampaolo/psutil/issues/586
             allcpus = set(range(len(per_cpu_times())))

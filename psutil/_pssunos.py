@@ -279,19 +279,11 @@ def boot_time():
 
 
 def users():
-    """Return currently connected users as a list of namedtuples."""
+    """Return currently connected users as a list of named tuples."""
     retlist = []
     rawlist = cext.users()
-    localhost = (':0.0', ':0')
     for item in rawlist:
-        user, tty, hostname, tstamp, user_process, pid = item
-        # note: the underlying C function includes entries about
-        # system boot, run level and others.  We might want
-        # to use them in the future.
-        if not user_process:
-            continue
-        if hostname in localhost:
-            hostname = 'localhost'
+        user, tty, hostname, tstamp, pid = item
         nt = ntp.suser(user, tty, hostname, tstamp, pid)
         retlist.append(nt)
     return retlist
@@ -649,9 +641,7 @@ class Process:
     @wrap_exceptions
     def memory_maps(self):
         def toaddr(start, end):
-            return "{}-{}".format(
-                hex(start)[2:].strip('L'), hex(end)[2:].strip('L')
-            )
+            return f"{hex(start)[2:].strip('L')}-{hex(end)[2:].strip('L')}"
 
         procfs_path = self._procfs_path
         retlist = []

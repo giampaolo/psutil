@@ -9,26 +9,23 @@ See: https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode.
 
 """
 
-import os
+import pathlib
 import re
 import subprocess
 import sys
 
 from psutil import __version__
 
-HERE = os.path.abspath(os.path.dirname(__file__))
-ROOT = os.path.realpath(os.path.join(HERE, '..', '..'))
-CHANGELOG = os.path.join(ROOT, 'docs', 'changelog.rst')
-PRINT_HASHES_SCRIPT = os.path.join(
-    ROOT, 'scripts', 'internal', 'print_hashes.py'
-)
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
+CHANGELOG = ROOT_DIR / 'docs' / 'changelog.rst'
+PRINT_HASHES_PY = ROOT_DIR / 'scripts' / 'internal' / 'print_hashes.py'
 
 PRJ_NAME = 'psutil'
 PRJ_VERSION = __version__
 PRJ_URL_HOME = 'https://github.com/giampaolo/psutil'
-PRJ_URL_DOC = 'http://psutil.readthedocs.io'
+PRJ_URL_DOC = 'https://psutil.io'
 PRJ_URL_DOWNLOAD = 'https://pypi.org/project/psutil/#files'
-PRJ_URL_WHATSNEW = 'https://psutil.readthedocs.io/en/latest/changelog.html'
+PRJ_URL_WHATSNEW = 'https://psutil.io/changelog/'
 
 template = """\
 Hello all,
@@ -131,7 +128,7 @@ def get_changes():
 def main():
     changes = get_changes()
     hashes = (
-        subprocess.check_output([sys.executable, PRINT_HASHES_SCRIPT, 'dist/'])
+        subprocess.check_output([sys.executable, PRINT_HASHES_PY, 'dist/'])
         .strip()
         .decode()
     )

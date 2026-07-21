@@ -1,0 +1,40 @@
+<footer class="footer" role="contentinfo">
+  <div class="footer-content">
+    <div class="footer-text">
+      {%- if show_copyright %}
+      <span><a class="footer-egg" href="{{ pathto('404') }}" title="🥚">&copy;</a> {{ copyright|e }}</span>
+      {%- endif %}
+      {%- if last_updated and has_rst_source %}
+      <span>{{ _('Updated: ') }}<a
+        href="https://github.com/giampaolo/psutil/commits/master/docs/{{ pagename }}.rst"
+        rel="noopener noreferrer" target="_blank"
+        title="{{ _('View commit history on GitHub') }}">{{ last_updated|e }}</a></span>
+      {%- endif %}
+      <span><a href="{{ pathto('about') }}"
+               title="{{ _('About this documentation site') }}">{{ _('About') }}</a></span>
+      {%- if has_rst_source %}
+      <span><a href="https://github.com/giampaolo/psutil/edit/master/docs/{{ pagename }}.rst"
+               rel="noopener noreferrer" target="_blank"
+               title="{{ _('Edit this page on GitHub') }}">{{ _('Edit on GitHub') }}</a></span>
+      {%- endif %}
+    </div>
+    <div class="footer-icons">
+      <a class="footer-github" href="https://github.com/giampaolo/psutil"
+         title="{{ _('psutil on GitHub') }}" aria-label="{{ _('psutil on GitHub') }}"
+         rel="noopener noreferrer" target="_blank">
+        <i class="fa-brands fa-github" aria-hidden="true"></i>
+      </a>
+      <a class="footer-pypi" href="https://pypi.org/project/psutil/"
+         title="{{ _('psutil on PyPI') }}" aria-label="{{ _('psutil on PyPI') }}"
+         rel="noopener noreferrer" target="_blank">
+        <i class="fa-brands fa-python" aria-hidden="true"></i>
+      </a>
+      {%- if ablog is defined %}
+      <a class="footer-rss" href="{{ pathto(ablog.blog_path ~ '/atom', 1) }}.xml"
+         title="{{ _('Subscribe to blog (Atom feed)') }}" aria-label="{{ _('Subscribe to blog') }}">
+        <span class="rss-icon"></span>
+      </a>
+      {%- endif %}
+    </div>
+  </div>
+</footer>
