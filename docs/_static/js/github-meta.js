@@ -35,7 +35,8 @@
     let cached;
     try {
         cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || "null");
-    } catch (e) {
+    }
+    catch (e) {
         cached = null;
     }
     if (cached && Date.now() - cached.t < CACHE_TTL_MS) {
@@ -44,10 +45,14 @@
     }
 
     Promise.all([
-        fetch("https://api.github.com/repos/" + REPO).then((r) => (r.ok ? r.json() : null)),
+        fetch("https://api.github.com/repos/" + REPO).then((
+            r,
+        ) => (r.ok ? r.json() : null)),
         // /releases/latest only works if a release is explicitly
         // marked as latest. /tags is more reliable.
-        fetch("https://api.github.com/repos/" + REPO + "/tags").then((r) => (r.ok ? r.json() : null)),
+        fetch("https://api.github.com/repos/" + REPO + "/tags").then((
+            r,
+        ) => (r.ok ? r.json() : null)),
     ])
         .then((results) => {
             const repo = results[0];
@@ -65,9 +70,14 @@
             try {
                 sessionStorage.setItem(
                     CACHE_KEY,
-                    JSON.stringify({ t: Date.now(), stars: stars, version: version })
+                    JSON.stringify({
+                        t: Date.now(),
+                        stars: stars,
+                        version: version,
+                    }),
                 );
-            } catch (e) {
+            }
+            catch (e) {
                 // private mode / storage disabled: skip caching
             }
             applyValues(stars, version);

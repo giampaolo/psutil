@@ -32,8 +32,10 @@
         const form = e.currentTarget;
         const action = new URL(form.action, location.href);
         action.search = "?" + new URLSearchParams(new FormData(form));
-        if (action.pathname === location.pathname
-            && action.search === location.search) {
+        if (
+            action.pathname === location.pathname &&
+            action.search === location.search
+        ) {
             e.preventDefault();
             location.reload();
         }
@@ -48,7 +50,8 @@
                 e.preventDefault();
                 if (document.activeElement === input) {
                     input.blur();
-                } else {
+                }
+                else {
                     input.focus();
                     input.select();
                 }
@@ -132,12 +135,14 @@
             if (e.key === "ArrowDown") {
                 e.preventDefault();
                 setActive(activeIndex === -1 ? 0 : activeIndex + 1);
-            } else if (e.key === "ArrowUp") {
+            }
+            else if (e.key === "ArrowUp") {
                 e.preventDefault();
                 if (activeIndex > 0) {
                     setActive(activeIndex - 1);
                 }
-            } else if (e.key === "Enter" && activeIndex >= 0) {
+            }
+            else if (e.key === "Enter" && activeIndex >= 0) {
                 e.preventDefault();
                 const link = getResults()[activeIndex].querySelector("a");
                 if (link) {

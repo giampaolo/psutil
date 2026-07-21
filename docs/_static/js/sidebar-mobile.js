@@ -46,7 +46,8 @@
     function toggle() {
         if (body.classList.contains("sidebar-open")) {
             close();
-        } else {
+        }
+        else {
             open();
         }
     }
@@ -73,7 +74,7 @@
             dragStartY = e.touches[0].clientY;
             dragging = false;
         },
-        { passive: true }
+        { passive: true },
     );
 
     document.addEventListener(
@@ -100,7 +101,7 @@
             sidebar.style.transition = "none";
             sidebar.style.transform = "translateX(" + Math.min(0, dx) + "px)";
         },
-        { passive: true }
+        { passive: true },
     );
 
     document.addEventListener("touchend", (e) => {
@@ -153,7 +154,8 @@
             if (e.shiftKey && document.activeElement === first) {
                 e.preventDefault();
                 last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
+            }
+            else if (!e.shiftKey && document.activeElement === last) {
                 e.preventDefault();
                 first.focus();
             }

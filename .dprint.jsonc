@@ -17,8 +17,34 @@
             "**/.clang-format",
         ],
     },
+    // js
+    "typescript": {
+        "indentWidth": 4,
+        "lineWidth": 79,
+        "quoteStyle": "preferDouble",
+        "useBraces": "always",
+        "singleBodyPosition": "nextLine",
+        "nextControlFlowPosition": "nextLine",
+        "operatorPosition": "sameLine",
+        "conditionalExpression.operatorPosition": "nextLine",
+        "functionExpression.spaceBeforeParentheses": true,
+        "trailingCommas": "onlyMultiLine",
+        "associations": [
+            "**/*.js",
+        ],
+    },
+    // css
+    "malva": {
+        "indentWidth": 4,
+        "printWidth": 79,
+        "associations": [
+            "**/*.css",
+        ],
+    },
     "excludes": [
         "**/*-lock.json",
+        "docs/_static/css/code.css",
+        "docs/_static/css/fonts.css",
         ".github/ISSUE_TEMPLATE/bug.md",
         ".github/ISSUE_TEMPLATE/enhancement.md",
         ".github/PULL_REQUEST_TEMPLATE.md",
@@ -27,5 +53,7 @@
         "https://plugins.dprint.dev/markdown-0.22.1.wasm",
         "https://plugins.dprint.dev/json-0.23.0.wasm",
         "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.6.0.wasm",
+        "https://plugins.dprint.dev/typescript-0.96.1.wasm",
+        "https://plugins.dprint.dev/g-plane/malva-v0.16.0.wasm",
     ],
 }

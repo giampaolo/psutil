@@ -31,7 +31,8 @@
         applyTheme(dark);
         try {
             localStorage.setItem(KEY, dark ? "dark" : "light");
-        } catch (e) {
+        }
+        catch (e) {
             // private mode / storage disabled: skip persisting
         }
     }
