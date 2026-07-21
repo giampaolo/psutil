@@ -22,8 +22,7 @@
     flyout.setAttribute("role", "dialog");
     flyout.setAttribute("aria-modal", "true");
     flyout.setAttribute("aria-label", "Keyboard shortcuts");
-    flyout.innerHTML =
-        '<div class="shortcut-flyout-backdrop"></div>' +
+    flyout.innerHTML = '<div class="shortcut-flyout-backdrop"></div>' +
         '<div class="shortcut-flyout-panel" tabindex="-1">' +
         '<div class="shortcut-flyout-title">Keyboard shortcuts</div>' +
         '<dl class="shortcut-flyout-list">' +
@@ -64,7 +63,8 @@
     function toggle() {
         if (flyout.classList.contains("is-open")) {
             close();
-        } else {
+        }
+        else {
             open();
         }
     }

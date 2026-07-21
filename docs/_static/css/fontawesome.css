@@ -64,10 +64,30 @@
 
 /* Glyphs referenced by class (the doc-icons set their codepoint via
    --doc-icon and don't need entries here). */
-.fa-bars::before { content: "\f0c9"; }
-.fa-chevron-up::before { content: "\f077"; }
-.fa-magnifying-glass::before { content: "\f002"; }
-.fa-sun::before { content: "\f185"; }
-.fa-moon::before { content: "\f186"; }
-.fa-github::before { content: "\f09b"; }
-.fa-python::before { content: "\f3e2"; }
+.fa-bars::before {
+    content: "\f0c9";
+}
+
+.fa-chevron-up::before {
+    content: "\f077";
+}
+
+.fa-magnifying-glass::before {
+    content: "\f002";
+}
+
+.fa-sun::before {
+    content: "\f185";
+}
+
+.fa-moon::before {
+    content: "\f186";
+}
+
+.fa-github::before {
+    content: "\f09b";
+}
+
+.fa-python::before {
+    content: "\f3e2";
+}

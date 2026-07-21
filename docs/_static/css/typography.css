@@ -47,7 +47,7 @@ body {
 .article a.headerlink,
 .article a.headerlink:visited,
 .article a.headerlink:hover {
-    visibility: visible;  /* override basic.css default */
+    visibility: visible; /* override basic.css default */
     margin-left: 0.6rem;
     padding-left: 0;
     color: var(--text-muted);

@@ -11,7 +11,7 @@
 
 :root {
     --font-post-body: "Merriweather", Charter, Georgia, serif;
-    --blog-accent: #9a3412;       /* warm rust, editorial */
+    --blog-accent: #9a3412; /* warm rust, editorial */
     --blog-accent-deep: #7c2d12;
 }
 

@@ -245,9 +245,10 @@
     color: var(--text-muted);
     background: var(--surface-sunken);
     text-decoration: none;
-    transition: border-color var(--theme-transition),
-                color var(--theme-transition),
-                background var(--theme-transition);
+    transition:
+        border-color var(--theme-transition),
+        color var(--theme-transition),
+        background var(--theme-transition);
 }
 
 .home-page a.home-platform-pill:hover {
@@ -505,9 +506,10 @@ a.sponsor-cta:visited {
     text-decoration: underline dashed;
     text-decoration-color: var(--border);
     text-underline-offset: 3px;
-    transition: color var(--theme-transition),
-                opacity var(--theme-transition),
-                text-decoration-color var(--theme-transition);
+    transition:
+        color var(--theme-transition),
+        opacity var(--theme-transition),
+        text-decoration-color var(--theme-transition);
 }
 
 a.sponsor-cta:hover {

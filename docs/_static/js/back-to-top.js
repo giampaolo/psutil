@@ -14,7 +14,8 @@
     // Hidden at rest via opacity, which doesn't remove it from the tab
     // order; keep it unfocusable until the scroll handler shows it.
     btn.tabIndex = -1;
-    btn.innerHTML = '<i class="fa-solid fa-chevron-up" aria-hidden="true"></i>';
+    btn.innerHTML =
+        '<i class="fa-solid fa-chevron-up" aria-hidden="true"></i>';
     // Faster than the browser's default smooth scroll (which can take
     // ~1s on long pages). Custom 300ms ease-out animation.
     btn.addEventListener("click", () => {
