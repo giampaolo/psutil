@@ -89,7 +89,6 @@ main .gsc-main {
 }
 
 main .gsc-comment-box,
-main .gsc-comment-box-textarea,
 main .btn {
     border-radius: 6px;
 }
@@ -97,4 +96,17 @@ main .btn {
 main .gsc-comment-box-main {
     margin-left: 0;
     margin-right: 0;
+}
+
+main .gsc-comment-box-textarea,
+main .gsc-comment-box-textarea-extras {
+    box-sizing: border-box;
+    width: 100%;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+}
+
+main .gsc-comment-box-textarea {
+    border-top: 0;
 }
