@@ -317,6 +317,10 @@ Others:
   ``resource.prlimit()`` accordingly. psutil now maps it back to
   :data:`psutil.RLIM_INFINITY` so the value stays consistent across Python
   versions.
+- :gh:`2875`, [Windows]: :func:`sensors_battery` never returned
+  :data:`POWER_TIME_UNKNOWN` when the remaining battery time was unknown; it
+  returned ``4294967295`` instead of ``-1`` due to ``BatteryLifeTime`` being
+  passed as an unsigned integer.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
