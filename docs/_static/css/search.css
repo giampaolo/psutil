@@ -272,7 +272,7 @@ ul.search > li.search-result-active {
    in doc-icons.css, shared with the sidebar); the kind fallback below
    covers results whose target page has no icon. */
 ul.search > li::before {
-    content: var(--doc-icon, "\f0f6");  /* generic doc */
+    content: var(--doc-icon, "\f0f6"); /* generic doc */
     font-family: var(--doc-icon-font, "Font Awesome 7 Free");
     font-weight: var(--doc-icon-weight, 900);
     font-size: 16px;
@@ -286,10 +286,21 @@ ul.search > li::before {
 
 /* Fallbacks by Sphinx SearchResultKind, used only when the target page
    has no --doc-icon. */
-ul.search > li.kind-title::before { content: var(--doc-icon, "\f0c1"); }   /* link */
-ul.search > li.kind-object::before { content: var(--doc-icon, "\f085"); }  /* cogs */
-ul.search > li.kind-text::before { content: var(--doc-icon, "\f0f6"); }    /* doc text */
-ul.search > li.kind-index::before { content: var(--doc-icon, "\f097"); }   /* bookmark */
+ul.search > li.kind-title::before {
+    content: var(--doc-icon, "\f0c1");
+} /* link */
+
+ul.search > li.kind-object::before {
+    content: var(--doc-icon, "\f085");
+} /* cogs */
+
+ul.search > li.kind-text::before {
+    content: var(--doc-icon, "\f0f6");
+} /* doc text */
+
+ul.search > li.kind-index::before {
+    content: var(--doc-icon, "\f097");
+} /* bookmark */
 
 /* Blog results get a "Blog >" breadcrumb prefix on the link itself. */
 ul.search > li:has(> a[href^="blog/"]) > a::before,

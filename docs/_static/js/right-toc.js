@@ -22,7 +22,7 @@
     });
 
     var tocLinks = Array.prototype.slice.call(
-        pageToc.querySelectorAll("a[href^=\"#\"]")
+        pageToc.querySelectorAll('a[href^="#"]'),
     );
 
     if (tocLinks.length === 0) {
@@ -215,7 +215,7 @@
 
     window.addEventListener(
         "resize",
-        debounce(connectIntersectionObserver, 300)
+        debounce(connectIntersectionObserver, 300),
     );
 
     connectIntersectionObserver();
@@ -233,10 +233,12 @@
     // away from that section in between).
     window.addEventListener("click", function (e) {
         var link = e.target.closest("a");
-        if (link
-            && link.hash
-            && link.hash === location.hash
-            && link.origin === location.origin) {
+        if (
+            link &&
+            link.hash &&
+            link.hash === location.hash &&
+            link.origin === location.origin
+        ) {
             syncTocHash(link.hash);
         }
     });

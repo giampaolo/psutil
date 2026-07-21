@@ -270,9 +270,9 @@ html {
 @media (min-width: 1280px) {
     .back-to-top {
         right: calc(
-            max(0px, (100vw - var(--layout-width)) / 2)
-            + var(--right-sidebar-width)
-            + 44px
+            max(0px, (100vw - var(--layout-width)) / 2) +
+                var(--right-sidebar-width) +
+                44px
         );
     }
 }

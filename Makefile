@@ -185,7 +185,7 @@ black:  ## Run black formatter.
 lint-c:  ## Run C linter.
 	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format --dry-run --Werror {}
 
-dprint:  ## Run linter for .md / .json / .yml files.
+dprint:  ## Run linter for .md / .json / .yml / .js / .css files.
 	@$(DPRINT) check
 
 lint-rst:  ## Run linter for .rst files.
@@ -231,7 +231,7 @@ fix-toml:  ## Fix pyproject.toml
 fix-rst:  ## Re-wrap .rst files.
 	@$(call _ls,'*.rst') | xargs rstwrap
 
-fix-dprint:  ## Reformat .md / .json / .yml files.
+fix-dprint:  ## Reformat .md / .json / .yml / .js / .css files.
 	@$(DPRINT) fmt
 
 fix-all:  ## Run all code fixers.

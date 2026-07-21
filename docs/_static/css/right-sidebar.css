@@ -117,7 +117,10 @@
 }
 
 .right-sidebar > ul > li:first-child > ul > li > ul > li:has(> ul) > a,
-.right-sidebar > ul > li:first-child > ul > li > ul > li:has(> ul) > a:visited {
+.right-sidebar
+    > ul > li:first-child
+    > ul > li > ul > li:has(> ul)
+    > a:visited {
     font-weight: 600;
     color: var(--text);
 }
@@ -137,7 +140,9 @@
     font-weight: 400;
 }
 
-.right-sidebar > ul > li:first-child > ul > li > ul > li > ul > li > ul > li > a {
+.right-sidebar
+    > ul > li:first-child
+    > ul > li > ul > li > ul > li > ul > li > a {
     font-size: 0.8rem;
     font-weight: 400;
 }
