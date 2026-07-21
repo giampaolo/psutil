@@ -10,7 +10,13 @@
         return;
     }
 
-    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    const ORIGIN = "https://giscus.app";
+
+    function currentTheme() {
+        const theme = document.documentElement.getAttribute("data-theme");
+        return theme === "dark" ? "dark" : "light";
+    }
+
     const attrs = {
         "data-repo": container.dataset.repo,
         "data-repo-id": container.dataset.repoId,
@@ -26,14 +32,14 @@
         "data-reactions-enabled": "1",
         "data-emit-metadata": "0",
         "data-input-position": "top",
-        "data-theme": dark ? "dark" : "light",
+        "data-theme": currentTheme(),
         "data-lang": "en",
         "data-loading": "lazy"
     };
 
     const section = container.closest(".comments");
     const script = document.createElement("script");
-    script.src = "https://giscus.app/client.js";
+    script.src = ORIGIN + "/client.js";
     script.crossOrigin = "anonymous";
     script.async = true;
     Object.keys(attrs).forEach((name) => {
@@ -48,4 +54,57 @@
         }
     });
     container.appendChild(script);
+
+    // frame.contentWindow exists before giscus is ready to receive
+    // messages, so track readiness explicitly instead.
+    let ready = false;
+    let lastPushed = attrs["data-theme"];
+
+    function pushTheme() {
+        if (!ready) {
+            return;
+        }
+        const theme = currentTheme();
+        if (theme === lastPushed) {
+            return;
+        }
+        const frame = document.querySelector("iframe.giscus-frame");
+        if (!frame || !frame.contentWindow) {
+            return;
+        }
+        frame.contentWindow.postMessage(
+            {giscus: {setConfig: {theme}}},
+            ORIGIN
+        );
+        lastPushed = theme;
+    }
+
+    const observer = new MutationObserver(pushTheme);
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"]
+    });
+
+    window.addEventListener("message", (event) => {
+        if (event.origin !== ORIGIN) {
+            return;
+        }
+        if (!event.data || typeof event.data !== "object"
+                || !event.data.giscus) {
+            return;
+        }
+        if (!ready) {
+            ready = true;
+            // giscus re-sets iframe.src on sign-out, which re-renders
+            // with the theme baked into the script tag.
+            const frame = document.querySelector("iframe.giscus-frame");
+            if (frame) {
+                frame.addEventListener("load", () => {
+                    lastPushed = attrs["data-theme"];
+                    pushTheme();
+                });
+            }
+        }
+        pushTheme();
+    });
 })();
