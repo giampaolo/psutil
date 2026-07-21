@@ -107,6 +107,82 @@ if _TYPE_CHECKING:
     from ._ntuples import svmem
     from ._pswindows import WindowsService
 
+    # _export_enum() puts these in the module namespace at run time.
+    STATUS_DEAD: ProcessStatus
+    STATUS_DISK_SLEEP: ProcessStatus
+    STATUS_IDLE: ProcessStatus
+    STATUS_LOCKED: ProcessStatus
+    STATUS_PARKED: ProcessStatus
+    STATUS_RUNNING: ProcessStatus
+    STATUS_SLEEPING: ProcessStatus
+    STATUS_STOPPED: ProcessStatus
+    STATUS_SUSPENDED: ProcessStatus
+    STATUS_TRACING_STOP: ProcessStatus
+    STATUS_WAITING: ProcessStatus
+    STATUS_WAKE_KILL: ProcessStatus
+    STATUS_WAKING: ProcessStatus
+    STATUS_ZOMBIE: ProcessStatus
+
+    CONN_CLOSE: ConnectionStatus
+    CONN_CLOSE_WAIT: ConnectionStatus
+    CONN_CLOSING: ConnectionStatus
+    CONN_ESTABLISHED: ConnectionStatus
+    CONN_FIN_WAIT1: ConnectionStatus
+    CONN_FIN_WAIT2: ConnectionStatus
+    CONN_LAST_ACK: ConnectionStatus
+    CONN_LISTEN: ConnectionStatus
+    CONN_NONE: ConnectionStatus
+    CONN_SYN_RECV: ConnectionStatus
+    CONN_SYN_SENT: ConnectionStatus
+    CONN_TIME_WAIT: ConnectionStatus
+    CONN_BOUND: ConnectionStatus  # SunOS
+    CONN_DELETE_TCB: ConnectionStatus  # Windows
+    CONN_IDLE: ConnectionStatus  # SunOS
+
+    NIC_DUPLEX_FULL: NicDuplex
+    NIC_DUPLEX_HALF: NicDuplex
+    NIC_DUPLEX_UNKNOWN: NicDuplex
+
+    POWER_TIME_UNKNOWN: BatteryTime
+    POWER_TIME_UNLIMITED: BatteryTime
+
+    IOPRIO_CLASS_BE: ProcessIOPriority  # Linux
+    IOPRIO_CLASS_IDLE: ProcessIOPriority  # Linux
+    IOPRIO_CLASS_NONE: ProcessIOPriority  # Linux
+    IOPRIO_CLASS_RT: ProcessIOPriority  # Linux
+    IOPRIO_HIGH: ProcessIOPriority  # Windows
+    IOPRIO_LOW: ProcessIOPriority  # Windows
+    IOPRIO_NORMAL: ProcessIOPriority  # Windows
+    IOPRIO_VERYLOW: ProcessIOPriority  # Windows
+
+    ABOVE_NORMAL_PRIORITY_CLASS: ProcessPriority  # Windows
+    BELOW_NORMAL_PRIORITY_CLASS: ProcessPriority  # Windows
+    HIGH_PRIORITY_CLASS: ProcessPriority  # Windows
+    IDLE_PRIORITY_CLASS: ProcessPriority  # Windows
+    NORMAL_PRIORITY_CLASS: ProcessPriority  # Windows
+    REALTIME_PRIORITY_CLASS: ProcessPriority  # Windows
+
+    RLIMIT_AS: ProcessRlimit  # Linux, FreeBSD
+    RLIMIT_CORE: ProcessRlimit  # Linux, FreeBSD
+    RLIMIT_CPU: ProcessRlimit  # Linux, FreeBSD
+    RLIMIT_DATA: ProcessRlimit  # Linux, FreeBSD
+    RLIMIT_FSIZE: ProcessRlimit  # Linux, FreeBSD
+    RLIMIT_LOCKS: ProcessRlimit  # Linux
+    RLIMIT_MEMLOCK: ProcessRlimit  # Linux, FreeBSD
+    RLIMIT_MSGQUEUE: ProcessRlimit  # Linux
+    RLIMIT_NICE: ProcessRlimit  # Linux
+    RLIMIT_NOFILE: ProcessRlimit  # Linux, FreeBSD
+    RLIMIT_NPROC: ProcessRlimit  # Linux, FreeBSD
+    RLIMIT_NPTS: ProcessRlimit  # FreeBSD
+    RLIMIT_RSS: ProcessRlimit  # Linux, FreeBSD
+    RLIMIT_RTPRIO: ProcessRlimit  # Linux
+    RLIMIT_RTTIME: ProcessRlimit  # Linux
+    RLIMIT_SBSIZE: ProcessRlimit  # FreeBSD
+    RLIMIT_SIGPENDING: ProcessRlimit  # Linux
+    RLIMIT_STACK: ProcessRlimit  # Linux, FreeBSD
+    RLIMIT_SWAP: ProcessRlimit  # FreeBSD
+    RLIM_INFINITY: ProcessRlimit  # Linux, FreeBSD
+
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
