@@ -103,9 +103,10 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 Type hints / enums:
 
 - :gh:`1946`: Add inline type hints to all public APIs in
-  ``psutil/__init__.py``. Type checkers (mypy, pyright, etc.) can now
-  statically verify code that uses psutil. No runtime behavior is changed; the
-  annotations are purely informational.
+  ``psutil/__init__.py``. Editors and checkers that read inline annotations
+  (pyright, Pylance) pick them up automatically. mypy ignores them until we
+  ship a ``py.typed`` marker, so it still relies on the third-party
+  ``types-psutil`` stubs. No runtime behavior is changed.
 - :gh:`2751`: Convert all named tuples from :func:`collections.namedtuple` to
   :class:`typing.NamedTuple` classes with **type annotations**. This makes the
   classes self-documenting, effectively turning this module into a readable API
