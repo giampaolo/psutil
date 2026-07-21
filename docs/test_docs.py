@@ -937,3 +937,19 @@ class TestUrlScheme:
         entries = zlib.decompress(raw.split(b"\n", 4)[4]).decode("utf-8")
         assert entries
         assert ".html" not in entries
+
+
+@pytest.mark.usefixtures("build_html")
+class TestComments:
+    """giscus widget: _ext/giscus.py + _templates/comments.html."""
+
+    def test_container_on_blog_posts(self, subtests):
+        for rst in blog_posts():
+            with subtests.test(post=rst.name):
+                html = blog_html(rst)
+                stem = rst.relative_to(BLOG).with_suffix("").as_posix()
+                assert 'class="giscus"' in html
+                assert f'data-term="blog/{stem}"' in html
+
+    def test_container_absent_on_other_pages(self):
+        assert 'class="giscus"' not in read_html("api.html")
