@@ -7,7 +7,8 @@
     .sidebar-backdrop,
     .back-to-top,
     .prev-next,
-    .shortcut-flyout {
+    .shortcut-flyout,
+    .comments {
         display: none !important;
     }
 

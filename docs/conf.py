@@ -210,15 +210,14 @@ blog_baseurl = html_baseurl
 # Comments (giscus)
 # =====================================================================
 
-# Blog comments live as GitHub Discussions in a repo of their own, so
-# they don't notify psutil's watchers or land in its Discussions
-# search. Threads key off the source file path (see
-# _templates/comments.html), not the URL, so changing domain doesn't
-# orphan them. These IDs are public, not secrets.
 giscus_repo = "giampaolo/psutil-blog-comments"
 giscus_repo_id = "R_kgDOTfVGLA"
-giscus_category = "Announcements"
-giscus_category_id = "DIC_kwDOTfVGLM4DBqyI"
+giscus_category = "User Comments"
+giscus_category_id = "DIC_kwDOTfVGLM4DBrKC"
+# linked above the widget
+giscus_policy_url = (
+    "https://github.com/giampaolo/psutil-blog-comments/discussions/2"
+)
 
 # =====================================================================
 # sphinxext-opengraph

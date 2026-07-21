@@ -12,11 +12,15 @@ CONFIG_VALUES = (
     "giscus_repo_id",
     "giscus_category",
     "giscus_category_id",
+    "giscus_policy_url",
 )
 
 
 def add_giscus_context(app, pagename, templatename, context, doctree):
-    context["is_blog_post"] = pagename in getattr(app.env, "ablog_posts", {})
+    is_post = pagename in getattr(app.env, "ablog_posts", {})
+    # A bare ":no_comments:" field at the top of a post opts it out.
+    meta = app.env.metadata.get(pagename, {})
+    context["is_blog_post"] = is_post and "no_comments" not in meta
     for name in CONFIG_VALUES:
         context[name] = getattr(app.config, name)
 

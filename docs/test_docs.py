@@ -945,11 +945,19 @@ class TestComments:
 
     def test_container_on_blog_posts(self, subtests):
         for rst in blog_posts():
+            if ":no_comments:" in rst.read_text():
+                continue
             with subtests.test(post=rst.name):
                 html = blog_html(rst)
                 stem = rst.relative_to(BLOG).with_suffix("").as_posix()
                 assert 'class="giscus"' in html
                 assert f'data-term="blog/{stem}"' in html
+                # Hardcoded, not compared against conf.py: a typo in
+                # the config would land on both sides otherwise.
+                assert 'data-repo="giampaolo/psutil-blog-comments"' in html
+                assert 'data-repo-id="R_kgDOTfVGLA"' in html
+                assert 'data-category="User Comments"' in html
+                assert 'data-category-id="DIC_kwDOTfVGLM4DBrKC"' in html
 
     def test_container_absent_on_other_pages(self):
         assert 'class="giscus"' not in read_html("api.html")
