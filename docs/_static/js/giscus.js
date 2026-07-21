@@ -34,7 +34,7 @@
         "data-input-position": "top",
         "data-theme": currentTheme(),
         "data-lang": "en",
-        "data-loading": "lazy"
+        "data-loading": "lazy",
     };
 
     const section = container.closest(".comments");
@@ -73,8 +73,8 @@
             return;
         }
         frame.contentWindow.postMessage(
-            {giscus: {setConfig: {theme}}},
-            ORIGIN
+            { giscus: { setConfig: { theme } } },
+            ORIGIN,
         );
         lastPushed = theme;
     }
@@ -82,15 +82,17 @@
     const observer = new MutationObserver(pushTheme);
     observer.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ["data-theme"]
+        attributeFilter: ["data-theme"],
     });
 
     window.addEventListener("message", (event) => {
         if (event.origin !== ORIGIN) {
             return;
         }
-        if (!event.data || typeof event.data !== "object"
-                || !event.data.giscus) {
+        if (
+            !event.data || typeof event.data !== "object" ||
+            !event.data.giscus
+        ) {
             return;
         }
         if (!ready) {
