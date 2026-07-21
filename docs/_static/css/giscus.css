@@ -93,3 +93,8 @@ main .gsc-comment-box-textarea,
 main .btn {
     border-radius: 6px;
 }
+
+main .gsc-comment-box-main {
+    margin-left: 0;
+    margin-right: 0;
+}
