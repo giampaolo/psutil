@@ -322,6 +322,9 @@ Others:
   :data:`POWER_TIME_UNKNOWN` when the remaining battery time was unknown; it
   returned ``4294967295`` instead of ``-1`` due to ``BatteryLifeTime`` being
   passed as an unsigned integer.
+- :gh:`2877`, [UNIX]: fix a one-byte stack buffer overflow in :func:`users`.
+  When ``ut_host`` fills the whole field it has no null terminator, and the
+  terminator was written one byte past the end of the local buffer.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
