@@ -98,15 +98,20 @@ main .gsc-comment-box-main {
     margin-right: 0;
 }
 
-main .gsc-comment-box-textarea,
-main .gsc-comment-box-textarea-extras {
+main .gsc-comment-box-textarea {
     box-sizing: border-box;
     width: 100%;
     border-left: 0;
     border-right: 0;
+    border-top: 0;
     border-radius: 0;
+    border-bottom-style: solid;
 }
 
-main .gsc-comment-box-textarea {
-    border-top: 0;
+main .gsc-comment-box-textarea-extras {
+    display: none;
+}
+
+main .gsc-comment-box-md-toolbar {
+    display: none;
 }
