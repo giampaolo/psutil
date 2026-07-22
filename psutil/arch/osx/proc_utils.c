@@ -49,6 +49,22 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 }
 
 
+// task_for_pid() only succeeds for tasks we may access (ours, or any
+// task when we're root). On macOS it can *block* instead of failing for
+// the rest (e.g. system daemons like distnoted), so use this to bail out
+// early. Return 1 if allowed, 0 if not, -1 on error (Python exc set).
+int
+psutil_task_access_allowed(pid_t pid) {
+    struct kinfo_proc kp;
+
+    if (geteuid() == 0)
+        return 1;
+    if (psutil_get_kinfo_proc(pid, &kp) == -1)
+        return -1;
+    return kp.kp_eproc.e_ucred.cr_uid == geteuid() ? 1 : 0;
+}
+
+
 // Return 1 if PID a zombie, else 0 (including on error).
 int
 is_zombie(size_t pid) {
@@ -140,6 +156,8 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
 
 
 // A wrapper around task_for_pid() which sucks big time:
+//
+// - it can *block* forever (not just fail) for tasks we can't access
 // - it's not documented
 // - errno is set only sometimes
 // - sometimes errno is ENOENT (?!?)
@@ -154,9 +172,20 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
 int
 psutil_task_for_pid(pid_t pid, mach_port_t *task) {
     kern_return_t err;
+    int access;
 
     if (pid < 0 || !task)
         return psutil_badargs("psutil_task_for_pid");
+
+    // task_for_pid() can block forever (not just fail) for tasks we
+    // can't access, so refuse those up front.
+    access = psutil_task_access_allowed(pid);
+    if (access == -1)
+        return -1;
+    if (access == 0) {
+        psutil_oserror_ad("task_for_pid() access pre-check");
+        return -1;
+    }
 
     Py_BEGIN_ALLOW_THREADS
     err = task_for_pid(mach_task_self(), pid, task);
