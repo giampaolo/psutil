@@ -439,16 +439,16 @@ def spawn_zombie():
     assert psutil.POSIX
     unix_file = get_testfn()
     src = textwrap.dedent(f"""\
-        import os, sys, time, socket, contextlib
+        import os, socket, time
         child_pid = os.fork()
-        if child_pid > 0:
-            time.sleep(3000)
+        if child_pid == 0:
+            # Exit now -> zombie (parent won't wait() us).
+            os._exit(0)
         else:
-            # this is the zombie process
             with socket.socket(socket.AF_UNIX) as s:
                 s.connect('{unix_file}')
-                pid = bytes(str(os.getpid()), 'ascii')
-                s.sendall(pid)
+                s.sendall(bytes(str(child_pid), 'ascii'))
+            time.sleep(3000)
         """)
     tfile = None
     sock = bind_unix_socket(unix_file)
