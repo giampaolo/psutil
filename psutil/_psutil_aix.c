@@ -919,6 +919,8 @@ psutil_aix_exec(PyObject *mod) {
         return -1;
     if (psutil_posix_add_methods(mod) != 0)
         return -1;
+    if (psutil_add_exceptions(mod) != 0)
+        return -1;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
         return -1;

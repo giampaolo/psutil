@@ -52,13 +52,65 @@ psutil_setup(void) {
 }
 
 
+// Create a custom exception once (cached in *dst) and add it to the
+// module. PyModule_AddObject() steals a ref on success only, so INCREF
+// first and drop it again on failure.
+static int
+_psutil_add_exception(
+    PyObject *mod, const char *name, const char *qualname, PyObject **dst
+) {
+    if (*dst == NULL) {
+        *dst = PyErr_NewException(qualname, NULL, NULL);
+        if (*dst == NULL)
+            return -1;
+    }
+    Py_INCREF(*dst);
+    if (PyModule_AddObject(mod, name, *dst)) {
+        Py_DECREF(*dst);
+        return -1;
+    }
+    return 0;
+}
+
+
+// Add exceptions to the C extension module.
+int
+psutil_add_exceptions(PyObject *mod) {
+#ifdef PSUTIL_WINDOWS
+    if (_psutil_add_exception(
+            mod,
+            "TimeoutExpired",
+            "_psutil_windows.TimeoutExpired",
+            &TimeoutExpired
+        ))
+        return -1;
+    if (_psutil_add_exception(
+            mod,
+            "TimeoutAbandoned",
+            "_psutil_windows.TimeoutAbandoned",
+            &TimeoutAbandoned
+        ))
+        return -1;
+#elif defined(PSUTIL_POSIX)
+    if (_psutil_add_exception(
+            mod,
+            "ZombieProcessError",
+            "_psutil_posix.ZombieProcessError",
+            &ZombieProcessError
+        ))
+        return -1;
+#endif
+    return 0;
+}
+
+
 // Initialize the Python C extension module.
 PyObject *
 psutil_mod_init(
     const char *name, PyMethodDef *methods, int (*exec)(PyObject *)
 ) {
     static PyModuleDef_Slot slots[] = {
-        {Py_mod_exec, NULL},  // filled in below
+        {Py_mod_exec, NULL},  // platform exec, filled below
 #ifdef Py_mod_gil
         {Py_mod_gil, Py_MOD_GIL_NOT_USED},
 #endif
