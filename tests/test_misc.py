@@ -8,13 +8,14 @@
 
 import collections
 import contextlib
-import importlib
 import io
 import json
 import os
 import pickle
 import socket
+import subprocess
 import sys
+import textwrap
 from unittest import mock
 
 import psutil
@@ -373,22 +374,32 @@ class TestMisc(PsutilTestCase):
 class TestCExtension(PsutilTestCase):
 
     def test_exceptions_survive_reimport(self):
-        # PEP 489 multi-phase init re-runs the C exec slot on
-        # re-import. The C exceptions are cached in process-global vars
-        # so their identity should remain the same.
-        name = _psutil.__name__
-        if WINDOWS:
-            attrs = ["TimeoutExpired", "TimeoutAbandoned"]
-        else:
-            attrs = ["ZombieProcessError"]
-        before = {a: getattr(_psutil, a) for a in attrs}
-        del sys.modules[name]
-        try:
-            newcext = importlib.import_module(name)
-            for attr in attrs:
-                assert getattr(newcext, attr) is before[attr]
-        finally:
-            sys.modules[name] = _psutil
+        # PEP 489 multi-phase init re-runs the C exec slot on re-import;
+        # the C exceptions are cached in process-global vars so their
+        # identity survives. Run in a subprocess: re-importing the
+        # module (del from sys.modules + import) mutates global state and
+        # would leak into other tests.
+        attrs = (
+            ["TimeoutExpired", "TimeoutAbandoned"]
+            if WINDOWS
+            else ["ZombieProcessError"]
+        )
+        code = textwrap.dedent(f"""
+            import importlib
+            import sys
+
+            from psutil import _psutil
+
+            attrs = {attrs!r}
+            before = {{a: getattr(_psutil, a) for a in attrs}}
+            del sys.modules[_psutil.__name__]
+            new = importlib.import_module(_psutil.__name__)
+            for a in attrs:
+                assert getattr(new, a) is before[a], a
+        """)
+        subprocess.check_output(
+            [sys.executable, "-c", code], stderr=subprocess.STDOUT
+        )
 
 
 # ===================================================================

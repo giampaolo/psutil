@@ -227,8 +227,8 @@ Others:
        - Before
        - After
      * - Import
-       - ``import _psutil_linux``
-       - ``import _psutil``
+       - ``from psutil import _psutil_linux``
+       - ``from psutil import _psutil``
      * - Installed ``.so`` file
        - ``_psutil_linux.abi3.so``
        - ``_psutil.abi3.so``
