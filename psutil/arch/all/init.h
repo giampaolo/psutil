@@ -134,6 +134,10 @@ int pylist_append_obj(PyObject *list, PyObject *obj);
 
 int psutil_badargs(const char *funcname);
 int psutil_setup(void);
+int psutil_add_exceptions(PyObject *mod);
+PyObject *psutil_mod_init(
+    const char *name, PyMethodDef *methods, int (*exec)(PyObject *)
+);
 double psutil_usage_percent(double used, double total, int round_);
 
 // ====================================================================

@@ -59,8 +59,8 @@ PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
 PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
 PVOID psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall);
 
-PyObject *TimeoutExpired;
-PyObject *TimeoutAbandoned;
+extern PyObject *TimeoutExpired;
+extern PyObject *TimeoutAbandoned;
 
 
 int _psutil_pids(DWORD **pids_array, int *pids_count);

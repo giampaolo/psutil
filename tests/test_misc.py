@@ -8,6 +8,7 @@
 
 import collections
 import contextlib
+import importlib
 import io
 import json
 import os
@@ -363,6 +364,33 @@ class TestMisc(PsutilTestCase):
         before = sorted(psutil.__all__)
         reload_module(psutil)
         assert sorted(psutil.__all__) == before
+
+
+# ===================================================================
+# --- C extension
+# ===================================================================
+
+
+class TestCExtension(PsutilTestCase):
+
+    def test_exceptions_survive_reimport(self):
+        # PEP 489 multi-phase init re-runs the C exec slot on
+        # re-import. The C exceptions are cached in process-global vars
+        # so their identity should remain the same.
+        cext = psutil._psplatform.cext
+        name = cext.__name__
+        if WINDOWS:
+            attrs = ["TimeoutExpired", "TimeoutAbandoned"]
+        else:
+            attrs = ["ZombieProcessError"]
+        before = {a: getattr(cext, a) for a in attrs}
+        del sys.modules[name]
+        try:
+            newcext = importlib.import_module(name)
+            for attr in attrs:
+                assert getattr(newcext, attr) is before[attr]
+        finally:
+            sys.modules[name] = cext
 
 
 # ===================================================================

@@ -111,42 +111,18 @@ psutil_windows_exec(PyObject *mod) {
     if (psutil_setup() != 0)
         return -1;
 
-    // Process-wide setup that must happen only once, guarded so it isn't
-    // repeated when the module is imported again. psutil_setup_windows() calls
-    // InitializeCriticalSection(), which must only be called once per lock,
-    // and TimeoutExpired / TimeoutAbandoned are stored in process-global
-    // variables, so they are created a single time.
+    // InitializeCriticalSection() (called by psutil_setup_windows) must
+    // run only once per lock, so guard the process-wide setup.
     if (!module_loaded) {
         if (psutil_setup_windows() != 0)
             return -1;
         if (psutil_set_se_debug() != 0)
             return -1;
-        TimeoutExpired = PyErr_NewException(
-            "_psutil_windows.TimeoutExpired", NULL, NULL
-        );
-        if (TimeoutExpired == NULL)
-            return -1;
-        TimeoutAbandoned = PyErr_NewException(
-            "_psutil_windows.TimeoutAbandoned", NULL, NULL
-        );
-        if (TimeoutAbandoned == NULL)
-            return -1;
         module_loaded = 1;
     }
 
-    // Done on every import. PyModule_AddObject() steals a reference on success
-    // but not on failure, so add one with Py_INCREF() first and drop it again
-    // if the call fails.
-    Py_INCREF(TimeoutExpired);
-    if (PyModule_AddObject(mod, "TimeoutExpired", TimeoutExpired)) {
-        Py_DECREF(TimeoutExpired);
+    if (psutil_add_exceptions(mod) != 0)
         return -1;
-    }
-    Py_INCREF(TimeoutAbandoned);
-    if (PyModule_AddObject(mod, "TimeoutAbandoned", TimeoutAbandoned)) {
-        Py_DECREF(TimeoutAbandoned);
-        return -1;
-    }
 
     // version constant
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
@@ -269,23 +245,9 @@ psutil_windows_exec(PyObject *mod) {
     return 0;
 }
 
-static PyModuleDef_Slot psutil_windows_slots[] = {
-    {Py_mod_exec, psutil_windows_exec},
-#ifdef Py_mod_gil
-    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
-#endif
-    {0, NULL}
-};
-
-static struct PyModuleDef moduledef = {
-    .m_base = PyModuleDef_HEAD_INIT,
-    .m_name = "_psutil_windows",
-    .m_size = 0,
-    .m_methods = PsutilMethods,
-    .m_slots = psutil_windows_slots,
-};
-
 PyMODINIT_FUNC
 PyInit__psutil_windows(void) {
-    return PyModuleDef_Init(&moduledef);
+    return psutil_mod_init(
+        "_psutil_windows", PsutilMethods, psutil_windows_exec
+    );
 }
