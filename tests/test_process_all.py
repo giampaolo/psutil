@@ -86,6 +86,11 @@ def proc_info(pid):
         # We don't use oneshot() because in order not to fool
         # check_exception() in case of NSP.
         for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
+            if MACOS and fun_name in {"memory_info_ex", "threads"}:
+                # Still implemented on top of task_for_pid(), which can
+                # hang forever when taskgated is wedged (headless CI).
+                # Skip until they're ported to proc_pidinfo(). See #2885.
+                continue
             print(  # noqa: T201
                 f"XXX proc_info pid={proc.pid} name={name!r} {fun_name}",
                 flush=True,

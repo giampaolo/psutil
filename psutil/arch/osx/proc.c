@@ -327,101 +327,87 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     pid_t pid;
     cpu_type_t cpu_type;
     size_t private_pages = 0;
-    mach_vm_size_t size = 0;
-    mach_msg_type_number_t info_count;
-    kern_return_t kr;
     long pagesize = psutil_getpagesize();
-    mach_vm_address_t addr;
-    mach_port_t task = MACH_PORT_NULL;
-    vm_region_top_info_data_t info;
-    mach_port_t object_name;
-    mach_vm_address_t prev_addr;
+    uint64_t addr = 0;
+    uint64_t next_addr;
+    int ret;
+    int nregions = 0;
+    struct proc_regioninfo ri;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-
-    if (psutil_task_for_pid(pid, &task) != 0)
         return NULL;
 
     if (psutil_sysctlbyname("sysctl.proc_cputype", &cpu_type, sizeof(cpu_type))
         != 0)
     {
-        mach_port_deallocate(mach_task_self(), task);
         return NULL;
     }
 
+    // Sum up the process' private (unique) resident pages by walking its
+    // VM regions. We use proc_pidinfo(PROC_PIDREGIONINFO) rather than
+    // task_for_pid() + mach_vm_region(): it's pid-based and never upcalls
+    // the taskgated daemon, so unlike task_for_pid() it can't hang.
     // Roughly based on libtop_update_vm_regions in
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
-    for (addr = MACH_VM_MIN_ADDRESS;; addr += size) {
-        prev_addr = addr;
-        info_count = VM_REGION_TOP_INFO_COUNT;  // reset before each call
-        object_name = MACH_PORT_NULL;
-
+    while (1) {
+        errno = 0;
         Py_BEGIN_ALLOW_THREADS
-        kr = mach_vm_region(
-            task,
-            &addr,
-            &size,
-            VM_REGION_TOP_INFO,
-            (vm_region_info_t)&info,
-            &info_count,
-            &object_name
-        );
+        ret = proc_pidinfo(pid, PROC_PIDREGIONINFO, addr, &ri, sizeof(ri));
         Py_END_ALLOW_THREADS
 
-        if (object_name != MACH_PORT_NULL) {
-            mach_port_deallocate(mach_task_self(), object_name);
-            object_name = MACH_PORT_NULL;
-        }
-
-        if (kr == KERN_INVALID_ADDRESS) {
-            // Done iterating VM regions.
+        if (ret <= 0) {
+            // A failure on the first region means the process is gone or
+            // not accessible; past that it just means we reached the end
+            // of the address space.
+            if (nregions == 0) {
+                psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDREGIONINFO)");
+                return NULL;
+            }
             break;
         }
-        else if (kr != KERN_SUCCESS) {
-            psutil_runtime_error(
-                "mach_vm_region(VM_REGION_TOP_INFO) syscall failed"
+        if (ret != sizeof(ri)) {
+            psutil_raise_for_pid(
+                pid, "proc_pidinfo(PROC_PIDREGIONINFO) truncated"
             );
-            mach_port_deallocate(mach_task_self(), task);
             return NULL;
         }
+        nregions += 1;
 
-        if (size == 0 || addr < prev_addr) {
+        if (!(psutil_in_shared_region(ri.pri_address, cpu_type)
+              && ri.pri_share_mode != SM_PRIVATE))
+        {
+            switch (ri.pri_share_mode) {
+#ifdef SM_LARGE_PAGE
+                case SM_LARGE_PAGE:
+                    // NB: Large pages are not shareable and always resident.
+#endif
+                case SM_PRIVATE:
+                    private_pages += ri.pri_private_pages_resident;
+                    private_pages += ri.pri_shared_pages_resident;
+                    break;
+                case SM_COW:
+                    private_pages += ri.pri_private_pages_resident;
+                    if (ri.pri_ref_count == 1) {
+                        // Treat copy-on-write pages as private if they
+                        // only have one reference.
+                        private_pages += ri.pri_shared_pages_resident;
+                    }
+                    break;
+                case SM_SHARED:
+                default:
+                    break;
+            }
+        }
+
+        next_addr = ri.pri_address + ri.pri_size;
+        if (ri.pri_size == 0 || next_addr <= addr) {
             psutil_debug("prevent infinite loop");
             break;
         }
-
-        if (psutil_in_shared_region(addr, cpu_type)
-            && info.share_mode != SM_PRIVATE)
-        {
-            continue;
-        }
-
-        switch (info.share_mode) {
-#ifdef SM_LARGE_PAGE
-            case SM_LARGE_PAGE:
-                // NB: Large pages are not shareable and always resident.
-#endif
-            case SM_PRIVATE:
-                private_pages += info.private_pages_resident;
-                private_pages += info.shared_pages_resident;
-                break;
-            case SM_COW:
-                private_pages += info.private_pages_resident;
-                if (info.ref_count == 1) {
-                    // Treat copy-on-write pages as private if they only
-                    // have one reference.
-                    private_pages += info.shared_pages_resident;
-                }
-                break;
-            case SM_SHARED:
-            default:
-                break;
-        }
+        addr = next_addr;
     }
 
-    mach_port_deallocate(mach_task_self(), task);
-    return Py_BuildValue("K", private_pages * pagesize);
+    return Py_BuildValue("K", (unsigned long long)private_pages * pagesize);
 }
 
 
