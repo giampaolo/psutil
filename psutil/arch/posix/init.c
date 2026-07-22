@@ -78,14 +78,21 @@ psutil_posix_add_methods(PyObject *mod) {
         }
     }
 
-    // custom exception
-    ZombieProcessError = PyErr_NewException(
-        "_psutil_posix.ZombieProcessError", NULL, NULL
-    );
-    if (ZombieProcessError == NULL)
+    // Created once and cached in a process-global so every module object
+    // shares the same exception type. PyModule_AddObject() steals a reference
+    // on success only.
+    if (ZombieProcessError == NULL) {
+        ZombieProcessError = PyErr_NewException(
+            "_psutil_posix.ZombieProcessError", NULL, NULL
+        );
+        if (ZombieProcessError == NULL)
+            return -1;
+    }
+    Py_INCREF(ZombieProcessError);
+    if (PyModule_AddObject(mod, "ZombieProcessError", ZombieProcessError)) {
+        Py_DECREF(ZombieProcessError);
         return -1;
-    if (PyModule_AddObject(mod, "ZombieProcessError", ZombieProcessError))
-        return -1;
+    }
 
     return 0;
 }
