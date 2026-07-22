@@ -29,6 +29,7 @@ from unittest import mock
 import psutil
 from psutil import AIX
 from psutil import BSD
+from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
@@ -1523,12 +1524,13 @@ class TestProcess(PsutilTestCase):
         assert p.is_running()
         # Wait for process to exec or exit.
         assert sproc.stderr.read() == b""
-        if MACOS and CI_TESTING:
+        if (MACOS or FREEBSD) and CI_TESTING:
             try:
                 env = p.environ()
             except psutil.AccessDenied:
-                # XXX: fails sometimes with:
-                # PermissionError from 'sysctl(KERN_PROCARGS2) -> EIO'
+                # MACOS: sometimes 'sysctl(KERN_PROCARGS2) -> EIO'.
+                # FreeBSD 15.x: can't read another process's environ
+                # (kvm_getenvv / kern.proc.env -> ENOMEM).
                 return
         else:
             env = p.environ()

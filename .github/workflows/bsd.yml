@@ -38,6 +38,7 @@ jobs:
       - name: Run tests
         uses: vmactions/freebsd-vm@v1
         with:
+          release: "14.3"
           usesh: true
           run: |
             make ci-test
