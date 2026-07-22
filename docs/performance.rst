@@ -93,10 +93,14 @@ slow ones (see :ref:`perf-api-speed` table below):
 Methods sped up by oneshot()
 ----------------------------
 
-The table below lists methods that benefit from :meth:`Process.oneshot`,
-grouped by platform. Methods separated by an empty row share the same
-underlying system call. The *speedup* row estimates the gain when all listed
-methods are called together (best case), as measured by
+Here's a list of method groups for each platform
+which can benefit from :meth:`Process.oneshot`.
+Methods in each group (in the same comma-separated list)
+share the same underlying system call.
+
+The estimated speedup represents the gain
+when all listed methods are called together (best case),
+as measured by
 :src:`scripts/internal/bench_oneshot.py`.
 
 Linux
