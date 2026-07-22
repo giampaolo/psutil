@@ -960,25 +960,9 @@ psutil_aix_exec(PyObject *mod) {
     return 0;
 }
 
-static PyModuleDef_Slot psutil_aix_slots[] = {
-    {Py_mod_exec, psutil_aix_exec},
-#ifdef Py_mod_gil
-    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
-#endif
-    {0, NULL}
-};
-
-static struct PyModuleDef moduledef = {
-    .m_base = PyModuleDef_HEAD_INIT,
-    .m_name = "_psutil_aix",
-    .m_size = 0,
-    .m_methods = PsutilMethods,
-    .m_slots = psutil_aix_slots,
-};
-
 PyMODINIT_FUNC
 PyInit__psutil_aix(void) {
-    return PyModuleDef_Init(&moduledef);
+    return psutil_mod_init("_psutil_aix", PsutilMethods, psutil_aix_exec);
 }
 
 #ifdef __cplusplus

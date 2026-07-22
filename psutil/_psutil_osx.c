@@ -113,23 +113,7 @@ psutil_osx_exec(PyObject *mod) {
     return 0;
 }
 
-static PyModuleDef_Slot psutil_osx_slots[] = {
-    {Py_mod_exec, psutil_osx_exec},
-#ifdef Py_mod_gil
-    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
-#endif
-    {0, NULL}
-};
-
-static struct PyModuleDef moduledef = {
-    .m_base = PyModuleDef_HEAD_INIT,
-    .m_name = "_psutil_osx",
-    .m_size = 0,
-    .m_methods = mod_methods,
-    .m_slots = psutil_osx_slots,
-};
-
 PyMODINIT_FUNC
 PyInit__psutil_osx(void) {
-    return PyModuleDef_Init(&moduledef);
+    return psutil_mod_init("_psutil_osx", mod_methods, psutil_osx_exec);
 }

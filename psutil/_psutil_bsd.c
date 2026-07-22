@@ -177,23 +177,7 @@ psutil_bsd_exec(PyObject *mod) {
     return 0;
 }
 
-static PyModuleDef_Slot psutil_bsd_slots[] = {
-    {Py_mod_exec, psutil_bsd_exec},
-#ifdef Py_mod_gil
-    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
-#endif
-    {0, NULL}
-};
-
-static struct PyModuleDef moduledef = {
-    .m_base = PyModuleDef_HEAD_INIT,
-    .m_name = "_psutil_bsd",
-    .m_size = 0,
-    .m_methods = mod_methods,
-    .m_slots = psutil_bsd_slots,
-};
-
 PyMODINIT_FUNC
 PyInit__psutil_bsd(void) {
-    return PyModuleDef_Init(&moduledef);
+    return psutil_mod_init("_psutil_bsd", mod_methods, psutil_bsd_exec);
 }

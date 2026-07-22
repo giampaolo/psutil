@@ -50,3 +50,28 @@ psutil_setup(void) {
         PSUTIL_TESTING = 1;
     return 0;
 }
+
+
+// Initialize the Python C extension module.
+PyObject *
+psutil_mod_init(
+    const char *name, PyMethodDef *methods, int (*exec)(PyObject *)
+) {
+    static PyModuleDef_Slot slots[] = {
+        {Py_mod_exec, NULL},  // filled in below
+#ifdef Py_mod_gil
+        {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+        {0, NULL}
+    };
+    static struct PyModuleDef def = {
+        .m_base = PyModuleDef_HEAD_INIT,
+        .m_size = 0,
+        .m_slots = slots,
+    };
+
+    slots[0].value = (void *)exec;
+    def.m_name = name;
+    def.m_methods = methods;
+    return PyModuleDef_Init(&def);
+}
