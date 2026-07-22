@@ -250,6 +250,9 @@ addopts = [
 verbosity_subtests = "0"
 testpaths = ["tests/"]
 python_files = ["test_*.py"]
+# Dump every thread's stack if a test hangs > 2 min, so CI hangs show
+# where they're stuck. C-level watchdog: invisible to threading/psleak.
+faulthandler_timeout = "120"
 
 [tool.rstwrap]
 width = 79
