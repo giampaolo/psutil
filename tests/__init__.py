@@ -612,6 +612,9 @@ def reap_children(recursive=False):
     # recursive=True we don't want to lose the intermediate reference
     # pointing to the grandchildren.
     children = psutil.Process().children(recursive=recursive)
+    # children() lists them top-down; reverse so descendants die before
+    # their parents (avoids orphaning grandchildren).
+    children.reverse()
 
     # Terminate subprocess.Popen.
     while _subprocesses_started:
@@ -626,7 +629,12 @@ def reap_children(recursive=False):
     # Terminate children.
     if children:
         for p in children:
-            terminate(p, wait_timeout=None)
+            # Bounded wait; a child that ignores the signal (macOS + CI
+            # can hang) is left to the SIGKILL fallback below.
+            try:
+                terminate(p, wait_timeout=GLOBAL_TIMEOUT)
+            except psutil.TimeoutExpired:
+                warn(f"{p!r} didn't terminate within {GLOBAL_TIMEOUT}s")
         _, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn(f"couldn't terminate process {p!r}; attempting kill()")
