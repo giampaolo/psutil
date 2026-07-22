@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import types
 import xml.etree.ElementTree as ET
 import zlib
 from datetime import datetime
@@ -991,6 +992,8 @@ class TestComments:
                 stem = rst.relative_to(BLOG).with_suffix("").as_posix()
                 assert 'class="giscus"' in html
                 assert f'data-term="blog/{stem}"' in html
+                tag = re.search(r'<section[^>]*class="comments"[^>]*>', html)
+                assert "hidden" in tag.group(0)
                 # Hardcoded, not compared against conf.py: a typo in
                 # the config would land on both sides otherwise.
                 assert 'data-repo="giampaolo/psutil-blog-comments"' in html
@@ -1000,3 +1003,31 @@ class TestComments:
 
     def test_container_absent_on_other_pages(self):
         assert 'class="giscus"' not in read_html("api.html")
+
+
+class TestGiscusExtension:
+    @staticmethod
+    def is_blog_post(pagename, ablog_posts, meta):
+        import giscus
+
+        env = types.SimpleNamespace(ablog_posts=ablog_posts, metadata=meta)
+        config = types.SimpleNamespace(
+            **dict.fromkeys(giscus.CONFIG_VALUES, "")
+        )
+        app = types.SimpleNamespace(env=env, config=config)
+        context = {}
+        giscus.add_giscus_context(app, pagename, "page.html", context, None)
+        return context["is_blog_post"]
+
+    def test_renders_on_a_post(self):
+        got = self.is_blog_post("blog/x", {"blog/x": object()}, {"blog/x": {}})
+        assert got is True
+
+    def test_no_comments_field_opts_out(self):
+        got = self.is_blog_post(
+            "blog/x", {"blog/x": object()}, {"blog/x": {"no_comments": ""}}
+        )
+        assert got is False
+
+    def test_not_a_post(self):
+        assert self.is_blog_post("faq", {}, {}) is False
