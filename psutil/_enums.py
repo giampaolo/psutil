@@ -26,12 +26,8 @@ from ._common import LINUX
 from ._common import SUNOS
 from ._common import WINDOWS
 
-if WINDOWS:
-    from . import _psutil_windows as cext
-elif LINUX:
-    from . import _psutil_linux as cext
-elif FREEBSD:
-    from . import _psutil_bsd as cext
+if WINDOWS or LINUX or FREEBSD:
+    from . import _psutil as cext
 else:
     cext = None
 

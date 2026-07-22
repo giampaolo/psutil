@@ -268,7 +268,7 @@ if WINDOWS:
         macros.append(('Py_GIL_DISABLED', 1))
 
     ext = Extension(
-        'psutil._psutil_windows',
+        'psutil._psutil',
         sources=(
             sources
             + ["psutil/_psutil_windows.c"]
@@ -293,7 +293,7 @@ if WINDOWS:
 elif MACOS:
     macros.extend([("PSUTIL_OSX", 1), ("PSUTIL_MACOS", 1)])
     ext = Extension(
-        'psutil._psutil_osx',
+        'psutil._psutil',
         sources=(
             sources
             + ["psutil/_psutil_osx.c"]
@@ -313,7 +313,7 @@ elif FREEBSD:
     macros.append(("PSUTIL_FREEBSD", 1))
 
     ext = Extension(
-        'psutil._psutil_bsd',
+        'psutil._psutil',
         sources=(
             sources
             + ["psutil/_psutil_bsd.c"]
@@ -329,7 +329,7 @@ elif OPENBSD:
     macros.append(("PSUTIL_OPENBSD", 1))
 
     ext = Extension(
-        'psutil._psutil_bsd',
+        'psutil._psutil',
         sources=(
             sources
             + ["psutil/_psutil_bsd.c"]
@@ -345,7 +345,7 @@ elif NETBSD:
     macros.append(("PSUTIL_NETBSD", 1))
 
     ext = Extension(
-        'psutil._psutil_bsd',
+        'psutil._psutil',
         sources=(
             sources
             + ["psutil/_psutil_bsd.c"]
@@ -364,7 +364,7 @@ elif LINUX:
 
     macros.append(("PSUTIL_LINUX", 1))
     ext = Extension(
-        'psutil._psutil_linux',
+        'psutil._psutil',
         sources=(
             sources
             + ["psutil/_psutil_linux.c"]
@@ -378,7 +378,7 @@ elif SUNOS:
     macros.append(("PSUTIL_SUNOS", 1))
 
     ext = Extension(
-        'psutil._psutil_sunos',
+        'psutil._psutil',
         sources=(
             sources
             + ["psutil/_psutil_sunos.c"]
@@ -393,7 +393,7 @@ elif AIX:
     macros.append(("PSUTIL_AIX", 1))
 
     ext = Extension(
-        'psutil._psutil_aix',
+        'psutil._psutil',
         sources=(
             sources
             + ["psutil/_psutil_aix.c"]

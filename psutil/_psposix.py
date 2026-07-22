@@ -20,7 +20,7 @@ from ._common import debug
 from ._common import usage_percent
 
 if MACOS:
-    from . import _psutil_osx
+    from . import _psutil
 
 
 __all__ = ['pid_exists', 'wait_pid', 'disk_usage', 'get_terminal_map']
@@ -323,7 +323,7 @@ def disk_usage(path):
     used = total - avail_to_root
     if MACOS:
         # see: https://github.com/giampaolo/psutil/pull/2152
-        used = _psutil_osx.disk_usage_used(path, used)
+        used = _psutil.disk_usage_used(path, used)
     # Total space which is available to user (same as 'total' but
     # for the user).
     total_user = used + avail_to_user

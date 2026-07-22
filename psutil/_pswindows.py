@@ -35,7 +35,7 @@ from ._enums import ProcessPriority
 from ._enums import ProcessStatus
 
 try:
-    from . import _psutil_windows as cext
+    from . import _psutil as cext
 except ImportError as err:
     if (
         str(err).lower().startswith("dll load failed")

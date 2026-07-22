@@ -78,16 +78,13 @@ int
 psutil_add_exceptions(PyObject *mod) {
 #ifdef PSUTIL_WINDOWS
     if (_psutil_add_exception(
-            mod,
-            "TimeoutExpired",
-            "_psutil_windows.TimeoutExpired",
-            &TimeoutExpired
+            mod, "TimeoutExpired", "_psutil.TimeoutExpired", &TimeoutExpired
         ))
         return -1;
     if (_psutil_add_exception(
             mod,
             "TimeoutAbandoned",
-            "_psutil_windows.TimeoutAbandoned",
+            "_psutil.TimeoutAbandoned",
             &TimeoutAbandoned
         ))
         return -1;
@@ -95,7 +92,7 @@ psutil_add_exceptions(PyObject *mod) {
     if (_psutil_add_exception(
             mod,
             "ZombieProcessError",
-            "_psutil_posix.ZombieProcessError",
+            "_psutil.ZombieProcessError",
             &ZombieProcessError
         ))
         return -1;

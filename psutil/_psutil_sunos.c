@@ -102,7 +102,7 @@ psutil_add_constants(PyObject *mod) {
 
 
 static int
-psutil_sunos_exec(PyObject *mod) {
+psutil_exec(PyObject *mod) {
     if (psutil_setup() != 0)
         return -1;
     if (psutil_posix_add_constants(mod) != 0)
@@ -117,6 +117,6 @@ psutil_sunos_exec(PyObject *mod) {
 }
 
 PyMODINIT_FUNC
-PyInit__psutil_sunos(void) {
-    return psutil_mod_init("_psutil_sunos", mod_methods, psutil_sunos_exec);
+PyInit__psutil(void) {
+    return psutil_mod_init("_psutil", mod_methods, psutil_exec);
 }

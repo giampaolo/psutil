@@ -15,7 +15,7 @@ import sys
 
 from . import _ntuples as ntp
 from . import _psposix
-from . import _psutil_aix as cext
+from . import _psutil as cext
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess

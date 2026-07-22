@@ -936,7 +936,7 @@ psutil_add_constants(PyObject *mod) {
 
 
 static int
-psutil_aix_exec(PyObject *mod) {
+psutil_exec(PyObject *mod) {
     if (psutil_setup() != 0)
         return -1;
     if (psutil_posix_add_constants(mod) != 0)
@@ -951,8 +951,8 @@ psutil_aix_exec(PyObject *mod) {
 }
 
 PyMODINIT_FUNC
-PyInit__psutil_aix(void) {
-    return psutil_mod_init("_psutil_aix", PsutilMethods, psutil_aix_exec);
+PyInit__psutil(void) {
+    return psutil_mod_init("_psutil", PsutilMethods, psutil_exec);
 }
 
 #ifdef __cplusplus

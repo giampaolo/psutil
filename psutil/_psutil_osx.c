@@ -88,7 +88,7 @@ psutil_add_constants(PyObject *mod) {
 
 
 static int
-psutil_osx_exec(PyObject *mod) {
+psutil_exec(PyObject *mod) {
     if (psutil_setup() != 0)
         return -1;
     if (psutil_setup_osx() != 0)
@@ -105,6 +105,6 @@ psutil_osx_exec(PyObject *mod) {
 }
 
 PyMODINIT_FUNC
-PyInit__psutil_osx(void) {
-    return psutil_mod_init("_psutil_osx", mod_methods, psutil_osx_exec);
+PyInit__psutil(void) {
+    return psutil_mod_init("_psutil", mod_methods, psutil_exec);
 }

@@ -21,7 +21,7 @@ from collections import defaultdict
 
 from . import _ntuples as ntp
 from . import _psposix
-from . import _psutil_linux as cext
+from . import _psutil as cext
 from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess

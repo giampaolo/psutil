@@ -13,7 +13,7 @@ from collections import namedtuple
 
 from . import _ntuples as ntp
 from . import _psposix
-from . import _psutil_bsd as cext
+from . import _psutil as cext
 from ._common import FREEBSD
 from ._common import NETBSD
 from ._common import OPENBSD
