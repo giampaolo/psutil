@@ -219,6 +219,10 @@ Others:
 
 **Bug fixes**
 
+- :gh:`2830`, [Linux, macOS, BSD]: :meth:`Process.terminal` could return
+  ``None`` for PTYs allocated after the first call to ``get_terminal_map()``.
+  The ``lru_cache`` was never refreshed, so newly opened terminals were
+  invisible. On a cache miss the cache is now cleared and rebuilt once.
 - :gh:`1007`, [Windows]: :func:`boot_time` no longer fluctuates by ~1 second
   across calls or across processes. It is now read atomically from the kernel
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
