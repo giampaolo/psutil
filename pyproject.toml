@@ -90,7 +90,6 @@ ignore = [
     "RUF028",  # This suppression comment is invalid
     "RUF031",  # [*] Avoid parentheses for tuples in subscripts
     "RUF067",  # `__init__` module should only contain docstrings and re-exports
-    "RUF105",  # noqa comment used instead of ruff:ignore (we prefer noqa)
     "S",  # flake8-bandit
     "SIM102",  # Use a single `if` statement instead of nested `if` statements
     "SIM105",  # Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`
@@ -225,17 +224,12 @@ skip = [
 test-extras = ["test"]  # same as doing `pip install .[test]`
 test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
 
-# Run tests on Python 3.13. On all other Python versions do a lightweight
+# Run tests on Python 3.14. On all other Python versions do a lightweight
 # import test.
 [[tool.cibuildwheel.overrides]]
-select = "cp3{8,9,10,11,12,13t,14,14t}-* cp313-macosx* *-musllinux*"
+select = "cp3{8,9,10,11,12,13,13t,14t}-* *-musllinux*"
 test-extras = []
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
-
-[[tool.cibuildwheel.overrides]]
-select = "cp38-macosx*"  # In macOS use Python 3.8: higher Python version hang for some reason.
-test-extras = ["test"]
-test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
 
 [tool.pytest]
 addopts = [
