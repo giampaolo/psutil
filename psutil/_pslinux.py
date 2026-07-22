@@ -21,7 +21,7 @@ from collections import defaultdict
 
 from . import _ntuples as ntp
 from . import _psposix
-from . import _psutil as cext
+from . import _psutil
 from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess
@@ -57,18 +57,18 @@ __extra__all__ = ['PROCFS_PATH']
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_PROC_SMAPS = os.path.exists(f"/proc/{os.getpid()}/smaps")
 HAS_PROC_SMAPS_ROLLUP = os.path.exists(f"/proc/{os.getpid()}/smaps_rollup")
-HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
-HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
+HAS_PROC_IO_PRIORITY = hasattr(_psutil, "proc_ioprio_get")
+HAS_CPU_AFFINITY = hasattr(_psutil, "proc_cpu_affinity_get")
 
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
-PAGESIZE = cext.getpagesize()
+PAGESIZE = _psutil.getpagesize()
 LITTLE_ENDIAN = sys.byteorder == 'little'
 UNSET = object()
 
 # Python 3.15 changed resource.prlimit() to return RLIM_INFINITY as the
 # unsigned 2**64-1 instead of -1; used to map it back to -1.
-RLIM_INFINITY_UNSIGNED = cext.RLIM_INFINITY & 0xFFFFFFFFFFFFFFFF
+RLIM_INFINITY_UNSIGNED = _psutil.RLIM_INFINITY & 0xFFFFFFFFFFFFFFFF
 
 # "man iostat" states that sectors are equivalent with blocks and have
 # a size of 512 bytes. Despite this value can be queried at runtime
@@ -392,7 +392,7 @@ def swap_memory():
         total = mems[b'SwapTotal:']
         free = mems[b'SwapFree:']
     except KeyError:
-        _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
+        _, _, _, _, total, free, unit_multiplier = _psutil.linux_sysinfo()
         total *= unit_multiplier
         free *= unit_multiplier
 
@@ -433,9 +433,9 @@ def swap_memory():
 
 
 # malloc / heap functions; require glibc
-if hasattr(cext, "heap_info"):
-    heap_info = cext.heap_info
-    heap_trim = cext.heap_trim
+if hasattr(_psutil, "heap_info"):
+    heap_info = _psutil.heap_info
+    heap_trim = _psutil.heap_trim
 
 
 # =====================================================================
@@ -654,7 +654,7 @@ else:
 # =====================================================================
 
 
-net_if_addrs = cext.net_if_addrs
+net_if_addrs = _psutil.net_if_addrs
 
 
 class _Ipv6UnsupportedError(Exception):
@@ -955,17 +955,17 @@ def net_io_counters():
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
     duplex_map = {
-        cext.DUPLEX_FULL: NicDuplex.NIC_DUPLEX_FULL,
-        cext.DUPLEX_HALF: NicDuplex.NIC_DUPLEX_HALF,
-        cext.DUPLEX_UNKNOWN: NicDuplex.NIC_DUPLEX_UNKNOWN,
+        _psutil.DUPLEX_FULL: NicDuplex.NIC_DUPLEX_FULL,
+        _psutil.DUPLEX_HALF: NicDuplex.NIC_DUPLEX_HALF,
+        _psutil.DUPLEX_UNKNOWN: NicDuplex.NIC_DUPLEX_UNKNOWN,
     }
     names = net_io_counters().keys()
     ret = {}
     for name in names:
         try:
-            mtu = cext.net_if_mtu(name)
-            flags = cext.net_if_flags(name)
-            duplex, speed = cext.net_if_duplex_speed(name)
+            mtu = _psutil.net_if_mtu(name)
+            flags = _psutil.net_if_flags(name)
+            duplex, speed = _psutil.net_if_duplex_speed(name)
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1279
             if err.errno != errno.ENODEV:
@@ -1191,7 +1191,7 @@ def disk_partitions(all=False):
         mounts_path = os.path.realpath(f"{procfs_path}/self/mounts")
 
     retlist = []
-    partitions = cext.disk_partitions(mounts_path)
+    partitions = _psutil.disk_partitions(mounts_path)
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
@@ -1456,7 +1456,7 @@ def sensors_battery():
 def users():
     """Return currently connected users as a list of named tuples."""
     retlist = []
-    rawlist = cext.users()
+    rawlist = _psutil.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         nt = ntp.suser(user, tty or None, hostname, tstamp, pid)
@@ -2082,18 +2082,18 @@ class Process:
         #   return int(data.split()[18])
 
         # Use C implementation
-        return cext.proc_priority_get(self.pid)
+        return _psutil.proc_priority_get(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
-        return cext.proc_priority_set(self.pid, value)
+        return _psutil.proc_priority_set(self.pid, value)
 
     # starting from CentOS 6.
     if HAS_CPU_AFFINITY:
 
         @wrap_exceptions
         def cpu_affinity_get(self):
-            return cext.proc_cpu_affinity_get(self.pid)
+            return _psutil.proc_cpu_affinity_get(self.pid)
 
         def _get_eligible_cpus(
             self, _re=re.compile(br"Cpus_allowed_list:\t(\d+)-(\d+)")
@@ -2108,7 +2108,7 @@ class Process:
         @wrap_exceptions
         def cpu_affinity_set(self, cpus):
             try:
-                cext.proc_cpu_affinity_set(self.pid, cpus)
+                _psutil.proc_cpu_affinity_set(self.pid, cpus)
             except (OSError, ValueError) as err:
                 if isinstance(err, ValueError) or err.errno == errno.EINVAL:
                     eligible_cpus = self._get_eligible_cpus()
@@ -2133,7 +2133,7 @@ class Process:
 
         @wrap_exceptions
         def ionice_get(self):
-            ioclass, value = cext.proc_ioprio_get(self.pid)
+            ioclass, value = _psutil.proc_ioprio_get(self.pid)
             ioclass = ProcessIOPriority(ioclass)
             return ntp.pionice(ioclass, value)
 
@@ -2150,7 +2150,7 @@ class Process:
             if value < 0 or value > 7:
                 msg = "value not in 0-7 range"
                 raise ValueError(msg)
-            return cext.proc_ioprio_set(self.pid, ioclass, value)
+            return _psutil.proc_ioprio_set(self.pid, ioclass, value)
 
     if hasattr(resource, "prlimit"):
 
@@ -2169,9 +2169,9 @@ class Process:
                     # Python 3.15 returns RLIM_INFINITY as the unsigned
                     # 2**64-1 instead of -1; map it back for consistency.
                     if soft == RLIM_INFINITY_UNSIGNED:
-                        soft = cext.RLIM_INFINITY
+                        soft = _psutil.RLIM_INFINITY
                     if hard == RLIM_INFINITY_UNSIGNED:
-                        hard = cext.RLIM_INFINITY
+                        hard = _psutil.RLIM_INFINITY
                     return soft, hard
                 else:
                     # set

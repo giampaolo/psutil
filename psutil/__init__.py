@@ -225,6 +225,7 @@ else:  # pragma: no cover
     msg = f"platform {sys.platform} is not supported"
     raise NotImplementedError(msg)
 
+from . import _psutil
 
 # fmt: off
 __all__ = [
@@ -300,18 +301,16 @@ _SENTINEL = object()
 # was compiled for a different version of psutil.
 # We want to prevent that by failing sooner rather than later.
 # See: https://github.com/giampaolo/psutil/issues/564
-if int(__version__.replace('.', '')) != getattr(
-    _psplatform.cext, 'version', None
-):
-    msg = f"version conflict: {_psplatform.cext.__file__!r} C extension "
+if int(__version__.replace('.', '')) != getattr(_psutil, 'version', None):
+    msg = f"version conflict: {_psutil.__file__!r} C extension "
     msg += "module was built for another version of psutil"
-    if hasattr(_psplatform.cext, 'version'):
-        v = ".".join(list(str(_psplatform.cext.version)))
+    if hasattr(_psutil, 'version'):
+        v = ".".join(list(str(_psutil.version)))
         msg += f" ({v} instead of {__version__})"
     else:
         msg += f" (different than {__version__})"
     what = getattr(
-        _psplatform.cext,
+        _psutil,
         "__file__",
         "the existing psutil install directory",
     )
@@ -416,7 +415,7 @@ class Process:
                 msg = f"pid must be a positive integer (got {pid})"
                 raise ValueError(msg)
             try:
-                _psplatform.cext.check_pid_range(pid)
+                _psutil.check_pid_range(pid)
             except OverflowError as err:
                 msg = "process PID out of range"
                 raise NoSuchProcess(pid, msg=msg) from err
@@ -2767,7 +2766,7 @@ def _set_debug(value):
     import psutil._common
 
     psutil._common.PSUTIL_DEBUG = bool(value)
-    _psplatform.cext.set_debug(bool(value))
+    _psutil.set_debug(bool(value))
 
 
 del memoize_when_activated
