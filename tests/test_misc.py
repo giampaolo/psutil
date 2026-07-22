@@ -371,13 +371,12 @@ class TestMisc(PsutilTestCase):
 # ===================================================================
 
 
-class TestCExternsion(PsutilTestCase):
+class TestCExtension(PsutilTestCase):
 
     def test_exceptions_survive_reimport(self):
         # PEP 489 multi-phase init re-runs the C exec slot on
-        # re-import. The custom C exceptions are cached in
-        # process-global vars so their identity should be the same.
-        # https://github.com/giampaolo/psutil/pull/2855
+        # re-import. The C exceptions are cached in process-global vars
+        # so their identity should remain the same.
         cext = psutil._psplatform.cext
         name = cext.__name__
         if WINDOWS:
