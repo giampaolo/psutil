@@ -48,6 +48,17 @@ static PyMethodDef mod_methods[] = {
 
 
 static int
+psutil_add_constants(PyObject *mod) {
+    PSUTIL_ADD_INT(mod, "version", PSUTIL_VERSION);
+    PSUTIL_ADD_INT(mod, "DUPLEX_HALF", DUPLEX_HALF);
+    PSUTIL_ADD_INT(mod, "DUPLEX_FULL", DUPLEX_FULL);
+    PSUTIL_ADD_INT(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN);
+
+    return 0;
+}
+
+
+static int
 psutil_linux_exec(PyObject *mod) {
     if (psutil_setup() != 0)
         return -1;
@@ -57,16 +68,8 @@ psutil_linux_exec(PyObject *mod) {
         return -1;
     if (psutil_add_exceptions(mod) != 0)
         return -1;
-
-    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
+    if (psutil_add_constants(mod) != 0)
         return -1;
-    if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN))
-        return -1;
-
     return 0;
 }
 

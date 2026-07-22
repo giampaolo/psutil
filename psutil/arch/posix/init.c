@@ -8,6 +8,7 @@
 #include <sys/resource.h>
 #include <sys/socket.h>
 
+#include "../all/init.h"
 #include "init.h"
 
 PyObject *ZombieProcessError = NULL;
@@ -90,110 +91,74 @@ psutil_posix_add_constants(PyObject *mod) {
 
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX) || defined(PSUTIL_SUNOS) \
     || defined(PSUTIL_AIX)
-    if (PyModule_AddIntConstant(mod, "AF_LINK", AF_LINK))
-        return -1;
+    PSUTIL_ADD_INT(mod, "AF_LINK", AF_LINK);
 #endif
 
 #if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
     PyObject *v;
 
 #ifdef RLIMIT_AS
-    if (PyModule_AddIntConstant(mod, "RLIMIT_AS", RLIMIT_AS))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_AS", RLIMIT_AS);
 #endif
-
 #ifdef RLIMIT_CORE
-    if (PyModule_AddIntConstant(mod, "RLIMIT_CORE", RLIMIT_CORE))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_CORE", RLIMIT_CORE);
 #endif
-
 #ifdef RLIMIT_CPU
-    if (PyModule_AddIntConstant(mod, "RLIMIT_CPU", RLIMIT_CPU))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_CPU", RLIMIT_CPU);
 #endif
-
 #ifdef RLIMIT_DATA
-    if (PyModule_AddIntConstant(mod, "RLIMIT_DATA", RLIMIT_DATA))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_DATA", RLIMIT_DATA);
 #endif
-
 #ifdef RLIMIT_FSIZE
-    if (PyModule_AddIntConstant(mod, "RLIMIT_FSIZE", RLIMIT_FSIZE))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_FSIZE", RLIMIT_FSIZE);
 #endif
-
 #ifdef RLIMIT_MEMLOCK
-    if (PyModule_AddIntConstant(mod, "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK);
 #endif
-
 #ifdef RLIMIT_NOFILE
-    if (PyModule_AddIntConstant(mod, "RLIMIT_NOFILE", RLIMIT_NOFILE))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_NOFILE", RLIMIT_NOFILE);
 #endif
-
 #ifdef RLIMIT_NPROC
-    if (PyModule_AddIntConstant(mod, "RLIMIT_NPROC", RLIMIT_NPROC))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_NPROC", RLIMIT_NPROC);
 #endif
-
 #ifdef RLIMIT_RSS
-    if (PyModule_AddIntConstant(mod, "RLIMIT_RSS", RLIMIT_RSS))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_RSS", RLIMIT_RSS);
 #endif
-
 #ifdef RLIMIT_STACK
-    if (PyModule_AddIntConstant(mod, "RLIMIT_STACK", RLIMIT_STACK))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_STACK", RLIMIT_STACK);
 #endif
 
-        // Linux specific
+    // Linux specific
 
 #ifdef RLIMIT_LOCKS
-    if (PyModule_AddIntConstant(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS);
 #endif
-
 #ifdef RLIMIT_MSGQUEUE
-    if (PyModule_AddIntConstant(mod, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE);
 #endif
-
 #ifdef RLIMIT_NICE
-    if (PyModule_AddIntConstant(mod, "RLIMIT_NICE", RLIMIT_NICE))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_NICE", RLIMIT_NICE);
 #endif
-
 #ifdef RLIMIT_RTPRIO
-    if (PyModule_AddIntConstant(mod, "RLIMIT_RTPRIO", RLIMIT_RTPRIO))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_RTPRIO", RLIMIT_RTPRIO);
 #endif
-
 #ifdef RLIMIT_RTTIME
-    if (PyModule_AddIntConstant(mod, "RLIMIT_RTTIME", RLIMIT_RTTIME))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_RTTIME", RLIMIT_RTTIME);
 #endif
-
 #ifdef RLIMIT_SIGPENDING
-    if (PyModule_AddIntConstant(mod, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING);
 #endif
 
-        // Free specific
+    // Free specific
 
 #ifdef RLIMIT_SWAP
-    if (PyModule_AddIntConstant(mod, "RLIMIT_SWAP", RLIMIT_SWAP))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_SWAP", RLIMIT_SWAP);
 #endif
-
 #ifdef RLIMIT_SBSIZE
-    if (PyModule_AddIntConstant(mod, "RLIMIT_SBSIZE", RLIMIT_SBSIZE))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_SBSIZE", RLIMIT_SBSIZE);
 #endif
-
 #ifdef RLIMIT_NPTS
-    if (PyModule_AddIntConstant(mod, "RLIMIT_NPTS", RLIMIT_NPTS))
-        return -1;
+    PSUTIL_ADD_INT(mod, "RLIMIT_NPTS", RLIMIT_NPTS);
 #endif
 
 #if defined(HAVE_LONG_LONG)

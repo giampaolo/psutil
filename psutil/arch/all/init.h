@@ -51,6 +51,13 @@ extern int PSUTIL_TESTING;
 #endif
 // clang-format on
 
+// Add an int constant to the module; return -1 on failure.
+#define PSUTIL_ADD_INT(mod, name, value)                     \
+    do {                                                     \
+        if (PyModule_AddIntConstant((mod), (name), (value))) \
+            return -1;                                       \
+    } while (0)
+
 
 // ====================================================================
 // --- Backward compatibility with missing Python.h APIs
