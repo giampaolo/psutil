@@ -21,6 +21,7 @@ from psutil import BSD
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import OPENBSD
+from psutil import _psutil
 
 from . import HAS_BATTERY
 from . import TOLERANCE_SYS_MEM
@@ -31,7 +32,7 @@ from . import sh
 from . import spawn_subproc
 from . import terminate
 
-PAGESIZE = psutil._psplatform.cext.getpagesize() if BSD else None
+PAGESIZE = _psutil.getpagesize() if BSD else None
 
 
 def sysctl(cmdline):
@@ -395,8 +396,8 @@ class FreeBSDSystemTestCase(PsutilTestCase):
     def test_cpu_freq_no_levels(self):
         # No freq_levels means we can't tell min / max. It used to
         # raise NameError, or reuse the previous CPU's values.
-        with mock.patch(
-            "psutil._psbsd.cext.cpu_freq", return_value=(100, "")
+        with mock.patch.object(
+            _psutil, "cpu_freq", return_value=(100, "")
         ) as m:
             ret = psutil._psbsd.cpu_freq()
             assert m.called

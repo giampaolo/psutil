@@ -8,17 +8,19 @@
 
 import collections
 import contextlib
-import importlib
 import io
 import json
 import os
 import pickle
 import socket
+import subprocess
 import sys
+import textwrap
 from unittest import mock
 
 import psutil
 from psutil import WINDOWS
+from psutil import _psutil
 from psutil._common import bcat
 from psutil._common import cat
 from psutil._common import debug
@@ -43,7 +45,7 @@ from . import system_namespace
 class TestSpecialMethods(PsutilTestCase):
     def test_check_pid_range(self):
         with pytest.raises(OverflowError):
-            psutil._psplatform.cext.check_pid_range(2**128)
+            _psutil.check_pid_range(2**128)
         with pytest.raises(psutil.NoSuchProcess):
             psutil.Process(2**128)
 
@@ -351,9 +353,7 @@ class TestMisc(PsutilTestCase):
 
     def test_sanity_version_check(self):
         # see: https://github.com/giampaolo/psutil/issues/564
-        with mock.patch(
-            "psutil._psplatform.cext.version", return_value="0.0.0"
-        ):
+        with mock.patch.object(_psutil, "version", return_value="0.0.0"):
             with pytest.raises(ImportError) as cm:
                 reload_module(psutil)
             assert "version conflict" in str(cm.value).lower()
@@ -374,23 +374,32 @@ class TestMisc(PsutilTestCase):
 class TestCExtension(PsutilTestCase):
 
     def test_exceptions_survive_reimport(self):
-        # PEP 489 multi-phase init re-runs the C exec slot on
-        # re-import. The C exceptions are cached in process-global vars
-        # so their identity should remain the same.
-        cext = psutil._psplatform.cext
-        name = cext.__name__
-        if WINDOWS:
-            attrs = ["TimeoutExpired", "TimeoutAbandoned"]
-        else:
-            attrs = ["ZombieProcessError"]
-        before = {a: getattr(cext, a) for a in attrs}
-        del sys.modules[name]
-        try:
-            newcext = importlib.import_module(name)
-            for attr in attrs:
-                assert getattr(newcext, attr) is before[attr]
-        finally:
-            sys.modules[name] = cext
+        # PEP 489 multi-phase init re-runs the C exec slot on re-import;
+        # the C exceptions are cached in process-global vars so their
+        # identity survives. Run in a subprocess: re-importing the
+        # module (del from sys.modules + import) mutates global state and
+        # would leak into other tests.
+        attrs = (
+            ["TimeoutExpired", "TimeoutAbandoned"]
+            if WINDOWS
+            else ["ZombieProcessError"]
+        )
+        code = textwrap.dedent(f"""
+            import importlib
+            import sys
+
+            from psutil import _psutil
+
+            attrs = {attrs!r}
+            before = {{a: getattr(_psutil, a) for a in attrs}}
+            del sys.modules[_psutil.__name__]
+            new = importlib.import_module(_psutil.__name__)
+            for a in attrs:
+                assert getattr(new, a) is before[a], a
+        """)
+        subprocess.check_output(
+            [sys.executable, "-c", code], stderr=subprocess.STDOUT
+        )
 
 
 # ===================================================================

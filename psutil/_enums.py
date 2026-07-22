@@ -26,14 +26,10 @@ from ._common import LINUX
 from ._common import SUNOS
 from ._common import WINDOWS
 
-if WINDOWS:
-    from . import _psutil_windows as cext
-elif LINUX:
-    from . import _psutil_linux as cext
-elif FREEBSD:
-    from . import _psutil_bsd as cext
+if WINDOWS or LINUX or FREEBSD:
+    from . import _psutil
 else:
-    cext = None
+    _psutil = None
 
 if hasattr(enum, "StrEnum"):  # Python >= 3.11
     StrEnum = enum.StrEnum
@@ -128,12 +124,12 @@ if WINDOWS:
 
     # psutil.Process.nice()
     class ProcessPriority(enum.IntEnum):
-        ABOVE_NORMAL_PRIORITY_CLASS = cext.ABOVE_NORMAL_PRIORITY_CLASS
-        BELOW_NORMAL_PRIORITY_CLASS = cext.BELOW_NORMAL_PRIORITY_CLASS
-        HIGH_PRIORITY_CLASS = cext.HIGH_PRIORITY_CLASS
-        IDLE_PRIORITY_CLASS = cext.IDLE_PRIORITY_CLASS
-        NORMAL_PRIORITY_CLASS = cext.NORMAL_PRIORITY_CLASS
-        REALTIME_PRIORITY_CLASS = cext.REALTIME_PRIORITY_CLASS
+        ABOVE_NORMAL_PRIORITY_CLASS = _psutil.ABOVE_NORMAL_PRIORITY_CLASS
+        BELOW_NORMAL_PRIORITY_CLASS = _psutil.BELOW_NORMAL_PRIORITY_CLASS
+        HIGH_PRIORITY_CLASS = _psutil.HIGH_PRIORITY_CLASS
+        IDLE_PRIORITY_CLASS = _psutil.IDLE_PRIORITY_CLASS
+        NORMAL_PRIORITY_CLASS = _psutil.NORMAL_PRIORITY_CLASS
+        REALTIME_PRIORITY_CLASS = _psutil.REALTIME_PRIORITY_CLASS
 
 
 if LINUX or FREEBSD:
@@ -142,8 +138,8 @@ if LINUX or FREEBSD:
     ProcessRlimit = enum.IntEnum(
         "ProcessRlimit",
         (
-            (name, getattr(cext, name))
-            for name in dir(cext)
+            (name, getattr(_psutil, name))
+            for name in dir(_psutil)
             if name.startswith("RLIM") and name.isupper()
         ),
     )

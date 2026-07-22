@@ -35,7 +35,7 @@ from ._enums import ProcessPriority
 from ._enums import ProcessStatus
 
 try:
-    from . import _psutil_windows as cext
+    from . import _psutil
 except ImportError as err:
     if (
         str(err).lower().startswith("dll load failed")
@@ -69,19 +69,19 @@ AddressFamily = enum.IntEnum('AddressFamily', {'AF_LINK': -1})
 AF_LINK = AddressFamily.AF_LINK
 
 TCP_STATUSES = {
-    cext.MIB_TCP_STATE_ESTAB: ConnectionStatus.CONN_ESTABLISHED,
-    cext.MIB_TCP_STATE_SYN_SENT: ConnectionStatus.CONN_SYN_SENT,
-    cext.MIB_TCP_STATE_SYN_RCVD: ConnectionStatus.CONN_SYN_RECV,
-    cext.MIB_TCP_STATE_FIN_WAIT1: ConnectionStatus.CONN_FIN_WAIT1,
-    cext.MIB_TCP_STATE_FIN_WAIT2: ConnectionStatus.CONN_FIN_WAIT2,
-    cext.MIB_TCP_STATE_TIME_WAIT: ConnectionStatus.CONN_TIME_WAIT,
-    cext.MIB_TCP_STATE_CLOSED: ConnectionStatus.CONN_CLOSE,
-    cext.MIB_TCP_STATE_CLOSE_WAIT: ConnectionStatus.CONN_CLOSE_WAIT,
-    cext.MIB_TCP_STATE_LAST_ACK: ConnectionStatus.CONN_LAST_ACK,
-    cext.MIB_TCP_STATE_LISTEN: ConnectionStatus.CONN_LISTEN,
-    cext.MIB_TCP_STATE_CLOSING: ConnectionStatus.CONN_CLOSING,
-    cext.MIB_TCP_STATE_DELETE_TCB: ConnectionStatus.CONN_DELETE_TCB,
-    cext.PSUTIL_CONN_NONE: ConnectionStatus.CONN_NONE,
+    _psutil.MIB_TCP_STATE_ESTAB: ConnectionStatus.CONN_ESTABLISHED,
+    _psutil.MIB_TCP_STATE_SYN_SENT: ConnectionStatus.CONN_SYN_SENT,
+    _psutil.MIB_TCP_STATE_SYN_RCVD: ConnectionStatus.CONN_SYN_RECV,
+    _psutil.MIB_TCP_STATE_FIN_WAIT1: ConnectionStatus.CONN_FIN_WAIT1,
+    _psutil.MIB_TCP_STATE_FIN_WAIT2: ConnectionStatus.CONN_FIN_WAIT2,
+    _psutil.MIB_TCP_STATE_TIME_WAIT: ConnectionStatus.CONN_TIME_WAIT,
+    _psutil.MIB_TCP_STATE_CLOSED: ConnectionStatus.CONN_CLOSE,
+    _psutil.MIB_TCP_STATE_CLOSE_WAIT: ConnectionStatus.CONN_CLOSE_WAIT,
+    _psutil.MIB_TCP_STATE_LAST_ACK: ConnectionStatus.CONN_LAST_ACK,
+    _psutil.MIB_TCP_STATE_LISTEN: ConnectionStatus.CONN_LISTEN,
+    _psutil.MIB_TCP_STATE_CLOSING: ConnectionStatus.CONN_CLOSING,
+    _psutil.MIB_TCP_STATE_DELETE_TCB: ConnectionStatus.CONN_DELETE_TCB,
+    _psutil.PSUTIL_CONN_NONE: ConnectionStatus.CONN_NONE,
 }
 
 
@@ -107,14 +107,14 @@ def convert_dos_path(s):
     elif rawdrive.startswith('\\??\\'):
         driveletter = s.split('\\')[2]
     else:
-        driveletter = cext.QueryDosDevice(rawdrive)
+        driveletter = _psutil.QueryDosDevice(rawdrive)
     remainder = s[len(rawdrive) :]
     return os.path.join(driveletter, remainder)
 
 
 @functools.lru_cache
 def getpagesize():
-    return cext.getpagesize()
+    return _psutil.getpagesize()
 
 
 # =====================================================================
@@ -124,7 +124,7 @@ def getpagesize():
 
 def virtual_memory():
     """System virtual memory as a named tuple."""
-    info = cext.GetPerformanceInfo()
+    info = _psutil.GetPerformanceInfo()
     pagesize = info["PageSize"]
     total = info["PhysicalTotal"] * pagesize
     avail = info["PhysicalAvailable"] * pagesize
@@ -138,7 +138,7 @@ def virtual_memory():
 
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
-    info = cext.GetPerformanceInfo()
+    info = _psutil.GetPerformanceInfo()
     pagesize = info["PageSize"]
     total_phys = info["PhysicalTotal"] * pagesize
     # CommitLimit == Maximum pages that can be committed into RAM +
@@ -153,7 +153,7 @@ def swap_memory():
     # pages are accessed, so we can't use free system memory for swap.
     # instead, we calculate page file usage based on performance counter
     if total > 0:
-        percentswap = cext.swap_percent()
+        percentswap = _psutil.swap_percent()
         used = int(0.01 * percentswap * total)
     else:
         percentswap = 0.0
@@ -165,8 +165,8 @@ def swap_memory():
 
 
 # malloc / heap functions
-heap_info = cext.heap_info
-heap_trim = cext.heap_trim
+heap_info = _psutil.heap_info
+heap_trim = _psutil.heap_trim
 
 
 # =====================================================================
@@ -174,7 +174,7 @@ heap_trim = cext.heap_trim
 # =====================================================================
 
 
-disk_io_counters = cext.disk_io_counters
+disk_io_counters = _psutil.disk_io_counters
 
 
 def disk_usage(path):
@@ -184,18 +184,18 @@ def disk_usage(path):
         # to fail immediately. After all we are accepting input here...
         path = path.decode(ENCODING, errors="strict")
     try:
-        total, used, free = cext.disk_usage(path)
+        total, used, free = _psutil.disk_usage(path)
     except NotADirectoryError:
         if not os.path.isabs(path):
             path = os.path.join(os.getcwd(), path)
-        total, used, free = cext.disk_usage(os.path.dirname(path))
+        total, used, free = _psutil.disk_usage(os.path.dirname(path))
     percent = usage_percent(used, total, round_=1)
     return ntp.sdiskusage(total, used, free, percent)
 
 
 def disk_partitions(all):
     """Return disk partitions."""
-    rawlist = cext.disk_partitions(all)
+    rawlist = _psutil.disk_partitions(all)
     return [ntp.sdiskpart(*x) for x in rawlist]
 
 
@@ -206,12 +206,12 @@ def disk_partitions(all):
 
 def cpu_times():
     """Return system CPU times as a named tuple."""
-    user, system, idle = cext.cpu_times()
+    user, system, idle = _psutil.cpu_times()
     # Internally, GetSystemTimes() is used, and it doesn't return
-    # interrupt and dpc times. cext.per_cpu_times() does, so we
+    # interrupt and dpc times. _psutil.per_cpu_times() does, so we
     # rely on it to get those only.
     percpu_summed = ntp.scputimes(
-        *[sum(n) for n in zip(*cext.per_cpu_times())]
+        *[sum(n) for n in zip(*_psutil.per_cpu_times())]
     )
     return ntp.scputimes(
         user, system, idle, percpu_summed.irq, percpu_summed.dpc
@@ -221,7 +221,7 @@ def cpu_times():
 def per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = []
-    for user, system, idle, irq, dpc in cext.per_cpu_times():
+    for user, system, idle, irq, dpc in _psutil.per_cpu_times():
         item = ntp.scputimes(user, system, idle, irq, dpc)
         ret.append(item)
     return ret
@@ -229,17 +229,17 @@ def per_cpu_times():
 
 def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
-    return cext.cpu_count_logical()
+    return _psutil.cpu_count_logical()
 
 
 def cpu_count_cores():
     """Return the number of CPU cores in the system."""
-    return cext.cpu_count_cores()
+    return _psutil.cpu_count_cores()
 
 
 def cpu_stats():
     """Return CPU statistics."""
-    ctx_switches, interrupts, _dpcs, syscalls = cext.cpu_stats()
+    ctx_switches, interrupts, _dpcs, syscalls = _psutil.cpu_stats()
     soft_interrupts = 0
     return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
 
@@ -248,7 +248,7 @@ def cpu_freq():
     """Return CPU frequency.
     On Windows per-cpu frequency is not supported.
     """
-    curr, max_ = cext.cpu_freq()
+    curr, max_ = _psutil.cpu_freq()
     min_ = 0.0
     return [ntp.scpufreq(float(curr), min_, float(max_))]
 
@@ -259,7 +259,7 @@ _lock = threading.Lock()
 
 def _getloadavg_impl():
     # Drop to 2 decimal points which is what Linux does
-    raw_loads = cext.getloadavg()
+    raw_loads = _psutil.getloadavg()
     return tuple(round(load, 2) for load in raw_loads)
 
 
@@ -274,7 +274,7 @@ def getloadavg():
 
     with _lock:
         if not _loadavg_initialized:
-            cext.init_loadavg_counter()
+            _psutil.init_loadavg_counter()
             _loadavg_initialized = True
 
     return _getloadavg_impl()
@@ -290,7 +290,7 @@ def net_connections(kind, _pid=-1):
     connections (as opposed to connections opened by one process only).
     """
     families, types = conn_tmap[kind]
-    rawlist = cext.net_connections(_pid, families, types)
+    rawlist = _psutil.net_connections(_pid, families, types)
     ret = set()
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
@@ -311,7 +311,7 @@ def net_connections(kind, _pid=-1):
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
     ret = {}
-    rawdict = cext.net_if_stats()
+    rawdict = _psutil.net_if_stats()
     for name, items in rawdict.items():
         isup, duplex, speed, mtu = items
         duplex = NicDuplex(duplex)
@@ -323,12 +323,12 @@ def net_io_counters():
     """Return network I/O statistics for every network interface
     installed on the system as a dict of raw tuples.
     """
-    return cext.net_io_counters()
+    return _psutil.net_io_counters()
 
 
 def net_if_addrs():
     """Return the addresses associated to each NIC."""
-    return cext.net_if_addrs()
+    return _psutil.net_if_addrs()
 
 
 # =====================================================================
@@ -340,7 +340,7 @@ def sensors_battery():
     """Return battery information."""
     # For constants meaning see:
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa373232(v=vs.85).aspx
-    acline_status, flags, percent, secsleft = cext.sensors_battery()
+    acline_status, flags, percent, secsleft = _psutil.sensors_battery()
     power_plugged = acline_status == 1
     no_battery = bool(flags & 128)
     charging = bool(flags & 8)
@@ -364,13 +364,13 @@ def boot_time():
     """The system boot time expressed in seconds since the epoch. This
     also includes the time spent during hibernate / suspend.
     """
-    return cext.boot_time()
+    return _psutil.boot_time()
 
 
 def users():
     """Return currently connected users as a list of named tuples."""
     retlist = []
-    rawlist = cext.users()
+    rawlist = _psutil.users()
     for item in rawlist:
         user, hostname, tstamp = item
         nt = ntp.suser(user, None, hostname, tstamp, None)
@@ -385,7 +385,7 @@ def users():
 
 def win_service_iter():
     """Yields a list of WindowsService instances."""
-    for name, display_name in cext.winservice_enumerate():
+    for name, display_name in _psutil.winservice_enumerate():
         yield WindowsService(name, display_name)
 
 
@@ -423,7 +423,7 @@ class WindowsService:  # noqa: PLW1641
     def _query_config(self):
         with self._wrap_exceptions():
             display_name, binpath, username, start_type = (
-                cext.winservice_query_config(self._name)
+                _psutil.winservice_query_config(self._name)
             )
         # XXX - update _self.display_name?
         return dict(
@@ -435,7 +435,7 @@ class WindowsService:  # noqa: PLW1641
 
     def _query_status(self):
         with self._wrap_exceptions():
-            status, pid = cext.winservice_query_status(self._name)
+            status, pid = _psutil.winservice_query_status(self._name)
         if pid == 0:
             pid = None
         return dict(status=status, pid=pid)
@@ -455,8 +455,8 @@ class WindowsService:  # noqa: PLW1641
                 )
                 raise AccessDenied(pid=None, name=name, msg=msg) from err
             elif err.winerror in {
-                cext.ERROR_INVALID_NAME,
-                cext.ERROR_SERVICE_DOES_NOT_EXIST,
+                _psutil.ERROR_INVALID_NAME,
+                _psutil.ERROR_SERVICE_DOES_NOT_EXIST,
             }:
                 msg = f"service {name!r} does not exist"
                 raise NoSuchProcess(pid=None, name=name, msg=msg) from err
@@ -508,7 +508,7 @@ class WindowsService:  # noqa: PLW1641
 
     def description(self) -> str:
         """Service long description."""
-        return cext.winservice_query_descr(self.name())
+        return _psutil.winservice_query_descr(self.name())
 
     # utils
 
@@ -543,7 +543,7 @@ class WindowsService:  # noqa: PLW1641
 
     # def start(self, timeout=None):
     #     with self._wrap_exceptions():
-    #         cext.winservice_start(self.name())
+    #         _psutil.winservice_start(self.name())
     #         if timeout:
     #             giveup_at = time.time() + timeout
     #             while True:
@@ -560,7 +560,7 @@ class WindowsService:  # noqa: PLW1641
     #     # possible, see:
     #     # http://stackoverflow.com/questions/11973228/
     #     with self._wrap_exceptions():
-    #         return cext.winservice_stop(self.name())
+    #         return _psutil.winservice_stop(self.name())
 
 
 # =====================================================================
@@ -568,17 +568,17 @@ class WindowsService:  # noqa: PLW1641
 # =====================================================================
 
 
-pids = cext.pids
-pid_exists = cext.pid_exists
-ppid_map = cext.ppid_map  # used internally by Process.children()
+pids = _psutil.pids
+pid_exists = _psutil.pid_exists
+ppid_map = _psutil.ppid_map  # used internally by Process.children()
 
 
 def is_permission_err(exc):
     """Return True if this is a permission error."""
     assert isinstance(exc, OSError), exc
     return isinstance(exc, PermissionError) or exc.winerror in {
-        cext.ERROR_ACCESS_DENIED,
-        cext.ERROR_PRIVILEGE_NOT_HELD,
+        _psutil.ERROR_ACCESS_DENIED,
+        _psutil.ERROR_PRIVILEGE_NOT_HELD,
     }
 
 
@@ -658,7 +658,7 @@ class Process:
         """Return multiple information about this process as a
         raw dict.
         """
-        return cext.proc_oneshot(self.pid)
+        return _psutil.proc_oneshot(self.pid)
 
     def name(self):
         """Return process name, which on Windows is always the final
@@ -677,7 +677,7 @@ class Process:
     def exe(self):
         if PYPY:
             try:
-                exe = cext.proc_exe(self.pid)
+                exe = _psutil.proc_exe(self.pid)
             except OSError as err:
                 # 24 = ERROR_TOO_MANY_OPEN_FILES. Not sure why this happens
                 # (perhaps PyPy's JIT delaying garbage collection of files?).
@@ -686,7 +686,7 @@ class Process:
                     raise AccessDenied(self.pid, self._name) from err
                 raise
         else:
-            exe = cext.proc_exe(self.pid)
+            exe = _psutil.proc_exe(self.pid)
         if exe.startswith('\\'):
             return convert_dos_path(exe)
         return exe  # May be "Registry", "MemCompression", ...
@@ -694,23 +694,23 @@ class Process:
     @wrap_exceptions
     @retry_error_partial_copy
     def cmdline(self):
-        if cext.WINVER >= cext.WINDOWS_8_1:
+        if _psutil.WINVER >= _psutil.WINDOWS_8_1:
             # PEB method detects cmdline changes but requires more
             # privileges: https://github.com/giampaolo/psutil/pull/1398
             try:
-                return cext.proc_cmdline(self.pid, use_peb=True)
+                return _psutil.proc_cmdline(self.pid, use_peb=True)
             except OSError as err:
                 if is_permission_err(err):
-                    return cext.proc_cmdline(self.pid, use_peb=False)
+                    return _psutil.proc_cmdline(self.pid, use_peb=False)
                 else:
                     raise
         else:
-            return cext.proc_cmdline(self.pid, use_peb=True)
+            return _psutil.proc_cmdline(self.pid, use_peb=True)
 
     @wrap_exceptions
     @retry_error_partial_copy
     def environ(self):
-        s = cext.proc_environ(self.pid)
+        s = _psutil.proc_environ(self.pid)
         return parse_environ_block(s)
 
     def ppid(self):
@@ -721,11 +721,11 @@ class Process:
 
     def _get_raw_meminfo(self):
         try:
-            return cext.proc_memory_info(self.pid)
+            return _psutil.proc_memory_info(self.pid)
         except OSError as err:
             if is_permission_err(err):
                 # TODO: the C ext can probably be refactored in order
-                # to get this from cext.proc_oneshot()
+                # to get this from _psutil.proc_oneshot()
                 debug("attempting memory_info() fallback (slower)")
                 info = self._oneshot()
                 return {
@@ -786,18 +786,18 @@ class Process:
 
     @wrap_exceptions
     def memory_footprint(self):
-        uss = cext.proc_memory_uss(self.pid)
+        uss = _psutil.proc_memory_uss(self.pid)
         uss *= getpagesize()
         return ntp.pfootprint(uss)
 
     @wrap_exceptions
     def page_faults(self):
-        t = cext.proc_page_faults(self.pid)
+        t = _psutil.proc_page_faults(self.pid)
         return ntp.ppagefaults(*t)
 
     def memory_maps(self):
         try:
-            raw = cext.proc_memory_maps(self.pid)
+            raw = _psutil.proc_memory_maps(self.pid)
         except OSError as err:
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
@@ -810,12 +810,12 @@ class Process:
 
     @wrap_exceptions
     def kill(self):
-        return cext.proc_kill(self.pid)
+        return _psutil.proc_kill(self.pid)
 
     @wrap_exceptions
     def send_signal(self, sig):
         if sig == signal.SIGTERM:
-            cext.proc_kill(self.pid)
+            _psutil.proc_kill(self.pid)
         elif sig in {signal.CTRL_C_EVENT, signal.CTRL_BREAK_EVENT}:
             os.kill(self.pid, sig)
         else:
@@ -828,7 +828,7 @@ class Process:
     @wrap_exceptions
     def wait(self, timeout=None):
         if timeout is None:
-            cext_timeout = cext.INFINITE
+            cext_timeout = _psutil.INFINITE
         else:
             # WaitForSingleObject() expects time in milliseconds.
             cext_timeout = int(timeout * 1000)
@@ -840,11 +840,11 @@ class Process:
             # Exit code is supposed to come from GetExitCodeProcess().
             # May also be None if OpenProcess() failed with
             # ERROR_INVALID_PARAMETER, meaning PID is already gone.
-            exit_code = cext.proc_wait(self.pid, cext_timeout)
-        except cext.TimeoutExpired as err:
+            exit_code = _psutil.proc_wait(self.pid, cext_timeout)
+        except _psutil.TimeoutExpired as err:
             # WaitForSingleObject() returned WAIT_TIMEOUT. Just raise.
             raise TimeoutExpired(timeout, self.pid, self._name) from err
-        except cext.TimeoutAbandoned:
+        except _psutil.TimeoutAbandoned:
             # WaitForSingleObject() returned WAIT_ABANDONED, see:
             # https://github.com/giampaolo/psutil/issues/1224
             # We'll just rely on the internal polling and return None
@@ -870,7 +870,7 @@ class Process:
     def username(self):
         if self.pid in {0, 4}:
             return 'NT AUTHORITY\\SYSTEM'
-        domain, user = cext.proc_username(self.pid)
+        domain, user = _psutil.proc_username(self.pid)
         return f"{domain}\\{user}"
 
     @wrap_exceptions
@@ -878,7 +878,7 @@ class Process:
         # Note: proc_times() not put under oneshot() 'cause create_time()
         # is already cached by the main Process class.
         try:
-            _user, _system, created = cext.proc_times(self.pid)
+            _user, _system, created = _psutil.proc_times(self.pid)
             return created
         except OSError as err:
             if is_permission_err(err):
@@ -894,7 +894,7 @@ class Process:
 
     @wrap_exceptions
     def threads(self):
-        rawlist = cext.proc_threads(self.pid)
+        rawlist = _psutil.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
             ntuple = ntp.pthread(thread_id, utime, stime)
@@ -904,7 +904,7 @@ class Process:
     @wrap_exceptions
     def cpu_times(self):
         try:
-            user, system, _created = cext.proc_times(self.pid)
+            user, system, _created = _psutil.proc_times(self.pid)
         except OSError as err:
             if not is_permission_err(err):
                 raise
@@ -917,11 +917,11 @@ class Process:
 
     @wrap_exceptions
     def suspend(self):
-        cext.proc_suspend_or_resume(self.pid, True)
+        _psutil.proc_suspend_or_resume(self.pid, True)
 
     @wrap_exceptions
     def resume(self):
-        cext.proc_suspend_or_resume(self.pid, False)
+        _psutil.proc_suspend_or_resume(self.pid, False)
 
     @wrap_exceptions
     @retry_error_partial_copy
@@ -930,7 +930,7 @@ class Process:
             raise AccessDenied(self.pid, self._name)
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
-        path = cext.proc_cwd(self.pid)
+        path = _psutil.proc_cwd(self.pid)
         return os.path.normpath(path)
 
     @wrap_exceptions
@@ -942,7 +942,7 @@ class Process:
         # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
         # Convert the first part in the corresponding drive letter
         # (e.g. "C:\") by using Windows's QueryDosDevice()
-        raw_file_names = cext.proc_open_files(self.pid)
+        raw_file_names = _psutil.proc_open_files(self.pid)
         for file in raw_file_names:
             file = convert_dos_path(file)
             if isfile_strict(file):
@@ -956,17 +956,17 @@ class Process:
 
     @wrap_exceptions
     def nice_get(self):
-        value = cext.proc_priority_get(self.pid)
+        value = _psutil.proc_priority_get(self.pid)
         value = ProcessPriority(value)
         return value
 
     @wrap_exceptions
     def nice_set(self, value):
-        return cext.proc_priority_set(self.pid, value)
+        return _psutil.proc_priority_set(self.pid, value)
 
     @wrap_exceptions
     def ionice_get(self):
-        ret = cext.proc_io_priority_get(self.pid)
+        ret = _psutil.proc_io_priority_get(self.pid)
         ret = ProcessIOPriority(ret)
         return ret
 
@@ -978,12 +978,12 @@ class Process:
         if ioclass not in ProcessIOPriority:
             msg = f"{ioclass} is not a valid priority"
             raise ValueError(msg)
-        cext.proc_io_priority_set(self.pid, ioclass)
+        _psutil.proc_io_priority_set(self.pid, ioclass)
 
     @wrap_exceptions
     def io_counters(self):
         try:
-            ret = cext.proc_io_counters(self.pid)
+            ret = _psutil.proc_io_counters(self.pid)
         except OSError as err:
             if not is_permission_err(err):
                 raise
@@ -1001,7 +1001,7 @@ class Process:
 
     @wrap_exceptions
     def status(self):
-        suspended = cext.proc_is_suspended(self.pid)
+        suspended = _psutil.proc_is_suspended(self.pid)
         if suspended:
             return ProcessStatus.STATUS_STOPPED
         else:
@@ -1012,7 +1012,7 @@ class Process:
         def from_bitmask(x):
             return [i for i in range(64) if (1 << i) & x]
 
-        bitmask = cext.proc_cpu_affinity_get(self.pid)
+        bitmask = _psutil.proc_cpu_affinity_get(self.pid)
         return from_bitmask(bitmask)
 
     @wrap_exceptions
@@ -1039,12 +1039,12 @@ class Process:
                 raise ValueError(msg)
 
         bitmask = to_bitmask(value)
-        cext.proc_cpu_affinity_set(self.pid, bitmask)
+        _psutil.proc_cpu_affinity_set(self.pid, bitmask)
 
     @wrap_exceptions
     def num_handles(self):
         try:
-            return cext.proc_num_handles(self.pid)
+            return _psutil.proc_num_handles(self.pid)
         except OSError as err:
             if is_permission_err(err):
                 debug("attempting num_handles() fallback (slower)")

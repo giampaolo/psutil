@@ -15,7 +15,7 @@ from socket import AF_INET
 
 from . import _ntuples as ntp
 from . import _psposix
-from . import _psutil_sunos as cext
+from . import _psutil
 from ._common import AF_INET6
 from ._common import ENCODING
 from ._common import AccessDenied
@@ -41,36 +41,36 @@ __extra__all__ = ["PROCFS_PATH"]
 # =====================================================================
 
 
-PAGE_SIZE = cext.getpagesize()
-AF_LINK = cext.AF_LINK
+PAGE_SIZE = _psutil.getpagesize()
+AF_LINK = _psutil.AF_LINK
 IS_64_BIT = sys.maxsize > 2**32
 
 
 PROC_STATUSES = {
-    cext.SSLEEP: ProcessStatus.STATUS_SLEEPING,
-    cext.SRUN: ProcessStatus.STATUS_RUNNING,
-    cext.SZOMB: ProcessStatus.STATUS_ZOMBIE,
-    cext.SSTOP: ProcessStatus.STATUS_STOPPED,
-    cext.SIDL: ProcessStatus.STATUS_IDLE,
-    cext.SONPROC: ProcessStatus.STATUS_RUNNING,  # same as run
-    cext.SWAIT: ProcessStatus.STATUS_WAITING,
+    _psutil.SSLEEP: ProcessStatus.STATUS_SLEEPING,
+    _psutil.SRUN: ProcessStatus.STATUS_RUNNING,
+    _psutil.SZOMB: ProcessStatus.STATUS_ZOMBIE,
+    _psutil.SSTOP: ProcessStatus.STATUS_STOPPED,
+    _psutil.SIDL: ProcessStatus.STATUS_IDLE,
+    _psutil.SONPROC: ProcessStatus.STATUS_RUNNING,  # same as run
+    _psutil.SWAIT: ProcessStatus.STATUS_WAITING,
 }
 
 TCP_STATUSES = {
-    cext.TCPS_ESTABLISHED: ConnectionStatus.CONN_ESTABLISHED,
-    cext.TCPS_SYN_SENT: ConnectionStatus.CONN_SYN_SENT,
-    cext.TCPS_SYN_RCVD: ConnectionStatus.CONN_SYN_RECV,
-    cext.TCPS_FIN_WAIT_1: ConnectionStatus.CONN_FIN_WAIT1,
-    cext.TCPS_FIN_WAIT_2: ConnectionStatus.CONN_FIN_WAIT2,
-    cext.TCPS_TIME_WAIT: ConnectionStatus.CONN_TIME_WAIT,
-    cext.TCPS_CLOSED: ConnectionStatus.CONN_CLOSE,
-    cext.TCPS_CLOSE_WAIT: ConnectionStatus.CONN_CLOSE_WAIT,
-    cext.TCPS_LAST_ACK: ConnectionStatus.CONN_LAST_ACK,
-    cext.TCPS_LISTEN: ConnectionStatus.CONN_LISTEN,
-    cext.TCPS_CLOSING: ConnectionStatus.CONN_CLOSING,
-    cext.PSUTIL_CONN_NONE: ConnectionStatus.CONN_NONE,
-    cext.TCPS_IDLE: ConnectionStatus.CONN_IDLE,  # sunos specific
-    cext.TCPS_BOUND: ConnectionStatus.CONN_BOUND,  # sunos specific
+    _psutil.TCPS_ESTABLISHED: ConnectionStatus.CONN_ESTABLISHED,
+    _psutil.TCPS_SYN_SENT: ConnectionStatus.CONN_SYN_SENT,
+    _psutil.TCPS_SYN_RCVD: ConnectionStatus.CONN_SYN_RECV,
+    _psutil.TCPS_FIN_WAIT_1: ConnectionStatus.CONN_FIN_WAIT1,
+    _psutil.TCPS_FIN_WAIT_2: ConnectionStatus.CONN_FIN_WAIT2,
+    _psutil.TCPS_TIME_WAIT: ConnectionStatus.CONN_TIME_WAIT,
+    _psutil.TCPS_CLOSED: ConnectionStatus.CONN_CLOSE,
+    _psutil.TCPS_CLOSE_WAIT: ConnectionStatus.CONN_CLOSE_WAIT,
+    _psutil.TCPS_LAST_ACK: ConnectionStatus.CONN_LAST_ACK,
+    _psutil.TCPS_LISTEN: ConnectionStatus.CONN_LISTEN,
+    _psutil.TCPS_CLOSING: ConnectionStatus.CONN_CLOSING,
+    _psutil.PSUTIL_CONN_NONE: ConnectionStatus.CONN_NONE,
+    _psutil.TCPS_IDLE: ConnectionStatus.CONN_IDLE,  # sunos specific
+    _psutil.TCPS_BOUND: ConnectionStatus.CONN_BOUND,  # sunos specific
 }
 
 proc_info_map = dict(
@@ -107,7 +107,7 @@ def virtual_memory():
 
 def swap_memory():
     """Report swap memory metrics."""
-    sin, sout = cext.swap_mem()
+    sin, sout = _psutil.swap_mem()
     # XXX
     # we are supposed to get total/free by doing so:
     # http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/cmd/swap/swap.c
@@ -152,13 +152,13 @@ def swap_memory():
 
 def cpu_times():
     """Return system-wide CPU times as a named tuple."""
-    ret = cext.per_cpu_times()
+    ret = _psutil.per_cpu_times()
     return ntp.scputimes(*[sum(x) for x in zip(*ret)])
 
 
 def per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
-    ret = cext.per_cpu_times()
+    ret = _psutil.per_cpu_times()
     return [ntp.scputimes(*x) for x in ret]
 
 
@@ -173,12 +173,12 @@ def cpu_count_logical():
 
 def cpu_count_cores():
     """Return the number of CPU cores in the system."""
-    return cext.cpu_count_cores()
+    return _psutil.cpu_count_cores()
 
 
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
-    ctx_switches, interrupts, syscalls, _traps = cext.cpu_stats()
+    ctx_switches, interrupts, syscalls, _traps = _psutil.cpu_stats()
     soft_interrupts = 0
     return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
 
@@ -188,7 +188,7 @@ def cpu_stats():
 # =====================================================================
 
 
-disk_io_counters = cext.disk_io_counters
+disk_io_counters = _psutil.disk_io_counters
 disk_usage = _psposix.disk_usage
 
 
@@ -197,7 +197,7 @@ def disk_partitions(all=False):
     # TODO - the filtering logic should be better checked so that
     # it tries to reflect 'df' as much as possible
     retlist = []
-    partitions = cext.disk_partitions()
+    partitions = _psutil.disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
@@ -223,8 +223,8 @@ def disk_partitions(all=False):
 # =====================================================================
 
 
-net_io_counters = cext.net_io_counters
-net_if_addrs = cext.net_if_addrs
+net_io_counters = _psutil.net_io_counters
+net_if_addrs = _psutil.net_if_addrs
 
 
 def net_connections(kind, _pid=-1):
@@ -233,7 +233,7 @@ def net_connections(kind, _pid=-1):
     Only INET sockets are returned (UNIX are not).
     """
     families, types = conn_tmap[kind]
-    rawlist = cext.net_connections(_pid)
+    rawlist = _psutil.net_connections(_pid)
     ret = set()
     for item in rawlist:
         fd, fam, type_, laddr, raddr, status, pid = item
@@ -260,7 +260,7 @@ def net_connections(kind, _pid=-1):
 
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
-    ret = cext.net_if_stats()
+    ret = _psutil.net_if_stats()
     for name, items in ret.items():
         isup, duplex, speed, mtu = items
         duplex = NicDuplex(duplex)
@@ -275,13 +275,13 @@ def net_if_stats():
 
 def boot_time():
     """The system boot time expressed in seconds since the epoch."""
-    return cext.boot_time()
+    return _psutil.boot_time()
 
 
 def users():
     """Return currently connected users as a list of named tuples."""
     retlist = []
-    rawlist = cext.users()
+    rawlist = _psutil.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         nt = ntp.suser(user, tty, hostname, tstamp, pid)
@@ -364,7 +364,7 @@ class Process:
     @wrap_exceptions
     @memoize_when_activated
     def _proc_name_and_args(self):
-        return cext.proc_name_and_args(self.pid, self._procfs_path)
+        return _psutil.proc_name_and_args(self.pid, self._procfs_path)
 
     @wrap_exceptions
     @memoize_when_activated
@@ -373,14 +373,14 @@ class Process:
             f"{self._procfs_path}/{self.pid}/psinfo"
         ):
             raise AccessDenied(self.pid)
-        ret = cext.proc_oneshot(self.pid, self._procfs_path)
+        ret = _psutil.proc_oneshot(self.pid, self._procfs_path)
         assert len(ret) == len(proc_info_map)
         return ret
 
     @wrap_exceptions
     @memoize_when_activated
     def _proc_cred(self):
-        return cext.proc_cred(self.pid, self._procfs_path)
+        return _psutil.proc_cred(self.pid, self._procfs_path)
 
     @wrap_exceptions
     def name(self):
@@ -405,7 +405,7 @@ class Process:
 
     @wrap_exceptions
     def environ(self):
-        return cext.proc_environ(self.pid, self._procfs_path)
+        return _psutil.proc_environ(self.pid, self._procfs_path)
 
     @wrap_exceptions
     def create_time(self):
@@ -430,7 +430,7 @@ class Process:
             # The process actually exists though, as it has a name,
             # creation time, etc.
             raise AccessDenied(self.pid, self._name)
-        return cext.proc_priority_set(self.pid, value)
+        return _psutil.proc_priority_set(self.pid, value)
 
     @wrap_exceptions
     def ppid(self):
@@ -460,7 +460,7 @@ class Process:
     @wrap_exceptions
     def cpu_times(self):
         try:
-            times = cext.proc_cpu_times(self.pid, self._procfs_path)
+            times = _psutil.proc_cpu_times(self.pid, self._procfs_path)
         except OSError as err:
             if err.errno == errno.EOVERFLOW and not IS_64_BIT:
                 # We may get here if we attempt to query a 64bit process
@@ -477,14 +477,14 @@ class Process:
 
     @wrap_exceptions
     def cpu_num(self):
-        return cext.proc_cpu_num(self.pid, self._procfs_path)
+        return _psutil.proc_cpu_num(self.pid, self._procfs_path)
 
     @wrap_exceptions
     def terminal(self):
         procfs_path = self._procfs_path
         hit_enoent = False
         tty = wrap_exceptions(self._oneshot()[proc_info_map['ttynr']])
-        if tty != cext.PRNODEV:
+        if tty != _psutil.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
                     return os.readlink(f"{procfs_path}/{self.pid}/path/{x}")
@@ -529,7 +529,7 @@ class Process:
         for tid in tids:
             tid = int(tid)
             try:
-                utime, stime = cext.query_process_thread(
+                utime, stime = _psutil.query_process_thread(
                     self.pid, tid, procfs_path
                 )
             except OSError as err:
@@ -646,7 +646,7 @@ class Process:
         procfs_path = self._procfs_path
         retlist = []
         try:
-            rawlist = cext.proc_memory_maps(self.pid, procfs_path)
+            rawlist = _psutil.proc_memory_maps(self.pid, procfs_path)
         except OSError as err:
             if err.errno == errno.EOVERFLOW and not IS_64_BIT:
                 # We may get here if we attempt to query a 64bit process
@@ -690,12 +690,12 @@ class Process:
     @wrap_exceptions
     def num_ctx_switches(self):
         return ntp.pctxsw(
-            *cext.proc_num_ctx_switches(self.pid, self._procfs_path)
+            *_psutil.proc_num_ctx_switches(self.pid, self._procfs_path)
         )
 
     @wrap_exceptions
     def page_faults(self):
-        ret = cext.proc_page_faults(self.pid, self._procfs_path)
+        ret = _psutil.proc_page_faults(self.pid, self._procfs_path)
         return ntp.ppagefaults(*ret)
 
     @wrap_exceptions

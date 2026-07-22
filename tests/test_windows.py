@@ -22,6 +22,7 @@ from unittest import mock
 
 import psutil
 from psutil import WINDOWS
+from psutil import _psutil
 
 from . import GITHUB_ACTIONS
 from . import HAS_BATTERY
@@ -49,9 +50,6 @@ if WINDOWS and not PYPY:
 
 if WINDOWS:
     from psutil._pswindows import convert_oserror
-
-
-cext = psutil._psplatform.cext
 
 
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
@@ -304,7 +302,7 @@ class TestNetAPIs(WindowsTestCase):
         assert ps_ports == win_ports
 
     def test_net_if_stats(self):
-        ps_names = set(cext.net_if_stats())
+        ps_names = set(_psutil.net_if_stats())
         wmi_adapters = wmi.WMI().Win32_NetworkAdapter()
         wmi_names = set()
         for wmi_adapter in wmi_adapters:
@@ -419,8 +417,8 @@ class TestOtherSystemAPIs(WindowsTestCase):
 
         devices = {devicepath: driveletter}
 
-        with mock.patch(
-            'psutil._pswindows.cext.QueryDosDevice', side_effect=devices.get
+        with mock.patch.object(
+            _psutil, 'QueryDosDevice', side_effect=devices.get
         ) as m:
             assert psutil._pswindows.convert_dos_path(ntpath1) == winpath
             assert psutil._pswindows.convert_dos_path(ntpath2) == winpath
@@ -508,8 +506,9 @@ class TestSensorsBattery(WindowsTestCase):
             assert bat.secsleft == status.BatteryLifeTime
 
     def test_emulate_secsleft_unknown(self):
-        with mock.patch(
-            "psutil._pswindows.cext.sensors_battery",
+        with mock.patch.object(
+            _psutil,
+            "sensors_battery",
             return_value=(0, 0, 50, -1),
         ) as m:
             bat = psutil.sensors_battery()
@@ -517,16 +516,17 @@ class TestSensorsBattery(WindowsTestCase):
         assert bat.secsleft == psutil.POWER_TIME_UNKNOWN
 
     def test_emulate_no_battery(self):
-        with mock.patch(
-            "psutil._pswindows.cext.sensors_battery",
+        with mock.patch.object(
+            _psutil,
+            "sensors_battery",
             return_value=(0, 128, 0, 0),
         ) as m:
             assert psutil.sensors_battery() is None
             assert m.called
 
     def test_emulate_power_connected(self):
-        with mock.patch(
-            "psutil._pswindows.cext.sensors_battery", return_value=(1, 0, 0, 0)
+        with mock.patch.object(
+            _psutil, "sensors_battery", return_value=(1, 0, 0, 0)
         ) as m:
             assert (
                 psutil.sensors_battery().secsleft
@@ -535,8 +535,8 @@ class TestSensorsBattery(WindowsTestCase):
             assert m.called
 
     def test_emulate_power_charging(self):
-        with mock.patch(
-            "psutil._pswindows.cext.sensors_battery", return_value=(0, 8, 0, 0)
+        with mock.patch.object(
+            _psutil, "sensors_battery", return_value=(0, 8, 0, 0)
         ) as m:
             assert (
                 psutil.sensors_battery().secsleft
@@ -545,8 +545,9 @@ class TestSensorsBattery(WindowsTestCase):
             assert m.called
 
     def test_emulate_secs_left_unknown(self):
-        with mock.patch(
-            "psutil._pswindows.cext.sensors_battery",
+        with mock.patch.object(
+            _psutil,
+            "sensors_battery",
             return_value=(0, 0, 0, -1),
         ) as m:
             assert (
@@ -771,7 +772,7 @@ class TestProcess(WindowsTestCase):
         # https://github.com/giampaolo/psutil/issues/875
         exc = OSError()
         exc.winerror = 299
-        with mock.patch("psutil._psplatform.cext.proc_cwd", side_effect=exc):
+        with mock.patch.object(_psutil, "proc_cwd", side_effect=exc):
             with mock.patch("time.sleep") as m:
                 p = psutil.Process()
                 with pytest.raises(psutil.AccessDenied):
@@ -903,8 +904,9 @@ class TestDualProcessImplementation(PsutilTestCase):
 
     def test_memory_info(self):
         mem_1 = psutil.Process(self.pid).memory_info()
-        with mock.patch(
-            "psutil._psplatform.cext.proc_memory_info",
+        with mock.patch.object(
+            _psutil,
+            "proc_memory_info",
             side_effect=PermissionError,
         ) as fun:
             mem_2 = psutil.Process(self.pid).memory_info()
@@ -917,8 +919,9 @@ class TestDualProcessImplementation(PsutilTestCase):
 
     def test_create_time(self):
         ctime = psutil.Process(self.pid).create_time()
-        with mock.patch(
-            "psutil._psplatform.cext.proc_times",
+        with mock.patch.object(
+            _psutil,
+            "proc_times",
             side_effect=PermissionError,
         ) as fun:
             assert psutil.Process(self.pid).create_time() == ctime
@@ -926,8 +929,9 @@ class TestDualProcessImplementation(PsutilTestCase):
 
     def test_cpu_times(self):
         cpu_times_1 = psutil.Process(self.pid).cpu_times()
-        with mock.patch(
-            "psutil._psplatform.cext.proc_times",
+        with mock.patch.object(
+            _psutil,
+            "proc_times",
             side_effect=PermissionError,
         ) as fun:
             cpu_times_2 = psutil.Process(self.pid).cpu_times()
@@ -937,8 +941,9 @@ class TestDualProcessImplementation(PsutilTestCase):
 
     def test_io_counters(self):
         io_counters_1 = psutil.Process(self.pid).io_counters()
-        with mock.patch(
-            "psutil._psplatform.cext.proc_io_counters",
+        with mock.patch.object(
+            _psutil,
+            "proc_io_counters",
             side_effect=PermissionError,
         ) as fun:
             io_counters_2 = psutil.Process(self.pid).io_counters()
@@ -948,8 +953,9 @@ class TestDualProcessImplementation(PsutilTestCase):
 
     def test_num_handles(self):
         num_handles = psutil.Process(self.pid).num_handles()
-        with mock.patch(
-            "psutil._psplatform.cext.proc_num_handles",
+        with mock.patch.object(
+            _psutil,
+            "proc_num_handles",
             side_effect=PermissionError,
         ) as fun:
             assert psutil.Process(self.pid).num_handles() == num_handles
@@ -958,8 +964,8 @@ class TestDualProcessImplementation(PsutilTestCase):
     def test_cmdline(self):
         for pid in psutil.pids():
             try:
-                a = cext.proc_cmdline(pid, use_peb=True)
-                b = cext.proc_cmdline(pid, use_peb=False)
+                a = _psutil.proc_cmdline(pid, use_peb=True)
+                b = _psutil.proc_cmdline(pid, use_peb=False)
             except OSError as err:
                 err = convert_oserror(err)
                 if not isinstance(
@@ -1116,10 +1122,8 @@ class TestServices(PsutilTestCase):
             assert serv == s
 
     def test_win_service_get(self):
-        ERROR_SERVICE_DOES_NOT_EXIST = (
-            psutil._psplatform.cext.ERROR_SERVICE_DOES_NOT_EXIST
-        )
-        ERROR_ACCESS_DENIED = psutil._psplatform.cext.ERROR_ACCESS_DENIED
+        ERROR_SERVICE_DOES_NOT_EXIST = _psutil.ERROR_SERVICE_DOES_NOT_EXIST
+        ERROR_ACCESS_DENIED = _psutil.ERROR_ACCESS_DENIED
 
         name = next(psutil.win_service_iter()).name()
         with pytest.raises(psutil.NoSuchProcess) as cm:
@@ -1130,13 +1134,13 @@ class TestServices(PsutilTestCase):
         service = psutil.win_service_get(name)
         exc = OSError(0, "msg", 0)
         exc.winerror = ERROR_SERVICE_DOES_NOT_EXIST
-        with mock.patch(
-            "psutil._psplatform.cext.winservice_query_status", side_effect=exc
+        with mock.patch.object(
+            _psutil, "winservice_query_status", side_effect=exc
         ):
             with pytest.raises(psutil.NoSuchProcess):
                 service.status()
-        with mock.patch(
-            "psutil._psplatform.cext.winservice_query_config", side_effect=exc
+        with mock.patch.object(
+            _psutil, "winservice_query_config", side_effect=exc
         ):
             with pytest.raises(psutil.NoSuchProcess):
                 service.username()
@@ -1144,13 +1148,13 @@ class TestServices(PsutilTestCase):
         # test AccessDenied
         exc = OSError(0, "msg", 0)
         exc.winerror = ERROR_ACCESS_DENIED
-        with mock.patch(
-            "psutil._psplatform.cext.winservice_query_status", side_effect=exc
+        with mock.patch.object(
+            _psutil, "winservice_query_status", side_effect=exc
         ):
             with pytest.raises(psutil.AccessDenied):
                 service.status()
-        with mock.patch(
-            "psutil._psplatform.cext.winservice_query_config", side_effect=exc
+        with mock.patch.object(
+            _psutil, "winservice_query_config", side_effect=exc
         ):
             with pytest.raises(psutil.AccessDenied):
                 service.username()

@@ -11,6 +11,7 @@ import time
 
 import psutil
 from psutil import MACOS
+from psutil import _psutil
 
 from . import AARCH64
 from . import CI_TESTING
@@ -46,10 +47,7 @@ def vm_stat(field):
             break
     else:
         raise ValueError("line not found")
-    return (
-        int(re.search(r'\d+', line).group(0))
-        * psutil._psplatform.cext.getpagesize()
-    )
+    return int(re.search(r'\d+', line).group(0)) * _psutil.getpagesize()
 
 
 @pytest.mark.skipif(not MACOS, reason="MACOS only")

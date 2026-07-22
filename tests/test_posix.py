@@ -23,6 +23,7 @@ from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
+from psutil import _psutil
 
 from . import AARCH64
 from . import HAS_NET_IO_COUNTERS
@@ -522,7 +523,7 @@ class TestSystemAPIs(PosixTestCase):
 
 class TestMisc(PosixTestCase):
     def test_getpagesize(self):
-        pagesize = psutil._psplatform.cext.getpagesize()
+        pagesize = _psutil.getpagesize()
         assert pagesize > 0
         assert pagesize == resource.getpagesize()
         assert pagesize == mmap.PAGESIZE
