@@ -47,45 +47,44 @@ static PyMethodDef mod_methods[] = {
 };
 
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_psutil_linux",
-    NULL,
-    -1,
-    mod_methods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
-
-
-PyObject *
-PyInit__psutil_linux(void) {
-    PyObject *mod = PyModule_Create(&moduledef);
-    if (mod == NULL)
-        return NULL;
-
-#ifdef Py_GIL_DISABLED
-    if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
-        return NULL;
-#endif
-
+static int
+psutil_linux_exec(PyObject *mod) {
     if (psutil_setup() != 0)
-        return NULL;
+        return -1;
     if (psutil_posix_add_constants(mod) != 0)
-        return NULL;
+        return -1;
     if (psutil_posix_add_methods(mod) != 0)
-        return NULL;
+        return -1;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN))
-        return NULL;
+        return -1;
 
-    return mod;
+    return 0;
+}
+
+static PyModuleDef_Slot psutil_linux_slots[] = {
+    {Py_mod_exec, psutil_linux_exec},
+#ifdef Py_mod_gil
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL}
+};
+
+static struct PyModuleDef moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_psutil_linux",
+    .m_size = 0,
+    .m_methods = mod_methods,
+    .m_slots = psutil_linux_slots,
+};
+
+PyMODINIT_FUNC
+PyInit__psutil_linux(void) {
+    return PyModuleDef_Init(&moduledef);
 }
