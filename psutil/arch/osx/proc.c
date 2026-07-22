@@ -281,9 +281,7 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
 
     // Fetch multiple metrics. Fails with access denied for any PID not
     // owned by us.
-    Py_BEGIN_ALLOW_THREADS
     kr = task_info(task, TASK_VM_INFO, (task_info_t)&info, &info_count);
-    Py_END_ALLOW_THREADS
     mach_port_deallocate(mach_task_self(), task);
     task = MACH_PORT_NULL;
     if (kr != KERN_SUCCESS) {
@@ -295,9 +293,7 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
     uint64_t wired_size = 0;
     struct rusage_info_v0 ri;
     int rusage_ret;
-    Py_BEGIN_ALLOW_THREADS
     rusage_ret = proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri);
-    Py_END_ALLOW_THREADS
     if (rusage_ret == 0)
         wired_size = ri.ri_wired_size;
     else
@@ -351,9 +347,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
     while (1) {
         errno = 0;
-        Py_BEGIN_ALLOW_THREADS
         ret = proc_pidinfo(pid, PROC_PIDREGIONINFO, addr, &ri, sizeof(ri));
-        Py_END_ALLOW_THREADS
 
         if (ret <= 0) {
             // A failure on the first region means the process is gone or
