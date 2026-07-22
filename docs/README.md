@@ -16,7 +16,8 @@ so this file is the map.
 
 - `*.rst`: the doc sources. `api.rst` is the hand-written API reference;
   `index.rst` is the home page.
-- `blog/`: blog posts, managed by the ablog extension.
+- `blog/`: blog posts, managed by the ablog extension + comments provided via
+  giscus.
 - `conf.py`: Sphinx config: extensions, the theme, `html_baseurl`, OpenGraph /
   sitemap / feed settings.
 - `_templates/`: the custom theme, built on Sphinx's `basic` theme (topbar,
