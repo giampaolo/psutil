@@ -63,6 +63,45 @@ static PyMethodDef mod_methods[] = {
 
 
 static int
+psutil_add_constants(PyObject *mod) {
+    PSUTIL_ADD_INT(mod, "version", PSUTIL_VERSION);
+    PSUTIL_ADD_INT(mod, "SSLEEP", SSLEEP);
+    PSUTIL_ADD_INT(mod, "SRUN", SRUN);
+    PSUTIL_ADD_INT(mod, "SZOMB", SZOMB);
+    PSUTIL_ADD_INT(mod, "SSTOP", SSTOP);
+    PSUTIL_ADD_INT(mod, "SIDL", SIDL);
+    PSUTIL_ADD_INT(mod, "SONPROC", SONPROC);
+#ifdef SWAIT
+    PSUTIL_ADD_INT(mod, "SWAIT", SWAIT);
+#else
+    // sys/proc.h started defining SWAIT somewhere
+    // after Update 3 and prior to Update 5 included.
+    PSUTIL_ADD_INT(mod, "SWAIT", 0);
+#endif
+    // for process tty
+    PSUTIL_ADD_INT(mod, "PRNODEV", PRNODEV);
+    PSUTIL_ADD_INT(mod, "TCPS_CLOSED", TCPS_CLOSED);
+    PSUTIL_ADD_INT(mod, "TCPS_CLOSING", TCPS_CLOSING);
+    PSUTIL_ADD_INT(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT);
+    PSUTIL_ADD_INT(mod, "TCPS_LISTEN", TCPS_LISTEN);
+    PSUTIL_ADD_INT(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED);
+    PSUTIL_ADD_INT(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT);
+    PSUTIL_ADD_INT(mod, "TCPS_SYN_RCVD", TCPS_SYN_RCVD);
+    PSUTIL_ADD_INT(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1);
+    PSUTIL_ADD_INT(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
+    PSUTIL_ADD_INT(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK);
+    PSUTIL_ADD_INT(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
+    // sunos specific
+    PSUTIL_ADD_INT(mod, "TCPS_IDLE", TCPS_IDLE);
+    // sunos specific
+    PSUTIL_ADD_INT(mod, "TCPS_BOUND", TCPS_BOUND);
+    PSUTIL_ADD_INT(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+
+    return 0;
+}
+
+
+static int
 psutil_sunos_exec(PyObject *mod) {
     if (psutil_setup() != 0)
         return -1;
@@ -72,64 +111,8 @@ psutil_sunos_exec(PyObject *mod) {
         return -1;
     if (psutil_add_exceptions(mod) != 0)
         return -1;
-
-    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
+    if (psutil_add_constants(mod) != 0)
         return -1;
-    if (PyModule_AddIntConstant(mod, "SSLEEP", SSLEEP))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "SRUN", SRUN))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "SZOMB", SZOMB))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "SSTOP", SSTOP))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "SIDL", SIDL))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "SONPROC", SONPROC))
-        return -1;
-#ifdef SWAIT
-    if (PyModule_AddIntConstant(mod, "SWAIT", SWAIT))
-        return -1;
-#else
-    // sys/proc.h started defining SWAIT somewhere
-    // after Update 3 and prior to Update 5 included.
-    if (PyModule_AddIntConstant(mod, "SWAIT", 0))
-        return -1;
-#endif
-    // for process tty
-    if (PyModule_AddIntConstant(mod, "PRNODEV", PRNODEV))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "TCPS_SYN_RCVD", TCPS_SYN_RCVD))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT))
-        return -1;
-    // sunos specific
-    if (PyModule_AddIntConstant(mod, "TCPS_IDLE", TCPS_IDLE))
-        return -1;
-    // sunos specific
-    if (PyModule_AddIntConstant(mod, "TCPS_BOUND", TCPS_BOUND))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE))
-        return -1;
-
     return 0;
 }
 

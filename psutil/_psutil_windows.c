@@ -21,8 +21,6 @@
 #include "arch/windows/init.h"
 
 
-// ------------------------ Python init ---------------------------
-
 static PyMethodDef PsutilMethods[] = {
     // --- per-process functions
     {"proc_cmdline",
@@ -107,6 +105,60 @@ static PyMethodDef PsutilMethods[] = {
 static int module_loaded = 0;
 
 static int
+psutil_add_constants(PyObject *mod) {
+    // version constant
+    PSUTIL_ADD_INT(mod, "version", PSUTIL_VERSION);
+
+    // process status constants
+    // http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx
+    PSUTIL_ADD_INT(
+        mod, "ABOVE_NORMAL_PRIORITY_CLASS", ABOVE_NORMAL_PRIORITY_CLASS
+    );
+    PSUTIL_ADD_INT(
+        mod, "BELOW_NORMAL_PRIORITY_CLASS", BELOW_NORMAL_PRIORITY_CLASS
+    );
+    PSUTIL_ADD_INT(mod, "HIGH_PRIORITY_CLASS", HIGH_PRIORITY_CLASS);
+    PSUTIL_ADD_INT(mod, "IDLE_PRIORITY_CLASS", IDLE_PRIORITY_CLASS);
+    PSUTIL_ADD_INT(mod, "NORMAL_PRIORITY_CLASS", NORMAL_PRIORITY_CLASS);
+    PSUTIL_ADD_INT(mod, "REALTIME_PRIORITY_CLASS", REALTIME_PRIORITY_CLASS);
+
+    // connection status constants
+    // http://msdn.microsoft.com/en-us/library/cc669305.aspx
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_CLOSED", MIB_TCP_STATE_CLOSED);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_CLOSING", MIB_TCP_STATE_CLOSING);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_CLOSE_WAIT", MIB_TCP_STATE_CLOSE_WAIT);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_LISTEN", MIB_TCP_STATE_LISTEN);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_ESTAB", MIB_TCP_STATE_ESTAB);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_SYN_SENT", MIB_TCP_STATE_SYN_SENT);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_SYN_RCVD", MIB_TCP_STATE_SYN_RCVD);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_FIN_WAIT1", MIB_TCP_STATE_FIN_WAIT1);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_FIN_WAIT2", MIB_TCP_STATE_FIN_WAIT2);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_LAST_ACK", MIB_TCP_STATE_LAST_ACK);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_TIME_WAIT", MIB_TCP_STATE_TIME_WAIT);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_TIME_WAIT", MIB_TCP_STATE_TIME_WAIT);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_DELETE_TCB", MIB_TCP_STATE_DELETE_TCB);
+    PSUTIL_ADD_INT(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+
+    // ...for internal use in _psutil_windows.py
+    PSUTIL_ADD_INT(mod, "INFINITE", INFINITE);
+    PSUTIL_ADD_INT(mod, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED);
+    PSUTIL_ADD_INT(mod, "ERROR_INVALID_NAME", ERROR_INVALID_NAME);
+    PSUTIL_ADD_INT(
+        mod, "ERROR_SERVICE_DOES_NOT_EXIST", ERROR_SERVICE_DOES_NOT_EXIST
+    );
+    PSUTIL_ADD_INT(mod, "ERROR_PRIVILEGE_NOT_HELD", ERROR_PRIVILEGE_NOT_HELD);
+    PSUTIL_ADD_INT(mod, "WINVER", PSUTIL_WINVER);
+    PSUTIL_ADD_INT(mod, "WINDOWS_VISTA", PSUTIL_WINDOWS_VISTA);
+    PSUTIL_ADD_INT(mod, "WINDOWS_7", PSUTIL_WINDOWS_7);
+    PSUTIL_ADD_INT(mod, "WINDOWS_8", PSUTIL_WINDOWS_8);
+    PSUTIL_ADD_INT(mod, "WINDOWS_8_1", PSUTIL_WINDOWS_8_1);
+    PSUTIL_ADD_INT(mod, "WINDOWS_10", PSUTIL_WINDOWS_10);
+
+    return 0;
+}
+
+
+static int
 psutil_windows_exec(PyObject *mod) {
     if (psutil_setup() != 0)
         return -1;
@@ -120,128 +172,10 @@ psutil_windows_exec(PyObject *mod) {
             return -1;
         module_loaded = 1;
     }
-
     if (psutil_add_exceptions(mod) != 0)
         return -1;
-
-    // version constant
-    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
+    if (psutil_add_constants(mod) != 0)
         return -1;
-
-    // process status constants
-    // http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx
-    if (PyModule_AddIntConstant(
-            mod, "ABOVE_NORMAL_PRIORITY_CLASS", ABOVE_NORMAL_PRIORITY_CLASS
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "BELOW_NORMAL_PRIORITY_CLASS", BELOW_NORMAL_PRIORITY_CLASS
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "HIGH_PRIORITY_CLASS", HIGH_PRIORITY_CLASS
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "IDLE_PRIORITY_CLASS", IDLE_PRIORITY_CLASS
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "NORMAL_PRIORITY_CLASS", NORMAL_PRIORITY_CLASS
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "REALTIME_PRIORITY_CLASS", REALTIME_PRIORITY_CLASS
-        ))
-        return -1;
-
-    // connection status constants
-    // http://msdn.microsoft.com/en-us/library/cc669305.aspx
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_CLOSED", MIB_TCP_STATE_CLOSED
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_CLOSING", MIB_TCP_STATE_CLOSING
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_CLOSE_WAIT", MIB_TCP_STATE_CLOSE_WAIT
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_LISTEN", MIB_TCP_STATE_LISTEN
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_ESTAB", MIB_TCP_STATE_ESTAB
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_SYN_SENT", MIB_TCP_STATE_SYN_SENT
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_SYN_RCVD", MIB_TCP_STATE_SYN_RCVD
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_FIN_WAIT1", MIB_TCP_STATE_FIN_WAIT1
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_FIN_WAIT2", MIB_TCP_STATE_FIN_WAIT2
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_LAST_ACK", MIB_TCP_STATE_LAST_ACK
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_TIME_WAIT", MIB_TCP_STATE_TIME_WAIT
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_TIME_WAIT", MIB_TCP_STATE_TIME_WAIT
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "MIB_TCP_STATE_DELETE_TCB", MIB_TCP_STATE_DELETE_TCB
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE))
-        return -1;
-
-    // ...for internal use in _psutil_windows.py
-    if (PyModule_AddIntConstant(mod, "INFINITE", INFINITE))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "ERROR_INVALID_NAME", ERROR_INVALID_NAME))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "ERROR_SERVICE_DOES_NOT_EXIST", ERROR_SERVICE_DOES_NOT_EXIST
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(
-            mod, "ERROR_PRIVILEGE_NOT_HELD", ERROR_PRIVILEGE_NOT_HELD
-        ))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "WINVER", PSUTIL_WINVER))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "WINDOWS_VISTA", PSUTIL_WINDOWS_VISTA))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "WINDOWS_7", PSUTIL_WINDOWS_7))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "WINDOWS_8", PSUTIL_WINDOWS_8))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "WINDOWS_8_1", PSUTIL_WINDOWS_8_1))
-        return -1;
-    if (PyModule_AddIntConstant(mod, "WINDOWS_10", PSUTIL_WINDOWS_10))
-        return -1;
-
     return 0;
 }
 
