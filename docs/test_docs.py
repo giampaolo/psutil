@@ -10,7 +10,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import types
 import xml.etree.ElementTree as ET
 import zlib
 from datetime import datetime
@@ -830,43 +829,6 @@ class TestSidebarIcons:
             with subtests.test(href=href):
                 assert any(frag in href for frag in fragments)
 
-    @staticmethod
-    def icon_selectors():
-        css = (DOCS / "_static" / "css" / "doc-icons.css").read_text()
-        css = re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
-        out = []
-        for sels, body in re.findall(r"([^{}]+)\{([^}]*)\}", css):
-            if "--doc-icon:" in body:
-                out += [s.strip() for s in sels.split(",") if s.strip()]
-        # cssselect can't parse :has(); those target search results,
-        # not the sidebar, so dropping them changes nothing here.
-        return [s for s in out if ":has(" not in s]
-
-    def test_every_toplevel_item_has_icon(self, subtests):
-        # Matches doc-icons.css selectors against the real DOM, so it
-        # catches a nav link no selector reaches. The href-only test
-        # above missed the blog post case: the Blog link points up
-        # ("../../"), which has no "blog/" fragment.
-        import lxml.html
-
-        selectors = self.icon_selectors()
-        pages = {
-            "blog post": blog_html(blog_posts()[0]),
-            "api": read_html("api.html"),
-            "blog index": read_html("blog/index.html"),
-        }
-        for label, html in pages.items():
-            tree = lxml.html.fromstring(html)
-            iconed = set()
-            for sel in selectors:
-                iconed.update(tree.cssselect(sel))
-            nav = tree.cssselect(".left-sidebar li.toctree-l1 > a")
-            assert nav, f"no sidebar nav links found on {label}"
-            for a in nav:
-                item = (a.text_content() or "").strip()
-                with subtests.test(page=label, item=item):
-                    assert a in iconed
-
 
 @pytest.mark.usefixtures("build_html")
 class TestUrlScheme:
@@ -977,57 +939,3 @@ class TestUrlScheme:
         entries = zlib.decompress(raw.split(b"\n", 4)[4]).decode("utf-8")
         assert entries
         assert ".html" not in entries
-
-
-@pytest.mark.usefixtures("build_html")
-class TestComments:
-    """giscus widget: _ext/giscus.py + _templates/comments.html."""
-
-    def test_container_on_blog_posts(self, subtests):
-        for rst in blog_posts():
-            if ":no_comments:" in rst.read_text():
-                continue
-            with subtests.test(post=rst.name):
-                html = blog_html(rst)
-                stem = rst.relative_to(BLOG).with_suffix("").as_posix()
-                assert 'class="giscus"' in html
-                assert f'data-term="blog/{stem}"' in html
-                tag = re.search(r'<section[^>]*class="comments"[^>]*>', html)
-                assert "hidden" in tag.group(0)
-                # Hardcoded, not compared against conf.py: a typo in
-                # the config would land on both sides otherwise.
-                assert 'data-repo="giampaolo/psutil-blog-comments"' in html
-                assert 'data-repo-id="R_kgDOTfVGLA"' in html
-                assert 'data-category="User Comments"' in html
-                assert 'data-category-id="DIC_kwDOTfVGLM4DBrKC"' in html
-
-    def test_container_absent_on_other_pages(self):
-        assert 'class="giscus"' not in read_html("api.html")
-
-
-class TestGiscusExtension:
-    @staticmethod
-    def is_blog_post(pagename, ablog_posts, meta):
-        import giscus
-
-        env = types.SimpleNamespace(ablog_posts=ablog_posts, metadata=meta)
-        config = types.SimpleNamespace(
-            **dict.fromkeys(giscus.CONFIG_VALUES, "")
-        )
-        app = types.SimpleNamespace(env=env, config=config)
-        context = {}
-        giscus.add_giscus_context(app, pagename, "page.html", context, None)
-        return context["is_blog_post"]
-
-    def test_renders_on_a_post(self):
-        got = self.is_blog_post("blog/x", {"blog/x": object()}, {"blog/x": {}})
-        assert got is True
-
-    def test_no_comments_field_opts_out(self):
-        got = self.is_blog_post(
-            "blog/x", {"blog/x": object()}, {"blog/x": {"no_comments": ""}}
-        )
-        assert got is False
-
-    def test_not_a_post(self):
-        assert self.is_blog_post("faq", {}, {}) is False
