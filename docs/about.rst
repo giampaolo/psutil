@@ -124,7 +124,8 @@ Blog
 
 New releases and deep-dives are written up on the :doc:`blog <blog>`. Blog
 provides a RSS feed (the icon at the top of the blog page) so you can receive
-notifications of new blog posts from your reader.
+notifications of new blog posts from your reader + a commenting system provided
+by `giscus <https://giscus.app/>`_.
 
 Other internal optimizations
 ----------------------------

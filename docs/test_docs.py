@@ -691,6 +691,8 @@ class TestNoExternalAssets:
     def test_no_external_css_urls(self, subtests):
         css_dir = HTML_DIR / "_static" / "css"
         for css in sorted(css_dir.glob("*.css")):
+            if css.name == "giscus.css":
+                continue  # runs in the giscus iframe, imports its theme
             urls = re.findall(r'url\(\s*["\']?([^"\')]+)', css.read_text())
             external = [u for u in urls if self.is_external(u)]
             with subtests.test(css=css.name):

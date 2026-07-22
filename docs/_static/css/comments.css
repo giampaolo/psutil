@@ -1,0 +1,23 @@
+/* Blog comments (giscus), below the prev/next nav. */
+
+.comments {
+    margin-top: 2em;
+    padding-top: 1em;
+    border-top: 1px solid var(--border);
+}
+
+.comments h2 {
+    margin-top: 0;
+    margin-bottom: 0.8em;
+    font-size: 1.3em;
+    color: var(--headings);
+    font-weight: 600;
+}
+
+/* giscus sizes its own iframe; just keep it inside the column. */
+.comments .giscus,
+.comments iframe.giscus-frame {
+    width: 100%;
+    max-width: 100%;
+    border: none;
+}
