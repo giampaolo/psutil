@@ -22,6 +22,7 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil import _psutil
 
 from . import HAS_CPU_FREQ
 from . import HAS_HEAP_INFO
@@ -46,7 +47,6 @@ from . import spawn_subproc
 from . import system_namespace
 from . import terminate
 
-cext = psutil._psplatform.cext
 thisproc = psutil.Process()
 
 
@@ -226,7 +226,7 @@ class TestProcess(MemoryLeakTestCase):
 
     @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
     def test_proc_oneshot(self):
-        self.execute(lambda: cext.proc_oneshot(os.getpid()))
+        self.execute(lambda: _psutil.proc_oneshot(os.getpid()))
 
 
 class TestTerminatedProcess(TestProcess):
@@ -276,7 +276,7 @@ class TestTerminatedProcess(TestProcess):
             # test dual implementation
             def call():
                 try:
-                    return cext.proc_oneshot(self.proc.pid)
+                    return _psutil.proc_oneshot(self.proc.pid)
                 except ProcessLookupError:
                     pass
 
@@ -286,10 +286,10 @@ class TestTerminatedProcess(TestProcess):
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
 class TestProcessDualImplementation(MemoryLeakTestCase):
     def test_cmdline_peb_true(self):
-        self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=True))
+        self.execute(lambda: _psutil.proc_cmdline(os.getpid(), use_peb=True))
 
     def test_cmdline_peb_false(self):
-        self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=False))
+        self.execute(lambda: _psutil.proc_cmdline(os.getpid(), use_peb=False))
 
 
 # ===================================================================
@@ -445,22 +445,22 @@ class TestModuleFunctions(MemoryLeakTestCase):
         # --- win services
 
         def test_win_service_iter(self):
-            self.execute(cext.winservice_enumerate)
+            self.execute(_psutil.winservice_enumerate)
 
         def test_win_service_get(self):
             pass
 
         def test_win_service_get_config(self):
             name = next(psutil.win_service_iter()).name()
-            self.execute(lambda: cext.winservice_query_config(name))
+            self.execute(lambda: _psutil.winservice_query_config(name))
 
         def test_win_service_get_status(self):
             name = next(psutil.win_service_iter()).name()
-            self.execute(lambda: cext.winservice_query_status(name))
+            self.execute(lambda: _psutil.winservice_query_status(name))
 
         def test_win_service_get_description(self):
             name = next(psutil.win_service_iter()).name()
-            self.execute(lambda: cext.winservice_query_descr(name))
+            self.execute(lambda: _psutil.winservice_query_descr(name))
 
 
 # ===================================================================
@@ -496,10 +496,10 @@ class TestBadargs(MemoryLeakTestCase):
         # Names of the C functions that actually parse at least one
         # argument.
         names = []
-        for name in dir(cext):
+        for name in dir(_psutil):
             if name.startswith("_"):
                 continue
-            func = getattr(cext, name)
+            func = getattr(_psutil, name)
             if not inspect.isbuiltin(func):  # skip exception classes
                 continue
             try:
@@ -515,14 +515,14 @@ class TestBadargs(MemoryLeakTestCase):
     @classmethod
     def auto_generate(cls):
         return {
-            name: LeakTest(getattr(cext, name), *cls.badargs)
+            name: LeakTest(getattr(_psutil, name), *cls.badargs)
             for name in cls.cext_arg_funcs()
         }
 
 
 def cext_has(name):
     return pytest.mark.skipif(
-        not hasattr(cext, name), reason=f"no cext.{name}()"
+        not hasattr(_psutil, name), reason=f"no _psutil.{name}()"
     )
 
 
@@ -540,57 +540,59 @@ class TestBadargs2(MemoryLeakTestCase):
 
     @cext_has("proc_priority_get")
     def test_proc_priority_get(self):
-        self.execute_w_exc(OSError, cext.proc_priority_get, -1)
+        self.execute_w_exc(OSError, _psutil.proc_priority_get, -1)
 
     @cext_has("proc_priority_set")
     def test_proc_priority_set(self):
-        self.execute_w_exc(OSError, cext.proc_priority_set, -1, 0)
+        self.execute_w_exc(OSError, _psutil.proc_priority_set, -1, 0)
 
     @cext_has("proc_cpu_affinity_get")
     def test_proc_cpu_affinity_get(self):
         # FreeBSD's cpuset_getaffinity() reads -1 as "the current
         # process", so it succeeds. Use another negative PID.
         pid = -2 if FREEBSD else -1
-        self.execute_w_exc(OSError, cext.proc_cpu_affinity_get, pid)
+        self.execute_w_exc(OSError, _psutil.proc_cpu_affinity_get, pid)
 
     @cext_has("net_if_flags")
     def test_net_if_flags(self):
-        self.execute_w_exc(OSError, cext.net_if_flags, "nonexistent0")
+        self.execute_w_exc(OSError, _psutil.net_if_flags, "nonexistent0")
 
     @cext_has("net_if_mtu")
     def test_net_if_mtu(self):
-        self.execute_w_exc(OSError, cext.net_if_mtu, "nonexistent0")
+        self.execute_w_exc(OSError, _psutil.net_if_mtu, "nonexistent0")
 
     @cext_has("net_if_is_running")
     def test_net_if_is_running(self):
-        self.execute_w_exc(OSError, cext.net_if_is_running, "nonexistent0")
+        self.execute_w_exc(OSError, _psutil.net_if_is_running, "nonexistent0")
 
     # --- Linux only
 
     @cext_has("proc_ioprio_set")
     def test_proc_ioprio_set(self):
-        self.execute_w_exc(OSError, cext.proc_ioprio_set, self.pid, -1, 0)
+        self.execute_w_exc(OSError, _psutil.proc_ioprio_set, self.pid, -1, 0)
 
     @cext_has("proc_ioprio_get")
     def test_proc_ioprio_get(self):
-        self.execute_w_exc(OSError, cext.proc_ioprio_get, -1)
+        self.execute_w_exc(OSError, _psutil.proc_ioprio_get, -1)
 
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
     def test_disk_partitions(self):
-        self.execute_w_exc(OSError, cext.disk_partitions, "/does/not/exist")
+        self.execute_w_exc(OSError, _psutil.disk_partitions, "/does/not/exist")
 
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
     def test_net_if_duplex_speed(self):
-        self.execute_w_exc(OSError, cext.net_if_duplex_speed, "nonexistent0")
+        self.execute_w_exc(
+            OSError, _psutil.net_if_duplex_speed, "nonexistent0"
+        )
 
     # --- other platform-specific behavior
 
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
     def test_proc_cpu_affinity_set(self):
         self.execute_w_exc(
-            ValueError, cext.proc_cpu_affinity_set, self.pid, [-1]
+            ValueError, _psutil.proc_cpu_affinity_set, self.pid, [-1]
         )
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_check_pid_range(self):
-        self.execute_w_exc(ValueError, cext.check_pid_range, -1)
+        self.execute_w_exc(ValueError, _psutil.check_pid_range, -1)

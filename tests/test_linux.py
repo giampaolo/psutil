@@ -24,6 +24,7 @@ from unittest import mock
 
 import psutil
 from psutil import LINUX
+from psutil import _psutil
 
 from . import AARCH64
 from . import GITHUB_ACTIONS
@@ -654,12 +655,11 @@ class TestSwapMemory(LinuxTestCase):
         # https://github.com/giampaolo/psutil/issues/1015
         if not self.meminfo_has_swap_info():
             return pytest.skip("/proc/meminfo has no swap metrics")
-        with mock.patch('psutil._pslinux.cext.linux_sysinfo') as m:
+        with mock.patch.object(_psutil, 'linux_sysinfo') as m:
             swap = psutil.swap_memory()
         assert not m.called
-        import psutil._psutil as cext
 
-        _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
+        _, _, _, _, total, free, unit_multiplier = _psutil.linux_sysinfo()
         total *= unit_multiplier
         free *= unit_multiplier
         assert swap.total == total
@@ -1365,8 +1365,9 @@ class TestDiskPartitions(LinuxTestCase):
         with mock.patch(
             'psutil._common.open', return_value=fake_file, create=True
         ) as m1:
-            with mock.patch(
-                'psutil._pslinux.cext.disk_partitions',
+            with mock.patch.object(
+                _psutil,
+                'disk_partitions',
                 return_value=[('/dev/sdb3', '/', 'zfs', 'rw')],
             ) as m2:
                 ret = psutil.disk_partitions()
@@ -1602,8 +1603,9 @@ class TestRootFsDeviceFinder(LinuxTestCase):
         assert psutil_value == findmnt_value
 
     def test_disk_partitions_mocked(self):
-        with mock.patch(
-            'psutil._pslinux.cext.disk_partitions',
+        with mock.patch.object(
+            _psutil,
+            'disk_partitions',
             return_value=[('/dev/root', '/', 'ext4', 'rw')],
         ) as m:
             part = psutil.disk_partitions()[0]

@@ -36,6 +36,7 @@ from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
+from psutil import _psutil
 from psutil._common import open_text
 
 from . import CI_TESTING
@@ -1343,9 +1344,9 @@ class TestProcess(PsutilTestCase):
     def test_zombie_process(self):
         parent, zombie = self.spawn_zombie()
         self.assert_proc_zombie(zombie)
-        if hasattr(psutil._psplatform.cext, "proc_is_zombie"):
-            assert not psutil._psplatform.cext.proc_is_zombie(os.getpid())
-            assert psutil._psplatform.cext.proc_is_zombie(zombie.pid)
+        if hasattr(_psutil, "proc_is_zombie"):
+            assert not _psutil.proc_is_zombie(os.getpid())
+            assert _psutil.proc_is_zombie(zombie.pid)
         parent.terminate()
         parent.wait()
         zombie.wait()
