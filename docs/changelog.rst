@@ -48,6 +48,8 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
     imported from https://gmpy.dev, covering psutil topics from 2014 to 2026.
     Includes Atom feed. Posts are searchable. Use OpenGraph for nice preview
     when posts are shared on social media.
+  - Blog posts have a comments section, backed by
+    `giscus <https://giscus.app/>`__ and GitHub Discussions.
 
 - Theming:
 

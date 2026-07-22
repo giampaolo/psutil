@@ -100,7 +100,8 @@ a[href*="blog/"],
 ul.search > li:has(> a[href*="blog/"]),
 ul.search > li:has(> a[href^="blog/"]),
 ul.search > li:has(> a[href*="/blog/"]),
-body[data-page="blog"] .left-sidebar a.current {
+body[data-page="blog"] .left-sidebar a.current,
+body[data-page^="blog/"] .left-sidebar li.toctree-l1 > a[href$="../"] {
     --doc-icon: "\f09e";
 }
 

@@ -829,6 +829,43 @@ class TestSidebarIcons:
             with subtests.test(href=href):
                 assert any(frag in href for frag in fragments)
 
+    @staticmethod
+    def icon_selectors():
+        css = (DOCS / "_static" / "css" / "doc-icons.css").read_text()
+        css = re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
+        out = []
+        for sels, body in re.findall(r"([^{}]+)\{([^}]*)\}", css):
+            if "--doc-icon:" in body:
+                out += [s.strip() for s in sels.split(",") if s.strip()]
+        # cssselect can't parse :has(); those target search results,
+        # not the sidebar, so dropping them changes nothing here.
+        return [s for s in out if ":has(" not in s]
+
+    def test_every_toplevel_item_has_icon(self, subtests):
+        # Matches doc-icons.css selectors against the real DOM, so it
+        # catches a nav link no selector reaches. The href-only test
+        # above missed the blog post case: the Blog link points up
+        # ("../../"), which has no "blog/" fragment.
+        import lxml.html
+
+        selectors = self.icon_selectors()
+        pages = {
+            "blog post": blog_html(blog_posts()[0]),
+            "api": read_html("api.html"),
+            "blog index": read_html("blog/index.html"),
+        }
+        for label, html in pages.items():
+            tree = lxml.html.fromstring(html)
+            iconed = set()
+            for sel in selectors:
+                iconed.update(tree.cssselect(sel))
+            nav = tree.cssselect(".left-sidebar li.toctree-l1 > a")
+            assert nav, f"no sidebar nav links found on {label}"
+            for a in nav:
+                item = (a.text_content() or "").strip()
+                with subtests.test(page=label, item=item):
+                    assert a in iconed
+
 
 @pytest.mark.usefixtures("build_html")
 class TestUrlScheme:
