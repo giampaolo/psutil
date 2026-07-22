@@ -70,7 +70,8 @@ main .gsc-reactions {
     gap: 0.5rem;
 }
 
-main .gsc-reactions-count {
+main .gsc-reactions-count,
+main .gsc-comments-count {
     margin: 0;
     font-size: 0.85rem;
     font-weight: 400;
@@ -79,13 +80,31 @@ main .gsc-reactions-count {
 }
 
 main .gsc-reactions > * {
-    flex: 0 0 auto;
-    justify-content: flex-start;
-    margin-top: 0;
+    flex: 0 0 auto !important;
+    justify-content: flex-start !important;
+    margin-top: 0 !important;
 }
 
 main .gsc-main {
     gap: 1rem;
+}
+
+@media (min-width: 601px) {
+    main .gsc-main {
+        position: relative;
+    }
+
+    main .gsc-reactions {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: auto;
+        margin: 0;
+    }
+
+    main .gsc-main:has(.gsc-right-header) .gsc-reactions {
+        right: 9.5rem;
+    }
 }
 
 main .gsc-comment-box,

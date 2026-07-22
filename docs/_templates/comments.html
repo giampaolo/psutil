@@ -10,13 +10,6 @@
 {% if is_blog_post and giscus_repo %}
 <section class="comments" aria-labelledby="comments-heading" hidden>
   <h2 id="comments-heading">{{ _('Comments') }}</h2>
-  {%- if giscus_policy_url %}
-  <p class="comments-policy">
-    {% trans %}Please read the{% endtrans %}
-    <a href="{{ giscus_policy_url|e }}">{{ _('commenting guidelines') }}</a>
-    {% trans %}before posting.{% endtrans %}
-  </p>
-  {%- endif %}
   <div class="giscus"
        data-repo="{{ giscus_repo|e }}"
        data-repo-id="{{ giscus_repo_id|e }}"

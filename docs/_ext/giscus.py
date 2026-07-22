@@ -12,7 +12,6 @@ CONFIG_VALUES = (
     "giscus_repo_id",
     "giscus_category",
     "giscus_category_id",
-    "giscus_policy_url",
 )
 
 

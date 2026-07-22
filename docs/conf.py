@@ -219,10 +219,6 @@ giscus_repo = "giampaolo/psutil-blog-comments"
 giscus_repo_id = "R_kgDOTfVGLA"
 giscus_category = "User Comments"
 giscus_category_id = "DIC_kwDOTfVGLM4DBrKC"
-# linked above the widget
-# giscus_policy_url = (
-#     "https://github.com/giampaolo/psutil-blog-comments/discussions/2"
-# )
 
 # =====================================================================
 # sphinxext-opengraph

@@ -14,13 +14,6 @@
     font-weight: 600;
 }
 
-.comments-policy {
-    margin-top: -0.4em;
-    margin-bottom: 1.2em;
-    color: var(--text-muted);
-    font-size: 0.9em;
-}
-
 /* giscus sizes its own iframe; just keep it inside the column. */
 .comments .giscus,
 .comments iframe.giscus-frame {

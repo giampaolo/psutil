@@ -321,21 +321,19 @@ class TestReadTheDocsRedirects:
 
 
 class TestGiscus:
-    WIDGET = "https://giscus.app/en/widget?repo=x&term=t"
+    BASE_CSS = (
+        "https://raw.githubusercontent.com/giscus/giscus/main/styles/base.css"
+    )
+    DOM_ONLY = {".gsc-right-header"}
 
     def test_selectors_still_exist(self):
         # The layout rules in giscus.css lean on giscus' internal
         # class names, which aren't a public API. A rename would
         # silently revert the widget to its stock look.
         ours = (HERE / "_static" / "css" / "giscus.css").read_text()
-        selectors = sorted(set(re.findall(r"\.gsc-[a-z-]+", ours)))
+        selectors = set(re.findall(r"\.gsc-[a-z-]+", ours)) - self.DOM_ONLY
         assert selectors, "no .gsc-* selectors found in giscus.css"
 
-        html = fetch(self.WIDGET)[1].decode("utf-8", "replace")
-        match = re.search(r"/_next/static/css/[a-z0-9]+\.css", html)
-        assert match, "giscus stylesheet not linked from the widget page"
-        css = fetch("https://giscus.app" + match.group(0))[1]
-        css = css.decode("utf-8", "replace")
-
-        missing = [s for s in selectors if s not in css]
+        css = fetch(self.BASE_CSS)[1].decode("utf-8", "replace")
+        missing = sorted(s for s in selectors if s not in css)
         assert missing == []
