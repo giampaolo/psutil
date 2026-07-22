@@ -158,7 +158,9 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task) {
     if (pid < 0 || !task)
         return psutil_badargs("psutil_task_for_pid");
 
+    Py_BEGIN_ALLOW_THREADS
     err = task_for_pid(mach_task_self(), pid, task);
+    Py_END_ALLOW_THREADS
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0) {
             psutil_oserror_nsp("task_for_pid");

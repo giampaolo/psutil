@@ -281,7 +281,9 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
 
     // Fetch multiple metrics. Fails with access denied for any PID not
     // owned by us.
+    Py_BEGIN_ALLOW_THREADS
     kr = task_info(task, TASK_VM_INFO, (task_info_t)&info, &info_count);
+    Py_END_ALLOW_THREADS
     mach_port_deallocate(mach_task_self(), task);
     task = MACH_PORT_NULL;
     if (kr != KERN_SUCCESS) {
@@ -292,7 +294,11 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
     // Fetch wired memory.
     uint64_t wired_size = 0;
     struct rusage_info_v0 ri;
-    if (proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri) == 0)
+    int rusage_ret;
+    Py_BEGIN_ALLOW_THREADS
+    rusage_ret = proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri);
+    Py_END_ALLOW_THREADS
+    if (rusage_ret == 0)
         wired_size = ri.ri_wired_size;
     else
         psutil_debug("proc_pid_rusage() failed (pid=%i)", pid);
@@ -351,6 +357,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         info_count = VM_REGION_TOP_INFO_COUNT;  // reset before each call
         object_name = MACH_PORT_NULL;
 
+        Py_BEGIN_ALLOW_THREADS
         kr = mach_vm_region(
             task,
             &addr,
@@ -360,6 +367,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
             &info_count,
             &object_name
         );
+        Py_END_ALLOW_THREADS
 
         if (object_name != MACH_PORT_NULL) {
             mach_port_deallocate(mach_task_self(), object_name);

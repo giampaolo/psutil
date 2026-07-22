@@ -86,6 +86,10 @@ def proc_info(pid):
         # We don't use oneshot() because in order not to fool
         # check_exception() in case of NSP.
         for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
+            print(  # noqa: T201
+                f"XXX proc_info pid={proc.pid} name={name!r} {fun_name}",
+                flush=True,
+            )
             try:
                 ret = fun()
             except psutil.Error as exc:
