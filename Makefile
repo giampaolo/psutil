@@ -258,12 +258,11 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-pydeps-test
 	$(MAKE) build
 	$(MAKE) print-sysinfo
-	$(MAKE) test
-	$(MAKE) test-memleaks
+	$(MAKE) test ARGS="--durations=15"
+	$(MAKE) test-memleaks ARGS="--durations=10"
 
 ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
-	$(MAKE) install-sysdeps
-	$(MAKE) install-pydeps-test
+	$(MAKE) install-sysdeps  # test pydeps already installed at this point
 	$(MAKE) print-sysinfo
 	# Tests must be run from a separate directory so pytest does not import
 	# from the source tree and instead exercises only the installed wheel.

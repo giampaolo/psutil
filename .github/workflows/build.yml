@@ -49,6 +49,19 @@ jobs:
         with:
           python-version: ${{ runner.os == 'macOS' && runner.arch == 'ARM64' && '3.8' || '3.11' }}
 
+      # Cache the CPython interpreters cibuildwheel downloads, so later
+      # pushes reuse them. Linux gets them from the container, so skip it.
+      - name: Cache cibuildwheel interpreters
+        if: runner.os != 'Linux'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/AppData/Local/pypa/cibuildwheel/Cache
+            ~/Library/Caches/cibuildwheel
+          key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
+          restore-keys: |
+            cibw-${{ runner.os }}-${{ matrix.arch }}-
+
       - name: Build wheels + run tests
         uses: pypa/cibuildwheel@v3.4.1
         env:
