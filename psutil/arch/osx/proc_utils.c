@@ -50,9 +50,9 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 
 
 // task_for_pid() only succeeds for tasks we may access (ours, or any
-// task when we're root). On macOS it can *block* instead of failing for
-// the rest (e.g. system daemons like distnoted), so use this to bail out
-// early. Return 1 if allowed, 0 if not, -1 on error (Python exc set).
+// task when we're root). On macOS it can *block* instead of failing
+// for the rest, so use this to bail out early. Return 1 if allowed, 0
+// if not, -1 on error (Python exc set).
 int
 psutil_task_access_allowed(pid_t pid) {
     struct kinfo_proc kp;
