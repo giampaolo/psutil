@@ -346,6 +346,11 @@ Others:
 - :gh:`2877`, [UNIX]: fix a one-byte stack buffer overflow in :func:`users`.
   When ``ut_host`` fills the whole field it has no null terminator, and the
   terminator was written one byte past the end of the local buffer.
+- :gh:`2885`, :meth:`Process.memory_full_info`,
+  :meth:`Process.memory_footprint` and :meth:`Process.threads` no longer use
+  ``task_for_pid()`` syscall, which can hang forever on headless VMs (e.g. CI
+  runners). They now use ``proc_pidinfo()``, which is more permissive and so
+  raises :exc:`AccessDenied` less often.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
