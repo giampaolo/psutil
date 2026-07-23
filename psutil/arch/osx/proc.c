@@ -408,113 +408,73 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     pid_t pid;
-    kern_return_t kr;
-    mach_port_t task = MACH_PORT_NULL;
-    struct task_basic_info tasks_info;
-    thread_act_port_array_t thread_list = NULL;
-    thread_info_data_t thinfo_basic;
-    thread_basic_info_t basic_info_th;
-    mach_msg_type_number_t thread_count, thread_info_count, j;
-
+    int ret;
+    int buf_size;
+    int num_threads;
+    int i;
+    uint64_t *tids = NULL;
+    struct proc_threadinfo ti;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
-
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
-    if (psutil_task_for_pid(pid, &task) != 0)
-        goto error;
-
-    // Get basic task info (optional, ignored if access denied)
-    mach_msg_type_number_t info_count = TASK_BASIC_INFO_COUNT;
-    kr = task_info(
-        task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count
-    );
-    if (kr != KERN_SUCCESS) {
-        if (kr == KERN_INVALID_ARGUMENT) {
-            psutil_oserror_ad("task_info(TASK_BASIC_INFO)");
-        }
-        else {
-            // otherwise throw a runtime error with appropriate error code
-            psutil_runtime_error("task_info(TASK_BASIC_INFO) syscall failed");
-        }
+    ret = proc_pidinfo(pid, PROC_PIDLISTTHREADS, 0, NULL, 0);
+    if (ret <= 0) {
+        psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTTHREADS) 1/2");
         goto error;
     }
 
-    kr = task_threads(task, &thread_list, &thread_count);
-    if (kr != KERN_SUCCESS) {
-        psutil_runtime_error("task_threads() syscall failed");
+    // Leave room for threads spawned between the two calls.
+    buf_size = ret + (int)(32 * sizeof(uint64_t));
+    tids = malloc(buf_size);
+    if (tids == NULL) {
+        PyErr_NoMemory();
         goto error;
     }
 
-    for (j = 0; j < thread_count; j++) {
-        thread_info_count = THREAD_INFO_MAX;
-        kr = thread_info(
-            thread_list[j],
-            THREAD_BASIC_INFO,
-            (thread_info_t)thinfo_basic,
-            &thread_info_count
-        );
-        if (kr != KERN_SUCCESS) {
-            psutil_runtime_error(
-                "thread_info(THREAD_BASIC_INFO) syscall failed"
-            );
-            goto error;
+    ret = proc_pidinfo(pid, PROC_PIDLISTTHREADS, 0, tids, buf_size);
+    if (ret <= 0) {
+        psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTTHREADS) 2/2");
+        goto error;
+    }
+    num_threads = ret / (int)sizeof(uint64_t);
+
+    for (i = 0; i < num_threads; i++) {
+        if (psutil_proc_pidinfo(
+                pid, PROC_PIDTHREADID64INFO, tids[i], &ti, sizeof(ti)
+            )
+            != 0)
+        {
+            // Thread vanished between listing and query; skip it.
+            PyErr_Clear();
+            psutil_debug("PROC_PIDTHREADID64INFO failed; thread gone");
+            continue;
         }
 
-        basic_info_th = (thread_basic_info_t)thinfo_basic;
+        // pth_user_time/pth_system_time are Mach ticks (like
+        // PROC_PIDTASKINFO); hw.tbfrequency converts to seconds.
         if (!pylist_append_fmt(
                 py_retlist,
-                "Iff",
-                j + 1,
-                basic_info_th->user_time.seconds
-                    + (float)basic_info_th->user_time.microseconds / 1000000.0,
-                basic_info_th->system_time.seconds
-                    + (float)basic_info_th->system_time.microseconds
-                          / 1000000.0
+                "Kdd",
+                (unsigned long long)tids[i],
+                (double)ti.pth_user_time / PSUTIL_HW_TBFREQUENCY,
+                (double)ti.pth_system_time / PSUTIL_HW_TBFREQUENCY
             ))
         {
             goto error;
         }
     }
 
-    // deallocate thread_list if it was allocated
-    if (thread_list != NULL) {
-        vm_deallocate(
-            mach_task_self(),
-            (vm_address_t)thread_list,
-            thread_count * sizeof(thread_act_t)
-        );
-        thread_list = NULL;
-    }
-
-    // deallocate the task port
-    if (task != MACH_PORT_NULL) {
-        mach_port_deallocate(mach_task_self(), task);
-        task = MACH_PORT_NULL;
-    }
-
+    free(tids);
     return py_retlist;
 
 error:
+    if (tids != NULL)
+        free(tids);
     Py_XDECREF(py_retlist);
-
-    if (thread_list != NULL) {
-        vm_deallocate(
-            mach_task_self(),
-            (vm_address_t)thread_list,
-            thread_count * sizeof(thread_act_t)
-        );
-        thread_list = NULL;
-    }
-
-    if (task != MACH_PORT_NULL) {
-        mach_port_deallocate(mach_task_self(), task);
-        task = MACH_PORT_NULL;
-    }
-
     return NULL;
 }
 
