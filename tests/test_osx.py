@@ -20,9 +20,9 @@ from . import HAS_CPU_FREQ
 from . import TOLERANCE_DISK_USAGE
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
-from . import pytest
 from . import retry_on_failure
 from . import sh
+from . import skipif
 from . import spawn_subproc
 from . import terminate
 
@@ -50,7 +50,7 @@ def vm_stat(field):
     return int(re.search(r'\d+', line).group(0)) * _psutil.getpagesize()
 
 
-@pytest.mark.skipif(not MACOS, reason="MACOS only")
+@skipif(not MACOS, reason="MACOS only")
 class MacosTestCase(PsutilTestCase):
     pass
 
@@ -93,7 +93,7 @@ class TestVirtualMemory(MacosTestCase):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
         assert sysctl_hwphymem == psutil.virtual_memory().total
 
-    @pytest.mark.skipif(
+    @skipif(
         CI_TESTING and MACOS and AARCH64,
         reason="skipped on MACOS + ARM64 + CI_TESTING",
     )
@@ -103,7 +103,7 @@ class TestVirtualMemory(MacosTestCase):
         psutil_val = psutil.virtual_memory().free
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
-    @pytest.mark.skipif(
+    @skipif(
         CI_TESTING and MACOS and AARCH64,
         reason="skipped on MACOS + ARM64 + CI_TESTING",
     )
@@ -114,7 +114,7 @@ class TestVirtualMemory(MacosTestCase):
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
     # XXX: fails too often
-    @pytest.mark.skipif(CI_TESTING, reason="skipped on CI_TESTING")
+    @skipif(CI_TESTING, reason="skipped on CI_TESTING")
     @retry_on_failure()
     def test_inactive(self):
         vmstat_val = vm_stat("inactive")
@@ -182,7 +182,7 @@ class TestCpuAPIs(MacosTestCase):
         num = sysctl("sysctl hw.physicalcpu")
         assert num == psutil.cpu_count(logical=False)
 
-    @pytest.mark.skipif(
+    @skipif(
         MACOS and AARCH64 and not HAS_CPU_FREQ,
         reason="not available on MACOS + AARCH64",
     )
@@ -258,7 +258,7 @@ class TestNetAPIs(MacosTestCase):
 
 class TestSensorsAPIs(MacosTestCase):
 
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    @skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors_battery(self):
         out = sh("pmset -g batt")
         percent = re.search(r"(\d+)%", out).group(1)

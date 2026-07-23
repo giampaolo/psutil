@@ -41,6 +41,7 @@ from . import reap_children
 from . import retry_on_failure
 from . import serial
 from . import skip_on_access_denied
+from . import skipif
 from . import tcp_socketpair
 from . import unix_socketpair
 from . import wait_for_file
@@ -86,7 +87,7 @@ class ConnectionTestCase(PsutilTestCase):
 
 
 class TestBasicOperations(ConnectionTestCase):
-    @pytest.mark.skipif(SKIP_SYSCONS, reason="requires root")
+    @skipif(SKIP_SYSCONS, reason="requires root")
     def test_system(self):
         with create_sockets():
             for conn in psutil.net_connections(kind='all'):
@@ -158,7 +159,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
             assert conn.raddr == ()
             assert conn.status == psutil.CONN_LISTEN
 
-    @pytest.mark.skipif(not supports_ipv6(), reason="IPv6 not supported")
+    @skipif(not supports_ipv6(), reason="IPv6 not supported")
     def test_tcp_v6(self):
         addr = ("::1", 0)
         with closing(bind_socket(AF_INET6, SOCK_STREAM, addr=addr)) as sock:
@@ -173,7 +174,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
             assert conn.raddr == ()
             assert conn.status == psutil.CONN_NONE
 
-    @pytest.mark.skipif(not supports_ipv6(), reason="IPv6 not supported")
+    @skipif(not supports_ipv6(), reason="IPv6 not supported")
     def test_udp_v6(self):
         addr = ("::1", 0)
         with closing(bind_socket(AF_INET6, SOCK_DGRAM, addr=addr)) as sock:
@@ -181,7 +182,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
             assert conn.raddr == ()
             assert conn.status == psutil.CONN_NONE
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @skipif(not POSIX, reason="POSIX only")
     def test_unix_tcp(self):
         testfn = self.get_testfn()
         with closing(bind_unix_socket(testfn, type=SOCK_STREAM)) as sock:
@@ -189,7 +190,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
             assert conn.raddr == ""
             assert conn.status == psutil.CONN_NONE
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @skipif(not POSIX, reason="POSIX only")
     def test_unix_udp(self):
         testfn = self.get_testfn()
         with closing(bind_unix_socket(testfn, type=SOCK_STREAM)) as sock:
@@ -206,7 +207,7 @@ class TestConnectedSocket(ConnectionTestCase):
 
     # On SunOS, even after we close() it, the server socket stays around
     # in TIME_WAIT state.
-    @pytest.mark.skipif(SUNOS, reason="unreliable on SUNOS")
+    @skipif(SUNOS, reason="unreliable on SUNOS")
     def test_tcp(self):
         addr = ("127.0.0.1", 0)
         assert this_proc_net_connections(kind='tcp4') == []
@@ -226,10 +227,8 @@ class TestConnectedSocket(ConnectionTestCase):
             server.close()
             client.close()
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    @pytest.mark.skipif(
-        not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets"
-    )
+    @skipif(not POSIX, reason="POSIX only")
+    @skipif(not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets")
     def test_unix(self):
         testfn = self.get_testfn()
         server, client = unix_socketpair(testfn)
@@ -487,7 +486,7 @@ class TestFilters(ConnectionTestCase):
                     assert conn.type in {SOCK_STREAM, SOCK_DGRAM}
 
 
-@pytest.mark.skipif(SKIP_SYSCONS, reason="requires root")
+@skipif(SKIP_SYSCONS, reason="requires root")
 class TestSystemWideConnections(ConnectionTestCase):
     """Tests for net_connections()."""
 

@@ -40,6 +40,7 @@ from . import enum
 from . import is_namedtuple
 from . import kernel_version
 from . import pytest
+from . import skipif
 
 # ===================================================================
 # --- APIs availability
@@ -205,7 +206,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         else:
             not hasattr(psutil, "ProcessPriority")
 
-    @pytest.mark.skipif(
+    @skipif(
         GITHUB_ACTIONS and LINUX,
         reason="unsupported on GITHUB_ACTIONS + LINUX",
     )
@@ -311,7 +312,7 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_ionice(self):
         assert hasattr(psutil.Process, "ionice") == (LINUX or WINDOWS)
 
-    @pytest.mark.skipif(
+    @skipif(
         GITHUB_ACTIONS and LINUX,
         reason="unsupported on GITHUB_ACTIONS + LINUX",
     )
@@ -384,7 +385,7 @@ class TestSystemAPITypes(PsutilTestCase):
     def test_cpu_count(self):
         assert isinstance(psutil.cpu_count(), int)
 
-    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
             return pytest.skip("cpu_freq() returns None")
@@ -404,7 +405,7 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(disk.fstype, str)
             assert isinstance(disk.opts, str)
 
-    @pytest.mark.skipif(SKIP_SYSCONS, reason="requires root")
+    @skipif(SKIP_SYSCONS, reason="requires root")
     def test_net_connections(self):
         with create_sockets():
             ret = psutil.net_connections('all')
@@ -433,13 +434,13 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(info.speed, int)
             assert isinstance(info.mtu, int)
 
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_net_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname in psutil.net_io_counters(pernic=True):
             assert isinstance(ifname, str)
 
-    @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
+    @skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_sensors_fans(self):
         # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_fans().items():
@@ -448,7 +449,7 @@ class TestSystemAPITypes(PsutilTestCase):
                 assert isinstance(unit.label, str)
                 assert isinstance(unit.current, (float, int, type(None)))
 
-    @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
+    @skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     def test_sensors_temperatures(self):
         # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_temperatures().items():

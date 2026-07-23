@@ -52,6 +52,7 @@ from . import PsutilTestCase
 from . import check_net_address
 from . import pytest
 from . import retry_on_failure
+from . import skipif
 
 # ===================================================================
 # --- System-related API tests
@@ -149,7 +150,7 @@ class TestProcessIter(PsutilTestCase):
                 assert p.memory_percent() is None
                 assert p.memory_info_ex() is None
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @skipif(not POSIX, reason="POSIX only")
     def test_prefetch_derived_username(self):
         # username() derives from uids(), which is POSIX only.
         with mock.patch(
@@ -249,7 +250,7 @@ class TestProcessIter(PsutilTestCase):
 
 
 class TestProcessAPIs(PsutilTestCase):
-    @pytest.mark.skipif(
+    @skipif(
         PYPY and WINDOWS,
         reason="spawn_subproc() unreliable on PYPY + WINDOWS",
     )
@@ -312,7 +313,7 @@ class TestProcessAPIs(PsutilTestCase):
         for p in gone:
             assert hasattr(p, 'returncode')
 
-    @pytest.mark.skipif(
+    @skipif(
         PYPY and WINDOWS,
         reason="spawn_subproc() unreliable on PYPY + WINDOWS",
     )
@@ -357,9 +358,7 @@ class TestMiscAPIs(PsutilTestCase):
         assert bt > 0
         assert bt < time.time()
 
-    @pytest.mark.skipif(
-        CI_TESTING and not psutil.users(), reason="unreliable on CI"
-    )
+    @skipif(CI_TESTING and not psutil.users(), reason="unreliable on CI")
     def test_users(self):
         users = psutil.users()
         assert users
@@ -379,7 +378,7 @@ class TestMiscAPIs(PsutilTestCase):
                 else:
                     psutil.Process(user.pid)
 
-    @pytest.mark.skipif(not HAS_HEAP_INFO, reason="not supported")
+    @skipif(not HAS_HEAP_INFO, reason="not supported")
     def test_heap_info(self):
         m = psutil.heap_info()
         assert m.heap_used > 0
@@ -390,7 +389,7 @@ class TestMiscAPIs(PsutilTestCase):
         if WINDOWS:
             assert m.heap_count >= 0
 
-    @pytest.mark.skipif(not HAS_HEAP_INFO, reason="not supported")
+    @skipif(not HAS_HEAP_INFO, reason="not supported")
     def test_heap_trim(self):
         psutil.heap_trim()
 
@@ -647,7 +646,7 @@ class TestCpuAPIs(PsutilTestCase):
                 if difference >= 0.05:
                     return None
 
-    @pytest.mark.skipif(
+    @skipif(
         (CI_TESTING and OPENBSD) or MACOS or SUNOS,
         reason="unreliable on OPENBSD + CI",
     )
@@ -750,7 +749,7 @@ class TestCpuAPIs(PsutilTestCase):
             if not AIX and name in {'ctx_switches', 'interrupts'}:
                 assert value > 0
 
-    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
         def check_ls(ls):
             for nt in ls:
@@ -772,7 +771,7 @@ class TestCpuAPIs(PsutilTestCase):
         if LINUX:
             assert len(ls) == psutil.cpu_count()
 
-    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq_none_minmax(self):
         # min / max are None on FreeBSD when the sysctl is unparsable.
         # Averaging them across CPUs used to raise TypeError.
@@ -823,7 +822,7 @@ class TestDiskAPIs(PsutilTestCase):
         # we should also be able to use a file path
         psutil.disk_usage(__file__)
 
-    @pytest.mark.skipif(not ASCII_FS, reason="not an ASCII fs")
+    @skipif(not ASCII_FS, reason="not an ASCII fs")
     def test_disk_usage_unicode(self):
         # See: https://github.com/giampaolo/psutil/issues/416
         with pytest.raises(UnicodeEncodeError):
@@ -889,11 +888,11 @@ class TestDiskAPIs(PsutilTestCase):
         ]
         assert mount in mounts
 
-    @pytest.mark.skipif(
+    @skipif(
         LINUX and not os.path.exists('/proc/diskstats'),
         reason="/proc/diskstats not available on this linux version",
     )
-    @pytest.mark.skipif(
+    @skipif(
         CI_TESTING and not psutil.disk_io_counters(), reason="unreliable on CI"
     )  # no visible disks
     def test_disk_io_counters(self):
@@ -936,7 +935,7 @@ class TestDiskAPIs(PsutilTestCase):
 
 
 class TestNetAPIs(PsutilTestCase):
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_net_io_counters(self):
         def check_ntuple(nt):
             assert nt[0] == nt.bytes_sent
@@ -965,7 +964,7 @@ class TestNetAPIs(PsutilTestCase):
             assert isinstance(key, str)
             check_ntuple(ret[key])
 
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_net_io_counters_no_nics(self):
         # Emulate a case where no NICs are installed, see:
         # https://github.com/giampaolo/psutil/issues/1062
@@ -1094,7 +1093,7 @@ class TestNetAPIs(PsutilTestCase):
             assert mtu >= 0
             assert isinstance(flags, str)
 
-    @pytest.mark.skipif(
+    @skipif(
         not (LINUX or BSD or MACOS), reason="LINUX or BSD or MACOS specific"
     )
     def test_net_if_stats_enodev(self):
@@ -1108,7 +1107,7 @@ class TestNetAPIs(PsutilTestCase):
             assert ret == {}
             assert m.called
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @skipif(not POSIX, reason="POSIX only")
     def test_nic_names(self):
         stdlib_names = {name for _, name in socket.if_nameindex()}
         assert stdlib_names == set(psutil.net_io_counters(pernic=True).keys())
@@ -1117,7 +1116,7 @@ class TestNetAPIs(PsutilTestCase):
 
 
 class TestSensorsAPIs(PsutilTestCase):
-    @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
+    @skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     def test_sensors_temperatures(self):
         temps = psutil.sensors_temperatures()
         for name, entries in temps.items():
@@ -1131,7 +1130,7 @@ class TestSensorsAPIs(PsutilTestCase):
                 if entry.critical is not None:
                     assert entry.critical >= 0
 
-    @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
+    @skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     def test_sensors_temperatures_fahreneit(self):
         d = {'coretemp': [('label', 50.0, 60.0, 70.0)]}
         with mock.patch(
@@ -1143,8 +1142,8 @@ class TestSensorsAPIs(PsutilTestCase):
             assert temps.high == 140.0
             assert temps.critical == 158.0
 
-    @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    @skipif(not HAS_SENSORS_BATTERY, reason="not supported")
+    @skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors_battery(self):
         ret = psutil.sensors_battery()
         assert ret.percent >= 0
@@ -1158,7 +1157,7 @@ class TestSensorsAPIs(PsutilTestCase):
             assert ret.power_plugged
         assert isinstance(ret.power_plugged, bool)
 
-    @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
+    @skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_sensors_fans(self):
         fans = psutil.sensors_fans()
         for name, entries in fans.items():

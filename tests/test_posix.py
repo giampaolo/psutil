@@ -33,6 +33,7 @@ from . import pytest
 from . import retry_on_failure
 from . import sh
 from . import skip_on_access_denied
+from . import skipif
 from . import spawn_subproc
 from . import terminate
 
@@ -144,7 +145,7 @@ def df(device):
     return (sys_total, sys_used, sys_free, sys_percent)
 
 
-@pytest.mark.skipif(not POSIX, reason="POSIX only")
+@skipif(not POSIX, reason="POSIX only")
 class PosixTestCase(PsutilTestCase):
     pass
 
@@ -264,7 +265,7 @@ class TestProcess(PosixTestCase):
                 with pytest.raises(psutil.NoSuchProcess):
                     p.name()
 
-    @pytest.mark.skipif(MACOS or BSD, reason="ps -o start not available")
+    @skipif(MACOS or BSD, reason="ps -o start not available")
     def test_create_time(self):
         time_ps = ps('start', self.pid)
         time_psutil = psutil.Process(self.pid).create_time()
@@ -313,8 +314,8 @@ class TestProcess(PosixTestCase):
     # returns 0; psutil relies on it, see:
     # https://github.com/giampaolo/psutil/issues/1082
     # AIX has the same issue
-    @pytest.mark.skipif(SUNOS, reason="not reliable on SUNOS")
-    @pytest.mark.skipif(AIX, reason="not reliable on AIX")
+    @skipif(SUNOS, reason="not reliable on SUNOS")
+    @skipif(AIX, reason="not reliable on AIX")
     def test_nice(self):
         ps_nice = ps('nice', self.pid)
         psutil_nice = psutil.Process().nice()
@@ -350,7 +351,7 @@ class TestProcess(PosixTestCase):
         assert pf.minor == pytest.approx(ru.ru_minflt, abs=tol)
         assert pf.major == pytest.approx(ru.ru_majflt, abs=tol)
 
-    @pytest.mark.skipif(not LINUX and not MACOS, reason="Linux, macOS only")
+    @skipif(not LINUX and not MACOS, reason="Linux, macOS only")
     def test_page_faults_minor_increase(self):
         # Access 200 new anonymous pages; each first access triggers a
         # minor fault.
@@ -399,9 +400,9 @@ class TestSystemAPIs(PosixTestCase):
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
-    @pytest.mark.skipif(SUNOS, reason="unreliable on SUNOS")
-    @pytest.mark.skipif(not shutil.which("ifconfig"), reason="no ifconfig cmd")
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    @skipif(SUNOS, reason="unreliable on SUNOS")
+    @skipif(not shutil.which("ifconfig"), reason="no ifconfig cmd")
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_nic_names(self):
         output = sh("ifconfig -a")
         for nic in psutil.net_io_counters(pernic=True):
@@ -494,7 +495,7 @@ class TestSystemAPIs(PosixTestCase):
             assert m.called
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
-    @pytest.mark.skipif(AIX, reason="unreliable on AIX")
+    @skipif(AIX, reason="unreliable on AIX")
     @retry_on_failure()
     def test_disk_usage(self):
         tolerance = 4 * 1024 * 1024  # 4MB

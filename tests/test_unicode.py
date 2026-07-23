@@ -99,6 +99,7 @@ from . import safe_mkdir
 from . import safe_rmpath
 from . import serial
 from . import skip_on_access_denied
+from . import skipif
 from . import spawn_subproc
 from . import terminate
 
@@ -152,7 +153,7 @@ class BaseUnicodeTest(PsutilTestCase):
 
 
 @serial
-@pytest.mark.skipif(ASCII_FS, reason="ASCII fs")
+@skipif(ASCII_FS, reason="ASCII fs")
 class TestFSAPIs(BaseUnicodeTest):
     """Test FS APIs with a funky, valid, UTF8 path name."""
 
@@ -215,10 +216,8 @@ class TestFSAPIs(BaseUnicodeTest):
         if self.expect_exact_path_match():
             assert cwd == dname
 
-    @pytest.mark.skipif(PYPY and WINDOWS, reason="fails on PYPY + WINDOWS")
-    @pytest.mark.skipif(
-        NETBSD or OPENBSD, reason="broken on NETBSD or OPENBSD"
-    )
+    @skipif(PYPY and WINDOWS, reason="fails on PYPY + WINDOWS")
+    @skipif(NETBSD or OPENBSD, reason="broken on NETBSD or OPENBSD")
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
@@ -232,10 +231,8 @@ class TestFSAPIs(BaseUnicodeTest):
         if self.expect_exact_path_match():
             assert os.path.normcase(path) == os.path.normcase(self.funky_name)
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    @pytest.mark.skipif(
-        not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets"
-    )
+    @skipif(not POSIX, reason="POSIX only")
+    @skipif(not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets")
     def test_proc_net_connections(self):
         name = self.get_testfn(suffix=self.funky_suffix)
         sock = bind_unix_socket(name)
@@ -246,10 +243,8 @@ class TestFSAPIs(BaseUnicodeTest):
                 return pytest.skip("unreliable on OSX")
             assert conn.laddr == name
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    @pytest.mark.skipif(
-        not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets"
-    )
+    @skipif(not POSIX, reason="POSIX only")
+    @skipif(not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets")
     @skip_on_access_denied()
     def test_net_connections(self):
         def find_sock(cons):
@@ -272,7 +267,7 @@ class TestFSAPIs(BaseUnicodeTest):
         safe_mkdir(dname)
         psutil.disk_usage(dname)
 
-    @pytest.mark.skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
+    @skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
     def test_memory_maps(self):
         with copyload_shared_lib(suffix=self.funky_suffix) as funky_path:
 
@@ -289,7 +284,7 @@ class TestFSAPIs(BaseUnicodeTest):
                 assert isinstance(path, str)
 
 
-@pytest.mark.skipif(CI_TESTING, reason="unreliable on CI")
+@skipif(CI_TESTING, reason="unreliable on CI")
 class TestFSAPIsWithInvalidPath(TestFSAPIs):
     """Test FS APIs with a funky, invalid path name."""
 
@@ -309,8 +304,8 @@ class TestNonFSAPIS(BaseUnicodeTest):
 
     funky_suffix = UNICODE_SUFFIX
 
-    @pytest.mark.skipif(not HAS_PROC_ENVIRON, reason="not supported")
-    @pytest.mark.skipif(PYPY and WINDOWS, reason="segfaults on PYPY + WINDOWS")
+    @skipif(not HAS_PROC_ENVIRON, reason="not supported")
+    @skipif(PYPY and WINDOWS, reason="segfaults on PYPY + WINDOWS")
     def test_proc_environ(self):
         # Note: differently from others, this test does not deal
         # with fs paths.

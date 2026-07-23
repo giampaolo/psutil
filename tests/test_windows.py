@@ -34,6 +34,7 @@ from . import PsutilTestCase
 from . import pytest
 from . import retry_on_failure
 from . import sh
+from . import skipif
 from . import spawn_subproc
 from . import terminate
 
@@ -52,8 +53,8 @@ if WINDOWS:
     from psutil._pswindows import convert_oserror
 
 
-@pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
-@pytest.mark.skipif(PYPY, reason="pywin32 not available on PYPY")
+@skipif(not WINDOWS, reason="WINDOWS only")
+@skipif(PYPY, reason="pywin32 not available on PYPY")
 class WindowsTestCase(PsutilTestCase):
 
     def OpenProcess(self, pid=None):
@@ -121,7 +122,7 @@ def wmic(path, what, converter=int):
 
 class TestCpuCount(WindowsTestCase):
 
-    @pytest.mark.skipif(
+    @skipif(
         'NUMBER_OF_PROCESSORS' not in os.environ,
         reason="env var not available",
     )
@@ -264,7 +265,7 @@ class TestNetAPIs(WindowsTestCase):
                 )
 
     @retry_on_failure()
-    @pytest.mark.skipif(GITHUB_ACTIONS, reason="unreliable on GITHUB")
+    @skipif(GITHUB_ACTIONS, reason="unreliable on GITHUB")
     def test_net_io_counters(self):
         ps = psutil.net_io_counters(pernic=False)
         wmi_recv = wmi_sent = 0
@@ -383,7 +384,7 @@ class TestDiskApis(WindowsTestCase):
 
 class TestOtherSystemAPIs(WindowsTestCase):
 
-    # @pytest.mark.skipif(wmi is None, reason="wmi module is not installed")
+    # @skipif(wmi is None, reason="wmi module is not installed")
     # def test__UPTIME(self):
     #     # _UPTIME constant is not public but it is used internally
     #     # as value to return for pid 0 creation time.
@@ -463,7 +464,7 @@ class TestSensorsBattery(WindowsTestCase):
         else:
             assert psutil.sensors_battery() is None
 
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    @skipif(not HAS_BATTERY, reason="no battery")
     def test_percent(self):
         w = wmi.WMI()
         battery_wmi = w.query('select * from Win32_Battery')[0]
@@ -473,7 +474,7 @@ class TestSensorsBattery(WindowsTestCase):
             < 1
         )
 
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    @skipif(not HAS_BATTERY, reason="no battery")
     def test_power_plugged(self):
         w = wmi.WMI()
         battery_wmi = w.query('select * from Win32_Battery')[0]
@@ -482,7 +483,7 @@ class TestSensorsBattery(WindowsTestCase):
         # https://msdn.microsoft.com/en-us/library/aa394074(v=vs.85).aspx
         assert battery_psutil.power_plugged == (battery_wmi.BatteryStatus == 2)
 
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    @skipif(not HAS_BATTERY, reason="no battery")
     def test_secsleft(self):
         class SYSTEM_POWER_STATUS(ctypes.Structure):
             _fields_ = [
@@ -819,9 +820,7 @@ class TestProcessWMI(WindowsTestCase):
         assert p.name() == w.Caption
 
     # This fail on github because using virtualenv for test environment
-    @pytest.mark.skipif(
-        GITHUB_ACTIONS, reason="unreliable path on GITHUB_ACTIONS"
-    )
+    @skipif(GITHUB_ACTIONS, reason="unreliable path on GITHUB_ACTIONS")
     def test_exe(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
@@ -886,7 +885,7 @@ class TestProcessWMI(WindowsTestCase):
 # ---
 
 
-@pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
+@skipif(not WINDOWS, reason="WINDOWS only")
 class TestDualProcessImplementation(PsutilTestCase):
     """Certain APIs on Windows have 2 internal implementations, one
     based on documented Windows APIs, another one based
@@ -979,7 +978,7 @@ class TestDualProcessImplementation(PsutilTestCase):
                 assert a == b
 
 
-@pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
+@skipif(not WINDOWS, reason="WINDOWS only")
 class RemoteProcessTestCase(PsutilTestCase):
     """Certain functions require calling ReadProcessMemory.
     This trivially works when called on the current process.
@@ -1073,7 +1072,7 @@ class RemoteProcessTestCase(PsutilTestCase):
 # ===================================================================
 
 
-@pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
+@skipif(not WINDOWS, reason="WINDOWS only")
 class TestServices(PsutilTestCase):
     def test_win_service_iter(self):
         valid_statuses = {

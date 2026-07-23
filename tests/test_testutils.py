@@ -41,6 +41,7 @@ from . import reap_children
 from . import retry
 from . import safe_mkdir
 from . import safe_rmpath
+from . import skipif
 from . import system_namespace
 from . import tcp_socketpair
 from . import terminate
@@ -238,7 +239,7 @@ class TestProcessUtils(PsutilTestCase):
         terminate(grandchild)
         assert not grandchild.is_running()
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @skipif(not POSIX, reason="POSIX only")
     def test_spawn_zombie(self):
         _parent, zombie = self.spawn_zombie()
         assert zombie.status() == psutil.STATUS_ZOMBIE
@@ -289,7 +290,7 @@ class TestNetUtils(PsutilTestCase):
         with bind_socket(addr=('', port)) as s:
             assert s.getsockname()[1] == port
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @skipif(not POSIX, reason="POSIX only")
     def test_bind_unix_socket(self):
         name = self.get_testfn()
         with bind_unix_socket(name) as sock:
@@ -312,13 +313,11 @@ class TestNetUtils(PsutilTestCase):
             assert client.getpeername() == addr
             assert client.getsockname() != addr
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    @pytest.mark.skipif(
+    @skipif(not POSIX, reason="POSIX only")
+    @skipif(
         NETBSD or FREEBSD, reason="/var/run/log UNIX socket opened by default"
     )
-    @pytest.mark.skipif(
-        not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets"
-    )
+    @skipif(not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets")
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()
