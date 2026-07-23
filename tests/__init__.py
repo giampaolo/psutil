@@ -442,7 +442,6 @@ def spawn_zombie():
         import os, socket, time
         child_pid = os.fork()
         if child_pid == 0:
-            # Exit now -> zombie (parent won't wait() us).
             os._exit(0)
         else:
             with socket.socket(socket.AF_UNIX) as s:
@@ -628,13 +627,12 @@ def reap_children(recursive=False):
 
     # Terminate children.
     if children:
+        timeout = 3
         for p in children:
-            # Bounded wait; a child that ignores the signal (macOS + CI
-            # can hang) is left to the SIGKILL fallback below.
             try:
-                terminate(p, wait_timeout=GLOBAL_TIMEOUT)
+                terminate(p, wait_timeout=timeout)
             except psutil.TimeoutExpired:
-                warn(f"{p!r} didn't terminate within {GLOBAL_TIMEOUT}s")
+                warn(f"{p!r} didn't terminate within {timeout} secs")
         _, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn(f"couldn't terminate process {p!r}; attempting kill()")

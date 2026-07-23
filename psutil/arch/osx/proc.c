@@ -339,11 +339,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    // Sum up the process' private (unique) resident pages by walking its
-    // VM regions. We use proc_pidinfo(PROC_PIDREGIONINFO) rather than
-    // task_for_pid() + mach_vm_region(): it's pid-based and never upcalls
-    // the taskgated daemon, so unlike task_for_pid() it can't hang.
-    // Roughly based on libtop_update_vm_regions in
+    // Sum up process private (unique) resident pages by walking its VM
+    // regions. Roughly based on libtop_update_vm_regions in:
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
     while (1) {
         errno = 0;

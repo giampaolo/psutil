@@ -157,7 +157,8 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
 
 // A wrapper around task_for_pid() which sucks big time:
 //
-// - it can *block* forever (not just fail) for tasks we can't access
+// - it can *block* forever (not just fail) for tasks we can't access:
+//   https://github.com/giampaolo/psutil/issues/2885
 // - it's not documented
 // - errno is set only sometimes
 // - sometimes errno is ENOENT (?!?)
