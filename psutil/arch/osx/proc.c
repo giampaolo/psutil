@@ -442,13 +442,13 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     for (i = 0; i < num_threads; i++) {
         if (psutil_proc_pidinfo(
-                pid, PROC_PIDTHREADID64INFO, tids[i], &ti, sizeof(ti)
+                pid, PROC_PIDTHREADINFO, tids[i], &ti, sizeof(ti)
             )
             != 0)
         {
             // Thread vanished between listing and query; skip it.
             PyErr_Clear();
-            psutil_debug("PROC_PIDTHREADID64INFO failed; thread gone");
+            psutil_debug("PROC_PIDTHREADINFO failed; thread gone");
             continue;
         }
 
