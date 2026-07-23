@@ -339,6 +339,8 @@ class TestModuleFunctions(MemoryLeakTestCase):
     # TODO: remove this skip when this gets fixed
     @pytest.mark.skipif(SUNOS, reason="worthless on SUNOS (uses a subprocess)")
     def test_swap_memory(self):
+        if WINDOWS:
+            psutil.swap_memory()  # spawns a PDH thread internally
         self.execute(psutil.swap_memory)
 
     def test_pid_exists(self):
