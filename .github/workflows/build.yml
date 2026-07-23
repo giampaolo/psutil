@@ -72,6 +72,9 @@ jobs:
           # branches) build a lean subset: shipped abi3 wheel (3.8),
           # full-tested 3.14, free-threaded 3.14.
           CIBW_BUILD: "${{ (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && '*' || 'cp38-* cp314-* cp314t-*' }}"
+          # Test against psleak git master (not the released PyPI version).
+          # Runs before .[test], so its unpinned psleak is left satisfied.
+          CIBW_BEFORE_TEST: "pip install git+https://github.com/giampaolo/psleak.git"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v7
