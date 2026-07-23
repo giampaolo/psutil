@@ -286,9 +286,14 @@ class TestTerminatedProcess(TestProcess):
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
 class TestProcessDualImplementation(MemoryLeakTestCase):
     def test_cmdline_peb_true(self):
+        # The first CommandLineToArgvW() call loads shell32, leaving
+        # persistent handles; prime it so psleak doesn't flag it (each
+        # -n auto worker is a fresh process).
+        _psutil.proc_cmdline(os.getpid(), use_peb=True)
         self.execute(lambda: _psutil.proc_cmdline(os.getpid(), use_peb=True))
 
     def test_cmdline_peb_false(self):
+        _psutil.proc_cmdline(os.getpid(), use_peb=False)  # prime (see above)
         self.execute(lambda: _psutil.proc_cmdline(os.getpid(), use_peb=False))
 
 
@@ -372,6 +377,10 @@ class TestModuleFunctions(MemoryLeakTestCase):
 
     @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_net_io_counters(self):
+        if WINDOWS:
+            # GetAdaptersAddresses() leaves a persistent handle on first
+            # use; prime it (see test_net_if_addrs).
+            psutil.net_io_counters()
         self.execute(lambda: psutil.net_io_counters(nowrap=False))
 
     @pytest.mark.skipif(MACOS and os.getuid() != 0, reason="need root access")
@@ -398,6 +407,10 @@ class TestModuleFunctions(MemoryLeakTestCase):
         self.execute(psutil.net_if_addrs, tolerance=tolerance)
 
     def test_net_if_stats(self):
+        if WINDOWS:
+            # GetAdaptersAddresses() leaves a persistent handle on first
+            # use; prime it (see test_net_if_addrs).
+            psutil.net_if_stats()
         self.execute(psutil.net_if_stats)
 
     # --- sensors
