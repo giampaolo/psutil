@@ -101,7 +101,9 @@ install-pydeps-dev:  ## Install python deps meant for local development.
 # On CI drop instafail so failures gather in one block at the end.
 _PYTEST_EXTRA != { if [ "$$OS" = "Windows_NT" ]; then printf '%s ' '-o cache_dir=/tmp/pytest-psutil-cache'; fi; if [ -n "$$CI" ]; then printf '%s ' '-p no:instafail'; fi; }
 RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(_PYTEST_EXTRA)
-RUN_TEST_MEMLEAKS = PYTHONMALLOC=malloc $(RUN_TEST) -k test_memleaks.py $(_PYTEST_EXTRA)
+RUN_TEST_MEMLEAKS = PYTHONMALLOC=malloc $(RUN_TEST) -k test_memleaks.py
+RUN_TEST_PARALLEL = $(RUN_TEST) -n auto --dist loadgroup
+RUN_TEST_MEMLEAKS_PARALLEL = $(RUN_TEST_MEMLEAKS) -n auto
 
 # --- main
 
@@ -110,10 +112,13 @@ test:  ## Run all tests (except memleak tests).
 	$(RUN_TEST) $(ARGS)
 
 test-parallel:  ## Run all tests (except memleak tests) in parallel.
-	$(RUN_TEST) -n auto --dist loadgroup $(ARGS)
+	$(RUN_TEST_PARALLEL) $(ARGS)
 
-test-memleaks:  ## Memory leak tests.
+test-memleaks:  ## Run memory leak tests.
 	$(RUN_TEST_MEMLEAKS) $(ARGS)
+
+test-memleaks-parallel:  ## Run memory leak tests in parallel.
+	$(RUN_TEST_MEMLEAKS_PARALLEL) $(ARGS)
 
 # --- individual
 
@@ -267,7 +272,7 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) build
 	$(MAKE) print-sysinfo
 	$(RUN_TEST) --durations=15
-	$(RUN_TEST_MEMLEAKS) --durations=10
+	$(RUN_TEST_MEMLEAKS_PARALLEL) --durations=10
 
 ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	$(MAKE) install-sysdeps  # test pydeps already installed at this point
@@ -278,7 +283,7 @@ ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	mkdir -p .tests
 	cp -r tests .tests/
 	cd .tests/ && PYTHONPATH=$$(pwd) $(RUN_TEST) --durations=15
-	cd .tests/ && PYTHONPATH=$$(pwd) $(RUN_TEST_MEMLEAKS) --durations=10
+	cd .tests/ && PYTHONPATH=$$(pwd) $(RUN_TEST_MEMLEAKS_PARALLEL) --durations=10
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
