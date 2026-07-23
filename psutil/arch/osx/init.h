@@ -21,6 +21,7 @@ int psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax);
 int psutil_proc_pidinfo(
     pid_t pid, int flavor, uint64_t arg, void *pti, int size
 );
+int psutil_task_access_allowed(pid_t pid);
 int psutil_task_for_pid(pid_t pid, mach_port_t *task);
 struct proc_fdinfo *psutil_proc_list_fds(pid_t pid, int *num_fds);
 

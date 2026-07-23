@@ -97,8 +97,9 @@ install-pydeps-dev:  ## Install python deps meant for local development.
 # Tests
 # ===================================================================
 
-# Cache dir on Windows often causes "Permission denied" errors
-_PYTEST_EXTRA != if [ "$$OS" = "Windows_NT" ]; then printf '%s' '-o cache_dir=/tmp/pytest-psutil-cache'; fi
+# Cache dir on Windows often causes "Permission denied" errors.
+# On CI drop instafail so failures gather in one block at the end.
+_PYTEST_EXTRA != { if [ "$$OS" = "Windows_NT" ]; then printf '%s ' '-o cache_dir=/tmp/pytest-psutil-cache'; fi; if [ -n "$$CI" ]; then printf '%s ' '-p no:instafail'; fi; }
 RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(_PYTEST_EXTRA)
 
 test:  ## Run all tests (except memleak tests).
@@ -269,8 +270,8 @@ ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	rm -rf .tests tests/__pycache__
 	mkdir -p .tests
 	cp -r tests .tests/
-	cd .tests/ && PYTHONPATH=$$(pwd) $(PYTHON_ENV_VARS) $(PYTHON) -m pytest
-	cd .tests/ && PYTHONPATH=$$(pwd) $(PYTHON_ENV_VARS) PYTHONMALLOC=malloc $(PYTHON) -m pytest -k test_memleaks.py
+	cd .tests/ && PYTHONPATH=$$(pwd) $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -p no:instafail
+	cd .tests/ && PYTHONPATH=$$(pwd) $(PYTHON_ENV_VARS) PYTHONMALLOC=malloc $(PYTHON) -m pytest -k test_memleaks.py -p no:instafail
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit

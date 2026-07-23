@@ -29,7 +29,7 @@ jobs:
   tests:
     name: "${{ matrix.os }}, ${{ matrix.arch }}"
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -37,17 +37,18 @@ jobs:
           - { os: ubuntu-latest, arch: x86_64 }
           - { os: ubuntu-24.04-arm, arch: aarch64 }
           - { os: macos-15, arch: x86_64 }
-          - { os: macos-15, arch: arm64 }
+          - { os: macos-15, arch: arm64, python: "3.8" } # universal2
           - { os: windows-2025, arch: AMD64 }
-          - { os: windows-11-arm, arch: ARM64 }
+          - { os: windows-11-arm, arch: ARM64, python: "3.13" }
     steps:
       - uses: actions/checkout@v7
 
-      # Install Python 3.8 on macOS ARM64 for universal2 support, else 3.11
+      # Host Python only launches cibuildwheel. Default 3.11; some jobs
+      # override matrix.python to hit their runner's toolcache.
       - name: Install Python
         uses: actions/setup-python@v6
         with:
-          python-version: ${{ runner.os == 'macOS' && runner.arch == 'ARM64' && '3.8' || '3.11' }}
+          python-version: ${{ matrix.python || '3.11' }}
 
       # Cache the CPython interpreters cibuildwheel downloads, so later
       # pushes reuse them. Linux gets them from the container, so skip it.

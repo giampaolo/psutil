@@ -292,7 +292,9 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
     // Fetch wired memory.
     uint64_t wired_size = 0;
     struct rusage_info_v0 ri;
-    if (proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri) == 0)
+    int rusage_ret;
+    rusage_ret = proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri);
+    if (rusage_ret == 0)
         wired_size = ri.ri_wired_size;
     else
         psutil_debug("proc_pid_rusage() failed (pid=%i)", pid);
@@ -321,212 +323,153 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     pid_t pid;
     cpu_type_t cpu_type;
     size_t private_pages = 0;
-    mach_vm_size_t size = 0;
-    mach_msg_type_number_t info_count;
-    kern_return_t kr;
     long pagesize = psutil_getpagesize();
-    mach_vm_address_t addr;
-    mach_port_t task = MACH_PORT_NULL;
-    vm_region_top_info_data_t info;
-    mach_port_t object_name;
-    mach_vm_address_t prev_addr;
+    uint64_t addr = 0;
+    uint64_t next_addr;
+    int ret;
+    int nregions = 0;
+    struct proc_regioninfo ri;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-
-    if (psutil_task_for_pid(pid, &task) != 0)
         return NULL;
 
     if (psutil_sysctlbyname("sysctl.proc_cputype", &cpu_type, sizeof(cpu_type))
         != 0)
     {
-        mach_port_deallocate(mach_task_self(), task);
         return NULL;
     }
 
-    // Roughly based on libtop_update_vm_regions in
+    // Sum up process private (unique) resident pages by walking its VM
+    // regions. Roughly based on libtop_update_vm_regions in:
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
-    for (addr = MACH_VM_MIN_ADDRESS;; addr += size) {
-        prev_addr = addr;
-        info_count = VM_REGION_TOP_INFO_COUNT;  // reset before each call
-        object_name = MACH_PORT_NULL;
+    while (1) {
+        errno = 0;
+        ret = proc_pidinfo(pid, PROC_PIDREGIONINFO, addr, &ri, sizeof(ri));
 
-        kr = mach_vm_region(
-            task,
-            &addr,
-            &size,
-            VM_REGION_TOP_INFO,
-            (vm_region_info_t)&info,
-            &info_count,
-            &object_name
-        );
-
-        if (object_name != MACH_PORT_NULL) {
-            mach_port_deallocate(mach_task_self(), object_name);
-            object_name = MACH_PORT_NULL;
-        }
-
-        if (kr == KERN_INVALID_ADDRESS) {
-            // Done iterating VM regions.
+        if (ret <= 0) {
+            // A failure on the first region means the process is gone or
+            // not accessible; past that it just means we reached the end
+            // of the address space.
+            if (nregions == 0) {
+                psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDREGIONINFO)");
+                return NULL;
+            }
             break;
         }
-        else if (kr != KERN_SUCCESS) {
-            psutil_runtime_error(
-                "mach_vm_region(VM_REGION_TOP_INFO) syscall failed"
+        if (ret != sizeof(ri)) {
+            psutil_raise_for_pid(
+                pid, "proc_pidinfo(PROC_PIDREGIONINFO) truncated"
             );
-            mach_port_deallocate(mach_task_self(), task);
             return NULL;
         }
+        nregions += 1;
 
-        if (size == 0 || addr < prev_addr) {
+        if (!(psutil_in_shared_region(ri.pri_address, cpu_type)
+              && ri.pri_share_mode != SM_PRIVATE))
+        {
+            switch (ri.pri_share_mode) {
+#ifdef SM_LARGE_PAGE
+                case SM_LARGE_PAGE:
+                    // NB: Large pages are not shareable and always resident.
+#endif
+                case SM_PRIVATE:
+                    private_pages += ri.pri_private_pages_resident;
+                    private_pages += ri.pri_shared_pages_resident;
+                    break;
+                case SM_COW:
+                    private_pages += ri.pri_private_pages_resident;
+                    if (ri.pri_ref_count == 1) {
+                        // Treat copy-on-write pages as private if they
+                        // only have one reference.
+                        private_pages += ri.pri_shared_pages_resident;
+                    }
+                    break;
+                case SM_SHARED:
+                default:
+                    break;
+            }
+        }
+
+        next_addr = ri.pri_address + ri.pri_size;
+        if (ri.pri_size == 0 || next_addr <= addr) {
             psutil_debug("prevent infinite loop");
             break;
         }
-
-        if (psutil_in_shared_region(addr, cpu_type)
-            && info.share_mode != SM_PRIVATE)
-        {
-            continue;
-        }
-
-        switch (info.share_mode) {
-#ifdef SM_LARGE_PAGE
-            case SM_LARGE_PAGE:
-                // NB: Large pages are not shareable and always resident.
-#endif
-            case SM_PRIVATE:
-                private_pages += info.private_pages_resident;
-                private_pages += info.shared_pages_resident;
-                break;
-            case SM_COW:
-                private_pages += info.private_pages_resident;
-                if (info.ref_count == 1) {
-                    // Treat copy-on-write pages as private if they only
-                    // have one reference.
-                    private_pages += info.shared_pages_resident;
-                }
-                break;
-            case SM_SHARED:
-            default:
-                break;
-        }
+        addr = next_addr;
     }
 
-    mach_port_deallocate(mach_task_self(), task);
-    return Py_BuildValue("K", private_pages * pagesize);
+    return Py_BuildValue("K", (unsigned long long)private_pages * pagesize);
 }
 
 
 PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     pid_t pid;
-    kern_return_t kr;
-    mach_port_t task = MACH_PORT_NULL;
-    struct task_basic_info tasks_info;
-    thread_act_port_array_t thread_list = NULL;
-    thread_info_data_t thinfo_basic;
-    thread_basic_info_t basic_info_th;
-    mach_msg_type_number_t thread_count, thread_info_count, j;
-
+    int ret;
+    int buf_size;
+    int num_threads;
+    int i;
+    uint64_t *tids = NULL;
+    struct proc_taskinfo pti;
+    struct proc_threadinfo ti;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
-
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
-    if (psutil_task_for_pid(pid, &task) != 0)
+    // Get size.
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) != 0)
         goto error;
-
-    // Get basic task info (optional, ignored if access denied)
-    mach_msg_type_number_t info_count = TASK_BASIC_INFO_COUNT;
-    kr = task_info(
-        task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count
-    );
-    if (kr != KERN_SUCCESS) {
-        if (kr == KERN_INVALID_ARGUMENT) {
-            psutil_oserror_ad("task_info(TASK_BASIC_INFO)");
-        }
-        else {
-            // otherwise throw a runtime error with appropriate error code
-            psutil_runtime_error("task_info(TASK_BASIC_INFO) syscall failed");
-        }
+    buf_size = (int)((pti.pti_threadnum + 32) * sizeof(uint64_t));
+    tids = malloc(buf_size);
+    if (tids == NULL) {
+        PyErr_NoMemory();
         goto error;
     }
 
-    kr = task_threads(task, &thread_list, &thread_count);
-    if (kr != KERN_SUCCESS) {
-        psutil_runtime_error("task_threads() syscall failed");
+    errno = 0;
+    ret = proc_pidinfo(pid, PROC_PIDLISTTHREADS, 0, tids, buf_size);
+    if (ret <= 0) {
+        psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTTHREADS)");
         goto error;
     }
+    num_threads = ret / (int)sizeof(uint64_t);
 
-    for (j = 0; j < thread_count; j++) {
-        thread_info_count = THREAD_INFO_MAX;
-        kr = thread_info(
-            thread_list[j],
-            THREAD_BASIC_INFO,
-            (thread_info_t)thinfo_basic,
-            &thread_info_count
-        );
-        if (kr != KERN_SUCCESS) {
-            psutil_runtime_error(
-                "thread_info(THREAD_BASIC_INFO) syscall failed"
-            );
-            goto error;
+    for (i = 0; i < num_threads; i++) {
+        if (psutil_proc_pidinfo(
+                pid, PROC_PIDTHREADINFO, tids[i], &ti, sizeof(ti)
+            )
+            != 0)
+        {
+            // Thread vanished between listing and query; skip it.
+            PyErr_Clear();
+            psutil_debug("PROC_PIDTHREADINFO failed; thread gone");
+            continue;
         }
 
-        basic_info_th = (thread_basic_info_t)thinfo_basic;
+        // Unlike PROC_PIDTASKINFO's Mach-tick totals, pth_user_time and
+        // pth_system_time are already in nanoseconds.
         if (!pylist_append_fmt(
                 py_retlist,
-                "Iff",
-                j + 1,
-                basic_info_th->user_time.seconds
-                    + (float)basic_info_th->user_time.microseconds / 1000000.0,
-                basic_info_th->system_time.seconds
-                    + (float)basic_info_th->system_time.microseconds
-                          / 1000000.0
+                "Kdd",
+                (unsigned long long)tids[i],
+                (double)ti.pth_user_time / 1000000000.0,
+                (double)ti.pth_system_time / 1000000000.0
             ))
         {
             goto error;
         }
     }
 
-    // deallocate thread_list if it was allocated
-    if (thread_list != NULL) {
-        vm_deallocate(
-            mach_task_self(),
-            (vm_address_t)thread_list,
-            thread_count * sizeof(thread_act_t)
-        );
-        thread_list = NULL;
-    }
-
-    // deallocate the task port
-    if (task != MACH_PORT_NULL) {
-        mach_port_deallocate(mach_task_self(), task);
-        task = MACH_PORT_NULL;
-    }
-
+    free(tids);
     return py_retlist;
 
 error:
+    if (tids != NULL)
+        free(tids);
     Py_XDECREF(py_retlist);
-
-    if (thread_list != NULL) {
-        vm_deallocate(
-            mach_task_self(),
-            (vm_address_t)thread_list,
-            thread_count * sizeof(thread_act_t)
-        );
-        thread_list = NULL;
-    }
-
-    if (task != MACH_PORT_NULL) {
-        mach_port_deallocate(mach_task_self(), task);
-        task = MACH_PORT_NULL;
-    }
-
     return NULL;
 }
 

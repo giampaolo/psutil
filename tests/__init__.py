@@ -439,16 +439,15 @@ def spawn_zombie():
     assert psutil.POSIX
     unix_file = get_testfn()
     src = textwrap.dedent(f"""\
-        import os, sys, time, socket, contextlib
+        import os, socket, time
         child_pid = os.fork()
-        if child_pid > 0:
-            time.sleep(3000)
+        if child_pid == 0:
+            os._exit(0)
         else:
-            # this is the zombie process
             with socket.socket(socket.AF_UNIX) as s:
                 s.connect('{unix_file}')
-                pid = bytes(str(os.getpid()), 'ascii')
-                s.sendall(pid)
+                s.sendall(bytes(str(child_pid), 'ascii'))
+            time.sleep(3000)
         """)
     tfile = None
     sock = bind_unix_socket(unix_file)
@@ -612,6 +611,9 @@ def reap_children(recursive=False):
     # recursive=True we don't want to lose the intermediate reference
     # pointing to the grandchildren.
     children = psutil.Process().children(recursive=recursive)
+    # children() lists them top-down; reverse so descendants die before
+    # their parents (avoids orphaning grandchildren).
+    children.reverse()
 
     # Terminate subprocess.Popen.
     while _subprocesses_started:
@@ -625,8 +627,12 @@ def reap_children(recursive=False):
 
     # Terminate children.
     if children:
+        timeout = 3
         for p in children:
-            terminate(p, wait_timeout=None)
+            try:
+                terminate(p, wait_timeout=timeout)
+            except psutil.TimeoutExpired:
+                warn(f"{p!r} didn't terminate within {timeout} secs")
         _, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn(f"couldn't terminate process {p!r}; attempting kill()")
