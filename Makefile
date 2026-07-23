@@ -271,7 +271,7 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-pydeps-test
 	$(MAKE) build
 	$(MAKE) print-sysinfo
-	$(RUN_TEST) --durations=15
+	$(RUN_TEST_PARALLEL) --durations=15
 	$(RUN_TEST_MEMLEAKS_PARALLEL) --durations=10
 
 ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
@@ -282,7 +282,7 @@ ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	rm -rf .tests tests/__pycache__
 	mkdir -p .tests
 	cp -r tests .tests/
-	cd .tests/ && PYTHONPATH=$$(pwd) $(RUN_TEST) --durations=15
+	cd .tests/ && PYTHONPATH=$$(pwd) $(RUN_TEST_PARALLEL) --durations=15
 	cd .tests/ && PYTHONPATH=$$(pwd) $(RUN_TEST_MEMLEAKS_PARALLEL) --durations=10
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
