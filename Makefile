@@ -101,13 +101,26 @@ install-pydeps-dev:  ## Install python deps meant for local development.
 # On CI drop instafail so failures gather in one block at the end.
 _PYTEST_EXTRA != { if [ "$$OS" = "Windows_NT" ]; then printf '%s ' '-o cache_dir=/tmp/pytest-psutil-cache'; fi; if [ -n "$$CI" ]; then printf '%s ' '-p no:instafail'; fi; }
 RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(_PYTEST_EXTRA)
+RUN_TEST_MEMLEAKS = PYTHONMALLOC=malloc $(RUN_TEST) -k test_memleaks.py
+RUN_TEST_PARALLEL = $(RUN_TEST) -n auto --dist loadgroup
+RUN_TEST_MEMLEAKS_PARALLEL = $(RUN_TEST_MEMLEAKS) -n auto
+
+# --- main
 
 test:  ## Run all tests (except memleak tests).
 	# To run a specific test do `make test ARGS=tests/test_process.py::TestProcess::test_cmdline`
 	$(RUN_TEST) $(ARGS)
 
 test-parallel:  ## Run all tests (except memleak tests) in parallel.
-	$(RUN_TEST) -n auto --dist loadgroup $(ARGS)
+	$(RUN_TEST_PARALLEL) $(ARGS)
+
+test-memleaks:  ## Run memory leak tests.
+	$(RUN_TEST_MEMLEAKS) $(ARGS)
+
+test-memleaks-parallel:  ## Run memory leak tests in parallel.
+	$(RUN_TEST_MEMLEAKS_PARALLEL) $(ARGS)
+
+# --- individual
 
 test-process:  ## Run process-related tests.
 	$(RUN_TEST) -k "test_process.py or test_proc or test_pid or Process or pids or pid_exists" $(ARGS)
@@ -151,8 +164,7 @@ test-posix:  ## POSIX specific tests.
 test-platform:  ## Run specific platform tests only.
 	$(RUN_TEST) -k test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py $(ARGS)
 
-test-memleaks:  ## Memory leak tests.
-	PYTHONMALLOC=malloc $(RUN_TEST) -k test_memleaks.py $(ARGS)
+# --- special
 
 test-sudo:  ## Run tests requiring root privileges.
 	# Use unittest runner because pytest may not be installed as root.
@@ -259,8 +271,8 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-pydeps-test
 	$(MAKE) build
 	$(MAKE) print-sysinfo
-	$(MAKE) test ARGS="--durations=15"
-	$(MAKE) test-memleaks ARGS="--durations=10"
+	$(RUN_TEST) --durations=15
+	$(RUN_TEST_MEMLEAKS) --durations=10
 
 ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	$(MAKE) install-sysdeps  # test pydeps already installed at this point
@@ -270,8 +282,8 @@ ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	rm -rf .tests tests/__pycache__
 	mkdir -p .tests
 	cp -r tests .tests/
-	cd .tests/ && PYTHONPATH=$$(pwd) $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -p no:instafail
-	cd .tests/ && PYTHONPATH=$$(pwd) $(PYTHON_ENV_VARS) PYTHONMALLOC=malloc $(PYTHON) -m pytest -k test_memleaks.py -p no:instafail
+	cd .tests/ && PYTHONPATH=$$(pwd) $(RUN_TEST) --durations=15
+	cd .tests/ && PYTHONPATH=$$(pwd) $(RUN_TEST_MEMLEAKS) --durations=10
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit

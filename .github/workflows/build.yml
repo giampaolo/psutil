@@ -30,6 +30,11 @@ jobs:
     name: "${{ matrix.os }}, ${{ matrix.arch }}"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
+    # "full" = whole wheel matrix (master/tags), "lean" = branch/PR
+    # subset. Keeps their interpreter caches separate so a lean run
+    # doesn't restore (and pay for) the full set.
+    env:
+      CACHE_TAG: ${{ (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && 'full' || 'lean' }}
     strategy:
       fail-fast: false
       matrix:
@@ -59,15 +64,22 @@ jobs:
           path: |
             ~/AppData/Local/pypa/cibuildwheel/Cache
             ~/Library/Caches/cibuildwheel
-          key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
+          key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ env.CACHE_TAG }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
           restore-keys: |
-            cibw-${{ runner.os }}-${{ matrix.arch }}-
+            cibw-${{ runner.os }}-${{ matrix.arch }}-${{ env.CACHE_TAG }}-
 
       - name: Build wheels + run tests
         uses: pypa/cibuildwheel@v3.4.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENABLE: "cpython-freethreading ${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
+          # Full matrix only on master and tags. Everywhere else (PRs,
+          # branches) build a lean subset: shipped abi3 wheel (3.8),
+          # full-tested 3.14, free-threaded 3.14.
+          CIBW_BUILD: "${{ (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && '*' || 'cp38-* cp314-* cp314t-*' }}"
+          # Test against psleak git master (not the released PyPI version).
+          # Runs before .[test], so its unpinned psleak is left satisfied.
+          CIBW_BEFORE_TEST: "pip install git+https://github.com/giampaolo/psleak.git"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v7
@@ -90,6 +102,9 @@ jobs:
   # Merge wheels and check sanity of the package distribution.
   merge-and-check-dist:
     needs: [tests]
+    # Runs only on master + tags, where the full wheel set is built
+    # (it asserts that full set is present).
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

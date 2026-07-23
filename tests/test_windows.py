@@ -796,7 +796,10 @@ class TestProcess(WindowsTestCase):
         mem = p.memory_info()
         pfaults = p.page_faults()
         tol = 500
-        assert mem.num_page_faults == pytest.approx(pfaults.minor, abs=tol)
+        with pytest.warns(
+            DeprecationWarning, match="num_page_faults is deprecated"
+        ):
+            assert mem.num_page_faults == pytest.approx(pfaults.minor, abs=tol)
 
 
 class TestProcessWMI(WindowsTestCase):
