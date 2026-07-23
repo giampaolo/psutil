@@ -384,10 +384,9 @@ class TestModuleFunctions(MemoryLeakTestCase):
 
     @pytest.mark.skipif(MACOS and os.getuid() != 0, reason="need root access")
     def test_net_connections(self):
-        # always opens and handle on Windows() (once)
-        psutil.net_connections(kind='all')
         times = FEW_TIMES if LINUX else self.times
         with create_sockets():
+            psutil.net_connections(kind='all')
             self.execute(
                 lambda: psutil.net_connections(kind='all'), times=times
             )
