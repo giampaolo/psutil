@@ -68,9 +68,10 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENABLE: "cpython-freethreading ${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
-          # On PRs build only a subset: the shipped abi3 wheel (3.8), the
-          # full-tested 3.14, and free-threaded 3.14. Git push/tags build all.
-          CIBW_BUILD: "${{ github.event_name == 'pull_request' && 'cp38-* cp314-* cp314t-*' || '*' }}"
+          # Full matrix only on master and tags. Everywhere else (PRs,
+          # branches) build a lean subset: shipped abi3 wheel (3.8),
+          # full-tested 3.14, free-threaded 3.14.
+          CIBW_BUILD: "${{ (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && '*' || 'cp38-* cp314-* cp314t-*' }}"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v7
@@ -93,8 +94,9 @@ jobs:
   # Merge wheels and check sanity of the package distribution.
   merge-and-check-dist:
     needs: [tests]
-    # Skip on PRs: it asserts the full wheel set, which PRs don't build.
-    if: github.event_name != 'pull_request'
+    # Runs only on master + tags, where the full wheel set is built
+    # (it asserts that full set is present).
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
