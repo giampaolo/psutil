@@ -92,10 +92,6 @@ def proc_info(pid):
                 # can hang forever when taskgated is wedged, which happens on
                 # headless CI but not on real machines. See #2885.
                 continue
-            print(  # noqa: T201
-                f"XXX proc_info pid={proc.pid} name={name!r} {fun_name}",
-                flush=True,
-            )
             try:
                 ret = fun()
             except psutil.Error as exc:
