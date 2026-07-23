@@ -157,7 +157,7 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
 
 // A wrapper around task_for_pid() which sucks big time:
 //
-// - it can *block* forever (not just fail) for tasks we can't access:
+// - it can *block* forever, including for PIDs of our own user, see:
 //   https://github.com/giampaolo/psutil/issues/2885
 // - it's not documented
 // - errno is set only sometimes
@@ -178,8 +178,9 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task) {
     if (pid < 0 || !task)
         return psutil_badargs("psutil_task_for_pid");
 
-    // task_for_pid() can block forever (not just fail) for tasks we
-    // can't access, so refuse those up front.
+    // Since we know task_for_pid() can potentially block forever,
+    // avoid to call it pre-emptively for PIDs which are not our own
+    // (exchange potential hang with immediate AD).
     access = psutil_task_access_allowed(pid);
     if (access == -1)
         return -1;
