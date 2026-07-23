@@ -48,6 +48,7 @@ from psutil import WINDOWS
 from . import HAS_HEAP_INFO
 from . import PsutilTestCase
 from . import retry_on_failure
+from . import serial
 
 # Small allocation (64 KiB), below M_MMAP_THRESHOLD (128 KiB).
 # Increases heap_used (uordblks) without triggering mmap().
@@ -270,7 +271,7 @@ class TestHeap(HeapTestCase):
 
 
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
-@pytest.mark.xdist_group(name="serial")
+@serial
 class TestHeapWindows(HeapTestCase):
 
     @retry_on_failure()

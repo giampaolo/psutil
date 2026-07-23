@@ -97,6 +97,7 @@ from . import get_testfn
 from . import pytest
 from . import safe_mkdir
 from . import safe_rmpath
+from . import serial
 from . import skip_on_access_denied
 from . import spawn_subproc
 from . import terminate
@@ -150,7 +151,7 @@ class BaseUnicodeTest(PsutilTestCase):
             return pytest.skip("can't handle unicode str")
 
 
-@pytest.mark.xdist_group(name="serial")
+@serial
 @pytest.mark.skipif(ASCII_FS, reason="ASCII fs")
 class TestFSAPIs(BaseUnicodeTest):
     """Test FS APIs with a funky, valid, UTF8 path name."""

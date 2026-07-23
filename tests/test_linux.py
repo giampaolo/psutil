@@ -42,6 +42,7 @@ from . import pytest
 from . import reload_module
 from . import retry_on_failure
 from . import safe_rmpath
+from . import serial
 from . import sh
 from . import skip_on_not_implemented
 
@@ -1771,7 +1772,7 @@ class TestMisc(LinuxTestCase):
             psutil.PROCFS_PATH = "/proc"
 
     @retry_on_failure()
-    @pytest.mark.xdist_group(name="serial")
+    @serial
     def test_issue_687(self):
         # In case of thread ID:
         # - pid_exists() is supposed to return False

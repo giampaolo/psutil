@@ -84,7 +84,7 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
-    'system_namespace', 'is_win_secure_system_proc',
+    'system_namespace', 'is_win_secure_system_proc', 'serial',
     # type hints
     'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
@@ -893,6 +893,9 @@ def get_testfn(suffix="", dir=None):
 # ===================================================================
 # --- testing
 # ===================================================================
+
+
+serial = pytest.mark.xdist_group(name="serial")
 
 
 class PsutilTestCase(unittest.TestCase):

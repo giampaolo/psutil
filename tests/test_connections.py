@@ -39,6 +39,7 @@ from . import filter_proc_net_connections
 from . import pytest
 from . import reap_children
 from . import retry_on_failure
+from . import serial
 from . import skip_on_access_denied
 from . import tcp_socketpair
 from . import unix_socketpair
@@ -54,7 +55,7 @@ def this_proc_net_connections(kind):
     return cons
 
 
-@pytest.mark.xdist_group(name="serial")
+@serial
 class ConnectionTestCase(PsutilTestCase):
     def setUp(self):
         assert this_proc_net_connections(kind='all') == []
@@ -103,7 +104,7 @@ class TestBasicOperations(ConnectionTestCase):
             psutil.net_connections(kind='???')
 
 
-@pytest.mark.xdist_group(name="serial")
+@serial
 class TestUnconnectedSockets(ConnectionTestCase):
     """Tests sockets which are open but not connected to anything."""
 
@@ -197,7 +198,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
             assert conn.status == psutil.CONN_NONE
 
 
-@pytest.mark.xdist_group(name="serial")
+@serial
 class TestConnectedSocket(ConnectionTestCase):
     """Test socket pairs which are actually connected to
     each other.

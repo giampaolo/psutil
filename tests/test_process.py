@@ -66,6 +66,7 @@ from . import process_namespace
 from . import pytest
 from . import reap_children
 from . import retry_on_failure
+from . import serial
 from . import sh
 from . import skip_on_access_denied
 from . import skip_on_not_implemented
@@ -385,7 +386,7 @@ class TestProcess(PsutilTestCase):
         assert hard == psutil.RLIM_INFINITY
         p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
 
-    @pytest.mark.xdist_group(name="serial")
+    @serial
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
@@ -1013,7 +1014,7 @@ class TestProcess(PsutilTestCase):
             assert fileobj.name not in p.open_files()
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    @pytest.mark.xdist_group(name="serial")
+    @serial
     def test_num_fds(self):
         p = psutil.Process()
         testfn = self.get_testfn()
