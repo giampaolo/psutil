@@ -413,6 +413,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     int num_threads;
     int i;
     uint64_t *tids = NULL;
+    struct proc_taskinfo pti;
     struct proc_threadinfo ti;
     PyObject *py_retlist = PyList_New(0);
 
@@ -421,23 +422,20 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
-    ret = proc_pidinfo(pid, PROC_PIDLISTTHREADS, 0, NULL, 0);
-    if (ret <= 0) {
-        psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTTHREADS) 1/2");
+    // Get size.
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) != 0)
         goto error;
-    }
-
-    // Leave room for threads spawned between the two calls.
-    buf_size = ret + (int)(32 * sizeof(uint64_t));
+    buf_size = (int)((pti.pti_threadnum + 32) * sizeof(uint64_t));
     tids = malloc(buf_size);
     if (tids == NULL) {
         PyErr_NoMemory();
         goto error;
     }
 
+    errno = 0;
     ret = proc_pidinfo(pid, PROC_PIDLISTTHREADS, 0, tids, buf_size);
     if (ret <= 0) {
-        psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTTHREADS) 2/2");
+        psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTTHREADS)");
         goto error;
     }
     num_threads = ret / (int)sizeof(uint64_t);
