@@ -103,12 +103,19 @@ _PYTEST_EXTRA != { if [ "$$OS" = "Windows_NT" ]; then printf '%s ' '-o cache_dir
 RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(_PYTEST_EXTRA)
 RUN_TEST_MEMLEAKS = PYTHONMALLOC=malloc $(RUN_TEST) -k test_memleaks.py $(_PYTEST_EXTRA)
 
+# --- main
+
 test:  ## Run all tests (except memleak tests).
 	# To run a specific test do `make test ARGS=tests/test_process.py::TestProcess::test_cmdline`
 	$(RUN_TEST) $(ARGS)
 
 test-parallel:  ## Run all tests (except memleak tests) in parallel.
 	$(RUN_TEST) -n auto --dist loadgroup $(ARGS)
+
+test-memleaks:  ## Memory leak tests.
+	$(RUN_TEST_MEMLEAKS) $(ARGS)
+
+# --- individual
 
 test-process:  ## Run process-related tests.
 	$(RUN_TEST) -k "test_process.py or test_proc or test_pid or Process or pids or pid_exists" $(ARGS)
@@ -152,8 +159,7 @@ test-posix:  ## POSIX specific tests.
 test-platform:  ## Run specific platform tests only.
 	$(RUN_TEST) -k test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py $(ARGS)
 
-test-memleaks:  ## Memory leak tests.
-	$(RUN_TEST_MEMLEAKS) $(ARGS)
+# --- special
 
 test-sudo:  ## Run tests requiring root privileges.
 	# Use unittest runner because pytest may not be installed as root.
