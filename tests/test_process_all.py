@@ -86,12 +86,12 @@ def proc_info(pid):
         # We don't use oneshot() because in order not to fool
         # check_exception() in case of NSP.
         for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
-            if MACOS and CI_TESTING and fun_name == "memory_info_ex":
-                # memory_info_ex() needs task_for_pid() for fields with no
-                # pid-based source (peak_rss, compressed, ...). task_for_pid()
-                # can hang forever when taskgated is wedged, which happens on
-                # headless CI but not on real machines. See #2885.
-                continue
+            # if MACOS and CI_TESTING and fun_name == "memory_info_ex":
+            #     # memory_info_ex() needs task_for_pid() for fields with no
+            #     # pid-based source (peak_rss, compressed, ...). task_for_pid()
+            #     # can hang forever when taskgated is wedged, which happens on
+            #     # headless CI but not on real machines. See #2885.
+            #     continue
             try:
                 ret = fun()
             except psutil.Error as exc:
