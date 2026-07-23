@@ -452,14 +452,14 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             continue;
         }
 
-        // pth_user_time/pth_system_time are Mach ticks (like
-        // PROC_PIDTASKINFO); hw.tbfrequency converts to seconds.
+        // Unlike PROC_PIDTASKINFO's Mach-tick totals, pth_user_time and
+        // pth_system_time are already in nanoseconds.
         if (!pylist_append_fmt(
                 py_retlist,
                 "Kdd",
                 (unsigned long long)tids[i],
-                (double)ti.pth_user_time / PSUTIL_HW_TBFREQUENCY,
-                (double)ti.pth_system_time / PSUTIL_HW_TBFREQUENCY
+                (double)ti.pth_user_time / 1000000000.0,
+                (double)ti.pth_system_time / 1000000000.0
             ))
         {
             goto error;
