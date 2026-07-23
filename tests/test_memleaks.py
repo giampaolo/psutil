@@ -287,8 +287,7 @@ class TestTerminatedProcess(TestProcess):
 class TestProcessDualImplementation(MemoryLeakTestCase):
     def test_cmdline_peb_true(self):
         # The first CommandLineToArgvW() call loads shell32, leaving
-        # persistent handles; prime it so psleak doesn't flag it (each
-        # -n auto worker is a fresh process).
+        # persistent handles.
         _psutil.proc_cmdline(os.getpid(), use_peb=True)
         self.execute(lambda: _psutil.proc_cmdline(os.getpid(), use_peb=True))
 
