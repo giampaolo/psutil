@@ -410,6 +410,7 @@ class TestProcess(PsutilTestCase):
         assert p.num_handles() > 0
 
     @skipif(not HAS_PROC_THREADS, reason="not supported")
+    @isolated
     def test_threads(self):
         p = psutil.Process()
         if OPENBSD:
