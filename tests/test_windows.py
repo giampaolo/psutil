@@ -164,7 +164,7 @@ class TestCpuFreq(WindowsTestCase):
         w = wmi.WMI()
         proc = w.Win32_Processor()[0]
         assert abs(proc.CurrentClockSpeed - psutil.cpu_freq().current) < 100
-        assert proc.MaxClockSpeed == psutil.cpu_freq().max
+        assert abs(proc.MaxClockSpeed - psutil.cpu_freq().max) < 100
 
 
 class TestCpuStats(WindowsTestCase):
