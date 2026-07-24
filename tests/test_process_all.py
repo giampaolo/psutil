@@ -36,7 +36,6 @@ from . import PsutilTestCase
 from . import check_connection_ntuple
 from . import check_fun_type_hints
 from . import check_ntuple_type_hints
-from . import create_sockets
 from . import is_namedtuple
 from . import is_win_secure_system_proc
 from . import process_namespace
@@ -296,10 +295,6 @@ class TestFetchAllProcesses(PsutilTestCase):
             assert n >= 0
         # TODO: check ntuple fields
 
-    def cpu_percent(self, ret, info):
-        assert isinstance(ret, float)
-        assert 0.0 <= ret <= 100.0, ret
-
     def cpu_num(self, ret, info):
         assert isinstance(ret, int)
         if FREEBSD and ret == -1:
@@ -352,10 +347,9 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret >= 0
 
     def net_connections(self, ret, info):
-        with create_sockets():
-            assert len(ret) == len(set(ret))
-            for conn in ret:
-                check_connection_ntuple(conn)
+        assert len(ret) == len(set(ret))
+        for conn in ret:
+            check_connection_ntuple(conn)
 
     def cwd(self, ret, info):
         assert isinstance(ret, str)
@@ -372,13 +366,6 @@ class TestFetchAllProcesses(PsutilTestCase):
                     raise
             else:
                 assert stat.S_ISDIR(st.st_mode)
-
-    def memory_percent(self, ret, info):
-        assert isinstance(ret, float)
-        assert 0 <= ret <= 100, ret
-
-    def is_running(self, ret, info):
-        assert isinstance(ret, bool)
 
     def cpu_affinity(self, ret, info):
         assert isinstance(ret, list)

@@ -250,6 +250,9 @@ addopts = [
 verbosity_subtests = "0"
 testpaths = ["tests/"]
 python_files = ["test_*.py"]
+markers = [
+    "isolated: run the test alone (quiet machine) under pytest-xdist",
+]
 
 [tool.rstwrap]
 width = 79

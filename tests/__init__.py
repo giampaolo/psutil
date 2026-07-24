@@ -84,7 +84,8 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
-    'system_namespace', 'is_win_secure_system_proc', 'serial', 'skipif',
+    'system_namespace', 'is_win_secure_system_proc', 'serial', 'isolated',
+    'skipif',
     # type hints
     'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
@@ -897,8 +898,17 @@ def get_testfn(suffix="", dir=None):
 # --- testing
 # ===================================================================
 
-
+# `@serial` decorator: put all marked tests on the same xdist worker,
+# so they do not run concurrently with each other. Useful for tests
+# that share or mutate the same system-wide resource and must not
+# overlap.
 serial = pytest.mark.xdist_group(name="serial")
+
+# `@isolated` decorator: run the test with no other psutil test running
+# concurrently, via the inter-process lock in conftest.py. Use this for
+# measurement tests that need a quiet psutil test environment.
+isolated = pytest.mark.isolatedskipif = pytest.mark.skipif
+
 skipif = pytest.mark.skipif
 
 

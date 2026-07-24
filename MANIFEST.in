@@ -174,6 +174,7 @@ include scripts/winservices.py
 include setup.py
 include tests/README.md
 include tests/__init__.py
+include tests/conftest.py
 include tests/test_aix.py
 include tests/test_bsd.py
 include tests/test_changelog_bot.py

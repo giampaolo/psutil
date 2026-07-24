@@ -29,6 +29,7 @@ from . import AARCH64
 from . import HAS_NET_IO_COUNTERS
 from . import PYTHON_EXE
 from . import PsutilTestCase
+from . import isolated
 from . import pytest
 from . import retry_on_failure
 from . import sh
@@ -321,13 +322,12 @@ class TestProcess(PosixTestCase):
         psutil_nice = psutil.Process().nice()
         assert ps_nice == psutil_nice
 
+    @isolated
     @retry_on_failure
     def test_num_ctx_switches(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         cws = psutil.Process().num_ctx_switches()
         tol = 50
-        if "PYTEST_XDIST_WORKER_COUNT" in os.environ:
-            tol *= int(os.environ["PYTEST_XDIST_WORKER_COUNT"])
         if MACOS:
             assert cws.voluntary + cws.involuntary == pytest.approx(
                 ru.ru_nvcsw + ru.ru_nivcsw, abs=tol * 2
