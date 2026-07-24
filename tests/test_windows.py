@@ -13,6 +13,7 @@ import platform
 import re
 import signal
 import socket
+import subprocess
 import time
 import warnings
 from unittest import mock
@@ -972,6 +973,63 @@ class TestDualProcessImplementation(PsutilTestCase):
                     raise
             else:
                 assert a == b
+
+
+@skipif(not WINDOWS, reason="WINDOWS only")
+class TestWow64Process(PsutilTestCase):
+    """Test reading cmdline, cwd and environ of a 32 bit (WoW64)
+    process, which requires reading its 32 bit PEB, see
+    psutil/arch/windows/proc_info.c.
+    """
+
+    @staticmethod
+    def assert_wow64(pid):
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION, False, pid
+        )
+        assert handle
+        try:
+            wow64 = ctypes.c_int()
+            assert kernel32.IsWow64Process(handle, ctypes.byref(wow64))
+            assert wow64.value
+        finally:
+            kernel32.CloseHandle(handle)
+
+    def setUp(self):
+        super().setUp()
+        # any exe in SysWOW64 is 32 bit; the dir only exists on 64 bit
+        # Windows
+        exe = os.path.join(
+            os.environ.get("SYSTEMROOT", r"C:\Windows"),
+            "SysWOW64",
+            "findstr.exe",
+        )
+        if not os.path.exists(exe):
+            return pytest.skip("32 bit Windows")
+        env = os.environ.copy()
+        env["THINK_OF_A_NUMBER"] = str(os.getpid())
+        self.args = [exe, "hello"]
+        # findstr hangs reading stdin until we close it
+        self.proc = self.spawn_subproc(
+            self.args, env=env, stdin=subprocess.PIPE
+        )
+        self.assert_wow64(self.proc.pid)
+
+    def tearDown(self):
+        super().tearDown()
+        self.proc.communicate()
+
+    def test_cmdline(self):
+        assert psutil.Process(self.proc.pid).cmdline() == self.args
+
+    def test_cwd(self):
+        assert psutil.Process(self.proc.pid).cwd() == os.getcwd()
+
+    def test_environ(self):
+        environ = psutil.Process(self.proc.pid).environ()
+        assert environ["THINK_OF_A_NUMBER"] == str(os.getpid())
 
 
 # ===================================================================
