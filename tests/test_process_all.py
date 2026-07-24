@@ -47,7 +47,15 @@ def proc_info(pid):
         if exc.name is not None:
             assert exc.name == name
         if isinstance(exc, psutil.ZombieProcess):
-            tcase.assert_proc_zombie(proc)
+            try:
+                tcase.assert_proc_zombie(proc)
+            except (psutil.NoSuchProcess, AssertionError):
+                # Prevent race conditions: if zombie disappears while
+                # assert_proc_zombie analyzes it we fail only if its
+                # PID still exists.
+                if pid in psutil.pids():
+                    raise
+
             if exc.ppid is not None:
                 assert exc.ppid >= 0
                 assert exc.ppid == ppid
