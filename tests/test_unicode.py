@@ -245,7 +245,7 @@ class TestFSAPIs(BaseUnicodeTest):
 
     @skipif(not POSIX, reason="POSIX only")
     @skipif(not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets")
-    @skip_on_access_denied()
+    @skip_on_access_denied
     def test_net_connections(self):
         def find_sock(cons):
             for conn in cons:

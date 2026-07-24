@@ -1334,7 +1334,7 @@ class system_namespace:
     test_class_coverage = process_namespace.test_class_coverage
 
 
-def retry_on_failure(retries=NO_RETRIES):
+def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
     """Decorator which runs a test function and retries N times before
     giving up and failing.
     """
@@ -1375,7 +1375,7 @@ def retry_on_failure(retries=NO_RETRIES):
     return decorator
 
 
-def skip_on_access_denied(only_if=None):
+def skip_on_access_denied(only_if: "bool | typing.Callable | None" = None):
     """Decorator to Ignore AccessDenied exceptions."""
 
     def decorator(fun):
@@ -1391,10 +1391,12 @@ def skip_on_access_denied(only_if=None):
 
         return wrapper
 
+    if callable(only_if):
+        return skip_on_access_denied()(only_if)
     return decorator
 
 
-def skip_on_not_implemented(only_if=None):
+def skip_on_not_implemented(only_if: "bool | typing.Callable | None" = None):
     """Decorator to Ignore NotImplementedError exceptions."""
 
     def decorator(fun):
@@ -1414,6 +1416,8 @@ def skip_on_not_implemented(only_if=None):
 
         return wrapper
 
+    if callable(only_if):
+        return skip_on_not_implemented()(only_if)
     return decorator
 
 

@@ -192,7 +192,7 @@ class TestProcess(PosixTestCase):
             assert p.username() == str(p.uids().real)
             assert fun.called
 
-    @skip_on_access_denied()
+    @skip_on_access_denied
     @retry_on_failure
     def test_rss_memory(self):
         # give python interpreter some time to properly initialize
@@ -202,7 +202,7 @@ class TestProcess(PosixTestCase):
         rss_psutil = psutil.Process(self.pid).memory_info()[0] / 1024
         assert rss_ps == rss_psutil
 
-    @skip_on_access_denied()
+    @skip_on_access_denied
     @retry_on_failure
     def test_vsz_memory(self):
         # give python interpreter some time to properly initialize

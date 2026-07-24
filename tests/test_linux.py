@@ -1315,7 +1315,7 @@ class TestNetConnections(LinuxTestCase):
 
 class TestDiskPartitions(LinuxTestCase):
     @skipif(not hasattr(os, 'statvfs'), reason="os.statvfs() not available")
-    @skip_on_not_implemented()
+    @skip_on_not_implemented
     def test_against_df(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
