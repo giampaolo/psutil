@@ -233,6 +233,13 @@ Others:
        - ``_psutil_linux.abi3.so``
        - ``_psutil.abi3.so``
 
+- :gh:`2889`, [Windows]: 32-bit psutil can no longer inspect 64-bit processes.
+  This relied on the undocumented ``NtWow64*`` APIs and stopped being tested
+  when 32-bit wheels were dropped in 7.1.2 (:gh:`2657`). :meth:`Process.cwd`
+  now raises :exc:`AccessDenied` in that case; :meth:`Process.cmdline` and
+  :meth:`Process.environ` are unaffected. The opposite direction (64-bit psutil
+  inspecting 32-bit processes) still works.
+
 **Bug fixes**
 
 - :gh:`1007`, [Windows]: :func:`boot_time` no longer fluctuates by ~1 second
