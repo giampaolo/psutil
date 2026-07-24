@@ -10,7 +10,6 @@ test all psutil.Process() methods.
 
 import enum
 import errno
-import multiprocessing
 import os
 import stat
 import time
@@ -30,7 +29,6 @@ from psutil import POSIX
 from psutil import WINDOWS
 
 from . import CI_TESTING
-from . import PYTEST_PARALLEL
 from . import VALID_PROC_STATUSES
 from . import PsutilTestCase
 from . import check_connection_ntuple
@@ -39,10 +37,6 @@ from . import check_ntuple_type_hints
 from . import is_namedtuple
 from . import is_win_secure_system_proc
 from . import process_namespace
-
-# Cuts the time in half, but (e.g.) on macOS the process pool stays
-# alive after join() (multiprocessing bug?), messing up other tests.
-USE_PROC_POOL = LINUX and not CI_TESTING and not PYTEST_PARALLEL
 
 
 def proc_info(pid):
@@ -115,34 +109,13 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def setUp(self):
         psutil._set_debug(False)
-        # Using a pool in a CI env may result in deadlock, see:
-        # https://github.com/giampaolo/psutil/issues/2104
-        if USE_PROC_POOL:
-            # The 'fork' method is the only one that does not
-            # create a "resource_tracker" process. The problem
-            # when creating this process is that it ignores
-            # SIGTERM and SIGINT, and this makes "reap_children"
-            # hang... The following code should run on python-3.4
-            # and later.
-            multiprocessing.set_start_method('fork')
-            self.pool = multiprocessing.Pool()
 
     def tearDown(self):
         psutil._set_debug(True)
-        if USE_PROC_POOL:
-            self.pool.terminate()
-            self.pool.join()
 
     def iter_proc_info(self):
-        # Fixes "can't pickle <function proc_info>: it's not the
-        # same object as test_process_all.proc_info".
-        from tests.test_process_all import proc_info
-
-        if USE_PROC_POOL:
-            return self.pool.imap_unordered(proc_info, psutil.pids())
-        else:
-            ls = [proc_info(pid) for pid in psutil.pids()]
-            return ls
+        ls = [proc_info(pid) for pid in psutil.pids()]
+        return ls
 
     def test_all(self):
         failures = []
