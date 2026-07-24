@@ -52,7 +52,7 @@ thisproc = psutil.Process()
 
 
 MemoryLeakTestCase.retries = 30  # minimize false positives
-MemoryLeakTestCase.verbosity = 1
+MemoryLeakTestCase.verbosity = 0
 
 TIMES = MemoryLeakTestCase.times
 FEW_TIMES = int(TIMES / 10)

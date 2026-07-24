@@ -62,11 +62,11 @@ from . import call_until
 from . import copyload_shared_lib
 from . import create_c_exe
 from . import create_py_exe
+from . import isolated
 from . import process_namespace
 from . import pytest
 from . import reap_children
 from . import retry_on_failure
-from . import serial
 from . import sh
 from . import skip_on_access_denied
 from . import skip_on_not_implemented
@@ -385,7 +385,7 @@ class TestProcess(PsutilTestCase):
         assert hard == psutil.RLIM_INFINITY
         p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
 
-    @serial
+    @isolated
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
@@ -1012,8 +1012,8 @@ class TestProcess(PsutilTestCase):
             # test file is gone
             assert fileobj.name not in p.open_files()
 
+    @isolated
     @skipif(not POSIX, reason="POSIX only")
-    @serial
     @retry_on_failure  # can wobble on CI
     def test_num_fds(self):
         p = psutil.Process()

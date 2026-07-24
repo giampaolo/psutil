@@ -31,6 +31,7 @@ from . import PYPY
 from . import TOLERANCE_DISK_USAGE
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
+from . import isolated
 from . import pytest
 from . import retry_on_failure
 from . import serial
@@ -398,6 +399,7 @@ class TestOtherSystemAPIs(WindowsTestCase):
     #                                   time.localtime(p.create_time()))
 
     # Note: this test is not very reliable
+    @isolated
     @retry_on_failure
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing

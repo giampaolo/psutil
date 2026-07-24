@@ -45,8 +45,8 @@ from psutil import WINDOWS
 
 from . import HAS_HEAP_INFO
 from . import PsutilTestCase
+from . import isolated
 from . import retry_on_failure
-from . import serial
 from . import skipif
 
 # Small allocation (64 KiB), below M_MMAP_THRESHOLD (128 KiB).
@@ -270,7 +270,7 @@ class TestHeap(HeapTestCase):
 
 
 @skipif(not WINDOWS, reason="WINDOWS only")
-@serial
+@isolated
 class TestHeapWindows(HeapTestCase):
 
     @retry_on_failure
