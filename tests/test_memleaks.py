@@ -425,6 +425,8 @@ class TestModuleFunctions(MemoryLeakTestCase):
             )
 
     def test_net_if_addrs(self):
+        if WINDOWS:
+            psutil.net_if_addrs()  # XXX prime
         # Note: verified that on Windows this was a false positive.
         tolerance = 80 * 1024 if WINDOWS else self.tolerance
         self.execute(psutil.net_if_addrs, tolerance=tolerance)
