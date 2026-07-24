@@ -30,8 +30,8 @@ PARALLEL = "PYTEST_XDIST_WORKER" in os.environ
 if PARALLEL:
     import fasteners
 
-    uid = os.environ.get("PYTEST_XDIST_TESTRUNUID", "")
-    path = os.path.join(tempfile.gettempdir(), f"psutil-serial-{uid}.lock")
+    uid = os.environ["PYTEST_XDIST_TESTRUNUID"]
+    path = os.path.join(tempfile.gettempdir(), f"psutil-isolated-{uid}.lock")
     rwlock = fasteners.InterProcessReaderWriterLock(path)
 
 

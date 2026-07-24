@@ -251,7 +251,7 @@ verbosity_subtests = "0"
 testpaths = ["tests/"]
 python_files = ["test_*.py"]
 markers = [
-    "isolated: run the test alone (quiet machine) under pytest-xdist",
+    "isolated: run without concurrent psutil tests under pytest-xdist",
 ]
 
 [tool.rstwrap]
