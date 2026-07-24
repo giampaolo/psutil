@@ -33,6 +33,7 @@ from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
 from . import pytest
 from . import retry_on_failure
+from . import serial
 from . import sh
 from . import skipif
 from . import spawn_subproc
@@ -288,6 +289,7 @@ class TestNetAPIs(WindowsTestCase):
         win_addrs = set(out.strip().split(','))
         assert win_addrs == ps_addrs
 
+    @serial
     def test_net_connections(self):
         # Compare listening TCP ports; they're stable unlike active
         # connections.

@@ -1285,6 +1285,7 @@ class TestNetConnections(LinuxTestCase):
             psutil.net_connections(kind='unix')
             assert m.called
 
+    @serial
     @skipif(not shutil.which("ss"), reason="'ss' command not available")
     def test_against_ss(self):
         # Listening ports are stable, so an exact set comparison is
