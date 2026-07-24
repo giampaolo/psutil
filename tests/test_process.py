@@ -36,6 +36,7 @@ from psutil import NETBSD
 from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
+from psutil import SUNOS
 from psutil import WINDOWS
 from psutil import _psutil
 from psutil._common import open_text
@@ -1372,6 +1373,16 @@ class TestProcess(PsutilTestCase):
         ) as m:
             assert p.status() == psutil.STATUS_ZOMBIE
             assert m.called
+
+    def test_ident(self):
+        p = psutil.Process()
+        assert p._ident[0] == p.pid
+        if FREEBSD or OPENBSD or SUNOS or AIX:
+            # PID reuse detection is disabled on these platforms, see
+            # Process._get_ident().
+            assert p._ident[1] is None
+        else:
+            assert p._ident[1] is not None
 
     def test_reused_pid(self):
         # Emulate a case where PID has been reused by another process.

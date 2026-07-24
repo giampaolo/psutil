@@ -351,6 +351,10 @@ Others:
   ``task_for_pid()`` syscall, which can hang forever on headless VMs (e.g. CI
   runners). They now use ``proc_pidinfo()``, which is more permissive and so
   raises :exc:`AccessDenied` less often.
+- :gh:`2888`, [FreeBSD], [OpenBSD]: :class:`Process` methods could wrongly
+  raise :exc:`NoSuchProcess` ("PID has been reused") for a process still alive,
+  after a system clock update (e.g. NTP). Fixed by disabling the PID reuse
+  check (also on SunOS and AIX).
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
