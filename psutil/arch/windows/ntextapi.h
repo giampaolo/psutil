@@ -275,7 +275,6 @@ typedef struct _CLIENT_ID2 {
 } CLIENT_ID2, *PCLIENT_ID2;
 
 #define CLIENT_ID CLIENT_ID2
-#define PCLIENT_ID PCLIENT_ID2
 
 typedef struct _SYSTEM_THREAD_INFORMATION2 {
     LARGE_INTEGER KernelTime;
@@ -292,7 +291,6 @@ typedef struct _SYSTEM_THREAD_INFORMATION2 {
 } SYSTEM_THREAD_INFORMATION2, *PSYSTEM_THREAD_INFORMATION2;
 
 #define SYSTEM_THREAD_INFORMATION SYSTEM_THREAD_INFORMATION2
-#define PSYSTEM_THREAD_INFORMATION PSYSTEM_THREAD_INFORMATION2
 
 typedef struct _SYSTEM_PROCESS_INFORMATION2 {
     ULONG NextEntryOffset;                      // The address of the previous item plus the value in the NextEntryOffset member. For the last item in the array, NextEntryOffset is 0.
@@ -402,24 +400,6 @@ typedef struct _WTSINFOW {
 
 } WTSINFOW, * PWTSINFOW;
 
-#define PWTSINFO PWTSINFOW
-
-// cpu_count_cores()
-#if (_WIN32_WINNT < 0x0601)  // Windows < 7 (Vista and XP)
-typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
-    LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
-    DWORD Size;
-    _ANONYMOUS_UNION
-    union {
-        PROCESSOR_RELATIONSHIP Processor;
-        NUMA_NODE_RELATIONSHIP NumaNode;
-        CACHE_RELATIONSHIP Cache;
-        GROUP_RELATIONSHIP Group;
-    } DUMMYUNIONNAME;
-} SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, \
-    *PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX;
-#endif
-
 // memory_uss()
 typedef struct _MEMORY_WORKING_SET_BLOCK {
     ULONG_PTR Protection : 5;
@@ -465,7 +445,6 @@ typedef struct _SYSTEM_TIMEOFDAY_INFORMATION2 {
 } SYSTEM_TIMEOFDAY_INFORMATION2, *PSYSTEM_TIMEOFDAY_INFORMATION2;
 
 #define SYSTEM_TIMEOFDAY_INFORMATION SYSTEM_TIMEOFDAY_INFORMATION2
-#define PSYSTEM_TIMEOFDAY_INFORMATION PSYSTEM_TIMEOFDAY_INFORMATION2
 
 // ====================================================================
 // PEB structs for cmdline(), cwd(), environ()
@@ -519,50 +498,6 @@ typedef struct {
     PRTL_USER_PROCESS_PARAMETERS_ ProcessParameters;
     // more fields...
 } PEB_;
-
-// When we are a 32 bit (WoW64) process accessing a 64 bit process
-// we need to use the 64 bit structure layout and a special function
-// to read its memory.
-typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
-    HANDLE ProcessHandle,
-    PVOID64 BaseAddress,
-    PVOID Buffer,
-    ULONG64 Size,
-    PULONG64 NumberOfBytesRead);
-
-typedef struct {
-    PVOID Reserved1[2];
-    PVOID64 PebBaseAddress;
-    PVOID Reserved2[4];
-    PVOID UniqueProcessId[2];
-    PVOID Reserved3[2];
-} PROCESS_BASIC_INFORMATION64;
-
-typedef struct {
-    USHORT Length;
-    USHORT MaxLength;
-    PVOID64 Buffer;
-} UNICODE_STRING64;
-
-typedef struct {
-    BYTE Reserved1[16];
-    PVOID64 Reserved2[5];
-    UNICODE_STRING64 CurrentDirectoryPath;
-    PVOID64 CurrentDirectoryHandle;
-    UNICODE_STRING64 DllPath;
-    UNICODE_STRING64 ImagePathName;
-    UNICODE_STRING64 CommandLine;
-    PVOID64 env;
-} RTL_USER_PROCESS_PARAMETERS64;
-
-typedef struct {
-    BYTE Reserved1[2];
-    BYTE BeingDebugged;
-    BYTE Reserved2[21];
-    PVOID64 LoaderData;
-    PVOID64 ProcessParameters;
-    // more fields...
-} PEB64;
 #endif  // _WIN64
 
 // ================================================================
@@ -575,16 +510,6 @@ BOOL (WINAPI *_GetLogicalProcessorInformationEx) (
     PDWORD ReturnLength);
 
 #define GetLogicalProcessorInformationEx _GetLogicalProcessorInformationEx
-
-BOOLEAN (WINAPI * _WinStationQueryInformationW) (
-    HANDLE ServerHandle,
-    ULONG SessionId,
-    WINSTATIONINFOCLASS WinStationInformationClass,
-    PVOID pWinStationInformation,
-    ULONG WinStationInformationLength,
-    PULONG pReturnLength);
-
-#define WinStationQueryInformationW _WinStationQueryInformationW
 
 NTSTATUS (NTAPI *_NtQueryInformationProcess) (
     HANDLE ProcessHandle,

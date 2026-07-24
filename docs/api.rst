@@ -1148,8 +1148,8 @@ Process class
   When calling methods of this class, always be prepared to catch
   :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions. The builtin
   :func:`hash` can be used on instances to uniquely identify a process over
-  time (the hash combines PID and creation time), so instances can also be used
-  in a :class:`set`.
+  time (the hash combines PID and creation time, except on the platforms listed
+  in :ref:`faq_pid_reuse`), so instances can also be used in a :class:`set`.
 
   .. note::
 
@@ -1158,7 +1158,8 @@ Process class
     process. To prevent this, use :meth:`is_running` first. Some methods (e.g.,
     setters and signal-related methods) perform an additional check using PID +
     creation time, and will raise :exc:`NoSuchProcess` if the PID has been
-    reused. See :ref:`faq_pid_reuse` for details.
+    reused. This check is not available on all platforms. See
+    :ref:`faq_pid_reuse` for details.
 
   .. note::
 

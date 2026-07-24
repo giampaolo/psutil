@@ -480,7 +480,12 @@ class Process:
         practically it should be good enough.
 
         NOTE: unreliable on FreeBSD and OpenBSD as ctime is subject to
-        system clock updates.
+        system clock updates, so the PID-reuse check there is disabled.
+        Same goes for SunOS and AIX, where we don't know whether ctime
+        is stable across clock updates.
+
+        NOTE 2: it is also disabled on Windows in case `create_time()`
+        can't be fetched due to `AccessDenied`.
         """
 
         if WINDOWS:
@@ -497,7 +502,10 @@ class Process:
             # time.
             return (self.pid, self._proc.create_time(monotonic=True))
         else:
-            return (self.pid, self.create_time())
+            # Still call create_time() to check PID existence (raise
+            # NSP at construction time), but don't use it for identity.
+            self.create_time()
+            return (self.pid, None)
 
     def __str__(self):
         info = {}

@@ -233,6 +233,13 @@ Others:
        - ``_psutil_linux.abi3.so``
        - ``_psutil.abi3.so``
 
+- :gh:`2889`, [Windows]: 32-bit psutil can no longer inspect 64-bit processes.
+  This relied on the undocumented ``NtWow64*`` APIs and stopped being tested
+  when 32-bit wheels were dropped in 7.1.2 (:gh:`2657`). :meth:`Process.cwd`
+  now raises :exc:`AccessDenied` in that case; :meth:`Process.cmdline` and
+  :meth:`Process.environ` are unaffected. The opposite direction (64-bit psutil
+  inspecting 32-bit processes) still works.
+
 **Bug fixes**
 
 - :gh:`1007`, [Windows]: :func:`boot_time` no longer fluctuates by ~1 second
@@ -351,6 +358,10 @@ Others:
   ``task_for_pid()`` syscall, which can hang forever on headless VMs (e.g. CI
   runners). They now use ``proc_pidinfo()``, which is more permissive and so
   raises :exc:`AccessDenied` less often.
+- :gh:`2888`, [FreeBSD], [OpenBSD]: :class:`Process` methods could wrongly
+  raise :exc:`NoSuchProcess` ("PID has been reused") for a process still alive,
+  after a system clock update (e.g. NTP). Fixed by disabling the PID reuse
+  check (also on SunOS and AIX).
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
