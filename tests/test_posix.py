@@ -344,6 +344,7 @@ class TestProcess(PosixTestCase):
         assert cws.system == pytest.approx(ru.ru_stime, abs=0.3)
 
     @retry_on_failure
+    @isolated
     def test_page_faults(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         pf = psutil.Process().page_faults()

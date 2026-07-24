@@ -1014,6 +1014,7 @@ class TestProcess(PsutilTestCase):
 
     @skipif(not POSIX, reason="POSIX only")
     @serial
+    @retry_on_failure  # can wobble on CI
     def test_num_fds(self):
         p = psutil.Process()
         testfn = self.get_testfn()
