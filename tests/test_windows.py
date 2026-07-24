@@ -611,6 +611,7 @@ class TestProcess(WindowsTestCase):
         win32api.CloseHandle(handle)
         assert p.num_handles() == before
 
+    @isolated
     def test_ctrl_signals(self):
         p = psutil.Process(self.spawn_subproc().pid)
         p.send_signal(signal.CTRL_C_EVENT)
