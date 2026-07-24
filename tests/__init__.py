@@ -908,10 +908,10 @@ def get_testfn(suffix="", dir=None):
 #   tcp_socketpair(), unix_socketpair(), bind_unix_socket()
 serial = pytest.mark.xdist_group(name="serial")
 
-# `@isolated` decorator: run the test with no other psutil test running
-# concurrently, via the inter-process lock in conftest.py. Use this for
-# measurement tests that need a quiet psutil test environment, or whose
-# result another running test can perturb:
+# `@isolated` decorator: run the test in a separate, serial pytest run
+# (`-m isolated`), not the parallel `-n auto` one. These measure noisy
+# per-process or system counters that are only reliable in a quiet,
+# non-xdist process:
 # - CPU counters compared vs getrusage / vmstat / WMI: cpu_stats(),
 #   Process.num_ctx_switches(), Process.page_faults()
 # - pids() compared as an exact set
