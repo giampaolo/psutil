@@ -481,7 +481,8 @@ class Process:
 
         NOTE: unreliable on FreeBSD and OpenBSD as ctime is subject to
         system clock updates, so the PID-reuse check there is disabled.
-        Same goes for SunOS and AIX, where we don't know how this works.
+        Same goes for SunOS and AIX, where we don't know whether ctime
+        is stable across clock updates.
 
         NOTE 2: it is also disabled on Windows in case `create_time()`
         can't be fetched due to `AccessDenied`.
