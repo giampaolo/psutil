@@ -254,7 +254,7 @@ class FreeBSDProcessTestCase(PsutilTestCase):
     def tearDownClass(cls):
         terminate(cls.pid)
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_memory_maps(self):
         out = sh(f"procstat -v {self.pid}")
         maps = psutil.Process(self.pid).memory_maps(grouped=False)
@@ -292,7 +292,7 @@ class FreeBSDProcessTestCase(PsutilTestCase):
         assert gids.effective == int(egid)
         assert gids.saved == int(sgid)
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_ctx_switches(self):
         tested = []
         out = sh(f"procstat -r {self.pid}")
@@ -312,7 +312,7 @@ class FreeBSDProcessTestCase(PsutilTestCase):
         if len(tested) != 2:
             raise RuntimeError("couldn't find lines match in procstat out")
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_cpu_times(self):
         tested = []
         out = sh(f"procstat -r {self.pid}")
@@ -352,7 +352,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         cores = sysctl("kern.smp.cores")
         assert psutil.cpu_count(logical=False) == cores
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_cpu_times(self):
         clk_tck = os.sysconf("SC_CLK_TCK")
         ticks = [int(x) for x in sysctl("kern.cp_time").split()]
@@ -399,32 +399,32 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 
     # --- virtual_memory(); tests against sysctl
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_active(self):
         syst = sysctl("vm.stats.vm.v_active_count") * PAGESIZE
         assert abs(psutil.virtual_memory().active - syst) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_inactive(self):
         syst = sysctl("vm.stats.vm.v_inactive_count") * PAGESIZE
         assert abs(psutil.virtual_memory().inactive - syst) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_wired(self):
         syst = sysctl("vm.stats.vm.v_wire_count") * PAGESIZE
         assert abs(psutil.virtual_memory().wired - syst) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_cached(self):
         syst = sysctl("vm.stats.vm.v_cache_count") * PAGESIZE
         assert abs(psutil.virtual_memory().cached - syst) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_free(self):
         syst = sysctl("vm.stats.vm.v_free_count") * PAGESIZE
         assert abs(psutil.virtual_memory().free - syst) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_buffers(self):
         syst = sysctl("vfs.bufspace")
         assert abs(psutil.virtual_memory().buffers - syst) < TOLERANCE_SYS_MEM
@@ -453,7 +453,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             < 1000
         )
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_cpu_stats_syscalls(self):
         # pretty high tolerance but it looks like it's OK.
         assert (
@@ -477,7 +477,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 
     # --- net
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_net_io_counters(self):
         out = sh("netstat -ib")
         netstat = {}
@@ -612,7 +612,7 @@ class NetBSDTestCase(PsutilTestCase):
 
     # --- virtual mem
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_buffers(self):
         # uv.filepages: file-backed pages excluding executable mappings
         assert (
@@ -625,7 +625,7 @@ class NetBSDTestCase(PsutilTestCase):
 
     # --- swap mem
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_swapmem_total(self):
         assert (
             abs(

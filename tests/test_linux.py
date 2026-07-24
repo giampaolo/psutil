@@ -239,7 +239,7 @@ class TestVirtualMemoryAgainstFree(LinuxTestCase):
         psutil_value = psutil.virtual_memory().total
         assert cli_value == psutil_value
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_used(self):
         # Older versions of procps used slab memory to calculate used memory.
         # This got changed in:
@@ -253,13 +253,13 @@ class TestVirtualMemoryAgainstFree(LinuxTestCase):
         psutil_value = psutil.virtual_memory().used
         assert abs(cli_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_free(self):
         cli_value = free_physmem().free
         psutil_value = psutil.virtual_memory().free
         assert abs(cli_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_shared(self):
         free = free_physmem()
         free_value = free.shared
@@ -270,7 +270,7 @@ class TestVirtualMemoryAgainstFree(LinuxTestCase):
             abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
         ), f"{free_value} {psutil_value} \n{free.output}"
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_available(self):
         # "free" output format has changed at some point:
         # https://github.com/giampaolo/psutil/issues/538#issuecomment-147192098
@@ -289,7 +289,7 @@ class TestVirtualMemoryAgainstVmstat(LinuxTestCase):
         psutil_value = psutil.virtual_memory().total
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_used(self):
         # Older versions of procps used slab memory to calculate used memory.
         # This got changed in:
@@ -303,25 +303,25 @@ class TestVirtualMemoryAgainstVmstat(LinuxTestCase):
         psutil_value = psutil.virtual_memory().used
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_free(self):
         vmstat_value = vmstat('free memory') * 1024
         psutil_value = psutil.virtual_memory().free
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_buffers(self):
         vmstat_value = vmstat('buffer memory') * 1024
         psutil_value = psutil.virtual_memory().buffers
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_active(self):
         vmstat_value = vmstat('active memory') * 1024
         psutil_value = psutil.virtual_memory().active
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_inactive(self):
         vmstat_value = vmstat('inactive memory') * 1024
         psutil_value = psutil.virtual_memory().inactive
@@ -339,13 +339,13 @@ class TestVirtualMemoryAgainstMeminfo(LinuxTestCase):
                     mems[fields[0]] = int(fields[1]) * 1024
         return mems
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_buffers(self):
         proc_value = self.read_meminfo()["Buffers:"]
         psutil_value = psutil.virtual_memory().buffers
         assert abs(psutil_value - proc_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_cached(self):
         # psutil cached = Cached + SReclaimable
         mems = self.read_meminfo()
@@ -391,7 +391,7 @@ class TestVirtualMemoryMocks(LinuxTestCase):
                 assert ret.available == 0
                 assert ret.slab == 0
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_avail_old_percent(self):
         # Make sure that our calculation of avail mem for old kernels
         # is off by max 15%.
@@ -594,19 +594,19 @@ class TestSwapMemory(LinuxTestCase):
         psutil_value = psutil.swap_memory().total
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_used(self):
         free_value = free_swap().used
         psutil_value = psutil.swap_memory().used
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_free(self):
         free_value = free_swap().free
         psutil_value = psutil.swap_memory().free
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_sin_sout(self):
         # Cross-check sin/sout against /proc/vmstat pswpin/pswpout fields.
         # psutil converts pages to bytes using a 4096-byte page size.
@@ -1012,7 +1012,7 @@ class TestCpuFreq(LinuxTestCase):
 
 class TestCpuTimes(LinuxTestCase):
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_against_proc_stat(self):
         with open("/proc/stat") as f:
             line = f.readline()
@@ -1084,7 +1084,7 @@ class TestNetIfAddrs(LinuxTestCase):
                     assert address in get_ipv6_addresses(name)
 
     @skipif(not shutil.which("ip"), reason="'ip' command not available")
-    @retry_on_failure()
+    @retry_on_failure
     def test_against_ip_addr_v4(self):
         # Parse IPv4 addresses per interface from `ip addr` output and
         # compare against psutil. Use the label at the end of each inet
@@ -1112,7 +1112,7 @@ class TestNetIfAddrs(LinuxTestCase):
                 assert addr in psutil_ipv4
 
     @skipif(not shutil.which("ip"), reason="'ip' command not available")
-    @retry_on_failure()
+    @retry_on_failure
     def test_against_ip_addr_v6(self):
         # Parse IPv6 addresses per interface from `ip addr` output and
         # compare against psutil. Unlike inet, inet6 lines have no label,
@@ -1215,7 +1215,7 @@ class TestNetIoCounters(LinuxTestCase):
     @skipif(
         not shutil.which("ifconfig"), reason="ifconfig utility not available"
     )
-    @retry_on_failure()
+    @retry_on_failure
     def test_against_ifconfig(self):
         def ifconfig(nic):
             ret = {}
@@ -1512,7 +1512,7 @@ class TestDiskIoCounters(LinuxTestCase):
     @skipif(
         not shutil.which("iostat"), reason="'iostat' command not available"
     )
-    @retry_on_failure()
+    @retry_on_failure
     def test_against_iostat(self):
         # Cross-check read_bytes/write_bytes against 'iostat -d -k'
         # cumulative totals (kB_read, kB_wrtn columns).
@@ -1756,7 +1756,7 @@ class TestMisc(LinuxTestCase):
         finally:
             psutil.PROCFS_PATH = "/proc"
 
-    @retry_on_failure()
+    @retry_on_failure
     @serial
     def test_issue_687(self):
         # In case of thread ID:
@@ -2046,7 +2046,7 @@ class TestSensorsFans(LinuxTestCase):
 
 
 class TestProcess(LinuxTestCase):
-    @retry_on_failure()
+    @retry_on_failure
     def test_parse_smaps_vs_memory_maps(self):
         sproc = self.spawn_subproc()
         uss, pss, swap = psutil._pslinux.Process(sproc.pid)._parse_smaps()
@@ -2500,7 +2500,7 @@ class TestProcessAgainstStatus(LinuxTestCase):
         value = tuple(map(int, value.split()[1:4]))
         assert self.proc.gids() == value
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_num_ctx_switches(self):
         value = self.read_status_file("voluntary_ctxt_switches:")
         assert self.proc.num_ctx_switches().voluntary == value

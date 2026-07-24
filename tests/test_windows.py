@@ -169,14 +169,14 @@ class TestCpuFreq(WindowsTestCase):
 
 class TestCpuStats(WindowsTestCase):
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_ctx_switches(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_System()[0]
         wmi_value = int(w.ContextSwitchesPersec)
         psutil_value = psutil.cpu_stats().ctx_switches
         assert abs(psutil_value - wmi_value) < 1000
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_interrupts(self):
         # Interrupts are summed across all CPUs; use _Total from
         # Win32_PerfRawData_PerfOS_Processor.
@@ -203,7 +203,7 @@ class TestVirtualMemory(WindowsTestCase):
             < TOLERANCE_SYS_MEM
         )
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_wired(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
@@ -211,7 +211,7 @@ class TestVirtualMemory(WindowsTestCase):
             < TOLERANCE_SYS_MEM
         )
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_available(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
@@ -219,7 +219,7 @@ class TestVirtualMemory(WindowsTestCase):
             < TOLERANCE_SYS_MEM
         )
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_used(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         total = psutil.virtual_memory().total
@@ -264,7 +264,7 @@ class TestNetAPIs(WindowsTestCase):
                     f"{nic!r} nic wasn't found in 'ipconfig /all' output"
                 )
 
-    @retry_on_failure()
+    @retry_on_failure
     @skipif(GITHUB_ACTIONS, reason="unreliable on GITHUB")
     def test_net_io_counters(self):
         ps = psutil.net_io_counters(pernic=False)
@@ -316,7 +316,7 @@ class TestNetAPIs(WindowsTestCase):
 
 class TestDiskApis(WindowsTestCase):
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_disk_partitions(self):
         ps_parts = psutil.disk_partitions(all=True)
         wmi_parts = wmi.WMI().Win32_LogicalDisk()
@@ -360,7 +360,7 @@ class TestDiskApis(WindowsTestCase):
         ]
         assert win == ps
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_disk_usage(self):
         for disk in psutil.disk_partitions():
             if 'cdrom' in disk.opts:
@@ -371,7 +371,7 @@ class TestDiskApis(WindowsTestCase):
             assert abs(win[1] - ps.total) < TOLERANCE_DISK_USAGE
             assert ps.used == ps.total - ps.free
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_disk_io_counters(self):
         stats = psutil.disk_io_counters()
         w = wmi.WMI().Win32_PerfRawData_PerfDisk_PhysicalDisk(Name="_Total")[0]
@@ -396,7 +396,7 @@ class TestOtherSystemAPIs(WindowsTestCase):
     #                                   time.localtime(p.create_time()))
 
     # Note: this test is not very reliable
-    @retry_on_failure()
+    @retry_on_failure
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
@@ -788,7 +788,7 @@ class TestProcess(WindowsTestCase):
         with pytest.raises(psutil.NoSuchProcess):
             proc.exe()
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_page_faults(self):
         # memory_info() value comes from GetProcessMemoryInfo ->
         # PageFaultCount. page_faults() value comes from
@@ -840,14 +840,14 @@ class TestProcessWMI(WindowsTestCase):
         username = f"{domain}\\{username}"
         assert p.username() == username
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_memory_rss(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
         rss = p.memory_info().rss
         assert rss == int(w.WorkingSetSize)
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_memory_vms(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)

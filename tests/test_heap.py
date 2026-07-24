@@ -195,7 +195,7 @@ class TestHeap(HeapTestCase):
 
     # On Windows malloc() increases mmap_used
     @skipif(WINDOWS, reason="not on WINDOWS")
-    @retry_on_failure()
+    @retry_on_failure
     def test_heap_used(self):
         """Test that a small malloc() allocation without free()
         increases heap_used.
@@ -228,7 +228,7 @@ class TestHeap(HeapTestCase):
         assert_within_percent(mem3.mmap_used, mem1.mmap_used, percent=10)
 
     @skipif(MACOS, reason="not supported on MACOS")
-    @retry_on_failure()
+    @retry_on_failure
     def test_mmap_used(self):
         """Test that a large malloc allocation increases mmap_used.
         NOTE: `mmap()` / `munmap()` via ctypes proved to be unreliable.
@@ -273,7 +273,7 @@ class TestHeap(HeapTestCase):
 @serial
 class TestHeapWindows(HeapTestCase):
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_heap_used(self):
         """Test that HeapAlloc() without HeapFree() increases heap_used."""
         size = HEAP_SIZE
@@ -292,7 +292,7 @@ class TestHeapWindows(HeapTestCase):
         mem3 = psutil.heap_info()
         assert mem3.heap_used == mem1.heap_used
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_mmap_used(self):
         """Test that VirtualAllocEx() without VirtualFreeEx() increases
         mmap_used.
@@ -312,7 +312,7 @@ class TestHeapWindows(HeapTestCase):
         mem3 = psutil.heap_info()
         assert mem3.mmap_used == mem1.mmap_used
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_heap_count(self):
         """Test that HeapCreate() without HeapDestroy() increases
         heap_count.

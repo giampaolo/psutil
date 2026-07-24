@@ -1368,6 +1368,9 @@ def retry_on_failure(retries=NO_RETRIES):
 
         return wrapper
 
+    # allow bare `@retry_on_failure`
+    if callable(retries):
+        return retry_on_failure()(retries)
     assert retries > 1, retries
     return decorator
 

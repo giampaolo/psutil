@@ -429,7 +429,7 @@ class TestProcess(PsutilTestCase):
             assert athread.user_time == athread[1]
             assert athread.system_time == athread[2]
 
-    @retry_on_failure()
+    @retry_on_failure
     @skip_on_access_denied(only_if=MACOS)
     @skipif(not HAS_PROC_THREADS, reason="not supported")
     def test_threads_2(self):
@@ -448,7 +448,7 @@ class TestProcess(PsutilTestCase):
             < 0.1
         )
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_memory_info(self):
         p = psutil.Process()
         self.check_proc_memory(p.memory_info())
@@ -715,7 +715,7 @@ class TestProcess(PsutilTestCase):
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_long_name(self):
         pyexe = create_py_exe(self.get_testfn(suffix=string.digits * 2))
         cmdline = [
@@ -1070,7 +1070,7 @@ class TestProcess(PsutilTestCase):
         assert grandchild.parent() == child
         assert child.parent() == parent
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_parents(self):
         parent = psutil.Process()
         assert parent.parents()

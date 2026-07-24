@@ -510,7 +510,7 @@ class TestSystemWideConnections(ConnectionTestCase):
                 assert len(cons) == len(set(cons))
                 check(cons, families, types_)
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_multi_sockets_procs(self):
         # Creates multiple sub processes, each creating different
         # sockets. For each process check that proc.net_connections()
