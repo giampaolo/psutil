@@ -1886,7 +1886,6 @@ else:
             for x in psutil.Process().memory_maps()
             if x.path.lower().endswith(ext)
             and 'python' in os.path.basename(x.path).lower()
-            and 'wow64' not in x.path.lower()
         ]
         if PYPY and not libs:
             libs = [
