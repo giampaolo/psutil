@@ -901,13 +901,23 @@ def get_testfn(suffix="", dir=None):
 # `@serial` decorator: put all marked tests on the same xdist worker,
 # so they do not run concurrently with each other. Useful for tests
 # that share or mutate the same system-wide resource and must not
-# overlap.
+# overlap. Used by socket/connection tests:
+# - net_connections() / Process.net_connections() that compare vs
+#   `ss`, `netstat`, etc.
+# - the socket-opening helpers: create_sockets(), bind_socket(),
+#   tcp_socketpair(), unix_socketpair(), bind_unix_socket()
 serial = pytest.mark.xdist_group(name="serial")
 
 # `@isolated` decorator: run the test with no other psutil test running
 # concurrently, via the inter-process lock in conftest.py. Use this for
-# measurement tests that need a quiet psutil test environment.
-isolated = pytest.mark.isolatedskipif = pytest.mark.skipif
+# measurement tests that need a quiet psutil test environment, or whose
+# result another running test can perturb:
+# - CPU counters compared vs getrusage / vmstat / WMI: cpu_stats(),
+#   Process.num_ctx_switches(), Process.page_faults()
+# - pids() compared as an exact set
+# - per-process counts other tests can move: Process.num_threads(),
+#   Process.num_fds(), Process.threads(), heap_info().
+isolated = pytest.mark.isolated
 
 skipif = pytest.mark.skipif
 
