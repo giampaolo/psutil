@@ -917,24 +917,23 @@ def get_testfn(suffix="", dir=None):
 # ===================================================================
 
 # `@serial` decorator: put all marked tests on the same xdist worker,
-# so they do not run concurrently with each other. Useful for tests
+# so they do not run concurrently with each other. Needed by tests
 # that share or mutate the same system-wide resource and must not
-# overlap. Used by socket/connection tests:
+# overlap.
 # - net_connections() / Process.net_connections() that compare vs
 #   `ss`, `netstat`, etc.
 # - the socket-opening helpers: create_sockets(), bind_socket(),
 #   tcp_socketpair(), unix_socketpair(), bind_unix_socket()
 serial = pytest.mark.xdist_group(name="serial")
 
-# `@isolated` decorator: run the test in a separate, serial pytest run
-# (`-m isolated`), not the parallel `-n auto` one. These measure noisy
-# per-process or system counters that are only reliable in a quiet,
-# non-xdist process:
+# `@isolated` decorator: these tests are skipped under xdist and run in
+# a second, separate pytest run (`-m isolated`) that uses a single
+# process. They need a quiet, non-xdist environment, because
+# they measure noisy per-process or system counters.
 # - CPU counters compared vs getrusage / vmstat / WMI: cpu_stats(),
 #   Process.num_ctx_switches(), Process.page_faults()
-# - pids() compared as an exact set
 # - per-process counts other tests can move: Process.num_threads(),
-#   Process.num_fds(), Process.threads(), heap_info().
+#   Process.num_fds(), Process.threads(), heap_info()
 isolated = pytest.mark.isolated
 
 skipif = pytest.mark.skipif
