@@ -384,9 +384,27 @@ def spawn_subproc(cmd=None, **kwds):
                 "[time.sleep(0.1) for x in range(100)];"  # 10 secs
             )
             cmd = [PYTHON_EXE, "-c", pyline]
+            kwds.setdefault("stderr", subprocess.PIPE)
             sproc = subprocess.Popen(cmd, **kwds)
             _subprocesses_started.add(sproc)
-            wait_for_file(testfn, delete=True, empty=True)
+            try:
+                wait_for_file(testfn, delete=True, empty=True)
+            except FileNotFoundError as err:
+                # The subproc never signaled readiness. If it already
+                # died, surface its stderr instead of a bare
+                # FileNotFoundError (xdist drops a worker's inherited
+                # stderr, so this is the only way to see the crash).
+                ret = sproc.poll()
+                if ret is not None:
+                    if sproc.stderr is not None:
+                        stderr = sproc.stderr.read()
+                    else:
+                        stderr = b""
+                    raise RuntimeError(
+                        f"subprocess died (exit {ret}):\n"
+                        f"{stderr.decode(errors='replace')}"
+                    ) from err
+                raise
         finally:
             safe_rmpath(testfn)
     else:
