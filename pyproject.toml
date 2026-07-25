@@ -3,7 +3,7 @@
 # metadata. Install with `pip install --group <name>` or the
 # `make install-pydeps-*` targets.
 test = [
-    "psleak @ git+https://github.com/giampaolo/psleak.git",
+    "psleak @ https://github.com/giampaolo/psleak/archive/refs/heads/master.tar.gz",
     "pytest",
     "pytest-instafail",
     "pytest-xdist",
