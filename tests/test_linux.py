@@ -2094,12 +2094,12 @@ class TestProcess(LinuxTestCase):
     def test_open_files_mode(self):
         def get_test_file(fname):
             p = psutil.Process()
-            giveup_at = time.time() + GLOBAL_TIMEOUT
+            giveup_at = time.monotonic() + GLOBAL_TIMEOUT
             while True:
                 for file in p.open_files():
                     if file.path == os.path.abspath(fname):
                         return file
-                    elif time.time() > giveup_at:
+                    elif time.monotonic() > giveup_at:
                         break
             raise RuntimeError("timeout looking for test file")
 
