@@ -57,52 +57,6 @@ PYPY = '__pypy__' in sys.builtin_module_names
 CPYTHON = sys.implementation.name == "cpython"
 Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 
-# Test deps, installable via `pip install .[test]` or
-# `make install-pydeps-test`.
-TEST_DEPS = [
-    "psleak",
-    "pytest",
-    "pytest-instafail",
-    "pytest-xdist",
-    "setuptools",
-    'pywin32 ; os_name == "nt" and implementation_name != "pypy"',
-    'wheel ; os_name == "nt" and implementation_name != "pypy"',
-    'wmi ; os_name == "nt" and implementation_name != "pypy"',
-]
-
-# Linter deps, installable via `pip install .[lint]` or
-# `make install-pydeps-lint`.
-LINT_DEPS = [
-    "black",
-    "rstwrap",
-    "ruff==0.15.17",  # newer versions print rule names, not codes
-    "sphinx-lint",
-    "toml-sort",
-]
-
-# Development deps, installable via `pip install .[dev]` or
-# `make install-pydeps-dev`.
-DEV_DEPS = [
-    *TEST_DEPS,
-    *LINT_DEPS,
-    "abi3audit",
-    "check-manifest",
-    "coverage",
-    "packaging",
-    "pylint",  # not enforced
-    "pyperf",
-    "pypinfo",
-    "pytest-cov",
-    "requests",
-    "twine",
-    "validate-pyproject[all]",
-    "virtualenv",
-    "vulture",
-    "wheel",
-    'colorama ; os_name == "nt"',
-    'pyreadline3 ; os_name == "nt"',
-]
-
 # The pre-processor macros that are passed to the C compiler when
 # building the extension.
 macros = []
@@ -488,14 +442,8 @@ def main():
         ],
     )
     if setuptools is not None:
-        extras_require = {
-            "test": TEST_DEPS,
-            "lint": LINT_DEPS,
-            "dev": DEV_DEPS,
-        }
         kwargs.update(
             python_requires=">=3.8",
-            extras_require=extras_require,
             zip_safe=False,
         )
     success = False

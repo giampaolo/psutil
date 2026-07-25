@@ -81,17 +81,17 @@ install-sysdeps:  ## Install system deps needed to compile psutil.
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	$(MAKE) install-pip
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[test]
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group test
 
 install-pydeps-lint:  ## Install python deps necessary to run linters.
 	$(MAKE) install-pip
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[lint]
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group lint
 
 install-pydeps-dev:  ## Install python deps meant for local development.
 	$(MAKE) install-pip
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[dev]
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group dev
 
 # ===================================================================
 # Tests
@@ -268,6 +268,10 @@ ci-lint:  ## Run all linters on GitHub CI.
 
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-sysdeps
+	$(MAKE) install-pip
+	# Install psutil before the test deps: psleak depends on psutil,
+	# and a pre-installed one stops pip from pulling it from PyPI.
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .
 	$(MAKE) install-pydeps-test
 	$(MAKE) build
 	$(MAKE) print-sysinfo

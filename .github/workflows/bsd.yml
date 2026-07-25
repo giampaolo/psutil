@@ -10,17 +10,17 @@ on:
     # only run this job if the following files are modified
     paths: &bsd_paths
       - ".github/workflows/bsd.yml"
+      - "Makefile"
       - "psutil/__init__.py"
       - "psutil/_common.py"
       - "psutil/_ntuples.py"
       - "psutil/_psbsd.py"
       - "psutil/_psposix.py"
       - "psutil/_psutil_bsd.c"
-      - "psutil/arch/bsd/**"
-      - "psutil/arch/freebsd/**"
-      - "psutil/arch/netbsd/**"
-      - "psutil/arch/openbsd/**"
-      - "psutil/arch/posix/**"
+      - "psutil/arch/*bsd*/**"
+      - "psutil/arch/*posix*/**"
+      - "psutil/arch/all/**"
+      - "pyproject.toml"
       - "setup.py"
       - "tests/**"
   pull_request:
