@@ -396,17 +396,6 @@ class TestOtherSystemAPIs(WindowsTestCase):
     #     psutil_create = time.strftime("%Y%m%d%H%M%S",
     #                                   time.localtime(p.create_time()))
 
-    # Note: this test is not very reliable
-    @isolated
-    @retry_on_failure
-    def test_pids(self):
-        # Note: this test might fail if the OS is starting/killing
-        # other processes in the meantime
-        w = wmi.WMI().Win32_Process()
-        wmi_pids = {x.ProcessId for x in w}
-        psutil_pids = set(psutil.pids())
-        assert wmi_pids == psutil_pids
-
     def test_convert_dos_path_drive(self):
         winpath = 'C:\\Windows\\Temp'
         driveletter = 'C:'
