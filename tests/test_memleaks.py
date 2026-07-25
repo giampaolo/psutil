@@ -11,6 +11,7 @@ extension. Requires https://github.com/giampaolo/psleak.
 import inspect
 import os
 
+from psleak import Checkers
 from psleak import LeakTest
 from psleak import MemoryLeakTestCase
 
@@ -53,7 +54,23 @@ thisproc = psutil.Process()
 
 
 MemoryLeakTestCase.retries = 30  # minimize false positives
-MemoryLeakTestCase.verbosity = 0 if PYTEST_PARALLEL else 1
+
+# The Makefile (`make test-memleaks-parallel`) runs this suite twice:
+# once in parallel checking memory only, once in a single process
+# checking the exact resource counters, which give false positives if
+# other tests run next to them. No env var means the full check (`make
+# test-memleaks`).
+psleak_checkers = os.environ.get("PSLEAK_CHECKERS")
+if psleak_checkers == "memory":
+    MemoryLeakTestCase.checkers = Checkers.only("memory")
+elif psleak_checkers == "resources":
+    MemoryLeakTestCase.checkers = Checkers.exclude("memory")
+elif psleak_checkers is not None:
+    msg = f"invalid PSLEAK_CHECKERS env var: {psleak_checkers!r}"
+    raise ValueError(msg)
+
+# Be quiet when running under xdist or in one of the 2 CI passes.
+MemoryLeakTestCase.verbosity = 0 if PYTEST_PARALLEL or psleak_checkers else 1
 
 TIMES = MemoryLeakTestCase.times
 FEW_TIMES = int(TIMES / 10)
@@ -250,14 +267,12 @@ class TestProcess(MemoryLeakTestCase):
     # Windows implementation is based on a single system-wide
     # function (tested later).
     @skipif(WINDOWS, reason="worthless on WINDOWS")
+    @skipif(LINUX, reason="pure python, too slow")
+    @skipif(SUNOS, reason="parses pfiles CLI")
     def test_net_connections(self):
-        # TODO: UNIX sockets are temporarily implemented by parsing
-        # 'pfiles' cmd  output; we don't want that part of the code to
-        # be executed.
-        times = FEW_TIMES if LINUX else self.times
         with create_sockets():
             kind = 'inet' if SUNOS else 'all'
-            self.execute(lambda: self.proc.net_connections(kind), times=times)
+            self.execute(lambda: self.proc.net_connections(kind))
 
     @skipif(not HAS_PROC_ENVIRON, reason="not supported")
     def test_environ(self):
@@ -416,13 +431,11 @@ class TestModuleFunctions(MemoryLeakTestCase):
         self.execute(lambda: psutil.net_io_counters(nowrap=False))
 
     @skipif(MACOS and os.getuid() != 0, reason="need root access")
+    @skipif(LINUX, reason="pure python, too slow")
     def test_net_connections(self):
-        times = FEW_TIMES if LINUX else self.times
         with create_sockets():
             psutil.net_connections(kind='all')
-            self.execute(
-                lambda: psutil.net_connections(kind='all'), times=times
-            )
+            self.execute(lambda: psutil.net_connections(kind='all'))
 
     def test_net_if_addrs(self):
         psutil.net_if_addrs()  # XXX prime
