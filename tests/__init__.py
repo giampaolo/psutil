@@ -775,11 +775,8 @@ def wait_for_file(fname, delete=True, empty=False):
 
 
 def wait_for_file_subproc(fname, sproc, delete=True, empty=False):
-    """Same as wait_for_file(), for a file which is supposed to be
-    written by subprocess `sproc`. If the file never shows up and the
-    subprocess died, surface its stderr instead of a bare
-    FileNotFoundError (xdist drops a worker's inherited stderr, so
-    this is the only way to see the crash).
+    """Wait for a file to be written on disk, which is supposed to be
+    written by a subprocess.
     """
     try:
         return wait_for_file(fname, delete=delete, empty=empty)
