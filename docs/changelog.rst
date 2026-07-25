@@ -374,11 +374,9 @@ Others:
   ("PID has been reused") when the process creation time could not be
   determined, e.g. for zombies on NetBSD / OpenBSD or on :exc:`AccessDenied` on
   Windows. An unknown creation time is no longer treated as proof of PID reuse.
-  The same principle now also applies to :class:`Process` equality: two
-  instances with the same PID compare equal if the creation time of either one
-  is unknown (also happens for processes still in the fork / exec window on
-  NetBSD). ``hash(Process)`` is now based on the PID alone, so equal instances
-  are guaranteed to hash the same.
+  Same for :class:`Process` equality: instances with the same PID compare equal
+  if either creation time is unknown. ``hash(Process)`` is now based on the PID
+  alone.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^

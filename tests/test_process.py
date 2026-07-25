@@ -1526,14 +1526,12 @@ class TestProcessPidReuse(PsutilTestCase):
         assert proc(100, 50.0) == proc(100, 50.0)
         # same pid, different ctime: the PID has been reused
         assert proc(100, 50.0) != proc(100, 60.0)
-        # different pid always means different process, even when
-        # ctimes are unknown
+        # different pid always means different process
         assert proc(100, 50.0) != proc(101, 50.0)
         assert proc(100, None) != proc(101, None)
         assert proc(100, 0.0) != proc(101, 0.0)
-        # a null ctime on either side means identity is unknown, which
-        # is not proof of a different process (e.g. AccessDenied on
-        # Windows, zombies or the fork/exec window on NetBSD)
+        # a null ctime on either side means identity is unknown,
+        # which is not proof of a different process
         for null_value in (0.0, None):
             assert proc(100, 50.0) == proc(100, null_value)
             assert proc(100, null_value) == proc(100, 50.0)
@@ -1548,8 +1546,7 @@ class TestProcessPidReuse(PsutilTestCase):
             p._hash = None
             return p
 
-        # the eq / hash contract: a == b implies hash(a) == hash(b);
-        # here it means null-ctime idents must hash like real ones
+        # a == b implies hash(a) == hash(b)
         pairs = [
             (proc(100, 50.0), proc(100, 50.0)),
             (proc(100, 50.0), proc(100, None)),

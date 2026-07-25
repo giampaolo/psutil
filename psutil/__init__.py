@@ -537,31 +537,35 @@ class Process:
 
     __repr__ = __str__
 
+    @staticmethod
+    def _cmp_idents(ident1, ident2):
+        """Compare two `(pid, ctime)` identity tuples and return
+        "same", "different" or "unknown". "unknown" means ctime is
+        missing on either side (`AccessDenied` on Windows, zombies
+        resulting in ctime 0), which is not proof of a different
+        process.
+        """
+        pid1, ctime1 = ident1
+        pid2, ctime2 = ident2
+        if pid1 != pid2:
+            return "different"
+        if not ctime1 or not ctime2:
+            return "unknown"
+        return "same" if ctime1 == ctime2 else "different"
+
     def __eq__(self, other):
         # Test for equality with another Process object based
         # on PID and creation time.
         if not isinstance(other, Process):
             return NotImplemented
-        pid1, ctime1 = self._ident
-        pid2, ctime2 = other._ident
-        if pid1 != pid2:
-            return False
-        if not ctime1 or not ctime2:
-            # A null create time means identity is unknown: on Windows
-            # create_time() may raise AccessDenied, on NetBSD /
-            # OpenBSD / illumos it reads 0 for zombies and for
-            # processes still in the fork / exec window. Same PID +
-            # unknown ctime is not proof they are different processes.
-            return True
-        return ctime1 == ctime2
+        return self._cmp_idents(self._ident, other._ident) != "different"
 
     def __ne__(self, other):
         return not self == other
 
     def __hash__(self):
-        # Hash the PID only: __eq__ treats a null create time as a
-        # wildcard, and including it in the hash would break the
-        # equal-objects-have-equal-hashes contract.
+        # PID only: __eq__ can match idents with different ctimes, and
+        # equal objects must hash the same.
         if self._hash is None:
             self._hash = hash(self._pid)
         return self._hash
@@ -765,29 +769,20 @@ class Process:
             return False
         try:
             # Checking if PID is alive is not enough as the PID might
-            # have been reused by another process. Process identity /
-            # uniqueness over time is guaranteed by (PID + creation
-            # time) and that is verified in __eq__.
+            # have been reused by another process. Process identity is
+            # guaranteed by (PID + creation time), see __eq__.
             other = Process(self.pid)
-            pid_reused = self != other
-            if pid_reused:
-                if not self._ident[1] or not other._ident[1]:
-                    # A null create time means identity is unknown: on
-                    # Windows create_time() may raise AccessDenied and
-                    # be set to None, on NetBSD / OpenBSD zombies have
-                    # creation time == 0 (see #2287, #2593).
-                    debug(
-                        "null create time, ignoring PID reuse check:"
-                        f" {self._ident} vs. {other._ident}"
-                    )
-                    pid_reused = False
-                else:
-                    debug(f"PID reuse: {self._ident} vs. {other._ident}")
-
-            self._pid_reused = pid_reused
+            self._pid_reused = self != other
             if self._pid_reused:
+                debug(f"PID reuse detected: {self._ident} vs. {other._ident}")
                 _pids_reused.add(self.pid)
                 raise NoSuchProcess(self.pid)
+            if self._ident[1] != other._ident[1]:
+                # Equal only because either ctime is unknown (__eq__).
+                debug(
+                    "null create time, PID reuse check inconclusive:"
+                    f" {self._ident} vs. {other._ident}"
+                )
             return True
         except ZombieProcess:
             # We should never get here as it's already handled in
