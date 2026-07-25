@@ -434,11 +434,26 @@ def spawn_children_pair():
         # set (which is the default) a "conhost.exe" extra process will be
         # spawned as a child. We don't want that.
         if WINDOWS:
-            subp, tfile = pyrun(s, creationflags=0)
+            subp, tfile = pyrun(s, creationflags=0, stderr=subprocess.PIPE)
         else:
-            subp, tfile = pyrun(s)
+            subp, tfile = pyrun(s, stderr=subprocess.PIPE)
         child = psutil.Process(subp.pid)
-        grandchild_pid = int(wait_for_file(testfn, delete=True, empty=False))
+        try:
+            grandchild_pid = int(
+                wait_for_file(testfn, delete=True, empty=False)
+            )
+        except FileNotFoundError as err:
+            # The grandchild never signaled readiness. If the child
+            # already died, surface its stderr instead of a bare
+            # FileNotFoundError.
+            ret = subp.poll()
+            if ret is not None:
+                stderr = subp.stderr.read() if subp.stderr else b""
+                raise RuntimeError(
+                    f"child died (exit {ret}):\n"
+                    f"{stderr.decode(errors='replace')}"
+                ) from err
+            raise
         _pids_started.add(grandchild_pid)
         grandchild = psutil.Process(grandchild_pid)
         return (child, grandchild)
