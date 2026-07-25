@@ -1970,10 +1970,19 @@ class TestPopen(PsutilTestCase):
             with pytest.raises(AttributeError):
                 proc.foo  # noqa: B018
             proc.terminate()
-        if POSIX:
-            assert proc.wait(5) == -signal.SIGTERM
-        else:
-            assert proc.wait(5) == signal.SIGTERM
+        expected = -signal.SIGTERM if POSIX else signal.SIGTERM
+        ret = proc.wait(5)
+        if ret != expected:
+            # Seen once on NetBSD: SIGTERM had no effect and the child
+            # ran to completion. Leave some evidence behind.
+            masked = (
+                signal.pthread_sigmask(signal.SIG_BLOCK, []) if POSIX else ""
+            )
+            return pytest.fail(
+                f"wait() returned {ret} instead of {expected};"
+                f" blocked signals in this process: {masked};"
+                f" child stderr: {proc.stderr.read()}"
+            )
 
     def test_ctx_manager(self):
         with psutil.Popen(
