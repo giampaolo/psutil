@@ -1146,10 +1146,13 @@ Process class
   by :meth:`threads`).
 
   When calling methods of this class, always be prepared to catch
-  :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions. The builtin
-  :func:`hash` can be used on instances to uniquely identify a process over
-  time (the hash combines PID and creation time, except on the platforms listed
-  in :ref:`faq_pid_reuse`), so instances can also be used in a :class:`set`.
+  :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions. Instances can be
+  compared for equality and used in a :class:`set` or as :class:`dict` keys:
+  two instances are equal if they have the same PID and creation time. If the
+  creation time of either instance is unknown (e.g. on :exc:`AccessDenied`, or
+  for zombie processes), identity falls back on the PID alone. The same applies
+  on the platforms where creation time is not part of process identity (see
+  :ref:`faq_pid_reuse`).
 
   .. note::
 
