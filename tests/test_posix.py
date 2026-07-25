@@ -348,9 +348,11 @@ class TestProcess(PosixTestCase):
     def test_page_faults(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         pf = psutil.Process().page_faults()
-        tol = 5
-        assert pf.minor == pytest.approx(ru.ru_minflt, abs=tol)
-        assert pf.major == pytest.approx(ru.ru_majflt, abs=tol)
+        # Minor faults may change between reads, and the kernel
+        # counters are not updated atomically, so allow some slack.
+        # Seen ~50 apart on OpenBSD.
+        assert pf.minor == pytest.approx(ru.ru_minflt, abs=100)
+        assert pf.major == pytest.approx(ru.ru_majflt, abs=5)
 
     @skipif(not LINUX and not MACOS, reason="Linux, macOS only")
     def test_page_faults_minor_increase(self):
