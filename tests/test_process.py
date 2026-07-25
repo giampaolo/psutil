@@ -1376,82 +1376,6 @@ class TestProcess(PsutilTestCase):
             assert p.status() == psutil.STATUS_ZOMBIE
             assert m.called
 
-    def test_ident(self):
-        p = psutil.Process()
-        assert p._ident[0] == p.pid
-        if FREEBSD or OPENBSD or SUNOS or AIX:
-            # PID reuse detection is disabled on these platforms, see
-            # Process._get_ident().
-            assert p._ident[1] is None
-        else:
-            assert p._ident[1] is not None
-
-    @skipif(
-        FREEBSD or OPENBSD or SUNOS or AIX,
-        reason="PID reuse detection disabled on this platform",
-    )
-    def test_reused_pid(self):
-        # Emulate a case where PID has been reused by another process.
-        subp = self.spawn_subproc()
-        p = psutil.Process(subp.pid)
-        p._ident = (p.pid, p.create_time() + 100)
-
-        list(psutil.process_iter())
-        assert p.pid in psutil._pmap
-        assert not p.is_running()
-
-        # make sure is_running() removed PID from process_iter()
-        # internal cache
-        with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with contextlib.redirect_stderr(io.StringIO()) as f:
-                list(psutil.process_iter())
-        assert (
-            f"refreshing Process instance for reused PID {p.pid}"
-            in f.getvalue()
-        )
-        assert p.pid not in psutil._pmap
-
-        assert p != psutil.Process(subp.pid)
-        msg = "process no longer exists and its PID has been reused"
-        ns = process_namespace(p)
-        for fun, name in ns.iter(ns.setters + ns.killers, clear_cache=False):
-            with self.subTest(name=name):
-                with pytest.raises(psutil.NoSuchProcess, match=msg):
-                    fun()
-
-        assert "terminated + PID reused" in str(p)
-        assert "terminated + PID reused" in repr(p)
-
-        with pytest.raises(psutil.NoSuchProcess, match=msg):
-            p.ppid()
-        with pytest.raises(psutil.NoSuchProcess, match=msg):
-            p.parent()
-        with pytest.raises(psutil.NoSuchProcess, match=msg):
-            p.parents()
-        with pytest.raises(psutil.NoSuchProcess, match=msg):
-            p.children()
-
-    def test_reused_pid_with_null_ctime(self):
-        # A null create time on either side must not count as PID
-        # reuse, see: https://github.com/giampaolo/psutil/issues/2895.
-        subp = self.spawn_subproc()
-        p = psutil.Process(subp.pid)
-
-        for null_value in (0.0, None):
-            p._ident = (p.pid, null_value)
-            assert p.is_running()
-            assert not p._pid_reused
-
-        for null_value in (0.0, None):
-            p = psutil.Process(subp.pid)
-            with mock.patch.object(
-                psutil.Process,
-                "_get_ident",
-                return_value=(subp.pid, null_value),
-            ):
-                assert p.is_running()
-            assert not p._pid_reused
-
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
         if 0 not in psutil.pids():
@@ -1571,6 +1495,177 @@ class TestProcess(PsutilTestCase):
         assert env == {"A": "1", "C": "3"}
         sproc.communicate()
         assert sproc.returncode == 0
+
+
+# ===================================================================
+# --- PID reuse detection and process identity
+# ===================================================================
+
+
+class TestProcessPidReuse(PsutilTestCase):
+    """Tests for PID reuse detection and process identity
+    (__eq__, __ne__, __hash__).
+    """
+
+    def test_ident(self):
+        p = psutil.Process()
+        assert p._ident[0] == p.pid
+        if FREEBSD or OPENBSD or SUNOS or AIX:
+            # PID reuse detection is disabled on these platforms, see
+            # Process._get_ident().
+            assert p._ident[1] is None
+        else:
+            assert p._ident[1] is not None
+
+    def test_eq(self):
+        def proc(pid, ctime):
+            p = psutil.Process()
+            p._ident = (pid, ctime)
+            p._hash = None
+            return p
+
+        # same pid, same ctime
+        assert proc(100, 50.0) == proc(100, 50.0)
+        # same pid, different ctime: the PID has been reused
+        assert proc(100, 50.0) != proc(100, 60.0)
+        # different pid always means different process
+        assert proc(100, 50.0) != proc(101, 50.0)
+        assert proc(100, None) != proc(101, None)
+        assert proc(100, 0.0) != proc(101, 0.0)
+        # a null ctime on either side means identity is unknown,
+        # which is not proof of a different process
+        for null_value in (0.0, None):
+            assert proc(100, 50.0) == proc(100, null_value)
+            assert proc(100, null_value) == proc(100, 50.0)
+            assert proc(100, null_value) == proc(100, null_value)
+        # comparison with a non-Process object
+        assert proc(100, 50.0) != "foo"
+
+    def test_hash(self):
+        def proc(pid, ctime):
+            p = psutil.Process()
+            p._ident = (pid, ctime)
+            p._hash = None
+            return p
+
+        # a == b implies hash(a) == hash(b)
+        pairs = [
+            (proc(100, 50.0), proc(100, 50.0)),
+            (proc(100, 50.0), proc(100, None)),
+            (proc(100, 50.0), proc(100, 0.0)),
+            (proc(100, None), proc(100, 0.0)),
+        ]
+        for a, b in pairs:
+            assert a == b
+            assert hash(a) == hash(b)
+            assert len({a, b}) == 1
+            assert {a: "x"}[b] == "x"
+        # same pid but different ctime (PID reuse): unequal, and a set
+        # must keep both
+        a, b = proc(100, 50.0), proc(100, 60.0)
+        assert a != b
+        assert len({a, b}) == 2
+        # sanity check against the real world
+        p1 = psutil.Process()
+        p2 = psutil.Process(p1.pid)
+        assert p1 == p2
+        assert hash(p1) == hash(p2)
+        assert len({p1, p2}) == 1
+
+    @skipif(
+        FREEBSD or OPENBSD or SUNOS or AIX,
+        reason="PID reuse detection disabled on this platform",
+    )
+    def test_reused_pid(self):
+        # Emulate a case where PID has been reused by another process.
+        subp = self.spawn_subproc()
+        p = psutil.Process(subp.pid)
+        p._ident = (p.pid, p.create_time() + 100)
+
+        list(psutil.process_iter())
+        assert p.pid in psutil._pmap
+        assert not p.is_running()
+
+        # make sure is_running() removed PID from process_iter()
+        # internal cache
+        with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
+            with contextlib.redirect_stderr(io.StringIO()) as f:
+                list(psutil.process_iter())
+        assert (
+            f"refreshing Process instance for reused PID {p.pid}"
+            in f.getvalue()
+        )
+        assert p.pid not in psutil._pmap
+
+        assert p != psutil.Process(subp.pid)
+        msg = "process no longer exists and its PID has been reused"
+        ns = process_namespace(p)
+        for fun, name in ns.iter(ns.setters + ns.killers, clear_cache=False):
+            with self.subTest(name=name):
+                with pytest.raises(psutil.NoSuchProcess, match=msg):
+                    fun()
+
+        assert "terminated + PID reused" in str(p)
+        assert "terminated + PID reused" in repr(p)
+
+        with pytest.raises(psutil.NoSuchProcess, match=msg):
+            p.ppid()
+        with pytest.raises(psutil.NoSuchProcess, match=msg):
+            p.parent()
+        with pytest.raises(psutil.NoSuchProcess, match=msg):
+            p.parents()
+        with pytest.raises(psutil.NoSuchProcess, match=msg):
+            p.children()
+
+    def test_reused_pid_with_null_ctime(self):
+        # A null create time on either side must not count as PID
+        # reuse, see: https://github.com/giampaolo/psutil/issues/2895.
+        subp = self.spawn_subproc()
+        p = psutil.Process(subp.pid)
+
+        for null_value in (0.0, None):
+            p._ident = (p.pid, null_value)
+            assert p.is_running()
+            assert not p._pid_reused
+
+        for null_value in (0.0, None):
+            p = psutil.Process(subp.pid)
+            with mock.patch.object(
+                psutil.Process,
+                "_get_ident",
+                return_value=(subp.pid, null_value),
+            ):
+                assert p.is_running()
+            assert not p._pid_reused
+
+    def test_ad_on_process_creation(self):
+        # We are supposed to be able to instantiate Process also in case
+        # of zombie processes or access denied.
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=psutil.AccessDenied
+        ) as meth:
+            psutil.Process()
+            assert meth.called
+
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=psutil.ZombieProcess(1)
+        ) as meth:
+            psutil.Process()
+            assert meth.called
+
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=ValueError
+        ) as meth:
+            with pytest.raises(ValueError):
+                psutil.Process()
+            assert meth.called
+
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=psutil.NoSuchProcess(1)
+        ) as meth:
+            with pytest.raises(psutil.NoSuchProcess):
+                psutil.Process()
+            assert meth.called
 
 
 # ===================================================================

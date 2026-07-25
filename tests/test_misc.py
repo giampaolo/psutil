@@ -178,18 +178,6 @@ class TestSpecialMethods(PsutilTestCase):
             == "timeout after 5 seconds (pid=321, name='name')"
         )
 
-    def test_process__eq__(self):
-        p1 = psutil.Process()
-        p2 = psutil.Process()
-        assert p1 == p2
-        p2._ident = (0, 0)
-        assert p1 != p2
-        assert p1 != 'foo'
-
-    def test_process__hash__(self):
-        s = {psutil.Process(), psutil.Process()}
-        assert len(s) == 1
-
 
 # ===================================================================
 # --- Misc, generic, corner cases
@@ -322,35 +310,6 @@ class TestMisc(PsutilTestCase):
         assert b.seconds == 33
         assert b.pid == 4567
         assert b.name == 'name'
-
-    def test_ad_on_process_creation(self):
-        # We are supposed to be able to instantiate Process also in case
-        # of zombie processes or access denied.
-        with mock.patch.object(
-            psutil.Process, '_get_ident', side_effect=psutil.AccessDenied
-        ) as meth:
-            psutil.Process()
-            assert meth.called
-
-        with mock.patch.object(
-            psutil.Process, '_get_ident', side_effect=psutil.ZombieProcess(1)
-        ) as meth:
-            psutil.Process()
-            assert meth.called
-
-        with mock.patch.object(
-            psutil.Process, '_get_ident', side_effect=ValueError
-        ) as meth:
-            with pytest.raises(ValueError):
-                psutil.Process()
-            assert meth.called
-
-        with mock.patch.object(
-            psutil.Process, '_get_ident', side_effect=psutil.NoSuchProcess(1)
-        ) as meth:
-            with pytest.raises(psutil.NoSuchProcess):
-                psutil.Process()
-            assert meth.called
 
     def test_sanity_version_check(self):
         # see: https://github.com/giampaolo/psutil/issues/564
