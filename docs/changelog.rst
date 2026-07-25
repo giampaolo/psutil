@@ -367,6 +367,10 @@ Others:
   raise :exc:`NoSuchProcess` ("PID has been reused") for a process still alive,
   after a system clock update (e.g. NTP). Fixed by disabling the PID reuse
   check (also on SunOS and AIX).
+- :gh:`2895`: :class:`Process` methods could wrongly raise :exc:`NoSuchProcess`
+  ("PID has been reused") when the process creation time could not be
+  determined, e.g. for zombies on NetBSD / OpenBSD or on :exc:`AccessDenied` on
+  Windows. An unknown creation time is no longer treated as proof of PID reuse.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
