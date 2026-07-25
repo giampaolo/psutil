@@ -1425,6 +1425,27 @@ class TestProcess(PsutilTestCase):
         with pytest.raises(psutil.NoSuchProcess, match=msg):
             p.children()
 
+    def test_reused_pid_with_null_ctime(self):
+        # A null create time on either side must not count as PID
+        # reuse, see: https://github.com/giampaolo/psutil/issues/2895.
+        subp = self.spawn_subproc()
+        p = psutil.Process(subp.pid)
+
+        for null_value in (0.0, None):
+            p._ident = (p.pid, null_value)
+            assert p.is_running()
+            assert not p._pid_reused
+
+        for null_value in (0.0, None):
+            p = psutil.Process(subp.pid)
+            with mock.patch.object(
+                psutil.Process,
+                "_get_ident",
+                return_value=(subp.pid, null_value),
+            ):
+                assert p.is_running()
+            assert not p._pid_reused
+
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
         if 0 not in psutil.pids():
