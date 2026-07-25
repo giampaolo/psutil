@@ -218,7 +218,7 @@ class TestProcess(MemoryLeakTestCase):
 
     @skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
     def test_memory_footprint(self):
-        self.execute(self.proc.memory_footprint)
+        self.execute(self.proc.memory_footprint, times=50)  # slow
 
     @skipif(not POSIX, reason="POSIX only")
     def test_terminal(self):
