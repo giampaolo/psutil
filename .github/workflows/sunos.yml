@@ -8,11 +8,17 @@ on:
     # only run this job if the following files are modified
     paths: &sunos_paths
       - ".github/workflows/sunos.yml"
+      - "Makefile"
+      - "psutil/__init__.py"
+      - "psutil/_common.py"
+      - "psutil/_ntuples.py"
+      - "psutil/_psposix.py"
       - "psutil/_pssunos.py"
       - "psutil/_psutil_sunos.c"
       - "psutil/arch/all/**"
       - "psutil/arch/posix/**"
       - "psutil/arch/sunos/**"
+      - "pyproject.toml"
       - "setup.py"
   pull_request:
     paths: *sunos_paths
