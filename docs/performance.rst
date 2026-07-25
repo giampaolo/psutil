@@ -93,99 +93,66 @@ slow ones (see :ref:`perf-api-speed` table below):
 Methods sped up by oneshot()
 ----------------------------
 
-Here's a list of method groups for each platform
-which can benefit from :meth:`Process.oneshot`.
-Methods in each group (in the same comma-separated list)
-share the same underlying system call.
+Here's a list of method groups for each platform which can benefit from
+:meth:`Process.oneshot`. Methods in each group (in the same comma-separated
+list) share the same underlying system call.
 
-The estimated speedup represents the gain
-when all listed methods are called together (best case),
-as measured by
-:src:`scripts/internal/bench_oneshot.py`.
+The *Speedup* represents the estimated gain when all listed methods are called
+together (best case), as measured by :src:`scripts/internal/bench_oneshot.py`.
 
 Linux
 """""
 
-*   :meth:`~Process.cpu_num`,
-    :meth:`~Process.cpu_percent`,
-    :meth:`~Process.cpu_times`,
-    :meth:`~Process.create_time`,
-    :meth:`~Process.name`,
-    :meth:`~Process.page_faults`,
-    :meth:`~Process.ppid`,
-    :meth:`~Process.status`,
-    :meth:`~Process.terminal`
+*   :meth:`~Process.cpu_num`, :meth:`~Process.cpu_percent`,
+    :meth:`~Process.cpu_times`, :meth:`~Process.create_time`,
+    :meth:`~Process.name`, :meth:`~Process.page_faults`, :meth:`~Process.ppid`,
+    :meth:`~Process.status`, :meth:`~Process.terminal`
 
-*   :meth:`~Process.gids`,
-    :meth:`~Process.memory_info_ex`,
-    :meth:`~Process.num_ctx_switches`,
-    :meth:`~Process.num_threads`,
-    :meth:`~Process.uids`,
-    :meth:`~Process.username`
+*   :meth:`~Process.gids`, :meth:`~Process.memory_info_ex`,
+    :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_threads`,
+    :meth:`~Process.uids`, :meth:`~Process.username`
 
-*   :meth:`~Process.memory_footprint`,
-    :meth:`~Process.memory_maps`
+*   :meth:`~Process.memory_footprint`, :meth:`~Process.memory_maps`
 
-Linux estimated speedup: *+2.6×*
+*Speedup: +2.6×*
 
 Windows
 """""""
 
-*  :meth:`~Process.cpu_percent`,
-   :meth:`~Process.cpu_times`,
-   :meth:`~Process.io_counters`,
-   :meth:`~Process.memory_info`,
-   :meth:`~Process.memory_info_ex`,
-   :meth:`~Process.num_ctx_switches`,
-   :meth:`~Process.num_handles`,
-   :meth:`~Process.num_threads`
+*  :meth:`~Process.cpu_percent`, :meth:`~Process.cpu_times`,
+   :meth:`~Process.io_counters`, :meth:`~Process.memory_info`,
+   :meth:`~Process.memory_info_ex`, :meth:`~Process.num_ctx_switches`,
+   :meth:`~Process.num_handles`, :meth:`~Process.num_threads`
 
-*  :meth:`~Process.exe`,
-   :meth:`~Process.name`
+*  :meth:`~Process.exe`, :meth:`~Process.name`
 
-Windows estimated speedup: *+1.8× / +6.5×*
+*Speedup: +1.8× / +6.5×*
 
 macOS
 """""
 
-*  :meth:`~Process.cpu_percent`,
-   :meth:`~Process.cpu_times`,
-   :meth:`~Process.memory_info`,
-   :meth:`~Process.memory_percent`,
-   :meth:`~Process.num_ctx_switches`,
-   :meth:`~Process.num_threads`
+*  :meth:`~Process.cpu_percent`, :meth:`~Process.cpu_times`,
+   :meth:`~Process.memory_info`, :meth:`~Process.memory_percent`,
+   :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_threads`
 
-*  :meth:`~Process.create_time`,
-   :meth:`~Process.gids`,
-   :meth:`~Process.name`,
-   :meth:`~Process.ppid`,
-   :meth:`~Process.status`,
-   :meth:`~Process.terminal`,
-   :meth:`~Process.uids`,
-   :meth:`~Process.username`
+*  :meth:`~Process.create_time`, :meth:`~Process.gids`, :meth:`~Process.name`,
+   :meth:`~Process.ppid`, :meth:`~Process.status`, :meth:`~Process.terminal`,
+   :meth:`~Process.uids`, :meth:`~Process.username`
 
-macOS estimated speedup: *+1.9×*
+*Speedup: +1.9×*
 
 BSD
 """
 
-*  :meth:`~Process.cpu_num` ,
-   :meth:`~Process.cpu_percent`,
-   :meth:`~Process.cpu_times`,
-   :meth:`~Process.create_time`,
-   :meth:`~Process.gids`,
-   :meth:`~Process.io_counters`,
-   :meth:`~Process.memory_info`,
-   :meth:`~Process.memory_percent`,
-   :meth:`~Process.name`,
-   :meth:`~Process.num_ctx_switches`,
-   :meth:`~Process.ppid`,
-   :meth:`~Process.status`,
-   :meth:`~Process.terminal`,
-   :meth:`~Process.uids`,
-   :meth:`~Process.username`
+*  :meth:`~Process.cpu_num` , :meth:`~Process.cpu_percent`,
+   :meth:`~Process.cpu_times`, :meth:`~Process.create_time`,
+   :meth:`~Process.gids`, :meth:`~Process.io_counters`,
+   :meth:`~Process.memory_info`, :meth:`~Process.memory_percent`,
+   :meth:`~Process.name`, :meth:`~Process.num_ctx_switches`,
+   :meth:`~Process.ppid`, :meth:`~Process.status`, :meth:`~Process.terminal`,
+   :meth:`~Process.uids`, :meth:`~Process.username`
 
-BSD estimated speedup: *+2.0×*
+*Speedup: +2.0×*
 
 .. _perf-oneshot-bench:
 
