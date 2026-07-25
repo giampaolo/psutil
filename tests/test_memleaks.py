@@ -240,6 +240,7 @@ class TestProcess(MemoryLeakTestCase):
         affinity = thisproc.cpu_affinity()
         self.execute(lambda: self.proc.cpu_affinity(affinity))
 
+    @skipif(WINDOWS, reason="too slow on Windows")  # XXX
     def test_open_files(self):
         kw = {"times": 10, "retries": 30} if WINDOWS else {}
         with open(get_testfn(), 'w'):

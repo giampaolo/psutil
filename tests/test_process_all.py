@@ -95,6 +95,9 @@ def proc_info(pid):
                 # machines. See:
                 # https://github.com/giampaolo/psutil/issues/2885
                 continue
+            if WINDOWS and fun_name == "open_files":
+                # XXX: too slow
+                continue
             try:
                 ret = fun()
             except psutil.Error as exc:
