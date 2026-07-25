@@ -247,6 +247,11 @@ Others:
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
   old ``time.time() - uptime()`` computation that sampled two counters from
   Python and produced sub-second differences.
+- :gh:`1967`, [Windows]: :meth:`Process.open_files` could deadlock the calling
+  process. On timeout, the internal thread querying a handle name was killed
+  with ``TerminateThread()``, which cannot terminate a thread blocked in the
+  kernel (e.g. on a pipe with a pending read) and left locks and memory in an
+  inconsistent state. The thread is now abandoned and cleans up after itself.
 - :gh:`2382`, [macOS]: :func:`cpu_freq` is now always defined on ARM64 and
   returns ``None`` when CPU frequency can't be determined. Previously it was
   left undefined (or raised :exc:`RuntimeError`) when the ``pmgr`` IORegistry
