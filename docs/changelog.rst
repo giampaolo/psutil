@@ -247,6 +247,9 @@ Others:
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
   old ``time.time() - uptime()`` computation that sampled two counters from
   Python and produced sub-second differences.
+- :gh:`1534`, [NetBSD]: :meth:`Process.exe` is now fetched natively via
+  ``sysctl(KERN_PROC_PATHNAME)`` instead of reading the ``/proc/pid/exe``
+  symlink (a virtualization layer on NetBSD). (patch by Kamil Rytarowski)
 - :gh:`1967`, [Windows]: :meth:`Process.open_files` could deadlock the calling
   process. On timeout, the internal thread querying a handle name was killed
   with ``TerminateThread()``, which cannot terminate a thread blocked in the

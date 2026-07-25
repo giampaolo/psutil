@@ -4,10 +4,8 @@
 
 """FreeBSD, OpenBSD and NetBSD platforms implementation."""
 
-import contextlib
 import errno
 import functools
-import os
 from collections import defaultdict
 from collections import namedtuple
 
@@ -452,24 +450,6 @@ def wrap_exceptions(fun):
     return wrapper
 
 
-@contextlib.contextmanager
-def wrap_exceptions_procfs(inst):
-    """Same as above, for routines relying on reading /proc fs."""
-    pid, name, ppid = inst.pid, inst._name, inst._ppid
-    try:
-        yield
-    except (ProcessLookupError, FileNotFoundError) as err:
-        # ENOENT (no such file or directory) gets raised on open().
-        # ESRCH (no such process) can get raised on read() if
-        # process is gone in meantime.
-        if _psutil.proc_is_zombie(inst.pid):
-            raise ZombieProcess(pid, name, ppid) from err
-        else:
-            raise NoSuchProcess(pid, name) from err
-    except PermissionError as err:
-        raise AccessDenied(pid, name) from err
-
-
 class Process:
     """Wrapper class around underlying C implementation."""
 
@@ -505,16 +485,10 @@ class Process:
 
     @wrap_exceptions
     def exe(self):
-        if FREEBSD:
+        if FREEBSD or NETBSD:
             if self.pid == 0:
                 return ''  # else NSP
             return _psutil.proc_exe(self.pid)
-        elif NETBSD:
-            if self.pid == 0:
-                # /proc/0 dir exists but /proc/0/exe doesn't
-                return ""
-            with wrap_exceptions_procfs(self):
-                return os.readlink(f"/proc/{self.pid}/exe")
         else:
             # OpenBSD: exe cannot be determined; references:
             # https://chromium.googlesource.com/chromium/src/base/+/master/base_paths_posix.cc
