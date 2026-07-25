@@ -8,6 +8,7 @@
 
 import os
 import socket
+import subprocess
 import textwrap
 from contextlib import closing
 from socket import AF_INET
@@ -44,7 +45,7 @@ from . import skip_on_access_denied
 from . import skipif
 from . import tcp_socketpair
 from . import unix_socketpair
-from . import wait_for_file
+from . import wait_for_file_subproc
 
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
@@ -359,15 +360,23 @@ class TestFilters(ConnectionTestCase):
 
         # launch various subprocess instantiating a socket of various
         # families and types to enrich psutil results
-        tcp4_proc = self.pyrun(tcp4_template)
-        tcp4_addr = eval(wait_for_file(testfile, delete=True))
-        udp4_proc = self.pyrun(udp4_template)
-        udp4_addr = eval(wait_for_file(testfile, delete=True))
+        tcp4_proc = self.pyrun(tcp4_template, stderr=subprocess.PIPE)
+        tcp4_addr = eval(
+            wait_for_file_subproc(testfile, tcp4_proc, delete=True)
+        )
+        udp4_proc = self.pyrun(udp4_template, stderr=subprocess.PIPE)
+        udp4_addr = eval(
+            wait_for_file_subproc(testfile, udp4_proc, delete=True)
+        )
         if supports_ipv6():
-            tcp6_proc = self.pyrun(tcp6_template)
-            tcp6_addr = eval(wait_for_file(testfile, delete=True))
-            udp6_proc = self.pyrun(udp6_template)
-            udp6_addr = eval(wait_for_file(testfile, delete=True))
+            tcp6_proc = self.pyrun(tcp6_template, stderr=subprocess.PIPE)
+            tcp6_addr = eval(
+                wait_for_file_subproc(testfile, tcp6_proc, delete=True)
+            )
+            udp6_proc = self.pyrun(udp6_template, stderr=subprocess.PIPE)
+            udp6_addr = eval(
+                wait_for_file_subproc(testfile, udp6_proc, delete=True)
+            )
         else:
             tcp6_proc = None
             udp6_proc = None
@@ -520,7 +529,7 @@ class TestSystemWideConnections(ConnectionTestCase):
         # https://github.com/giampaolo/psutil/issues/1013
         with create_sockets() as socks:
             expected = len(socks)
-        pids = []
+        procs = []
         times = 10
         fnames = []
         for _ in range(times):
@@ -536,13 +545,14 @@ class TestSystemWideConnections(ConnectionTestCase):
                         f.write("hello")
                     [time.sleep(0.1) for x in range(100)]
                 """)
-            sproc = self.pyrun(src)
-            pids.append(sproc.pid)
+            sproc = self.pyrun(src, stderr=subprocess.PIPE)
+            procs.append(sproc)
 
         # sync
-        for fname in fnames:
-            wait_for_file(fname)
+        for fname, sproc in zip(fnames, procs):
+            wait_for_file_subproc(fname, sproc)
 
+        pids = [x.pid for x in procs]
         syscons = [
             x for x in psutil.net_connections(kind='all') if x.pid in pids
         ]

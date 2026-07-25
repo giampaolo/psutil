@@ -92,7 +92,7 @@ __all__ = [
     # os
     'get_winver', 'kernel_version',
     # sync primitives
-    'call_until', 'wait_for_pid', 'wait_for_file',
+    'call_until', 'wait_for_pid', 'wait_for_file', 'wait_for_file_subproc',
     # network
     'check_net_address', 'filter_proc_net_connections',
     'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
@@ -378,9 +378,10 @@ def spawn_subproc(cmd=None, **kwds):
                 "[time.sleep(0.1) for x in range(100)];"  # 10 secs
             )
             cmd = [PYTHON_EXE, "-c", pyline]
+            kwds.setdefault("stderr", subprocess.PIPE)
             sproc = subprocess.Popen(cmd, **kwds)
             _subprocesses_started.add(sproc)
-            wait_for_file(testfn, delete=True, empty=True)
+            wait_for_file_subproc(testfn, sproc, delete=True, empty=True)
         finally:
             safe_rmpath(testfn)
     else:
@@ -415,11 +416,13 @@ def spawn_children_pair():
         # set (which is the default) a "conhost.exe" extra process will be
         # spawned as a child. We don't want that.
         if WINDOWS:
-            subp, tfile = pyrun(s, creationflags=0)
+            subp, tfile = pyrun(s, creationflags=0, stderr=subprocess.PIPE)
         else:
-            subp, tfile = pyrun(s)
+            subp, tfile = pyrun(s, stderr=subprocess.PIPE)
         child = psutil.Process(subp.pid)
-        grandchild_pid = int(wait_for_file(testfn, delete=True, empty=False))
+        grandchild_pid = int(
+            wait_for_file_subproc(testfn, subp, delete=True, empty=False)
+        )
         _pids_started.add(grandchild_pid)
         grandchild = psutil.Process(grandchild_pid)
         return (child, grandchild)
@@ -766,6 +769,23 @@ def wait_for_file(fname, delete=True, empty=False):
     if delete:
         safe_rmpath(fname)
     return data
+
+
+def wait_for_file_subproc(fname, sproc, delete=True, empty=False):
+    """Wait for a file to be written on disk, which is supposed to be
+    written by a subprocess.
+    """
+    try:
+        return wait_for_file(fname, delete=delete, empty=empty)
+    except FileNotFoundError as err:
+        ret = sproc.poll()
+        if ret is None:
+            raise
+        stderr = sproc.stderr.read() if sproc.stderr else b""
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode(errors="replace")
+        msg = f"subprocess died (exit {ret}):\n{stderr}"
+        raise RuntimeError(msg) from err
 
 
 @retry(
