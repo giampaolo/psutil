@@ -768,7 +768,14 @@ class Process:
             # have been reused by another process. Process identity /
             # uniqueness over time is guaranteed by (PID + creation
             # time) and that is verified in __eq__.
-            self._pid_reused = self != Process(self.pid)
+            other = Process(self.pid)
+            # A null creation time on either side means we simply could
+            # not determine the identity (AccessDenied on Windows, a
+            # zombie swallowed in __init__, or a zombie reporting ctime
+            # 0 on Net/OpenBSD). That is not proof of PID reuse, so only
+            # flag reuse when both identities are known and differ.
+            if self._ident[1] and other._ident[1]:
+                self._pid_reused = self != other
             if self._pid_reused:
                 _pids_reused.add(self.pid)
                 raise NoSuchProcess(self.pid)

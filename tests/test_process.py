@@ -1425,6 +1425,25 @@ class TestProcess(PsutilTestCase):
         with pytest.raises(psutil.NoSuchProcess, match=msg):
             p.children()
 
+    def test_unknown_ident_is_not_pid_reuse(self):
+        # A null create time on either side of the comparison means we
+        # simply could not determine the process identity (AccessDenied
+        # on Windows, or a zombie reporting no / 0 create time). That is
+        # not proof of PID reuse and must not raise NoSuchProcess.
+        subp = self.spawn_subproc()
+        p = psutil.Process(subp.pid)
+        orig_get_ident = psutil.Process._get_ident
+
+        def unknown_ident(self):
+            if self.pid == subp.pid:
+                return (self.pid, None)
+            return orig_get_ident(self)
+
+        with mock.patch.object(psutil.Process, "_get_ident", unknown_ident):
+            assert p.is_running()
+            assert not p._pid_reused
+            p.terminate()
+
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
         if 0 not in psutil.pids():
