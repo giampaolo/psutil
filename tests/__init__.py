@@ -734,8 +734,10 @@ class retry:
 
     def __iter__(self):
         if self.timeout:
-            stop_at = time.time() + self.timeout
-            while time.time() < stop_at:
+            # time.monotonic(): the BSD CI VMs step the system clock
+            # (NTP), which would expire a time.time() deadline early.
+            stop_at = time.monotonic() + self.timeout
+            while time.monotonic() < stop_at:
                 yield
         elif self.retries:
             for _ in range(self.retries):
@@ -828,8 +830,8 @@ def safe_rmpath(path):
         # open handles or references preventing the delete operation
         # to succeed immediately, so we retry for a while. See:
         # https://bugs.python.org/issue33240
-        stop_at = time.time() + GLOBAL_TIMEOUT
-        while time.time() < stop_at:
+        stop_at = time.monotonic() + GLOBAL_TIMEOUT
+        while time.monotonic() < stop_at:
             try:
                 return fun()
             except FileNotFoundError:
