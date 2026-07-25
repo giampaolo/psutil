@@ -11,7 +11,6 @@ extension. Requires https://github.com/giampaolo/psleak.
 import inspect
 import os
 
-from psleak import Checkers
 from psleak import LeakTest
 from psleak import MemoryLeakTestCase
 
@@ -55,22 +54,8 @@ thisproc = psutil.Process()
 
 MemoryLeakTestCase.retries = 30  # minimize false positives
 
-# The Makefile (`make test-memleaks-parallel`) runs this suite twice:
-# memory checks in parallel, then resource checks serially to avoid
-# false positives (a psutil API may open a fd, handle, lib, C thread on
-# first call, creating false positives). With no env var, all checks
-# run together.
-psleak_checkers = os.environ.get("PSLEAK_CHECKERS")
-if psleak_checkers == "memory":
-    MemoryLeakTestCase.checkers = Checkers.only("memory")
-elif psleak_checkers == "resources":
-    MemoryLeakTestCase.checkers = Checkers.exclude("memory")
-elif psleak_checkers is not None:
-    msg = f"invalid PSLEAK_CHECKERS env var: {psleak_checkers!r}"
-    raise ValueError(msg)
-
-# Be quiet when running under xdist or in one of the 2 CI passes.
-MemoryLeakTestCase.verbosity = 0 if PYTEST_PARALLEL or psleak_checkers else 1
+# Be quiet when running under xdist.
+MemoryLeakTestCase.verbosity = 0 if PYTEST_PARALLEL else 1
 
 TIMES = MemoryLeakTestCase.times
 FEW_TIMES = int(TIMES / 10)
@@ -96,8 +81,6 @@ def setup_module(module):
     """
     if os.environ.get("PYTHONMALLOC") != "malloc":
         return  # memleak tests are skipped otherwise
-    if psleak_checkers == "memory":
-        return
 
     ns = process_namespace(thisproc)
     for fun, name in ns.iter(ns.getters + ns.setters, clear_cache=True):

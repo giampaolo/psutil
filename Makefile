@@ -117,9 +117,8 @@ test-parallel:  ## Run all tests (except memleak tests) in parallel.
 test-memleaks:  ## Run memory leak tests.
 	$(RUN_TEST_MEMLEAKS) $(ARGS)
 
-test-memleaks-parallel:  ## Run memory leak tests: memory in parallel, resources serially.
-	PSLEAK_CHECKERS=memory $(RUN_TEST_MEMLEAKS) -n auto $(ARGS)
-	PSLEAK_CHECKERS=resources $(RUN_TEST_MEMLEAKS) --durations-min=1 -q $(ARGS)
+test-memleaks-parallel:  ## Run memory leak tests in parallel.
+	$(RUN_TEST_MEMLEAKS) -n auto $(ARGS)
 
 # --- individual
 
