@@ -93,7 +93,7 @@ __all__ = [
     # os
     'get_winver', 'kernel_version',
     # sync primitives
-    'call_until', 'wait_for_pid', 'wait_for_file',
+    'call_until', 'wait_for_pid', 'wait_for_file', 'wait_for_file_subproc',
     # network
     'check_net_address', 'filter_proc_net_connections',
     'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
@@ -382,24 +382,7 @@ def spawn_subproc(cmd=None, **kwds):
             kwds.setdefault("stderr", subprocess.PIPE)
             sproc = subprocess.Popen(cmd, **kwds)
             _subprocesses_started.add(sproc)
-            try:
-                wait_for_file(testfn, delete=True, empty=True)
-            except FileNotFoundError as err:
-                # The subproc never signaled readiness. If it already
-                # died, surface its stderr instead of a bare
-                # FileNotFoundError (xdist drops a worker's inherited
-                # stderr, so this is the only way to see the crash).
-                ret = sproc.poll()
-                if ret is not None:
-                    if sproc.stderr is not None:
-                        stderr = sproc.stderr.read()
-                    else:
-                        stderr = b""
-                    raise RuntimeError(
-                        f"subprocess died (exit {ret}):\n"
-                        f"{stderr.decode(errors='replace')}"
-                    ) from err
-                raise
+            wait_for_file_subproc(testfn, sproc, delete=True, empty=True)
         finally:
             safe_rmpath(testfn)
     else:
@@ -438,22 +421,9 @@ def spawn_children_pair():
         else:
             subp, tfile = pyrun(s, stderr=subprocess.PIPE)
         child = psutil.Process(subp.pid)
-        try:
-            grandchild_pid = int(
-                wait_for_file(testfn, delete=True, empty=False)
-            )
-        except FileNotFoundError as err:
-            # The grandchild never signaled readiness. If the child
-            # already died, surface its stderr instead of a bare
-            # FileNotFoundError.
-            ret = subp.poll()
-            if ret is not None:
-                stderr = subp.stderr.read() if subp.stderr else b""
-                raise RuntimeError(
-                    f"child died (exit {ret}):\n"
-                    f"{stderr.decode(errors='replace')}"
-                ) from err
-            raise
+        grandchild_pid = int(
+            wait_for_file_subproc(testfn, subp, delete=True, empty=False)
+        )
         _pids_started.add(grandchild_pid)
         grandchild = psutil.Process(grandchild_pid)
         return (child, grandchild)
@@ -802,6 +772,26 @@ def wait_for_file(fname, delete=True, empty=False):
     if delete:
         safe_rmpath(fname)
     return data
+
+
+def wait_for_file_subproc(fname, sproc, delete=True, empty=False):
+    """Same as wait_for_file(), for a file which is supposed to be
+    written by subprocess `sproc`. If the file never shows up and the
+    subprocess died, surface its stderr instead of a bare
+    FileNotFoundError (xdist drops a worker's inherited stderr, so
+    this is the only way to see the crash).
+    """
+    try:
+        return wait_for_file(fname, delete=delete, empty=empty)
+    except FileNotFoundError as err:
+        ret = sproc.poll()
+        if ret is None:
+            raise
+        stderr = sproc.stderr.read() if sproc.stderr else b""
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode(errors="replace")
+        msg = f"subprocess died (exit {ret}):\n{stderr}"
+        raise RuntimeError(msg) from err
 
 
 @retry(

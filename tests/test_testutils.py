@@ -48,6 +48,7 @@ from . import tcp_socketpair
 from . import terminate
 from . import unix_socketpair
 from . import wait_for_file
+from . import wait_for_file_subproc
 from . import wait_for_pid
 
 # ===================================================================
@@ -158,6 +159,31 @@ class TestSyncTestUtils(PsutilTestCase):
             f.write('foo')
         wait_for_file(testfn, delete=False)
         assert os.path.exists(testfn)
+
+    def test_wait_for_file_subproc(self):
+        testfn = self.get_testfn()
+        with open(testfn, 'w') as f:
+            f.write('foo')
+        sproc = self.spawn_subproc()
+        assert wait_for_file_subproc(testfn, sproc) == b"foo"
+
+    def test_wait_for_file_subproc_dead(self):
+        testfn = self.get_testfn()
+        sproc = subprocess.Popen(
+            [
+                PYTHON_EXE,
+                "-c",
+                "import sys; sys.exit(sys.stderr.write('foo'))",
+            ],
+            stderr=subprocess.PIPE,
+        )
+        self.addCleanup(terminate, sproc)
+        sproc.wait()
+        with mock.patch('tests.retry.__iter__', return_value=iter([0])):
+            with pytest.raises(
+                RuntimeError, match=r"(?s)died \(exit 3\).*foo"
+            ):
+                wait_for_file_subproc(testfn, sproc)
 
     def test_call_until(self):
         call_until(lambda: 1)

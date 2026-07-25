@@ -98,7 +98,7 @@ install-pydeps-dev:  ## Install python deps meant for local development.
 # ===================================================================
 
 # - cache dir on Windows often causes "Permission denied" errors
-# - on CI drop instafail so failures gather in one block at the end.
+# - on CI drop instafail so failures gather in one block at the end
 _PYTEST_EXTRA != { if [ "$$OS" = "Windows_NT" ]; then printf '%s ' '-o cache_dir=/tmp/pytest-psutil-cache'; fi; if [ -n "$$CI" ]; then printf '%s ' '-p no:instafail'; fi; }
 
 RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --durations=5 $(_PYTEST_EXTRA)
