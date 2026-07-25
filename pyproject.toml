@@ -1,3 +1,44 @@
+[dependency-groups]
+# Dev-only deps (PEP 735), not part of the published package
+# metadata. Install with `pip install --group <name>` or the
+# `make install-pydeps-*` targets.
+test = [
+    "psleak @ https://github.com/giampaolo/psleak/archive/refs/heads/master.tar.gz",
+    "pytest",
+    "pytest-instafail",
+    "pytest-xdist",
+    "pywin32 ; os_name == 'nt' and implementation_name != 'pypy'",
+    "setuptools",
+    "wmi ; os_name == 'nt' and implementation_name != 'pypy'",
+]
+lint = [
+    "black",
+    "rstwrap",
+    "ruff==0.15.17",  # newer versions print rule names, not codes
+    "sphinx-lint",
+    "toml-sort",
+]
+dev = [
+    "abi3audit",
+    "check-manifest",
+    "colorama ; os_name == 'nt'",
+    "coverage",
+    "packaging",
+    "pylint",  # not enforced
+    "pyperf",
+    "pypinfo",
+    "pyreadline3 ; os_name == 'nt'",
+    "pytest-cov",
+    "requests",
+    "twine",
+    "validate-pyproject[all]",
+    "virtualenv",
+    "vulture",
+    "wheel",
+    {include-group = "lint"},
+    {include-group = "test"},
+]
+
 [tool.black]
 target-version = ["py38"]
 line-length = 79
@@ -221,14 +262,14 @@ trailing_comma_inline_array = true
 skip = [
     "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x} cp3*t-musllinux*",
 ]
-test-extras = ["test"]  # same as doing `pip install .[test]`
+test-groups = ["test"]  # same as doing `pip install --group test`
 test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
 
 # Run tests on Python 3.14. On all other Python versions do a lightweight
 # import test.
 [[tool.cibuildwheel.overrides]]
 select = "cp3{8,9,10,11,12,13,13t,14t}-* *-musllinux*"
-test-extras = []
+test-groups = []
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
 
 [tool.pytest]
