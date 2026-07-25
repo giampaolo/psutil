@@ -1384,6 +1384,64 @@ class TestProcess(PsutilTestCase):
         else:
             assert p._ident[1] is not None
 
+    def test_eq(self):
+        def proc(pid, ctime):
+            p = psutil.Process()
+            p._ident = (pid, ctime)
+            p._hash = None
+            return p
+
+        # same pid, same ctime
+        assert proc(100, 50.0) == proc(100, 50.0)
+        # same pid, different ctime: the PID has been reused
+        assert proc(100, 50.0) != proc(100, 60.0)
+        # different pid always means different process, even when
+        # ctimes are unknown
+        assert proc(100, 50.0) != proc(101, 50.0)
+        assert proc(100, None) != proc(101, None)
+        assert proc(100, 0.0) != proc(101, 0.0)
+        # a null ctime on either side means identity is unknown, which
+        # is not proof of a different process (e.g. AccessDenied on
+        # Windows, zombies or the fork/exec window on NetBSD)
+        for null_value in (0.0, None):
+            assert proc(100, 50.0) == proc(100, null_value)
+            assert proc(100, null_value) == proc(100, 50.0)
+            assert proc(100, null_value) == proc(100, null_value)
+        # comparison with a non-Process object
+        assert proc(100, 50.0) != "foo"
+
+    def test_hash(self):
+        def proc(pid, ctime):
+            p = psutil.Process()
+            p._ident = (pid, ctime)
+            p._hash = None
+            return p
+
+        # the eq / hash contract: a == b implies hash(a) == hash(b);
+        # here it means null-ctime idents must hash like real ones
+        pairs = [
+            (proc(100, 50.0), proc(100, 50.0)),
+            (proc(100, 50.0), proc(100, None)),
+            (proc(100, 50.0), proc(100, 0.0)),
+            (proc(100, None), proc(100, 0.0)),
+        ]
+        for a, b in pairs:
+            assert a == b
+            assert hash(a) == hash(b)
+            assert len({a, b}) == 1
+            assert {a: "x"}[b] == "x"
+        # same pid but different ctime (PID reuse): unequal, and a set
+        # must keep both
+        a, b = proc(100, 50.0), proc(100, 60.0)
+        assert a != b
+        assert len({a, b}) == 2
+        # sanity check against the real world
+        p1 = psutil.Process()
+        p2 = psutil.Process(p1.pid)
+        assert p1 == p2
+        assert hash(p1) == hash(p2)
+        assert len({p1, p2}) == 1
+
     @skipif(
         FREEBSD or OPENBSD or SUNOS or AIX,
         reason="PID reuse detection disabled on this platform",

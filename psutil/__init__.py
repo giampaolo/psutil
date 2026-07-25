@@ -542,28 +542,28 @@ class Process:
         # on PID and creation time.
         if not isinstance(other, Process):
             return NotImplemented
-        if OPENBSD or NETBSD or SUNOS:  # pragma: no cover
-            # Zombie processes on Open/NetBSD/illumos/Solaris have a
-            # creation time of 0.0.  This covers the case when a process
-            # started normally (so it has a ctime), then it turned into a
-            # zombie. It's important to do this because is_running()
-            # depends on __eq__.
-            pid1, ident1 = self._ident
-            pid2, ident2 = other._ident
-            if pid1 == pid2:
-                if ident1 and not ident2:
-                    try:
-                        return self.status() == ProcessStatus.STATUS_ZOMBIE
-                    except Error:
-                        pass
-        return self._ident == other._ident
+        pid1, ctime1 = self._ident
+        pid2, ctime2 = other._ident
+        if pid1 != pid2:
+            return False
+        if not ctime1 or not ctime2:
+            # A null create time means identity is unknown: on Windows
+            # create_time() may raise AccessDenied, on NetBSD /
+            # OpenBSD / illumos it reads 0 for zombies and for
+            # processes still in the fork / exec window. Same PID +
+            # unknown ctime is not proof they are different processes.
+            return True
+        return ctime1 == ctime2
 
     def __ne__(self, other):
         return not self == other
 
     def __hash__(self):
+        # Hash the PID only: __eq__ treats a null create time as a
+        # wildcard, and including it in the hash would break the
+        # equal-objects-have-equal-hashes contract.
         if self._hash is None:
-            self._hash = hash(self._ident)
+            self._hash = hash(self._pid)
         return self._hash
 
     def _raise_if_pid_reused(self):
