@@ -280,6 +280,9 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	$(MAKE) install-sysdeps  # test pydeps already installed at this point
 	$(MAKE) print-sysinfo
+	# Warm pywin32's gen_py cache: concurrent first imports of wmi in
+	# the pytest workers corrupt it (EOFError from gencache).
+	if [ "$$OS" = "Windows_NT" ]; then $(PYTHON) -c "import wmi"; fi
 	# Tests must be run from a separate directory so pytest does not import
 	# from the source tree and instead exercises only the installed wheel.
 	rm -rf .tests tests/__pycache__
