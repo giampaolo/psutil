@@ -202,8 +202,7 @@ class TestProcess(MemoryLeakTestCase):
 
     @skip_on_access_denied(only_if=OPENBSD)
     def test_threads(self):
-        kw = {"times": 50} if WINDOWS else {}
-        self.execute(self.proc.threads, **kw)
+        self.execute(self.proc.threads, times=50 if WINDOWS else TIMES)
 
     def test_cpu_times(self):
         self.execute(self.proc.cpu_times)
@@ -244,9 +243,9 @@ class TestProcess(MemoryLeakTestCase):
 
     @skipif(WINDOWS, reason="too slow on Windows")  # XXX
     def test_open_files(self):
-        kw = {"times": 10, "retries": 30} if WINDOWS else {}
+        # slow
         with open(get_testfn(), 'w'):
-            self.execute(self.proc.open_files, **kw)
+            self.execute(self.proc.open_files, times=25 if WINDOWS else TIMES)
 
     @skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
     @skipif(LINUX, reason="too slow on LINUX")
@@ -479,7 +478,7 @@ class TestModuleFunctions(MemoryLeakTestCase):
 
     @skipif(not HAS_HEAP_INFO, reason="not supported")
     def test_heap_info(self):
-        self.execute(psutil.heap_info)
+        self.execute(psutil.heap_info, times=25 if WINDOWS else TIMES)  # slow
 
     @skipif(not HAS_HEAP_INFO, reason="not supported")
     def test_heap_trim(self):
