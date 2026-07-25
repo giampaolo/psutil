@@ -567,7 +567,7 @@ class Process:
         # PID only: __eq__ can match idents with different ctimes, and
         # equal objects must hash the same.
         if self._hash is None:
-            self._hash = hash(self._pid)
+            self._hash = hash(self._ident[0])
         return self._hash
 
     def _raise_if_pid_reused(self):
@@ -777,8 +777,7 @@ class Process:
                 debug(f"PID reuse detected: {self._ident} vs. {other._ident}")
                 _pids_reused.add(self.pid)
                 raise NoSuchProcess(self.pid)
-            if self._ident[1] != other._ident[1]:
-                # Equal only because either ctime is unknown (__eq__).
+            if self._cmp_idents(self._ident, other._ident) == "unknown":
                 debug(
                     "null create time, PID reuse check inconclusive:"
                     f" {self._ident} vs. {other._ident}"
@@ -804,9 +803,6 @@ class Process:
         # change to 1 (init) in case this process turns into a zombie:
         # https://github.com/giampaolo/psutil/issues/321
         # http://stackoverflow.com/questions/356722/
-
-        # XXX should we check creation time here rather than in
-        # Process.parent()?
         self._raise_if_pid_reused()
         if POSIX:
             return self._proc.ppid()

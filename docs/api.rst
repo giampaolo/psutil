@@ -1149,8 +1149,10 @@ Process class
   :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions. Instances can be
   compared for equality and used in a :class:`set` or as :class:`dict` keys:
   two instances are equal if they have the same PID and creation time. If the
-  creation time of either instance could not be determined (see
-  :ref:`faq_pid_reuse`) identity falls back on the PID alone.
+  creation time of either instance is unknown (e.g. on :exc:`AccessDenied`, or
+  for zombie processes), identity falls back on the PID alone. The same applies
+  on the platforms where creation time is not part of process identity (see
+  :ref:`faq_pid_reuse`).
 
   .. note::
 
