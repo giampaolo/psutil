@@ -2101,7 +2101,7 @@ class TestProcess(LinuxTestCase):
                 for file in p.open_files():
                     if file.path == os.path.abspath(fname):
                         return file
-                    elif time.time() > giveup_at:
+                    elif time.monotonic() > giveup_at:
                         break
             raise RuntimeError("timeout looking for test file")
 
