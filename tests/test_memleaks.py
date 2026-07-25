@@ -56,10 +56,10 @@ thisproc = psutil.Process()
 MemoryLeakTestCase.retries = 30  # minimize false positives
 
 # The Makefile (`make test-memleaks-parallel`) runs this suite twice:
-# once in parallel checking memory only, once in a single process
-# checking the exact resource counters, which give false positives if
-# other tests run next to them. No env var means the full check (`make
-# test-memleaks`).
+# memory checks in parallel, then resource checks serially to avoid
+# false positives (a psutil API may open a fd, handle, lib, C thread on
+# first call, creating false positives). With no env var, all checks
+# run together.
 psleak_checkers = os.environ.get("PSLEAK_CHECKERS")
 if psleak_checkers == "memory":
     MemoryLeakTestCase.checkers = Checkers.only("memory")
