@@ -9,7 +9,6 @@ test = [
     "pytest-xdist",
     "pywin32 ; os_name == 'nt' and implementation_name != 'pypy'",
     "setuptools",
-    "wheel ; os_name == 'nt' and implementation_name != 'pypy'",
     "wmi ; os_name == 'nt' and implementation_name != 'pypy'",
 ]
 lint = [
