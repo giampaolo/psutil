@@ -9,10 +9,14 @@
 // We use NtQuerySystemInformation to enumerate them and NtQueryObject
 // to obtain the corresponding file name.
 //
-// Since NtQueryObject hangs for certain handle types we call it in a
-// separate thread which gets killed if it doesn't complete within
-// 100ms. This is a limitation of the Windows API and ProcessHacker
-// uses the same trick: https://github.com/giampaolo/psutil/pull/597
+// NtQueryObject / GetFileType block forever on pipes with a pending
+// blocking read, so we call them in a separate thread with a timeout.
+// The thread is never killed: TerminateThread() can't terminate a
+// thread waiting in the kernel, and if it lands while the thread is
+// exiting it orphans the loader lock, deadlocking the next
+// CreateThread(). On timeout we just abandon the thread; it cleans
+// up after itself if it ever completes. See:
+// https://github.com/giampaolo/psutil/pull/597
 //
 // CREDITS: original implementation was written by Jeff Tang. It was
 // then rewritten by Giampaolo Rodola many years later. Utility
@@ -27,8 +31,18 @@
 
 #define THREAD_TIMEOUT 100  // ms
 
-// Global object shared between the 2 threads.
-PUNICODE_STRING globalFileName = NULL;
+// Ownership handoff between the main thread and the query thread.
+#define QS_RUNNING 0
+#define QS_DONE 1  // thread finished, main thread consumes the result
+#define QS_ABANDONED 2  // main thread timed out, thread cleans up
+
+typedef struct {
+    HANDLE hFile;
+    PUNICODE_STRING fileName;
+    NTSTATUS status;
+    int oom;
+    volatile LONG state;
+} QueryCtx;
 
 
 static int
@@ -79,47 +93,43 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
 }
 
 
-static int
+// Runs in a separate thread. No Python calls in here: the main
+// thread holds the GIL and reports errors via ctx.
+static DWORD WINAPI
 psutil_get_filename(LPVOID lpvParam) {
-    HANDLE hFile = *((HANDLE *)lpvParam);
-    NTSTATUS status;
-    ULONG bufferSize;
+    QueryCtx *ctx = (QueryCtx *)lpvParam;
+    NTSTATUS status = 0;  // success
+    ULONG bufferSize = 0x200;
     ULONG attempts = 8;
+    PUNICODE_STRING name;
 
-    bufferSize = 0x200;
-    globalFileName = MALLOC_ZERO(bufferSize);
-    if (globalFileName == NULL) {
-        PyErr_NoMemory();
-        goto error;
+    name = MALLOC_ZERO(bufferSize);
+    if (name == NULL) {
+        ctx->oom = 1;
+        goto done;
     }
 
-
     // Note: also this is supposed to hang, hence why we do it in here.
-    if (GetFileType(hFile) != FILE_TYPE_DISK) {
-        SetLastError(0);
-        globalFileName->Length = 0;
-        return 0;
+    if (GetFileType(ctx->hFile) != FILE_TYPE_DISK) {
+        name->Length = 0;  // means "no name", skipped by the caller
+        goto done;
     }
 
     // A loop is needed because the I/O subsystem likes to give us the
     // wrong return lengths...
     do {
         status = NtQueryObject(
-            hFile,
-            ObjectNameInformation,
-            globalFileName,
-            bufferSize,
-            &bufferSize
+            ctx->hFile, ObjectNameInformation, name, bufferSize, &bufferSize
         );
         if (status == STATUS_BUFFER_OVERFLOW
             || status == STATUS_INFO_LENGTH_MISMATCH
             || status == STATUS_BUFFER_TOO_SMALL)
         {
-            FREE(globalFileName);
-            globalFileName = MALLOC_ZERO(bufferSize);
-            if (globalFileName == NULL) {
-                PyErr_NoMemory();
-                goto error;
+            FREE(name);
+            name = MALLOC_ZERO(bufferSize);
+            if (name == NULL) {
+                ctx->oom = 1;
+                goto done;
             }
         }
         else {
@@ -127,84 +137,83 @@ psutil_get_filename(LPVOID lpvParam) {
         }
     } while (--attempts);
 
-    if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
-        FREE(globalFileName);
-        globalFileName = NULL;
-        return 1;
+done:
+    ctx->fileName = name;
+    ctx->status = status;
+    if (InterlockedCompareExchange(&ctx->state, QS_DONE, QS_RUNNING)
+        != QS_RUNNING)
+    {
+        // Main thread gave up on us: nobody consumes this.
+        if (name != NULL)
+            FREE(name);
+        CloseHandle(ctx->hFile);
+        FREE(ctx);
     }
-
     return 0;
-
-error:
-    if (globalFileName != NULL) {
-        FREE(globalFileName);
-        globalFileName = NULL;
-    }
-    return 1;
 }
 
 
+// Return 0 on success (*nameOut set, may have Length 0), -1 on error
+// (Python exception set), WAIT_TIMEOUT if the query thread is stuck.
+// On WAIT_TIMEOUT ownership of hFile moves to the thread; the caller
+// must not close it.
 static DWORD
-psutil_threaded_get_filename(HANDLE hFile) {
+psutil_threaded_get_filename(HANDLE hFile, PUNICODE_STRING *nameOut) {
     DWORD dwWait;
     HANDLE hThread;
-    DWORD threadRetValue;
+    QueryCtx *ctx;
 
-    hThread = CreateThread(
-        NULL, 0, (LPTHREAD_START_ROUTINE)psutil_get_filename, &hFile, 0, NULL
-    );
+    *nameOut = NULL;
+    ctx = MALLOC_ZERO(sizeof(QueryCtx));
+    if (ctx == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    ctx->hFile = hFile;
+    ctx->state = QS_RUNNING;
+
+    hThread = CreateThread(NULL, 0, psutil_get_filename, ctx, 0, NULL);
     if (hThread == NULL) {
+        FREE(ctx);
         psutil_oserror_wsyscall("CreateThread");
         return -1;
     }
 
-    // Wait for the worker thread to finish.
     dwWait = WaitForSingleObject(hThread, THREAD_TIMEOUT);
-
-    // If the thread hangs, kill it and cleanup.
-    if (dwWait == WAIT_TIMEOUT) {
-        psutil_debug(
-            "get handle name thread timed out after %i ms", THREAD_TIMEOUT
-        );
-        if (TerminateThread(hThread, 0) == 0) {
-            psutil_oserror_wsyscall("TerminateThread");
-            CloseHandle(hThread);
-            return -1;
-        }
-        CloseHandle(hThread);
-        return 0;
-    }
-
-    if (dwWait == WAIT_FAILED) {
-        psutil_debug("WaitForSingleObject -> WAIT_FAILED");
-        if (TerminateThread(hThread, 0) == 0) {
-            psutil_oserror_wsyscall(
-                "WaitForSingleObject -> WAIT_FAILED -> TerminateThread"
+    if (dwWait != WAIT_OBJECT_0) {
+        if (dwWait == WAIT_FAILED)
+            psutil_debug("WaitForSingleObject -> WAIT_FAILED");
+        if (InterlockedCompareExchange(&ctx->state, QS_ABANDONED, QS_RUNNING)
+            == QS_RUNNING)
+        {
+            // Abandon the stuck thread; it cleans up by itself if it
+            // ever completes.
+            psutil_debug(
+                "get handle name thread timed out after %i ms", THREAD_TIMEOUT
             );
             CloseHandle(hThread);
-            return -1;
+            return WAIT_TIMEOUT;
         }
-        psutil_oserror_wsyscall("WaitForSingleObject");
-        CloseHandle(hThread);
-        return -1;
-    }
-
-    if (GetExitCodeThread(hThread, &threadRetValue) == 0) {
-        if (TerminateThread(hThread, 0) == 0) {
-            psutil_oserror_wsyscall(
-                "GetExitCodeThread (failed) -> TerminateThread"
-            );
-            CloseHandle(hThread);
-            return -1;
-        }
-
-        CloseHandle(hThread);
-        psutil_oserror_wsyscall("GetExitCodeThread");
-        return -1;
+        // The thread completed right after the timeout: fall through
+        // and consume its result.
     }
     CloseHandle(hThread);
-    return threadRetValue;
+
+    if (ctx->oom) {
+        FREE(ctx);
+        PyErr_NoMemory();
+        return -1;
+    }
+    if (!NT_SUCCESS(ctx->status)) {
+        psutil_SetFromNTStatusErr(ctx->status, "NtQueryObject");
+        if (ctx->fileName != NULL)
+            FREE(ctx->fileName);
+        FREE(ctx);
+        return -1;
+    }
+    *nameOut = ctx->fileName;
+    FREE(ctx);
+    return 0;
 }
 
 
@@ -213,17 +222,15 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
     PSYSTEM_HANDLE_INFORMATION_EX handlesList = NULL;
     PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX hHandle = NULL;
     HANDLE hFile = NULL;
+    PUNICODE_STRING fileName = NULL;
     ULONG i = 0;
     BOOLEAN errorOccurred = FALSE;
+    DWORD dwRet;
     PyObject *py_retlist = PyList_New(0);
     ;
 
     if (!py_retlist)
         return NULL;
-
-    // Due to the use of global variables, ensure only 1 call
-    // to psutil_get_open_files() is running.
-    EnterCriticalSection(&PSUTIL_CRITICAL_SECTION);
 
     if (psutil_enum_handles(&handlesList) != 0)
         goto error;
@@ -246,24 +253,32 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
             continue;
         }
 
-        // This will set *globalFileName* global variable.
-        if (psutil_threaded_get_filename(hFile) != 0)
+        dwRet = psutil_threaded_get_filename(hFile, &fileName);
+        if (dwRet == WAIT_TIMEOUT) {
+            // The abandoned thread owns hFile now. Closing it here
+            // would block: the thread is stuck in the kernel holding
+            // a lock on this handle's file object, and CloseHandle()
+            // needs the same lock.
+            hFile = NULL;
+            continue;
+        }
+        if (dwRet != 0)
             goto error;
 
-        if ((globalFileName != NULL) && (globalFileName->Length > 0)) {
+        if ((fileName != NULL) && (fileName->Length > 0)) {
             if (!pylist_append_obj(
                     py_retlist,
                     PyUnicode_FromWideChar(
-                        globalFileName->Buffer, wcslen(globalFileName->Buffer)
+                        fileName->Buffer, wcslen(fileName->Buffer)
                     )
                 ))
                 goto error;
         }
 
         // Loop cleanup section.
-        if (globalFileName != NULL) {
-            FREE(globalFileName);
-            globalFileName = NULL;
+        if (fileName != NULL) {
+            FREE(fileName);
+            fileName = NULL;
         }
         CloseHandle(hFile);
         hFile = NULL;
@@ -279,14 +294,11 @@ error:
 exit:
     if (hFile != NULL)
         CloseHandle(hFile);
-    if (globalFileName != NULL) {
-        FREE(globalFileName);
-        globalFileName = NULL;
-    }
+    if (fileName != NULL)
+        FREE(fileName);
     if (handlesList != NULL)
         FREE(handlesList);
 
-    LeaveCriticalSection(&PSUTIL_CRITICAL_SECTION);
     if (errorOccurred == TRUE)
         return NULL;
     return py_retlist;
