@@ -1374,6 +1374,137 @@ class TestProcess(PsutilTestCase):
             assert p.status() == psutil.STATUS_ZOMBIE
             assert m.called
 
+    def test_pid_0(self):
+        # Process(0) is supposed to work on all platforms except Linux
+        if 0 not in psutil.pids():
+            with pytest.raises(psutil.NoSuchProcess):
+                psutil.Process(0)
+            # These 2 are a contradiction, but "ps" says PID 1's parent
+            # is PID 0.
+            assert not psutil.pid_exists(0)
+            assert psutil.Process(1).ppid() == 0
+            return
+
+        p = psutil.Process(0)
+        exc = psutil.AccessDenied if WINDOWS else ValueError
+        with pytest.raises(ValueError):
+            p.wait()
+        with pytest.raises(exc):
+            p.terminate()
+        with pytest.raises(exc):
+            p.suspend()
+        with pytest.raises(exc):
+            p.resume()
+        with pytest.raises(exc):
+            p.kill()
+        with pytest.raises(exc):
+            p.send_signal(signal.SIGTERM)
+
+        # test all methods
+        ns = process_namespace(p)
+        for fun, name in ns.iter(ns.getters + ns.setters):
+            try:
+                ret = fun()
+            except psutil.AccessDenied:
+                pass
+            else:
+                if name in {"uids", "gids"}:
+                    assert ret.real == 0
+                elif name == "username":
+                    user = 'NT AUTHORITY\\SYSTEM' if WINDOWS else 'root'
+                    assert p.username() == user
+                elif name == "name":
+                    assert name, name
+
+        if not OPENBSD:
+            assert 0 in psutil.pids()
+            assert psutil.pid_exists(0)
+
+    @skipif(not HAS_PROC_ENVIRON, reason="not supported")
+    def test_environ(self):
+        def clean_dict(d):
+            exclude = {"PLAT", "HOME"}
+            if MACOS:
+                exclude.update([
+                    "__CF_USER_TEXT_ENCODING",
+                    "VERSIONER_PYTHON_PREFER_32_BIT",
+                    "VERSIONER_PYTHON_VERSION",
+                ])
+            for name in list(d.keys()):
+                if name in exclude or name.startswith("PYTEST_"):
+                    d.pop(name)
+            return {
+                k.replace("\r", "").replace("\n", ""): (
+                    v.replace("\r", "").replace("\n", "")
+                )
+                for k, v in d.items()
+            }
+
+        self.maxDiff = None
+        p = psutil.Process()
+        d1 = clean_dict(p.environ())
+        d2 = clean_dict(os.environ.copy())
+        if not OSX and GITHUB_ACTIONS:
+            assert d1 == d2
+
+    @skipif(not HAS_PROC_ENVIRON, reason="not supported")
+    @skipif(not POSIX, reason="POSIX only")
+    @skipif(
+        MACOS_11PLUS,
+        reason="macOS 11+ can't get another process environment, issue #2084",
+    )
+    @skipif(NETBSD, reason="sometimes fails on `assert is_running()`")
+    def test_weird_environ(self):
+        # environment variables can contain values without an equals sign
+        code = textwrap.dedent("""
+            #include <unistd.h>
+            #include <fcntl.h>
+
+            char * const argv[] = {"cat", 0};
+            char * const envp[] = {"A=1", "X", "C=3", 0};
+
+            int main(void) {
+                // Close stderr on exec so parent can wait for the
+                // execve to finish.
+                if (fcntl(2, F_SETFD, FD_CLOEXEC) != 0)
+                    return 0;
+                return execve("/bin/cat", argv, envp);
+            }
+            """)
+        cexe = create_c_exe(self.get_testfn(), c_code=code)
+        sproc = self.spawn_subproc(
+            [cexe], stdin=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        p = psutil.Process(sproc.pid)
+        wait_for_pid(p.pid)
+        assert p.is_running()
+        # Wait for process to exec or exit.
+        assert sproc.stderr.read() == b""
+        if (MACOS or FREEBSD) and CI_TESTING:
+            try:
+                env = p.environ()
+            except psutil.AccessDenied:
+                # MACOS: sometimes 'sysctl(KERN_PROCARGS2) -> EIO'.
+                # FreeBSD 15.x: can't read another process's environ
+                # (kvm_getenvv / kern.proc.env -> ENOMEM).
+                return
+        else:
+            env = p.environ()
+        assert env == {"A": "1", "C": "3"}
+        sproc.communicate()
+        assert sproc.returncode == 0
+
+
+# ===================================================================
+# --- PID reuse detection and process identity
+# ===================================================================
+
+
+class TestProcessPidReuse(PsutilTestCase):
+    """Tests for PID reuse detection and process identity
+    (__eq__, __ne__, __hash__).
+    """
+
     def test_ident(self):
         p = psutil.Process()
         assert p._ident[0] == p.pid
@@ -1508,125 +1639,34 @@ class TestProcess(PsutilTestCase):
                 assert p.is_running()
             assert not p._pid_reused
 
-    def test_pid_0(self):
-        # Process(0) is supposed to work on all platforms except Linux
-        if 0 not in psutil.pids():
+    def test_ad_on_process_creation(self):
+        # We are supposed to be able to instantiate Process also in case
+        # of zombie processes or access denied.
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=psutil.AccessDenied
+        ) as meth:
+            psutil.Process()
+            assert meth.called
+
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=psutil.ZombieProcess(1)
+        ) as meth:
+            psutil.Process()
+            assert meth.called
+
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=ValueError
+        ) as meth:
+            with pytest.raises(ValueError):
+                psutil.Process()
+            assert meth.called
+
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=psutil.NoSuchProcess(1)
+        ) as meth:
             with pytest.raises(psutil.NoSuchProcess):
-                psutil.Process(0)
-            # These 2 are a contradiction, but "ps" says PID 1's parent
-            # is PID 0.
-            assert not psutil.pid_exists(0)
-            assert psutil.Process(1).ppid() == 0
-            return
-
-        p = psutil.Process(0)
-        exc = psutil.AccessDenied if WINDOWS else ValueError
-        with pytest.raises(ValueError):
-            p.wait()
-        with pytest.raises(exc):
-            p.terminate()
-        with pytest.raises(exc):
-            p.suspend()
-        with pytest.raises(exc):
-            p.resume()
-        with pytest.raises(exc):
-            p.kill()
-        with pytest.raises(exc):
-            p.send_signal(signal.SIGTERM)
-
-        # test all methods
-        ns = process_namespace(p)
-        for fun, name in ns.iter(ns.getters + ns.setters):
-            try:
-                ret = fun()
-            except psutil.AccessDenied:
-                pass
-            else:
-                if name in {"uids", "gids"}:
-                    assert ret.real == 0
-                elif name == "username":
-                    user = 'NT AUTHORITY\\SYSTEM' if WINDOWS else 'root'
-                    assert p.username() == user
-                elif name == "name":
-                    assert name, name
-
-        if not OPENBSD:
-            assert 0 in psutil.pids()
-            assert psutil.pid_exists(0)
-
-    @skipif(not HAS_PROC_ENVIRON, reason="not supported")
-    def test_environ(self):
-        def clean_dict(d):
-            exclude = {"PLAT", "HOME"}
-            if MACOS:
-                exclude.update([
-                    "__CF_USER_TEXT_ENCODING",
-                    "VERSIONER_PYTHON_PREFER_32_BIT",
-                    "VERSIONER_PYTHON_VERSION",
-                ])
-            for name in list(d.keys()):
-                if name in exclude or name.startswith("PYTEST_"):
-                    d.pop(name)
-            return {
-                k.replace("\r", "").replace("\n", ""): (
-                    v.replace("\r", "").replace("\n", "")
-                )
-                for k, v in d.items()
-            }
-
-        self.maxDiff = None
-        p = psutil.Process()
-        d1 = clean_dict(p.environ())
-        d2 = clean_dict(os.environ.copy())
-        if not OSX and GITHUB_ACTIONS:
-            assert d1 == d2
-
-    @skipif(not HAS_PROC_ENVIRON, reason="not supported")
-    @skipif(not POSIX, reason="POSIX only")
-    @skipif(
-        MACOS_11PLUS,
-        reason="macOS 11+ can't get another process environment, issue #2084",
-    )
-    @skipif(NETBSD, reason="sometimes fails on `assert is_running()`")
-    def test_weird_environ(self):
-        # environment variables can contain values without an equals sign
-        code = textwrap.dedent("""
-            #include <unistd.h>
-            #include <fcntl.h>
-
-            char * const argv[] = {"cat", 0};
-            char * const envp[] = {"A=1", "X", "C=3", 0};
-
-            int main(void) {
-                // Close stderr on exec so parent can wait for the
-                // execve to finish.
-                if (fcntl(2, F_SETFD, FD_CLOEXEC) != 0)
-                    return 0;
-                return execve("/bin/cat", argv, envp);
-            }
-            """)
-        cexe = create_c_exe(self.get_testfn(), c_code=code)
-        sproc = self.spawn_subproc(
-            [cexe], stdin=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        p = psutil.Process(sproc.pid)
-        wait_for_pid(p.pid)
-        assert p.is_running()
-        # Wait for process to exec or exit.
-        assert sproc.stderr.read() == b""
-        if (MACOS or FREEBSD) and CI_TESTING:
-            try:
-                env = p.environ()
-            except psutil.AccessDenied:
-                # MACOS: sometimes 'sysctl(KERN_PROCARGS2) -> EIO'.
-                # FreeBSD 15.x: can't read another process's environ
-                # (kvm_getenvv / kern.proc.env -> ENOMEM).
-                return
-        else:
-            env = p.environ()
-        assert env == {"A": "1", "C": "3"}
-        sproc.communicate()
-        assert sproc.returncode == 0
+                psutil.Process()
+            assert meth.called
 
 
 # ===================================================================

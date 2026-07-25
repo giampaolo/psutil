@@ -178,18 +178,6 @@ class TestSpecialMethods(PsutilTestCase):
             == "timeout after 5 seconds (pid=321, name='name')"
         )
 
-    def test_process__eq__(self):
-        p1 = psutil.Process()
-        p2 = psutil.Process()
-        assert p1 == p2
-        p2._ident = (0, 0)
-        assert p1 != p2
-        assert p1 != 'foo'
-
-    def test_process__hash__(self):
-        s = {psutil.Process(), psutil.Process()}
-        assert len(s) == 1
-
 
 # ===================================================================
 # --- Misc, generic, corner cases
