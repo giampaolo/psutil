@@ -768,7 +768,23 @@ class Process:
             # have been reused by another process. Process identity /
             # uniqueness over time is guaranteed by (PID + creation
             # time) and that is verified in __eq__.
-            self._pid_reused = self != Process(self.pid)
+            other = Process(self.pid)
+            pid_reused = self != other
+            if pid_reused:
+                if not self._ident[1] or not other._ident[1]:
+                    # A null create time means identity is unknown: on
+                    # Windows create_time() may raise AccessDenied and
+                    # be set to None, on NetBSD / OpenBSD zombies have
+                    # creation time == 0 (see #2287, #2593).
+                    debug(
+                        "null create time, ignoring PID reuse check:"
+                        f" {self._ident} vs. {other._ident}"
+                    )
+                    pid_reused = False
+                else:
+                    debug(f"PID reuse: {self._ident} vs. {other._ident}")
+
+            self._pid_reused = pid_reused
             if self._pid_reused:
                 _pids_reused.add(self.pid)
                 raise NoSuchProcess(self.pid)
