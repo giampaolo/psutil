@@ -49,6 +49,7 @@ if WINDOWS and not PYPY:
         import wmi  # requires "pip install wmi" / "make install-pydeps-test"
 
 if WINDOWS:
+    from psutil._pswindows import ERROR_PARTIAL_COPY
     from psutil._pswindows import convert_oserror
 
 
@@ -971,6 +972,8 @@ class TestDualProcessImplementation(PsutilTestCase):
                 a = _psutil.proc_cmdline(pid, use_peb=True)
                 b = _psutil.proc_cmdline(pid, use_peb=False)
             except OSError as err:
+                if err.winerror == ERROR_PARTIAL_COPY:
+                    continue  # process is dying
                 err = convert_oserror(err)
                 if not isinstance(
                     err, (psutil.AccessDenied, psutil.NoSuchProcess)
