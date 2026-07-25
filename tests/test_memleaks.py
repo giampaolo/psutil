@@ -96,6 +96,8 @@ def setup_module(module):
     """
     if os.environ.get("PYTHONMALLOC") != "malloc":
         return  # memleak tests are skipped otherwise
+    if psleak_checkers == "memory":
+        return
 
     ns = process_namespace(thisproc)
     for fun, name in ns.iter(ns.getters + ns.setters, clear_cache=True):
