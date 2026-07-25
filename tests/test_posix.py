@@ -33,6 +33,7 @@ from . import pytest
 from . import retry_on_failure
 from . import sh
 from . import skip_on_access_denied
+from . import skipif
 from . import spawn_subproc
 from . import terminate
 
@@ -144,7 +145,7 @@ def df(device):
     return (sys_total, sys_used, sys_free, sys_percent)
 
 
-@pytest.mark.skipif(not POSIX, reason="POSIX only")
+@skipif(not POSIX, reason="POSIX only")
 class PosixTestCase(PsutilTestCase):
     pass
 
@@ -191,8 +192,8 @@ class TestProcess(PosixTestCase):
             assert p.username() == str(p.uids().real)
             assert fun.called
 
-    @skip_on_access_denied()
-    @retry_on_failure()
+    @skip_on_access_denied
+    @retry_on_failure
     def test_rss_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -201,8 +202,8 @@ class TestProcess(PosixTestCase):
         rss_psutil = psutil.Process(self.pid).memory_info()[0] / 1024
         assert rss_ps == rss_psutil
 
-    @skip_on_access_denied()
-    @retry_on_failure()
+    @skip_on_access_denied
+    @retry_on_failure
     def test_vsz_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -264,7 +265,7 @@ class TestProcess(PosixTestCase):
                 with pytest.raises(psutil.NoSuchProcess):
                     p.name()
 
-    @pytest.mark.skipif(MACOS or BSD, reason="ps -o start not available")
+    @skipif(MACOS or BSD, reason="ps -o start not available")
     def test_create_time(self):
         time_ps = ps('start', self.pid)
         time_psutil = psutil.Process(self.pid).create_time()
@@ -299,7 +300,7 @@ class TestProcess(PosixTestCase):
     # the Python framework.
     # There's a race condition between the ps call & the psutil call below
     # depending on the completion of the execve call so let's retry on failure
-    @retry_on_failure()
+    @retry_on_failure
     def test_cmdline(self):
         ps_cmdline = ps_args(self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
@@ -313,14 +314,14 @@ class TestProcess(PosixTestCase):
     # returns 0; psutil relies on it, see:
     # https://github.com/giampaolo/psutil/issues/1082
     # AIX has the same issue
-    @pytest.mark.skipif(SUNOS, reason="not reliable on SUNOS")
-    @pytest.mark.skipif(AIX, reason="not reliable on AIX")
+    @skipif(SUNOS, reason="not reliable on SUNOS")
+    @skipif(AIX, reason="not reliable on AIX")
     def test_nice(self):
         ps_nice = ps('nice', self.pid)
         psutil_nice = psutil.Process().nice()
         assert ps_nice == psutil_nice
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_num_ctx_switches(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         cws = psutil.Process().num_ctx_switches()
@@ -335,14 +336,14 @@ class TestProcess(PosixTestCase):
             assert cws.voluntary == pytest.approx(ru.ru_nvcsw, abs=tol)
             assert cws.involuntary == pytest.approx(ru.ru_nivcsw, abs=tol)
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_cpu_times(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         cws = psutil.Process().cpu_times()
         assert cws.user == pytest.approx(ru.ru_utime, abs=0.3)
         assert cws.system == pytest.approx(ru.ru_stime, abs=0.3)
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_page_faults(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         pf = psutil.Process().page_faults()
@@ -350,7 +351,7 @@ class TestProcess(PosixTestCase):
         assert pf.minor == pytest.approx(ru.ru_minflt, abs=tol)
         assert pf.major == pytest.approx(ru.ru_majflt, abs=tol)
 
-    @pytest.mark.skipif(not LINUX and not MACOS, reason="Linux, macOS only")
+    @skipif(not LINUX and not MACOS, reason="Linux, macOS only")
     def test_page_faults_minor_increase(self):
         # Access 200 new anonymous pages; each first access triggers a
         # minor fault.
@@ -379,7 +380,7 @@ class TestProcess(PosixTestCase):
 class TestSystemAPIs(PosixTestCase):
     """Test some system APIs."""
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
@@ -399,9 +400,9 @@ class TestSystemAPIs(PosixTestCase):
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
-    @pytest.mark.skipif(SUNOS, reason="unreliable on SUNOS")
-    @pytest.mark.skipif(not shutil.which("ifconfig"), reason="no ifconfig cmd")
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    @skipif(SUNOS, reason="unreliable on SUNOS")
+    @skipif(not shutil.which("ifconfig"), reason="no ifconfig cmd")
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_nic_names(self):
         output = sh("ifconfig -a")
         for nic in psutil.net_io_counters(pernic=True):
@@ -414,7 +415,7 @@ class TestSystemAPIs(PosixTestCase):
                     f" output\n{output}"
                 )
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_users(self):
         out = sh("who -u")
         if not out.strip():
@@ -445,7 +446,7 @@ class TestSystemAPIs(PosixTestCase):
             if user.pid is not None:
                 assert user.pid > 0
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_users_started(self):
         out = sh("who -u")
         if not out.strip():
@@ -494,8 +495,8 @@ class TestSystemAPIs(PosixTestCase):
             assert m.called
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
-    @pytest.mark.skipif(AIX, reason="unreliable on AIX")
-    @retry_on_failure()
+    @skipif(AIX, reason="unreliable on AIX")
+    @retry_on_failure
     def test_disk_usage(self):
         tolerance = 4 * 1024 * 1024  # 4MB
         for part in psutil.disk_partitions(all=False):

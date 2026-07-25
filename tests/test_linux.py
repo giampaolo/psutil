@@ -42,8 +42,10 @@ from . import pytest
 from . import reload_module
 from . import retry_on_failure
 from . import safe_rmpath
+from . import serial
 from . import sh
 from . import skip_on_not_implemented
+from . import skipif
 
 if LINUX:
     from psutil._pslinux import CLOCK_TICKS
@@ -60,7 +62,7 @@ if LINUX:
     SECTOR_SIZE = 512
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
+@skipif(not LINUX, reason="LINUX only")
 class LinuxTestCase(PsutilTestCase):
     pass
 
@@ -237,7 +239,7 @@ class TestVirtualMemoryAgainstFree(LinuxTestCase):
         psutil_value = psutil.virtual_memory().total
         assert cli_value == psutil_value
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_used(self):
         # Older versions of procps used slab memory to calculate used memory.
         # This got changed in:
@@ -251,13 +253,13 @@ class TestVirtualMemoryAgainstFree(LinuxTestCase):
         psutil_value = psutil.virtual_memory().used
         assert abs(cli_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_free(self):
         cli_value = free_physmem().free
         psutil_value = psutil.virtual_memory().free
         assert abs(cli_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_shared(self):
         free = free_physmem()
         free_value = free.shared
@@ -268,7 +270,7 @@ class TestVirtualMemoryAgainstFree(LinuxTestCase):
             abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
         ), f"{free_value} {psutil_value} \n{free.output}"
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_available(self):
         # "free" output format has changed at some point:
         # https://github.com/giampaolo/psutil/issues/538#issuecomment-147192098
@@ -287,7 +289,7 @@ class TestVirtualMemoryAgainstVmstat(LinuxTestCase):
         psutil_value = psutil.virtual_memory().total
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_used(self):
         # Older versions of procps used slab memory to calculate used memory.
         # This got changed in:
@@ -301,25 +303,25 @@ class TestVirtualMemoryAgainstVmstat(LinuxTestCase):
         psutil_value = psutil.virtual_memory().used
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_free(self):
         vmstat_value = vmstat('free memory') * 1024
         psutil_value = psutil.virtual_memory().free
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_buffers(self):
         vmstat_value = vmstat('buffer memory') * 1024
         psutil_value = psutil.virtual_memory().buffers
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_active(self):
         vmstat_value = vmstat('active memory') * 1024
         psutil_value = psutil.virtual_memory().active
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_inactive(self):
         vmstat_value = vmstat('inactive memory') * 1024
         psutil_value = psutil.virtual_memory().inactive
@@ -337,13 +339,13 @@ class TestVirtualMemoryAgainstMeminfo(LinuxTestCase):
                     mems[fields[0]] = int(fields[1]) * 1024
         return mems
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_buffers(self):
         proc_value = self.read_meminfo()["Buffers:"]
         psutil_value = psutil.virtual_memory().buffers
         assert abs(psutil_value - proc_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_cached(self):
         # psutil cached = Cached + SReclaimable
         mems = self.read_meminfo()
@@ -389,7 +391,7 @@ class TestVirtualMemoryMocks(LinuxTestCase):
                 assert ret.available == 0
                 assert ret.slab == 0
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_avail_old_percent(self):
         # Make sure that our calculation of avail mem for old kernels
         # is off by max 15%.
@@ -592,19 +594,19 @@ class TestSwapMemory(LinuxTestCase):
         psutil_value = psutil.swap_memory().total
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_used(self):
         free_value = free_swap().used
         psutil_value = psutil.swap_memory().used
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_free(self):
         free_value = free_swap().free
         psutil_value = psutil.swap_memory().free
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_sin_sout(self):
         # Cross-check sin/sout against /proc/vmstat pswpin/pswpout fields.
         # psutil converts pages to bytes using a 4096-byte page size.
@@ -697,7 +699,7 @@ class TestSwapMemory(LinuxTestCase):
 
 
 class TestCpuCountLogical(LinuxTestCase):
-    @pytest.mark.skipif(
+    @skipif(
         not os.path.exists("/sys/devices/system/cpu/online"),
         reason="/sys/devices/system/cpu/online does not exist",
     )
@@ -708,7 +710,7 @@ class TestCpuCountLogical(LinuxTestCase):
             value = int(value.split('-')[1]) + 1
             assert psutil.cpu_count() == value
 
-    @pytest.mark.skipif(
+    @skipif(
         not os.path.exists("/sys/devices/system/cpu"),
         reason="/sys/devices/system/cpu does not exist",
     )
@@ -717,16 +719,12 @@ class TestCpuCountLogical(LinuxTestCase):
         count = len([x for x in ls if re.search(r"cpu\d+$", x) is not None])
         assert psutil.cpu_count() == count
 
-    @pytest.mark.skipif(
-        not shutil.which("nproc"), reason="nproc utility not available"
-    )
+    @skipif(not shutil.which("nproc"), reason="nproc utility not available")
     def test_against_nproc(self):
         num = int(sh("nproc --all"))
         assert psutil.cpu_count(logical=True) == num
 
-    @pytest.mark.skipif(
-        not shutil.which("lscpu"), reason="lscpu utility not available"
-    )
+    @skipif(not shutil.which("lscpu"), reason="lscpu utility not available")
     def test_against_lscpu(self):
         out = sh("lscpu -p")
         num = len([x for x in out.split('\n') if not x.startswith('#')])
@@ -770,9 +768,7 @@ class TestCpuCountLogical(LinuxTestCase):
 
 
 class TestCpuCountCores(LinuxTestCase):
-    @pytest.mark.skipif(
-        not shutil.which("lscpu"), reason="lscpu utility not available"
-    )
+    @skipif(not shutil.which("lscpu"), reason="lscpu utility not available")
     def test_against_lscpu(self):
         out = sh("lscpu -p")
         core_ids = set()
@@ -782,7 +778,7 @@ class TestCpuCountCores(LinuxTestCase):
                 core_ids.add(fields[1])
         assert psutil.cpu_count(logical=False) == len(core_ids)
 
-    @pytest.mark.skipif(
+    @skipif(
         platform.machine() not in {"x86_64", "i686"}, reason="x86_64/i686 only"
     )
     def test_method_2(self):
@@ -802,10 +798,8 @@ class TestCpuCountCores(LinuxTestCase):
 
 
 class TestCpuFreq(LinuxTestCase):
-    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
-    @pytest.mark.skipif(
-        AARCH64, reason="aarch64 does not always expose frequency"
-    )
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
+    @skipif(AARCH64, reason="aarch64 does not always expose frequency")
     def test_emulate_use_second_file(self):
         # https://github.com/giampaolo/psutil/issues/981
         def path_exists_mock(path):
@@ -820,8 +814,8 @@ class TestCpuFreq(LinuxTestCase):
         ):
             assert psutil.cpu_freq()
 
-    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
-    @pytest.mark.skipif(
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
+    @skipif(
         AARCH64 or RISCV64,
         reason=f"{platform.machine()} does not report mhz in /proc/cpuinfo",
     )
@@ -849,7 +843,7 @@ class TestCpuFreq(LinuxTestCase):
             reload_module(psutil._pslinux)
             reload_module(psutil)
 
-    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_data(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/scaling_cur_freq') and name.startswith(
@@ -881,7 +875,7 @@ class TestCpuFreq(LinuxTestCase):
                 if freq.max != 0.0:
                     assert freq.max == 700.0
 
-    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_multi_cpu(self):
         def open_mock(name, *args, **kwargs):
             n = name
@@ -932,7 +926,7 @@ class TestCpuFreq(LinuxTestCase):
                     if freq[1].max != 0.0:
                         assert freq[1].max == 600.0
 
-    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_no_scaling_cur_freq_file(self):
         # See: https://github.com/giampaolo/psutil/issues/1071
         def open_mock(name, *args, **kwargs):
@@ -954,7 +948,7 @@ class TestCpuFreq(LinuxTestCase):
                     freq = psutil.cpu_freq()
                     assert freq.current == 200
 
-    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_offline_cpus(self):
         # Offline CPU cores must not be taken into account, else they
         # drag down the average frequency. See:
@@ -1018,7 +1012,7 @@ class TestCpuFreq(LinuxTestCase):
 
 class TestCpuTimes(LinuxTestCase):
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_against_proc_stat(self):
         with open("/proc/stat") as f:
             line = f.readline()
@@ -1089,10 +1083,8 @@ class TestNetIfAddrs(LinuxTestCase):
                     address = addr.address.split('%')[0]
                     assert address in get_ipv6_addresses(name)
 
-    @pytest.mark.skipif(
-        not shutil.which("ip"), reason="'ip' command not available"
-    )
-    @retry_on_failure()
+    @skipif(not shutil.which("ip"), reason="'ip' command not available")
+    @retry_on_failure
     def test_against_ip_addr_v4(self):
         # Parse IPv4 addresses per interface from `ip addr` output and
         # compare against psutil. Use the label at the end of each inet
@@ -1119,10 +1111,8 @@ class TestNetIfAddrs(LinuxTestCase):
             for addr in addrs:
                 assert addr in psutil_ipv4
 
-    @pytest.mark.skipif(
-        not shutil.which("ip"), reason="'ip' command not available"
-    )
-    @retry_on_failure()
+    @skipif(not shutil.which("ip"), reason="'ip' command not available")
+    @retry_on_failure
     def test_against_ip_addr_v6(self):
         # Parse IPv6 addresses per interface from `ip addr` output and
         # compare against psutil. Unlike inet, inet6 lines have no label,
@@ -1152,7 +1142,7 @@ class TestNetIfAddrs(LinuxTestCase):
                 assert addr in psutil_ipv6
 
     # XXX - not reliable when having virtual NICs installed by Docker.
-    # @pytest.mark.skipif(not shutil.which("ip"),
+    # @skipif(not shutil.which("ip"),
     #                     reason="'ip' utility not available")
     # def test_net_if_names(self):
     #     out = sh("ip addr").strip()
@@ -1168,7 +1158,7 @@ class TestNetIfAddrs(LinuxTestCase):
 
 
 class TestNetIfStats(LinuxTestCase):
-    @pytest.mark.skipif(
+    @skipif(
         not shutil.which("ifconfig"), reason="ifconfig utility not available"
     )
     def test_against_ifconfig(self):
@@ -1188,7 +1178,7 @@ class TestNetIfStats(LinuxTestCase):
             with open(f"/sys/class/net/{name}/mtu") as f:
                 assert stats.mtu == int(f.read().strip())
 
-    @pytest.mark.skipif(
+    @skipif(
         not shutil.which("ifconfig"), reason="ifconfig utility not available"
     )
     def test_flags(self):
@@ -1222,10 +1212,10 @@ class TestNetIfStats(LinuxTestCase):
 
 
 class TestNetIoCounters(LinuxTestCase):
-    @pytest.mark.skipif(
+    @skipif(
         not shutil.which("ifconfig"), reason="ifconfig utility not available"
     )
-    @retry_on_failure()
+    @retry_on_failure
     def test_against_ifconfig(self):
         def ifconfig(nic):
             ret = {}
@@ -1295,9 +1285,7 @@ class TestNetConnections(LinuxTestCase):
             psutil.net_connections(kind='unix')
             assert m.called
 
-    @pytest.mark.skipif(
-        not shutil.which("ss"), reason="'ss' command not available"
-    )
+    @skipif(not shutil.which("ss"), reason="'ss' command not available")
     def test_against_ss(self):
         # Listening ports are stable, so an exact set comparison is
         # reliable.
@@ -1326,10 +1314,8 @@ class TestNetConnections(LinuxTestCase):
 
 
 class TestDiskPartitions(LinuxTestCase):
-    @pytest.mark.skipif(
-        not hasattr(os, 'statvfs'), reason="os.statvfs() not available"
-    )
-    @skip_on_not_implemented()
+    @skipif(not hasattr(os, 'statvfs'), reason="os.statvfs() not available")
+    @skip_on_not_implemented
     def test_against_df(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
@@ -1523,10 +1509,10 @@ class TestDiskIoCounters(LinuxTestCase):
             with pytest.raises(NotImplementedError):
                 psutil.disk_io_counters()
 
-    @pytest.mark.skipif(
+    @skipif(
         not shutil.which("iostat"), reason="'iostat' command not available"
     )
-    @retry_on_failure()
+    @retry_on_failure
     def test_against_iostat(self):
         # Cross-check read_bytes/write_bytes against 'iostat -d -k'
         # cumulative totals (kB_read, kB_wrtn columns).
@@ -1573,7 +1559,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
                 finder.ask_sys_dev_block()
         finder.ask_sys_class_block()
 
-    @pytest.mark.skipif(GITHUB_ACTIONS, reason="unsupported on GITHUB_ACTIONS")
+    @skipif(GITHUB_ACTIONS, reason="unsupported on GITHUB_ACTIONS")
     def test_comparisons(self):
         finder = RootFsDeviceFinder()
         assert finder.find() is not None
@@ -1593,10 +1579,10 @@ class TestRootFsDeviceFinder(LinuxTestCase):
         if base and c:
             assert base == c
 
-    @pytest.mark.skipif(
+    @skipif(
         not shutil.which("findmnt"), reason="findmnt utility not available"
     )
-    @pytest.mark.skipif(GITHUB_ACTIONS, reason="unsupported on GITHUB_ACTIONS")
+    @skipif(GITHUB_ACTIONS, reason="unsupported on GITHUB_ACTIONS")
     def test_against_findmnt(self):
         psutil_value = RootFsDeviceFinder().find()
         findmnt_value = sh("findmnt -o SOURCE -rn /")
@@ -1770,8 +1756,8 @@ class TestMisc(LinuxTestCase):
         finally:
             psutil.PROCFS_PATH = "/proc"
 
-    @retry_on_failure()
-    @pytest.mark.xdist_group(name="serial")
+    @retry_on_failure
+    @serial
     def test_issue_687(self):
         # In case of thread ID:
         # - pid_exists() is supposed to return False
@@ -1804,11 +1790,9 @@ class TestMisc(LinuxTestCase):
 # =====================================================================
 
 
-@pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+@skipif(not HAS_BATTERY, reason="no battery")
 class TestSensorsBattery(LinuxTestCase):
-    @pytest.mark.skipif(
-        not shutil.which("acpi"), reason="acpi utility not available"
-    )
+    @skipif(not shutil.which("acpi"), reason="acpi utility not available")
     def test_percent(self):
         out = sh("acpi -b")
         acpi_value = int(out.split(",")[1].strip().replace('%', ''))
@@ -1920,7 +1904,7 @@ class TestSensorsBattery(LinuxTestCase):
                 ):
                     assert psutil.sensors_battery().percent == 88
 
-    @pytest.mark.skipif(
+    @skipif(
         not os.path.isfile("/sys/class/power_supply/BAT0/capacity"),
         reason="BAT /capacity file don't exist",
     )
@@ -2062,7 +2046,7 @@ class TestSensorsFans(LinuxTestCase):
 
 
 class TestProcess(LinuxTestCase):
-    @retry_on_failure()
+    @retry_on_failure
     def test_parse_smaps_vs_memory_maps(self):
         sproc = self.spawn_subproc()
         uss, pss, swap = psutil._pslinux.Process(sproc.pid)._parse_smaps()
@@ -2321,7 +2305,7 @@ class TestProcess(LinuxTestCase):
                 with pytest.raises(psutil.NoSuchProcess):
                     p.memory_info()
 
-    @pytest.mark.skipif(not HAS_PROC_RLIMIT, reason="not supported")
+    @skipif(not HAS_PROC_RLIMIT, reason="not supported")
     def test_rlimit_zombie(self):
         # Emulate a case where rlimit() raises ENOSYS, which may
         # happen in case of zombie process:
@@ -2516,7 +2500,7 @@ class TestProcessAgainstStatus(LinuxTestCase):
         value = tuple(map(int, value.split()[1:4]))
         assert self.proc.gids() == value
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_num_ctx_switches(self):
         value = self.read_status_file("voluntary_ctxt_switches:")
         assert self.proc.num_ctx_switches().voluntary == value

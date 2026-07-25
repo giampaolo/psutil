@@ -37,8 +37,6 @@ jemalloc on BSD/macOS, Windows CRT).
 import ctypes
 import gc
 
-import pytest
-
 import psutil
 from psutil import LINUX
 from psutil import MACOS
@@ -48,6 +46,8 @@ from psutil import WINDOWS
 from . import HAS_HEAP_INFO
 from . import PsutilTestCase
 from . import retry_on_failure
+from . import serial
+from . import skipif
 
 # Small allocation (64 KiB), below M_MMAP_THRESHOLD (128 KiB).
 # Increases heap_used (uordblks) without triggering mmap().
@@ -181,7 +181,7 @@ def assert_within_percent(actual, expected, percent):
         )
 
 
-@pytest.mark.skipif(not HAS_HEAP_INFO, reason="heap_info() not supported")
+@skipif(not HAS_HEAP_INFO, reason="heap_info() not supported")
 class HeapTestCase(PsutilTestCase):
     def setUp(self):
         trim_memory()
@@ -194,8 +194,8 @@ class HeapTestCase(PsutilTestCase):
 class TestHeap(HeapTestCase):
 
     # On Windows malloc() increases mmap_used
-    @pytest.mark.skipif(WINDOWS, reason="not on WINDOWS")
-    @retry_on_failure()
+    @skipif(WINDOWS, reason="not on WINDOWS")
+    @retry_on_failure
     def test_heap_used(self):
         """Test that a small malloc() allocation without free()
         increases heap_used.
@@ -227,8 +227,8 @@ class TestHeap(HeapTestCase):
         assert_within_percent(mem3.heap_used, mem1.heap_used, percent=10)
         assert_within_percent(mem3.mmap_used, mem1.mmap_used, percent=10)
 
-    @pytest.mark.skipif(MACOS, reason="not supported on MACOS")
-    @retry_on_failure()
+    @skipif(MACOS, reason="not supported on MACOS")
+    @retry_on_failure
     def test_mmap_used(self):
         """Test that a large malloc allocation increases mmap_used.
         NOTE: `mmap()` / `munmap()` via ctypes proved to be unreliable.
@@ -269,11 +269,11 @@ class TestHeap(HeapTestCase):
             assert mem1.heap_count == mem2.heap_count == mem3.heap_count
 
 
-@pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
-@pytest.mark.xdist_group(name="serial")
+@skipif(not WINDOWS, reason="WINDOWS only")
+@serial
 class TestHeapWindows(HeapTestCase):
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_heap_used(self):
         """Test that HeapAlloc() without HeapFree() increases heap_used."""
         size = HEAP_SIZE
@@ -292,7 +292,7 @@ class TestHeapWindows(HeapTestCase):
         mem3 = psutil.heap_info()
         assert mem3.heap_used == mem1.heap_used
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_mmap_used(self):
         """Test that VirtualAllocEx() without VirtualFreeEx() increases
         mmap_used.
@@ -312,7 +312,7 @@ class TestHeapWindows(HeapTestCase):
         mem3 = psutil.heap_info()
         assert mem3.mmap_used == mem1.mmap_used
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_heap_count(self):
         """Test that HeapCreate() without HeapDestroy() increases
         heap_count.

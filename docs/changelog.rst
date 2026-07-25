@@ -233,6 +233,13 @@ Others:
        - ``_psutil_linux.abi3.so``
        - ``_psutil.abi3.so``
 
+- :gh:`2889`, [Windows]: 32-bit psutil can no longer inspect 64-bit processes.
+  This relied on the undocumented ``NtWow64*`` APIs and stopped being tested
+  when 32-bit wheels were dropped in 7.1.2 (:gh:`2657`). :meth:`Process.cwd`
+  now raises :exc:`AccessDenied` in that case; :meth:`Process.cmdline` and
+  :meth:`Process.environ` are unaffected. The opposite direction (64-bit psutil
+  inspecting 32-bit processes) still works.
+
 **Bug fixes**
 
 - :gh:`1007`, [Windows]: :func:`boot_time` no longer fluctuates by ~1 second
@@ -240,6 +247,11 @@ Others:
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
   old ``time.time() - uptime()`` computation that sampled two counters from
   Python and produced sub-second differences.
+- :gh:`1967`, [Windows]: :meth:`Process.open_files` could deadlock the calling
+  process. On timeout, the internal thread querying a handle name was killed
+  with ``TerminateThread()``, which cannot terminate a thread blocked in the
+  kernel (e.g. on a pipe with a pending read) and left locks and memory in an
+  inconsistent state. The thread is now abandoned and cleans up after itself.
 - :gh:`2382`, [macOS]: :func:`cpu_freq` is now always defined on ARM64 and
   returns ``None`` when CPU frequency can't be determined. Previously it was
   left undefined (or raised :exc:`RuntimeError`) when the ``pmgr`` IORegistry
@@ -346,6 +358,19 @@ Others:
 - :gh:`2877`, [UNIX]: fix a one-byte stack buffer overflow in :func:`users`.
   When ``ut_host`` fills the whole field it has no null terminator, and the
   terminator was written one byte past the end of the local buffer.
+- :gh:`2885`, :meth:`Process.memory_full_info`,
+  :meth:`Process.memory_footprint` and :meth:`Process.threads` no longer use
+  ``task_for_pid()`` syscall, which can hang forever on headless VMs (e.g. CI
+  runners). They now use ``proc_pidinfo()``, which is more permissive and so
+  raises :exc:`AccessDenied` less often.
+- :gh:`2888`, [FreeBSD], [OpenBSD]: :class:`Process` methods could wrongly
+  raise :exc:`NoSuchProcess` ("PID has been reused") for a process still alive,
+  after a system clock update (e.g. NTP). Fixed by disabling the PID reuse
+  check (also on SunOS and AIX).
+- :gh:`2895`: :class:`Process` methods could wrongly raise :exc:`NoSuchProcess`
+  ("PID has been reused") when the process creation time could not be
+  determined, e.g. for zombies on NetBSD / OpenBSD or on :exc:`AccessDenied` on
+  Windows. An unknown creation time is no longer treated as proof of PID reuse.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^

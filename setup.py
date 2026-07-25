@@ -75,7 +75,7 @@ TEST_DEPS = [
 LINT_DEPS = [
     "black",
     "rstwrap",
-    "ruff",
+    "ruff==0.15.17",  # newer versions print rule names, not codes
     "sphinx-lint",
     "toml-sort",
 ]

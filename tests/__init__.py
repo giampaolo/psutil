@@ -68,7 +68,7 @@ __all__ = [
     'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR',
     'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
-    'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
+    'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE',
     "HAS_PROC_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_PROC_ENVIRON",
     "HAS_PROC_IO_COUNTERS", "HAS_PROC_IONICE",
     "HAS_PROC_MEMORY_FOOTPRINT", "HAS_PROC_MEMORY_MAPS",
@@ -84,7 +84,7 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
-    'system_namespace', 'is_win_secure_system_proc',
+    'system_namespace', 'is_win_secure_system_proc', 'serial', 'skipif',
     # type hints
     'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
@@ -117,8 +117,6 @@ GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
 CI_TESTING = GITHUB_ACTIONS
 COVERAGE = 'COVERAGE_RUN' in os.environ
 PYTEST_PARALLEL = "PYTEST_XDIST_WORKER" in os.environ  # `make test-parallel`
-# are we a 64 bit process?
-IS_64BIT = sys.maxsize > 2**32
 # apparently they're the same
 AARCH64 = platform.machine().lower() in {"aarch64", "arm64"}
 RISCV64 = platform.machine() == "riscv64"
@@ -439,16 +437,15 @@ def spawn_zombie():
     assert psutil.POSIX
     unix_file = get_testfn()
     src = textwrap.dedent(f"""\
-        import os, sys, time, socket, contextlib
+        import os, socket, time
         child_pid = os.fork()
-        if child_pid > 0:
-            time.sleep(3000)
+        if child_pid == 0:
+            os._exit(0)
         else:
-            # this is the zombie process
             with socket.socket(socket.AF_UNIX) as s:
                 s.connect('{unix_file}')
-                pid = bytes(str(os.getpid()), 'ascii')
-                s.sendall(pid)
+                s.sendall(bytes(str(child_pid), 'ascii'))
+            time.sleep(3000)
         """)
     tfile = None
     sock = bind_unix_socket(unix_file)
@@ -612,6 +609,9 @@ def reap_children(recursive=False):
     # recursive=True we don't want to lose the intermediate reference
     # pointing to the grandchildren.
     children = psutil.Process().children(recursive=recursive)
+    # children() lists them top-down; reverse so descendants die before
+    # their parents (avoids orphaning grandchildren).
+    children.reverse()
 
     # Terminate subprocess.Popen.
     while _subprocesses_started:
@@ -625,8 +625,12 @@ def reap_children(recursive=False):
 
     # Terminate children.
     if children:
+        timeout = 3
         for p in children:
-            terminate(p, wait_timeout=None)
+            try:
+                terminate(p, wait_timeout=timeout)
+            except psutil.TimeoutExpired:
+                warn(f"{p!r} didn't terminate within {timeout} secs")
         _, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn(f"couldn't terminate process {p!r}; attempting kill()")
@@ -887,6 +891,10 @@ def get_testfn(suffix="", dir=None):
 # ===================================================================
 # --- testing
 # ===================================================================
+
+
+serial = pytest.mark.xdist_group(name="serial")
+skipif = pytest.mark.skipif
 
 
 class PsutilTestCase(unittest.TestCase):
@@ -1324,7 +1332,7 @@ class system_namespace:
     test_class_coverage = process_namespace.test_class_coverage
 
 
-def retry_on_failure(retries=NO_RETRIES):
+def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
     """Decorator which runs a test function and retries N times before
     giving up and failing.
     """
@@ -1358,11 +1366,14 @@ def retry_on_failure(retries=NO_RETRIES):
 
         return wrapper
 
+    # allow bare `@retry_on_failure`
+    if callable(retries):
+        return retry_on_failure()(retries)
     assert retries > 1, retries
     return decorator
 
 
-def skip_on_access_denied(only_if=None):
+def skip_on_access_denied(only_if: "bool | typing.Callable | None" = None):
     """Decorator to Ignore AccessDenied exceptions."""
 
     def decorator(fun):
@@ -1378,10 +1389,12 @@ def skip_on_access_denied(only_if=None):
 
         return wrapper
 
+    if callable(only_if):
+        return skip_on_access_denied()(only_if)
     return decorator
 
 
-def skip_on_not_implemented(only_if=None):
+def skip_on_not_implemented(only_if: "bool | typing.Callable | None" = None):
     """Decorator to Ignore NotImplementedError exceptions."""
 
     def decorator(fun):
@@ -1401,6 +1414,8 @@ def skip_on_not_implemented(only_if=None):
 
         return wrapper
 
+    if callable(only_if):
+        return skip_on_not_implemented()(only_if)
     return decorator
 
 
@@ -1871,7 +1886,6 @@ else:
             for x in psutil.Process().memory_maps()
             if x.path.lower().endswith(ext)
             and 'python' in os.path.basename(x.path).lower()
-            and 'wow64' not in x.path.lower()
         ]
         if PYPY and not libs:
             libs = [

@@ -35,6 +35,7 @@ from . import PsutilTestCase
 from . import process_namespace
 from . import pytest
 from . import reload_module
+from . import skipif
 from . import system_namespace
 
 # ===================================================================
@@ -755,7 +756,7 @@ class TestWrapNumbers(PsutilTestCase):
         wrap_numbers.cache_clear('disk_io')
         wrap_numbers.cache_clear('?!?')
 
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_cache_clear_public_apis(self):
         if not psutil.disk_io_counters() or not psutil.net_io_counters():
             return pytest.skip("no disks or NICs available")

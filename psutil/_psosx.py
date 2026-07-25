@@ -135,7 +135,7 @@ def cpu_freq():
     if ret is None:  # not available on virtualized ARM64, see #2382
         return []
     curr, min_, max_ = ret
-    return [ntp.scpufreq(curr, min_, max_)]
+    return [ntp.scpufreq(float(curr), float(min_), float(max_))]
 
 
 # =====================================================================

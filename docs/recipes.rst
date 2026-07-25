@@ -268,12 +268,11 @@ Kill a process tree (including grandchildren):
       )
       return (gone, alive)
 
-On Unix, if you started the subprocess with ``subprocess.Popen`` you can
-often use the stdlib ``os.killpg()`` instead of this recipe.  Create the
-process with ``process_group=0`` so that it gets its own process group,
-then call ``os.killpg(pgid, sig)``.  This is simpler, does not require
-psutil, and still cleans up all descendants even when an intermediate
-process has exited::
+On Unix, if you started the subprocess with ``subprocess.Popen`` you can often
+use the stdlib ``os.killpg()`` instead of this recipe. Create the process with
+``process_group=0`` so that it gets its own process group, then call
+``os.killpg(pgid, sig)``. This is simpler, does not require psutil, and still
+cleans up all descendants even when an intermediate process has exited::
 
     import os
     import signal
@@ -283,9 +282,9 @@ process has exited::
     # ... later:
     os.killpg(proc.pid, signal.SIGTERM)
 
-This approach does not work on Windows (``os.killpg`` is not available)
-and it only works for PIDs that you started yourself as a new process
-group.  For arbitrary PIDs, use the psutil recipe above.
+This approach does not work on Windows (``os.killpg`` is not available) and it
+only works for PIDs that you started yourself as a new process group. For
+arbitrary PIDs, use the psutil recipe above.
 
 -------------------------------------------------------------------------------
 

@@ -83,7 +83,7 @@ On Windows:
 .. code-block:: none
 
   set PSUTIL_DEBUG=1 && python.exe script.py
-  psutil-debug [psutil/arch/windows/proc.c:90]> NtWow64ReadVirtualMemory64(...) -> 998 (Unknown error) (ignored)
+  psutil-debug [psutil/arch/windows/proc_info.c:56]> ReadProcessMemory -> ERROR_NOACCESS (ignored)
 
 Coding style
 ------------

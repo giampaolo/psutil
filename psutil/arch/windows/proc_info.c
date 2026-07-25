@@ -12,16 +12,6 @@
 #include "../../arch/all/init.h"
 
 
-#ifndef _WIN64
-typedef NTSTATUS(NTAPI *__NtQueryInformationProcess)(
-    HANDLE ProcessHandle,
-    DWORD ProcessInformationClass,
-    PVOID ProcessInformation,
-    DWORD ProcessInformationLength,
-    PDWORD ReturnLength
-);
-#endif
-
 #define PSUTIL_FIRST_PROCESS(Processes) \
     ((PSYSTEM_PROCESS_INFORMATION)(Processes))
 
@@ -72,35 +62,6 @@ psutil_convert_winerr(ULONG err, char *syscall) {
 }
 
 
-static void
-psutil_convert_ntstatus_err(NTSTATUS status, char *syscall) {
-    ULONG err;
-
-    if (NT_NTWIN32(status))
-        err = WIN32_FROM_NTSTATUS(status);
-    else
-        err = RtlNtStatusToDosErrorNoTeb(status);
-    psutil_convert_winerr(err, syscall);
-}
-
-
-static void
-psutil_giveup_with_ad(NTSTATUS status, char *syscall) {
-    ULONG err;
-    char fullmsg[2048];
-
-    if (NT_NTWIN32(status))
-        err = WIN32_FROM_NTSTATUS(status);
-    else
-        err = RtlNtStatusToDosErrorNoTeb(status);
-    str_format(
-        fullmsg, sizeof(fullmsg), "%s -> %lu (%s)", syscall, err, strerror(err)
-    );
-    psutil_debug(fullmsg);
-    psutil_oserror_ad(fullmsg);
-}
-
-
 // Get data from the process with the given pid.  The data is returned
 // in the pdata output member as a nul terminated string which must be
 // freed on success. On success 0 is returned.  On error the output
@@ -110,29 +71,25 @@ static int
 psutil_get_process_data(
     DWORD pid, enum psutil_process_data_kind kind, WCHAR **pdata, SIZE_T *psize
 ) {
-    /* This function is quite complex because there are several cases to be
-       considered:
+    /* Several cases to consider:
 
-       Two cases are really simple:  we (i.e. the python interpreter) and the
-       target process are both 32 bit or both 64 bit.  In that case the memory
-       layout of the structures matches up and all is well.
+       We (i.e. the python interpreter) and the target process are of
+       the same bitness: the memory layout of the structures matches
+       up and all is well.
 
-       When we are 64 bit and the target process is 32 bit we need to use
+       We are 64 bit and the target process is 32 bit (WoW64): we use
        custom 32 bit versions of the structures.
 
-       When we are 32 bit and the target process is 64 bit we need to use
-       custom 64 bit version of the structures.  Also we need to use separate
-       Wow64 functions to get the information.
+       We are 32 bit and the target process is 64 bit: we give up and
+       raise AccessDenied (it would require the undocumented NtWow64*
+       APIs).
 
-       A few helper structs are defined above so that the compiler can handle
-       calculating the correct offsets.
+       See: https://github.com/giampaolo/psutil/issues/2889
 
-       Additional help also came from the following sources:
+       Additional help came from:
 
-         https://github.com/kohsuke/winp and
+         https://github.com/kohsuke/winp
          http://wj32.org/wp/2009/01/24/howto-get-the-command-line-of-processes/
-         http://stackoverflow.com/a/14012919
-         http://www.drdobbs.com/embracing-64-bit-windows/184401966
      */
     SIZE_T size = 0;
     HANDLE hProcess = NULL;
@@ -141,9 +98,6 @@ psutil_get_process_data(
 #ifdef _WIN64
     LPVOID ppeb32 = NULL;
 #else
-    static __NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
-    static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
-    PVOID64 src64;
     BOOL weAreWow64;
     BOOL theyAreWow64;
 #endif
@@ -213,18 +167,8 @@ psutil_get_process_data(
     }
     else
 #else  // #ifdef _WIN64
-    // 32 bit process. In here we may run into a lot of errors, e.g.:
-    // * [Error 0] The operation completed successfully
-    //   (originated from NtWow64ReadVirtualMemory64)
-    // * [Error 998] Invalid access to memory location:
-    //   (originated from NtWow64ReadVirtualMemory64)
-    // Refs:
-    // * https://github.com/giampaolo/psutil/issues/1839
-    // * https://github.com/giampaolo/psutil/pull/1866
-    // Since the following code is quite hackish and fails unpredictably,
-    // in case of any error from NtWow64* APIs we raise AccessDenied.
-
-    // 32 bit case.  Check if the target is also 32 bit.
+    // We are 32 bit. If the target is 64 bit we give up: reading its
+    // memory would require the undocumented NtWow64* APIs.
     if (!IsWow64Process(GetCurrentProcess(), &weAreWow64)
         || !IsWow64Process(hProcess, &theyAreWow64))
     {
@@ -233,95 +177,9 @@ psutil_get_process_data(
     }
 
     if (weAreWow64 && !theyAreWow64) {
-        // We are 32 bit running in WoW64 mode.  Target process is 64 bit.
-        PROCESS_BASIC_INFORMATION64 pbi64;
-        PEB64 peb64;
-        RTL_USER_PROCESS_PARAMETERS64 procParameters64;
-
-        if (NtWow64QueryInformationProcess64 == NULL) {
-            NtWow64QueryInformationProcess64 = psutil_GetProcAddressFromLib(
-                "ntdll.dll", "NtWow64QueryInformationProcess64"
-            );
-            if (NtWow64QueryInformationProcess64 == NULL) {
-                PyErr_Clear();
-                psutil_oserror_ad(
-                    "can't query 64-bit process in 32-bit-WoW mode"
-                );
-                goto error;
-            }
-        }
-        if (NtWow64ReadVirtualMemory64 == NULL) {
-            NtWow64ReadVirtualMemory64 = psutil_GetProcAddressFromLib(
-                "ntdll.dll", "NtWow64ReadVirtualMemory64"
-            );
-            if (NtWow64ReadVirtualMemory64 == NULL) {
-                PyErr_Clear();
-                psutil_oserror_ad(
-                    "can't query 64-bit process in 32-bit-WoW mode"
-                );
-                goto error;
-            }
-        }
-
-        status = NtWow64QueryInformationProcess64(
-            hProcess, ProcessBasicInformation, &pbi64, sizeof(pbi64), NULL
-        );
-        if (!NT_SUCCESS(status)) {
-            // psutil_convert_ntstatus_err(
-            // status,
-            // "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
-            psutil_giveup_with_ad(
-                status,
-                "NtWow64QueryInformationProcess64(ProcessBasicInformation)"
-            );
-            goto error;
-        }
-
-        // read peb
-        status = NtWow64ReadVirtualMemory64(
-            hProcess, pbi64.PebBaseAddress, &peb64, sizeof(peb64), NULL
-        );
-        if (!NT_SUCCESS(status)) {
-            // psutil_convert_ntstatus_err(
-            // status, "NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress)");
-            psutil_giveup_with_ad(
-                status, "NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress)"
-            );
-            goto error;
-        }
-
-        // read process parameters
-        status = NtWow64ReadVirtualMemory64(
-            hProcess,
-            peb64.ProcessParameters,
-            &procParameters64,
-            sizeof(procParameters64),
-            NULL
-        );
-        if (!NT_SUCCESS(status)) {
-            // psutil_convert_ntstatus_err(
-            // status, "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)");
-            psutil_giveup_with_ad(
-                status, "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)"
-            );
-            goto error;
-        }
-
-        switch (kind) {
-            case KIND_CMDLINE:
-                src64 = procParameters64.CommandLine.Buffer;
-                size = procParameters64.CommandLine.Length;
-                break;
-            case KIND_CWD:
-                src64 = procParameters64.CurrentDirectoryPath.Buffer,
-                size = procParameters64.CurrentDirectoryPath.Length;
-                break;
-            case KIND_ENVIRON:
-                src64 = procParameters64.env;
-                break;
-        }
+        psutil_oserror_ad("can't query 64-bit process from 32-bit psutil");
+        goto error;
     }
-    else
 #endif
     // Target process is of the same bitness as us.
     {
@@ -383,14 +241,7 @@ psutil_get_process_data(
     }
 
     if (kind == KIND_ENVIRON) {
-#ifndef _WIN64
-        if (weAreWow64 && !theyAreWow64) {
-            psutil_oserror_ad("can't query 64-bit process in 32-bit-WoW mode");
-            goto error;
-        }
-        else
-#endif
-            if (psutil_get_process_region_size(hProcess, src, &size) != 0)
+        if (psutil_get_process_region_size(hProcess, src, &size) != 0)
             goto error;
     }
 
@@ -400,22 +251,7 @@ psutil_get_process_data(
         goto error;
     }
 
-#ifndef _WIN64
-    if (weAreWow64 && !theyAreWow64) {
-        status = NtWow64ReadVirtualMemory64(
-            hProcess, src64, buffer, size, NULL
-        );
-        if (!NT_SUCCESS(status)) {
-            // psutil_convert_ntstatus_err(status,
-            // "NtWow64ReadVirtualMemory64");
-            psutil_giveup_with_ad(status, "NtWow64ReadVirtualMemory64");
-            goto error;
-        }
-    }
-    else
-#endif
-        if (!ReadProcessMemory(hProcess, src, buffer, size, NULL))
-    {
+    if (!ReadProcessMemory(hProcess, src, buffer, size, NULL)) {
         // May fail with ERROR_PARTIAL_COPY, see:
         // https://github.com/giampaolo/psutil/issues/875
         psutil_convert_winerr(GetLastError(), "ReadProcessMemory");

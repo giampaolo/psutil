@@ -29,6 +29,7 @@ from . import PsutilTestCase
 from . import pytest
 from . import retry_on_failure
 from . import sh
+from . import skipif
 from . import spawn_subproc
 from . import terminate
 
@@ -55,7 +56,7 @@ def sysctl(cmdline):
 # =====================================================================
 
 
-@pytest.mark.skipif(not BSD, reason="BSD only")
+@skipif(not BSD, reason="BSD only")
 class TestSystemAPIs(PsutilTestCase):
     """System tests common to all BSD variants."""
 
@@ -86,26 +87,18 @@ class TestSystemAPIs(PsutilTestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 return pytest.fail(f"psutil={usage.used}, df={used}")
 
-    @pytest.mark.skipif(
-        not shutil.which("sysctl"), reason="sysctl cmd not available"
-    )
+    @skipif(not shutil.which("sysctl"), reason="sysctl cmd not available")
     def test_cpu_count_logical(self):
         syst = sysctl("hw.ncpu")
         assert psutil.cpu_count(logical=True) == syst
 
-    @pytest.mark.skipif(
-        not shutil.which("sysctl"), reason="sysctl cmd not available"
-    )
-    @pytest.mark.skipif(
-        NETBSD, reason="skipped on NETBSD"  # we check /proc/meminfo
-    )
+    @skipif(not shutil.which("sysctl"), reason="sysctl cmd not available")
+    @skipif(NETBSD, reason="skipped on NETBSD")  # we check /proc/meminfo
     def test_virtual_memory_total(self):
         num = sysctl('hw.physmem')
         assert num == psutil.virtual_memory().total
 
-    @pytest.mark.skipif(
-        not shutil.which("ifconfig"), reason="ifconfig cmd not available"
-    )
+    @skipif(not shutil.which("ifconfig"), reason="ifconfig cmd not available")
     def test_net_if_stats(self):
         for name, stats in psutil.net_if_stats().items():
             try:
@@ -118,7 +111,7 @@ class TestSystemAPIs(PsutilTestCase):
                     assert stats.mtu == int(re.findall(r'mtu (\d+)', out)[0])
 
 
-@pytest.mark.skipif(not BSD, reason="BSD only")
+@skipif(not BSD, reason="BSD only")
 class TestProcessAPIs(PsutilTestCase):
 
     @classmethod
@@ -129,7 +122,7 @@ class TestProcessAPIs(PsutilTestCase):
     def tearDownClass(cls):
         terminate(cls.pid)
 
-    @pytest.mark.skipif(NETBSD, reason="-o lstart doesn't work on NETBSD")
+    @skipif(NETBSD, reason="-o lstart doesn't work on NETBSD")
     def test_create_time(self):
         output = sh(f"ps -o lstart -p {self.pid}")
         start_ps = output.replace('STARTED', '').strip()
@@ -140,7 +133,7 @@ class TestProcessAPIs(PsutilTestCase):
         assert start_ps == start_psutil
 
 
-@pytest.mark.skipif(not BSD, reason="BSD only")
+@skipif(not BSD, reason="BSD only")
 class TestVmstat(PsutilTestCase):
 
     @staticmethod
@@ -187,9 +180,7 @@ class TestVmstat(PsutilTestCase):
         psutil_value = psutil.virtual_memory().wired
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    @pytest.mark.skipif(
-        not (OPENBSD or NETBSD), reason="NETBSD / OPENBSD only"
-    )
+    @skipif(not (OPENBSD or NETBSD), reason="NETBSD / OPENBSD only")
     def test_vmem_shared(self):
         out = sh("vmstat -t")
         if "vm-sh" not in out:
@@ -253,7 +244,7 @@ class TestVmstat(PsutilTestCase):
 # =====================================================================
 
 
-@pytest.mark.skipif(not FREEBSD, reason="FREEBSD only")
+@skipif(not FREEBSD, reason="FREEBSD only")
 class FreeBSDProcessTestCase(PsutilTestCase):
     @classmethod
     def setUpClass(cls):
@@ -263,7 +254,7 @@ class FreeBSDProcessTestCase(PsutilTestCase):
     def tearDownClass(cls):
         terminate(cls.pid)
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_memory_maps(self):
         out = sh(f"procstat -v {self.pid}")
         maps = psutil.Process(self.pid).memory_maps(grouped=False)
@@ -301,7 +292,7 @@ class FreeBSDProcessTestCase(PsutilTestCase):
         assert gids.effective == int(egid)
         assert gids.saved == int(sgid)
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_ctx_switches(self):
         tested = []
         out = sh(f"procstat -r {self.pid}")
@@ -321,7 +312,7 @@ class FreeBSDProcessTestCase(PsutilTestCase):
         if len(tested) != 2:
             raise RuntimeError("couldn't find lines match in procstat out")
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_cpu_times(self):
         tested = []
         out = sh(f"procstat -r {self.pid}")
@@ -342,7 +333,7 @@ class FreeBSDProcessTestCase(PsutilTestCase):
             raise RuntimeError("couldn't find lines match in procstat out")
 
 
-@pytest.mark.skipif(not FREEBSD, reason="FREEBSD only")
+@skipif(not FREEBSD, reason="FREEBSD only")
 class FreeBSDSystemTestCase(PsutilTestCase):
     @staticmethod
     def parse_swapinfo():
@@ -361,7 +352,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         cores = sysctl("kern.smp.cores")
         assert psutil.cpu_count(logical=False) == cores
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_cpu_times(self):
         clk_tck = os.sysconf("SC_CLK_TCK")
         ticks = [int(x) for x in sysctl("kern.cp_time").split()]
@@ -408,32 +399,32 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 
     # --- virtual_memory(); tests against sysctl
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_active(self):
         syst = sysctl("vm.stats.vm.v_active_count") * PAGESIZE
         assert abs(psutil.virtual_memory().active - syst) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_inactive(self):
         syst = sysctl("vm.stats.vm.v_inactive_count") * PAGESIZE
         assert abs(psutil.virtual_memory().inactive - syst) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_wired(self):
         syst = sysctl("vm.stats.vm.v_wire_count") * PAGESIZE
         assert abs(psutil.virtual_memory().wired - syst) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_cached(self):
         syst = sysctl("vm.stats.vm.v_cache_count") * PAGESIZE
         assert abs(psutil.virtual_memory().cached - syst) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_free(self):
         syst = sysctl("vm.stats.vm.v_free_count") * PAGESIZE
         assert abs(psutil.virtual_memory().free - syst) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_buffers(self):
         syst = sysctl("vfs.bufspace")
         assert abs(psutil.virtual_memory().buffers - syst) < TOLERANCE_SYS_MEM
@@ -462,7 +453,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             < 1000
         )
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_cpu_stats_syscalls(self):
         # pretty high tolerance but it looks like it's OK.
         assert (
@@ -486,7 +477,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 
     # --- net
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_net_io_counters(self):
         out = sh("netstat -ib")
         netstat = {}
@@ -514,7 +505,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 
     # --- sensors_battery
 
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    @skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors_battery(self):
         def secs2hours(secs):
             m, _s = divmod(secs, 60)
@@ -532,7 +523,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         else:
             assert secs2hours(metrics.secsleft) == remaining_time
 
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    @skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors_battery_against_sysctl(self):
         assert psutil.sensors_battery().percent == sysctl(
             "hw.acpi.battery.life"
@@ -546,7 +537,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         else:
             assert secsleft == sysctl("hw.acpi.battery.time") * 60
 
-    @pytest.mark.skipif(HAS_BATTERY, reason="has battery")
+    @skipif(HAS_BATTERY, reason="has battery")
     def test_sensors_battery_no_battery(self):
         # If no battery is present one of these calls is supposed
         # to fail, see:
@@ -589,7 +580,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 # =====================================================================
 
 
-@pytest.mark.skipif(not OPENBSD, reason="OPENBSD only")
+@skipif(not OPENBSD, reason="OPENBSD only")
 class OpenBSDSystemTestCase(PsutilTestCase):
     def test_boot_time(self):
         s = sysctl('kern.boottime')
@@ -603,7 +594,7 @@ class OpenBSDSystemTestCase(PsutilTestCase):
 # =====================================================================
 
 
-@pytest.mark.skipif(not NETBSD, reason="NETBSD only")
+@skipif(not NETBSD, reason="NETBSD only")
 class NetBSDTestCase(PsutilTestCase):
     @staticmethod
     def parse_vmstat(look_for):
@@ -621,7 +612,7 @@ class NetBSDTestCase(PsutilTestCase):
 
     # --- virtual mem
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_vmem_buffers(self):
         # uv.filepages: file-backed pages excluding executable mappings
         assert (
@@ -634,7 +625,7 @@ class NetBSDTestCase(PsutilTestCase):
 
     # --- swap mem
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_swapmem_total(self):
         assert (
             abs(
