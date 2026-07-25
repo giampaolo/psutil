@@ -1384,6 +1384,10 @@ class TestProcess(PsutilTestCase):
         else:
             assert p._ident[1] is not None
 
+    @skipif(
+        FREEBSD or OPENBSD or SUNOS or AIX,
+        reason="PID reuse detection disabled on this platform",
+    )
     def test_reused_pid(self):
         # Emulate a case where PID has been reused by another process.
         subp = self.spawn_subproc()
