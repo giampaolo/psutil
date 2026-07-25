@@ -32,8 +32,7 @@ jobs:
           usesh: true
           run: |
             set -x
-            python3 setup.py build_ext -i --parallel 4
-            python3 -c "import psutil"
-            python3 scripts/internal/install_pip.py
-            python3 -m pip install --break-system-packages --user .[test]
-            PYTHONMALLOC=malloc PYTHONUNBUFFERED=1 python3 -m pytest tests/test_memleaks.py
+            pkg install --accept developer/build/gnu-make || true
+            gmake build
+            gmake install-pydeps-test
+            gmake test-memleaks
