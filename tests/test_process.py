@@ -1778,8 +1778,8 @@ class TestProcessWait(PsutilTestCase):
         with pytest.raises(psutil.TimeoutExpired):
             p.wait(0)
         p.kill()
-        stop_at = time.time() + GLOBAL_TIMEOUT
-        while time.time() < stop_at:
+        stop_at = time.monotonic() + GLOBAL_TIMEOUT
+        while time.monotonic() < stop_at:
             try:
                 code = p.wait(0)
                 break

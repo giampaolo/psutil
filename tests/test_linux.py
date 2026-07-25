@@ -2096,7 +2096,7 @@ class TestProcess(LinuxTestCase):
     def test_open_files_mode(self):
         def get_test_file(fname):
             p = psutil.Process()
-            giveup_at = time.time() + GLOBAL_TIMEOUT
+            giveup_at = time.monotonic() + GLOBAL_TIMEOUT
             while True:
                 for file in p.open_files():
                     if file.path == os.path.abspath(fname):

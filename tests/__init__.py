@@ -916,8 +916,8 @@ def get_testfn(suffix="", dir=None):
 # ===================================================================
 
 # `@serial` decorator: put all marked tests on the same xdist worker,
-# so they do not run concurrently with each other. Needed by tests
-# that share or mutate the same system-wide resource and must not
+# so they don't run concurrently in the same process. Needed by tests
+# that share the same system-wide resource (e.g. a socket) and must not
 # overlap.
 # - net_connections() / Process.net_connections() that compare vs
 #   `ss`, `netstat`, etc.

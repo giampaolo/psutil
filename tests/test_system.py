@@ -268,10 +268,10 @@ class TestProcessAPIs(PsutilTestCase):
             psutil.wait_procs(procs, timeout=-1)
         with pytest.raises(TypeError):
             psutil.wait_procs(procs, callback=1)
-        t = time.time()
+        t = time.monotonic()
         gone, alive = psutil.wait_procs(procs, timeout=0.01, callback=callback)
 
-        assert time.time() - t < 0.5
+        assert time.monotonic() - t < 0.5
         assert not gone
         assert len(alive) == 3
         assert not pids
@@ -592,8 +592,8 @@ class TestCpuAPIs(PsutilTestCase):
     def test_cpu_times_time_increases(self):
         # Make sure time increases between calls.
         t1 = sum(psutil.cpu_times())
-        stop_at = time.time() + GLOBAL_TIMEOUT
-        while time.time() < stop_at:
+        stop_at = time.monotonic() + GLOBAL_TIMEOUT
+        while time.monotonic() < stop_at:
             t2 = sum(psutil.cpu_times())
             if t2 > t1:
                 return None
@@ -636,9 +636,9 @@ class TestCpuAPIs(PsutilTestCase):
         # Simulate some work load then make sure time have increased
         # between calls.
         tot1 = psutil.cpu_times(percpu=True)
-        giveup_at = time.time() + GLOBAL_TIMEOUT
+        giveup_at = time.monotonic() + GLOBAL_TIMEOUT
         while True:
-            if time.time() >= giveup_at:
+            if time.monotonic() >= giveup_at:
                 return pytest.fail("timeout")
             tot2 = psutil.cpu_times(percpu=True)
             for t1, t2 in zip(tot1, tot2):
