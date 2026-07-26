@@ -84,7 +84,8 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
-    'system_namespace', 'is_win_secure_system_proc', 'serial', 'skipif',
+    'system_namespace', 'is_win_secure_system_proc', 'serial', 'isolated',
+    'skipif',
     # type hints
     'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
@@ -703,8 +704,10 @@ class retry:
 
     def __iter__(self):
         if self.timeout:
-            stop_at = time.time() + self.timeout
-            while time.time() < stop_at:
+            # time.monotonic(): the BSD CI VMs step the system clock
+            # (NTP), which would expire a time.time() deadline early.
+            stop_at = time.monotonic() + self.timeout
+            while time.monotonic() < stop_at:
                 yield
         elif self.retries:
             for _ in range(self.retries):
@@ -814,8 +817,8 @@ def safe_rmpath(path):
         # open handles or references preventing the delete operation
         # to succeed immediately, so we retry for a while. See:
         # https://bugs.python.org/issue33240
-        stop_at = time.time() + GLOBAL_TIMEOUT
-        while time.time() < stop_at:
+        stop_at = time.monotonic() + GLOBAL_TIMEOUT
+        while time.monotonic() < stop_at:
             try:
                 return fun()
             except FileNotFoundError:
@@ -912,8 +915,26 @@ def get_testfn(suffix="", dir=None):
 # --- testing
 # ===================================================================
 
-
+# `@serial` decorator: put all marked tests on the same xdist worker,
+# so they don't run concurrently in the same process. Needed by tests
+# that share the same system-wide resource (e.g. a socket) and must not
+# overlap.
+# - net_connections() / Process.net_connections() that compare vs
+#   `ss`, `netstat`, etc.
+# - the socket-opening helpers: create_sockets(), bind_socket(),
+#   tcp_socketpair(), unix_socketpair(), bind_unix_socket()
 serial = pytest.mark.xdist_group(name="serial")
+
+# `@isolated` decorator: these tests are skipped under xdist and run in
+# a second, separate pytest run (`-m isolated`) that uses a single
+# process. They need a quiet, non-xdist environment, because
+# they measure noisy per-process or system counters.
+# - CPU counters compared vs getrusage / vmstat / WMI: cpu_stats(),
+#   Process.num_ctx_switches(), Process.page_faults()
+# - per-process counts other tests can move: Process.num_threads(),
+#   Process.num_fds(), Process.threads(), heap_info()
+isolated = pytest.mark.isolated
+
 skipif = pytest.mark.skipif
 
 

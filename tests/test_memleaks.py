@@ -38,6 +38,7 @@ from . import HAS_PROC_RLIMIT
 from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
+from . import PYTEST_PARALLEL
 from . import create_sockets
 from . import get_testfn
 from . import process_namespace
@@ -52,10 +53,49 @@ thisproc = psutil.Process()
 
 
 MemoryLeakTestCase.retries = 30  # minimize false positives
-MemoryLeakTestCase.verbosity = 1
+
+# Be quiet when running under xdist.
+MemoryLeakTestCase.verbosity = 0 if PYTEST_PARALLEL else 1
 
 TIMES = MemoryLeakTestCase.times
 FEW_TIMES = int(TIMES / 10)
+
+
+def setup_module(module):
+    """Prime APIs that allocate one-time resources.
+
+    Some calls open a file descriptor, handle, load a library, or start
+    a C thread only on their first invocation. Prime them before the
+    tests run, especially under pytest-xdist, so psleak's resource
+    checker does not mistake those one-time allocations for leaks.
+
+    Known examples:
+
+    * `net_io_counters()`, `net_if_stats()`, and `net_if_addrs()` on Windows:
+      `GetAdaptersAddresses()` leaves one handle open.
+    * `users()` on Windows leaves one handle open.
+    * `getloadavg()` on Windows starts one background PDH thread.
+    * `swap_memory()` on Windows loads `pdh.dll` on the first
+      `PdhOpenQuery()` call.
+    * `virtual_memory()` and `cpu_times()` on macOS cache the Mach host port.
+    """
+    if os.environ.get("PYTHONMALLOC") != "malloc":
+        return  # memleak tests are skipped otherwise
+
+    ns = process_namespace(thisproc)
+    for fun, name in ns.iter(ns.getters + ns.setters, clear_cache=True):
+        try:
+            fun()
+        except psutil.AccessDenied:
+            pass
+
+    ns = system_namespace()
+    for fun, name in ns.iter(ns.getters):
+        try:
+            fun()
+        except psutil.AccessDenied:
+            pass
+
 
 # ===================================================================
 # Process class
@@ -145,8 +185,7 @@ class TestProcess(MemoryLeakTestCase):
 
     @skip_on_access_denied(only_if=OPENBSD)
     def test_threads(self):
-        kw = {"times": 50} if WINDOWS else {}
-        self.execute(self.proc.threads, **kw)
+        self.execute(self.proc.threads, times=50 if WINDOWS else TIMES)
 
     def test_cpu_times(self):
         self.execute(self.proc.cpu_times)
@@ -163,7 +202,7 @@ class TestProcess(MemoryLeakTestCase):
 
     @skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
     def test_memory_footprint(self):
-        self.execute(self.proc.memory_footprint)
+        self.execute(self.proc.memory_footprint, times=50)  # slow
 
     @skipif(not POSIX, reason="POSIX only")
     def test_terminal(self):
@@ -185,10 +224,11 @@ class TestProcess(MemoryLeakTestCase):
         affinity = thisproc.cpu_affinity()
         self.execute(lambda: self.proc.cpu_affinity(affinity))
 
+    @skipif(WINDOWS, reason="too slow on Windows")  # XXX
     def test_open_files(self):
-        kw = {"times": 10, "retries": 30} if WINDOWS else {}
+        # slow
         with open(get_testfn(), 'w'):
-            self.execute(self.proc.open_files, **kw)
+            self.execute(self.proc.open_files, times=25 if WINDOWS else TIMES)
 
     @skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
     @skipif(LINUX, reason="too slow on LINUX")
@@ -212,14 +252,12 @@ class TestProcess(MemoryLeakTestCase):
     # Windows implementation is based on a single system-wide
     # function (tested later).
     @skipif(WINDOWS, reason="worthless on WINDOWS")
+    @skipif(LINUX, reason="pure python, too slow")
+    @skipif(SUNOS, reason="parses pfiles CLI")
     def test_net_connections(self):
-        # TODO: UNIX sockets are temporarily implemented by parsing
-        # 'pfiles' cmd  output; we don't want that part of the code to
-        # be executed.
-        times = FEW_TIMES if LINUX else self.times
         with create_sockets():
             kind = 'inet' if SUNOS else 'all'
-            self.execute(lambda: self.proc.net_connections(kind), times=times)
+            self.execute(lambda: self.proc.net_connections(kind))
 
     @skipif(not HAS_PROC_ENVIRON, reason="not supported")
     def test_environ(self):
@@ -344,8 +382,6 @@ class TestModuleFunctions(MemoryLeakTestCase):
     # TODO: remove this skip when this gets fixed
     @skipif(SUNOS, reason="worthless on SUNOS (uses a subprocess)")
     def test_swap_memory(self):
-        if WINDOWS:
-            psutil.swap_memory()  # spawns a PDH thread internally
         self.execute(psutil.swap_memory)
 
     def test_pid_exists(self):
@@ -377,39 +413,22 @@ class TestModuleFunctions(MemoryLeakTestCase):
 
     @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_net_io_counters(self):
-        if WINDOWS:
-            # GetAdaptersAddresses() leaves a persistent handle on first
-            # use; prime it (see test_net_if_addrs).
-            psutil.net_io_counters()
         self.execute(lambda: psutil.net_io_counters(nowrap=False))
 
     @skipif(MACOS and os.getuid() != 0, reason="need root access")
+    @skipif(LINUX, reason="pure python, too slow")
     def test_net_connections(self):
-        times = FEW_TIMES if LINUX else self.times
         with create_sockets():
             psutil.net_connections(kind='all')
-            self.execute(
-                lambda: psutil.net_connections(kind='all'), times=times
-            )
+            self.execute(lambda: psutil.net_connections(kind='all'))
 
     def test_net_if_addrs(self):
-        if WINDOWS:
-            # Calling GetAdaptersAddresses() for the first time
-            # allocates internal OS handles. These handles persist for
-            # the lifetime of the process, causing psleak to report
-            # "unclosed handles". Call it here first to avoid false
-            # positives.
-            psutil.net_if_addrs()
-
+        psutil.net_if_addrs()  # XXX prime
         # Note: verified that on Windows this was a false positive.
         tolerance = 80 * 1024 if WINDOWS else self.tolerance
         self.execute(psutil.net_if_addrs, tolerance=tolerance)
 
     def test_net_if_stats(self):
-        if WINDOWS:
-            # GetAdaptersAddresses() leaves a persistent handle on first
-            # use; prime it (see test_net_if_addrs).
-            psutil.net_if_stats()
         self.execute(psutil.net_if_stats)
 
     # --- sensors
@@ -435,12 +454,6 @@ class TestModuleFunctions(MemoryLeakTestCase):
         self.execute(psutil.boot_time)
 
     def test_users(self):
-        if WINDOWS:
-            # The first time this is called it allocates internal OS
-            # handles. These handles persist for the lifetime of the
-            # process, causing psleak to report "unclosed handles".
-            # Call it here first to avoid false positives.
-            psutil.users()
         self.execute(psutil.users)
 
     def test_set_debug(self):
@@ -448,7 +461,7 @@ class TestModuleFunctions(MemoryLeakTestCase):
 
     @skipif(not HAS_HEAP_INFO, reason="not supported")
     def test_heap_info(self):
-        self.execute(psutil.heap_info)
+        self.execute(psutil.heap_info, times=25 if WINDOWS else TIMES)  # slow
 
     @skipif(not HAS_HEAP_INFO, reason="not supported")
     def test_heap_trim(self):

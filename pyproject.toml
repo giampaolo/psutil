@@ -291,6 +291,9 @@ addopts = [
 verbosity_subtests = "0"
 testpaths = ["tests/"]
 python_files = ["test_*.py"]
+markers = [
+    "isolated: run in a separate serial pytest phase, not under -n auto",
+]
 
 [tool.rstwrap]
 width = 79

@@ -41,6 +41,7 @@ from . import reap_children
 from . import retry
 from . import safe_mkdir
 from . import safe_rmpath
+from . import serial
 from . import skipif
 from . import system_namespace
 from . import tcp_socketpair
@@ -167,8 +168,6 @@ class TestSyncTestUtils(PsutilTestCase):
         assert wait_for_file_subproc(testfn, sproc) == b"foo"
 
     def test_wait_for_file_subproc_dead(self):
-        # If the file never shows up and the subprocess died, its
-        # stderr ends up in the exception message.
         testfn = self.get_testfn()
         sproc = subprocess.Popen(
             [
@@ -312,6 +311,7 @@ class TestProcessUtils(PsutilTestCase):
             self.assert_pid_gone(zombie.pid)
 
 
+@serial
 class TestNetUtils(PsutilTestCase):
     def bind_socket(self):
         port = get_free_port()

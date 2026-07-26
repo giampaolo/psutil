@@ -38,6 +38,7 @@ from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
 from . import ThreadTask
 from . import call_until
+from . import isolated
 from . import pytest
 from . import reload_module
 from . import retry_on_failure
@@ -1285,6 +1286,7 @@ class TestNetConnections(LinuxTestCase):
             psutil.net_connections(kind='unix')
             assert m.called
 
+    @serial
     @skipif(not shutil.which("ss"), reason="'ss' command not available")
     def test_against_ss(self):
         # Listening ports are stable, so an exact set comparison is
@@ -1757,7 +1759,7 @@ class TestMisc(LinuxTestCase):
             psutil.PROCFS_PATH = "/proc"
 
     @retry_on_failure
-    @serial
+    @isolated
     def test_issue_687(self):
         # In case of thread ID:
         # - pid_exists() is supposed to return False

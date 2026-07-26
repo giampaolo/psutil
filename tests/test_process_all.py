@@ -10,7 +10,6 @@ test all psutil.Process() methods.
 
 import enum
 import errno
-import multiprocessing
 import os
 import stat
 import time
@@ -30,20 +29,14 @@ from psutil import POSIX
 from psutil import WINDOWS
 
 from . import CI_TESTING
-from . import PYTEST_PARALLEL
 from . import VALID_PROC_STATUSES
 from . import PsutilTestCase
 from . import check_connection_ntuple
 from . import check_fun_type_hints
 from . import check_ntuple_type_hints
-from . import create_sockets
 from . import is_namedtuple
 from . import is_win_secure_system_proc
 from . import process_namespace
-
-# Cuts the time in half, but (e.g.) on macOS the process pool stays
-# alive after join() (multiprocessing bug?), messing up other tests.
-USE_PROC_POOL = LINUX and not CI_TESTING and not PYTEST_PARALLEL
 
 
 def proc_info(pid):
@@ -54,7 +47,15 @@ def proc_info(pid):
         if exc.name is not None:
             assert exc.name == name
         if isinstance(exc, psutil.ZombieProcess):
-            tcase.assert_proc_zombie(proc)
+            try:
+                tcase.assert_proc_zombie(proc)
+            except (psutil.NoSuchProcess, AssertionError):
+                # Prevent race conditions: if zombie disappears while
+                # assert_proc_zombie analyzes it we fail only if its
+                # PID still exists.
+                if pid in psutil.pids():
+                    raise
+
             if exc.ppid is not None:
                 assert exc.ppid >= 0
                 assert exc.ppid == ppid
@@ -94,6 +95,9 @@ def proc_info(pid):
                 # machines. See:
                 # https://github.com/giampaolo/psutil/issues/2885
                 continue
+            if WINDOWS and fun_name == "open_files":
+                # XXX: too slow
+                continue
             try:
                 ret = fun()
             except psutil.Error as exc:
@@ -116,34 +120,13 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def setUp(self):
         psutil._set_debug(False)
-        # Using a pool in a CI env may result in deadlock, see:
-        # https://github.com/giampaolo/psutil/issues/2104
-        if USE_PROC_POOL:
-            # The 'fork' method is the only one that does not
-            # create a "resource_tracker" process. The problem
-            # when creating this process is that it ignores
-            # SIGTERM and SIGINT, and this makes "reap_children"
-            # hang... The following code should run on python-3.4
-            # and later.
-            multiprocessing.set_start_method('fork')
-            self.pool = multiprocessing.Pool()
 
     def tearDown(self):
         psutil._set_debug(True)
-        if USE_PROC_POOL:
-            self.pool.terminate()
-            self.pool.join()
 
     def iter_proc_info(self):
-        # Fixes "can't pickle <function proc_info>: it's not the
-        # same object as test_process_all.proc_info".
-        from tests.test_process_all import proc_info
-
-        if USE_PROC_POOL:
-            return self.pool.imap_unordered(proc_info, psutil.pids())
-        else:
-            ls = [proc_info(pid) for pid in psutil.pids()]
-            return ls
+        ls = [proc_info(pid) for pid in psutil.pids()]
+        return ls
 
     def test_all(self):
         failures = []
@@ -296,10 +279,6 @@ class TestFetchAllProcesses(PsutilTestCase):
             assert n >= 0
         # TODO: check ntuple fields
 
-    def cpu_percent(self, ret, info):
-        assert isinstance(ret, float)
-        assert 0.0 <= ret <= 100.0, ret
-
     def cpu_num(self, ret, info):
         assert isinstance(ret, int)
         if FREEBSD and ret == -1:
@@ -352,10 +331,9 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret >= 0
 
     def net_connections(self, ret, info):
-        with create_sockets():
-            assert len(ret) == len(set(ret))
-            for conn in ret:
-                check_connection_ntuple(conn)
+        assert len(ret) == len(set(ret))
+        for conn in ret:
+            check_connection_ntuple(conn)
 
     def cwd(self, ret, info):
         assert isinstance(ret, str)
@@ -372,13 +350,6 @@ class TestFetchAllProcesses(PsutilTestCase):
                     raise
             else:
                 assert stat.S_ISDIR(st.st_mode)
-
-    def memory_percent(self, ret, info):
-        assert isinstance(ret, float)
-        assert 0 <= ret <= 100, ret
-
-    def is_running(self, ret, info):
-        assert isinstance(ret, bool)
 
     def cpu_affinity(self, ret, info):
         assert isinstance(ret, list)

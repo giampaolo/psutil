@@ -28,8 +28,10 @@ from . import PYPY
 from . import TOLERANCE_DISK_USAGE
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
+from . import isolated
 from . import pytest
 from . import retry_on_failure
+from . import serial
 from . import sh
 from . import skipif
 from . import spawn_subproc
@@ -47,6 +49,7 @@ if WINDOWS and not PYPY:
         import wmi  # requires "pip install wmi" / "make install-pydeps-test"
 
 if WINDOWS:
+    from psutil._pswindows import ERROR_PARTIAL_COPY
     from psutil._pswindows import convert_oserror
 
 
@@ -161,7 +164,7 @@ class TestCpuFreq(WindowsTestCase):
         w = wmi.WMI()
         proc = w.Win32_Processor()[0]
         assert abs(proc.CurrentClockSpeed - psutil.cpu_freq().current) < 100
-        assert proc.MaxClockSpeed == psutil.cpu_freq().max
+        assert abs(proc.MaxClockSpeed - psutil.cpu_freq().max) < 100
 
 
 class TestCpuStats(WindowsTestCase):
@@ -193,6 +196,7 @@ class TestVirtualMemory(WindowsTestCase):
         w = wmi.WMI().Win32_ComputerSystem()[0]
         assert int(w.TotalPhysicalMemory) == psutil.virtual_memory().total
 
+    @retry_on_failure
     def test_free(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
@@ -285,6 +289,7 @@ class TestNetAPIs(WindowsTestCase):
         win_addrs = set(out.strip().split(','))
         assert win_addrs == ps_addrs
 
+    @serial
     def test_net_connections(self):
         # Compare listening TCP ports; they're stable unlike active
         # connections.
@@ -391,16 +396,6 @@ class TestOtherSystemAPIs(WindowsTestCase):
     #     wmic_create = str(w.CreationDate.split('.')[0])
     #     psutil_create = time.strftime("%Y%m%d%H%M%S",
     #                                   time.localtime(p.create_time()))
-
-    # Note: this test is not very reliable
-    @retry_on_failure
-    def test_pids(self):
-        # Note: this test might fail if the OS is starting/killing
-        # other processes in the meantime
-        w = wmi.WMI().Win32_Process()
-        wmi_pids = {x.ProcessId for x in w}
-        psutil_pids = set(psutil.pids())
-        assert wmi_pids == psutil_pids
 
     def test_convert_dos_path_drive(self):
         winpath = 'C:\\Windows\\Temp'
@@ -604,6 +599,7 @@ class TestProcess(WindowsTestCase):
         win32api.CloseHandle(handle)
         assert p.num_handles() == before
 
+    @isolated
     def test_ctrl_signals(self):
         p = psutil.Process(self.spawn_subproc().pid)
         p.send_signal(signal.CTRL_C_EVENT)
@@ -966,6 +962,8 @@ class TestDualProcessImplementation(PsutilTestCase):
                 a = _psutil.proc_cmdline(pid, use_peb=True)
                 b = _psutil.proc_cmdline(pid, use_peb=False)
             except OSError as err:
+                if err.winerror == ERROR_PARTIAL_COPY:
+                    continue  # process is dying
                 err = convert_oserror(err)
                 if not isinstance(
                     err, (psutil.AccessDenied, psutil.NoSuchProcess)

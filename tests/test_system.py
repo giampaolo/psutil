@@ -219,7 +219,8 @@ class TestProcessIter(PsutilTestCase):
     def test_deprecated_prefetch_empty_attrs(self):
         # attrs=[] should prefetch all methods.
         with pytest.warns(DeprecationWarning):
-            p = next(psutil.process_iter(attrs=[]))
+            for p in psutil.process_iter(attrs=[]):
+                break
         assert p._prefetch.keys() == psutil.Process.attrs
 
     def test_prefetch_with_non_prefetched(self):
