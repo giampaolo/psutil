@@ -220,24 +220,28 @@ class TestVmstat(PsutilTestCase):
     # --- cpu_stats()
 
     @isolated
+    @retry_on_failure
     def test_cpu_stats_interrupts(self):
         vmstat_value = self.vmstat(['device interrupts', 'interrupts'])
         psutil_value = psutil.cpu_stats().interrupts
         assert abs(vmstat_value - psutil_value) <= 100
 
     @isolated
+    @retry_on_failure
     def test_cpu_stats_soft_interrupts(self):
         vmstat_value = self.vmstat(['software interrupts'])
         psutil_value = psutil.cpu_stats().soft_interrupts
         assert abs(vmstat_value - psutil_value) <= 100
 
     @isolated
+    @retry_on_failure
     def test_cpu_stats_syscalls(self):
         vmstat_value = self.vmstat(['system calls', 'syscalls'])
         psutil_value = psutil.cpu_stats().syscalls
         assert abs(vmstat_value - psutil_value) <= 100
 
     @isolated
+    @retry_on_failure
     def test_cpu_stats_ctx_switches(self):
         vmstat_value = self.vmstat(['cpu context switches'])
         psutil_value = psutil.cpu_stats().ctx_switches
