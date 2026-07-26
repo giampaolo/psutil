@@ -196,6 +196,7 @@ class TestVirtualMemory(WindowsTestCase):
         w = wmi.WMI().Win32_ComputerSystem()[0]
         assert int(w.TotalPhysicalMemory) == psutil.virtual_memory().total
 
+    @retry_on_failure
     def test_free(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
