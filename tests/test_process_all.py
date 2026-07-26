@@ -104,6 +104,15 @@ class ProcInfo:
         str(exc)
         repr(exc)
 
+    def safe_repr(self):
+        # repr() calls name() and status(), which may fail themselves.
+        if self.proc is None:
+            return f"pid {self.pid}"
+        try:
+            return repr(self.proc)
+        except Exception as exc:  # noqa: BLE001
+            return f"psutil.Process(pid={self.pid}, repr_error={exc!r})"
+
     def check_wait(self):
         if self.pid != 0:
             try:
@@ -138,9 +147,6 @@ class ProcInfo:
             except psutil.Error as exc:
                 self.check_exception(exc)
                 continue
-            except Exception as exc:
-                msg = f"{fun_name}() failed for {self.proc!r}"
-                raise RuntimeError(msg) from exc
             else:
                 check_fun_type_hints(fun, ret)
                 if is_namedtuple(ret):
@@ -149,7 +155,7 @@ class ProcInfo:
             finally:
                 durations[fun_name] = time.perf_counter() - t
         info["_durations"] = durations
-        info["_repr"] = repr(self.proc)
+        info["_repr"] = self.safe_repr()
         return info
 
     def run(self):
@@ -172,7 +178,17 @@ class ProcInfo:
 
 
 def proc_info(pid):
-    return ProcInfo(pid).run()
+    obj = ProcInfo(pid)
+    try:
+        return obj.run()
+    except Exception as exc:
+        # Attach the process repr (name + status) to any unexpected
+        # error, no matter which part of the collection raised it.
+        msg = f"proc: {obj.safe_repr()}"
+        if hasattr(exc, "add_note"):  # python 3.11+
+            exc.add_note(msg)
+            raise
+        raise RuntimeError(msg) from exc
 
 
 class TestFetchAllProcesses(PsutilTestCase):
