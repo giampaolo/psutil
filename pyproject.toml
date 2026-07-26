@@ -286,6 +286,7 @@ addopts = [
     "-p no:junitxml",
     "-p no:nose",
     "-p no:pastebin",
+    "-p tests.test_process_all",  # pytest hooks reporting API durations
     "-p xdist",
 ]
 verbosity_subtests = "0"

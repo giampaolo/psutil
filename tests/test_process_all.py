@@ -8,6 +8,7 @@
 test all psutil.Process() methods.
 """
 
+import collections
 import enum
 import errno
 import os
@@ -37,6 +38,40 @@ from . import check_ntuple_type_hints
 from . import is_namedtuple
 from . import is_win_secure_system_proc
 from . import process_namespace
+
+API_DURATIONS = collections.Counter()
+
+
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_makereport(item, call):
+    # Attach the timings to test_all's report, so they survive the
+    # trip from the xdist worker to the master.
+    report = yield
+    if call.when == "call" and item.nodeid.endswith("::test_all"):
+        if API_DURATIONS:
+            report.user_properties.append(
+                ("api_durations", API_DURATIONS.most_common())
+            )
+    return report
+
+
+def pytest_terminal_summary(terminalreporter):
+    """Show top slowest APIs in pytest summary."""
+    top_slowest = terminalreporter.config.getoption("durations")
+    if top_slowest is None:
+        # show them only if --durations was passed
+        return
+    for reports in terminalreporter.stats.values():
+        for report in reports:
+            for key, value in getattr(report, "user_properties", []):
+                if key == "api_durations":
+                    terminalreporter.write_sep(
+                        "=",
+                        f"test_all: slowest {top_slowest} APIs (cumulative)",
+                    )
+                    for fun_name, secs in value[:top_slowest]:
+                        line = f"{secs:.2f}s call     {fun_name}()"
+                        terminalreporter.write_line(line)
 
 
 def proc_info(pid):
@@ -83,6 +118,7 @@ def proc_info(pid):
     else:
         name, ppid = d['name'], d['ppid']
         info = {'pid': proc.pid}
+        durations = {}
         ns = process_namespace(proc)
         # We don't use oneshot() because in order not to fool
         # check_exception() in case of NSP.
@@ -98,6 +134,7 @@ def proc_info(pid):
             if WINDOWS and fun_name == "open_files":
                 # XXX: too slow
                 continue
+            t = time.perf_counter()
             try:
                 ret = fun()
             except psutil.Error as exc:
@@ -108,6 +145,9 @@ def proc_info(pid):
                 if is_namedtuple(ret):
                     check_ntuple_type_hints(ret)
                 info[fun_name] = ret
+            finally:
+                durations[fun_name] = time.perf_counter() - t
+        info["_durations"] = durations
         do_wait()
         return info
 
@@ -130,7 +170,9 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def test_all(self):
         failures = []
+        durations = collections.Counter()
         for info in self.iter_proc_info():
+            durations.update(info.pop("_durations", {}))
             for name, value in info.items():
                 meth = getattr(self, name)
                 try:
@@ -149,6 +191,8 @@ class TestFetchAllProcesses(PsutilTestCase):
                 else:
                     if value not in (0, 0.0, [], None, '', {}):
                         assert value, value
+
+        API_DURATIONS.update(durations)
         if failures:
             return pytest.fail(''.join(failures))
 
