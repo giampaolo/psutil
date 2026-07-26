@@ -111,6 +111,47 @@ class ProcInfo:
             except psutil.Error as exc:
                 self.check_exception(exc)
 
+    def should_skip(self, fun_name):
+        if MACOS and CI_TESTING and fun_name == "memory_info_ex":
+            # XXX: memory_info_ex() needs task_for_pid() for fields
+            # with no pid-based source (peak_rss, compressed, ...).
+            # task_for_pid() can hang forever when taskgated is
+            # wedged, which happens on headless CI but not on real
+            # machines. See:
+            # https://github.com/giampaolo/psutil/issues/2885
+            return True
+        # XXX: open_files() is too slow on Windows
+        return WINDOWS and fun_name == "open_files"
+
+    def call_getters(self):
+        info = {'pid': self.pid}
+        durations = {}
+        ns = process_namespace(self.proc)
+        # We don't use oneshot() because in order not to fool
+        # check_exception() in case of NSP.
+        for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
+            if self.should_skip(fun_name):
+                continue
+            t = time.perf_counter()
+            try:
+                ret = fun()
+            except psutil.Error as exc:
+                self.check_exception(exc)
+                continue
+            except Exception as exc:
+                msg = f"{fun_name}() failed for {self.proc!r}"
+                raise RuntimeError(msg) from exc
+            else:
+                check_fun_type_hints(fun, ret)
+                if is_namedtuple(ret):
+                    check_ntuple_type_hints(ret)
+                info[fun_name] = ret
+            finally:
+                durations[fun_name] = time.perf_counter() - t
+        info["_durations"] = durations
+        info["_repr"] = repr(self.proc)
+        return info
+
     def run(self):
         try:
             self.proc = psutil.Process(self.pid)
@@ -123,41 +164,7 @@ class ProcInfo:
             self.tcase.assert_proc_gone(self.proc)
         else:
             self.name, self.ppid = d['name'], d['ppid']
-            info = {'pid': self.pid}
-            durations = {}
-            ns = process_namespace(self.proc)
-            # We don't use oneshot() because in order not to fool
-            # check_exception() in case of NSP.
-            for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
-                if MACOS and CI_TESTING and fun_name == "memory_info_ex":
-                    # XXX: memory_info_ex() needs task_for_pid() for
-                    # fields with no pid-based source (peak_rss,
-                    # compressed, ...). task_for_pid() can hang forever
-                    # when taskgated is wedged, which happens on
-                    # headless CI but not on real machines. See:
-                    # https://github.com/giampaolo/psutil/issues/2885
-                    continue
-                if WINDOWS and fun_name == "open_files":
-                    # XXX: too slow
-                    continue
-                t = time.perf_counter()
-                try:
-                    ret = fun()
-                except psutil.Error as exc:
-                    self.check_exception(exc)
-                    continue
-                except Exception as exc:
-                    msg = f"{fun_name}() failed for {self.proc!r}"
-                    raise RuntimeError(msg) from exc
-                else:
-                    check_fun_type_hints(fun, ret)
-                    if is_namedtuple(ret):
-                        check_ntuple_type_hints(ret)
-                    info[fun_name] = ret
-                finally:
-                    durations[fun_name] = time.perf_counter() - t
-            info["_durations"] = durations
-            info["_repr"] = repr(self.proc)
+            info = self.call_getters()
             self.check_wait()
             return info
 
