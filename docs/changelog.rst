@@ -216,9 +216,7 @@ Others:
   no longer set to ``0``.
 - :gh:`2844`: removed docs/ from tarball. Tarball before: 586K. Tarball now:
   396K.
-- :gh:`XXXX`: ``setup.py`` no longer uses ``distutils``, which was removed from
-  the stdlib in Python 3.12, and only relies on ``setuptools``.
-- :gh:`XXXX`: the platform-specific C extension modules (``_psutil_linux``,
+- :gh:`2883`: the platform-specific C extension modules (``_psutil_linux``,
   ``_psutil_windows``, etc.) are now built as a single private module named
   ``_psutil`` on all platforms.
 
@@ -241,6 +239,8 @@ Others:
   now raises :exc:`AccessDenied` in that case; :meth:`Process.cmdline` and
   :meth:`Process.environ` are unaffected. The opposite direction (64-bit psutil
   inspecting 32-bit processes) still works.
+- :gh:`2909`: ``setup.py`` no longer uses ``distutils``, which was removed from
+  the stdlib in Python 3.12, and only relies on ``setuptools``.
 
 **Bug fixes**
 
