@@ -32,6 +32,8 @@ concurrency:
 jobs:
   freebsd:
     # if: false
+    # Skip same-repo PR runs: the push event already covers them.
+    if: &skip_same_repo_pr github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -46,6 +48,7 @@ jobs:
 
   openbsd:
     # if: false
+    if: *skip_same_repo_pr
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -59,6 +62,7 @@ jobs:
 
   netbsd:
     # if: false
+    if: *skip_same_repo_pr
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
