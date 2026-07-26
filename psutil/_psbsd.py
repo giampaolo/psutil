@@ -75,6 +75,7 @@ elif NETBSD:
         _psutil.SZOMB: ProcessStatus.STATUS_ZOMBIE,
         _psutil.SRUN: ProcessStatus.STATUS_WAKING,
         _psutil.SONPROC: ProcessStatus.STATUS_RUNNING,
+        _psutil.SSUSPENDED: ProcessStatus.STATUS_SUSPENDED,
     }
 
 TCP_STATUSES = {
