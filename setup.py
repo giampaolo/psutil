@@ -6,32 +6,19 @@
 
 """Cross-platform lib for process and system monitoring in Python."""
 
-import contextlib
 import glob
-import io
 import os
 import pathlib
+import shlex
 import shutil
 import struct
 import subprocess
 import sys
 import sysconfig
 import tempfile
-import warnings
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import setuptools
-        from setuptools import Extension
-        from setuptools import setup
-    except ImportError:
-        if "CIBUILDWHEEL" in os.environ:
-            raise
-        setuptools = None
-        from distutils.core import Extension
-        from distutils.core import setup
-
+from setuptools import Extension
+from setuptools import setup
 
 ROOT_DIR = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT_DIR))
@@ -83,15 +70,18 @@ if POSIX:
 VERSION = get_version()
 macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
-# Py_LIMITED_API lets us create a single wheel which works with multiple
-# python versions, including unreleased ones. Keep the version in sync
-# with python_requires: it's the oldest interpreter the wheel claims to
-# run on.
+# The oldest interpreter we support, and the one the wheel claims to
+# run on. Py_LIMITED_API lets us create a single wheel which works with
+# multiple python versions, including unreleased ones.
+MIN_PY_VERSION = (3, 8)
+
 abi3_platform = MACOS or LINUX or WINDOWS  # the ones we ship wheels for
-if setuptools and CPYTHON and abi3_platform and not Py_GIL_DISABLED:
+if CPYTHON and abi3_platform and not Py_GIL_DISABLED:
+    _abi3_tag = "cp{}{}".format(*MIN_PY_VERSION)
+    _hexversion = "0x{:02x}{:02x}0000".format(*MIN_PY_VERSION)
     py_limited_api = {"py_limited_api": True}
-    options = {"bdist_wheel": {"py_limited_api": "cp38"}}
-    macros.append(('Py_LIMITED_API', '0x03080000'))
+    options = {"bdist_wheel": {"py_limited_api": _abi3_tag}}
+    macros.append(('Py_LIMITED_API', _hexversion))
 else:
     py_limited_api = {}
     options = {}
@@ -110,13 +100,6 @@ def get_long_description():
     if p.returncode != 0:
         raise RuntimeError(stderr)
     return stdout
-
-
-@contextlib.contextmanager
-def silenced_output():
-    with contextlib.redirect_stdout(io.StringIO()):
-        with contextlib.redirect_stderr(io.StringIO()):
-            yield
 
 
 def has_python_h():
@@ -169,30 +152,22 @@ def print_install_instructions():
 
 
 def unix_can_compile(c_code):
-    from distutils.errors import CompileError
-    from distutils.unixccompiler import UnixCCompiler
-
-    with tempfile.NamedTemporaryFile(
-        suffix='.c', delete=False, mode="wt"
-    ) as f:
-        f.write(c_code)
-
-    tempdir = tempfile.mkdtemp()
-    try:
-        compiler = UnixCCompiler()
-        # https://github.com/giampaolo/psutil/pull/1568
-        if os.getenv('CC'):
-            compiler.set_executable('compiler_so', os.getenv('CC'))
-        with silenced_output():
-            compiler.compile([f.name], output_dir=tempdir)
-        compiler.compile([f.name], output_dir=tempdir)
-    except CompileError:
-        return False
-    else:
-        return True
-    finally:
-        os.remove(f.name)
-        shutil.rmtree(tempdir)
+    # https://github.com/giampaolo/psutil/pull/1568
+    cc = os.getenv('CC') or sysconfig.get_config_var("CC") or "cc"
+    with tempfile.TemporaryDirectory() as tempdir:
+        src = os.path.join(tempdir, "test.c")
+        with open(src, "w") as f:
+            f.write(c_code)
+        cmd = shlex.split(cc) + [
+            "-c",
+            src,
+            "-o",
+            os.path.join(tempdir, "test.o"),
+        ]
+        ret = subprocess.call(
+            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        return ret == 0
 
 
 if WINDOWS:
@@ -384,6 +359,7 @@ def main():
         packages=['psutil'],
         ext_modules=[ext],
         options=options,
+        python_requires=">={}.{}".format(*MIN_PY_VERSION),
         # https://docs.pypi.org/project_metadata/
         project_urls={
             'Homepage': 'https://github.com/giampaolo/psutil',
@@ -441,11 +417,6 @@ def main():
             'Topic :: Utilities',
         ],
     )
-    if setuptools is not None:
-        kwargs.update(
-            python_requires=">=3.8",
-            zip_safe=False,
-        )
     success = False
     try:
         setup(**kwargs)
