@@ -395,6 +395,9 @@ Others:
   :meth:`Process.status` returned ``"sleeping"`` or ``"?"``.
 - :gh:`2907`, [NetBSD]: :data:`STATUS_SUSPENDED` was never returned by
   :meth:`Process.status`, despite being documented as NetBSD only.
+- :gh:`2907`, [NetBSD]: :meth:`Process.environ` raised ``OSError(EINVAL)`` for
+  a process which is exiting or is a zombie process. It now returns an empty
+  dict.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^

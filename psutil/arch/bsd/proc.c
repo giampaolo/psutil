@@ -281,12 +281,13 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     // (they are marked with P_SYSTEM.)
     // On FreeBSD, it's possible that the process is swapped or paged out,
     // then there no access to the environ stored in the process' user area.
-    // On NetBSD, we cannot call kvm_getenvv2() for a zombie process.
+    // On NetBSD, we cannot call kvm_getenvv2() for a zombie process,
+    // including one which is still exiting (it fails with EINVAL).
     // To make unittest suite happy, return an empty environment.
 #if defined(PSUTIL_FREEBSD)
     if (!((p)->ki_flag & P_INMEM) || ((p)->ki_flag & P_SYSTEM)) {
 #elif defined(PSUTIL_NETBSD)
-    if ((p)->p_stat == SZOMB) {
+    if (PSUTIL_KINFO_ZOMBIE(*p)) {
 #elif defined(PSUTIL_OPENBSD)
     if ((p)->p_flag & P_SYSTEM) {
 #endif
