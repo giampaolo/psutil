@@ -74,86 +74,96 @@ def pytest_terminal_summary(terminalreporter):
                         terminalreporter.write_line(line)
 
 
-def proc_info(pid):
-    tcase = PsutilTestCase()
+class ProcInfo:
+    def __init__(self, pid):
+        self.pid = pid
+        self.proc = None
+        self.name = None
+        self.ppid = None
+        self.tcase = PsutilTestCase()
 
-    def check_exception(exc, proc, name, ppid):
-        assert exc.pid == pid
+    def check_exception(self, exc):
+        assert exc.pid == self.pid
         if exc.name is not None:
-            assert exc.name == name
+            assert exc.name == self.name
         if isinstance(exc, psutil.ZombieProcess):
             try:
-                tcase.assert_proc_zombie(proc)
+                self.tcase.assert_proc_zombie(self.proc)
             except (psutil.NoSuchProcess, AssertionError):
                 # Prevent race conditions: if zombie disappears while
                 # assert_proc_zombie analyzes it we fail only if its
                 # PID still exists.
-                if pid in psutil.pids():
+                if self.pid in psutil.pids():
                     raise
 
             if exc.ppid is not None:
                 assert exc.ppid >= 0
-                assert exc.ppid == ppid
+                assert exc.ppid == self.ppid
         elif isinstance(exc, psutil.NoSuchProcess):
-            tcase.assert_proc_gone(proc)
+            self.tcase.assert_proc_gone(self.proc)
         str(exc)
         repr(exc)
 
-    def do_wait():
-        if pid != 0:
+    def check_wait(self):
+        if self.pid != 0:
             try:
-                proc.wait(0)
+                self.proc.wait(0)
             except psutil.Error as exc:
-                check_exception(exc, proc, name, ppid)
+                self.check_exception(exc)
 
-    try:
-        proc = psutil.Process(pid)
-    except psutil.NoSuchProcess:
-        tcase.assert_pid_gone(pid)
-        return {}
-    try:
-        d = proc.as_dict(['ppid', 'name'])
-    except psutil.NoSuchProcess:
-        tcase.assert_proc_gone(proc)
-    else:
-        name, ppid = d['name'], d['ppid']
-        info = {'pid': proc.pid}
-        durations = {}
-        ns = process_namespace(proc)
-        # We don't use oneshot() because in order not to fool
-        # check_exception() in case of NSP.
-        for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
-            if MACOS and CI_TESTING and fun_name == "memory_info_ex":
-                # XXX: memory_info_ex() needs task_for_pid() for fields
-                # with no pid-based source (peak_rss, compressed, ...).
-                # task_for_pid() can hang forever when taskgated is
-                # wedged, which happens on headless CI but not on real
-                # machines. See:
-                # https://github.com/giampaolo/psutil/issues/2885
-                continue
-            if WINDOWS and fun_name == "open_files":
-                # XXX: too slow
-                continue
-            t = time.perf_counter()
-            try:
-                ret = fun()
-            except psutil.Error as exc:
-                check_exception(exc, proc, name, ppid)
-                continue
-            except Exception as exc:
-                msg = f"{fun_name}() failed for {proc!r}"
-                raise RuntimeError(msg) from exc
-            else:
-                check_fun_type_hints(fun, ret)
-                if is_namedtuple(ret):
-                    check_ntuple_type_hints(ret)
-                info[fun_name] = ret
-            finally:
-                durations[fun_name] = time.perf_counter() - t
-        info["_durations"] = durations
-        info["_repr"] = repr(proc)
-        do_wait()
-        return info
+    def run(self):
+        try:
+            self.proc = psutil.Process(self.pid)
+        except psutil.NoSuchProcess:
+            self.tcase.assert_pid_gone(self.pid)
+            return {}
+        try:
+            d = self.proc.as_dict(['ppid', 'name'])
+        except psutil.NoSuchProcess:
+            self.tcase.assert_proc_gone(self.proc)
+        else:
+            self.name, self.ppid = d['name'], d['ppid']
+            info = {'pid': self.pid}
+            durations = {}
+            ns = process_namespace(self.proc)
+            # We don't use oneshot() because in order not to fool
+            # check_exception() in case of NSP.
+            for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
+                if MACOS and CI_TESTING and fun_name == "memory_info_ex":
+                    # XXX: memory_info_ex() needs task_for_pid() for
+                    # fields with no pid-based source (peak_rss,
+                    # compressed, ...). task_for_pid() can hang forever
+                    # when taskgated is wedged, which happens on
+                    # headless CI but not on real machines. See:
+                    # https://github.com/giampaolo/psutil/issues/2885
+                    continue
+                if WINDOWS and fun_name == "open_files":
+                    # XXX: too slow
+                    continue
+                t = time.perf_counter()
+                try:
+                    ret = fun()
+                except psutil.Error as exc:
+                    self.check_exception(exc)
+                    continue
+                except Exception as exc:
+                    msg = f"{fun_name}() failed for {self.proc!r}"
+                    raise RuntimeError(msg) from exc
+                else:
+                    check_fun_type_hints(fun, ret)
+                    if is_namedtuple(ret):
+                        check_ntuple_type_hints(ret)
+                    info[fun_name] = ret
+                finally:
+                    durations[fun_name] = time.perf_counter() - t
+            info["_durations"] = durations
+            info["_repr"] = repr(self.proc)
+            self.check_wait()
+            return info
+
+
+def proc_info(pid):
+    return ProcInfo(pid).run()
 
 
 class TestFetchAllProcesses(PsutilTestCase):
