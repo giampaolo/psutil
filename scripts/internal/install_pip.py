@@ -4,7 +4,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Install pip, or upgrade it if it's too old."""
+"""Install pip, or upgrade it if it's too old.
+
+Note: build.yml builds wheels on Python 3.8 (the floor), but doesn't
+run tests with it, nor installs deps, so this script is never called,
+and only works on Python 3.10+.
+"""
 
 import re
 import ssl
