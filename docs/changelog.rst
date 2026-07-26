@@ -216,6 +216,8 @@ Others:
   no longer set to ``0``.
 - :gh:`2844`: removed docs/ from tarball. Tarball before: 586K. Tarball now:
   396K.
+- :gh:`XXXX`: ``setup.py`` no longer uses ``distutils``, which was removed from
+  the stdlib in Python 3.12, and only relies on ``setuptools``.
 - :gh:`XXXX`: the platform-specific C extension modules (``_psutil_linux``,
   ``_psutil_windows``, etc.) are now built as a single private module named
   ``_psutil`` on all platforms.
