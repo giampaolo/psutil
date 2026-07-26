@@ -6,6 +6,7 @@
 
 #include <Python.h>
 #include <kvm.h>
+#include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
@@ -143,6 +144,7 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "ch_sys_time", "d", PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime))) goto error;
     if (!pydict_add(dict, "min_faults", "l", (long)kp.ki_rusage.ru_minflt)) goto error;
     if (!pydict_add(dict, "maj_faults", "l", (long)kp.ki_rusage.ru_majflt)) goto error;
+    if (!pydict_add(dict, "nice", "i", kp.ki_nice - NZERO)) goto error;
 #else
     // OpenBSD / NetBSD
     if (!pydict_add(dict, "ppid", _Py_PARSE_PID, kp.p_ppid)) goto error;
@@ -167,6 +169,7 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "ch_sys_time", "d", kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0)) goto error;
     if (!pydict_add(dict, "min_faults", "l", (long)kp.p_uru_minflt)) goto error;
     if (!pydict_add(dict, "maj_faults", "l", (long)kp.p_uru_majflt)) goto error;
+    if (!pydict_add(dict, "nice", "i", kp.p_nice - NZERO)) goto error;
 #endif
     // all BSDs
     if (!pydict_add(dict, "rss", "l", rss)) goto error;
