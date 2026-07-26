@@ -238,6 +238,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     kvm_t *kd;
 #ifdef PSUTIL_NETBSD
     struct kinfo_proc2 *p;
+    struct kinfo_proc2 kp;
 #else
     struct kinfo_proc *p;
 #endif
@@ -313,6 +314,20 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
             case ESRCH:
                 psutil_oserror_nsp("kvm_getenvv -> ESRCH");
                 break;
+#if defined(PSUTIL_NETBSD)
+            case EINVAL:
+            case EFAULT:
+                // The check above races. EINVAL: zombie, system proc,
+                // or already gone. EFAULT: started exiting.
+                if (psutil_kinfo_proc(pid, &kp) == -1)
+                    goto error;  // reaped in the meantime, raises NSP
+                if (PSUTIL_KINFO_ZOMBIE(kp)) {
+                    kvm_close(kd);
+                    return py_retdict;
+                }
+                psutil_oserror_wsyscall("kvm_getenvv2");
+                break;
+#endif
 #if defined(PSUTIL_FREEBSD)
             case ENOMEM:
                 // Unfortunately, under FreeBSD kvm_getenvv() returns
