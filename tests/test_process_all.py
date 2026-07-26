@@ -158,15 +158,17 @@ class ProcInfo:
         except psutil.NoSuchProcess:
             self.tcase.assert_pid_gone(self.pid)
             return {}
+
         try:
             d = self.proc.as_dict(['ppid', 'name'])
         except psutil.NoSuchProcess:
             self.tcase.assert_proc_gone(self.proc)
-        else:
-            self.name, self.ppid = d['name'], d['ppid']
-            info = self.call_getters()
-            self.check_wait()
-            return info
+            return {}
+
+        self.name, self.ppid = d['name'], d['ppid']
+        info = self.call_getters()
+        self.check_wait()
+        return info
 
 
 def proc_info(pid):
