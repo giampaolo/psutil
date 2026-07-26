@@ -384,6 +384,9 @@ Others:
 - :gh:`2903`, [BSD]: :meth:`Process.nice` could raise :exc:`NoSuchProcess` for
   processes in ``SIDL`` state (not yet fully initialized). It now retrieves the
   nice value via ``sysctl()`` instead of ``getpriority()``.
+- :gh:`2905`, [FreeBSD], [OpenBSD], [NetBSD]: the ``saved`` field of
+  :meth:`Process.gids` mistakenly reported the process saved *user* ID instead
+  of the saved group ID. Bug existed since 2011.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
