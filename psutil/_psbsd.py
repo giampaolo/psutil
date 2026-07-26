@@ -649,7 +649,10 @@ class Process:
 
     @wrap_exceptions
     def nice_get(self):
-        return _psutil.proc_priority_get(self.pid)
+        # Also available via POSIX getpriority(), but can raise NSP
+        # for not fully initialized processes in SIDL state, see:
+        # https://github.com/giampaolo/psutil/issues/2903
+        return self.oneshot()["nice"]
 
     @wrap_exceptions
     def nice_set(self, value):
