@@ -377,6 +377,10 @@ Others:
 - :gh:`2899`: two :class:`Process` instances for the same process could compare
   unequal if the creation time of either one could not be determined. They now
   compare equal, and ``hash(Process)`` is based on the PID alone.
+- :gh:`2902`, [NetBSD], [OpenBSD]: :meth:`Process.cmdline` could fail with
+  ``OSError(EINVAL)`` for a process which died mid-call (OpenBSD), or raise a
+  broken :exc:`NoSuchProcess` whose ``str()`` in turn raised :exc:`TypeError`
+  (NetBSD).
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
