@@ -41,6 +41,7 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     long memstack;
     long peak_rss;
     int oncpu;
+    int status;
     double create_time;
     double user_time;
     double sys_time;
@@ -152,9 +153,19 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     oncpu = -1;
 #endif
 
+#ifdef PSUTIL_NETBSD
+    // p_stat is the LWP status, except for a dying process, where it
+    // holds the process status instead. The 2 sets of values overlap
+    // (e.g. SDYING == LSSLEEP), so a process which is exiting would
+    // look like it's sleeping. Report all such states as zombie.
+    status = PSUTIL_KINFO_ZOMBIE(kp) ? LSZOMB : kp.p_stat;
+#else
+    status = KP(stat);
+#endif
+
     // clang-format off
     if (!pydict_add(dict, "ppid", _Py_PARSE_PID, KP(ppid))) goto error;
-    if (!pydict_add(dict, "status", "i", (int)KP(stat))) goto error;
+    if (!pydict_add(dict, "status", "i", status)) goto error;
     if (!pydict_add(dict, "real_uid", "l", (long)KP(ruid))) goto error;
     if (!pydict_add(dict, "effective_uid", "l", (long)KP(uid))) goto error;
     if (!pydict_add(dict, "saved_uid", "l", (long)KP(svuid))) goto error;

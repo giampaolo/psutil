@@ -387,6 +387,12 @@ Others:
 - :gh:`2905`, [FreeBSD], [OpenBSD], [NetBSD]: the ``saved`` field of
   :meth:`Process.gids` mistakenly reported the process saved *user* ID instead
   of the saved group ID. Bug existed since 2011.
+- :gh:`2907`, [NetBSD]: a process which is exiting, but is not a zombie yet,
+  was not recognized as such. :class:`Process` methods raised
+  :exc:`NoSuchProcess` instead of :exc:`ZombieProcess`, and
+  :meth:`Process.status` returned ``"sleeping"`` or ``"?"``.
+- :gh:`2907`, [NetBSD]: :data:`STATUS_SUSPENDED` was never returned by
+  :meth:`Process.status`, despite being documented as NetBSD only.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
