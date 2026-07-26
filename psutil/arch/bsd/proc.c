@@ -131,7 +131,7 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "saved_uid", "l", (long)kp.ki_svuid)) goto error;
     if (!pydict_add(dict, "real_gid", "l", (long)kp.ki_rgid)) goto error;
     if (!pydict_add(dict, "effective_gid", "l", (long)kp.ki_groups[0])) goto error;
-    if (!pydict_add(dict, "saved_gid", "l", (long)kp.ki_svuid)) goto error;
+    if (!pydict_add(dict, "saved_gid", "l", (long)kp.ki_svgid)) goto error;
     if (!pydict_add(dict, "ttynr", "L", (unsigned long long)kp.ki_tdev)) goto error;
     if (!pydict_add(dict, "create_time", "d", PSUTIL_TV2DOUBLE(kp.ki_start))) goto error;
     if (!pydict_add(dict, "ctx_switches_vol", "l", kp.ki_rusage.ru_nvcsw)) goto error;
@@ -154,7 +154,7 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "saved_uid", "l", (long)kp.p_svuid)) goto error;
     if (!pydict_add(dict, "real_gid", "l", (long)kp.p_rgid)) goto error;
     if (!pydict_add(dict, "effective_gid", "l", (long)kp.p_groups[0])) goto error;
-    if (!pydict_add(dict, "saved_gid", "l", (long)kp.p_svuid)) goto error;
+    if (!pydict_add(dict, "saved_gid", "l", (long)kp.p_svgid)) goto error;
     if (!pydict_add(dict, "ttynr", "i", (int)kp.p_tdev)) goto error;
     if (!pydict_add(dict, "create_time", "d", PSUTIL_KPT2DOUBLE(kp.p_ustart))) goto error;
     if (!pydict_add(dict, "ctx_switches_vol", "l", kp.p_uru_nvcsw)) goto error;
