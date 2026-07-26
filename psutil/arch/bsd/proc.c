@@ -20,6 +20,15 @@
 #include "../../arch/all/init.h"
 
 
+#ifdef PSUTIL_FREEBSD
+#define KP(field) kp.ki_##field
+#define KP_RU(field) kp.ki_rusage.ru_##field
+#else
+#define KP(field) kp.p_##field
+#define KP_RU(field) kp.p_uru_##field
+#endif
+
+
 // Collect different info about a process in one shot and return them
 // as a Python dict.
 PyObject *
@@ -32,6 +41,11 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     long memstack;
     long peak_rss;
     int oncpu;
+    double create_time;
+    double user_time;
+    double sys_time;
+    double ch_user_time;
+    double ch_sys_time;
 #ifdef PSUTIL_NETBSD
     struct kinfo_proc2 kp;
 #else
@@ -106,6 +120,22 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     }
 
 #ifdef PSUTIL_FREEBSD
+    create_time = PSUTIL_TV2DOUBLE(kp.ki_start);
+    user_time = PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_utime);
+    sys_time = PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_stime);
+    ch_user_time = PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_utime);
+    ch_sys_time = PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime);
+#else
+    create_time = PSUTIL_KPT2DOUBLE(kp.p_ustart);
+    user_time = PSUTIL_KPT2DOUBLE(kp.p_uutime);
+    sys_time = PSUTIL_KPT2DOUBLE(kp.p_ustime);
+    // OpenBSD and NetBSD provide children user + system times summed
+    // together (no distinction).
+    ch_user_time = PSUTIL_KPT2DOUBLE(kp.p_uctime);
+    ch_sys_time = ch_user_time;
+#endif
+
+#ifdef PSUTIL_FREEBSD
     // what CPU we're on; top was used as an example:
     // https://svnweb.freebsd.org/base/head/usr.bin/top/machine.c?
     //     view=markup&pathrev=273835
@@ -121,57 +151,29 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     // were. Not supported.
     oncpu = -1;
 #endif
-        // clang-format off
 
-#ifdef PSUTIL_FREEBSD
-    if (!pydict_add(dict, "ppid", _Py_PARSE_PID, kp.ki_ppid)) goto error;
-    if (!pydict_add(dict, "status", "i", (int)kp.ki_stat)) goto error;
-    if (!pydict_add(dict, "real_uid", "l", (long)kp.ki_ruid)) goto error;
-    if (!pydict_add(dict, "effective_uid", "l", (long)kp.ki_uid)) goto error;
-    if (!pydict_add(dict, "saved_uid", "l", (long)kp.ki_svuid)) goto error;
-    if (!pydict_add(dict, "real_gid", "l", (long)kp.ki_rgid)) goto error;
-    if (!pydict_add(dict, "effective_gid", "l", (long)kp.ki_groups[0])) goto error;
-    if (!pydict_add(dict, "saved_gid", "l", (long)kp.ki_svgid)) goto error;
-    if (!pydict_add(dict, "ttynr", "L", (unsigned long long)kp.ki_tdev)) goto error;
-    if (!pydict_add(dict, "create_time", "d", PSUTIL_TV2DOUBLE(kp.ki_start))) goto error;
-    if (!pydict_add(dict, "ctx_switches_vol", "l", kp.ki_rusage.ru_nvcsw)) goto error;
-    if (!pydict_add(dict, "ctx_switches_unvol", "l", kp.ki_rusage.ru_nivcsw)) goto error;
-    if (!pydict_add(dict, "read_io_count", "l", kp.ki_rusage.ru_inblock)) goto error;
-    if (!pydict_add(dict, "write_io_count", "l", kp.ki_rusage.ru_oublock)) goto error;
-    if (!pydict_add(dict, "user_time", "d", PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_utime))) goto error;
-    if (!pydict_add(dict, "sys_time", "d", PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_stime))) goto error;
-    if (!pydict_add(dict, "ch_user_time", "d", PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_utime))) goto error;
-    if (!pydict_add(dict, "ch_sys_time", "d", PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime))) goto error;
-    if (!pydict_add(dict, "min_faults", "l", (long)kp.ki_rusage.ru_minflt)) goto error;
-    if (!pydict_add(dict, "maj_faults", "l", (long)kp.ki_rusage.ru_majflt)) goto error;
-    if (!pydict_add(dict, "nice", "i", kp.ki_nice - NZERO)) goto error;
-#else
-    // OpenBSD / NetBSD
-    if (!pydict_add(dict, "ppid", _Py_PARSE_PID, kp.p_ppid)) goto error;
-    if (!pydict_add(dict, "status", "i", (int)kp.p_stat)) goto error;
-    if (!pydict_add(dict, "real_uid", "l", (long)kp.p_ruid)) goto error;
-    if (!pydict_add(dict, "effective_uid", "l", (long)kp.p_uid)) goto error;
-    if (!pydict_add(dict, "saved_uid", "l", (long)kp.p_svuid)) goto error;
-    if (!pydict_add(dict, "real_gid", "l", (long)kp.p_rgid)) goto error;
-    if (!pydict_add(dict, "effective_gid", "l", (long)kp.p_groups[0])) goto error;
-    if (!pydict_add(dict, "saved_gid", "l", (long)kp.p_svgid)) goto error;
-    if (!pydict_add(dict, "ttynr", "i", (int)kp.p_tdev)) goto error;
-    if (!pydict_add(dict, "create_time", "d", PSUTIL_KPT2DOUBLE(kp.p_ustart))) goto error;
-    if (!pydict_add(dict, "ctx_switches_vol", "l", kp.p_uru_nvcsw)) goto error;
-    if (!pydict_add(dict, "ctx_switches_unvol", "l", kp.p_uru_nivcsw)) goto error;
-    if (!pydict_add(dict, "read_io_count", "l", kp.p_uru_inblock)) goto error;
-    if (!pydict_add(dict, "write_io_count", "l", kp.p_uru_oublock)) goto error;
-    if (!pydict_add(dict, "user_time", "d", PSUTIL_KPT2DOUBLE(kp.p_uutime))) goto error;
-    if (!pydict_add(dict, "sys_time", "d", PSUTIL_KPT2DOUBLE(kp.p_ustime))) goto error;
-    // OpenBSD and NetBSD provide children user + system times summed
-    // together (no distinction).
-    if (!pydict_add(dict, "ch_user_time", "d", kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0)) goto error;
-    if (!pydict_add(dict, "ch_sys_time", "d", kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0)) goto error;
-    if (!pydict_add(dict, "min_faults", "l", (long)kp.p_uru_minflt)) goto error;
-    if (!pydict_add(dict, "maj_faults", "l", (long)kp.p_uru_majflt)) goto error;
-    if (!pydict_add(dict, "nice", "i", kp.p_nice - NZERO)) goto error;
-#endif
-    // all BSDs
+    // clang-format off
+    if (!pydict_add(dict, "ppid", _Py_PARSE_PID, KP(ppid))) goto error;
+    if (!pydict_add(dict, "status", "i", (int)KP(stat))) goto error;
+    if (!pydict_add(dict, "real_uid", "l", (long)KP(ruid))) goto error;
+    if (!pydict_add(dict, "effective_uid", "l", (long)KP(uid))) goto error;
+    if (!pydict_add(dict, "saved_uid", "l", (long)KP(svuid))) goto error;
+    if (!pydict_add(dict, "real_gid", "l", (long)KP(rgid))) goto error;
+    if (!pydict_add(dict, "effective_gid", "l", (long)KP(groups)[0])) goto error;
+    if (!pydict_add(dict, "saved_gid", "l", (long)KP(svgid))) goto error;
+    if (!pydict_add(dict, "ttynr", "L", (unsigned long long)KP(tdev))) goto error;
+    if (!pydict_add(dict, "create_time", "d", create_time)) goto error;
+    if (!pydict_add(dict, "ctx_switches_vol", "l", (long)KP_RU(nvcsw))) goto error;
+    if (!pydict_add(dict, "ctx_switches_unvol", "l", (long)KP_RU(nivcsw))) goto error;
+    if (!pydict_add(dict, "read_io_count", "l", (long)KP_RU(inblock))) goto error;
+    if (!pydict_add(dict, "write_io_count", "l", (long)KP_RU(oublock))) goto error;
+    if (!pydict_add(dict, "user_time", "d", user_time)) goto error;
+    if (!pydict_add(dict, "sys_time", "d", sys_time)) goto error;
+    if (!pydict_add(dict, "ch_user_time", "d", ch_user_time)) goto error;
+    if (!pydict_add(dict, "ch_sys_time", "d", ch_sys_time)) goto error;
+    if (!pydict_add(dict, "min_faults", "l", (long)KP_RU(minflt))) goto error;
+    if (!pydict_add(dict, "maj_faults", "l", (long)KP_RU(majflt))) goto error;
+    if (!pydict_add(dict, "nice", "i", KP(nice) - NZERO)) goto error;
     if (!pydict_add(dict, "rss", "l", rss)) goto error;
     if (!pydict_add(dict, "vms", "l", vms)) goto error;
     if (!pydict_add(dict, "memtext", "l", memtext)) goto error;
@@ -180,8 +182,8 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "peak_rss", "l", peak_rss)) goto error;
     if (!pydict_add(dict, "cpunum", "i", oncpu)) goto error;
     if (!pydict_add(dict, "name", "O", py_name)) goto error;
-
     // clang-format on
+
     Py_DECREF(py_name);
     return dict;
 
