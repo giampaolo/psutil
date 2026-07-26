@@ -70,15 +70,18 @@ if POSIX:
 VERSION = get_version()
 macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
-# Py_LIMITED_API lets us create a single wheel which works with multiple
-# python versions, including unreleased ones. Keep the version in sync
-# with python_requires: it's the oldest interpreter the wheel claims to
-# run on.
+# The oldest interpreter we support, and the one the wheel claims to
+# run on. Py_LIMITED_API lets us create a single wheel which works with
+# multiple python versions, including unreleased ones.
+MIN_PY_VERSION = (3, 8)
+
 abi3_platform = MACOS or LINUX or WINDOWS  # the ones we ship wheels for
 if CPYTHON and abi3_platform and not Py_GIL_DISABLED:
+    _abi3_tag = "cp{}{}".format(*MIN_PY_VERSION)
+    _hexversion = "0x{:02x}{:02x}0000".format(*MIN_PY_VERSION)
     py_limited_api = {"py_limited_api": True}
-    options = {"bdist_wheel": {"py_limited_api": "cp38"}}
-    macros.append(('Py_LIMITED_API', '0x03080000'))
+    options = {"bdist_wheel": {"py_limited_api": _abi3_tag}}
+    macros.append(('Py_LIMITED_API', _hexversion))
 else:
     py_limited_api = {}
     options = {}
@@ -356,8 +359,7 @@ def main():
         packages=['psutil'],
         ext_modules=[ext],
         options=options,
-        python_requires=">=3.8",
-        zip_safe=False,
+        python_requires=">={}.{}".format(*MIN_PY_VERSION),
         # https://docs.pypi.org/project_metadata/
         project_urls={
             'Homepage': 'https://github.com/giampaolo/psutil',
