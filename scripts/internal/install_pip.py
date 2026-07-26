@@ -18,6 +18,12 @@ import sys
 import tempfile
 from urllib.request import urlopen
 
+try:
+    import pip
+except ImportError:
+    pip = None
+
+
 URL = "https://bootstrap.pypa.io/get-pip.py"
 # Needed by "pip install --group" (PEP 735), used by the
 # install-pydeps-* makefile targets.
@@ -25,12 +31,9 @@ MIN_VERSION = (25, 1)
 
 
 def get_pip_version():
-    try:
-        import pip
-    except ImportError:
-        return None
-    match = re.match(r"(\d+)\.(\d+)", pip.__version__)
-    return (int(match.group(1)), int(match.group(2))) if match else (0, 0)
+    if pip is not None:
+        match = re.match(r"(\d+)\.(\d+)", pip.__version__)
+        return (int(match.group(1)), int(match.group(2))) if match else (0, 0)
 
 
 def install_pip():
@@ -64,11 +67,9 @@ def main():
     if version is None:
         print("pip is not installed")
     elif version < MIN_VERSION:
-        have = ".".join(map(str, version))
-        want = ".".join(map(str, MIN_VERSION))
-        print(f"pip {have} is too old, we need >= {want}")
+        print(f"pip {pip.__version__} is too old; upgrading")
     else:
-        print("pip already installed")
+        print(f"pip (version {pip.__version__}) already installed")
         return
     install_pip()
 
