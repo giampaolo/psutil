@@ -1,12 +1,16 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=75.3.4"]  # latest version supporting Python 3.8
+
 [dependency-groups]
 # Dev-only deps (PEP 735), not part of the published package
 # metadata. Install with `pip install --group <name>` or the
 # `make install-pydeps-*` targets.
 test = [
     "psleak @ https://github.com/giampaolo/psleak/archive/refs/heads/master.tar.gz",
-    "pytest",
     "pytest-instafail",
     "pytest-xdist",
+    "pytest>=9",  # needed to interpret the [tool.pytest] block
     "pywin32 ; os_name == 'nt' and implementation_name != 'pypy'",
     "setuptools",
     "wmi ; os_name == 'nt' and implementation_name != 'pypy'",
@@ -277,8 +281,6 @@ addopts = [
     "--capture=no",
     "--instafail",
     "--no-header",
-    "--strict-config",
-    "--strict-markers",
     "--tb=short",
     "--verbose",
     "-p instafail",
@@ -286,9 +288,10 @@ addopts = [
     "-p no:junitxml",
     "-p no:nose",
     "-p no:pastebin",
-    "-p tests.test_process_all",  # pytest hooks reporting API durations
     "-p xdist",
 ]
+strict_config = true
+strict_markers = true
 verbosity_subtests = "0"
 testpaths = ["tests/"]
 python_files = ["test_*.py"]
@@ -298,7 +301,3 @@ markers = [
 
 [tool.rstwrap]
 width = 79
-
-[build-system]
-build-backend = "setuptools.build_meta"
-requires = ["setuptools>=75.3.4"]  # latest version supporting Python 3.8
