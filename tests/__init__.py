@@ -78,7 +78,7 @@ __all__ = [
     "AARCH64", "PYTEST_PARALLEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_subproc', 'spawn_zombie',
-    'spawn_children_pair',
+    'spawn_children_pair', 'filter_alien_children',
     # threads
     'ThreadTask',
     # test utils
@@ -600,6 +600,21 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
             flush_popen(p)
         pid = p if isinstance(p, int) else p.pid
         assert not psutil.pid_exists(pid), pid
+
+
+def filter_alien_children(procs):
+    """On Windows CI the runner agent (provjobd.exe) sporadically
+    spawns wsl.exe, conhost.exe, etc. When their parent dies the PPID
+    is left dangling (Windows never clears it), and if that PID gets
+    reused by us they show up as our children.
+    """
+    if not (WINDOWS and CI_TESTING):
+        return procs
+    names = {"wsl.exe", "conhost.exe"}
+    aliens = {
+        x.pid for x in psutil.process_iter() if x.name().lower() in names
+    }
+    return [x for x in procs if x.pid not in aliens]
 
 
 def reap_children(recursive=False):

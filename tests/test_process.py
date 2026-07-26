@@ -63,6 +63,7 @@ from . import call_until
 from . import copyload_shared_lib
 from . import create_c_exe
 from . import create_py_exe
+from . import filter_alien_children
 from . import isolated
 from . import process_namespace
 from . import pytest
@@ -1084,14 +1085,14 @@ class TestProcess(PsutilTestCase):
 
     def test_children(self):
         parent = psutil.Process()
-        assert not parent.children()
-        assert not parent.children(recursive=True)
+        assert not filter_alien_children(parent.children())
+        assert not filter_alien_children(parent.children(recursive=True))
         # On Windows we set the flag to 0 in order to cancel out the
         # CREATE_NO_WINDOW flag (enabled by default) which creates
         # an extra "conhost.exe" child.
         child = self.spawn_psproc(creationflags=0)
-        children1 = parent.children()
-        children2 = parent.children(recursive=True)
+        children1 = filter_alien_children(parent.children())
+        children2 = filter_alien_children(parent.children(recursive=True))
         for children in (children1, children2):
             assert len(children) == 1
             assert children[0].pid == child.pid
@@ -1108,14 +1109,14 @@ class TestProcess(PsutilTestCase):
         assert parent._create_time
         parent._create_time += 100000
 
-        assert not parent.children()
-        assert not parent.children(recursive=True)
+        assert not filter_alien_children(parent.children())
+        assert not filter_alien_children(parent.children(recursive=True))
         # On Windows we set the flag to 0 in order to cancel out the
         # CREATE_NO_WINDOW flag (enabled by default) which creates
         # an extra "conhost.exe" child.
         child = self.spawn_psproc(creationflags=0)
-        children1 = parent.children()
-        children2 = parent.children(recursive=True)
+        children1 = filter_alien_children(parent.children())
+        children2 = filter_alien_children(parent.children(recursive=True))
         for children in (children1, children2):
             assert len(children) == 1
             assert children[0].pid == child.pid
@@ -1158,7 +1159,7 @@ class TestProcess(PsutilTestCase):
         parent = psutil.Process()
         child, grandchild = self.spawn_children_pair()
         # forward
-        children = parent.children(recursive=True)
+        children = filter_alien_children(parent.children(recursive=True))
         assert len(children) == 2
         assert children[0] == child
         assert children[1] == grandchild
