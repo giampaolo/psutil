@@ -140,6 +140,9 @@ def proc_info(pid):
             except psutil.Error as exc:
                 check_exception(exc, proc, name, ppid)
                 continue
+            except Exception as exc:
+                msg = f"{fun_name}() failed for {proc!r}"
+                raise RuntimeError(msg) from exc
             else:
                 check_fun_type_hints(fun, ret)
                 if is_namedtuple(ret):
@@ -148,6 +151,7 @@ def proc_info(pid):
             finally:
                 durations[fun_name] = time.perf_counter() - t
         info["_durations"] = durations
+        info["_repr"] = repr(proc)
         do_wait()
         return info
 
@@ -173,6 +177,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         durations = collections.Counter()
         for info in self.iter_proc_info():
             durations.update(info.pop("_durations", {}))
+            proc_repr = info.pop("_repr", None)
             for name, value in info.items():
                 meth = getattr(self, name)
                 try:
@@ -184,6 +189,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                         info['pid'],
                         repr(value),
                     )
+                    s += f"proc={proc_repr}\n\n"
                     s += '-' * 70
                     s += f"\n{traceback.format_exc()}"
                     s = "\n".join((" " * 4) + i for i in s.splitlines()) + "\n"
