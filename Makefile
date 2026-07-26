@@ -80,17 +80,14 @@ install-sysdeps:  ## Install system deps needed to compile psutil.
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group test
 
 install-pydeps-lint:  ## Install python deps necessary to run linters.
 	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group lint
 
 install-pydeps-dev:  ## Install python deps meant for local development.
 	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group dev
 
 # ===================================================================
@@ -293,6 +290,7 @@ ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	cd .tests/ && PYTHONPATH=$$(pwd) $(MAKE) -f ../Makefile test-memleaks-parallel
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
+	$(MAKE) install-pip
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
 	$(MAKE) create-sdist
 	mv wheelhouse/* dist/
