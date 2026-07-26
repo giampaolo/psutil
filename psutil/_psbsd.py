@@ -506,7 +506,7 @@ class Process:
     def cmdline(self):
         if OPENBSD and self.pid == 0:
             return []  # ...else it crashes
-        elif NETBSD:
+        elif NETBSD or OPENBSD:
             # XXX - most of the times the underlying sysctl() call on
             # NetBSD and OpenBSD returns a truncated string. Also
             # /proc/pid/cmdline behaves the same so it looks like this
@@ -520,7 +520,7 @@ class Process:
                     if _psutil.proc_is_zombie(self.pid):
                         raise ZombieProcess(pid, name, ppid) from err
                     if not pid_exists(self.pid):
-                        raise NoSuchProcess(pid, name, ppid) from err
+                        raise NoSuchProcess(pid, name) from err
                     return []
                 else:
                     raise
