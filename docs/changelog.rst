@@ -381,6 +381,9 @@ Others:
   ``OSError(EINVAL)`` for a process which died mid-call (OpenBSD), or raise a
   broken :exc:`NoSuchProcess` whose ``str()`` in turn raised :exc:`TypeError`
   (NetBSD).
+- :gh:`2903`, [BSD]: :meth:`Process.nice` could raise :exc:`NoSuchProcess` for
+  processes in ``SIDL`` state (not yet fully initialized). It now retrieves the
+  nice value via ``sysctl()`` instead of ``getpriority()``.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
