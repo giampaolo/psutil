@@ -301,4 +301,4 @@ width = 79
 
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>=43"]
+requires = ["setuptools>=75.3.4"]  # latest version supporting Python 3.8
