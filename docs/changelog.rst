@@ -241,6 +241,10 @@ Others:
   inspecting 32-bit processes) still works.
 - :gh:`2909`: ``setup.py`` no longer uses ``distutils``, which was removed from
   the stdlib in Python 3.12, and only relies on ``setuptools``.
+- :gh:`2914`, [macOS]: Intel wheels now require macOS 10.15 (Catalina) or
+  higher, up from 10.9. Older versions account for 0.01% of macOS downloads,
+  and they must now build from source. ``arm64`` wheels are unaffected: they
+  already required macOS 11.
 - :gh:`XXXX`: stop publishing wheels for free-threaded CPython 3.13
   (``cp313t``). Free-threading was experimental in 3.13 and is officially not
   recommended. Publish only ``cp314t`` wheels.
