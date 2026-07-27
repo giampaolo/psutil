@@ -267,14 +267,16 @@ trailing_comma_inline_array = true
 skip = [
     # The free-threaded musl builds.
     "cp3*t-musllinux*",
-    # 3.8 is free on Linux and Windows, where it's worth keeping to
-    # check the abi3 wheel imports on the oldest version we support.
-    # On macOS it costs 26s to install, and 3.14 builds the same wheel
-    # anyway (setup.py hardcodes the "cp38" abi3 tag).
-    "cp38-macosx*",
+    # 3.14 builds the abi3 wheel these would reuse (setup.py hardcodes
+    # the "cp38" tag), so they'd only repeat an import check.
     "cp3{9,10,11,12,13}-*",
 ]
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
+
+# We only link Windows system DLLs, so there's nothing for delvewheel
+# (the default since cibuildwheel 4) to bundle.
+[tool.cibuildwheel.windows]
+repair-wheel-command = ""
 
 # Only 3.14 runs the real test suite. Everything else just "import
 # psutil". Musl is left out: it keeps the import check.

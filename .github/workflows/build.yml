@@ -39,7 +39,7 @@ jobs:
           - { os: ubuntu-latest, arch: x86_64 }
           - { os: ubuntu-24.04-arm, arch: aarch64 }
           - { os: macos-15-intel, arch: x86_64 } # plain macos-15 is ARM
-          - { os: macos-15, arch: arm64, python: "3.8" }
+          - { os: macos-15, arch: arm64 }
           - { os: windows-2025, arch: AMD64 }
           - { os: windows-11-arm, arch: ARM64, python: "3.13" }
     steps:
@@ -76,10 +76,9 @@ jobs:
           Add-MpPreference -ExclusionProcess "cl.exe", "link.exe", "python.exe"
 
       - name: Build wheels + run tests
-        uses: pypa/cibuildwheel@v3.4.1
+        uses: pypa/cibuildwheel@v4.1.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_ENABLE: "cpython-freethreading ${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v7

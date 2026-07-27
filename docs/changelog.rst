@@ -241,6 +241,9 @@ Others:
   inspecting 32-bit processes) still works.
 - :gh:`2909`: ``setup.py`` no longer uses ``distutils``, which was removed from
   the stdlib in Python 3.12, and only relies on ``setuptools``.
+- :gh:`XXXX`: stop publishing wheels for free-threaded CPython 3.13
+  (``cp313t``). Free-threading was experimental in 3.13 and is officially not
+  recommended. Publish only ``cp314t`` wheels.
 
 **Bug fixes**
 
