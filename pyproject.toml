@@ -262,29 +262,6 @@ spaces_before_inline_comment = 2
 spaces_indent_inline_array = 4
 trailing_comma_inline_array = true
 
-[tool.cibuildwheel]
-# Python versions we don't build a wheel for.
-skip = [
-    # 3.8 on ppc64le / s390x, and the free-threaded musl builds.
-    "cp38-*linux_{ppc64le,s390x} cp3*t-musllinux*",
-    # 3.9 to 3.13 would reuse the abi3 wheel 3.8 builds, so they'd
-    # only repeat an import check. Note "cp313-*" does not match
-    # "cp313t-*", so the free-threaded build still happens.
-    "cp3{9,10,11,12,13}-*",
-]
-test-groups = ["test"]  # same as doing `pip install --group test`
-test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
-
-# Run tests on Python 3.14. On all other Python versions do a lightweight
-# import test.
-[[tool.cibuildwheel.overrides]]
-select = "cp3{8,9,10,11,12,13,13t,14t}-* *-musllinux*"
-test-groups = []
-test-command = "python -c \"import psutil; print(psutil.__version__)\""
-
-[tool.cibuildwheel.macos]
-environment = {MACOSX_DEPLOYMENT_TARGET = "10.15"}
-
 [tool.pytest]
 addopts = [
     "--capture=no",
@@ -310,3 +287,35 @@ markers = [
 
 [tool.rstwrap]
 width = 79
+
+# Wheels (what we build and where)
+# =============================================================================
+#
+# platform    builds              3.9 import check   full test suite
+# ----------  ------------------  -----------------  ---------------
+# Linux       3.9, 3.14, 3.14t    yes                3.14
+# Linux MUSL  3.9, 3.14           yes                no
+# Windows     3.9, 3.14, 3.14t    yes                3.14
+# macOS       3.14, 3.14t         no                 3.14
+[tool.cibuildwheel]
+skip = [
+    "cp3*t-musllinux*",
+    "cp39-macosx*",
+    "cp3{10,11,12,13}-*",
+]
+test-command = "python -c \"import psutil; print(psutil.__version__)\""
+
+# Pin it, else it follows whichever Python builds the wheel. arm64
+# has its own 11.0 floor and ignores this.
+[tool.cibuildwheel.macos]
+environment = {MACOSX_DEPLOYMENT_TARGET = "10.15"}
+
+# We only link Windows system DLLs, so there's nothing for delvewheel
+# (the default since cibuildwheel 4) to bundle.
+[tool.cibuildwheel.windows]
+repair-wheel-command = ""
+
+[[tool.cibuildwheel.overrides]]
+select = "cp314-{manylinux,macosx,win}*"
+test-groups = ["test"]  # same as doing `pip install --group test`
+test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"

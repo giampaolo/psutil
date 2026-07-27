@@ -12,7 +12,7 @@ Python
    =======================  =========  ========================================================================================================
    Minimum Python version   3.8        last version supporting 3.6 / 3.7 is `psutil 7.2.2 <https://pypi.org/project/psutil/7.2.2/>`_ (Jan 2026)
    PyPy3                    yes        not tested on CI
-   Free threading (no-GIL)  yes        ``cp313t`` and ``cp314t`` wheels are published
+   Free threading (no-GIL)  yes        ``cp314t`` wheels are published
    Stable ABI (abi3)        yes        one ``cp38-abi3`` wheel serves 3.8 and above
    Inline type hints        yes
    Sub-interpreters         no         only legacy shared-GIL ones; ``concurrent.interpreters`` fails (:gh:`2576`)
@@ -73,6 +73,7 @@ Support history
 
 * psutil 8.0.0 (2026-XX): drop Python 3.6 and 3.7
 * psutil 8.0.0 (2026-XX): Intel wheels now require **macOS 10.15**
+* psutil 8.0.0 (2026-XX): no longer publish wheels for **free-threaded 3.13**
 * psutil 7.2.0 (2025-12): publish wheels for **Linux musl**
 * psutil 7.1.2 (2025-10): publish wheels for **free-threaded Python**
 * psutil 7.1.2 (2025-10): no longer publish wheels for 32-bit Python (Linux and

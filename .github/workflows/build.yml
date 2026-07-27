@@ -32,11 +32,6 @@ jobs:
     if: &skip_same_repo_pr github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
-    # "full" = whole wheel matrix (master/tags), "lean" = branch/PR
-    # subset. Keeps their interpreter caches separate so a lean run
-    # doesn't restore (and pay for) the full set.
-    env:
-      CACHE_TAG: ${{ (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && 'full' || 'lean' }}
     strategy:
       fail-fast: false
       matrix:
@@ -44,7 +39,7 @@ jobs:
           - { os: ubuntu-latest, arch: x86_64 }
           - { os: ubuntu-24.04-arm, arch: aarch64 }
           - { os: macos-15-intel, arch: x86_64 } # plain macos-15 is ARM
-          - { os: macos-15, arch: arm64, python: "3.8" }
+          - { os: macos-15, arch: arm64 }
           - { os: windows-2025, arch: AMD64 }
           - { os: windows-11-arm, arch: ARM64, python: "3.13" }
     steps:
@@ -66,9 +61,9 @@ jobs:
           path: |
             ~/AppData/Local/pypa/cibuildwheel/Cache
             ~/Library/Caches/cibuildwheel
-          key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ env.CACHE_TAG }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
+          key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
           restore-keys: |
-            cibw-${{ runner.os }}-${{ matrix.arch }}-${{ env.CACHE_TAG }}-
+            cibw-${{ runner.os }}-${{ matrix.arch }}-
 
       # Defender scans every file MSVC and virtualenv touch. That costs
       # ~60s on the first compile and ~48s creating a venv.
@@ -81,14 +76,9 @@ jobs:
           Add-MpPreference -ExclusionProcess "cl.exe", "link.exe", "python.exe"
 
       - name: Build wheels + run tests
-        uses: pypa/cibuildwheel@v3.4.1
+        uses: pypa/cibuildwheel@v4.1.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_ENABLE: "cpython-freethreading ${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
-          # Full matrix only on master and tags. Everywhere else (PRs,
-          # branches) build a lean subset: shipped abi3 wheel (3.8),
-          # full-tested 3.14, free-threaded 3.14.
-          CIBW_BUILD: "${{ (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && '*' || 'cp38-* cp314-* cp314t-*' }}"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v7
@@ -112,9 +102,6 @@ jobs:
   # Merge wheels and check sanity of the package distribution.
   merge-and-check-dist:
     needs: [tests]
-    # Runs only on master + tags, where the full wheel set is built
-    # (it asserts that full set is present).
-    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
