@@ -199,8 +199,14 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def setUp(self):
         psutil._set_debug(False)
+        if POSIX:
+            self.parent, self.zombie = self.spawn_zombie()
 
     def tearDown(self):
+        if POSIX:
+            self.parent.terminate()
+            self.parent.wait()
+            self.zombie.wait()
         psutil._set_debug(True)
 
     def iter_proc_info(self):
