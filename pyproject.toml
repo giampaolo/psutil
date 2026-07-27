@@ -267,10 +267,12 @@ trailing_comma_inline_array = true
 skip = [
     # The free-threaded musl builds.
     "cp3*t-musllinux*",
-    # setup.py hardcodes the "cp38" abi3 tag, so whichever version
-    # builds the wheel it comes out the same. 3.14 does it, and it's
-    # already on the runners, so these would only build a duplicate.
-    "cp3{8,9,10,11,12,13}-*",
+    # 3.8 is free on Linux and Windows, where it's worth keeping to
+    # check the abi3 wheel imports on the oldest version we support.
+    # On macOS it costs 26s to install, and 3.14 builds the same wheel
+    # anyway (setup.py hardcodes the "cp38" abi3 tag).
+    "cp38-macosx*",
+    "cp3{9,10,11,12,13}-*",
 ]
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
 
