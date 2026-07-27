@@ -353,6 +353,8 @@ class TestFetchAllProcesses(PsutilTestCase):
         if WINDOWS and ret == 0 and is_win_secure_system_proc(info['pid']):
             # https://github.com/giampaolo/psutil/issues/2338
             return
+        if POSIX and ret == 0 and info['pid'] == self.zombie.pid:
+            return
         assert ret >= 1
 
     def threads(self, ret, info):
