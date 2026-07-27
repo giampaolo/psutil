@@ -265,9 +265,12 @@ trailing_comma_inline_array = true
 [tool.cibuildwheel]
 # Python versions we don't build a wheel for.
 skip = [
-    # 3.8 on ppc64le / s390x, and the free-threaded musl builds.
-    "cp38-*linux_{ppc64le,s390x} cp3*t-musllinux*",
-    "cp3{9,10,11,12,13}-*",
+    # The free-threaded musl builds.
+    "cp3*t-musllinux*",
+    # setup.py hardcodes the "cp38" abi3 tag, so whichever version
+    # builds the wheel it comes out the same. 3.14 does it, and it's
+    # already on the runners, so these would only build a duplicate.
+    "cp3{8,9,10,11,12,13}-*",
 ]
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
 
