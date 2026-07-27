@@ -263,8 +263,14 @@ spaces_indent_inline_array = 4
 trailing_comma_inline_array = true
 
 [tool.cibuildwheel]
+# Python versions we don't build a wheel for.
 skip = [
-    "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x} cp3*t-musllinux*",
+    # 3.8 on ppc64le / s390x, and the free-threaded musl builds.
+    "cp38-*linux_{ppc64le,s390x} cp3*t-musllinux*",
+    # 3.9 to 3.13 would reuse the abi3 wheel 3.8 builds, so they'd
+    # only repeat an import check. Note "cp313-*" does not match
+    # "cp313t-*", so the free-threaded build still happens.
+    "cp3{9,10,11,12,13}-*",
 ]
 test-groups = ["test"]  # same as doing `pip install --group test`
 test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
