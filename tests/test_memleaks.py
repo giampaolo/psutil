@@ -61,42 +61,6 @@ TIMES = MemoryLeakTestCase.times
 FEW_TIMES = int(TIMES / 10)
 
 
-def setup_module(module):
-    """Prime APIs that allocate one-time resources.
-
-    Some calls open a file descriptor, handle, load a library, or start
-    a C thread only on their first invocation. Prime them before the
-    tests run, especially under pytest-xdist, so psleak's resource
-    checker does not mistake those one-time allocations for leaks.
-
-    Known examples:
-
-    * `net_io_counters()`, `net_if_stats()`, and `net_if_addrs()` on Windows:
-      `GetAdaptersAddresses()` leaves one handle open.
-    * `users()` on Windows leaves one handle open.
-    * `getloadavg()` on Windows starts one background PDH thread.
-    * `swap_memory()` on Windows loads `pdh.dll` on the first
-      `PdhOpenQuery()` call.
-    * `virtual_memory()` and `cpu_times()` on macOS cache the Mach host port.
-    """
-    if os.environ.get("PYTHONMALLOC") != "malloc":
-        return  # memleak tests are skipped otherwise
-
-    ns = process_namespace(thisproc)
-    for fun, name in ns.iter(ns.getters + ns.setters, clear_cache=True):
-        try:
-            fun()
-        except psutil.AccessDenied:
-            pass
-
-    ns = system_namespace()
-    for fun, name in ns.iter(ns.getters):
-        try:
-            fun()
-        except psutil.AccessDenied:
-            pass
-
-
 # ===================================================================
 # Process class
 # ===================================================================
