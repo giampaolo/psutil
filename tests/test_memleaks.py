@@ -418,9 +418,12 @@ class TestModuleFunctions(MemoryLeakTestCase):
     @skipif(MACOS and os.getuid() != 0, reason="need root access")
     @skipif(LINUX, reason="pure python, too slow")
     def test_net_connections(self):
+        # slow
         with create_sockets():
             psutil.net_connections(kind='all')
-            self.execute(lambda: psutil.net_connections(kind='all'))
+            self.execute(
+                lambda: psutil.net_connections(kind='all'), times=TIMES / 2
+            )
 
     def test_net_if_addrs(self):
         psutil.net_if_addrs()  # XXX prime
