@@ -60,7 +60,9 @@ Supported CPU architectures and platforms tested in CI or with prebuilt wheels:
 Notes:
 
 - Linux wheels are built for both glibc (manylinux) and musl.
-- macOS wheels are universal2 (include both x86_64 and arm64 slices).
+- macOS wheels are built per architecture: Intel ones require macOS 10.15,
+  arm64 ones require macOS 11, the first version running on Apple Silicon.
+  Older systems can still compile from source, down to macOS 10.7.
 - Windows wheels are labeled AMD64 or ARM64 according to architecture.
 - Other architectures (i686, ppc64le, s390x, riscv64, ...) are supported but
   not CI-tested. They can be compiled from the source tarball
@@ -70,6 +72,7 @@ Support history
 ^^^^^^^^^^^^^^^
 
 * psutil 8.0.0 (2026-XX): drop Python 3.6 and 3.7
+* psutil 8.0.0 (2026-XX): Intel wheels now require **macOS 10.15**
 * psutil 7.2.0 (2025-12): publish wheels for **Linux musl**
 * psutil 7.1.2 (2025-10): publish wheels for **free-threaded Python**
 * psutil 7.1.2 (2025-10): no longer publish wheels for 32-bit Python (Linux and

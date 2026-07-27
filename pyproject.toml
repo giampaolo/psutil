@@ -282,6 +282,9 @@ select = "cp3{8,9,10,11,12,13,13t,14t}-* *-musllinux*"
 test-groups = []
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
 
+[tool.cibuildwheel.macos]
+environment = {MACOSX_DEPLOYMENT_TARGET = "10.15"}
+
 [tool.pytest]
 addopts = [
     "--capture=no",
