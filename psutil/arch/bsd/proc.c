@@ -238,6 +238,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     kvm_t *kd;
 #ifdef PSUTIL_NETBSD
     struct kinfo_proc2 *p;
+    struct kinfo_proc2 kp;
 #else
     struct kinfo_proc *p;
 #endif
@@ -281,12 +282,13 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     // (they are marked with P_SYSTEM.)
     // On FreeBSD, it's possible that the process is swapped or paged out,
     // then there no access to the environ stored in the process' user area.
-    // On NetBSD, we cannot call kvm_getenvv2() for a zombie process.
+    // On NetBSD, we cannot call kvm_getenvv2() for a zombie process,
+    // including one which is still exiting (it fails with EINVAL).
     // To make unittest suite happy, return an empty environment.
 #if defined(PSUTIL_FREEBSD)
     if (!((p)->ki_flag & P_INMEM) || ((p)->ki_flag & P_SYSTEM)) {
 #elif defined(PSUTIL_NETBSD)
-    if ((p)->p_stat == SZOMB) {
+    if (PSUTIL_KINFO_ZOMBIE(*p)) {
 #elif defined(PSUTIL_OPENBSD)
     if ((p)->p_flag & P_SYSTEM) {
 #endif
@@ -312,7 +314,30 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
             case ESRCH:
                 psutil_oserror_nsp("kvm_getenvv -> ESRCH");
                 break;
-#if defined(PSUTIL_FREEBSD)
+#if defined(PSUTIL_NETBSD)
+            case EBUSY:
+                // p_reflock is write held, likely an exec in progress.
+                psutil_debug(
+                    "proc %ld environ(): return empty dict due to EBUSY", pid
+                );
+                kvm_close(kd);
+                return py_retdict;
+            case EINVAL:
+            case EFAULT:
+                // The check above races. EINVAL: zombie, system proc
+                // or gone. EFAULT: started exiting.
+                if (psutil_kinfo_proc(pid, &kp) == -1)
+                    goto error;  // reaped in the meantime, raises NSP
+                if (PSUTIL_KINFO_ZOMBIE(kp)) {
+                    psutil_debug(
+                        "proc %ld environ(): zombie, return empty dict", pid
+                    );
+                    kvm_close(kd);
+                    return py_retdict;
+                }
+                psutil_oserror_wsyscall("kvm_getenvv2");
+                break;
+#elif defined(PSUTIL_FREEBSD)
             case ENOMEM:
                 // Unfortunately, under FreeBSD kvm_getenvv() returns
                 // failure for certain processes ( e.g. try
