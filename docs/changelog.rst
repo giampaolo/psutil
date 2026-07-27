@@ -245,7 +245,7 @@ Others:
   higher, up from 10.9. Older versions account for 0.01% of macOS downloads,
   and they must now build from source. ``arm64`` wheels are unaffected: they
   already required macOS 11.
-- :gh:`XXXX`: stop publishing wheels for free-threaded CPython 3.13
+- :gh:`2915`: stop publishing wheels for free-threaded CPython 3.13
   (``cp313t``). Free-threading was experimental in 3.13 and is officially not
   recommended. Publish only ``cp314t`` wheels.
 
