@@ -262,29 +262,6 @@ spaces_before_inline_comment = 2
 spaces_indent_inline_array = 4
 trailing_comma_inline_array = true
 
-[tool.cibuildwheel]
-# Python versions we don't build a wheel for.
-skip = [
-    # The free-threaded musl builds.
-    "cp3*t-musllinux*",
-    # 3.14 builds the abi3 wheel these would reuse (setup.py hardcodes
-    # the "cp38" tag), so they'd only repeat an import check.
-    "cp3{9,10,11,12,13}-*",
-]
-test-command = "python -c \"import psutil; print(psutil.__version__)\""
-
-# We only link Windows system DLLs, so there's nothing for delvewheel
-# (the default since cibuildwheel 4) to bundle.
-[tool.cibuildwheel.windows]
-repair-wheel-command = ""
-
-# Only 3.14 runs the real test suite. Everything else just "import
-# psutil". Musl is left out: it keeps the import check.
-[[tool.cibuildwheel.overrides]]
-select = "cp314-{manylinux,macosx,win}*"
-test-groups = ["test"]  # same as doing `pip install --group test`
-test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
-
 [tool.pytest]
 addopts = [
     "--capture=no",
@@ -310,3 +287,30 @@ markers = [
 
 [tool.rstwrap]
 width = 79
+
+# Wheels (what we build and where)
+# =============================================================================
+#
+# platform    builds              3.9 import check   full test suite
+# ----------  ------------------  -----------------  ---------------
+# Linux       3.9, 3.14, 3.14t    yes                3.14
+# Linux MUSL  3.9, 3.14           yes                no
+# Windows     3.9, 3.14, 3.14t    yes                3.14
+# macOS       3.14, 3.14t         no                 3.14
+[tool.cibuildwheel]
+skip = [
+    "cp3*t-musllinux*",
+    "cp39-macosx*",
+    "cp3{10,11,12,13}-*",
+]
+test-command = "python -c \"import psutil; print(psutil.__version__)\""
+
+# We only link Windows system DLLs, so there's nothing for delvewheel
+# (the default since cibuildwheel 4) to bundle.
+[tool.cibuildwheel.windows]
+repair-wheel-command = ""
+
+[[tool.cibuildwheel.overrides]]
+select = "cp314-{manylinux,macosx,win}*"
+test-groups = ["test"]  # same as doing `pip install --group test`
+test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
