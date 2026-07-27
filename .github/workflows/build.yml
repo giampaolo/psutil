@@ -32,9 +32,9 @@ jobs:
     if: &skip_same_repo_pr github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
-    # "full" = whole wheel matrix (master/tags), "lean" = branch/PR
-    # subset. Keeps their interpreter caches separate so a lean run
-    # doesn't restore (and pay for) the full set.
+    # master/tags and branches build different version sets, so keep
+    # their interpreter caches apart. That way a branch run doesn't
+    # restore (and pay for) 3.13t, which it doesn't build.
     env:
       CACHE_TAG: ${{ (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && 'full' || 'lean' }}
     strategy:
@@ -85,9 +85,9 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENABLE: "cpython-freethreading ${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
-          # Full matrix only on master and tags. Everywhere else (PRs,
-          # branches) build a lean subset: shipped abi3 wheel (3.8),
-          # full-tested 3.14, free-threaded 3.14.
+          # On master and tags build whatever "skip" in pyproject.toml
+          # leaves us: 3.8 (abi3 wheel), 3.13t, 3.14, 3.14t. Branches
+          # and PRs drop 3.13t to go faster.
           CIBW_BUILD: "${{ (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && '*' || 'cp38-* cp314-* cp314t-*' }}"
 
       - name: Upload wheels
