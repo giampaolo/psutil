@@ -1030,17 +1030,85 @@ class TestProcess(PsutilTestCase):
         lowest_pid = psutil.pids()[0]
         assert psutil.Process(lowest_pid).parent() is None
 
-    def test_parent_mocked_ctime(self):
-        # Make sure we get a fresh copy of the ctime before processing
-        # parent().We make the assumption that the parent pid MUST have
-        # a creation time < than the child. If system clock is updated
-        # this assumption was broken.
+    def test_parent_refreshes_self(self):
+        # The fresh lookup introduced for #2542 must still surface a
+        # process disappearing after ppid() returns.
         # https://github.com/giampaolo/psutil/issues/2542
-        p = self.spawn_psproc()
-        p.create_time()  # trigger cache
-        assert p._create_time
-        p._create_time = 1
-        assert p.parent().pid == os.getpid()
+        parent = psutil.Process()
+        child = self.spawn_psproc()
+
+        def process(pid):
+            if pid == child.pid:
+                raise psutil.NoSuchProcess(pid)
+            return parent
+
+        with mock.patch.object(child, "ppid", return_value=parent.pid):
+            with mock.patch(
+                "psutil.Process", side_effect=process
+            ) as constructor:
+                with pytest.raises(psutil.NoSuchProcess):
+                    child.parent()
+        constructor.assert_called_once_with(child.pid)
+
+    def test_parent_with_null_ctime(self):
+        # A null identity ctime on either side is not proof of PID reuse.
+        # https://github.com/giampaolo/psutil/issues/2910
+        parent = psutil.Process()
+        child = self.spawn_psproc()
+        # Deliberately invert raw ctimes so the old create_time()
+        # comparison rejects the real relationship.
+        raw_ctimes = {child.pid: 1.0, parent.pid: 2.0}
+
+        def call_parent(
+            identity_ctimes,
+            *,
+            windows=False,
+            denied_pids=(),
+        ):
+            def get_ident(proc):
+                return (proc.pid, identity_ctimes[proc.pid])
+
+            def create_time(proc):
+                if proc.pid in denied_pids:
+                    raise psutil.AccessDenied(proc.pid)
+                return raw_ctimes[proc.pid]
+
+            with mock.patch.object(child, "_ident", get_ident(child)):
+                with mock.patch.object(psutil, "WINDOWS", windows):
+                    with mock.patch.multiple(
+                        psutil.Process,
+                        _get_ident=get_ident,
+                        create_time=create_time,
+                    ):
+                        return child.parent()
+
+        # Known inverted times must still reject PID reuse.
+        assert call_parent(raw_ctimes) is None
+        cases = [
+            (None, child.pid),
+            (0.0, child.pid),
+            (None, parent.pid),
+        ]
+        for null_ctime, null_pid in cases:
+            with self.subTest(null_ctime=null_ctime, null_pid=null_pid):
+                identity_ctimes = dict(raw_ctimes)
+                identity_ctimes[null_pid] = null_ctime
+                assert call_parent(identity_ctimes).pid == parent.pid
+
+        # On Windows a null fast identity ctime falls back to the slower
+        # create_time() before the ordering check is disabled.
+        identity_ctimes = dict(raw_ctimes)
+        identity_ctimes[parent.pid] = None
+        with self.subTest(windows_fallback=True):
+            assert call_parent(identity_ctimes, windows=True) is None
+        # If both Windows paths are denied, the check is inconclusive.
+        with self.subTest(windows_access_denied=True):
+            actual = call_parent(
+                identity_ctimes,
+                windows=True,
+                denied_pids=(parent.pid,),
+            )
+            assert actual.pid == parent.pid
 
     def test_parent_multi(self):
         parent = psutil.Process()
@@ -1072,29 +1140,121 @@ class TestProcess(PsutilTestCase):
             assert children[0].pid == child.pid
             assert children[0].ppid() == parent.pid
 
-    def test_children_mocked_ctime(self):
-        # Make sure we get a fresh copy of the ctime before processing
-        # children(). We make the assumption that process children MUST
-        # have a creation time > than the parent. If system clock is
-        # updated this assumption was broken.
+    def test_children_refreshes_self(self):
+        # The fresh lookup introduced for #2542 must still surface a
+        # process disappearing after the initial PID-reuse check.
         # https://github.com/giampaolo/psutil/issues/2542
         parent = psutil.Process()
-        parent.create_time()  # trigger cache
-        assert parent._create_time
-        parent._create_time += 100000
+        child = self.spawn_psproc()
 
-        assert not filter_alien_children(parent.children())
-        assert not filter_alien_children(parent.children(recursive=True))
-        # On Windows we set the flag to 0 in order to cancel out the
-        # CREATE_NO_WINDOW flag (enabled by default) which creates
-        # an extra "conhost.exe" child.
-        child = self.spawn_psproc(creationflags=0)
-        children1 = filter_alien_children(parent.children())
-        children2 = filter_alien_children(parent.children(recursive=True))
-        for children in (children1, children2):
-            assert len(children) == 1
-            assert children[0].pid == child.pid
-            assert children[0].ppid() == parent.pid
+        def process(pid):
+            if pid == parent.pid:
+                raise psutil.NoSuchProcess(pid)
+            return child
+
+        with mock.patch.object(parent, "_raise_if_pid_reused"):
+            with mock.patch(
+                "psutil._ppid_map",
+                return_value={child.pid: parent.pid},
+            ):
+                for recursive in (False, True):
+                    with self.subTest(recursive=recursive):
+                        with mock.patch(
+                            "psutil.Process", side_effect=process
+                        ) as constructor:
+                            with pytest.raises(psutil.NoSuchProcess):
+                                parent.children(recursive=recursive)
+                        constructor.assert_called_once_with(parent.pid)
+
+    def test_children_with_null_ctime(self):
+        # A null identity ctime on either side is not proof of PID reuse.
+        # https://github.com/giampaolo/psutil/issues/2910
+        parent = psutil.Process()
+        child = self.spawn_psproc()
+        # Deliberately invert raw ctimes so the old create_time()
+        # comparison rejects the real relationship.
+        raw_ctimes = {parent.pid: 2.0, child.pid: 1.0}
+
+        def call_children(
+            identity_ctimes,
+            recursive,
+            *,
+            windows=False,
+            denied_pids=(),
+            create_times=raw_ctimes,
+        ):
+            def get_ident(proc):
+                return (proc.pid, identity_ctimes[proc.pid])
+
+            def create_time(proc):
+                if proc.pid in denied_pids:
+                    raise psutil.AccessDenied(proc.pid)
+                return create_times[proc.pid]
+
+            with mock.patch.object(parent, "_ident", get_ident(parent)):
+                with mock.patch.object(psutil, "WINDOWS", windows):
+                    with mock.patch.multiple(
+                        psutil.Process,
+                        _get_ident=get_ident,
+                        create_time=create_time,
+                    ):
+                        with mock.patch(
+                            "psutil._ppid_map",
+                            return_value={child.pid: parent.pid},
+                        ):
+                            return parent.children(recursive=recursive)
+
+        cases = [
+            (None, parent.pid),
+            (None, child.pid),
+            (0.0, child.pid),
+        ]
+        for recursive in (False, True):
+            # Known inverted times must still reject PID reuse.
+            assert call_children(raw_ctimes, recursive) == []
+            for null_ctime, null_pid in cases:
+                with self.subTest(
+                    recursive=recursive,
+                    null_ctime=null_ctime,
+                    null_pid=null_pid,
+                ):
+                    identity_ctimes = dict(raw_ctimes)
+                    identity_ctimes[null_pid] = null_ctime
+                    children = call_children(identity_ctimes, recursive)
+                    assert [proc.pid for proc in children] == [child.pid]
+
+            # Windows must retry a null fast identity ctime. Preserve
+            # a valid 0.0 from the slow path instead of treating it as
+            # an unknown identity value.
+            identity_ctimes = dict(raw_ctimes)
+            identity_ctimes[child.pid] = None
+            for child_ctime in (1.0, 0.0):
+                with self.subTest(
+                    recursive=recursive,
+                    windows_child_ctime=child_ctime,
+                ):
+                    create_times = dict(raw_ctimes)
+                    create_times[child.pid] = child_ctime
+                    children = call_children(
+                        identity_ctimes,
+                        recursive,
+                        windows=True,
+                        create_times=create_times,
+                    )
+                    assert children == []
+
+            # If both Windows paths are denied, keep the relationship.
+            with self.subTest(
+                recursive=recursive,
+                windows_access_denied=True,
+            ):
+                children = call_children(
+                    identity_ctimes,
+                    recursive,
+                    windows=True,
+                    denied_pids=(child.pid,),
+                )
+                assert [proc.pid for proc in children] == [child.pid]
 
     def test_children_recursive(self):
         # Test children() against two sub processes, p1 and p2, where
