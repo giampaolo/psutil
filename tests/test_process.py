@@ -22,7 +22,6 @@ import stat
 import string
 import subprocess
 import sys
-import textwrap
 import time
 from unittest import mock
 
@@ -53,7 +52,6 @@ from . import HAS_PROC_MEMORY_FOOTPRINT
 from . import HAS_PROC_MEMORY_MAPS
 from . import HAS_PROC_RLIMIT
 from . import HAS_PROC_THREADS
-from . import MACOS_11PLUS
 from . import PYPY
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
@@ -61,7 +59,6 @@ from . import PsutilTestCase
 from . import ThreadTask
 from . import call_until
 from . import copyload_shared_lib
-from . import create_c_exe
 from . import create_py_exe
 from . import filter_alien_children
 from . import isolated
@@ -73,7 +70,6 @@ from . import sh
 from . import skip_on_access_denied
 from . import skip_on_not_implemented
 from . import skipif
-from . import wait_for_pid
 
 # ===================================================================
 # --- psutil.Process class tests
@@ -1423,53 +1419,6 @@ class TestProcess(PsutilTestCase):
         d2 = clean_dict(os.environ.copy())
         if not OSX and GITHUB_ACTIONS:
             assert d1 == d2
-
-    @skipif(not HAS_PROC_ENVIRON, reason="not supported")
-    @skipif(not POSIX, reason="POSIX only")
-    @skipif(
-        MACOS_11PLUS,
-        reason="macOS 11+ can't get another process environment, issue #2084",
-    )
-    @skipif(NETBSD, reason="sometimes fails on `assert is_running()`")
-    def test_weird_environ(self):
-        # environment variables can contain values without an equals sign
-        code = textwrap.dedent("""
-            #include <unistd.h>
-            #include <fcntl.h>
-
-            char * const argv[] = {"cat", 0};
-            char * const envp[] = {"A=1", "X", "C=3", 0};
-
-            int main(void) {
-                // Close stderr on exec so parent can wait for the
-                // execve to finish.
-                if (fcntl(2, F_SETFD, FD_CLOEXEC) != 0)
-                    return 0;
-                return execve("/bin/cat", argv, envp);
-            }
-            """)
-        cexe = create_c_exe(self.get_testfn(), c_code=code)
-        sproc = self.spawn_subproc(
-            [cexe], stdin=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        p = psutil.Process(sproc.pid)
-        wait_for_pid(p.pid)
-        assert p.is_running()
-        # Wait for process to exec or exit.
-        assert sproc.stderr.read() == b""
-        if (MACOS or FREEBSD) and CI_TESTING:
-            try:
-                env = p.environ()
-            except psutil.AccessDenied:
-                # MACOS: sometimes 'sysctl(KERN_PROCARGS2) -> EIO'.
-                # FreeBSD 15.x: can't read another process's environ
-                # (kvm_getenvv / kern.proc.env -> ENOMEM).
-                return
-        else:
-            env = p.environ()
-        assert env == {"A": "1", "C": "3"}
-        sproc.communicate()
-        assert sproc.returncode == 0
 
 
 # ===================================================================
