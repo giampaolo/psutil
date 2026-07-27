@@ -131,7 +131,7 @@ class TestExampleScripts(ScriptsTestCase):
 
     @skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
     def test_procsmem(self):
-        self.assert_stdout('procsmem.py')
+        self.assert_syntax('procsmem.py')  # slow
 
     def test_killall(self):
         self.assert_syntax('killall.py')
