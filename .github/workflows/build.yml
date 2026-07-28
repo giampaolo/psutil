@@ -61,19 +61,8 @@ jobs:
           path: |
             ~/AppData/Local/pypa/cibuildwheel/Cache
             ~/Library/Caches/cibuildwheel
+          # Invalidate cache every time build.yml or pyproject.toml change.
           key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
-          restore-keys: |
-            cibw-${{ runner.os }}-${{ matrix.arch }}-
-
-      # Defender scans every file MSVC and virtualenv touch. That costs
-      # ~60s on the first compile and ~48s creating a venv.
-      - name: Exclude build dirs from Defender
-        if: runner.os == 'Windows'
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          Add-MpPreference -ExclusionPath "${{ github.workspace }}", "${{ runner.temp }}", "$env:TEMP"
-          Add-MpPreference -ExclusionProcess "cl.exe", "link.exe", "python.exe"
 
       - name: Build wheels + run tests
         uses: pypa/cibuildwheel@v4.1.1
