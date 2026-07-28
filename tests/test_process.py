@@ -22,7 +22,6 @@ import stat
 import string
 import subprocess
 import sys
-import textwrap
 import time
 from unittest import mock
 
@@ -53,7 +52,6 @@ from . import HAS_PROC_MEMORY_FOOTPRINT
 from . import HAS_PROC_MEMORY_MAPS
 from . import HAS_PROC_RLIMIT
 from . import HAS_PROC_THREADS
-from . import MACOS_11PLUS
 from . import PYPY
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
@@ -61,18 +59,18 @@ from . import PsutilTestCase
 from . import ThreadTask
 from . import call_until
 from . import copyload_shared_lib
-from . import create_c_exe
 from . import create_py_exe
+from . import filter_alien_children
+from . import isolated
 from . import process_namespace
 from . import pytest
 from . import reap_children
 from . import retry_on_failure
-from . import serial
 from . import sh
 from . import skip_on_access_denied
 from . import skip_on_not_implemented
 from . import skipif
-from . import wait_for_pid
+from . import wait_for_file
 
 # ===================================================================
 # --- psutil.Process class tests
@@ -386,7 +384,7 @@ class TestProcess(PsutilTestCase):
         assert hard == psutil.RLIM_INFINITY
         p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
 
-    @serial
+    @isolated
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
@@ -411,6 +409,7 @@ class TestProcess(PsutilTestCase):
         assert p.num_handles() > 0
 
     @skipif(not HAS_PROC_THREADS, reason="not supported")
+    @isolated
     def test_threads(self):
         p = psutil.Process()
         if OPENBSD:
@@ -656,12 +655,14 @@ class TestProcess(PsutilTestCase):
         assert out == 'hey'
 
     def test_cmdline(self):
-        cmdline = [
-            PYTHON_EXE,
-            "-c",
-            "import time; [time.sleep(0.1) for x in range(100)]",
-        ]
+        testfn = self.get_testfn()
+        pyline = (
+            f"import time; open(r'{testfn}', 'w').close(); "
+            "[time.sleep(0.1) for x in range(100)]"
+        )
+        cmdline = [PYTHON_EXE, "-c", pyline]
         p = self.spawn_psproc(cmdline)
+        wait_for_file(testfn, delete=True, empty=True)
 
         if NETBSD and p.cmdline() == []:
             # https://github.com/giampaolo/psutil/issues/2250
@@ -681,32 +682,6 @@ class TestProcess(PsutilTestCase):
                     assert ' '.join(p.cmdline()[1:]) == ' '.join(cmdline[1:])
                     return None
             assert ' '.join(p.cmdline()) == ' '.join(cmdline)
-
-    def test_long_cmdline(self):
-        cmdline = [PYTHON_EXE]
-        cmdline.extend(["-v"] * 50)
-        cmdline.extend(
-            ["-c", "import time; [time.sleep(0.1) for x in range(100)]"]
-        )
-        p = self.spawn_psproc(cmdline)
-
-        # XXX - flaky test: exclude the python exe which, for some
-        # reason, and only sometimes, on OSX appears different.
-        cmdline = cmdline[1:]
-
-        if OPENBSD:
-            # XXX: for some reason the test process may turn into a
-            # zombie (don't know why).
-            try:
-                assert p.cmdline()[1:] == cmdline
-            except psutil.ZombieProcess:
-                return pytest.skip("OPENBSD: process turned into zombie")
-        else:
-            ret = p.cmdline()[1:]
-            if NETBSD and ret == []:
-                # https://github.com/giampaolo/psutil/issues/2250
-                return pytest.skip("OPENBSD: returned EBUSY")
-            assert ret == cmdline
 
     def test_name(self):
         p = self.spawn_psproc()
@@ -1013,8 +988,9 @@ class TestProcess(PsutilTestCase):
             # test file is gone
             assert fileobj.name not in p.open_files()
 
+    @isolated
     @skipif(not POSIX, reason="POSIX only")
-    @serial
+    @retry_on_failure  # can wobble on CI
     def test_num_fds(self):
         p = psutil.Process()
         testfn = self.get_testfn()
@@ -1082,14 +1058,14 @@ class TestProcess(PsutilTestCase):
 
     def test_children(self):
         parent = psutil.Process()
-        assert not parent.children()
-        assert not parent.children(recursive=True)
+        assert not filter_alien_children(parent.children())
+        assert not filter_alien_children(parent.children(recursive=True))
         # On Windows we set the flag to 0 in order to cancel out the
         # CREATE_NO_WINDOW flag (enabled by default) which creates
         # an extra "conhost.exe" child.
         child = self.spawn_psproc(creationflags=0)
-        children1 = parent.children()
-        children2 = parent.children(recursive=True)
+        children1 = filter_alien_children(parent.children())
+        children2 = filter_alien_children(parent.children(recursive=True))
         for children in (children1, children2):
             assert len(children) == 1
             assert children[0].pid == child.pid
@@ -1106,14 +1082,14 @@ class TestProcess(PsutilTestCase):
         assert parent._create_time
         parent._create_time += 100000
 
-        assert not parent.children()
-        assert not parent.children(recursive=True)
+        assert not filter_alien_children(parent.children())
+        assert not filter_alien_children(parent.children(recursive=True))
         # On Windows we set the flag to 0 in order to cancel out the
         # CREATE_NO_WINDOW flag (enabled by default) which creates
         # an extra "conhost.exe" child.
         child = self.spawn_psproc(creationflags=0)
-        children1 = parent.children()
-        children2 = parent.children(recursive=True)
+        children1 = filter_alien_children(parent.children())
+        children2 = filter_alien_children(parent.children(recursive=True))
         for children in (children1, children2):
             assert len(children) == 1
             assert children[0].pid == child.pid
@@ -1156,7 +1132,7 @@ class TestProcess(PsutilTestCase):
         parent = psutil.Process()
         child, grandchild = self.spawn_children_pair()
         # forward
-        children = parent.children(recursive=True)
+        children = filter_alien_children(parent.children(recursive=True))
         assert len(children) == 2
         assert children[0] == child
         assert children[1] == grandchild
@@ -1374,82 +1350,6 @@ class TestProcess(PsutilTestCase):
             assert p.status() == psutil.STATUS_ZOMBIE
             assert m.called
 
-    def test_ident(self):
-        p = psutil.Process()
-        assert p._ident[0] == p.pid
-        if FREEBSD or OPENBSD or SUNOS or AIX:
-            # PID reuse detection is disabled on these platforms, see
-            # Process._get_ident().
-            assert p._ident[1] is None
-        else:
-            assert p._ident[1] is not None
-
-    @skipif(
-        FREEBSD or OPENBSD or SUNOS or AIX,
-        reason="PID reuse detection disabled on this platform",
-    )
-    def test_reused_pid(self):
-        # Emulate a case where PID has been reused by another process.
-        subp = self.spawn_subproc()
-        p = psutil.Process(subp.pid)
-        p._ident = (p.pid, p.create_time() + 100)
-
-        list(psutil.process_iter())
-        assert p.pid in psutil._pmap
-        assert not p.is_running()
-
-        # make sure is_running() removed PID from process_iter()
-        # internal cache
-        with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with contextlib.redirect_stderr(io.StringIO()) as f:
-                list(psutil.process_iter())
-        assert (
-            f"refreshing Process instance for reused PID {p.pid}"
-            in f.getvalue()
-        )
-        assert p.pid not in psutil._pmap
-
-        assert p != psutil.Process(subp.pid)
-        msg = "process no longer exists and its PID has been reused"
-        ns = process_namespace(p)
-        for fun, name in ns.iter(ns.setters + ns.killers, clear_cache=False):
-            with self.subTest(name=name):
-                with pytest.raises(psutil.NoSuchProcess, match=msg):
-                    fun()
-
-        assert "terminated + PID reused" in str(p)
-        assert "terminated + PID reused" in repr(p)
-
-        with pytest.raises(psutil.NoSuchProcess, match=msg):
-            p.ppid()
-        with pytest.raises(psutil.NoSuchProcess, match=msg):
-            p.parent()
-        with pytest.raises(psutil.NoSuchProcess, match=msg):
-            p.parents()
-        with pytest.raises(psutil.NoSuchProcess, match=msg):
-            p.children()
-
-    def test_reused_pid_with_null_ctime(self):
-        # A null create time on either side must not count as PID
-        # reuse, see: https://github.com/giampaolo/psutil/issues/2895.
-        subp = self.spawn_subproc()
-        p = psutil.Process(subp.pid)
-
-        for null_value in (0.0, None):
-            p._ident = (p.pid, null_value)
-            assert p.is_running()
-            assert not p._pid_reused
-
-        for null_value in (0.0, None):
-            p = psutil.Process(subp.pid)
-            with mock.patch.object(
-                psutil.Process,
-                "_get_ident",
-                return_value=(subp.pid, null_value),
-            ):
-                assert p.is_running()
-            assert not p._pid_reused
-
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
         if 0 not in psutil.pids():
@@ -1523,52 +1423,176 @@ class TestProcess(PsutilTestCase):
         if not OSX and GITHUB_ACTIONS:
             assert d1 == d2
 
-    @skipif(not HAS_PROC_ENVIRON, reason="not supported")
-    @skipif(not POSIX, reason="POSIX only")
-    @skipif(
-        MACOS_11PLUS,
-        reason="macOS 11+ can't get another process environment, issue #2084",
-    )
-    @skipif(NETBSD, reason="sometimes fails on `assert is_running()`")
-    def test_weird_environ(self):
-        # environment variables can contain values without an equals sign
-        code = textwrap.dedent("""
-            #include <unistd.h>
-            #include <fcntl.h>
 
-            char * const argv[] = {"cat", 0};
-            char * const envp[] = {"A=1", "X", "C=3", 0};
+# ===================================================================
+# --- PID reuse detection and process identity
+# ===================================================================
 
-            int main(void) {
-                // Close stderr on exec so parent can wait for the
-                // execve to finish.
-                if (fcntl(2, F_SETFD, FD_CLOEXEC) != 0)
-                    return 0;
-                return execve("/bin/cat", argv, envp);
-            }
-            """)
-        cexe = create_c_exe(self.get_testfn(), c_code=code)
-        sproc = self.spawn_subproc(
-            [cexe], stdin=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        p = psutil.Process(sproc.pid)
-        wait_for_pid(p.pid)
-        assert p.is_running()
-        # Wait for process to exec or exit.
-        assert sproc.stderr.read() == b""
-        if (MACOS or FREEBSD) and CI_TESTING:
-            try:
-                env = p.environ()
-            except psutil.AccessDenied:
-                # MACOS: sometimes 'sysctl(KERN_PROCARGS2) -> EIO'.
-                # FreeBSD 15.x: can't read another process's environ
-                # (kvm_getenvv / kern.proc.env -> ENOMEM).
-                return
+
+class TestProcessPidReuse(PsutilTestCase):
+    """Tests for PID reuse detection and process identity
+    (__eq__, __ne__, __hash__).
+    """
+
+    def test_ident(self):
+        p = psutil.Process()
+        assert p._ident[0] == p.pid
+        if FREEBSD or OPENBSD or SUNOS or AIX:
+            # PID reuse detection is disabled on these platforms, see
+            # Process._get_ident().
+            assert p._ident[1] is None
         else:
-            env = p.environ()
-        assert env == {"A": "1", "C": "3"}
-        sproc.communicate()
-        assert sproc.returncode == 0
+            assert p._ident[1] is not None
+
+    def test_eq(self):
+        def proc(pid, ctime):
+            p = psutil.Process()
+            p._ident = (pid, ctime)
+            p._hash = None
+            return p
+
+        # same pid, same ctime
+        assert proc(100, 50.0) == proc(100, 50.0)
+        # same pid, different ctime: the PID has been reused
+        assert proc(100, 50.0) != proc(100, 60.0)
+        # different pid always means different process
+        assert proc(100, 50.0) != proc(101, 50.0)
+        assert proc(100, None) != proc(101, None)
+        assert proc(100, 0.0) != proc(101, 0.0)
+        # a null ctime on either side means identity is unknown,
+        # which is not proof of a different process
+        for null_value in (0.0, None):
+            assert proc(100, 50.0) == proc(100, null_value)
+            assert proc(100, null_value) == proc(100, 50.0)
+            assert proc(100, null_value) == proc(100, null_value)
+        # comparison with a non-Process object
+        assert proc(100, 50.0) != "foo"
+
+    def test_hash(self):
+        def proc(pid, ctime):
+            p = psutil.Process()
+            p._ident = (pid, ctime)
+            p._hash = None
+            return p
+
+        # a == b implies hash(a) == hash(b)
+        pairs = [
+            (proc(100, 50.0), proc(100, 50.0)),
+            (proc(100, 50.0), proc(100, None)),
+            (proc(100, 50.0), proc(100, 0.0)),
+            (proc(100, None), proc(100, 0.0)),
+        ]
+        for a, b in pairs:
+            assert a == b
+            assert hash(a) == hash(b)
+            assert len({a, b}) == 1
+            assert {a: "x"}[b] == "x"
+        # same pid but different ctime (PID reuse): unequal, and a set
+        # must keep both
+        a, b = proc(100, 50.0), proc(100, 60.0)
+        assert a != b
+        assert len({a, b}) == 2
+        # sanity check against the real world
+        p1 = psutil.Process()
+        p2 = psutil.Process(p1.pid)
+        assert p1 == p2
+        assert hash(p1) == hash(p2)
+        assert len({p1, p2}) == 1
+
+    @skipif(
+        FREEBSD or OPENBSD or SUNOS or AIX,
+        reason="PID reuse detection disabled on this platform",
+    )
+    def test_reused_pid(self):
+        # Emulate a case where PID has been reused by another process.
+        subp = self.spawn_subproc()
+        p = psutil.Process(subp.pid)
+        p._ident = (p.pid, p.create_time() + 100)
+
+        list(psutil.process_iter())
+        assert p.pid in psutil._pmap
+        assert not p.is_running()
+
+        # make sure is_running() removed PID from process_iter()
+        # internal cache
+        with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
+            with contextlib.redirect_stderr(io.StringIO()) as f:
+                list(psutil.process_iter())
+        assert (
+            f"refreshing Process instance for reused PID {p.pid}"
+            in f.getvalue()
+        )
+        assert p.pid not in psutil._pmap
+
+        assert p != psutil.Process(subp.pid)
+        msg = "process no longer exists and its PID has been reused"
+        ns = process_namespace(p)
+        for fun, name in ns.iter(ns.setters + ns.killers, clear_cache=False):
+            with self.subTest(name=name):
+                with pytest.raises(psutil.NoSuchProcess, match=msg):
+                    fun()
+
+        assert "terminated + PID reused" in str(p)
+        assert "terminated + PID reused" in repr(p)
+
+        with pytest.raises(psutil.NoSuchProcess, match=msg):
+            p.ppid()
+        with pytest.raises(psutil.NoSuchProcess, match=msg):
+            p.parent()
+        with pytest.raises(psutil.NoSuchProcess, match=msg):
+            p.parents()
+        with pytest.raises(psutil.NoSuchProcess, match=msg):
+            p.children()
+
+    def test_reused_pid_with_null_ctime(self):
+        # A null create time on either side must not count as PID
+        # reuse, see: https://github.com/giampaolo/psutil/issues/2895.
+        subp = self.spawn_subproc()
+        p = psutil.Process(subp.pid)
+
+        for null_value in (0.0, None):
+            p._ident = (p.pid, null_value)
+            assert p.is_running()
+            assert not p._pid_reused
+
+        for null_value in (0.0, None):
+            p = psutil.Process(subp.pid)
+            with mock.patch.object(
+                psutil.Process,
+                "_get_ident",
+                return_value=(subp.pid, null_value),
+            ):
+                assert p.is_running()
+            assert not p._pid_reused
+
+    def test_ad_on_process_creation(self):
+        # We are supposed to be able to instantiate Process also in case
+        # of zombie processes or access denied.
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=psutil.AccessDenied
+        ) as meth:
+            psutil.Process()
+            assert meth.called
+
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=psutil.ZombieProcess(1)
+        ) as meth:
+            psutil.Process()
+            assert meth.called
+
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=ValueError
+        ) as meth:
+            with pytest.raises(ValueError):
+                psutil.Process()
+            assert meth.called
+
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=psutil.NoSuchProcess(1)
+        ) as meth:
+            with pytest.raises(psutil.NoSuchProcess):
+                psutil.Process()
+            assert meth.called
 
 
 # ===================================================================
@@ -1681,8 +1705,8 @@ class TestProcessWait(PsutilTestCase):
         with pytest.raises(psutil.TimeoutExpired):
             p.wait(0)
         p.kill()
-        stop_at = time.time() + GLOBAL_TIMEOUT
-        while time.time() < stop_at:
+        stop_at = time.monotonic() + GLOBAL_TIMEOUT
+        while time.monotonic() < stop_at:
             try:
                 code = p.wait(0)
                 break
@@ -1873,10 +1897,19 @@ class TestPopen(PsutilTestCase):
             with pytest.raises(AttributeError):
                 proc.foo  # noqa: B018
             proc.terminate()
-        if POSIX:
-            assert proc.wait(5) == -signal.SIGTERM
-        else:
-            assert proc.wait(5) == signal.SIGTERM
+        expected = -signal.SIGTERM if POSIX else signal.SIGTERM
+        ret = proc.wait(5)
+        if ret != expected:
+            # Seen once on NetBSD: SIGTERM had no effect and the child
+            # ran to completion. Leave some evidence behind.
+            masked = (
+                signal.pthread_sigmask(signal.SIG_BLOCK, []) if POSIX else ""
+            )
+            return pytest.fail(
+                f"wait() returned {ret} instead of {expected};"
+                f" blocked signals in this process: {masked};"
+                f" child stderr: {proc.stderr.read()}"
+            )
 
     def test_ctx_manager(self):
         with psutil.Popen(

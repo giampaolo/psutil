@@ -119,6 +119,8 @@ is_zombie(size_t pid) {
     // equivalent.
     return ((kp.p_stat == SZOMB) || (kp.p_stat == SDEAD));
 #else
-    return kp.p_stat == SZOMB;
+    // A dying process goes SDYING -> SDEAD -> SZOMB, and only the
+    // last one has the same value as its LWP counterpart.
+    return PSUTIL_KINFO_ZOMBIE(kp);
 #endif
 }

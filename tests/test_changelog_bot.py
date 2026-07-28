@@ -900,5 +900,9 @@ class TestGhRequest:
 
     def test_error_includes_github_body(self):
         # A bare "HTTP Error 404" hides why GitHub refused.
-        with pytest.raises(SystemExit, match="boom"):
-            self._call(self._http_error(404))
+        err = self._http_error(404)
+        try:
+            with pytest.raises(SystemExit, match="boom"):
+                self._call(err)
+        finally:
+            err.close()

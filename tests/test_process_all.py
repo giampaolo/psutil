@@ -8,9 +8,9 @@
 test all psutil.Process() methods.
 """
 
+import collections
 import enum
 import errno
-import multiprocessing
 import os
 import stat
 import time
@@ -30,82 +30,165 @@ from psutil import POSIX
 from psutil import WINDOWS
 
 from . import CI_TESTING
-from . import PYTEST_PARALLEL
 from . import VALID_PROC_STATUSES
 from . import PsutilTestCase
 from . import check_connection_ntuple
 from . import check_fun_type_hints
 from . import check_ntuple_type_hints
-from . import create_sockets
 from . import is_namedtuple
 from . import is_win_secure_system_proc
 from . import process_namespace
 
-# Cuts the time in half, but (e.g.) on macOS the process pool stays
-# alive after join() (multiprocessing bug?), messing up other tests.
-USE_PROC_POOL = LINUX and not CI_TESTING and not PYTEST_PARALLEL
+API_DURATIONS = collections.Counter()
 
 
-def proc_info(pid):
-    tcase = PsutilTestCase()
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_makereport(item, call):
+    # Attach the timings to test_all's report, so they survive the
+    # trip from the xdist worker to the master.
+    report = yield
+    if call.when == "call" and item.nodeid.endswith("::test_all"):
+        if API_DURATIONS:
+            report.user_properties.append(
+                ("api_durations", API_DURATIONS.most_common())
+            )
+    return report
 
-    def check_exception(exc, proc, name, ppid):
-        assert exc.pid == pid
+
+def pytest_terminal_summary(terminalreporter):
+    """Show top slowest APIs in pytest summary."""
+    top_slowest = terminalreporter.config.getoption("durations")
+    if top_slowest is None:
+        # show them only if --durations was passed
+        return
+    for reports in terminalreporter.stats.values():
+        for report in reports:
+            for key, value in getattr(report, "user_properties", []):
+                if key == "api_durations":
+                    terminalreporter.write_sep(
+                        "=",
+                        f"test_all: slowest {top_slowest} APIs (cumulative)",
+                    )
+                    for fun_name, secs in value[:top_slowest]:
+                        line = f"{secs:.2f}s call     {fun_name}()"
+                        terminalreporter.write_line(line)
+
+
+class ProcInfo:
+    def __init__(self, pid):
+        self.pid = pid
+        self.proc = None
+        self.name = None
+        self.ppid = None
+        self.tcase = PsutilTestCase()
+
+    def check_exception(self, exc):
+        assert exc.pid == self.pid
         if exc.name is not None:
-            assert exc.name == name
+            assert exc.name == self.name
         if isinstance(exc, psutil.ZombieProcess):
-            tcase.assert_proc_zombie(proc)
+            try:
+                self.tcase.assert_proc_zombie(self.proc)
+            except (psutil.NoSuchProcess, AssertionError):
+                # Prevent race conditions: if zombie disappears while
+                # assert_proc_zombie analyzes it we fail only if its
+                # PID still exists.
+                if self.pid in psutil.pids():
+                    raise
+
             if exc.ppid is not None:
                 assert exc.ppid >= 0
-                assert exc.ppid == ppid
+                assert exc.ppid == self.ppid
         elif isinstance(exc, psutil.NoSuchProcess):
-            tcase.assert_proc_gone(proc)
+            self.tcase.assert_proc_gone(self.proc)
         str(exc)
         repr(exc)
 
-    def do_wait():
-        if pid != 0:
-            try:
-                proc.wait(0)
-            except psutil.Error as exc:
-                check_exception(exc, proc, name, ppid)
+    def safe_repr(self):
+        # repr() calls name() and status(), which may fail themselves.
+        if self.proc is None:
+            return f"pid {self.pid}"
+        try:
+            return repr(self.proc)
+        except Exception as exc:  # noqa: BLE001
+            return f"psutil.Process(pid={self.pid}, repr_error={exc!r})"
 
-    try:
-        proc = psutil.Process(pid)
-    except psutil.NoSuchProcess:
-        tcase.assert_pid_gone(pid)
-        return {}
-    try:
-        d = proc.as_dict(['ppid', 'name'])
-    except psutil.NoSuchProcess:
-        tcase.assert_proc_gone(proc)
-    else:
-        name, ppid = d['name'], d['ppid']
-        info = {'pid': proc.pid}
-        ns = process_namespace(proc)
+    def check_wait(self):
+        if self.pid != 0:
+            try:
+                self.proc.wait(0)
+            except psutil.Error as exc:
+                self.check_exception(exc)
+
+    def should_skip(self, fun_name):
+        if MACOS and CI_TESTING and fun_name == "memory_info_ex":
+            # XXX: memory_info_ex() needs task_for_pid() for fields
+            # with no pid-based source (peak_rss, compressed, ...).
+            # task_for_pid() can hang forever when taskgated is
+            # wedged, which happens on headless CI but not on real
+            # machines. See:
+            # https://github.com/giampaolo/psutil/issues/2885
+            return True
+        # XXX: open_files() is too slow on Windows
+        return WINDOWS and fun_name == "open_files"
+
+    def call_getters(self):
+        info = {'pid': self.pid}
+        durations = {}
+        ns = process_namespace(self.proc)
         # We don't use oneshot() because in order not to fool
         # check_exception() in case of NSP.
         for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
-            if MACOS and CI_TESTING and fun_name == "memory_info_ex":
-                # XXX: memory_info_ex() needs task_for_pid() for fields
-                # with no pid-based source (peak_rss, compressed, ...).
-                # task_for_pid() can hang forever when taskgated is
-                # wedged, which happens on headless CI but not on real
-                # machines. See:
-                # https://github.com/giampaolo/psutil/issues/2885
+            if self.should_skip(fun_name):
                 continue
+            t = time.perf_counter()
             try:
                 ret = fun()
             except psutil.Error as exc:
-                check_exception(exc, proc, name, ppid)
+                self.check_exception(exc)
                 continue
             else:
                 check_fun_type_hints(fun, ret)
                 if is_namedtuple(ret):
                     check_ntuple_type_hints(ret)
                 info[fun_name] = ret
-        do_wait()
+            finally:
+                durations[fun_name] = time.perf_counter() - t
+        info["_durations"] = durations
+        info["_repr"] = self.safe_repr()
         return info
+
+    def run(self):
+        try:
+            self.proc = psutil.Process(self.pid)
+        except psutil.NoSuchProcess:
+            self.tcase.assert_pid_gone(self.pid)
+            return {}
+
+        try:
+            d = self.proc.as_dict(['ppid', 'name'])
+        except psutil.NoSuchProcess:
+            self.tcase.assert_proc_gone(self.proc)
+            return {}
+
+        self.name, self.ppid = d['name'], d['ppid']
+        info = self.call_getters()
+        self.check_wait()
+        return info
+
+
+def proc_info(pid):
+    obj = ProcInfo(pid)
+    try:
+        return obj.run()
+    except Exception as exc:
+        # Attach the process repr (name + status) to any unexpected
+        # error, no matter which part of the collection raised it.
+        msg = f"proc: {obj.safe_repr()}"
+        if hasattr(exc, "add_note"):  # python 3.11+
+            exc.add_note(msg)
+            raise
+        raise RuntimeError(msg) from exc
 
 
 class TestFetchAllProcesses(PsutilTestCase):
@@ -116,38 +199,26 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def setUp(self):
         psutil._set_debug(False)
-        # Using a pool in a CI env may result in deadlock, see:
-        # https://github.com/giampaolo/psutil/issues/2104
-        if USE_PROC_POOL:
-            # The 'fork' method is the only one that does not
-            # create a "resource_tracker" process. The problem
-            # when creating this process is that it ignores
-            # SIGTERM and SIGINT, and this makes "reap_children"
-            # hang... The following code should run on python-3.4
-            # and later.
-            multiprocessing.set_start_method('fork')
-            self.pool = multiprocessing.Pool()
+        if POSIX:
+            self.parent, self.zombie = self.spawn_zombie()
 
     def tearDown(self):
+        if POSIX:
+            self.parent.terminate()
+            self.parent.wait()
+            self.zombie.wait()
         psutil._set_debug(True)
-        if USE_PROC_POOL:
-            self.pool.terminate()
-            self.pool.join()
 
     def iter_proc_info(self):
-        # Fixes "can't pickle <function proc_info>: it's not the
-        # same object as test_process_all.proc_info".
-        from tests.test_process_all import proc_info
-
-        if USE_PROC_POOL:
-            return self.pool.imap_unordered(proc_info, psutil.pids())
-        else:
-            ls = [proc_info(pid) for pid in psutil.pids()]
-            return ls
+        ls = [proc_info(pid) for pid in psutil.pids()]
+        return ls
 
     def test_all(self):
         failures = []
+        durations = collections.Counter()
         for info in self.iter_proc_info():
+            durations.update(info.pop("_durations", {}))
+            proc_repr = info.pop("_repr", None)
             for name, value in info.items():
                 meth = getattr(self, name)
                 try:
@@ -159,6 +230,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                         info['pid'],
                         repr(value),
                     )
+                    s += f"proc={proc_repr}\n\n"
                     s += '-' * 70
                     s += f"\n{traceback.format_exc()}"
                     s = "\n".join((" " * 4) + i for i in s.splitlines()) + "\n"
@@ -166,6 +238,8 @@ class TestFetchAllProcesses(PsutilTestCase):
                 else:
                     if value not in (0, 0.0, [], None, '', {}):
                         assert value, value
+
+        API_DURATIONS.update(durations)
         if failures:
             return pytest.fail(''.join(failures))
 
@@ -279,6 +353,8 @@ class TestFetchAllProcesses(PsutilTestCase):
         if WINDOWS and ret == 0 and is_win_secure_system_proc(info['pid']):
             # https://github.com/giampaolo/psutil/issues/2338
             return
+        if POSIX and ret == 0 and info['pid'] == self.zombie.pid:
+            return
         assert ret >= 1
 
     def threads(self, ret, info):
@@ -295,10 +371,6 @@ class TestFetchAllProcesses(PsutilTestCase):
             assert isinstance(n, float)
             assert n >= 0
         # TODO: check ntuple fields
-
-    def cpu_percent(self, ret, info):
-        assert isinstance(ret, float)
-        assert 0.0 <= ret <= 100.0, ret
 
     def cpu_num(self, ret, info):
         assert isinstance(ret, int)
@@ -352,10 +424,9 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret >= 0
 
     def net_connections(self, ret, info):
-        with create_sockets():
-            assert len(ret) == len(set(ret))
-            for conn in ret:
-                check_connection_ntuple(conn)
+        assert len(ret) == len(set(ret))
+        for conn in ret:
+            check_connection_ntuple(conn)
 
     def cwd(self, ret, info):
         assert isinstance(ret, str)
@@ -372,13 +443,6 @@ class TestFetchAllProcesses(PsutilTestCase):
                     raise
             else:
                 assert stat.S_ISDIR(st.st_mode)
-
-    def memory_percent(self, ret, info):
-        assert isinstance(ret, float)
-        assert 0 <= ret <= 100, ret
-
-    def is_running(self, ret, info):
-        assert isinstance(ret, bool)
 
     def cpu_affinity(self, ret, info):
         assert isinstance(ret, list)

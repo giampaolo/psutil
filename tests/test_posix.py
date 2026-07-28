@@ -29,6 +29,7 @@ from . import AARCH64
 from . import HAS_NET_IO_COUNTERS
 from . import PYTHON_EXE
 from . import PsutilTestCase
+from . import isolated
 from . import pytest
 from . import retry_on_failure
 from . import sh
@@ -321,13 +322,12 @@ class TestProcess(PosixTestCase):
         psutil_nice = psutil.Process().nice()
         assert ps_nice == psutil_nice
 
+    @isolated
     @retry_on_failure
     def test_num_ctx_switches(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         cws = psutil.Process().num_ctx_switches()
         tol = 50
-        if "PYTEST_XDIST_WORKER_COUNT" in os.environ:
-            tol *= int(os.environ["PYTEST_XDIST_WORKER_COUNT"])
         if MACOS:
             assert cws.voluntary + cws.involuntary == pytest.approx(
                 ru.ru_nvcsw + ru.ru_nivcsw, abs=tol * 2
@@ -344,12 +344,15 @@ class TestProcess(PosixTestCase):
         assert cws.system == pytest.approx(ru.ru_stime, abs=0.3)
 
     @retry_on_failure
+    @isolated
     def test_page_faults(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         pf = psutil.Process().page_faults()
-        tol = 5
-        assert pf.minor == pytest.approx(ru.ru_minflt, abs=tol)
-        assert pf.major == pytest.approx(ru.ru_majflt, abs=tol)
+        # Minor faults may change between reads, and the kernel
+        # counters are not updated atomically, so allow some slack.
+        # Seen ~50 apart on OpenBSD.
+        assert pf.minor == pytest.approx(ru.ru_minflt, abs=100)
+        assert pf.major == pytest.approx(ru.ru_majflt, abs=5)
 
     @skipif(not LINUX and not MACOS, reason="Linux, macOS only")
     def test_page_faults_minor_increase(self):

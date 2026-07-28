@@ -40,6 +40,7 @@ from . import enum
 from . import is_namedtuple
 from . import kernel_version
 from . import pytest
+from . import serial
 from . import skipif
 
 # ===================================================================
@@ -405,6 +406,7 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(disk.fstype, str)
             assert isinstance(disk.opts, str)
 
+    @serial
     @skipif(SKIP_SYSCONS, reason="requires root")
     def test_net_connections(self):
         with create_sockets():

@@ -6,6 +6,7 @@
 
 #include <Python.h>
 #include <kvm.h>
+#include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
@@ -17,6 +18,15 @@
 #endif
 
 #include "../../arch/all/init.h"
+
+
+#ifdef PSUTIL_FREEBSD
+#define KP(field) kp.ki_##field
+#define KP_RU(field) kp.ki_rusage.ru_##field
+#else
+#define KP(field) kp.p_##field
+#define KP_RU(field) kp.p_uru_##field
+#endif
 
 
 // Collect different info about a process in one shot and return them
@@ -31,6 +41,12 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     long memstack;
     long peak_rss;
     int oncpu;
+    int status;
+    double create_time;
+    double user_time;
+    double sys_time;
+    double ch_user_time;
+    double ch_sys_time;
 #ifdef PSUTIL_NETBSD
     struct kinfo_proc2 kp;
 #else
@@ -105,6 +121,22 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     }
 
 #ifdef PSUTIL_FREEBSD
+    create_time = PSUTIL_TV2DOUBLE(kp.ki_start);
+    user_time = PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_utime);
+    sys_time = PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_stime);
+    ch_user_time = PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_utime);
+    ch_sys_time = PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime);
+#else
+    create_time = PSUTIL_KPT2DOUBLE(kp.p_ustart);
+    user_time = PSUTIL_KPT2DOUBLE(kp.p_uutime);
+    sys_time = PSUTIL_KPT2DOUBLE(kp.p_ustime);
+    // OpenBSD and NetBSD provide children user + system times summed
+    // together (no distinction).
+    ch_user_time = PSUTIL_KPT2DOUBLE(kp.p_uctime);
+    ch_sys_time = ch_user_time;
+#endif
+
+#ifdef PSUTIL_FREEBSD
     // what CPU we're on; top was used as an example:
     // https://svnweb.freebsd.org/base/head/usr.bin/top/machine.c?
     //     view=markup&pathrev=273835
@@ -120,55 +152,39 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     // were. Not supported.
     oncpu = -1;
 #endif
-        // clang-format off
 
-#ifdef PSUTIL_FREEBSD
-    if (!pydict_add(dict, "ppid", _Py_PARSE_PID, kp.ki_ppid)) goto error;
-    if (!pydict_add(dict, "status", "i", (int)kp.ki_stat)) goto error;
-    if (!pydict_add(dict, "real_uid", "l", (long)kp.ki_ruid)) goto error;
-    if (!pydict_add(dict, "effective_uid", "l", (long)kp.ki_uid)) goto error;
-    if (!pydict_add(dict, "saved_uid", "l", (long)kp.ki_svuid)) goto error;
-    if (!pydict_add(dict, "real_gid", "l", (long)kp.ki_rgid)) goto error;
-    if (!pydict_add(dict, "effective_gid", "l", (long)kp.ki_groups[0])) goto error;
-    if (!pydict_add(dict, "saved_gid", "l", (long)kp.ki_svuid)) goto error;
-    if (!pydict_add(dict, "ttynr", "L", (unsigned long long)kp.ki_tdev)) goto error;
-    if (!pydict_add(dict, "create_time", "d", PSUTIL_TV2DOUBLE(kp.ki_start))) goto error;
-    if (!pydict_add(dict, "ctx_switches_vol", "l", kp.ki_rusage.ru_nvcsw)) goto error;
-    if (!pydict_add(dict, "ctx_switches_unvol", "l", kp.ki_rusage.ru_nivcsw)) goto error;
-    if (!pydict_add(dict, "read_io_count", "l", kp.ki_rusage.ru_inblock)) goto error;
-    if (!pydict_add(dict, "write_io_count", "l", kp.ki_rusage.ru_oublock)) goto error;
-    if (!pydict_add(dict, "user_time", "d", PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_utime))) goto error;
-    if (!pydict_add(dict, "sys_time", "d", PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_stime))) goto error;
-    if (!pydict_add(dict, "ch_user_time", "d", PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_utime))) goto error;
-    if (!pydict_add(dict, "ch_sys_time", "d", PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime))) goto error;
-    if (!pydict_add(dict, "min_faults", "l", (long)kp.ki_rusage.ru_minflt)) goto error;
-    if (!pydict_add(dict, "maj_faults", "l", (long)kp.ki_rusage.ru_majflt)) goto error;
+#ifdef PSUTIL_NETBSD
+    // p_stat is the LWP status, except for a dying process, where it
+    // holds the process status instead. The 2 sets of values overlap
+    // (e.g. SDYING == LSSLEEP), so a process which is exiting would
+    // look like it's sleeping. Report all such states as zombie.
+    status = PSUTIL_KINFO_ZOMBIE(kp) ? LSZOMB : kp.p_stat;
 #else
-    // OpenBSD / NetBSD
-    if (!pydict_add(dict, "ppid", _Py_PARSE_PID, kp.p_ppid)) goto error;
-    if (!pydict_add(dict, "status", "i", (int)kp.p_stat)) goto error;
-    if (!pydict_add(dict, "real_uid", "l", (long)kp.p_ruid)) goto error;
-    if (!pydict_add(dict, "effective_uid", "l", (long)kp.p_uid)) goto error;
-    if (!pydict_add(dict, "saved_uid", "l", (long)kp.p_svuid)) goto error;
-    if (!pydict_add(dict, "real_gid", "l", (long)kp.p_rgid)) goto error;
-    if (!pydict_add(dict, "effective_gid", "l", (long)kp.p_groups[0])) goto error;
-    if (!pydict_add(dict, "saved_gid", "l", (long)kp.p_svuid)) goto error;
-    if (!pydict_add(dict, "ttynr", "i", (int)kp.p_tdev)) goto error;
-    if (!pydict_add(dict, "create_time", "d", PSUTIL_KPT2DOUBLE(kp.p_ustart))) goto error;
-    if (!pydict_add(dict, "ctx_switches_vol", "l", kp.p_uru_nvcsw)) goto error;
-    if (!pydict_add(dict, "ctx_switches_unvol", "l", kp.p_uru_nivcsw)) goto error;
-    if (!pydict_add(dict, "read_io_count", "l", kp.p_uru_inblock)) goto error;
-    if (!pydict_add(dict, "write_io_count", "l", kp.p_uru_oublock)) goto error;
-    if (!pydict_add(dict, "user_time", "d", PSUTIL_KPT2DOUBLE(kp.p_uutime))) goto error;
-    if (!pydict_add(dict, "sys_time", "d", PSUTIL_KPT2DOUBLE(kp.p_ustime))) goto error;
-    // OpenBSD and NetBSD provide children user + system times summed
-    // together (no distinction).
-    if (!pydict_add(dict, "ch_user_time", "d", kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0)) goto error;
-    if (!pydict_add(dict, "ch_sys_time", "d", kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0)) goto error;
-    if (!pydict_add(dict, "min_faults", "l", (long)kp.p_uru_minflt)) goto error;
-    if (!pydict_add(dict, "maj_faults", "l", (long)kp.p_uru_majflt)) goto error;
+    status = KP(stat);
 #endif
-    // all BSDs
+
+    // clang-format off
+    if (!pydict_add(dict, "ppid", _Py_PARSE_PID, KP(ppid))) goto error;
+    if (!pydict_add(dict, "status", "i", status)) goto error;
+    if (!pydict_add(dict, "real_uid", "l", (long)KP(ruid))) goto error;
+    if (!pydict_add(dict, "effective_uid", "l", (long)KP(uid))) goto error;
+    if (!pydict_add(dict, "saved_uid", "l", (long)KP(svuid))) goto error;
+    if (!pydict_add(dict, "real_gid", "l", (long)KP(rgid))) goto error;
+    if (!pydict_add(dict, "effective_gid", "l", (long)KP(groups)[0])) goto error;
+    if (!pydict_add(dict, "saved_gid", "l", (long)KP(svgid))) goto error;
+    if (!pydict_add(dict, "ttynr", "L", (unsigned long long)KP(tdev))) goto error;
+    if (!pydict_add(dict, "create_time", "d", create_time)) goto error;
+    if (!pydict_add(dict, "ctx_switches_vol", "l", (long)KP_RU(nvcsw))) goto error;
+    if (!pydict_add(dict, "ctx_switches_unvol", "l", (long)KP_RU(nivcsw))) goto error;
+    if (!pydict_add(dict, "read_io_count", "l", (long)KP_RU(inblock))) goto error;
+    if (!pydict_add(dict, "write_io_count", "l", (long)KP_RU(oublock))) goto error;
+    if (!pydict_add(dict, "user_time", "d", user_time)) goto error;
+    if (!pydict_add(dict, "sys_time", "d", sys_time)) goto error;
+    if (!pydict_add(dict, "ch_user_time", "d", ch_user_time)) goto error;
+    if (!pydict_add(dict, "ch_sys_time", "d", ch_sys_time)) goto error;
+    if (!pydict_add(dict, "min_faults", "l", (long)KP_RU(minflt))) goto error;
+    if (!pydict_add(dict, "maj_faults", "l", (long)KP_RU(majflt))) goto error;
+    if (!pydict_add(dict, "nice", "i", KP(nice) - NZERO)) goto error;
     if (!pydict_add(dict, "rss", "l", rss)) goto error;
     if (!pydict_add(dict, "vms", "l", vms)) goto error;
     if (!pydict_add(dict, "memtext", "l", memtext)) goto error;
@@ -177,8 +193,8 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "peak_rss", "l", peak_rss)) goto error;
     if (!pydict_add(dict, "cpunum", "i", oncpu)) goto error;
     if (!pydict_add(dict, "name", "O", py_name)) goto error;
-
     // clang-format on
+
     Py_DECREF(py_name);
     return dict;
 
@@ -222,6 +238,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     kvm_t *kd;
 #ifdef PSUTIL_NETBSD
     struct kinfo_proc2 *p;
+    struct kinfo_proc2 kp;
 #else
     struct kinfo_proc *p;
 #endif
@@ -265,12 +282,13 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     // (they are marked with P_SYSTEM.)
     // On FreeBSD, it's possible that the process is swapped or paged out,
     // then there no access to the environ stored in the process' user area.
-    // On NetBSD, we cannot call kvm_getenvv2() for a zombie process.
+    // On NetBSD, we cannot call kvm_getenvv2() for a zombie process,
+    // including one which is still exiting (it fails with EINVAL).
     // To make unittest suite happy, return an empty environment.
 #if defined(PSUTIL_FREEBSD)
     if (!((p)->ki_flag & P_INMEM) || ((p)->ki_flag & P_SYSTEM)) {
 #elif defined(PSUTIL_NETBSD)
-    if ((p)->p_stat == SZOMB) {
+    if (PSUTIL_KINFO_ZOMBIE(*p)) {
 #elif defined(PSUTIL_OPENBSD)
     if ((p)->p_flag & P_SYSTEM) {
 #endif
@@ -296,7 +314,30 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
             case ESRCH:
                 psutil_oserror_nsp("kvm_getenvv -> ESRCH");
                 break;
-#if defined(PSUTIL_FREEBSD)
+#if defined(PSUTIL_NETBSD)
+            case EBUSY:
+                // p_reflock is write held, likely an exec in progress.
+                psutil_debug(
+                    "proc %ld environ(): return empty dict due to EBUSY", pid
+                );
+                kvm_close(kd);
+                return py_retdict;
+            case EINVAL:
+            case EFAULT:
+                // The check above races. EINVAL: zombie, system proc
+                // or gone. EFAULT: started exiting.
+                if (psutil_kinfo_proc(pid, &kp) == -1)
+                    goto error;  // reaped in the meantime, raises NSP
+                if (PSUTIL_KINFO_ZOMBIE(kp)) {
+                    psutil_debug(
+                        "proc %ld environ(): zombie, return empty dict", pid
+                    );
+                    kvm_close(kd);
+                    return py_retdict;
+                }
+                psutil_oserror_wsyscall("kvm_getenvv2");
+                break;
+#elif defined(PSUTIL_FREEBSD)
             case ENOMEM:
                 // Unfortunately, under FreeBSD kvm_getenvv() returns
                 // failure for certain processes ( e.g. try

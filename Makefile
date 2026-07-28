@@ -80,30 +80,26 @@ install-sysdeps:  ## Install system deps needed to compile psutil.
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[test]
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group test
 
 install-pydeps-lint:  ## Install python deps necessary to run linters.
 	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[lint]
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group lint
 
 install-pydeps-dev:  ## Install python deps meant for local development.
 	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[dev]
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group dev
 
 # ===================================================================
 # Tests
 # ===================================================================
 
-# Cache dir on Windows often causes "Permission denied" errors.
-# On CI drop instafail so failures gather in one block at the end.
+# - cache dir on Windows often causes "Permission denied" errors
+# - on CI drop instafail so failures gather in one block at the end
 _PYTEST_EXTRA != { if [ "$$OS" = "Windows_NT" ]; then printf '%s ' '-o cache_dir=/tmp/pytest-psutil-cache'; fi; if [ -n "$$CI" ]; then printf '%s ' '-p no:instafail'; fi; }
-RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(_PYTEST_EXTRA)
+
+RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --durations=5 $(_PYTEST_EXTRA)
 RUN_TEST_MEMLEAKS = PYTHONMALLOC=malloc $(RUN_TEST) -k test_memleaks.py
-RUN_TEST_PARALLEL = $(RUN_TEST) -n auto --dist loadgroup
-RUN_TEST_MEMLEAKS_PARALLEL = $(RUN_TEST_MEMLEAKS) -n auto
 
 # --- main
 
@@ -112,13 +108,14 @@ test:  ## Run all tests (except memleak tests).
 	$(RUN_TEST) $(ARGS)
 
 test-parallel:  ## Run all tests (except memleak tests) in parallel.
-	$(RUN_TEST_PARALLEL) $(ARGS)
+	$(RUN_TEST) -n auto --dist loadgroup -m 'not isolated' $(ARGS)
+	$(RUN_TEST) -m isolated $(ARGS)
 
 test-memleaks:  ## Run memory leak tests.
 	$(RUN_TEST_MEMLEAKS) $(ARGS)
 
 test-memleaks-parallel:  ## Run memory leak tests in parallel.
-	$(RUN_TEST_MEMLEAKS_PARALLEL) $(ARGS)
+	$(RUN_TEST_MEMLEAKS) -n auto $(ARGS)
 
 # --- individual
 
@@ -268,29 +265,36 @@ ci-lint:  ## Run all linters on GitHub CI.
 
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-sysdeps
+	$(MAKE) install-pip
+	# Install psutil before the test deps: psleak depends on psutil,
+	# and a pre-installed one stops pip from pulling it from PyPI.
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .
 	$(MAKE) install-pydeps-test
 	$(MAKE) build
 	$(MAKE) print-sysinfo
-	$(RUN_TEST) --durations=15
-	$(RUN_TEST_MEMLEAKS) --durations=10
+	$(MAKE) test-parallel
+	$(MAKE) test-memleaks-parallel
 
 ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	$(MAKE) install-sysdeps  # test pydeps already installed at this point
 	$(MAKE) print-sysinfo
+	# Warm pywin32's gen_py cache: concurrent first imports of wmi in
+	# the pytest workers corrupt it (EOFError from gencache).
+	if [ "$$OS" = "Windows_NT" ]; then $(PYTHON) -c "import wmi"; fi
 	# Tests must be run from a separate directory so pytest does not import
 	# from the source tree and instead exercises only the installed wheel.
 	rm -rf .tests tests/__pycache__
 	mkdir -p .tests
 	cp -r tests .tests/
-	cd .tests/ && PYTHONPATH=$$(pwd) $(RUN_TEST) --durations=15
-	cd .tests/ && PYTHONPATH=$$(pwd) $(RUN_TEST_MEMLEAKS) --durations=10
+	cd .tests/ && PYTHONPATH=$$(pwd) $(MAKE) -f ../Makefile test-parallel
+	cd .tests/ && PYTHONPATH=$$(pwd) $(MAKE) -f ../Makefile test-memleaks-parallel
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
+	$(MAKE) install-pip
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
 	$(MAKE) create-sdist
 	mv wheelhouse/* dist/
 	$(MAKE) check-dist
-	$(MAKE) install
 	$(PYTHON) scripts/internal/print_dist.py --check
 
 # ===================================================================
@@ -411,7 +415,7 @@ bench-oneshot-2:  ## Same as above but using perf module (supposed to be more pr
 find-broken-links:  ## Look for broken links in source files.
 	git ls-files | xargs $(PYTHON) -Wa scripts/internal/find_broken_links.py
 
-_CI_JOBS := $(patsubst .github/workflows/%.yml,%,$(shell grep -l workflow_dispatch .github/workflows/*.yml))
+_CI_JOBS = $(patsubst .github/workflows/%.yml,%,$(shell grep -l workflow_dispatch .github/workflows/*.yml))
 
 ci-run:  ## Manually run a CI workflow, e.g. `make ci-run JOB=bsd`
 	@echo "$(_CI_JOBS)" | tr ' ' '\n' | grep -qx "$(JOB)" || { echo "Usage: make ci-run JOB=<$$(echo $(_CI_JOBS) | tr ' ' '|')>"; exit 1; }

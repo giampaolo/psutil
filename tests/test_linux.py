@@ -38,6 +38,7 @@ from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
 from . import ThreadTask
 from . import call_until
+from . import isolated
 from . import pytest
 from . import reload_module
 from . import retry_on_failure
@@ -1244,6 +1245,12 @@ class TestNetIoCounters(LinuxTestCase):
                 ifconfig_ret = ifconfig(name)
             except RuntimeError:
                 continue
+            if not any(ifconfig_ret.values()):
+                # net-tools can't parse /proc/net/dev lines whose NIC
+                # name fills the whole 15 chars (e.g. enxbaa44ee7dd5e),
+                # and prints zeros for the whole interface.
+                continue
+
             assert (
                 abs(stats.bytes_recv - ifconfig_ret['bytes_recv']) < 1024 * 10
             )
@@ -1285,6 +1292,7 @@ class TestNetConnections(LinuxTestCase):
             psutil.net_connections(kind='unix')
             assert m.called
 
+    @serial
     @skipif(not shutil.which("ss"), reason="'ss' command not available")
     def test_against_ss(self):
         # Listening ports are stable, so an exact set comparison is
@@ -1757,7 +1765,7 @@ class TestMisc(LinuxTestCase):
             psutil.PROCFS_PATH = "/proc"
 
     @retry_on_failure
-    @serial
+    @isolated
     def test_issue_687(self):
         # In case of thread ID:
         # - pid_exists() is supposed to return False
@@ -2094,12 +2102,12 @@ class TestProcess(LinuxTestCase):
     def test_open_files_mode(self):
         def get_test_file(fname):
             p = psutil.Process()
-            giveup_at = time.time() + GLOBAL_TIMEOUT
+            giveup_at = time.monotonic() + GLOBAL_TIMEOUT
             while True:
                 for file in p.open_files():
                     if file.path == os.path.abspath(fname):
                         return file
-                    elif time.time() > giveup_at:
+                    elif time.monotonic() > giveup_at:
                         break
             raise RuntimeError("timeout looking for test file")
 

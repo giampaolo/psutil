@@ -10,6 +10,15 @@
 
 #define PSUTIL_KPT2DOUBLE(t) (t##_sec + t##_usec / 1000000.0)
 
+#ifdef PSUTIL_NETBSD
+// Same states as the kernel's P_ZOMBIE(), which we can't use here:
+// it reads p_stat, which in kinfo_proc2 is the LWP status. The
+// process one is p_realstat.
+#define PSUTIL_KINFO_ZOMBIE(kp)                            \
+    ((kp).p_realstat == SZOMB || (kp).p_realstat == SDYING \
+     || (kp).p_realstat == SDEAD)
+#endif
+
 #if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
 #define PSUTIL_HASNT_KINFO_GETFILE
 struct kinfo_file *kinfo_getfile(pid_t pid, int *cnt);

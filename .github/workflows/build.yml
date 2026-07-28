@@ -28,21 +28,18 @@ jobs:
   # Run tests on Linux, macOS, Windows
   tests:
     name: "${{ matrix.os }}, ${{ matrix.arch }}"
+    # Skip same-repo PR runs: the push event already covers them.
+    if: &skip_same_repo_pr github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
-    # "full" = whole wheel matrix (master/tags), "lean" = branch/PR
-    # subset. Keeps their interpreter caches separate so a lean run
-    # doesn't restore (and pay for) the full set.
-    env:
-      CACHE_TAG: ${{ (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && 'full' || 'lean' }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - { os: ubuntu-latest, arch: x86_64 }
           - { os: ubuntu-24.04-arm, arch: aarch64 }
-          - { os: macos-15, arch: x86_64 }
-          - { os: macos-15, arch: arm64, python: "3.8" } # universal2
+          - { os: macos-15-intel, arch: x86_64 } # plain macos-15 is ARM
+          - { os: macos-15, arch: arm64 }
           - { os: windows-2025, arch: AMD64 }
           - { os: windows-11-arm, arch: ARM64, python: "3.13" }
     steps:
@@ -51,7 +48,7 @@ jobs:
       # Host Python only launches cibuildwheel. Default 3.11; some jobs
       # override matrix.python to hit their runner's toolcache.
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python || '3.11' }}
 
@@ -59,27 +56,20 @@ jobs:
       # pushes reuse them. Linux gets them from the container, so skip it.
       - name: Cache cibuildwheel interpreters
         if: runner.os != 'Linux'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/AppData/Local/pypa/cibuildwheel/Cache
             ~/Library/Caches/cibuildwheel
-          key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ env.CACHE_TAG }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
-          restore-keys: |
-            cibw-${{ runner.os }}-${{ matrix.arch }}-${{ env.CACHE_TAG }}-
+          # Invalidate cache every time build.yml or pyproject.toml change.
+          key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
 
       - name: Build wheels + run tests
-        uses: pypa/cibuildwheel@v3.4.1
+        uses: pypa/cibuildwheel@v4.1.1
+        with:
+          extras: uv # required by build-frontend in pyproject.toml
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_ENABLE: "cpython-freethreading ${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
-          # Full matrix only on master and tags. Everywhere else (PRs,
-          # branches) build a lean subset: shipped abi3 wheel (3.8),
-          # full-tested 3.14, free-threaded 3.14.
-          CIBW_BUILD: "${{ (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && '*' || 'cp38-* cp314-* cp314t-*' }}"
-          # Test against psleak git master (not the released PyPI version).
-          # Runs before .[test], so its unpinned psleak is left satisfied.
-          CIBW_BEFORE_TEST: "pip install git+https://github.com/giampaolo/psleak.git"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v7
@@ -89,10 +79,11 @@ jobs:
 
   # Run linters
   linters:
+    if: *skip_same_repo_pr
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.x
       - name: "Run linters"
@@ -102,13 +93,10 @@ jobs:
   # Merge wheels and check sanity of the package distribution.
   merge-and-check-dist:
     needs: [tests]
-    # Runs only on master + tags, where the full wheel set is built
-    # (it asserts that full set is present).
-    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.x
       - uses: actions/upload-artifact/merge@v7

@@ -248,7 +248,7 @@ Code contributors by year
 * :user:`EccoTheFlintstone <EccoTheFlintstone>` - :gh:`1368`, :gh:`1348`
 * :user:`Erwan Le Pape <erwan-le-pape>` - :gh:`1570`
 * :user:`Ghislain Le Meur <gigi206>` - :gh:`1379`
-* :user:`Kamil Rytarowski <krytarowski>` - :gh:`1526`, :gh:`1530`
+* :user:`Kamil Rytarowski <krytarowski>` - :gh:`1526`, :gh:`1530`, :gh:`1534`
   (:meth:`Process.cwd` for NetBSD)
 * :user:`Nathan Houghton <n1000>` - :gh:`1619`
 * :user:`Samer Masterson <samertm>` - :gh:`1480`

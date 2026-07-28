@@ -74,7 +74,19 @@ SC_HANDLE psutil_get_service_handle(
     char service_name, DWORD scm_access, DWORD access
 );
 
-int psutil_get_proc_info(
+#define PSUTIL_FIRST_PROCESS(Processes) \
+    ((PSYSTEM_PROCESS_INFORMATION)(Processes))
+
+#define PSUTIL_NEXT_PROCESS(Process)                                              \
+    (((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset                    \
+         ? (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process)                         \
+                                         + ((PSYSTEM_PROCESS_INFORMATION)(Process \
+                                            ))                                    \
+                                               ->NextEntryOffset)                 \
+         : NULL)
+
+int psutil_proc_table(PVOID *retBuffer);
+int psutil_proc_table_entry(
     DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retBuffer
 );
 
@@ -117,7 +129,6 @@ PyObject *psutil_proc_memory_uss(PyObject *self, PyObject *args);
 PyObject *psutil_proc_num_handles(PyObject *self, PyObject *args);
 PyObject *psutil_proc_oneshot(PyObject *self, PyObject *args);
 PyObject *psutil_proc_open_files(PyObject *self, PyObject *args);
-PyObject *psutil_proc_page_faults(PyObject *self, PyObject *args);
 PyObject *psutil_proc_priority_get(PyObject *self, PyObject *args);
 PyObject *psutil_proc_priority_set(PyObject *self, PyObject *args);
 PyObject *psutil_proc_suspend_or_resume(PyObject *self, PyObject *args);

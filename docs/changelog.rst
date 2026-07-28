@@ -216,7 +216,7 @@ Others:
   no longer set to ``0``.
 - :gh:`2844`: removed docs/ from tarball. Tarball before: 586K. Tarball now:
   396K.
-- :gh:`XXXX`: the platform-specific C extension modules (``_psutil_linux``,
+- :gh:`2883`: the platform-specific C extension modules (``_psutil_linux``,
   ``_psutil_windows``, etc.) are now built as a single private module named
   ``_psutil`` on all platforms.
 
@@ -239,6 +239,25 @@ Others:
   now raises :exc:`AccessDenied` in that case; :meth:`Process.cmdline` and
   :meth:`Process.environ` are unaffected. The opposite direction (64-bit psutil
   inspecting 32-bit processes) still works.
+- :gh:`2909`: ``setup.py`` no longer uses ``distutils``, which was removed from
+  the stdlib in Python 3.12, and only relies on ``setuptools``.
+- :gh:`2914`, [macOS]: Intel wheels now require macOS 10.15 (Catalina) or
+  higher, up from 10.9. Older versions account for 0.01% of macOS downloads,
+  and they must now build from source. ``arm64`` wheels are unaffected: they
+  already required macOS 11.
+- :gh:`2915`: stop publishing wheels for free-threaded CPython 3.13
+  (``cp313t``). Free-threading was experimental in 3.13 and is officially not
+  recommended. Publish only ``cp314t`` wheels.
+- :gh:`2919`, [Windows]: :meth:`Process.threads` is around 25x faster. It no
+  longer snapshots every thread on the system with
+  ``CreateToolhelp32Snapshot``. Thread IDs and times are now read in one shot
+  from ``NtQuerySystemInformation(SystemProcessInformation)``. As a side effect
+  the returned list is no longer silently missing the threads which could not
+  be opened due to :exc:`AccessDenied`.
+- :gh:`2920`, [Windows]: :meth:`Process.ppid` and :meth:`Process.children` are
+  around 3.5x faster. They no longer snapshot every process on the system with
+  ``CreateToolhelp32Snapshot``. PIDs and parent PIDs are now read from
+  ``NtQuerySystemInformation(SystemProcessInformation)`` instead.
 
 **Bug fixes**
 
@@ -247,6 +266,9 @@ Others:
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
   old ``time.time() - uptime()`` computation that sampled two counters from
   Python and produced sub-second differences.
+- :gh:`1534`, [NetBSD]: :meth:`Process.exe` is now fetched natively via
+  ``sysctl(KERN_PROC_PATHNAME)`` instead of reading the ``/proc/pid/exe``
+  symlink (a virtualization layer on NetBSD). (patch by Kamil Rytarowski)
 - :gh:`1967`, [Windows]: :meth:`Process.open_files` could deadlock the calling
   process. On timeout, the internal thread querying a handle name was killed
   with ``TerminateThread()``, which cannot terminate a thread blocked in the
@@ -371,6 +393,29 @@ Others:
   ("PID has been reused") when the process creation time could not be
   determined, e.g. for zombies on NetBSD / OpenBSD or on :exc:`AccessDenied` on
   Windows. An unknown creation time is no longer treated as proof of PID reuse.
+- :gh:`2899`: two :class:`Process` instances for the same process could compare
+  unequal if the creation time of either one could not be determined. They now
+  compare equal, and ``hash(Process)`` is based on the PID alone.
+- :gh:`2902`, [NetBSD], [OpenBSD]: :meth:`Process.cmdline` could fail with
+  ``OSError(EINVAL)`` for a process which died mid-call (OpenBSD), or raise a
+  broken :exc:`NoSuchProcess` whose ``str()`` in turn raised :exc:`TypeError`
+  (NetBSD).
+- :gh:`2903`, [BSD]: :meth:`Process.nice` could raise :exc:`NoSuchProcess` for
+  processes in ``SIDL`` state (not yet fully initialized). It now retrieves the
+  nice value via ``sysctl()`` instead of ``getpriority()``.
+- :gh:`2905`, [FreeBSD], [OpenBSD], [NetBSD]: the ``saved`` field of
+  :meth:`Process.gids` mistakenly reported the process saved *user* ID instead
+  of the saved group ID. Bug existed since 2011.
+- :gh:`2907`, [NetBSD]: a process which is exiting, but is not a zombie yet,
+  was not recognized as such. :class:`Process` methods raised
+  :exc:`NoSuchProcess` instead of :exc:`ZombieProcess`, and
+  :meth:`Process.status` returned ``"sleeping"`` or ``"?"``.
+- :gh:`2907`, [NetBSD]: :data:`STATUS_SUSPENDED` was never returned by
+  :meth:`Process.status`, despite being documented as NetBSD only.
+- :gh:`2907`, [NetBSD]: :meth:`Process.environ` raised ``OSError`` with
+  ``EINVAL`` / ``EFAULT`` / ``EBUSY`` for a process which is exiting or is a
+  zombie. It now returns an empty dict, or raises :exc:`NoSuchProcess` if the
+  process is gone.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^

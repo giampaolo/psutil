@@ -78,13 +78,14 @@ __all__ = [
     "AARCH64", "PYTEST_PARALLEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_subproc', 'spawn_zombie',
-    'spawn_children_pair',
+    'spawn_children_pair', 'filter_alien_children',
     # threads
     'ThreadTask',
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
-    'system_namespace', 'is_win_secure_system_proc', 'serial', 'skipif',
+    'system_namespace', 'is_win_secure_system_proc', 'serial', 'isolated',
+    'skipif',
     # type hints
     'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
@@ -92,7 +93,7 @@ __all__ = [
     # os
     'get_winver', 'kernel_version',
     # sync primitives
-    'call_until', 'wait_for_pid', 'wait_for_file',
+    'call_until', 'wait_for_pid', 'wait_for_file', 'wait_for_file_subproc',
     # network
     'check_net_address', 'filter_proc_net_connections',
     'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
@@ -378,9 +379,10 @@ def spawn_subproc(cmd=None, **kwds):
                 "[time.sleep(0.1) for x in range(100)];"  # 10 secs
             )
             cmd = [PYTHON_EXE, "-c", pyline]
+            kwds.setdefault("stderr", subprocess.PIPE)
             sproc = subprocess.Popen(cmd, **kwds)
             _subprocesses_started.add(sproc)
-            wait_for_file(testfn, delete=True, empty=True)
+            wait_for_file_subproc(testfn, sproc, delete=True, empty=True)
         finally:
             safe_rmpath(testfn)
     else:
@@ -415,11 +417,13 @@ def spawn_children_pair():
         # set (which is the default) a "conhost.exe" extra process will be
         # spawned as a child. We don't want that.
         if WINDOWS:
-            subp, tfile = pyrun(s, creationflags=0)
+            subp, tfile = pyrun(s, creationflags=0, stderr=subprocess.PIPE)
         else:
-            subp, tfile = pyrun(s)
+            subp, tfile = pyrun(s, stderr=subprocess.PIPE)
         child = psutil.Process(subp.pid)
-        grandchild_pid = int(wait_for_file(testfn, delete=True, empty=False))
+        grandchild_pid = int(
+            wait_for_file_subproc(testfn, subp, delete=True, empty=False)
+        )
         _pids_started.add(grandchild_pid)
         grandchild = psutil.Process(grandchild_pid)
         return (child, grandchild)
@@ -598,6 +602,21 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         assert not psutil.pid_exists(pid), pid
 
 
+def filter_alien_children(procs):
+    """On Windows CI the runner agent (provjobd.exe) sporadically
+    spawns wsl.exe, conhost.exe, etc. When their parent dies the PPID
+    is left dangling (Windows never clears it), and if that PID gets
+    reused by us they show up as our children.
+    """
+    if not (WINDOWS and CI_TESTING):
+        return procs
+    names = {"wsl.exe", "conhost.exe"}
+    aliens = {
+        x.pid for x in psutil.process_iter() if x.name().lower() in names
+    }
+    return [x for x in procs if x.pid not in aliens]
+
+
 def reap_children(recursive=False):
     """Terminate and wait() any subprocess started by this test suite
     and any children currently running, ensuring that no processes stick
@@ -700,8 +719,10 @@ class retry:
 
     def __iter__(self):
         if self.timeout:
-            stop_at = time.time() + self.timeout
-            while time.time() < stop_at:
+            # time.monotonic(): the BSD CI VMs step the system clock
+            # (NTP), which would expire a time.time() deadline early.
+            stop_at = time.monotonic() + self.timeout
+            while time.monotonic() < stop_at:
                 yield
         elif self.retries:
             for _ in range(self.retries):
@@ -768,6 +789,23 @@ def wait_for_file(fname, delete=True, empty=False):
     return data
 
 
+def wait_for_file_subproc(fname, sproc, delete=True, empty=False):
+    """Wait for a file to be written on disk, which is supposed to be
+    written by a subprocess.
+    """
+    try:
+        return wait_for_file(fname, delete=delete, empty=empty)
+    except FileNotFoundError as err:
+        ret = sproc.poll()
+        if ret is None:
+            raise
+        stderr = sproc.stderr.read() if sproc.stderr else b""
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode(errors="replace")
+        msg = f"subprocess died (exit {ret}):\n{stderr}"
+        raise RuntimeError(msg) from err
+
+
 @retry(
     exception=(AssertionError, pytest.fail.Exception),
     logfun=None,
@@ -794,8 +832,8 @@ def safe_rmpath(path):
         # open handles or references preventing the delete operation
         # to succeed immediately, so we retry for a while. See:
         # https://bugs.python.org/issue33240
-        stop_at = time.time() + GLOBAL_TIMEOUT
-        while time.time() < stop_at:
+        stop_at = time.monotonic() + GLOBAL_TIMEOUT
+        while time.monotonic() < stop_at:
             try:
                 return fun()
             except FileNotFoundError:
@@ -892,8 +930,26 @@ def get_testfn(suffix="", dir=None):
 # --- testing
 # ===================================================================
 
-
+# `@serial` decorator: put all marked tests on the same xdist worker,
+# so they don't run concurrently in the same process. Needed by tests
+# that share the same system-wide resource (e.g. a socket) and must not
+# overlap.
+# - net_connections() / Process.net_connections() that compare vs
+#   `ss`, `netstat`, etc.
+# - the socket-opening helpers: create_sockets(), bind_socket(),
+#   tcp_socketpair(), unix_socketpair(), bind_unix_socket()
 serial = pytest.mark.xdist_group(name="serial")
+
+# `@isolated` decorator: these tests are skipped under xdist and run in
+# a second, separate pytest run (`-m isolated`) that uses a single
+# process. They need a quiet, non-xdist environment, because
+# they measure noisy per-process or system counters.
+# - CPU counters compared vs getrusage / vmstat / WMI: cpu_stats(),
+#   Process.num_ctx_switches(), Process.page_faults()
+# - per-process counts other tests can move: Process.num_threads(),
+#   Process.num_fds(), Process.threads(), heap_info()
+isolated = pytest.mark.isolated
+
 skipif = pytest.mark.skipif
 
 

@@ -537,33 +537,37 @@ class Process:
 
     __repr__ = __str__
 
+    @staticmethod
+    def _cmp_idents(ident1, ident2):
+        """Compare two `(pid, ctime)` identity tuples and return
+        "same", "different" or "unknown". "unknown" means ctime is
+        missing on either side (`AccessDenied` on Windows, zombies
+        resulting in ctime 0), which is not proof of a different
+        process.
+        """
+        pid1, ctime1 = ident1
+        pid2, ctime2 = ident2
+        if pid1 != pid2:
+            return "different"
+        if not ctime1 or not ctime2:
+            return "unknown"
+        return "same" if ctime1 == ctime2 else "different"
+
     def __eq__(self, other):
         # Test for equality with another Process object based
         # on PID and creation time.
         if not isinstance(other, Process):
             return NotImplemented
-        if OPENBSD or NETBSD or SUNOS:  # pragma: no cover
-            # Zombie processes on Open/NetBSD/illumos/Solaris have a
-            # creation time of 0.0.  This covers the case when a process
-            # started normally (so it has a ctime), then it turned into a
-            # zombie. It's important to do this because is_running()
-            # depends on __eq__.
-            pid1, ident1 = self._ident
-            pid2, ident2 = other._ident
-            if pid1 == pid2:
-                if ident1 and not ident2:
-                    try:
-                        return self.status() == ProcessStatus.STATUS_ZOMBIE
-                    except Error:
-                        pass
-        return self._ident == other._ident
+        return self._cmp_idents(self._ident, other._ident) != "different"
 
     def __ne__(self, other):
         return not self == other
 
     def __hash__(self):
+        # PID only: __eq__ can match idents with different ctimes, and
+        # equal objects must hash the same.
         if self._hash is None:
-            self._hash = hash(self._ident)
+            self._hash = hash(self._ident[0])
         return self._hash
 
     def _raise_if_pid_reused(self):
@@ -765,29 +769,19 @@ class Process:
             return False
         try:
             # Checking if PID is alive is not enough as the PID might
-            # have been reused by another process. Process identity /
-            # uniqueness over time is guaranteed by (PID + creation
-            # time) and that is verified in __eq__.
+            # have been reused by another process. Process identity is
+            # guaranteed by (PID + creation time), see __eq__.
             other = Process(self.pid)
-            pid_reused = self != other
-            if pid_reused:
-                if not self._ident[1] or not other._ident[1]:
-                    # A null create time means identity is unknown: on
-                    # Windows create_time() may raise AccessDenied and
-                    # be set to None, on NetBSD / OpenBSD zombies have
-                    # creation time == 0 (see #2287, #2593).
-                    debug(
-                        "null create time, ignoring PID reuse check:"
-                        f" {self._ident} vs. {other._ident}"
-                    )
-                    pid_reused = False
-                else:
-                    debug(f"PID reuse: {self._ident} vs. {other._ident}")
-
-            self._pid_reused = pid_reused
+            self._pid_reused = self != other
             if self._pid_reused:
+                debug(f"PID reuse detected: {self._ident} vs. {other._ident}")
                 _pids_reused.add(self.pid)
                 raise NoSuchProcess(self.pid)
+            if self._cmp_idents(self._ident, other._ident) == "unknown":
+                debug(
+                    "null create time, PID reuse check inconclusive:"
+                    f" {self._ident} vs. {other._ident}"
+                )
             return True
         except ZombieProcess:
             # We should never get here as it's already handled in
@@ -809,9 +803,6 @@ class Process:
         # change to 1 (init) in case this process turns into a zombie:
         # https://github.com/giampaolo/psutil/issues/321
         # http://stackoverflow.com/questions/356722/
-
-        # XXX should we check creation time here rather than in
-        # Process.parent()?
         self._raise_if_pid_reused()
         if POSIX:
             return self._proc.ppid()
