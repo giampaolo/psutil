@@ -77,6 +77,8 @@ jobs:
 
       - name: Build wheels + run tests
         uses: pypa/cibuildwheel@v4.1.1
+        with:
+          extras: uv # required by build-frontend in pyproject.toml
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
 

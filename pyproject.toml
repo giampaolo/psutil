@@ -303,6 +303,7 @@ skip = [
     "cp39-macosx*",
     "cp3{10,11,12,13}-*",
 ]
+build-frontend = "build[uv]"
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
 
 # Pin it, else it follows whichever Python builds the wheel. arm64
