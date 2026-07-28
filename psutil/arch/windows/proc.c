@@ -507,7 +507,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
-    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
+    if (psutil_proc_table_entry(pid, &process, &buffer) != 0)
         goto error;
 
     for (i = 0; i < process->NumberOfThreads; i++) {
@@ -911,7 +911,7 @@ psutil_proc_page_faults(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
+    if (psutil_proc_table_entry(pid, &process, &buffer) != 0)
         return NULL;
     major = process->HardFaultCount;
     minor = process->PageFaultCount - major;
@@ -931,7 +931,7 @@ psutil_proc_is_suspended(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
+    if (psutil_proc_table_entry(pid, &process, &buffer) != 0)
         return NULL;
     for (i = 0; i < process->NumberOfThreads; i++) {
         if (process->Threads[i].ThreadState != Waiting
@@ -1070,7 +1070,7 @@ psutil_ppid_map(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
-    if (psutil_get_all_proc_info(&buffer) != 0) {
+    if (psutil_proc_table(&buffer) != 0) {
         Py_DECREF(py_retdict);
         return NULL;
     }

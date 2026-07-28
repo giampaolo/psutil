@@ -501,12 +501,12 @@ out:
 }
 
 
-// Fetch info about all processes at once. Walk the result with the
-// PSUTIL_FIRST_PROCESS / PSUTIL_NEXT_PROCESS macros. On success the
+// Fetch the whole process table via NtQuerySystemInformation. Walk it
+// with the PSUTIL_FIRST_PROCESS / PSUTIL_NEXT_PROCESS macros. The
 // caller owns *retBuffer and must free() it. Return 0 on success, else
 // -1 with Python exception set.
 int
-psutil_get_all_proc_info(PVOID *retBuffer) {
+psutil_proc_table(PVOID *retBuffer) {
     static ULONG initialBufferSize = 0x4000;
     NTSTATUS status;
     PVOID buffer;
@@ -554,20 +554,19 @@ psutil_get_all_proc_info(PVOID *retBuffer) {
 }
 
 
-// Given a PID and a PSYSTEM_PROCESS_INFORMATION struct, fills it with
-// various process information by using NtQuerySystemInformation. We
-// use this as a fallback when faster functions fail with access
-// denied. This is slower because it iterates over all processes but it
-// doesn't require any privilege (also work for PID 0). Return 0 on
-// success, else -1 with Python exception set.
+// Find one process in the table. *retProcess points into *retBuffer,
+// which the caller owns and must free(). We use this as a fallback
+// when faster functions fail with access denied: it's slower because
+// it fetches all processes, but requires no privilege and works for
+// PID 0 too. Return 0 on success, else -1 with Python exception set.
 int
-psutil_get_proc_info(
+psutil_proc_table_entry(
     DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retBuffer
 ) {
     PVOID buffer;
     PSYSTEM_PROCESS_INFORMATION process;
 
-    if (psutil_get_all_proc_info(&buffer) != 0)
+    if (psutil_proc_table(&buffer) != 0)
         return -1;
 
     process = PSUTIL_FIRST_PROCESS(buffer);
@@ -604,7 +603,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
         return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
-    if (psutil_get_proc_info(pid, &proc, &buffer) != 0)
+    if (psutil_proc_table_entry(pid, &proc, &buffer) != 0)
         goto error;
 
     for (i = 0; i < proc->NumberOfThreads; i++)

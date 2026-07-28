@@ -85,8 +85,8 @@ SC_HANDLE psutil_get_service_handle(
                                                ->NextEntryOffset)                 \
          : NULL)
 
-int psutil_get_all_proc_info(PVOID *retBuffer);
-int psutil_get_proc_info(
+int psutil_proc_table(PVOID *retBuffer);
+int psutil_proc_table_entry(
     DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retBuffer
 );
 
