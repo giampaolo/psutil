@@ -1013,8 +1013,7 @@ class Process:
 
     @wrap_exceptions
     def status(self):
-        suspended = _psutil.proc_is_suspended(self.pid)
-        if suspended:
+        if self._oneshot()["is_suspended"]:
             return ProcessStatus.STATUS_STOPPED
         else:
             return ProcessStatus.STATUS_RUNNING

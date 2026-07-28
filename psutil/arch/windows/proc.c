@@ -894,31 +894,6 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 }
 
 
-// Return True if all process threads are in waiting/suspended state.
-PyObject *
-psutil_proc_is_suspended(PyObject *self, PyObject *args) {
-    DWORD pid;
-    ULONG i;
-    PSYSTEM_PROCESS_INFORMATION process;
-    PVOID buffer;
-
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-    if (psutil_proc_table_entry(pid, &process, &buffer) != 0)
-        return NULL;
-    for (i = 0; i < process->NumberOfThreads; i++) {
-        if (process->Threads[i].ThreadState != Waiting
-            || process->Threads[i].WaitReason != Suspended)
-        {
-            free(buffer);
-            Py_RETURN_FALSE;
-        }
-    }
-    free(buffer);
-    Py_RETURN_TRUE;
-}
-
-
 PyObject *
 psutil_proc_num_handles(PyObject *self, PyObject *args) {
     DWORD pid;
