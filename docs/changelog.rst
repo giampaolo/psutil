@@ -258,6 +258,10 @@ Others:
   around 3.5x faster. They no longer snapshot every process on the system with
   ``CreateToolhelp32Snapshot``. PIDs and parent PIDs are now read from
   ``NtQuerySystemInformation(SystemProcessInformation)`` instead.
+- :gh:`2921`, [Windows]: :meth:`Process.ppid` is around 58x faster (99x on
+  ARM64). Instead of fetching the whole process table to read one field, the
+  parent PID is now read from
+  ``NtQueryInformationProcess(ProcessBasicInformation)``.
 
 **Bug fixes**
 
