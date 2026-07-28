@@ -279,6 +279,7 @@ addopts = [
 strict_config = true
 strict_markers = true
 verbosity_subtests = "0"
+verbosity_assertions = "2"
 testpaths = ["tests/"]
 python_files = ["test_*.py"]
 markers = [

@@ -70,6 +70,7 @@ from . import sh
 from . import skip_on_access_denied
 from . import skip_on_not_implemented
 from . import skipif
+from . import wait_for_file
 
 # ===================================================================
 # --- psutil.Process class tests
@@ -654,12 +655,14 @@ class TestProcess(PsutilTestCase):
         assert out == 'hey'
 
     def test_cmdline(self):
-        cmdline = [
-            PYTHON_EXE,
-            "-c",
-            "import time; [time.sleep(0.1) for x in range(100)]",
-        ]
+        testfn = self.get_testfn()
+        pyline = (
+            f"import time; open(r'{testfn}', 'w').close(); "
+            "[time.sleep(0.1) for x in range(100)]"
+        )
+        cmdline = [PYTHON_EXE, "-c", pyline]
         p = self.spawn_psproc(cmdline)
+        wait_for_file(testfn, delete=True, empty=True)
 
         if NETBSD and p.cmdline() == []:
             # https://github.com/giampaolo/psutil/issues/2250
