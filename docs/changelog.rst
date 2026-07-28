@@ -254,6 +254,10 @@ Others:
   from ``NtQuerySystemInformation(SystemProcessInformation)``. As a side effect
   the returned list is no longer silently missing the threads which could not
   be opened due to :exc:`AccessDenied`.
+- :gh:`2920`, [Windows]: :meth:`Process.ppid` and :meth:`Process.children` are
+  around 3.5x faster. They no longer snapshot every process on the system with
+  ``CreateToolhelp32Snapshot``. PIDs and parent PIDs are now read from
+  ``NtQuerySystemInformation(SystemProcessInformation)`` instead.
 
 **Bug fixes**
 
