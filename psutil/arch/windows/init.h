@@ -129,7 +129,6 @@ PyObject *psutil_proc_memory_uss(PyObject *self, PyObject *args);
 PyObject *psutil_proc_num_handles(PyObject *self, PyObject *args);
 PyObject *psutil_proc_oneshot(PyObject *self, PyObject *args);
 PyObject *psutil_proc_open_files(PyObject *self, PyObject *args);
-PyObject *psutil_proc_page_faults(PyObject *self, PyObject *args);
 PyObject *psutil_proc_priority_get(PyObject *self, PyObject *args);
 PyObject *psutil_proc_priority_set(PyObject *self, PyObject *args);
 PyObject *psutil_proc_suspend_or_resume(PyObject *self, PyObject *args);

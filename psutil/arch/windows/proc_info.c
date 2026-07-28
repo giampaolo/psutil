@@ -641,6 +641,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "io_bytes_others", "K", proc->OtherTransferCount.QuadPart)) goto error;
     // proc memory
     if (!pydict_add(dict, "PageFaultCount", "K", (ULONGLONG)proc->PageFaultCount)) goto error;
+    if (!pydict_add(dict, "HardFaultCount", "K", (ULONGLONG)proc->HardFaultCount)) goto error;
     if (!pydict_add(dict, "PeakWorkingSetSize", "K", (ULONGLONG)proc->PeakWorkingSetSize)) goto error;
     if (!pydict_add(dict, "WorkingSetSize", "K", (ULONGLONG)proc->WorkingSetSize)) goto error;
     if (!pydict_add(dict, "QuotaPeakPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPeakPagedPoolUsage)) goto error;

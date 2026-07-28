@@ -792,8 +792,13 @@ class Process:
 
     @wrap_exceptions
     def page_faults(self):
-        t = _psutil.proc_page_faults(self.pid)
-        return ntp.ppagefaults(*t)
+        # PageFaultCount is the total (soft + hard), while
+        # HardFaultCount tracks hard (major) faults only. Minor faults
+        # are derived by subtracting the two.
+        info = self._oneshot()
+        major = info["HardFaultCount"]
+        minor = info["PageFaultCount"] - major
+        return ntp.ppagefaults(minor, major)
 
     def memory_maps(self):
         try:
