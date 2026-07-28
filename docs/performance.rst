@@ -122,7 +122,8 @@ Windows
 *  :meth:`~Process.cpu_percent`, :meth:`~Process.cpu_times`,
    :meth:`~Process.io_counters`, :meth:`~Process.memory_info`,
    :meth:`~Process.memory_info_ex`, :meth:`~Process.num_ctx_switches`,
-   :meth:`~Process.num_handles`, :meth:`~Process.num_threads`
+   :meth:`~Process.num_handles`, :meth:`~Process.num_threads`,
+   :meth:`~Process.page_faults`
 
 *  :meth:`~Process.exe`, :meth:`~Process.name`
 
