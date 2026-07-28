@@ -262,6 +262,11 @@ Others:
   ARM64). Instead of fetching the whole process table to read one field, the
   parent PID is now read from
   ``NtQueryInformationProcess(ProcessBasicInformation)``.
+- :gh:`2923`, [Windows]: :meth:`Process.status` is now part of the
+  :meth:`Process.oneshot` group, so within that context (also used by
+  :meth:`Process.as_dict`) it no longer costs an extra system-wide query.
+  Reading 4 methods of that group in one :meth:`Process.oneshot` block is now
+  around 3.9x faster than reading them without it, up from 2x.
 
 **Bug fixes**
 
