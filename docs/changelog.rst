@@ -248,6 +248,12 @@ Others:
 - :gh:`2915`: stop publishing wheels for free-threaded CPython 3.13
   (``cp313t``). Free-threading was experimental in 3.13 and is officially not
   recommended. Publish only ``cp314t`` wheels.
+- :gh:`2919`, [Windows]: :meth:`Process.threads` is around 25x faster. It no
+  longer snapshots every thread on the system with
+  ``CreateToolhelp32Snapshot``. Thread IDs and times are now read in one shot
+  from ``NtQuerySystemInformation(SystemProcessInformation)``. As a side effect
+  the returned list is no longer silently missing the threads which could not
+  be opened due to :exc:`AccessDenied`.
 
 **Bug fixes**
 
