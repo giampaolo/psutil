@@ -48,7 +48,7 @@ jobs:
       # Host Python only launches cibuildwheel. Default 3.11; some jobs
       # override matrix.python to hit their runner's toolcache.
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python || '3.11' }}
 
@@ -56,7 +56,7 @@ jobs:
       # pushes reuse them. Linux gets them from the container, so skip it.
       - name: Cache cibuildwheel interpreters
         if: runner.os != 'Linux'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/AppData/Local/pypa/cibuildwheel/Cache
@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.x
       - name: "Run linters"
@@ -107,7 +107,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.x
       - uses: actions/upload-artifact/merge@v7
