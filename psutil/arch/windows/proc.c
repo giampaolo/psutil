@@ -18,7 +18,7 @@
 #include <windows.h>
 #include <Psapi.h>  // memory_info(), memory_maps()
 #include <signal.h>
-#include <tlhelp32.h>  // threads(), PROCESSENTRY32
+#include <tlhelp32.h>  // ppid_map(), PROCESSENTRY32
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -498,104 +498,43 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
-    HANDLE hThread = NULL;
-    THREADENTRY32 te32 = {0};
     DWORD pid;
-    int pid_return;
-    int rc;
-    FILETIME ftDummy, ftKernel, ftUser;
-    HANDLE hThreadSnap = NULL;
+    ULONG i;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
-    if (pid == 0) {
-        // raise AD instead of returning 0 as procexp is able to
-        // retrieve useful information somehow
-        psutil_oserror_ad("forced for PID 0");
-        goto error;
-    }
-
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0) {
-        psutil_oserror_nsp("psutil_pid_is_running -> 0");
-        goto error;
-    }
-    if (pid_return == -1)
+    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
         goto error;
 
-    hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-    if (hThreadSnap == INVALID_HANDLE_VALUE) {
-        psutil_oserror_wsyscall("CreateToolhelp32Snapshot");
-        goto error;
-    }
+    for (i = 0; i < process->NumberOfThreads; i++) {
+        SYSTEM_THREAD_INFORMATION *thread = &process->Threads[i];
 
-    // Fill in the size of the structure before using it
-    te32.dwSize = sizeof(THREADENTRY32);
-
-    if (!Thread32First(hThreadSnap, &te32)) {
-        psutil_oserror_wsyscall("Thread32First");
-        goto error;
-    }
-
-    // Walk the thread snapshot to find all threads of the process.
-    // If the thread belongs to the process, increase the counter.
-    do {
-        if (te32.th32OwnerProcessID == pid) {
-            hThread = NULL;
-            hThread = OpenThread(
-                THREAD_QUERY_INFORMATION, FALSE, te32.th32ThreadID
-            );
-            if (hThread == NULL) {
-                // thread has disappeared on us
-                continue;
-            }
-
-            rc = GetThreadTimes(
-                hThread, &ftDummy, &ftDummy, &ftKernel, &ftUser
-            );
-            if (rc == 0) {
-                psutil_oserror_wsyscall("GetThreadTimes");
-                goto error;
-            }
-
-            /*
-             * User and kernel times are represented as a FILETIME structure
-             * which contains a 64-bit value representing the number of
-             * 100-nanosecond intervals since January 1, 1601 (UTC):
-             * http://msdn.microsoft.com/en-us/library/ms724284(VS.85).aspx
-             * To convert it into a float representing the seconds that the
-             * process has executed in user/kernel mode I borrowed the code
-             * below from Python's Modules/posixmodule.c
-             */
-            if (!pylist_append_fmt(
-                    py_retlist,
-                    "kdd",
-                    te32.th32ThreadID,
-                    (double)(ftUser.dwHighDateTime * HI_T
-                             + ftUser.dwLowDateTime * LO_T),
-                    (double)(ftKernel.dwHighDateTime * HI_T
-                             + ftKernel.dwLowDateTime * LO_T)
-                ))
-            {
-                goto error;
-            }
-
-            CloseHandle(hThread);
+        // Times count 100-nanosecond intervals, turn them into secs.
+        if (!pylist_append_fmt(
+                py_retlist,
+                "kdd",
+                (DWORD)(ULONG_PTR)thread->ClientId.UniqueThread,
+                (double)thread->UserTime.HighPart * HI_T
+                    + (double)thread->UserTime.LowPart * LO_T,
+                (double)thread->KernelTime.HighPart * HI_T
+                    + (double)thread->KernelTime.LowPart * LO_T
+            ))
+        {
+            free(buffer);
+            goto error;
         }
-    } while (Thread32Next(hThreadSnap, &te32));
+    }
 
-    CloseHandle(hThreadSnap);
+    free(buffer);
     return py_retlist;
 
 error:
     Py_DECREF(py_retlist);
-    if (hThread != NULL)
-        CloseHandle(hThread);
-    if (hThreadSnap != NULL)
-        CloseHandle(hThreadSnap);
     return NULL;
 }
 
