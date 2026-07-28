@@ -34,7 +34,6 @@ static PyMethodDef PsutilMethods[] = {
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS},
     {"proc_io_priority_get", psutil_proc_io_priority_get, METH_VARARGS},
     {"proc_io_priority_set", psutil_proc_io_priority_set, METH_VARARGS},
-    {"proc_is_suspended", psutil_proc_is_suspended, METH_VARARGS},
     {"proc_kill", psutil_proc_kill, METH_VARARGS},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS},

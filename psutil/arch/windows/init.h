@@ -121,7 +121,6 @@ PyObject *psutil_proc_exe(PyObject *self, PyObject *args);
 PyObject *psutil_proc_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_proc_io_priority_get(PyObject *self, PyObject *args);
 PyObject *psutil_proc_io_priority_set(PyObject *self, PyObject *args);
-PyObject *psutil_proc_is_suspended(PyObject *self, PyObject *args);
 PyObject *psutil_proc_kill(PyObject *self, PyObject *args);
 PyObject *psutil_proc_memory_info(PyObject *self, PyObject *args);
 PyObject *psutil_proc_memory_maps(PyObject *self, PyObject *args);

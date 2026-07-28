@@ -594,6 +594,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
     PVOID buffer = NULL;
     ULONG i;
     ULONG ctx_switches = 0;
+    int suspended = 1;  // a process with no threads counts as suspended
     double user_time;
     double kernel_time;
     double create_time;
@@ -606,8 +607,14 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
     if (psutil_proc_table_entry(pid, &proc, &buffer) != 0)
         goto error;
 
-    for (i = 0; i < proc->NumberOfThreads; i++)
+    for (i = 0; i < proc->NumberOfThreads; i++) {
         ctx_switches += proc->Threads[i].ContextSwitches;
+        if (proc->Threads[i].ThreadState != Waiting
+            || proc->Threads[i].WaitReason != Suspended)
+        {
+            suspended = 0;
+        }
+    }
 
     user_time = (double)proc->UserTime.HighPart * HI_T
                 + (double)proc->UserTime.LowPart * LO_T;
@@ -628,6 +635,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
     // clang-format off
     if (!pydict_add(dict, "num_handles", "k", proc->HandleCount)) goto error;
     if (!pydict_add(dict, "ctx_switches", "k", ctx_switches)) goto error;
+    if (!pydict_add(dict, "is_suspended", "i", suspended)) goto error;
     if (!pydict_add(dict, "user_time", "d", user_time)) goto error;
     if (!pydict_add(dict, "kernel_time", "d", kernel_time)) goto error;
     if (!pydict_add(dict, "create_time", "d", create_time)) goto error;
