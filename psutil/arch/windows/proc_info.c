@@ -12,18 +12,6 @@
 #include "../../arch/all/init.h"
 
 
-#define PSUTIL_FIRST_PROCESS(Processes) \
-    ((PSYSTEM_PROCESS_INFORMATION)(Processes))
-
-#define PSUTIL_NEXT_PROCESS(Process)                                              \
-    (((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset                    \
-         ? (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process)                         \
-                                         + ((PSYSTEM_PROCESS_INFORMATION)(Process \
-                                            ))                                    \
-                                               ->NextEntryOffset)                 \
-         : NULL)
-
-
 // Given a pointer into a process's memory, figure out how much data
 // can be read from it.
 static int
@@ -513,27 +501,22 @@ out:
 }
 
 
-// Given a PID and a PSYSTEM_PROCESS_INFORMATION struct, fills it with
-// various process information by using NtQuerySystemInformation. We
-// use this as a fallback when faster functions fail with access
-// denied. This is slower because it iterates over all processes but it
-// doesn't require any privilege (also work for PID 0). Return 0 on
-// success, else -1 with Python exception set.
+// Fetch the whole process table via NtQuerySystemInformation. Walk it
+// with the PSUTIL_FIRST_PROCESS / PSUTIL_NEXT_PROCESS macros. The
+// caller owns *retBuffer and must free() it. Return 0 on success, else
+// -1 with Python exception set.
 int
-psutil_get_proc_info(
-    DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retBuffer
-) {
+psutil_proc_table(PVOID *retBuffer) {
     static ULONG initialBufferSize = 0x4000;
     NTSTATUS status;
     PVOID buffer;
     ULONG bufferSize;
-    PSYSTEM_PROCESS_INFORMATION process;
 
     bufferSize = initialBufferSize;
     buffer = malloc(bufferSize);
     if (buffer == NULL) {
         PyErr_NoMemory();
-        goto error;
+        return -1;
     }
 
     while (TRUE) {
@@ -547,7 +530,7 @@ psutil_get_proc_info(
             buffer = malloc(bufferSize);
             if (buffer == NULL) {
                 PyErr_NoMemory();
-                goto error;
+                return -1;
             }
         }
         else {
@@ -559,11 +542,32 @@ psutil_get_proc_info(
         psutil_SetFromNTStatusErr(
             status, "NtQuerySystemInformation(SystemProcessInformation)"
         );
-        goto error;
+        free(buffer);
+        return -1;
     }
 
     if (bufferSize <= 0x20000)
         initialBufferSize = bufferSize;
+
+    *retBuffer = buffer;
+    return 0;
+}
+
+
+// Find one process in the table. *retProcess points into *retBuffer,
+// which the caller owns and must free(). We use this as a fallback
+// when faster functions fail with access denied: it's slower because
+// it fetches all processes, but requires no privilege and works for
+// PID 0 too. Return 0 on success, else -1 with Python exception set.
+int
+psutil_proc_table_entry(
+    DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retBuffer
+) {
+    PVOID buffer;
+    PSYSTEM_PROCESS_INFORMATION process;
+
+    if (psutil_proc_table(&buffer) != 0)
+        return -1;
 
     process = PSUTIL_FIRST_PROCESS(buffer);
     do {
@@ -574,12 +578,8 @@ psutil_get_proc_info(
         }
     } while ((process = PSUTIL_NEXT_PROCESS(process)));
 
+    free(buffer);
     psutil_oserror_nsp("NtQuerySystemInformation (no PID found)");
-    goto error;
-
-error:
-    if (buffer != NULL)
-        free(buffer);
     return -1;
 }
 
@@ -603,7 +603,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
         return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
-    if (psutil_get_proc_info(pid, &proc, &buffer) != 0)
+    if (psutil_proc_table_entry(pid, &proc, &buffer) != 0)
         goto error;
 
     for (i = 0; i < proc->NumberOfThreads; i++)

@@ -18,7 +18,6 @@
 #include <windows.h>
 #include <Psapi.h>  // memory_info(), memory_maps()
 #include <signal.h>
-#include <tlhelp32.h>  // ppid_map(), PROCESSENTRY32
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -508,7 +507,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
-    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
+    if (psutil_proc_table_entry(pid, &process, &buffer) != 0)
         goto error;
 
     for (i = 0; i < process->NumberOfThreads; i++) {
@@ -912,7 +911,7 @@ psutil_proc_page_faults(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
+    if (psutil_proc_table_entry(pid, &process, &buffer) != 0)
         return NULL;
     major = process->HardFaultCount;
     minor = process->PageFaultCount - major;
@@ -932,7 +931,7 @@ psutil_proc_is_suspended(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
+    if (psutil_proc_table_entry(pid, &process, &buffer) != 0)
         return NULL;
     for (i = 0; i < process->NumberOfThreads; i++) {
         if (process->Threads[i].ThreadState != Waiting
@@ -1066,41 +1065,40 @@ psutil_ppid_map(PyObject *self, PyObject *args) {
     PyObject *py_pid = NULL;
     PyObject *py_ppid = NULL;
     PyObject *py_retdict = PyDict_New();
-    HANDLE handle = NULL;
-    PROCESSENTRY32 pe = {0};
-    pe.dwSize = sizeof(PROCESSENTRY32);
+    PVOID buffer;
+    PSYSTEM_PROCESS_INFORMATION process;
 
     if (py_retdict == NULL)
         return NULL;
-    handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (handle == INVALID_HANDLE_VALUE) {
-        psutil_oserror();
+    if (psutil_proc_table(&buffer) != 0) {
         Py_DECREF(py_retdict);
         return NULL;
     }
 
-    if (Process32First(handle, &pe)) {
-        do {
-            py_pid = PyLong_FromPid(pe.th32ProcessID);
-            if (py_pid == NULL)
-                goto error;
-            py_ppid = PyLong_FromPid(pe.th32ParentProcessID);
-            if (py_ppid == NULL)
-                goto error;
-            if (PyDict_SetItem(py_retdict, py_pid, py_ppid))
-                goto error;
-            Py_CLEAR(py_pid);
-            Py_CLEAR(py_ppid);
-        } while (Process32Next(handle, &pe));
-    }
+    process = PSUTIL_FIRST_PROCESS(buffer);
+    do {
+        DWORD pid = (DWORD)(ULONG_PTR)process->UniqueProcessId;
+        DWORD ppid = (DWORD)(ULONG_PTR)process->InheritedFromUniqueProcessId;
 
-    CloseHandle(handle);
+        py_pid = PyLong_FromPid(pid);
+        if (py_pid == NULL)
+            goto error;
+        py_ppid = PyLong_FromPid(ppid);
+        if (py_ppid == NULL)
+            goto error;
+        if (PyDict_SetItem(py_retdict, py_pid, py_ppid))
+            goto error;
+        Py_CLEAR(py_pid);
+        Py_CLEAR(py_ppid);
+    } while ((process = PSUTIL_NEXT_PROCESS(process)));
+
+    free(buffer);
     return py_retdict;
 
 error:
     Py_XDECREF(py_pid);
     Py_XDECREF(py_ppid);
     Py_DECREF(py_retdict);
-    CloseHandle(handle);
+    free(buffer);
     return NULL;
 }
