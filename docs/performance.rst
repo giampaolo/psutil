@@ -121,11 +121,14 @@ Windows
 
 *  :meth:`~Process.cpu_percent`, :meth:`~Process.cpu_times`,
    :meth:`~Process.io_counters`, :meth:`~Process.memory_info`,
-   :meth:`~Process.memory_info_ex`, :meth:`~Process.num_ctx_switches`,
-   :meth:`~Process.num_handles`, :meth:`~Process.num_threads`,
-   :meth:`~Process.page_faults`
+   :meth:`~Process.memory_info_ex`, :meth:`~Process.memory_percent`,
+   :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_handles`,
+   :meth:`~Process.num_threads`, :meth:`~Process.page_faults`
 
 *  :meth:`~Process.exe`, :meth:`~Process.name`
+
+Some of these first try a faster dedicated call, and only use the shared one if
+it raises :exc:`AccessDenied`. The second figure is for such processes.
 
 *Speedup: +1.8× / +6.5×*
 
@@ -134,7 +137,8 @@ macOS
 
 *  :meth:`~Process.cpu_percent`, :meth:`~Process.cpu_times`,
    :meth:`~Process.memory_info`, :meth:`~Process.memory_percent`,
-   :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_threads`
+   :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_threads`,
+   :meth:`~Process.page_faults`
 
 *  :meth:`~Process.create_time`, :meth:`~Process.gids`, :meth:`~Process.name`,
    :meth:`~Process.ppid`, :meth:`~Process.status`, :meth:`~Process.terminal`,
@@ -149,7 +153,8 @@ BSD
    :meth:`~Process.cpu_times`, :meth:`~Process.create_time`,
    :meth:`~Process.gids`, :meth:`~Process.io_counters`,
    :meth:`~Process.memory_info`, :meth:`~Process.memory_percent`,
-   :meth:`~Process.name`, :meth:`~Process.num_ctx_switches`,
+   :meth:`~Process.name`, :meth:`~Process.nice`,
+   :meth:`~Process.num_ctx_switches`, :meth:`~Process.page_faults`,
    :meth:`~Process.ppid`, :meth:`~Process.status`, :meth:`~Process.terminal`,
    :meth:`~Process.uids`, :meth:`~Process.username`
 

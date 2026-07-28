@@ -1225,6 +1225,10 @@ Process class
        ...
        >>>
 
+    Which methods share a syscall, and therefore get cached, depends on the
+    platform, so the example above is indicative. See
+    :ref:`perf-oneshot-methods` for the full list.
+
     .. seealso::
       - :doc:`performance`
       - :doc:`/blog/2016/500-is-twice-as-fast`
