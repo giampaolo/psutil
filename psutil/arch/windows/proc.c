@@ -1032,6 +1032,36 @@ error:
 }
 
 
+// Return the parent PID. Needs a handle, so it can fail with
+// AccessDenied; the Python layer falls back to ppid_map() then.
+PyObject *
+psutil_proc_ppid(PyObject *self, PyObject *args) {
+    DWORD pid;
+    HANDLE hProcess;
+    NTSTATUS status;
+    PROCESS_BASIC_INFORMATION pbi;
+
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+    hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+    if (hProcess == NULL)
+        return NULL;
+
+    status = NtQueryInformationProcess(
+        hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), NULL
+    );
+    CloseHandle(hProcess);
+    if (!NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "NtQueryInformationProcess(ProcessBasicInformation)"
+        );
+        return NULL;
+    }
+
+    return PyLong_FromPid((DWORD)pbi.InheritedFromUniqueProcessId);
+}
+
+
 // Return a {pid:ppid, ...} dict for all running processes.
 PyObject *
 psutil_ppid_map(PyObject *self, PyObject *args) {

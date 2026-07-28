@@ -713,11 +713,18 @@ class Process:
         s = _psutil.proc_environ(self.pid)
         return parse_environ_block(s)
 
+    @wrap_exceptions
     def ppid(self):
         try:
-            return ppid_map()[self.pid]
-        except KeyError:
-            raise NoSuchProcess(self.pid, self._name) from None
+            return _psutil.proc_ppid(self.pid)
+        except OSError as err:
+            if is_permission_err(err):
+                debug("attempting ppid() fallback (slower)")
+                try:
+                    return ppid_map()[self.pid]
+                except KeyError:
+                    raise NoSuchProcess(self.pid, self._name) from None
+            raise
 
     def _get_raw_meminfo(self):
         try:
