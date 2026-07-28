@@ -1245,6 +1245,12 @@ class TestNetIoCounters(LinuxTestCase):
                 ifconfig_ret = ifconfig(name)
             except RuntimeError:
                 continue
+            if not any(ifconfig_ret.values()):
+                # net-tools can't parse /proc/net/dev lines whose NIC
+                # name fills the whole 15 chars (e.g. enxbaa44ee7dd5e),
+                # and prints zeros for the whole interface.
+                continue
+
             assert (
                 abs(stats.bytes_recv - ifconfig_ret['bytes_recv']) < 1024 * 10
             )
