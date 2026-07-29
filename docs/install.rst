@@ -15,7 +15,7 @@ Or with `uv <https://docs.astral.sh/uv/>`_:
 
 .. code-block:: none
 
-    uv add psutil
+    uv pip install psutil
 
 If wheels are not available for your platform or architecture, or you wish to
 build & install psutil from sources, keep reading.
@@ -26,15 +26,15 @@ Compile psutil from source
 UNIX
 ^^^^
 
-On all UNIX systems you can use the `install-sysdeps.sh`_ script. This will
-install the system dependencies necessary to compile psutil from sources. You
-can invoke this script from the Makefile as:
+On all UNIX systems except macOS and AIX you can use the `install-sysdeps.sh`_
+script. This will install the system dependencies necessary to compile psutil
+from sources. You can invoke this script from the Makefile as:
 
 .. code-block:: none
 
     make install-sysdeps
 
-...or fetch it and install from github:
+...or download and run it directly from GitHub:
 
 .. code-block:: none
 
@@ -105,8 +105,8 @@ Windows
       pip install --no-binary :all: psutil
 
 - If you want to clone psutil's Git repository and build / develop locally,
-  first install `Git for Windows`_ and launch a Git Bash shell. This provides a
-  Unix-like environment where ``make`` works.
+  first install `Git for Windows`_ and GNU Make, then launch a Git Bash shell.
+  This provides a Unix-like environment where ``make`` works.
 - Once inside Git Bash, you can run the usual ``make`` commands:
 
   .. code-block:: none
@@ -176,36 +176,32 @@ Troubleshooting
 Install pip
 ^^^^^^^^^^^
 
-If you don't have pip you can install it with wget:
+Python installations normally include pip. If it is missing, first try:
 
 .. code-block:: none
 
-    wget https://bootstrap.pypa.io/get-pip.py -O - | python3
+    python3 -m ensurepip --upgrade
 
-...or with curl:
-
-.. code-block:: none
-
-    python3 < <(curl -s https://bootstrap.pypa.io/get-pip.py)
-
-On Windows, `download pip`_, open cmd.exe and install it with:
+Alternatively, download `get-pip.py`_ and run:
 
 .. code-block:: none
 
-    py get-pip.py
+    python3 get-pip.py
 
-Permission errors (UNIX)
-^^^^^^^^^^^^^^^^^^^^^^^^
+Permission errors
+^^^^^^^^^^^^^^^^^
 
-If you want to install psutil system-wide and you bump into permission errors
-either run as root user or prepend ``sudo``:
+If you encounter permission errors, install psutil inside a virtual environment
+instead of modifying the system Python installation:
 
 .. code-block:: none
 
-    sudo pip install psutil
+    python3 -m venv .venv
+    . .venv/bin/activate
+    python -m pip install psutil
 
 .. _`CPython Developer Guide`: https://devguide.python.org/getting-started/setup-building/#windows
-.. _`download pip`: https://pip.pypa.io/en/latest/installing/
+.. _`get-pip.py`: https://bootstrap.pypa.io/get-pip.py
 .. _`Git for Windows`: https://git-scm.com/install/windows
 .. _`install-sysdeps.sh`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/install-sysdeps.sh
 .. _`PyPI`: https://pypi.org/project/psutil/
