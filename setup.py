@@ -351,21 +351,35 @@ class BuildExt(build_ext):
 
 
 def print_install_instructions():
-    if WINDOWS or PYPY:
-        return
-    suggest = ""
+
+    def get_install_sysdeps_cmd():
+        script = (
+            "https://raw.githubusercontent.com/giampaolo/psutil/"
+            "master/scripts/internal/install-sysdeps.sh"
+        )
+        return f"curl -fsSL {script} | sh"
+
     if not has_compiler():
-        suggest = "A C compiler is not installed."
-    elif not has_python_h():
-        suggest = "Python header files are not installed."
-    if suggest:
+        suggest = "A working C compiler is not installed."
         if MACOS:
             cmd = "xcode-select --install"
+        elif AIX or PYPY:
+            cmd = None
         else:
-            script = "https://raw.githubusercontent.com/giampaolo/psutil/master/scripts/internal/install-sysdeps.sh"
-            cmd = f"curl -fsSL {script} | sh"
+            cmd = get_install_sysdeps_cmd()
+    elif not has_python_h():
+        suggest = "Python header files are not installed."
+        if MACOS or AIX or PYPY:  # noqa: SIM108
+            cmd = None
+        else:
+            cmd = get_install_sysdeps_cmd()
+    else:
+        return
+
+    if cmd:
         suggest += f" Try running:\n{cmd}"
-        print(hilite(suggest, color="red", bold=True), file=sys.stderr)
+
+    print(hilite(suggest, color="red", bold=True), file=sys.stderr)
 
 
 def main():
