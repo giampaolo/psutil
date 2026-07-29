@@ -105,7 +105,7 @@ install_test_deps() {
     elif [ $HAS_APK ]; then
         $SUDO apk add --no-interactive coreutils util-linux procps
     else
-        echo "No test deps to install on '$UNAME_S'. Ignoring."
+        echo "No supported package manager found on '$UNAME_S'. Ignoring."
     fi
 }
 

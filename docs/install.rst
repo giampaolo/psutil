@@ -117,7 +117,7 @@ Windows
 macOS
 ^^^^^
 
-Install Xcode first:
+Install the Xcode command line tools first:
 
 .. code-block:: none
 
@@ -129,7 +129,7 @@ FreeBSD
 
 .. code-block:: none
 
-    pkg install python3
+    pkg install python3 py312-pip
     python3 -m pip install psutil
 
 OpenBSD
@@ -138,8 +138,8 @@ OpenBSD
 .. code-block:: none
 
     export PKG_PATH=https://cdn.openbsd.org/pub/OpenBSD/`uname -r`/packages/`uname -m`/
-    pkg_add -v python%3
-    pip install psutil
+    pkg_add -v python%3 py3-pip
+    python3 -m pip install psutil
 
 NetBSD
 ^^^^^^
@@ -157,18 +157,26 @@ Assuming Python 3.11:
 Sun Solaris
 ^^^^^^^^^^^
 
-If ``cc`` compiler is not installed create a symbolic link to ``gcc``:
+.. code-block:: none
+
+    pkg install developer/gcc
+    pip install psutil
+
+If there's no ``cc`` afterwards, symlink it to gcc:
 
 .. code-block:: none
 
     sudo ln -s /usr/bin/gcc /usr/local/bin/cc
 
-Install:
+AIX
+^^^
+
+``install-sysdeps.sh`` has no AIX branch. Install a C compiler and the python
+headers from the `AIX Toolbox`_, then:
 
 .. code-block:: none
 
-    pkg install gcc
-    pip install psutil
+    pip install --no-binary :all: psutil
 
 Troubleshooting
 ---------------
@@ -182,7 +190,8 @@ Python installations normally include pip. If it is missing, first try:
 
     python3 -m ensurepip --upgrade
 
-Alternatively, download `get-pip.py`_ and run:
+Some ports (the BSDs, Debian) build python without ``ensurepip``. There, either
+install the pip package or download `get-pip.py`_ and run:
 
 .. code-block:: none
 
@@ -200,6 +209,7 @@ instead of modifying the system Python installation:
     . .venv/bin/activate
     python -m pip install psutil
 
+.. _`AIX Toolbox`: https://www.ibm.com/support/pages/aix-toolbox-open-source-software-downloads-alpha
 .. _`CPython Developer Guide`: https://devguide.python.org/getting-started/setup-building/#windows
 .. _`get-pip.py`: https://bootstrap.pypa.io/get-pip.py
 .. _`Git for Windows`: https://git-scm.com/install/windows
