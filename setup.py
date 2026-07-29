@@ -356,7 +356,7 @@ class BuildExt(build_ext):
             # Hooking spawn() instead of the private per-file methods
             # is what makes this work on Windows as well.
             futures = []
-            with concurrent.futures.ThreadPoolExecutor(os.cpu_count()) as pool:
+            with concurrent.futures.ThreadPoolExecutor(NUM_CPUS) as pool:
                 compiler.spawn = lambda cmd, **kw: futures.append(
                     pool.submit(real_spawn, cmd, **kw)
                 )
