@@ -142,6 +142,7 @@ include scripts/internal/find_adopters.py
 include scripts/internal/find_broken_links.py
 include scripts/internal/generate_manifest.py
 include scripts/internal/git_pre_commit.py
+include scripts/internal/install-pydeps.sh
 include scripts/internal/install-sysdeps.sh
 include scripts/internal/install_pip.py
 include scripts/internal/new_blog_post.py

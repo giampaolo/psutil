@@ -79,16 +79,13 @@ install-sysdeps:  ## Install system deps needed to compile psutil.
 	./scripts/internal/install-sysdeps.sh
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
-	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group test
+	PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh --group test
 
 install-pydeps-lint:  ## Install python deps necessary to run linters.
-	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group lint
+	PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh --group lint
 
 install-pydeps-dev:  ## Install python deps meant for local development.
-	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group dev
+	PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh --group dev
 
 # ===================================================================
 # Tests
