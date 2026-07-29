@@ -11,6 +11,7 @@ import glob
 import os
 import pathlib
 import shlex
+import shutil
 import struct
 import subprocess
 import sys
@@ -352,12 +353,19 @@ class BuildExt(build_ext):
 
 def print_install_instructions():
 
-    def get_install_sysdeps_cmd():
-        script = (
+    def install_sysdeps_cmd():
+        url = (
             "https://raw.githubusercontent.com/giampaolo/psutil/"
             "master/scripts/internal/install-sysdeps.sh"
         )
-        return f"curl -fsSL {script} | sh"
+        if shutil.which("curl"):
+            return f"curl -fsSL {url} | sh"
+        if shutil.which("wget"):
+            return f"wget -qO- {url} | sh"
+        if shutil.which("fetch"):  # FreeBSD
+            return f"fetch -qo - {url} | sh"
+        if shutil.which("ftp"):  # OpenBSD / NetNBSD
+            return f"ftp -o - {url} | sh"
 
     if not has_compiler():
         suggest = "A working C compiler is not installed."
@@ -366,13 +374,13 @@ def print_install_instructions():
         elif AIX or PYPY:
             cmd = None
         else:
-            cmd = get_install_sysdeps_cmd()
+            cmd = install_sysdeps_cmd()
     elif not has_python_h():
         suggest = "Python header files are not installed."
         if MACOS or AIX or PYPY:  # noqa: SIM108
             cmd = None
         else:
-            cmd = get_install_sysdeps_cmd()
+            cmd = install_sysdeps_cmd()
     else:
         return
 
