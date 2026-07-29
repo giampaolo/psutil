@@ -108,8 +108,15 @@ def get_long_description():
 
 
 def has_python_h():
-    include_dir = sysconfig.get_path("include")
-    return os.path.exists(os.path.join(include_dir, "Python.h"))
+    """Whether a C file including Python.h really compiles."""
+    paths = sysconfig.get_paths()
+    incdirs = [paths["include"]]
+    if paths.get("platinclude") and paths["platinclude"] not in incdirs:
+        incdirs.append(paths["platinclude"])
+    args = []
+    for d in incdirs:
+        args.extend(["-I", d])
+    return unix_can_compile("#include <Python.h>", args)
 
 
 def get_cc():
@@ -166,21 +173,28 @@ def print_install_instructions():
             print(hilite(s, color="red", bold=True), file=sys.stderr)
 
 
-def unix_can_compile(c_code):
+def unix_can_compile(c_code, extra_args=()):
     # https://github.com/giampaolo/psutil/pull/1568
     with tempfile.TemporaryDirectory() as tempdir:
         src = os.path.join(tempdir, "test.c")
         with open(src, "w") as f:
             f.write(c_code)
-        cmd = get_cc() + [
-            "-c",
-            src,
-            "-o",
-            os.path.join(tempdir, "test.o"),
-        ]
-        ret = subprocess.call(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        cmd = (
+            get_cc()
+            + list(extra_args)
+            + [
+                "-c",
+                src,
+                "-o",
+                os.path.join(tempdir, "test.o"),
+            ]
         )
+        try:
+            ret = subprocess.call(
+                cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        except OSError:
+            return False  # compiler is not installed
         return ret == 0
 
 
