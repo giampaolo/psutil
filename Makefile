@@ -200,13 +200,14 @@ lint-rst:  ## Run linter for .rst files.
 lint-toml:  ## Run linter for pyproject.toml.
 	@$(call _ls,'*.toml') | xargs toml-sort --check
 
-lint-all:  ## Run all linters
-	$(MAKE) black
-	$(MAKE) ruff
-	$(MAKE) lint-c
-	$(MAKE) dprint
-	$(MAKE) lint-rst
-	$(MAKE) lint-toml
+lint-all:  ## Run all linters in parallel
+	$(MAKE) -j \
+		black \
+		ruff \
+		lint-c \
+		dprint \
+		lint-rst \
+		lint-toml
 
 # --- not mandatory linters (just run from time to time)
 
