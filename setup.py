@@ -140,7 +140,7 @@ def print_install_instructions():
         if MACOS:
             cmd = "xcode-select --install"
         else:
-            script = "https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/scripts/internal/install-sysdeps.sh"
+            script = "https://raw.githubusercontent.com/giampaolo/psutil/master/scripts/internal/install-sysdeps.sh"
             cmd = f"curl -fsSL {script} | sh"
         suggest += f" Try running:\n{cmd}"
         print(hilite(suggest, color="red", bold=True), file=sys.stderr)
@@ -458,9 +458,7 @@ def main():
         if (
             not success
             and POSIX
-            and cmd.startswith(
-                ("build", "install", "sdist", "bdist", "develop")
-            )
+            and cmd.startswith(("build", "install", "bdist", "develop"))
         ):
             print_install_instructions()
 
