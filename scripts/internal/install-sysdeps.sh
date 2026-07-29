@@ -4,7 +4,8 @@
 # * compile psutil
 # * run those unit tests that rely on CLI tools (netstat, ps, etc.)
 # With --test-only, skip the compiler and Python headers and install
-# just the CLI tools. CI uses it, where the wheel is already built.
+# just the CLI tools. CI uses it, where the wheel is already built. Only
+# Linux tells the two apart; elsewhere the whole list is installed.
 # NOTE: this script MUST be kept compatible with the `sh` shell.
 
 set -e
@@ -17,7 +18,7 @@ UNAME_S=$(uname -s)
 
 case "$UNAME_S" in
     Linux)
-        if command -v apt > /dev/null 2>&1; then
+        if command -v apt-get > /dev/null 2>&1; then
             HAS_APT=true  # debian / ubuntu
         elif command -v yum > /dev/null 2>&1; then
             HAS_YUM=true  # redhat / centos
@@ -51,7 +52,7 @@ main() {
     # Debian / Ubuntu
     if [ $HAS_APT ]; then
         [ $TEST_ONLY ] || $SUDO apt-get install -y python3-dev gcc
-        $SUDO apt-get install -y net-tools coreutils util-linux sudo
+        $SUDO apt-get install -y net-tools coreutils util-linux sudo procps
     # Redhat
     elif [ $HAS_YUM ]; then
         [ $TEST_ONLY ] || $SUDO yum install -y python3-devel gcc
@@ -59,7 +60,7 @@ main() {
     # Arch
     elif [ $HAS_PACMAN ]; then
         [ $TEST_ONLY ] || $SUDO pacman -S --noconfirm python gcc
-        $SUDO pacman -S --noconfirm net-tools coreutils util-linux sudo
+        $SUDO pacman -S --noconfirm net-tools coreutils util-linux sudo procps-ng
     # Alpine
     elif [ $HAS_APK ]; then
         [ $TEST_ONLY ] || $SUDO apk add --no-interactive python3-dev gcc musl-dev linux-headers
@@ -71,7 +72,7 @@ main() {
     elif [ $NETBSD ]; then
         $SUDO /usr/sbin/pkg_add -v pkgin
         $SUDO pkgin update
-        $SUDO pkgin -y install python311-*  # no gcc12: base gcc compiles psutil just fine
+        $SUDO pkgin -y install 'python311-*'  # no gcc12: base gcc compiles psutil just fine
         if [ ! -e /usr/pkg/bin/python3 ]; then
             $SUDO ln -s /usr/pkg/bin/python3.11 /usr/pkg/bin/python3
         fi
