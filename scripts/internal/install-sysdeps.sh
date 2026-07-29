@@ -1,11 +1,7 @@
 #!/bin/sh
 
-# Depending on the UNIX platform, install the necessary system dependencies to:
-# * compile psutil
-# * run those unit tests that rely on CLI tools (netstat, ps, etc.)
-# With --test-only, skip the compiler and Python headers and install
-# just the CLI tools. CI uses it, where the wheel is already built. Only
-# Linux tells the two apart; elsewhere the whole list is installed.
+# Install the system dependencies needed to compile psutil. With --test-only
+# install CLI tools needed by unit tests.
 # NOTE: this script MUST be kept compatible with the `sh` shell.
 
 set -e
@@ -49,28 +45,23 @@ if [ "$(id -u)" -ne 0 ]; then
     SUDO=sudo
 fi
 
-# Function to install system dependencies
-main() {
+# Deps needed to compile psutil.
+install_build_deps() {
     # Debian / Ubuntu
     if [ $HAS_APT ]; then
-        [ $TEST_ONLY ] || $SUDO apt-get install -y python3-dev gcc
-        $SUDO apt-get install -y net-tools coreutils util-linux sudo procps
+        $SUDO apt-get install -y python3-dev gcc
     # Redhat
     elif [ $HAS_YUM ]; then
-        [ $TEST_ONLY ] || $SUDO yum install -y python3-devel gcc
-        $SUDO yum install -y net-tools coreutils-single util-linux sudo procps-ng
+        $SUDO yum install -y python3-devel gcc
     # Fedora
     elif [ $HAS_DNF ]; then
-        [ $TEST_ONLY ] || $SUDO dnf install -y python3-devel gcc
-        $SUDO dnf install -y net-tools coreutils util-linux sudo procps-ng
+        $SUDO dnf install -y python3-devel gcc
     # Arch
     elif [ $HAS_PACMAN ]; then
-        [ $TEST_ONLY ] || $SUDO pacman -S --noconfirm python gcc
-        $SUDO pacman -S --noconfirm net-tools coreutils util-linux sudo procps-ng
+        $SUDO pacman -S --noconfirm python gcc
     # Alpine
     elif [ $HAS_APK ]; then
-        [ $TEST_ONLY ] || $SUDO apk add --no-interactive python3-dev gcc musl-dev linux-headers
-        $SUDO apk add --no-interactive coreutils util-linux procps
+        $SUDO apk add --no-interactive python3-dev gcc musl-dev linux-headers
     # FreeBSD
     elif [ $FREEBSD ]; then
         $SUDO pkg install -y python3  # no gcc: base cc is clang, and that's what python uses
@@ -92,6 +83,36 @@ main() {
         $SUDO pkg install developer/gcc
     else
         echo "Unsupported platform '$UNAME_S'. Ignoring."
+    fi
+}
+
+# CLI tools needed by unit tests.
+install_test_deps() {
+    # Debian / Ubuntu
+    if [ $HAS_APT ]; then
+        $SUDO apt-get install -y net-tools coreutils util-linux sudo procps
+    # Redhat
+    elif [ $HAS_YUM ]; then
+        $SUDO yum install -y net-tools coreutils-single util-linux sudo procps-ng
+    # Fedora
+    elif [ $HAS_DNF ]; then
+        $SUDO dnf install -y net-tools coreutils util-linux sudo procps-ng
+    # Arch
+    elif [ $HAS_PACMAN ]; then
+        $SUDO pacman -S --noconfirm net-tools coreutils util-linux sudo procps-ng
+    # Alpine
+    elif [ $HAS_APK ]; then
+        $SUDO apk add --no-interactive coreutils util-linux procps
+    else
+        echo "No test deps to install on '$UNAME_S'. Ignoring."
+    fi
+}
+
+main() {
+    if [ $TEST_ONLY ]; then
+        install_test_deps
+    else
+        install_build_deps
     fi
 }
 
