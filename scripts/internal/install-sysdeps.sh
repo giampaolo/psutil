@@ -67,12 +67,13 @@ install_build_deps() {
         $SUDO pkg install -y python3  # no gcc: base cc is clang, and that's what python uses
     # NetBSD
     elif [ $NETBSD ]; then
-        if ! command -v pkgin > /dev/null 2>&1; then
+        PKGIN=/usr/pkg/bin/pkgin
+        if [ ! -x "$PKGIN" ]; then
             : "${PKG_PATH:=https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/$(uname -m)/$(uname -r)/All}"
             $SUDO env PKG_PATH="$PKG_PATH" /usr/sbin/pkg_add -v pkgin
         fi
-        $SUDO pkgin update
-        $SUDO pkgin -y install 'python311-*'  # no gcc12: base gcc compiles psutil just fine
+        $SUDO "$PKGIN" update
+        $SUDO "$PKGIN" -y install 'python311-*'  # no gcc12: base gcc compiles psutil just fine
         if [ ! -e /usr/pkg/bin/python3 ]; then
             $SUDO ln -s /usr/pkg/bin/python3.11 /usr/pkg/bin/python3
         fi
