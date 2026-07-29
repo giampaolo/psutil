@@ -11,10 +11,10 @@ PYTHON = python3
 ARGS =
 FILES =
 
-PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade --upgrade-strategy eager
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
 DPRINT = ~/.dprint/bin/dprint
+INSTALL_PYDEPS = PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
@@ -72,23 +72,17 @@ uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON_ENV_VARS) $(PYTHON) -m pip uninstall -y -v psutil || true
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/purge_installation.py
 
-install-pip:  ## Install pip (no-op if already installed).
-	$(PYTHON) scripts/internal/install_pip.py
-
 install-sysdeps:  ## Install system deps needed to compile psutil.
 	./scripts/internal/install-sysdeps.sh
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
-	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group test
+	$(INSTALL_PYDEPS) --group test
 
 install-pydeps-lint:  ## Install python deps necessary to run linters.
-	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group lint
+	$(INSTALL_PYDEPS) --group lint
 
 install-pydeps-dev:  ## Install python deps meant for local development.
-	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group dev
+	$(INSTALL_PYDEPS) --group dev
 
 # ===================================================================
 # Tests
@@ -265,10 +259,9 @@ ci-lint:  ## Run all linters on GitHub CI.
 
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-sysdeps
-	$(MAKE) install-pip
 	# Install psutil before the test deps: psleak depends on psutil,
 	# and a pre-installed one stops pip from pulling it from PyPI.
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .
+	$(INSTALL_PYDEPS) .
 	$(MAKE) install-pydeps-test
 	$(MAKE) build
 	$(MAKE) print-sysinfo
@@ -290,8 +283,7 @@ ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	cd .tests/ && PYTHONPATH=$$(pwd) $(MAKE) -f ../Makefile test-memleaks-parallel
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
-	$(MAKE) install-pip
-	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
+	$(INSTALL_PYDEPS) setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
 	$(MAKE) create-sdist
 	mv wheelhouse/* dist/
 	$(MAKE) check-dist

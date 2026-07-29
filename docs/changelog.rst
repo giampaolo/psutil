@@ -271,6 +271,8 @@ Others:
   psutil from source 2x to 3.6x faster depending on the platform. This mostly
   benefits the platforms which get no wheels from PyPI (\*BSD, Solaris, AIX),
   where ``pip install psutil`` always compiles.
+- :gh:`2927`: python dependencies (``make install-pydeps-*``) are now installed
+  with ``uv`` when available, saving around 10 secs for each CI run.
 
 **Bug fixes**
 
