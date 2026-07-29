@@ -2074,8 +2074,9 @@ Process class
     .. warning::
       - Windows: this is not guaranteed to enumerate all file handles (see
         :ref:`faq_open_files_windows`)
-      - BSD: can return empty-string paths due to a kernel bug (see
-        `issue 595 <https://github.com/giampaolo/psutil/pull/595>`_)
+      - NetBSD, OpenBSD: :field:`path` is always an empty string. The kernel
+        doesn't expose it (there's no path field in ``struct kinfo_file``).
+      - FreeBSD: :field:`path` can be an empty string (:gh:`595`).
 
     .. versionchanged:: 3.1.0
        no longer hangs on Windows.
