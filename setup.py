@@ -6,6 +6,7 @@
 
 """Cross-platform lib for process and system monitoring in Python."""
 
+import concurrent.futures
 import glob
 import os
 import pathlib
@@ -19,6 +20,7 @@ import tempfile
 
 from setuptools import Extension
 from setuptools import setup
+from setuptools.command.build_ext import build_ext
 
 ROOT_DIR = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT_DIR))
@@ -38,11 +40,14 @@ OPENBSD = _common.OPENBSD
 POSIX = _common.POSIX
 SUNOS = _common.SUNOS
 WINDOWS = _common.WINDOWS
+
 hilite = _common.hilite
 
 PYPY = '__pypy__' in sys.builtin_module_names
 CPYTHON = sys.implementation.name == "cpython"
 Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
+NUM_CPUS = os.cpu_count() or 1
+
 
 # The pre-processor macros that are passed to the C compiler when
 # building the extension.
@@ -337,6 +342,36 @@ else:
     sys.exit("platform {} is not supported".format(sys.platform))
 
 
+class BuildExt(build_ext):
+    """Compile the C sources in parallel."""
+
+    def build_extensions(self):  # override
+        compiler = self.compiler
+        real_spawn = compiler.spawn
+        real_compile = compiler.compile
+
+        def parallel_compile(*args, **kwargs):
+            # Run compile() as usual, but have every compiler
+            # invocation return right away, then wait for all of them.
+            # Hooking spawn() instead of the private per-file methods
+            # is what makes this work on Windows as well.
+            futures = []
+            with concurrent.futures.ThreadPoolExecutor(NUM_CPUS) as pool:
+                compiler.spawn = lambda cmd, **kw: futures.append(
+                    pool.submit(real_spawn, cmd, **kw)
+                )
+                try:
+                    objects = real_compile(*args, **kwargs)
+                finally:
+                    compiler.spawn = real_spawn
+                for fut in concurrent.futures.as_completed(futures):
+                    fut.result()  # let compiler errors surface
+            return objects
+
+        compiler.compile = parallel_compile
+        super().build_extensions()
+
+
 def main():
     kwargs = dict(
         name='psutil',
@@ -358,6 +393,7 @@ def main():
         license='BSD-3-Clause',
         packages=['psutil'],
         ext_modules=[ext],
+        cmdclass={'build_ext': BuildExt if NUM_CPUS > 1 else build_ext},
         options=options,
         python_requires=">={}.{}".format(*MIN_PY_VERSION),
         # https://docs.pypi.org/project_metadata/
