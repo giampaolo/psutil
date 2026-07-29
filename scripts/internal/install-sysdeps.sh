@@ -63,16 +63,16 @@ main() {
     elif [ $TEST_ONLY ]; then
         echo "Nothing to install on '$UNAME_S' with --test-only."
     elif [ $FREEBSD ]; then
-        $SUDO pkg install -y python3 gcc
+        $SUDO pkg install -y python3  # no gcc: base cc is clang, and that's what python uses
     elif [ $NETBSD ]; then
         $SUDO /usr/sbin/pkg_add -v pkgin
         $SUDO pkgin update
-        $SUDO pkgin -y install python311-* gcc12-*
+        $SUDO pkgin -y install python311-*  # no gcc12: base gcc compiles psutil just fine.
         if [ ! -e /usr/pkg/bin/python3 ]; then
             $SUDO ln -s /usr/pkg/bin/python3.11 /usr/pkg/bin/python3
         fi
     elif [ $OPENBSD ]; then
-        $SUDO pkg_add gcc python3
+        $SUDO pkg_add python%3  # there's no "python3" package, and no gcc: base cc is clang.
     elif [ $SUNOS ]; then
         $SUDO pkg install developer/gcc
     else
