@@ -431,6 +431,10 @@ Others:
   ``EINVAL`` / ``EFAULT`` / ``EBUSY`` for a process which is exiting or is a
   zombie. It now returns an empty dict, or raises :exc:`NoSuchProcess` if the
   process is gone.
+- :gh:`2929`, [NetBSD]: :meth:`Process.num_fds` returned a wrong, system-wide
+  number which didn't change when the process opened a file.
+- :gh:`2929`, [NetBSD], [OpenBSD]: :meth:`Process.open_files` always returned
+  an empty list.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
