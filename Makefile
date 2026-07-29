@@ -72,9 +72,6 @@ uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON_ENV_VARS) $(PYTHON) -m pip uninstall -y -v psutil || true
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/purge_installation.py
 
-install-pip:  ## Install pip (no-op if already installed).
-	$(PYTHON) scripts/internal/install_pip.py
-
 install-sysdeps:  ## Install system deps needed to compile psutil.
 	./scripts/internal/install-sysdeps.sh
 
@@ -262,7 +259,6 @@ ci-lint:  ## Run all linters on GitHub CI.
 
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-sysdeps
-	$(MAKE) install-pip
 	# Install psutil before the test deps: psleak depends on psutil,
 	# and a pre-installed one stops pip from pulling it from PyPI.
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .
@@ -287,8 +283,7 @@ ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	cd .tests/ && PYTHONPATH=$$(pwd) $(MAKE) -f ../Makefile test-memleaks-parallel
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
-	$(MAKE) install-pip
-	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
+	PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
 	$(MAKE) create-sdist
 	mv wheelhouse/* dist/
 	$(MAKE) check-dist
