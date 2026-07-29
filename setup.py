@@ -17,7 +17,6 @@ import subprocess
 import sys
 import sysconfig
 import tempfile
-import types
 
 from setuptools import Extension
 from setuptools import setup
@@ -341,51 +340,33 @@ else:
 
 
 class BuildExt(build_ext):
-    """Compile the C sources in parallel (UNIX only)."""
+    """Compile the C sources in parallel."""
 
     def build_extensions(self):  # override
-        methods = ("_setup_compile", "_get_cc_args", "_compile")
-        if POSIX and all(hasattr(self.compiler, m) for m in methods):
-            self.compiler.compile = types.MethodType(
-                self.parallel_compile, self.compiler
-            )
+        compiler = self.compiler
+        real_spawn = compiler.spawn
+        real_compile = compiler.compile
+
+        def parallel_compile(*args, **kwargs):
+            # Run compile() as usual, but have every compiler
+            # invocation return right away, then wait for all of them.
+            # Hooking spawn() instead of the private per-file methods
+            # is what makes this work on Windows as well.
+            futures = []
+            with concurrent.futures.ThreadPoolExecutor(os.cpu_count()) as pool:
+                compiler.spawn = lambda cmd, **kw: futures.append(
+                    pool.submit(real_spawn, cmd, **kw)
+                )
+                try:
+                    objects = real_compile(*args, **kwargs)
+                finally:
+                    compiler.spawn = real_spawn
+                for fut in concurrent.futures.as_completed(futures):
+                    fut.result()  # let compiler errors surface
+            return objects
+
+        compiler.compile = parallel_compile
         super().build_extensions()
-
-    @staticmethod
-    def parallel_compile(
-        compiler,
-        sources,
-        output_dir=None,
-        macros=None,
-        include_dirs=None,
-        debug=0,
-        extra_preargs=None,
-        extra_postargs=None,
-        depends=None,
-    ):
-        macros, objects, extra_postargs, pp_opts, build = (
-            compiler._setup_compile(
-                output_dir,
-                macros,
-                include_dirs,
-                sources,
-                depends,
-                extra_postargs,
-            )
-        )
-        cc_args = compiler._get_cc_args(pp_opts, debug, extra_preargs)
-
-        def compile_one(obj):
-            try:
-                src, ext = build[obj]
-            except KeyError:
-                return
-            compiler._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
-
-        with concurrent.futures.ThreadPoolExecutor(os.cpu_count()) as pool:
-            # Consume the iterator, else compiler errors go unnoticed.
-            list(pool.map(compile_one, objects))
-        return objects
 
 
 def main():
