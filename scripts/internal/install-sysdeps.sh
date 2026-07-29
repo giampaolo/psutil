@@ -16,10 +16,10 @@ case "$UNAME_S" in
     Linux)
         if command -v apt-get > /dev/null 2>&1; then
             HAS_APT=true  # debian / ubuntu
-        elif command -v yum > /dev/null 2>&1; then
-            HAS_YUM=true  # redhat / centos
         elif command -v dnf > /dev/null 2>&1; then
-            HAS_DNF=true  # fedora
+            RPM_MGR=dnf  # fedora, redhat 8+
+        elif command -v yum > /dev/null 2>&1; then
+            RPM_MGR=yum  # older redhat / centos
         elif command -v pacman > /dev/null 2>&1; then
             HAS_PACMAN=true  # arch
         elif command -v apk > /dev/null 2>&1; then
@@ -50,12 +50,9 @@ install_build_deps() {
     # Debian / Ubuntu
     if [ $HAS_APT ]; then
         $SUDO apt-get install -y python3-dev gcc
-    # Redhat
-    elif [ $HAS_YUM ]; then
-        $SUDO yum install -y python3-devel gcc
-    # Fedora
-    elif [ $HAS_DNF ]; then
-        $SUDO dnf install -y python3-devel gcc
+    # Redhat / Fedora
+    elif [ $RPM_MGR ]; then
+        $SUDO $RPM_MGR install -y python3-devel gcc
     # Arch
     elif [ $HAS_PACMAN ]; then
         $SUDO pacman -S --noconfirm python gcc
@@ -93,12 +90,9 @@ install_test_deps() {
     # Debian / Ubuntu
     if [ $HAS_APT ]; then
         $SUDO apt-get install -y net-tools coreutils util-linux sudo procps
-    # Redhat
-    elif [ $HAS_YUM ]; then
-        $SUDO yum install -y net-tools coreutils-single util-linux sudo procps-ng
-    # Fedora
-    elif [ $HAS_DNF ]; then
-        $SUDO dnf install -y net-tools coreutils util-linux sudo procps-ng
+    # Redhat / Fedora
+    elif [ $RPM_MGR ]; then
+        $SUDO $RPM_MGR install -y net-tools util-linux sudo procps-ng
     # Arch
     elif [ $HAS_PACMAN ]; then
         $SUDO pacman -S --noconfirm net-tools coreutils util-linux sudo procps-ng
