@@ -3,9 +3,15 @@
 # Depending on the UNIX platform, install the necessary system dependencies to:
 # * compile psutil
 # * run those unit tests that rely on CLI tools (netstat, ps, etc.)
+# With --test-only, skip the compiler and Python headers and install
+# just the CLI tools. CI uses it, where the wheel is already built.
 # NOTE: this script MUST be kept compatible with the `sh` shell.
 
 set -e
+
+if [ "$1" = "--test-only" ]; then
+    TEST_ONLY=true
+fi
 
 UNAME_S=$(uname -s)
 
@@ -43,17 +49,19 @@ fi
 # Function to install system dependencies
 main() {
     if [ $HAS_APT ]; then
-        $SUDO apt-get install -y python3-dev gcc
+        [ $TEST_ONLY ] || $SUDO apt-get install -y python3-dev gcc
         $SUDO apt-get install -y net-tools coreutils util-linux sudo  # for tests
     elif [ $HAS_YUM ]; then
-        $SUDO yum install -y python3-devel gcc
+        [ $TEST_ONLY ] || $SUDO yum install -y python3-devel gcc
         $SUDO yum install -y net-tools coreutils-single util-linux sudo procps-ng  # for tests
     elif [ $HAS_PACMAN ]; then
-        $SUDO pacman -S --noconfirm python gcc
+        [ $TEST_ONLY ] || $SUDO pacman -S --noconfirm python gcc
         $SUDO pacman -S --noconfirm net-tools coreutils util-linux sudo  # for tests
     elif [ $HAS_APK ]; then
-        $SUDO apk add --no-interactive python3-dev gcc musl-dev linux-headers
+        [ $TEST_ONLY ] || $SUDO apk add --no-interactive python3-dev gcc musl-dev linux-headers
         $SUDO apk add --no-interactive coreutils util-linux procps  # for tests
+    elif [ $TEST_ONLY ]; then
+        echo "Nothing to install on '$UNAME_S' with --test-only."
     elif [ $FREEBSD ]; then
         $SUDO pkg install -y python3 gcc
     elif [ $NETBSD ]; then

@@ -270,7 +270,7 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) test-memleaks-parallel
 
 ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
-	$(MAKE) install-sysdeps  # test pydeps already installed at this point
+	./scripts/internal/install-sysdeps.sh --test-only
 	$(MAKE) print-sysinfo
 	# Warm pywin32's gen_py cache: concurrent first imports of wmi in
 	# the pytest workers corrupt it (EOFError from gencache).
