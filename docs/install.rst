@@ -70,6 +70,13 @@ RedHat / CentOS:
     sudo yum install gcc python3-devel
     pip install --no-binary :all: psutil
 
+Fedora:
+
+.. code-block:: none
+
+    sudo dnf install gcc python3-devel
+    pip install --no-binary :all: psutil
+
 Arch:
 
 .. code-block:: none
@@ -122,7 +129,7 @@ FreeBSD
 
 .. code-block:: none
 
-    pkg install python3 gcc
+    pkg install python3
     python3 -m pip install psutil
 
 OpenBSD
@@ -131,7 +138,7 @@ OpenBSD
 .. code-block:: none
 
     export PKG_PATH=https://cdn.openbsd.org/pub/OpenBSD/`uname -r`/packages/`uname -m`/
-    pkg_add -v python3 gcc
+    pkg_add -v python%3
     pip install psutil
 
 NetBSD
@@ -141,9 +148,10 @@ Assuming Python 3.11:
 
 .. code-block:: none
 
-    export PKG_PATH="https://ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/`uname -m`/`uname -r`/All"
+    export PKG_PATH="https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/`uname -m`/`uname -r`/All"
     pkg_add -v pkgin
-    pkgin install python311-* gcc12-* py311-setuptools-* py311-pip-*
+    pkgin update
+    pkgin install 'python311-*' 'py311-setuptools-*' 'py311-pip-*'
     python3.11 -m pip install psutil
 
 Sun Solaris

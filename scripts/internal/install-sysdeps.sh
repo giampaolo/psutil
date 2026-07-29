@@ -68,7 +68,8 @@ install_build_deps() {
     # NetBSD
     elif [ $NETBSD ]; then
         if ! command -v pkgin > /dev/null 2>&1; then
-            $SUDO /usr/sbin/pkg_add -v pkgin
+            : "${PKG_PATH:=https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/$(uname -m)/$(uname -r)/All}"
+            $SUDO env PKG_PATH="$PKG_PATH" /usr/sbin/pkg_add -v pkgin
         fi
         $SUDO pkgin update
         $SUDO pkgin -y install 'python311-*'  # no gcc12: base gcc compiles psutil just fine
