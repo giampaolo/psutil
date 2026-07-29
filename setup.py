@@ -128,24 +128,6 @@ def has_compiler():
     return unix_can_compile("int main(void) { return 0; }")
 
 
-def print_install_instructions():
-    if WINDOWS:
-        return
-    suggest = ""
-    if not has_compiler():
-        suggest = "A C compiler is not installed."
-    elif not has_python_h():
-        suggest = "Python header files are not installed."
-    if suggest:
-        if MACOS:
-            cmd = "xcode-select --install"
-        else:
-            script = "https://raw.githubusercontent.com/giampaolo/psutil/master/scripts/internal/install-sysdeps.sh"
-            cmd = f"curl -fsSL {script} | sh"
-        suggest += f" Try running:\n{cmd}"
-        print(hilite(suggest, color="red", bold=True), file=sys.stderr)
-
-
 def unix_can_compile(c_code, extra_args=()):
     # https://github.com/giampaolo/psutil/pull/1568
     with tempfile.TemporaryDirectory() as tempdir:
@@ -366,6 +348,24 @@ class BuildExt(build_ext):
 
         compiler.compile = parallel_compile
         super().build_extensions()
+
+
+def print_install_instructions():
+    if WINDOWS:
+        return
+    suggest = ""
+    if not has_compiler():
+        suggest = "A C compiler is not installed."
+    elif not has_python_h():
+        suggest = "Python header files are not installed."
+    if suggest:
+        if MACOS:
+            cmd = "xcode-select --install"
+        else:
+            script = "https://raw.githubusercontent.com/giampaolo/psutil/master/scripts/internal/install-sysdeps.sh"
+            cmd = f"curl -fsSL {script} | sh"
+        suggest += f" Try running:\n{cmd}"
+        print(hilite(suggest, color="red", bold=True), file=sys.stderr)
 
 
 def main():
