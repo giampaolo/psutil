@@ -6,6 +6,7 @@
 
 """Cross-platform lib for process and system monitoring in Python."""
 
+import concurrent.futures
 import glob
 import os
 import pathlib
@@ -16,9 +17,11 @@ import subprocess
 import sys
 import sysconfig
 import tempfile
+import types
 
 from setuptools import Extension
 from setuptools import setup
+from setuptools.command.build_ext import build_ext
 
 ROOT_DIR = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT_DIR))
@@ -337,6 +340,54 @@ else:
     sys.exit("platform {} is not supported".format(sys.platform))
 
 
+class BuildExt(build_ext):
+    """Compile the C sources in parallel (UNIX only)."""
+
+    def build_extensions(self):  # override
+        methods = ("_setup_compile", "_get_cc_args", "_compile")
+        if POSIX and all(hasattr(self.compiler, m) for m in methods):
+            self.compiler.compile = types.MethodType(
+                self.parallel_compile, self.compiler
+            )
+        super().build_extensions()
+
+    @staticmethod
+    def parallel_compile(
+        compiler,
+        sources,
+        output_dir=None,
+        macros=None,
+        include_dirs=None,
+        debug=0,
+        extra_preargs=None,
+        extra_postargs=None,
+        depends=None,
+    ):
+        macros, objects, extra_postargs, pp_opts, build = (
+            compiler._setup_compile(
+                output_dir,
+                macros,
+                include_dirs,
+                sources,
+                depends,
+                extra_postargs,
+            )
+        )
+        cc_args = compiler._get_cc_args(pp_opts, debug, extra_preargs)
+
+        def compile_one(obj):
+            try:
+                src, ext = build[obj]
+            except KeyError:
+                return
+            compiler._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+
+        with concurrent.futures.ThreadPoolExecutor(os.cpu_count()) as pool:
+            # Consume the iterator, else compiler errors go unnoticed.
+            list(pool.map(compile_one, objects))
+        return objects
+
+
 def main():
     kwargs = dict(
         name='psutil',
@@ -358,6 +409,7 @@ def main():
         license='BSD-3-Clause',
         packages=['psutil'],
         ext_modules=[ext],
+        cmdclass={'build_ext': BuildExt},
         options=options,
         python_requires=">={}.{}".format(*MIN_PY_VERSION),
         # https://docs.pypi.org/project_metadata/
