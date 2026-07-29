@@ -12,8 +12,9 @@ Build, setup and test
   .. code-block:: bash
 
      git clone git@github.com:giampaolo/psutil.git
-     make install-sysdeps      # install gcc and python headers
-     make install-pydeps-test  # install test dependencies
+     make install-sysdeps       # install gcc and python headers
+     make install-sysdeps-test  # install CLI tools used by tests
+     make install-pydeps-test   # install test dependencies
      make build
      make install
      make test

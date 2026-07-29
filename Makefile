@@ -75,6 +75,9 @@ uninstall:  ## Uninstall this package via pip.
 install-sysdeps:  ## Install system deps needed to compile psutil.
 	./scripts/internal/install-sysdeps.sh
 
+install-sysdeps-test:  ## Install CLI tools needed to run unit tests.
+	./scripts/internal/install-sysdeps.sh --test-only
+
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	$(INSTALL_PYDEPS) --group test
 
@@ -270,7 +273,7 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) test-memleaks-parallel
 
 ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
-	./scripts/internal/install-sysdeps.sh --test-only
+	$(MAKE) install-sysdeps-test  # the wheel is already built
 	$(MAKE) print-sysinfo
 	# Warm pywin32's gen_py cache: concurrent first imports of wmi in
 	# the pytest workers corrupt it (EOFError from gencache).
