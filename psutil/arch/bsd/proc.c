@@ -446,12 +446,12 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 #elif PSUTIL_OPENBSD
         regular = (kif->f_type == DTYPE_VNODE) && (kif->v_type == VREG);
         fd = kif->fd_fd;
-        // XXX - it appears path is not exposed in the kinfo_file struct.
+        // struct kinfo_file has no path field (FreeBSD has kf_path).
         path = "";
 #elif PSUTIL_NETBSD
         regular = (kif->ki_ftype == DTYPE_VNODE) && (kif->ki_vtype == VREG);
         fd = kif->ki_fd;
-        // XXX - it appears path is not exposed in the kinfo_file struct.
+        // struct kinfo_file has no path field (FreeBSD has kf_path).
         path = "";
 #endif
         if (regular == 1) {
