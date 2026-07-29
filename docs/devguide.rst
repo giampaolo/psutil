@@ -6,18 +6,22 @@ Development guide
 Build, setup and test
 ---------------------
 
-- psutil makes extensive use of C extension modules, meaning a C compiler is
-  required, see :doc:`install instructions <install>`. Once installed run:
+- psutil makes extensive use of C extension modules, meaning a C compiler and
+  the Python development headers are required. To get started:
 
   .. code-block:: bash
 
-     git clone git@github.com:giampaolo/psutil.git
-     make install-sysdeps       # install gcc and python headers
+     git clone https://github.com/giampaolo/psutil.git
+     cd psutil
+     make install-sysdeps       # install system deps needed to compile
      make install-sysdeps-test  # install CLI tools used by tests
-     make install-pydeps-test   # install test dependencies
-     make build
-     make install
+     make install-pydeps-dev    # install python development deps (linters, etc)
+     make build                 # compile the C extension in place
      make test
+
+  ``make install-sysdeps`` only covers Linux, FreeBSD, OpenBSD, NetBSD and
+  Solaris. On macOS and AIX install the compiler by hand, see
+  :ref:`install_from_source`.
 
 - ``make`` (via the :src:`Makefile`) is used for building, testing and general
   development tasks, including on Windows (see below):
@@ -25,11 +29,10 @@ Build, setup and test
   .. code-block:: bash
 
      make clean
-     make install-pydeps-dev   # install dev deps (ruff, black, coverage, ...)
      make test
      make test-parallel
      make test-memleaks
-     make test-coverage
+     make coverage
      make lint-all
      make fix-all
      make uninstall
@@ -41,14 +44,17 @@ Build, setup and test
 
      make test ARGS=tests/test_system.py
 
-- Do not use ``sudo``. ``make install`` installs psutil in editable mode, so
-  you can modify the code while developing.
+- ``make build`` compiles the extension in place, so you can import psutil
+  straight from the repo. No need to install it.
+
+- Don't use ``sudo``, except for the ``install-sysdeps-*`` targets, which
+  invoke it themselves when needed.
 
 - To target a specific Python version:
 
   .. code-block:: none
 
-     make test PYTHON=python3.8
+     make test PYTHON=python3.13
 
 Windows
 -------
@@ -59,6 +65,7 @@ Windows
 
   .. code-block:: bash
 
+     make install-pydeps-dev
      make build
      make test-parallel
 
@@ -112,6 +119,8 @@ Code organization
    psutil/_ps{platform}.py              # OS-specific python wrapper
    psutil/_psutil_{platform}.c          # OS-specific C extension (entry point)
    psutil/arch/all/*.c                  # C code common to all OSes
+   psutil/arch/posix/*.c                # C code common to POSIX OSes
+   psutil/arch/bsd/*.c                  # C code common to the BSDs
    psutil/arch/{platform}/*.c           # OS-specific C extension
    tests/test_process|system.py         # Main system/process API tests
    tests/test_{platform}.py             # OS-specific tests
