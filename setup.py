@@ -351,7 +351,7 @@ class BuildExt(build_ext):
 
 
 def print_install_instructions():
-    if WINDOWS:
+    if WINDOWS or PYPY:
         return
     suggest = ""
     if not has_compiler():
