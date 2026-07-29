@@ -40,11 +40,14 @@ OPENBSD = _common.OPENBSD
 POSIX = _common.POSIX
 SUNOS = _common.SUNOS
 WINDOWS = _common.WINDOWS
+
 hilite = _common.hilite
 
 PYPY = '__pypy__' in sys.builtin_module_names
 CPYTHON = sys.implementation.name == "cpython"
 Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
+NUM_CPUS = os.cpu_count() or 1
+
 
 # The pre-processor macros that are passed to the C compiler when
 # building the extension.
@@ -390,7 +393,7 @@ def main():
         license='BSD-3-Clause',
         packages=['psutil'],
         ext_modules=[ext],
-        cmdclass={'build_ext': BuildExt},
+        cmdclass={'build_ext': BuildExt if NUM_CPUS > 1 else build_ext},
         options=options,
         python_requires=">={}.{}".format(*MIN_PY_VERSION),
         # https://docs.pypi.org/project_metadata/
