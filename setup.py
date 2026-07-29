@@ -11,7 +11,6 @@ import glob
 import os
 import pathlib
 import shlex
-import shutil
 import struct
 import subprocess
 import sys
@@ -126,11 +125,11 @@ def get_cc():
 
 
 def has_compiler():
-    return shutil.which(get_cc()[0]) is not None
+    return unix_can_compile("int main(void) { return 0; }")
 
 
 def print_install_instructions():
-    if WINDOWS or MACOS:
+    if WINDOWS:
         return
     suggest = ""
     if not has_compiler():
@@ -138,8 +137,12 @@ def print_install_instructions():
     elif not has_python_h():
         suggest = "Python header files are not installed."
     if suggest:
-        script = "https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/scripts/internal/install-sysdeps.sh"
-        suggest += f" Try running:\ncurl -fsSL {script} | sh"
+        if MACOS:
+            cmd = "xcode-select --install"
+        else:
+            script = "https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/scripts/internal/install-sysdeps.sh"
+            cmd = f"curl -fsSL {script} | sh"
+        suggest += f" Try running:\n{cmd}"
         print(hilite(suggest, color="red", bold=True), file=sys.stderr)
 
 
