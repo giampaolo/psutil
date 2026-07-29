@@ -112,6 +112,16 @@ def has_python_h():
     return os.path.exists(os.path.join(include_dir, "Python.h"))
 
 
+def get_cc():
+    """The compiler (plus flags) python uses to build C extensions."""
+    cc = os.getenv('CC') or sysconfig.get_config_var("CC") or "cc"
+    return shlex.split(cc)
+
+
+def has_compiler():
+    return shutil.which(get_cc()[0]) is not None
+
+
 def get_sysdeps():
     if LINUX:
         pyimpl = "pypy" if PYPY else "python"
@@ -142,8 +152,8 @@ def get_sysdeps():
 
 def print_install_instructions():
     reasons = []
-    if not shutil.which("gcc"):
-        reasons.append("gcc is not installed.")
+    if not has_compiler():
+        reasons.append("a C compiler is not installed.")
     if not has_python_h():
         reasons.append("Python header files are not installed.")
     if reasons:
@@ -158,12 +168,11 @@ def print_install_instructions():
 
 def unix_can_compile(c_code):
     # https://github.com/giampaolo/psutil/pull/1568
-    cc = os.getenv('CC') or sysconfig.get_config_var("CC") or "cc"
     with tempfile.TemporaryDirectory() as tempdir:
         src = os.path.join(tempdir, "test.c")
         with open(src, "w") as f:
             f.write(c_code)
-        cmd = shlex.split(cc) + [
+        cmd = get_cc() + [
             "-c",
             src,
             "-o",
