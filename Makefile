@@ -200,13 +200,14 @@ lint-rst:  ## Run linter for .rst files.
 lint-toml:  ## Run linter for pyproject.toml.
 	@$(call _ls,'*.toml') | xargs toml-sort --check
 
-lint-all:  ## Run all linters
-	$(MAKE) black
-	$(MAKE) ruff
-	$(MAKE) lint-c
-	$(MAKE) dprint
-	$(MAKE) lint-rst
-	$(MAKE) lint-toml
+lint-all:  ## Run all linters in parallel
+	$(MAKE) -j \
+		black \
+		ruff \
+		lint-c \
+		dprint \
+		lint-rst \
+		lint-toml
 
 # --- not mandatory linters (just run from time to time)
 
@@ -252,7 +253,7 @@ fix-all:  ## Run all code fixers.
 
 ci-lint:  ## Run all linters on GitHub CI.
 	$(MAKE) install-pydeps-lint
-	curl -fsSL https://dprint.dev/install.sh | sh
+	test -x $(DPRINT) || curl -fsSL https://dprint.dev/install.sh | sh
 	$(DPRINT) --version
 	clang-format --version
 	$(MAKE) lint-all
@@ -306,7 +307,7 @@ create-wheels:  ## Create .whl files
 	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
 
 download-wheels:  ## Download latest wheels hosted on github.
-	$(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
+	$(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.api.key
 	$(MAKE) print-dist
 
 create-dist:  ## Create .tar.gz + .whl distribution.
@@ -332,10 +333,11 @@ check-wheels:  ## Check sanity of wheels.
 	$(PYTHON) -m twine check --strict dist/*.whl
 
 check-dist:  ## Run all sanity checks re. to the package distribution.
-	$(MAKE) check-manifest
-	$(MAKE) check-pyproject
-	$(MAKE) check-sdist
-	$(MAKE) check-wheels
+	$(MAKE) -j \
+		check-manifest \
+		check-pyproject \
+		check-sdist \
+		check-wheels
 
 # --- release
 
