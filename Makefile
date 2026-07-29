@@ -307,7 +307,7 @@ create-wheels:  ## Create .whl files
 	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
 
 download-wheels:  ## Download latest wheels hosted on github.
-	$(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
+	$(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.api.key
 	$(MAKE) print-dist
 
 create-dist:  ## Create .tar.gz + .whl distribution.
@@ -333,10 +333,11 @@ check-wheels:  ## Check sanity of wheels.
 	$(PYTHON) -m twine check --strict dist/*.whl
 
 check-dist:  ## Run all sanity checks re. to the package distribution.
-	$(MAKE) check-manifest
-	$(MAKE) check-pyproject
-	$(MAKE) check-sdist
-	$(MAKE) check-wheels
+	$(MAKE) -j \
+		check-manifest \
+		check-pyproject \
+		check-sdist \
+		check-wheels
 
 # --- release
 
