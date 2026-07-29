@@ -129,35 +129,9 @@ def has_compiler():
     return shutil.which(get_cc()[0]) is not None
 
 
-def get_sysdeps():
-    if LINUX:
-        pyimpl = "pypy" if PYPY else "python"
-        if shutil.which("dpkg"):
-            return "sudo apt-get install gcc {}3-dev".format(pyimpl)
-        elif shutil.which("rpm"):
-            return "sudo yum install gcc {}3-devel".format(pyimpl)
-        elif shutil.which("pacman"):
-            return "sudo pacman -S gcc python"
-        elif shutil.which("apk"):
-            return "sudo apk add gcc {}3-dev musl-dev linux-headers".format(
-                pyimpl
-            )
-    elif MACOS:
-        return "xcode-select --install"
-    elif FREEBSD:
-        if shutil.which("pkg"):
-            return "pkg install gcc python3"
-        elif shutil.which("mport"):  # MidnightBSD
-            return "mport install gcc python3"
-    elif OPENBSD:
-        return "pkg_add -v gcc python3"
-    elif NETBSD:
-        return "pkgin install gcc python3"
-    elif SUNOS:
-        return "pkg install gcc"
-
-
 def print_install_instructions():
+    if WINDOWS or MACOS:
+        return
     suggest = ""
     if not has_compiler():
         suggest = "A C compiler is not installed."
