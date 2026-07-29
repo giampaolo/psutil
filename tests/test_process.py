@@ -50,6 +50,7 @@ from . import HAS_PROC_IO_COUNTERS
 from . import HAS_PROC_IONICE
 from . import HAS_PROC_MEMORY_FOOTPRINT
 from . import HAS_PROC_MEMORY_MAPS
+from . import HAS_PROC_OPEN_FILES_PATH
 from . import HAS_PROC_RLIMIT
 from . import HAS_PROC_THREADS
 from . import PYPY
@@ -921,8 +922,7 @@ class TestProcess(PsutilTestCase):
             p.cpu_affinity(combo)
             assert sorted(p.cpu_affinity()) == sorted(combo)
 
-    # TODO: #595
-    @skipif(BSD, reason="broken on BSD")
+    @skipif(FREEBSD, reason="broken on FREEBSD, see #595")
     def test_open_files(self):
         p = psutil.Process()
         testfn = self.get_testfn()
@@ -934,14 +934,16 @@ class TestProcess(PsutilTestCase):
             # give the kernel some time to see the new file
             call_until(lambda: len(p.open_files()) != len(files))
             files = p.open_files()
-            filenames = [os.path.normcase(x.path) for x in files]
-            assert os.path.normcase(testfn) in filenames
+            if HAS_PROC_OPEN_FILES_PATH:
+                filenames = [os.path.normcase(x.path) for x in files]
+                assert os.path.normcase(testfn) in filenames
             if LINUX:
                 for file in files:
                     if file.path == testfn:
                         assert file.position == 1024
-        for file in files:
-            assert os.path.isfile(file.path), file
+        if HAS_PROC_OPEN_FILES_PATH:
+            for file in files:
+                assert os.path.isfile(file.path), file
 
         # another process
         cmdline = (
@@ -950,18 +952,18 @@ class TestProcess(PsutilTestCase):
         )
         p = self.spawn_psproc([PYTHON_EXE, "-c", cmdline])
 
-        for x in range(100):
-            filenames = [os.path.normcase(x.path) for x in p.open_files()]
-            if testfn in filenames:
-                break
-            time.sleep(0.01)
-        else:
-            assert os.path.normcase(testfn) in filenames
-        for file in filenames:
-            assert os.path.isfile(file), file
+        if HAS_PROC_OPEN_FILES_PATH:
+            for x in range(100):
+                filenames = [os.path.normcase(x.path) for x in p.open_files()]
+                if testfn in filenames:
+                    break
+                time.sleep(0.01)
+            else:
+                assert os.path.normcase(testfn) in filenames
+            for file in filenames:
+                assert os.path.isfile(file), file
 
-    # TODO: #595
-    @skipif(BSD, reason="broken on BSD")
+    @skipif(FREEBSD, reason="broken on FREEBSD, see #595")
     def test_open_files_2(self):
         # test fd and path fields
         p = psutil.Process()
@@ -976,7 +978,8 @@ class TestProcess(PsutilTestCase):
                     break
             else:
                 return pytest.fail(f"no file found; files={p.open_files()!r}")
-            assert normcase(file.path) == normcase(fileobj.name)
+            if HAS_PROC_OPEN_FILES_PATH:
+                assert normcase(file.path) == normcase(fileobj.name)
             if WINDOWS:
                 assert file.fd == -1
             else:
