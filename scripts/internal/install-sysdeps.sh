@@ -50,16 +50,16 @@ fi
 main() {
     if [ $HAS_APT ]; then
         [ $TEST_ONLY ] || $SUDO apt-get install -y python3-dev gcc
-        $SUDO apt-get install -y net-tools coreutils util-linux sudo  # for tests
+        $SUDO apt-get install -y net-tools coreutils util-linux sudo
     elif [ $HAS_YUM ]; then
         [ $TEST_ONLY ] || $SUDO yum install -y python3-devel gcc
-        $SUDO yum install -y net-tools coreutils-single util-linux sudo procps-ng  # for tests
+        $SUDO yum install -y net-tools coreutils-single util-linux sudo procps-ng
     elif [ $HAS_PACMAN ]; then
         [ $TEST_ONLY ] || $SUDO pacman -S --noconfirm python gcc
-        $SUDO pacman -S --noconfirm net-tools coreutils util-linux sudo  # for tests
+        $SUDO pacman -S --noconfirm net-tools coreutils util-linux sudo
     elif [ $HAS_APK ]; then
         [ $TEST_ONLY ] || $SUDO apk add --no-interactive python3-dev gcc musl-dev linux-headers
-        $SUDO apk add --no-interactive coreutils util-linux procps  # for tests
+        $SUDO apk add --no-interactive coreutils util-linux procps
     elif [ $TEST_ONLY ]; then
         echo "Nothing to install on '$UNAME_S' with --test-only."
     elif [ $FREEBSD ]; then
