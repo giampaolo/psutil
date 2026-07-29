@@ -158,19 +158,15 @@ def get_sysdeps():
 
 
 def print_install_instructions():
-    reasons = []
+    suggest = ""
     if not has_compiler():
-        reasons.append("a C compiler is not installed.")
-    if not has_python_h():
-        reasons.append("Python header files are not installed.")
-    if reasons:
-        sysdeps = get_sysdeps()
-        if sysdeps:
-            s = "psutil could not be compiled from sources. "
-            s += " ".join(reasons)
-            s += " Try running:\n"
-            s += "  {}".format(sysdeps)
-            print(hilite(s, color="red", bold=True), file=sys.stderr)
+        suggest = "A C compiler is not installed."
+    elif not has_python_h():
+        suggest = "Python header files are not installed."
+    if suggest:
+        script = "https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/scripts/internal/install-sysdeps.sh"
+        suggest += f" Try running:\ncurl -fsSL {script} | sh"
+        print(hilite(suggest, color="red", bold=True), file=sys.stderr)
 
 
 def unix_can_compile(c_code, extra_args=()):
