@@ -54,9 +54,8 @@ Windows
 -------
 
 - The recommended way to develop on Windows is to use ``make``.
-- Install `Git for Windows`_ and launch a *Git Bash shell*, which provides a
-  Unix-like environment where ``make`` works.
-- Then run:
+- For the build tools, Git Bash and GNU Make setup see :ref:`install_windows`.
+- Once inside a Git Bash shell, run:
 
   .. code-block:: bash
 
@@ -168,7 +167,6 @@ Releases
 - Git tags use the ``vX.Y.Z`` format (e.g. ``v7.2.2``).
 - The version string is defined in :src:`psutil/__init__.py` (``__version__``).
 
-.. _`Git for Windows`: https://git-scm.com/install/windows
 .. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/
 .. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/
 .. _`PyPI`: https://pypi.org/project/psutil/

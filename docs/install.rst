@@ -60,7 +60,7 @@ Debian / Ubuntu:
 
 .. code-block:: none
 
-    sudo apt install gcc python3-dev
+    sudo apt-get install gcc python3-dev
     pip install --no-binary :all: psutil
 
 RedHat / CentOS:
@@ -91,23 +91,31 @@ Alpine:
     sudo apk add gcc python3-dev musl-dev linux-headers
     pip install --no-binary :all: psutil
 
+.. _install_windows:
+
 Windows
 ^^^^^^^
 
-- To build or install psutil from source on Windows, you need to have
-  `Visual Studio 2017`_ or later installed. For detailed instructions, see the
-  `CPython Developer Guide`_.
-- MinGW is not supported for building psutil on Windows.
-- To build directly from the source tarball (.tar.gz) on PYPI, run:
+- To build psutil from source, install
+  `Microsoft C++ Build Tools <https://visualstudio.microsoft.com/visual-cpp-build-tools/>`_
+  with the **Desktop development with C++** option selected.
+- MinGW is not supported.
+- To build and install psutil directly from the source distribution on PyPI,
+  run:
 
   .. code-block:: none
 
-      pip install --no-binary :all: psutil
+      python -m pip install --no-binary=:all: psutil
 
-- If you want to clone psutil's Git repository and build / develop locally,
-  first install `Git for Windows`_ and GNU Make, then launch a Git Bash shell.
-  This provides a Unix-like environment where ``make`` works.
-- Once inside Git Bash, you can run the usual ``make`` commands:
+- To clone psutil's Git repository and build or develop it locally, first
+  install `Git for Windows`_ and GNU Make. To install GNU Make, open PowerShell
+  and run:
+
+  .. code-block:: none
+
+      winget install --exact --id ezwinports.make
+
+- Close and reopen Git Bash, then run the usual ``make`` commands:
 
   .. code-block:: none
 
@@ -210,9 +218,7 @@ instead of modifying the system Python installation:
     python -m pip install psutil
 
 .. _`AIX Toolbox`: https://www.ibm.com/support/pages/aix-toolbox-open-source-software-downloads-alpha
-.. _`CPython Developer Guide`: https://devguide.python.org/getting-started/setup-building/#windows
 .. _`get-pip.py`: https://bootstrap.pypa.io/get-pip.py
 .. _`Git for Windows`: https://git-scm.com/install/windows
 .. _`install-sysdeps.sh`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/install-sysdeps.sh
 .. _`PyPI`: https://pypi.org/project/psutil/
-.. _`Visual Studio 2017`: https://visualstudio.microsoft.com/vs/older-downloads/
