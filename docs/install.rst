@@ -34,6 +34,12 @@ can invoke this script from the Makefile as:
 
     make install-sysdeps
 
+...or fetch it and install from github:
+
+.. code-block:: none
+
+    curl -fsSL https://raw.githubusercontent.com/giampaolo/psutil/master/scripts/internal/install-sysdeps.sh | sh
+
 After system deps are installed, you can compile and install psutil with:
 
 .. code-block:: none
