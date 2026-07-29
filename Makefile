@@ -253,7 +253,7 @@ fix-all:  ## Run all code fixers.
 
 ci-lint:  ## Run all linters on GitHub CI.
 	$(MAKE) install-pydeps-lint
-	curl -fsSL https://dprint.dev/install.sh | sh
+	test -x $(DPRINT) || curl -fsSL https://dprint.dev/install.sh | sh
 	$(DPRINT) --version
 	clang-format --version
 	$(MAKE) lint-all
