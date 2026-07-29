@@ -22,6 +22,8 @@ case "$UNAME_S" in
             HAS_APT=true  # debian / ubuntu
         elif command -v yum > /dev/null 2>&1; then
             HAS_YUM=true  # redhat / centos
+        elif command -v dnf > /dev/null 2>&1; then
+            HAS_DNF=true  # fedora
         elif command -v pacman > /dev/null 2>&1; then
             HAS_PACMAN=true  # arch
         elif command -v apk > /dev/null 2>&1; then
@@ -57,6 +59,10 @@ main() {
     elif [ $HAS_YUM ]; then
         [ $TEST_ONLY ] || $SUDO yum install -y python3-devel gcc
         $SUDO yum install -y net-tools coreutils-single util-linux sudo procps-ng
+    # Fedora
+    elif [ $HAS_DNF ]; then
+        [ $TEST_ONLY ] || $SUDO dnf install -y python3-devel gcc
+        $SUDO dnf install -y net-tools coreutils util-linux sudo procps-ng
     # Arch
     elif [ $HAS_PACMAN ]; then
         [ $TEST_ONLY ] || $SUDO pacman -S --noconfirm python gcc
@@ -70,7 +76,9 @@ main() {
         $SUDO pkg install -y python3  # no gcc: base cc is clang, and that's what python uses
     # NetBSD
     elif [ $NETBSD ]; then
-        $SUDO /usr/sbin/pkg_add -v pkgin
+        if ! command -v pkgin > /dev/null 2>&1; then
+            $SUDO /usr/sbin/pkg_add -v pkgin
+        fi
         $SUDO pkgin update
         $SUDO pkgin -y install 'python311-*'  # no gcc12: base gcc compiles psutil just fine
         if [ ! -e /usr/pkg/bin/python3 ]; then
