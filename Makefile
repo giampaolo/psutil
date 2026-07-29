@@ -259,6 +259,7 @@ ci-lint:  ## Run all linters on GitHub CI.
 
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-sysdeps
+	$(PYTHON) scripts/internal/install_pip.py
 	# Install psutil before the test deps: psleak depends on psutil,
 	# and a pre-installed one stops pip from pulling it from PyPI.
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .
