@@ -78,18 +78,19 @@ If you need to debug unusual situations or report a bug, you can enable debug
 mode via the :envvar:`PSUTIL_DEBUG` environment variable. In this mode, psutil
 may print additional information to stderr. Usually these are non-severe error
 conditions that are ignored instead of causing a crash. Unit tests
-automatically run with debug mode enabled. On UNIX:
+automatically run with debug mode enabled. To enable debug mode in UNIX (or on
+Windows + Bash):
 
 .. code-block:: none
 
-  $ PSUTIL_DEBUG=1 python3 script.py
+  $ PSUTIL_DEBUG=1 python3 test_script.py
   psutil-debug [psutil/_psutil_linux.c:150]> setmntent() failed (ignored)
 
-On Windows:
+On Windows using cmd.exe:
 
 .. code-block:: none
 
-  set PSUTIL_DEBUG=1 && python.exe script.py
+  set PSUTIL_DEBUG=1 && python.exe test_script.py
   psutil-debug [psutil/arch/windows/proc_info.c:56]> ReadProcessMemory -> ERROR_NOACCESS (ignored)
 
 Coding style
@@ -110,9 +111,32 @@ Run ``make fix-all`` before committing; it usually fixes Python issues (via
 Code organization
 -----------------
 
+A call travels from the public API down to the syscall. Linux is used here as
+an example, but the shape is the same on every platform:
+
+.. code-block:: none
+
+   import psutil
+        │
+        ▼
+   psutil/__init__.py          public API, Process class
+        │
+        ▼
+   psutil/_pslinux.py          python layer: parses /proc, calls into C
+        │
+        ▼
+   psutil/_psutil_linux.c      C extension entry point (arg parsing)
+        │
+        ▼
+   psutil/arch/linux/*.c       the actual syscalls
+                               + arch/posix/*.c   shared by POSIX
+                               + arch/all/*.c     shared by everything
+
+Where things live:
+
 .. code-block:: bash
 
-   psutil/__init__.py                   # Main API namespace ("import psutil")
+   psutil/__init__.py                   # Public API ("import psutil")
    psutil/_common.py                    # Generic utilities
    psutil/_ntuples.py                   # Named tuples returned by psutil APIs
    psutil/_enums.py                     # Enum containers
