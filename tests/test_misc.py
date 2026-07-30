@@ -19,6 +19,7 @@ import textwrap
 from unittest import mock
 
 import psutil
+from psutil import POSIX
 from psutil import WINDOWS
 from psutil import _psutil
 from psutil._common import bcat
@@ -31,7 +32,9 @@ from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
 
 from . import HAS_NET_IO_COUNTERS
+from . import ROOT_DIR
 from . import PsutilTestCase
+from . import import_module_by_path
 from . import process_namespace
 from . import pytest
 from . import reload_module
@@ -735,3 +738,29 @@ class TestWrapNumbers(PsutilTestCase):
         psutil.net_io_counters.cache_clear()
         caches = wrap_numbers.cache_info()
         assert caches == ({}, {}, {})
+
+
+# ===================================================================
+# --- Test setup.py
+# ===================================================================
+
+
+@skipif(not POSIX, reason="POSIX only")
+class TestSetupPy(PsutilTestCase):
+    @staticmethod
+    def import_setup_py():
+        path = os.path.join(ROOT_DIR, "setup.py")
+        if not os.path.exists(path):
+            return pytest.skip("setup.py not available")
+        return import_module_by_path(path)
+
+    def test_get_cc(self):
+        setup = self.import_setup_py()
+        with mock.patch.dict(os.environ, {"CC": "gcc -pthread"}):
+            assert setup.get_cc() == ["gcc", "-pthread"]
+
+    def test_detection_without_compiler(self):
+        setup = self.import_setup_py()
+        with mock.patch.dict(os.environ, {"CC": "psutil-no-such-cc"}):
+            assert setup.has_compiler() is False
+            assert setup.has_python_h() is False

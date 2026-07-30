@@ -2,30 +2,37 @@
 
 Install deps (e.g. pytest):
 
-.. code-block:: bash
+```bash
+make install-pydeps-test
+```
 
-    make install-pydeps-test
+Some tests shell out to CLI tools (`ps`, `ifconfig`, ...). On UNIX install
+them with:
+
+```bash
+make install-sysdeps-test
+```
 
 Run tests:
 
-.. code-block:: bash
-
-    make test
+```bash
+make test
+```
 
 Run tests in parallel (faster):
 
-.. code-block:: bash
-
-    make test-parallel
+```bash
+make test-parallel
+```
 
 Run a specific test:
 
-.. code-block:: bash
-
-    make test ARGS=tests.test_system.TestDiskAPIs
+```bash
+make test ARGS=tests/test_system.py::TestDiskAPIs
+```
 
 Test C extension memory leaks:
 
-.. code-block:: bash
-
-    make test-memleaks
+```bash
+make test-memleaks
+```

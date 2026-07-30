@@ -364,7 +364,7 @@ def print_install_instructions():
             return f"wget -qO- {url} | sh"
         if shutil.which("fetch"):  # FreeBSD
             return f"fetch -qo - {url} | sh"
-        if shutil.which("ftp"):  # OpenBSD / NetNBSD
+        if shutil.which("ftp"):  # OpenBSD / NetBSD
             return f"ftp -o - {url} | sh"
 
     if not has_compiler():

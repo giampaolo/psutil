@@ -183,7 +183,7 @@ Make a pull request
 - Stage and commit: ``git add <files>`` then
   ``git commit -m 'Add some feature'``
 - Push: ``git push origin new-feature``
-- Open a PR and sign off your work (see :src:`CONTRIBUTING.md`).
+- Open a pull request (see :src:`CONTRIBUTING.md`).
 
 Continuous integration
 ----------------------
