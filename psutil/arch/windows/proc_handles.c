@@ -6,8 +6,9 @@
 
 // This module retrieves handles opened by a process.
 //
-// We use NtQuerySystemInformation to enumerate them and NtQueryObject
-// to obtain the corresponding file name.
+// We use NtQueryInformationProcess(ProcessHandleInformation) to
+// enumerate them and NtQueryObject to obtain the corresponding file
+// name.
 //
 // NtQueryObject / GetFileType block forever on pipes with a pending
 // blocking read, so we call them in a separate thread with a timeout.
@@ -46,49 +47,47 @@ typedef struct {
 
 
 static int
-psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
-    static ULONG initialBufferSize = 0x10000;
+psutil_enum_process_handles(
+    HANDLE hProcess, PPROCESS_HANDLE_SNAPSHOT_INFORMATION *snapshot
+) {
     NTSTATUS status;
-    PVOID buffer;
-    ULONG bufferSize;
+    PVOID buffer = NULL;
+    ULONG bufferSize = 0x8000;
+    DWORD returnLength = 0;
+    int attempts = 8;
 
-    bufferSize = initialBufferSize;
-    buffer = MALLOC_ZERO(bufferSize);
-    if (buffer == NULL) {
-        PyErr_NoMemory();
-        return -1;
-    }
-
-    while ((status = NtQuerySystemInformation(
-                SystemExtendedHandleInformation, buffer, bufferSize, NULL
-            ))
-           == STATUS_INFO_LENGTH_MISMATCH)
-    {
-        FREE(buffer);
-        bufferSize *= 2;
-
-        // Fail if we're resizing the buffer to something very large.
-        if (bufferSize > 256 * 1024 * 1024) {
-            psutil_runtime_error(
-                "SystemExtendedHandleInformation buffer too big"
-            );
-            return -1;
-        }
-
+    do {
+        // Zeroed buffer: some Windows versions return success for
+        // minimal processes without writing anything, so make sure
+        // NumberOfHandles reads as 0 in that case.
         buffer = MALLOC_ZERO(bufferSize);
         if (buffer == NULL) {
             PyErr_NoMemory();
             return -1;
         }
-    }
+        status = NtQueryInformationProcess(
+            hProcess,
+            ProcessHandleInformation,
+            buffer,
+            bufferSize,
+            &returnLength
+        );
+        if (status != STATUS_INFO_LENGTH_MISMATCH)
+            break;
+        FREE(buffer);
+        buffer = NULL;
+        // The handle table may grow between calls; leave some slack.
+        bufferSize = returnLength + 0x1000;
+    } while (--attempts);
 
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
-        FREE(buffer);
+        psutil_SetFromNTStatusErr(status, "NtQueryInformationProcess");
+        if (buffer != NULL)
+            FREE(buffer);
         return -1;
     }
 
-    *handles = (PSYSTEM_HANDLE_INFORMATION_EX)buffer;
+    *snapshot = (PPROCESS_HANDLE_SNAPSHOT_INFORMATION)buffer;
     return 0;
 }
 
@@ -218,30 +217,27 @@ psutil_threaded_get_filename(HANDLE hFile, PUNICODE_STRING *nameOut) {
 
 
 PyObject *
-psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
-    PSYSTEM_HANDLE_INFORMATION_EX handlesList = NULL;
-    PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX hHandle = NULL;
+psutil_get_open_files(HANDLE hProcess) {
+    PPROCESS_HANDLE_SNAPSHOT_INFORMATION snapshot = NULL;
+    PPROCESS_HANDLE_TABLE_ENTRY_INFO entry = NULL;
     HANDLE hFile = NULL;
     PUNICODE_STRING fileName = NULL;
-    ULONG i = 0;
+    ULONG_PTR i = 0;
     BOOLEAN errorOccurred = FALSE;
     DWORD dwRet;
     PyObject *py_retlist = PyList_New(0);
-    ;
 
     if (!py_retlist)
         return NULL;
 
-    if (psutil_enum_handles(&handlesList) != 0)
+    if (psutil_enum_process_handles(hProcess, &snapshot) != 0)
         goto error;
 
-    for (i = 0; i < handlesList->NumberOfHandles; i++) {
-        hHandle = &handlesList->Handles[i];
-        if ((ULONG_PTR)hHandle->UniqueProcessId != dwPid)
-            continue;
+    for (i = 0; i < snapshot->NumberOfHandles; i++) {
+        entry = &snapshot->Handles[i];
         if (!DuplicateHandle(
                 hProcess,
-                hHandle->HandleValue,
+                entry->HandleValue,
                 GetCurrentProcess(),
                 &hFile,
                 0,
@@ -296,8 +292,8 @@ exit:
         CloseHandle(hFile);
     if (fileName != NULL)
         FREE(fileName);
-    if (handlesList != NULL)
-        FREE(handlesList);
+    if (snapshot != NULL)
+        FREE(snapshot);
 
     if (errorOccurred == TRUE)
         return NULL;

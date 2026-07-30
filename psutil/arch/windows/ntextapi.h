@@ -30,12 +30,12 @@ typedef LONG NTSTATUS;
 // Enums
 // ================================================================
 
-#undef  SystemExtendedHandleInformation
-#define SystemExtendedHandleInformation 64
 #undef  MemoryWorkingSetInformation
 #define MemoryWorkingSetInformation 0x1
 #undef  ObjectNameInformation
 #define ObjectNameInformation 1
+#undef  ProcessHandleInformation
+#define ProcessHandleInformation 51
 #undef  ProcessIoPriority
 #define ProcessIoPriority 33
 #undef  ProcessWow64Information
@@ -252,22 +252,22 @@ typedef struct {
     ULONG ApcBypassCount;
 } _SYSTEM_INTERRUPT_INFORMATION;
 
-typedef struct _SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX {
-    PVOID Object;
-    HANDLE UniqueProcessId;
+// Process.open_files()
+typedef struct _PROCESS_HANDLE_TABLE_ENTRY_INFO {
     HANDLE HandleValue;
-    ULONG GrantedAccess;
-    USHORT CreatorBackTraceIndex;
-    USHORT ObjectTypeIndex;
+    SIZE_T HandleCount;
+    SIZE_T PointerCount;
+    ACCESS_MASK GrantedAccess;
+    ULONG ObjectTypeIndex;
     ULONG HandleAttributes;
     ULONG Reserved;
-} SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX, *PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX;
+} PROCESS_HANDLE_TABLE_ENTRY_INFO, *PPROCESS_HANDLE_TABLE_ENTRY_INFO;
 
-typedef struct _SYSTEM_HANDLE_INFORMATION_EX {
+typedef struct _PROCESS_HANDLE_SNAPSHOT_INFORMATION {
     ULONG_PTR NumberOfHandles;
     ULONG_PTR Reserved;
-    SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX Handles[1];
-} SYSTEM_HANDLE_INFORMATION_EX, *PSYSTEM_HANDLE_INFORMATION_EX;
+    PROCESS_HANDLE_TABLE_ENTRY_INFO Handles[1];
+} PROCESS_HANDLE_SNAPSHOT_INFORMATION, *PPROCESS_HANDLE_SNAPSHOT_INFORMATION;
 
 typedef struct _PROCESS_BASIC_INFORMATION2 {
     NTSTATUS ExitStatus;
