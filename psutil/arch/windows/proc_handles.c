@@ -13,13 +13,19 @@
 // NtQueryObject / GetFileType block forever on pipes, console and
 // other device handles with a pending blocking operation, so we call
 // them in a worker thread with a timeout. The worker is created
-// lazily, once per call, and reused for all the handles. It is never
-// killed: TerminateThread() can't terminate a thread waiting in the
-// kernel, and if it lands while the thread is exiting it orphans the
-// loader lock, deadlocking the next CreateThread(). On timeout we
-// just abandon the worker (it cleans up after itself if it ever
-// completes) and create a new one for the remaining handles. See:
+// lazily, once per call, and reused for all the handles. On timeout
+// we kill it with TerminateThread() and create a new one for the
+// remaining handles. Killing it is safe because its body is strictly
+// syscalls: it can't be holding the heap or loader lock, and it
+// never exits on its own. The kernel wait it's stuck in is a
+// UserMode wait, which termination breaks (SystemInformer has done
+// the same for years). The old code deadlocked by killing a thread
+// that used the heap and the Python C API, see #1967. If the killed
+// thread doesn't die (never seen in practice) we abandon it and leak
+// its resources. See:
 // https://github.com/giampaolo/psutil/pull/597
+// https://github.com/giampaolo/psutil/pull/2190
+// https://github.com/giampaolo/psutil/pull/2894
 //
 // CREDITS: original implementation was written by Jeff Tang. It was
 // then rewritten by Giampaolo Rodola many years later. Utility
@@ -33,11 +39,8 @@
 
 
 #define THREAD_TIMEOUT 100  // ms
-
-// Ownership handoff between the main thread and the worker thread.
-#define QS_RUNNING 0
-#define QS_DONE 1  // worker finished, main thread consumes the result
-#define QS_ABANDONED 2  // main thread timed out, worker cleans up and exits
+// How long to wait for a killed worker to actually die.
+#define KILL_JOIN_TIMEOUT 1000  // ms
 
 typedef struct {
     HANDLE hThread;
@@ -49,7 +52,6 @@ typedef struct {
     ULONG returnLength;  // out
     NTSTATUS status;  // out
     int quit;  // main thread asks the worker to exit
-    volatile LONG state;
 } Worker;
 
 
@@ -179,9 +181,11 @@ psutil_enum_process_handles(
 }
 
 
-// Runs in a separate thread. The body is a single syscall: no
-// Python, no heap. Buffers are allocated and freed by the main
-// thread, which also reports errors.
+// Runs in a separate thread. The body is strictly syscalls: no
+// Python, no heap, no CRT. The main thread may TerminateThread()
+// this thread at any point between the two events, so anything that
+// can hold a user-mode lock is off limits. Buffers are allocated and
+// freed by the main thread, which also reports errors.
 static DWORD WINAPI
 psutil_worker_loop(LPVOID lpvParam) {
     Worker *w = (Worker *)lpvParam;
@@ -203,17 +207,6 @@ psutil_worker_loop(LPVOID lpvParam) {
                 &w->returnLength
             );
         }
-        if (InterlockedCompareExchange(&w->state, QS_DONE, QS_RUNNING)
-            != QS_RUNNING)
-        {
-            // Main thread gave up on us: nobody consumes the result.
-            FREE(w->fileName);
-            CloseHandle(w->hFile);
-            CloseHandle(w->hStartEvent);
-            CloseHandle(w->hDoneEvent);
-            FREE(w);
-            return 0;
-        }
         SetEvent(w->hDoneEvent);
     }
 }
@@ -234,9 +227,8 @@ psutil_worker_create(void) {
         psutil_oserror_wsyscall("CreateEvent");
         goto error;
     }
-    w->state = QS_DONE;
-    // Small stack: the thread only issues one syscall. Keeps the
-    // cost down if the worker gets stuck and leaks.
+    // Small stack: the thread only issues syscalls. Keeps the cost
+    // down if the worker gets stuck and leaks.
     w->hThread = CreateThread(
         NULL,
         0x10000,
@@ -278,9 +270,9 @@ psutil_worker_destroy(Worker *w) {
 // Query the name of hFile on the worker thread, with a timeout.
 // Return 0 on success (*nameOut set, may have Length 0), -1 on error
 // (Python exception set), WAIT_TIMEOUT if the query got stuck. On
-// WAIT_TIMEOUT the worker is abandoned along with hFile (the caller
-// must not close it) and *workerRef is reset to NULL; the next call
-// creates a new worker.
+// WAIT_TIMEOUT the worker is killed and hFile is closed (or leaked
+// if the kill fails); either way the caller must not touch hFile.
+// *workerRef is reset to NULL; the next call creates a new worker.
 static DWORD
 psutil_worker_get_filename(
     Worker **workerRef, HANDLE hFile, PUNICODE_STRING *nameOut
@@ -317,29 +309,45 @@ psutil_worker_get_filename(
         w->hFile = hFile;
         w->fileName = name;
         w->bufferSize = bufferSize;
-        w->state = QS_RUNNING;
         SetEvent(w->hStartEvent);
 
         dwWait = WaitForSingleObject(w->hDoneEvent, THREAD_TIMEOUT);
         if (dwWait != WAIT_OBJECT_0) {
             if (dwWait == WAIT_FAILED)
                 psutil_debug("WaitForSingleObject -> WAIT_FAILED");
-            if (InterlockedCompareExchange(&w->state, QS_ABANDONED, QS_RUNNING)
-                == QS_RUNNING)
-            {
-                // The worker is stuck; abandon it along with hFile
-                // and the name buffer. It cleans up by itself if it
-                // ever completes.
-                psutil_debug(
-                    "get handle name thread timed out after %i ms",
-                    THREAD_TIMEOUT
-                );
+            psutil_debug(
+                "get handle name thread timed out after %i ms; killing it",
+                THREAD_TIMEOUT
+            );
+            // The worker is stuck in the kernel. Kill it: its body is
+            // strictly syscalls, so there is no user-mode lock it can
+            // orphan.
+            if (!TerminateThread(w->hThread, 0))
+                psutil_debug("TerminateThread -> FALSE");
+            dwWait = WaitForSingleObject(w->hThread, KILL_JOIN_TIMEOUT);
+            if (dwWait == WAIT_OBJECT_0) {
+                // The worker is gone. It never acquired the file
+                // object lock (it was stuck waiting for it), so
+                // closing the handle here can't block.
                 CloseHandle(w->hThread);
-                *workerRef = NULL;
-                return WAIT_TIMEOUT;
+                CloseHandle(w->hStartEvent);
+                CloseHandle(w->hDoneEvent);
+                CloseHandle(w->hFile);
+                FREE(w->fileName);
+                FREE(w);
             }
-            // The worker completed right after the timeout: consume.
-            WaitForSingleObject(w->hDoneEvent, INFINITE);
+            else {
+                // Should not happen: the thread is stuck in an
+                // unkillable kernel wait. Leak it, along with hFile,
+                // the events and the name buffer, which the kernel
+                // may still write to. The pending termination will
+                // kill the thread before it ever runs user code
+                // again.
+                psutil_debug("killed worker did not exit; leaking it");
+                CloseHandle(w->hThread);
+            }
+            *workerRef = NULL;
+            return WAIT_TIMEOUT;
         }
 
         status = w->status;
@@ -410,10 +418,8 @@ psutil_get_open_files(HANDLE hProcess) {
 
         dwRet = psutil_worker_get_filename(&worker, hFile, &fileName);
         if (dwRet == WAIT_TIMEOUT) {
-            // The abandoned worker owns hFile now. Closing it here
-            // would block: the worker is stuck in the kernel holding
-            // a lock on this handle's file object, and CloseHandle()
-            // needs the same lock.
+            // Already closed (or deliberately leaked) along with the
+            // killed worker; skip this handle.
             hFile = NULL;
             continue;
         }
