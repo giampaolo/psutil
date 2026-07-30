@@ -6,22 +6,29 @@ Development guide
 Build, setup and test
 ---------------------
 
-- psutil makes extensive use of C extension modules, meaning a C compiler and
-  the Python development headers are required. To get started:
+- psutil makes extensive use of C code, so a C compiler and the Python
+  development headers are required. First clone the repository:
 
   .. code-block:: bash
 
      git clone https://github.com/giampaolo/psutil.git
      cd psutil
-     make install-sysdeps       # install system deps needed to compile
-     make install-sysdeps-test  # install CLI tools used by tests
-     make install-pydeps-dev    # install python development deps (linters, etc)
+
+  On Linux, FreeBSD, OpenBSD, NetBSD and Solaris, install the system deps:
+
+  .. code-block:: bash
+
+     make install-sysdeps       # compiler + python headers
+     make install-sysdeps-test  # CLI tools used by tests
+
+  On macOS, AIX and Windows there's no such target, see
+  :ref:`install_from_source`. Then, everywhere:
+
+  .. code-block:: bash
+
+     make install-pydeps-dev    # python development deps (linters, etc)
      make build                 # compile the C extension in place
      make test
-
-  ``make install-sysdeps`` only covers Linux, FreeBSD, OpenBSD, NetBSD and
-  Solaris. On macOS and AIX install the compiler by hand, see
-  :ref:`install_from_source`.
 
 - ``make`` (via the :src:`Makefile`) is used for building, testing and general
   development tasks, including on Windows (see below):
@@ -50,10 +57,13 @@ Build, setup and test
 - Don't use ``sudo``, except for the ``install-sysdeps-*`` targets, which
   invoke it themselves when needed.
 
-- To target a specific Python version:
+- To target a specific Python version, pass ``PYTHON`` to every step, so that
+  the extension is built by the same interpreter that runs the tests:
 
   .. code-block:: none
 
+     make install-pydeps-dev PYTHON=python3.13
+     make build PYTHON=python3.13
      make test PYTHON=python3.13
 
 Windows
@@ -111,8 +121,9 @@ Run ``make fix-all`` before committing; it usually fixes Python issues (via
 Code organization
 -----------------
 
-A call travels from the public API down to the syscall. Linux is used here as
-an example, but the shape is the same on every platform:
+Not every API reaches C: many are implemented in python alone (on Linux, by
+parsing ``/proc``). For those that do, a call travels down through the
+platform-specific layers. Linux is used here as an example:
 
 .. code-block:: none
 
@@ -128,7 +139,7 @@ an example, but the shape is the same on every platform:
    psutil/_psutil_linux.c      C extension entry point (arg parsing)
         │
         ▼
-   psutil/arch/linux/*.c       the actual syscalls
+   psutil/arch/linux/*.c       platform-specific C implementation
                                + arch/posix/*.c   shared by POSIX
                                + arch/all/*.c     shared by everything
 
@@ -145,15 +156,17 @@ Where things live:
    psutil/arch/all/*.c                  # C code common to all OSes
    psutil/arch/posix/*.c                # C code common to POSIX OSes
    psutil/arch/bsd/*.c                  # C code common to the BSDs
-   psutil/arch/{platform}/*.c           # OS-specific C extension
-   tests/test_process|system.py         # Main system/process API tests
+   psutil/arch/{platform}/*.c           # OS-specific C implementation
+   tests/test_process.py                # Main process API tests
+   tests/test_system.py                 # Main system API tests
    tests/test_{platform}.py             # OS-specific tests
 
 Adding a new API
 ----------------
 
-- Define the API in :src:`psutil/__init__.py`.
-- Implement it in ``psutil/_ps{platform}.py`` (e.g. :src:`psutil/_pslinux.py`).
+- Define the public API in :src:`psutil/__init__.py`.
+- Implement it for each applicable platform in ``psutil/_ps{platform}.py``
+  (e.g. :src:`psutil/_pslinux.py`).
 - If needed, add C code in ``psutil/arch/{platform}/file.c``.
 - Add a generic test in :src:`tests/test_system.py` or
   :src:`tests/test_process.py`.
@@ -167,15 +180,16 @@ Make a pull request
 - Fork psutil on GitHub.
 - Clone your fork: ``git clone git@github.com:YOUR-USERNAME/psutil.git``
 - Create a branch: ``git checkout -b new-feature``
-- Commit changes: ``git commit -am 'add some feature'``
+- Stage and commit: ``git add <files>`` then
+  ``git commit -m 'Add some feature'``
 - Push: ``git push origin new-feature``
 - Open a PR and sign off your work (see :src:`CONTRIBUTING.md`).
 
 Continuous integration
 ----------------------
 
-Unit tests run automatically on every ``git push`` on all platforms except AIX.
-See
+Tests run automatically on pull requests and on relevant pushes, covering all
+regularly tested platforms except AIX. See
 `.github/workflows <https://github.com/giampaolo/psutil/tree/master/.github/workflows>`_.
 
 Documentation
@@ -190,13 +204,15 @@ Documentation
      python3 -m pip install -r requirements.txt
      make html
 
-- Doc is hosted at https://psutil.io. It's a single version, rebuilt and
-  deployed automatically on every push to ``master``.
+- The documentation is hosted at https://psutil.io. It's a single version,
+  rebuilt and deployed automatically on every push to ``master``.
 
 Releases
 --------
 
-- Uploaded to `PyPI`_ via ``make release``.
+For project maintainers:
+
+- Releases are uploaded to `PyPI`_ via ``make release``.
 - Git tags use the ``vX.Y.Z`` format (e.g. ``v7.2.2``).
 - The version string is defined in :src:`psutil/__init__.py` (``__version__``).
 
