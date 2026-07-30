@@ -42,6 +42,7 @@ from . import retry
 from . import safe_mkdir
 from . import safe_rmpath
 from . import serial
+from . import sh
 from . import skipif
 from . import system_namespace
 from . import tcp_socketpair
@@ -233,6 +234,30 @@ class TestFSTestUtils(PsutilTestCase):
         with chdir(testfn):
             assert os.getcwd() == os.path.join(base, testfn)
         assert os.getcwd() == base
+
+
+class TestPythonExeEnv(PsutilTestCase):
+    def test_subprocess_imports_our_psutil(self):
+        # A psutil installed elsewhere (typically site-packages) must
+        # not win over the one we're testing. Reproduce the sys.path
+        # order of that situation: the decoy comes after PYTHONPATH,
+        # and the cwd has no psutil of its own.
+        cwd = self.get_testfn()
+        decoy = os.path.join(cwd, "decoy")
+        os.makedirs(os.path.join(decoy, "psutil"))
+        with open(os.path.join(decoy, "psutil", "__init__.py"), "w"):
+            pass
+
+        env = PYTHON_EXE_ENV.copy()
+        env["PYTHONPATH"] = os.pathsep.join(
+            filter(None, [env.get("PYTHONPATH"), decoy])
+        )
+        cmd = [PYTHON_EXE, "-c", "import psutil; print(psutil.__file__)"]
+        out = sh(cmd, env=env, cwd=cwd)
+
+        got = os.path.normcase(os.path.realpath(out))
+        expected = os.path.normcase(os.path.realpath(psutil.__file__))
+        assert got == expected
 
 
 class TestProcessUtils(PsutilTestCase):
