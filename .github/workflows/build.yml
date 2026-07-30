@@ -27,7 +27,7 @@ jobs:
 
   # Run tests on Linux, macOS, Windows
   tests:
-    name: "${{ matrix.os }}, ${{ matrix.arch }}"
+    name: "${{ matrix.os }}, ${{ matrix.arch }}${{ matrix.tag && format(' ({0})', matrix.tag) || '' }}"
     # Skip same-repo PR runs: the push event already covers them.
     if: &skip_same_repo_pr github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ${{ matrix.os }}
@@ -38,7 +38,11 @@ jobs:
         include:
           - { os: ubuntu-latest, arch: x86_64 }
           - { os: ubuntu-24.04-arm, arch: aarch64 }
-          - { os: macos-15-intel, arch: x86_64 } # plain macos-15 is ARM
+          # Intel runners are slow, and installing the free-threaded
+          # framework alone takes ~90s there. Give it its own lane so it
+          # runs next to cp314 instead of after it.
+          - { os: macos-15-intel, arch: x86_64, build: "cp314-*", tag: cp314 }
+          - { os: macos-15-intel, arch: x86_64, build: "cp314t-*", tag: cp314t }
           - { os: macos-15, arch: arm64 }
           - { os: windows-2025, arch: AMD64 }
           - { os: windows-11-arm, arch: ARM64, python: "3.13" }
@@ -54,15 +58,17 @@ jobs:
 
       # Cache the CPython interpreters cibuildwheel downloads, so later
       # pushes reuse them. Linux gets them from the container, so skip it.
+      # Worth ~90 secs on Windows, measured by removing it (see #2931).
       - name: Cache cibuildwheel interpreters
         if: runner.os != 'Linux'
         uses: actions/cache@v6
         with:
-          path: |
-            ~/AppData/Local/pypa/cibuildwheel/Cache
-            ~/Library/Caches/cibuildwheel
-          # Invalidate cache every time build.yml or pyproject.toml change.
-          key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
+          path: ${{ runner.temp }}/cibw-cache
+          # Refresh the cache every time build.yml or pyproject.toml change.
+          # restore-keys falls back to the previous entry meanwhile, so an
+          # unrelated edit doesn't mean re-downloading everything.
+          key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
+          restore-keys: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-
 
       - name: Build wheels + run tests
         uses: pypa/cibuildwheel@v4.1.1
@@ -70,11 +76,13 @@ jobs:
           extras: uv # required by build-frontend in pyproject.toml
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_CACHE_PATH: ${{ runner.temp }}/cibw-cache
+          CIBW_BUILD: "${{ matrix.build || '*' }}"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v7
         with:
-          name: wheels-${{ matrix.os }}-${{ matrix.arch }}
+          name: wheels-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}
           path: wheelhouse
 
   # Run linters

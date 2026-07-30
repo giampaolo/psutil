@@ -1902,7 +1902,17 @@ class TestPopen(PsutilTestCase):
             proc.terminate()
 
             expected = -signal.SIGTERM if POSIX else signal.SIGTERM
-            ret = proc.wait(5)
+            # Wait longer than the child sleeps (10 secs). If SIGTERM
+            # gets lost (seen on NetBSD) we want the child to run to
+            # completion, so that wait() returns and we can print the
+            # evidence below, instead of just timing out.
+            status = ""
+            try:
+                ret = proc.wait(20)
+            except psutil.TimeoutExpired:
+                ret = "<timeout>"
+                with contextlib.suppress(psutil.Error):
+                    status = f" child status: {proc.status()};"
             if ret != expected:
                 masked = (
                     signal.pthread_sigmask(signal.SIG_BLOCK, [])
@@ -1912,6 +1922,7 @@ class TestPopen(PsutilTestCase):
                 return pytest.fail(
                     f"wait() returned {ret} instead of {expected};"
                     f" blocked signals in this process: {masked};"
+                    f"{status}"
                     f" child stderr: {proc.stderr.read()}"
                 )
 
