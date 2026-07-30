@@ -30,12 +30,14 @@ AUTH_FILE = os.path.expanduser("~/.pypinfo.json")
 CACHE_FILE = os.path.expanduser("~/.cache/psutil-print-downloads.json")
 PKGNAME = 'psutil'
 DAYS = 30
+CACHE_DAYS = 7
 # pypinfo defaults to 10 rows, which would turn "%" into a share of the
 # top 10. Raising it is free: BigQuery scans the same bytes either way.
 LIMIT = 100
 # pypinfo's own --all means "every installer, not just pip". Without it
 # we'd miss the ~46% of downloads that come from uv.
 PYPINFO = f"pypinfo --json --all --days {DAYS} --limit"
+SDIST = "sdist (built from source)"
 PYPISTATS_URL = "https://pypistats.org/api/packages/{}/{}"
 TOP_PACKAGES_URL = (
     "https://hugovk.dev/top-pypi-packages/top-pypi-packages.min.json"
@@ -67,20 +69,21 @@ def parse_cli():
 
 def file_cache(fun):
     """Cache the decorated function's JSON-serializable return value on
-    disk for the rest of the day.
+    disk for CACHE_DAYS days.
     """
 
     @functools.wraps(fun)
     def wrapper(*args):
         key = repr((fun.__name__, args))
-        today = str(datetime.date.today())
+        today = datetime.date.today()
         try:
             with open(CACHE_FILE) as f:
                 cache = json.load(f)
-            if cache["date"] != today:
+            written = datetime.date.fromisoformat(cache["date"])
+            if (today - written).days >= CACHE_DAYS:
                 raise ValueError("stale")
         except (FileNotFoundError, ValueError, KeyError):
-            cache = {"date": today, "entries": {}}
+            cache = {"date": str(today), "entries": {}}
         entries = cache.get("entries", {})
         if key in entries:
             return entries[key]
@@ -277,34 +280,40 @@ def downloads_by_wheel():
     """Group downloads by the kind of file fetched. This is the only
     way to count free-threaded (no-GIL) usage: those interpreters
     report the same version as regular ones, so pyversion can't tell
-    them apart.
+    them apart. Also break sdists down by platform and architecture:
+    those are the users who would benefit from a new wheel.
     """
-    # EXPENSIVE: ~39 GB scanned per call, the priciest query here.
+    # EXPENSIVE: ~45 GB scanned per call, the priciest query here.
     # Every psutil file ever published gets a row, hence the big limit:
     # cutting the tail undercounts sdist and free-threaded.
-    cmd = f"{PYPINFO} 5000 {PKGNAME} file"
+    cmd = f"{PYPINFO} 20000 {PKGNAME} file system cpu"
     totals = collections.Counter()
+    sdists = collections.Counter()
     for row in query(cmd)['rows']:
         name = row['file']
         if name.endswith(".metadata"):
             continue  # PEP 658 sidecar, not an actual download
         num = row['download_count']
         if name.endswith((".tar.gz", ".zip")):
-            totals["sdist (built from source)"] += num
+            totals[SDIST] += num
+            system = row['system_name'] or "null"
+            cpu = row['cpu'] or "null"
+            sdists[f"{system} / {cpu}"] += num
         elif re.search(r"-cp\d+t-", name):
             totals["wheel (free-threaded)"] += num
         elif "-abi3-" in name:
             totals["wheel (abi3)"] += num
         else:
             totals["wheel (version specific)"] += num
-    return totals
+    return totals, sdists
 
 
 # --- print
 
 
-def print_table(title, left, rows, percent=True):
-    total = sum(x['download_count'] for x in rows)
+def print_table(title, left, rows, percent=True, total=None):
+    if total is None:
+        total = sum(x['download_count'] for x in rows)
     if percent:
         header = f"{title:<30}  {'Downloads':>15}  {'%':>7}"
     else:
@@ -371,11 +380,16 @@ def print_expensive():
         'version',
         to_rows(downloads_by_dimension('version'), 'version')[:LIMIT],
     )
-    print_table(
-        'Wheel types',
-        'wheel_type',
-        to_rows(downloads_by_wheel(), 'wheel_type'),
-    )
+    wheels, sdists = downloads_by_wheel()
+    rows = []
+    for row in to_rows(wheels, 'wheel_type'):
+        rows.append(row)
+        if row['wheel_type'] == SDIST:
+            rows.extend(
+                {'wheel_type': f"    {name}", 'download_count': num}
+                for name, num in sdists.most_common()
+            )
+    print_table('Wheel types', 'wheel_type', rows, total=sum(wheels.values()))
     print_table(
         'Implementations',
         'implementation',
