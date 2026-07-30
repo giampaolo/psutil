@@ -515,13 +515,6 @@ typedef struct {
 // Type defs for modules loaded at runtime.
 // ================================================================
 
-BOOL (WINAPI *_GetLogicalProcessorInformationEx) (
-    LOGICAL_PROCESSOR_RELATIONSHIP relationship,
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
-    PDWORD ReturnLength);
-
-#define GetLogicalProcessorInformationEx _GetLogicalProcessorInformationEx
-
 NTSTATUS (NTAPI *_NtQueryInformationProcess) (
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
@@ -578,11 +571,6 @@ DWORD (WINAPI * _GetExtendedUdpTable) (
     ULONG Reserved);
 
 #define GetExtendedUdpTable _GetExtendedUdpTable
-
-DWORD (CALLBACK *_GetActiveProcessorCount) (
-    WORD GroupNumber);
-
-#define GetActiveProcessorCount _GetActiveProcessorCount
 
 BOOL(CALLBACK *_WTSQuerySessionInformationW) (
     HANDLE hServer,

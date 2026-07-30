@@ -248,14 +248,6 @@ psutil_loadlibs() {
 
     // --- Optional
 
-    // minimum requirement: Win 7
-    GetActiveProcessorCount = psutil_GetProcAddress(
-        "kernel32", "GetActiveProcessorCount"
-    );
-    // minimum requirement: Win 7
-    GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
-        "kernel32", "GetLogicalProcessorInformationEx"
-    );
     // minimum requirements: Windows Server Core
     WTSEnumerateSessionsW = psutil_GetProcAddressFromLib(
         "wtsapi32.dll", "WTSEnumerateSessionsW"
