@@ -53,31 +53,6 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 }
 
 
-// Commented out in favor of psutil_boot_time() above.
-
-/*
-// The number of seconds passed since boot. This is a monotonic timer,
-// not affected by system clock updates. On Windows 7+ it also includes
-// the time spent during suspend / hibernate.
-PyObject *
-psutil_uptime(PyObject *self, PyObject *args) {
-    double uptimeSeconds;
-    ULONGLONG interruptTime100ns = 0;
-
-    if (QueryInterruptTime) {  // Windows 7+
-        QueryInterruptTime(&interruptTime100ns);
-        // Convert from 100-nanosecond to seconds.
-        uptimeSeconds = interruptTime100ns / 10000000.0;
-    }
-    else {
-        // Convert from milliseconds to seconds.
-        uptimeSeconds = (double)GetTickCount64() / 1000.0;
-    }
-    return Py_BuildValue("d", uptimeSeconds);
-}
-*/
-
-
 PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;

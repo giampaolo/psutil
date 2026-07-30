@@ -167,10 +167,10 @@ if WINDOWS:
         maj, min = sys.getwindowsversion()[0:2]
         return "0x0{}".format((maj * 100) + min)
 
-    if sys.getwindowsversion()[0] < 6:
-        msg = "this Windows version is too old (< Windows Vista); "
-        msg += "psutil 3.4.2 is the latest version which supports Windows "
-        msg += "2000, XP and 2003 server"
+    if sys.getwindowsversion()[0] < 10:
+        msg = "this Windows version is too old (< Windows 10); "
+        msg += "psutil 7.2.x is the latest version which supports Windows "
+        msg += "Vista, 7, 8, 8.1 and their server counterparts"
         raise RuntimeError(msg)
 
     macros.append(("PSUTIL_WINDOWS", 1))
@@ -180,8 +180,6 @@ if WINDOWS:
         ('_WIN32_WINNT', get_winver()),
         ('_AVAIL_WINVER_', get_winver()),
         ('_CRT_SECURE_NO_WARNINGS', None),
-        # see: https://github.com/giampaolo/psutil/issues/348
-        ('PSAPI_VERSION', 1),
     ])
 
     if Py_GIL_DISABLED:
@@ -197,11 +195,12 @@ if WINDOWS:
         define_macros=macros,
         libraries=[
             "advapi32",
+            "iphlpapi",
             "kernel32",
             "netapi32",
+            "ntdll",
             "pdh",
             "PowrProf",
-            "psapi",
             "shell32",
             "ws2_32",
         ],
@@ -438,40 +437,33 @@ def main():
             'Intended Audience :: Information Technology',
             'Intended Audience :: System Administrators',
             'License :: OSI Approved :: BSD License',
+            'Operating System :: OS Independent',
             'Operating System :: MacOS :: MacOS X',
+            'Operating System :: Microsoft :: Windows',
             'Operating System :: Microsoft :: Windows :: Windows 10',
             'Operating System :: Microsoft :: Windows :: Windows 11',
-            'Operating System :: Microsoft :: Windows :: Windows 7',
-            'Operating System :: Microsoft :: Windows :: Windows 8',
-            'Operating System :: Microsoft :: Windows :: Windows 8.1',
-            'Operating System :: Microsoft :: Windows :: Windows Server 2003',
-            'Operating System :: Microsoft :: Windows :: Windows Server 2008',
-            'Operating System :: Microsoft :: Windows :: Windows Vista',
-            'Operating System :: Microsoft :: Windows',
-            'Operating System :: Microsoft',
-            'Operating System :: OS Independent',
             'Operating System :: POSIX :: AIX',
+            'Operating System :: POSIX :: BSD',
             'Operating System :: POSIX :: BSD :: FreeBSD',
             'Operating System :: POSIX :: BSD :: NetBSD',
             'Operating System :: POSIX :: BSD :: OpenBSD',
-            'Operating System :: POSIX :: BSD',
             'Operating System :: POSIX :: Linux',
             'Operating System :: POSIX :: SunOS/Solaris',
             'Operating System :: POSIX',
             'Programming Language :: C',
-            'Programming Language :: Python :: 3 :: Only',
+            'Programming Language :: Python',
             'Programming Language :: Python :: 3',
+            'Programming Language :: Python :: 3 :: Only',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
-            'Programming Language :: Python',
             'Programming Language :: Python :: Free Threading',
-            'Topic :: Software Development :: Libraries :: Python Modules',
             'Topic :: Software Development :: Libraries',
+            'Topic :: Software Development :: Libraries :: Python Modules',
             'Topic :: System :: Benchmark',
             'Topic :: System :: Hardware',
             'Topic :: System :: Monitoring',
-            'Topic :: System :: Networking :: Monitoring :: Hardware Watchdog',
             'Topic :: System :: Networking :: Monitoring',
+            'Topic :: System :: Networking :: Monitoring :: Hardware Watchdog',
             'Topic :: System :: Networking',
             'Topic :: System :: Operating System',
             'Topic :: System :: Systems Administration',

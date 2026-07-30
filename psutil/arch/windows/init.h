@@ -11,16 +11,8 @@
 #include "ntextapi.h"
 
 
-extern int PSUTIL_WINVER;
 extern SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 extern CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
-
-#define PSUTIL_WINDOWS_VISTA 60
-#define PSUTIL_WINDOWS_7 61
-#define PSUTIL_WINDOWS_8 62
-#define PSUTIL_WINDOWS_8_1 63
-#define PSUTIL_WINDOWS_10 100
-#define PSUTIL_WINDOWS_NEW MAXLONG
 
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
 #define MALLOC_ZERO(x) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (x))

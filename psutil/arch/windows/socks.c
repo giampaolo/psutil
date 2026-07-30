@@ -242,8 +242,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     // TCP IPv6
     if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1)
-        && (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1)
-        && (RtlIpv6AddressToStringA != NULL))
+        && (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1))
     {
         table = NULL;
         py_addr_tuple_local = NULL;
@@ -388,8 +387,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     // UDP IPv6
 
     if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1)
-        && (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1)
-        && (RtlIpv6AddressToStringA != NULL))
+        && (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1))
     {
         table = NULL;
         py_addr_tuple_local = NULL;

@@ -354,15 +354,6 @@ typedef struct _PROCESSOR_POWER_INFORMATION {
    ULONG CurrentIdleState;
 } PROCESSOR_POWER_INFORMATION, *PPROCESSOR_POWER_INFORMATION;
 
-#ifndef __IPHLPAPI_H__
-typedef struct in6_addr {
-    union {
-        UCHAR Byte[16];
-        USHORT Word[8];
-    } u;
-} IN6_ADDR, *PIN6_ADDR, FAR *LPIN6_ADDR;
-#endif
-
 // PEB / cmdline(), cwd(), environ()
 typedef struct {
     BYTE Reserved1[16];
@@ -515,13 +506,6 @@ typedef struct {
 // Type defs for modules loaded at runtime.
 // ================================================================
 
-BOOL (WINAPI *_GetLogicalProcessorInformationEx) (
-    LOGICAL_PROCESSOR_RELATIONSHIP relationship,
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
-    PDWORD ReturnLength);
-
-#define GetLogicalProcessorInformationEx _GetLogicalProcessorInformationEx
-
 NTSTATUS (NTAPI *_NtQueryInformationProcess) (
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
@@ -547,42 +531,13 @@ NTSTATUS (NTAPI *_NtSetInformationProcess) (
 
 #define NtSetInformationProcess _NtSetInformationProcess
 
-PSTR (NTAPI * _RtlIpv4AddressToStringA) (
-    struct in_addr *Addr,
-    PSTR S);
+// Declared in <ip2string.h>, which can't be included from user-mode
+// code (it expects kernel types we don't have). Exported by ntdll.lib.
+NTSYSAPI PSTR NTAPI
+RtlIpv4AddressToStringA(struct in_addr *Addr, PSTR S);
 
-#define RtlIpv4AddressToStringA _RtlIpv4AddressToStringA
-
-PSTR (NTAPI * _RtlIpv6AddressToStringA) (
-    struct in6_addr *Addr,
-    PSTR P);
-
-#define RtlIpv6AddressToStringA _RtlIpv6AddressToStringA
-
-DWORD (WINAPI * _GetExtendedTcpTable) (
-    PVOID pTcpTable,
-    PDWORD pdwSize,
-    BOOL bOrder,
-    ULONG ulAf,
-    TCP_TABLE_CLASS TableClass,
-    ULONG Reserved);
-
-#define GetExtendedTcpTable _GetExtendedTcpTable
-
-DWORD (WINAPI * _GetExtendedUdpTable) (
-    PVOID pUdpTable,
-    PDWORD pdwSize,
-    BOOL bOrder,
-    ULONG ulAf,
-    UDP_TABLE_CLASS TableClass,
-    ULONG Reserved);
-
-#define GetExtendedUdpTable _GetExtendedUdpTable
-
-DWORD (CALLBACK *_GetActiveProcessorCount) (
-    WORD GroupNumber);
-
-#define GetActiveProcessorCount _GetActiveProcessorCount
+NTSYSAPI PSTR NTAPI
+RtlIpv6AddressToStringA(struct in6_addr *Addr, PSTR P);
 
 BOOL(CALLBACK *_WTSQuerySessionInformationW) (
     HANDLE hServer,
@@ -609,17 +564,6 @@ VOID(CALLBACK *_WTSFreeMemory)(
     );
 
 #define WTSFreeMemory _WTSFreeMemory
-
-ULONGLONG (CALLBACK *_GetTickCount64) (
-    void);
-
-#define GetTickCount64 _GetTickCount64
-
-VOID(CALLBACK *_QueryInterruptTime) (
-    PULONGLONG lpInterruptTime
-);
-
-#define QueryInterruptTime _QueryInterruptTime
 
 NTSTATUS (NTAPI *_NtQueryObject) (
     HANDLE Handle,

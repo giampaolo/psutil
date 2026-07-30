@@ -15,24 +15,11 @@
 // See discussion at: https://bugs.python.org/issue33166#msg314631
 static unsigned int
 psutil_get_num_cpus(int fail_on_err) {
-    unsigned int ncpus = 0;
+    unsigned int ncpus;
 
-    // Minimum requirement: Windows 7
-    if (GetActiveProcessorCount != NULL) {
-        ncpus = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
-        if ((ncpus == 0) && (fail_on_err == 1)) {
-            psutil_oserror();
-        }
-    }
-    else {
-        psutil_debug(
-            "GetActiveProcessorCount() not available; "
-            "using GetSystemInfo()"
-        );
-        ncpus = (unsigned int)PSUTIL_SYSTEM_INFO.dwNumberOfProcessors;
-        if ((ncpus <= 0) && (fail_on_err == 1)) {
-            psutil_runtime_error("GetSystemInfo failed to retrieve CPU count");
-        }
+    ncpus = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+    if ((ncpus == 0) && (fail_on_err == 1)) {
+        psutil_oserror();
     }
     return ncpus;
 }
@@ -168,16 +155,10 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     DWORD ncpus = 0;
     DWORD prev_processor_info_size = 0;
 
-    // GetLogicalProcessorInformationEx() is available from Windows 7
-    // onward. Differently from GetLogicalProcessorInformation()
-    // it supports process groups, meaning this is able to report more
-    // than 64 CPUs. See:
+    // Differently from GetLogicalProcessorInformation(),
+    // GetLogicalProcessorInformationEx() supports process groups,
+    // meaning this is able to report more than 64 CPUs. See:
     // https://bugs.python.org/issue33166
-    if (GetLogicalProcessorInformationEx == NULL) {
-        psutil_debug("Win < 7; cpu_count_cores() forced to None");
-        Py_RETURN_NONE;
-    }
-
     while (1) {
         rc = GetLogicalProcessorInformationEx(RelationAll, buffer, &length);
         if (rc == FALSE) {

@@ -264,7 +264,7 @@ error:
 
 // Get process cmdline by using NtQueryInformationProcess. This is a
 // method alternative to PEB which is less likely to result in
-// AccessDenied. Requires Windows 8.1+.
+// AccessDenied.
 static int
 psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     HANDLE hProcess = NULL;
@@ -275,11 +275,6 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     PUNICODE_STRING tmp = NULL;
     size_t size;
     int ProcessCommandLineInformation = 60;
-
-    if (PSUTIL_WINVER < PSUTIL_WINDOWS_8_1) {
-        psutil_runtime_error("requires Windows 8.1+");
-        goto error;
-    }
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)

@@ -694,18 +694,15 @@ class Process:
     @wrap_exceptions
     @retry_error_partial_copy
     def cmdline(self):
-        if _psutil.WINVER >= _psutil.WINDOWS_8_1:
-            # PEB method detects cmdline changes but requires more
-            # privileges: https://github.com/giampaolo/psutil/pull/1398
-            try:
-                return _psutil.proc_cmdline(self.pid, use_peb=True)
-            except OSError as err:
-                if is_permission_err(err):
-                    return _psutil.proc_cmdline(self.pid, use_peb=False)
-                else:
-                    raise
-        else:
+        # PEB method detects cmdline changes but requires more
+        # privileges: https://github.com/giampaolo/psutil/pull/1398
+        try:
             return _psutil.proc_cmdline(self.pid, use_peb=True)
+        except OSError as err:
+            if is_permission_err(err):
+                return _psutil.proc_cmdline(self.pid, use_peb=False)
+            else:
+                raise
 
     @wrap_exceptions
     @retry_error_partial_copy

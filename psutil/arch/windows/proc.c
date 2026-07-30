@@ -19,9 +19,6 @@
 #include <Psapi.h>  // memory_info(), memory_maps()
 #include <signal.h>
 
-// Link with Iphlpapi.lib
-#pragma comment(lib, "IPHLPAPI.lib")
-
 #include "../../arch/all/init.h"
 
 
