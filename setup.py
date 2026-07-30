@@ -167,10 +167,10 @@ if WINDOWS:
         maj, min = sys.getwindowsversion()[0:2]
         return "0x0{}".format((maj * 100) + min)
 
-    if sys.getwindowsversion()[0] < 6:
-        msg = "this Windows version is too old (< Windows Vista); "
-        msg += "psutil 3.4.2 is the latest version which supports Windows "
-        msg += "2000, XP and 2003 server"
+    if sys.getwindowsversion()[0] < 10:
+        msg = "this Windows version is too old (< Windows 10); "
+        msg += "psutil 7.2.x is the latest version which supports Windows "
+        msg += "Vista, 7, 8, 8.1 and their server counterparts"
         raise RuntimeError(msg)
 
     macros.append(("PSUTIL_WINDOWS", 1))

@@ -283,16 +283,18 @@ psutil_set_winver() {
     RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
     maj = versionInfo.dwMajorVersion;
     min = versionInfo.dwMinorVersion;
-    if (maj == 6 && min == 0)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_VISTA;  // or Server 2008
-    else if (maj == 6 && min == 1)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_7;
-    else if (maj == 6 && min == 2)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_8;
-    else if (maj == 6 && min == 3)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_8_1;
-    else if (maj == 10 && min == 0)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_10;
+    if (maj < 10) {
+        psutil_runtime_error(
+            "this Windows version is too old (%lu.%lu); psutil 7.2.x is "
+            "the latest version supporting Windows Vista, 7, 8, 8.1 and "
+            "their server counterparts",
+            maj,
+            min
+        );
+        return 1;
+    }
+    if (maj == 10 && min == 0)
+        PSUTIL_WINVER = PSUTIL_WINDOWS_10;  // Windows 10 / 11, Server 2016+
     else
         PSUTIL_WINVER = PSUTIL_WINDOWS_NEW;
     return 0;
