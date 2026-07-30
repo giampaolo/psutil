@@ -121,16 +121,13 @@ class ProcInfo:
                 self.check_exception(exc)
 
     def should_skip(self, fun_name):
-        if MACOS and CI_TESTING and fun_name == "memory_info_ex":
-            # XXX: memory_info_ex() needs task_for_pid() for fields
-            # with no pid-based source (peak_rss, compressed, ...).
-            # task_for_pid() can hang forever when taskgated is
-            # wedged, which happens on headless CI but not on real
-            # machines. See:
-            # https://github.com/giampaolo/psutil/issues/2885
-            return True
-        # XXX: open_files() is too slow on Windows
-        return WINDOWS and fun_name == "open_files"
+        # XXX: memory_info_ex() needs task_for_pid() for fields
+        # with no pid-based source (peak_rss, compressed, ...).
+        # task_for_pid() can hang forever when taskgated is
+        # wedged, which happens on headless CI but not on real
+        # machines. See:
+        # https://github.com/giampaolo/psutil/issues/2885
+        return MACOS and CI_TESTING and fun_name == "memory_info_ex"
 
     def call_getters(self):
         info = {'pid': self.pid}

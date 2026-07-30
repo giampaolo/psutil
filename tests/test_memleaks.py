@@ -188,11 +188,9 @@ class TestProcess(MemoryLeakTestCase):
         affinity = thisproc.cpu_affinity()
         self.execute(lambda: self.proc.cpu_affinity(affinity))
 
-    @skipif(WINDOWS, reason="too slow on Windows")  # XXX
     def test_open_files(self):
-        # slow
         with open(get_testfn(), 'w'):
-            self.execute(self.proc.open_files, times=25 if WINDOWS else TIMES)
+            self.execute(self.proc.open_files)
 
     @skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
     @skipif(LINUX, reason="too slow on LINUX")
