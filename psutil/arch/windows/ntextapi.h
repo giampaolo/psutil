@@ -34,6 +34,8 @@ typedef LONG NTSTATUS;
 #define MemoryWorkingSetInformation 0x1
 #undef  ObjectNameInformation
 #define ObjectNameInformation 1
+#undef  ObjectTypesInformation
+#define ObjectTypesInformation 3
 #undef  ProcessHandleInformation
 #define ProcessHandleInformation 51
 #undef  ProcessIoPriority
@@ -253,6 +255,36 @@ typedef struct {
 } _SYSTEM_INTERRUPT_INFORMATION;
 
 // Process.open_files()
+typedef struct _OBJECT_TYPE_INFORMATION2 {
+    UNICODE_STRING TypeName;
+    ULONG TotalNumberOfObjects;
+    ULONG TotalNumberOfHandles;
+    ULONG TotalPagedPoolUsage;
+    ULONG TotalNonPagedPoolUsage;
+    ULONG TotalNamePoolUsage;
+    ULONG TotalHandleTableUsage;
+    ULONG HighWaterNumberOfObjects;
+    ULONG HighWaterNumberOfHandles;
+    ULONG HighWaterPagedPoolUsage;
+    ULONG HighWaterNonPagedPoolUsage;
+    ULONG HighWaterNamePoolUsage;
+    ULONG HighWaterHandleTableUsage;
+    ULONG InvalidAttributes;
+    GENERIC_MAPPING GenericMapping;
+    ULONG ValidAccessMask;
+    BOOLEAN SecurityRequired;
+    BOOLEAN MaintainHandleCount;
+    UCHAR TypeIndex;  // since Windows 8.1
+    CHAR ReservedByte;
+    ULONG PoolType;
+    ULONG DefaultPagedPoolCharge;
+    ULONG DefaultNonPagedPoolCharge;
+} OBJECT_TYPE_INFORMATION2, *POBJECT_TYPE_INFORMATION2;
+
+typedef struct _OBJECT_TYPES_INFORMATION {
+    ULONG NumberOfTypes;
+} OBJECT_TYPES_INFORMATION, *POBJECT_TYPES_INFORMATION;
+
 typedef struct _PROCESS_HANDLE_TABLE_ENTRY_INFO {
     HANDLE HandleValue;
     SIZE_T HandleCount;

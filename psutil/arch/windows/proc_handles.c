@@ -46,6 +46,86 @@ typedef struct {
 } QueryCtx;
 
 
+// ObjectTypesInformation buffer walking, adapted from SystemInformer's
+// phnt headers. Entries are variable-size: each OBJECT_TYPE_INFORMATION2
+// is followed by its type name buffer, padded to pointer alignment.
+// clang-format off
+#define ALIGN_UP_PTR(x) \
+    (((ULONG_PTR)(x) + sizeof(ULONG_PTR) - 1) & ~(sizeof(ULONG_PTR) - 1))
+
+#define FIRST_OBJECT_TYPE(types) \
+    ((POBJECT_TYPE_INFORMATION2)ALIGN_UP_PTR( \
+        (ULONG_PTR)(types) + sizeof(OBJECT_TYPES_INFORMATION)))
+
+#define NEXT_OBJECT_TYPE(entry) \
+    ((POBJECT_TYPE_INFORMATION2)((ULONG_PTR)(entry) \
+        + sizeof(OBJECT_TYPE_INFORMATION2) \
+        + ALIGN_UP_PTR((entry)->TypeName.MaximumLength)))
+// clang-format on
+
+
+// Find the kernel object type index for "File" handles, so that we
+// can tell whether a handle refers to a file without touching it.
+// The index is stable until reboot; resolve it once and cache it.
+// Return 0 on success, -1 on error (Python exception set).
+static int
+psutil_get_file_type_index(ULONG *indexOut) {
+    static ULONG cachedIndex = 0;
+    NTSTATUS status;
+    POBJECT_TYPES_INFORMATION typesInfo = NULL;
+    POBJECT_TYPE_INFORMATION2 entry;
+    ULONG bufferSize = 0x1000;
+    ULONG returnLength = 0;
+    ULONG i;
+    int attempts = 8;
+
+    if (cachedIndex != 0) {
+        *indexOut = cachedIndex;
+        return 0;
+    }
+
+    do {
+        typesInfo = MALLOC_ZERO(bufferSize);
+        if (typesInfo == NULL) {
+            PyErr_NoMemory();
+            return -1;
+        }
+        status = NtQueryObject(
+            NULL, ObjectTypesInformation, typesInfo, bufferSize, &returnLength
+        );
+        if (status != STATUS_INFO_LENGTH_MISMATCH)
+            break;
+        FREE(typesInfo);
+        typesInfo = NULL;
+        bufferSize = returnLength + 0x1000;
+    } while (--attempts);
+
+    if (!NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(status, "NtQueryObject");
+        if (typesInfo != NULL)
+            FREE(typesInfo);
+        return -1;
+    }
+
+    entry = FIRST_OBJECT_TYPE(typesInfo);
+    for (i = 0; i < typesInfo->NumberOfTypes; i++) {
+        if (entry->TypeName.Length == 4 * sizeof(WCHAR)
+            && memcmp(entry->TypeName.Buffer, L"File", 4 * sizeof(WCHAR)) == 0)
+        {
+            cachedIndex = entry->TypeIndex;
+            *indexOut = cachedIndex;
+            FREE(typesInfo);
+            return 0;
+        }
+        entry = NEXT_OBJECT_TYPE(entry);
+    }
+
+    FREE(typesInfo);
+    psutil_runtime_error("'File' object type not found");
+    return -1;
+}
+
+
 static int
 psutil_enum_process_handles(
     HANDLE hProcess, PPROCESS_HANDLE_SNAPSHOT_INFORMATION *snapshot
@@ -223,6 +303,7 @@ psutil_get_open_files(HANDLE hProcess) {
     HANDLE hFile = NULL;
     PUNICODE_STRING fileName = NULL;
     ULONG_PTR i = 0;
+    ULONG fileTypeIndex = 0;
     BOOLEAN errorOccurred = FALSE;
     DWORD dwRet;
     PyObject *py_retlist = PyList_New(0);
@@ -230,11 +311,17 @@ psutil_get_open_files(HANDLE hProcess) {
     if (!py_retlist)
         return NULL;
 
+    if (psutil_get_file_type_index(&fileTypeIndex) != 0)
+        goto error;
     if (psutil_enum_process_handles(hProcess, &snapshot) != 0)
         goto error;
 
     for (i = 0; i < snapshot->NumberOfHandles; i++) {
         entry = &snapshot->Handles[i];
+        // Skip anything that is not a File object (events, keys,
+        // threads, ...), which is usually most of the handles.
+        if (entry->ObjectTypeIndex != fileTypeIndex)
+            continue;
         if (!DuplicateHandle(
                 hProcess,
                 entry->HandleValue,
@@ -245,7 +332,7 @@ psutil_get_open_files(HANDLE hProcess) {
                 DUPLICATE_SAME_ACCESS
             ))
         {
-            // Will fail if not a regular file; just skip it.
+            // The process may have closed it in the meantime.
             continue;
         }
 
