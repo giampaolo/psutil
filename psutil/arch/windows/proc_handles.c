@@ -22,7 +22,26 @@
 // the same for years). The old code deadlocked by killing a thread
 // that used the heap and the Python C API, see #1967. If the killed
 // thread doesn't die (never seen in practice) we abandon it and leak
-// its resources. See:
+// its resources.
+//
+// The whole design (per-process handle snapshot, object type
+// pre-filter, reusable kill-on-timeout worker) mirrors what
+// SystemInformer (ex Process Hacker) does when its kernel driver is
+// not loaded:
+// - handle enumeration: PhEnumProcessHandles in
+//   https://github.com/winsiderss/systeminformer/blob/master/phlib/native.c
+// - type table, name query and kill-on-timeout worker pool:
+//   PhGetHandleInformationEx and PhpCallWithTimeout in
+//   https://github.com/winsiderss/systeminformer/blob/master/phlib/hndlinfo.c
+//
+// Why the queries hang can be seen in the WRK kernel sources: they
+// all wait on the FILE_OBJECT lock, which a blocking synchronous
+// read holds for its whole duration. Even GetFileType, which is
+// NtQueryVolumeInformationFile(FileFsDeviceInformation), acquires it
+// before its no-IRP fast path:
+// https://github.com/9176324/WRK/blob/master/base/ntos/io/iomgr/qsfs.c
+//
+// History:
 // https://github.com/giampaolo/psutil/pull/597
 // https://github.com/giampaolo/psutil/pull/2190
 // https://github.com/giampaolo/psutil/pull/2894
@@ -30,7 +49,7 @@
 // CREDITS: original implementation was written by Jeff Tang. It was
 // then rewritten by Giampaolo Rodola many years later. Utility
 // functions for getting the file handles and names were re-adapted
-// from the excellent ProcessHacker.
+// from the excellent ProcessHacker / SystemInformer.
 
 #include <windows.h>
 #include <Python.h>
