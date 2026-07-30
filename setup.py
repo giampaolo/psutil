@@ -195,8 +195,10 @@ if WINDOWS:
         define_macros=macros,
         libraries=[
             "advapi32",
+            "iphlpapi",
             "kernel32",
             "netapi32",
+            "ntdll",
             "pdh",
             "PowrProf",
             "shell32",

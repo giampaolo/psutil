@@ -203,21 +203,6 @@ psutil_loadlibs() {
     NtQueryObject = psutil_GetProcAddressFromLib("ntdll.dll", "NtQueryObject");
     if (!NtQueryObject)
         return -1;
-    RtlIpv4AddressToStringA = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "RtlIpv4AddressToStringA"
-    );
-    if (!RtlIpv4AddressToStringA)
-        return -1;
-    GetExtendedTcpTable = psutil_GetProcAddressFromLib(
-        "iphlpapi.dll", "GetExtendedTcpTable"
-    );
-    if (!GetExtendedTcpTable)
-        return -1;
-    GetExtendedUdpTable = psutil_GetProcAddressFromLib(
-        "iphlpapi.dll", "GetExtendedUdpTable"
-    );
-    if (!GetExtendedUdpTable)
-        return -1;
     RtlGetVersion = psutil_GetProcAddressFromLib("ntdll.dll", "RtlGetVersion");
     if (!RtlGetVersion)
         return -1;
@@ -238,11 +223,6 @@ psutil_loadlibs() {
         "ntdll", "RtlNtStatusToDosErrorNoTeb"
     );
     if (!RtlNtStatusToDosErrorNoTeb)
-        return -1;
-    RtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "RtlIpv6AddressToStringA"
-    );
-    if (!RtlIpv6AddressToStringA)
         return -1;
 
     // --- Optional
