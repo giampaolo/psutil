@@ -10,13 +10,15 @@
 // enumerate them and NtQueryObject to obtain the corresponding file
 // name.
 //
-// NtQueryObject / GetFileType block forever on pipes with a pending
-// blocking read, so we call them in a separate thread with a timeout.
-// The thread is never killed: TerminateThread() can't terminate a
-// thread waiting in the kernel, and if it lands while the thread is
-// exiting it orphans the loader lock, deadlocking the next
-// CreateThread(). On timeout we just abandon the thread; it cleans
-// up after itself if it ever completes. See:
+// NtQueryObject / GetFileType block forever on pipes, console and
+// other device handles with a pending blocking operation, so we call
+// them in a worker thread with a timeout. The worker is created
+// lazily, once per call, and reused for all the handles. It is never
+// killed: TerminateThread() can't terminate a thread waiting in the
+// kernel, and if it lands while the thread is exiting it orphans the
+// loader lock, deadlocking the next CreateThread(). On timeout we
+// just abandon the worker (it cleans up after itself if it ever
+// completes) and create a new one for the remaining handles. See:
 // https://github.com/giampaolo/psutil/pull/597
 //
 // CREDITS: original implementation was written by Jeff Tang. It was
@@ -32,18 +34,23 @@
 
 #define THREAD_TIMEOUT 100  // ms
 
-// Ownership handoff between the main thread and the query thread.
+// Ownership handoff between the main thread and the worker thread.
 #define QS_RUNNING 0
-#define QS_DONE 1  // thread finished, main thread consumes the result
-#define QS_ABANDONED 2  // main thread timed out, thread cleans up
+#define QS_DONE 1  // worker finished, main thread consumes the result
+#define QS_ABANDONED 2  // main thread timed out, worker cleans up and exits
 
 typedef struct {
-    HANDLE hFile;
-    PUNICODE_STRING fileName;
-    NTSTATUS status;
-    int oom;
+    HANDLE hThread;
+    HANDLE hStartEvent;  // auto-reset, main -> worker: work is ready
+    HANDLE hDoneEvent;  // auto-reset, worker -> main: work is done
+    HANDLE hFile;  // in: the handle to query
+    PUNICODE_STRING fileName;  // in: caller-allocated result buffer
+    ULONG bufferSize;  // in
+    ULONG returnLength;  // out
+    NTSTATUS status;  // out
+    int quit;  // main thread asks the worker to exit
     volatile LONG state;
-} QueryCtx;
+} Worker;
 
 
 // ObjectTypesInformation buffer walking, adapted from SystemInformer's
@@ -172,126 +179,190 @@ psutil_enum_process_handles(
 }
 
 
-// Runs in a separate thread. No Python calls in here: the main
-// thread holds the GIL and reports errors via ctx.
+// Runs in a separate thread. The body is a single syscall: no
+// Python, no heap. Buffers are allocated and freed by the main
+// thread, which also reports errors.
 static DWORD WINAPI
-psutil_get_filename(LPVOID lpvParam) {
-    QueryCtx *ctx = (QueryCtx *)lpvParam;
-    NTSTATUS status = 0;  // success
+psutil_worker_loop(LPVOID lpvParam) {
+    Worker *w = (Worker *)lpvParam;
+
+    while (1) {
+        WaitForSingleObject(w->hStartEvent, INFINITE);
+        if (w->quit)
+            return 0;
+        w->status = 0;  // success
+        // Note: also this is supposed to hang, hence why we do it in
+        // here. On a non-disk handle we skip the name query and leave
+        // the zeroed buffer, meaning "no name", skipped by the caller.
+        if (GetFileType(w->hFile) == FILE_TYPE_DISK) {
+            w->status = NtQueryObject(
+                w->hFile,
+                ObjectNameInformation,
+                w->fileName,
+                w->bufferSize,
+                &w->returnLength
+            );
+        }
+        if (InterlockedCompareExchange(&w->state, QS_DONE, QS_RUNNING)
+            != QS_RUNNING)
+        {
+            // Main thread gave up on us: nobody consumes the result.
+            FREE(w->fileName);
+            CloseHandle(w->hFile);
+            CloseHandle(w->hStartEvent);
+            CloseHandle(w->hDoneEvent);
+            FREE(w);
+            return 0;
+        }
+        SetEvent(w->hDoneEvent);
+    }
+}
+
+
+static Worker *
+psutil_worker_create(void) {
+    Worker *w;
+
+    w = MALLOC_ZERO(sizeof(Worker));
+    if (w == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    w->hStartEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    w->hDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (w->hStartEvent == NULL || w->hDoneEvent == NULL) {
+        psutil_oserror_wsyscall("CreateEvent");
+        goto error;
+    }
+    w->state = QS_DONE;
+    // Small stack: the thread only issues one syscall. Keeps the
+    // cost down if the worker gets stuck and leaks.
+    w->hThread = CreateThread(
+        NULL,
+        0x10000,
+        psutil_worker_loop,
+        w,
+        STACK_SIZE_PARAM_IS_A_RESERVATION,
+        NULL
+    );
+    if (w->hThread == NULL) {
+        psutil_oserror_wsyscall("CreateThread");
+        goto error;
+    }
+    return w;
+
+error:
+    if (w->hStartEvent != NULL)
+        CloseHandle(w->hStartEvent);
+    if (w->hDoneEvent != NULL)
+        CloseHandle(w->hDoneEvent);
+    FREE(w);
+    return NULL;
+}
+
+
+// Only for a live (not abandoned) worker: it's idle, so it exits
+// right away and the wait is bounded.
+static void
+psutil_worker_destroy(Worker *w) {
+    w->quit = 1;
+    SetEvent(w->hStartEvent);
+    WaitForSingleObject(w->hThread, INFINITE);
+    CloseHandle(w->hThread);
+    CloseHandle(w->hStartEvent);
+    CloseHandle(w->hDoneEvent);
+    FREE(w);
+}
+
+
+// Query the name of hFile on the worker thread, with a timeout.
+// Return 0 on success (*nameOut set, may have Length 0), -1 on error
+// (Python exception set), WAIT_TIMEOUT if the query got stuck. On
+// WAIT_TIMEOUT the worker is abandoned along with hFile (the caller
+// must not close it) and *workerRef is reset to NULL; the next call
+// creates a new worker.
+static DWORD
+psutil_worker_get_filename(
+    Worker **workerRef, HANDLE hFile, PUNICODE_STRING *nameOut
+) {
+    Worker *w = NULL;
+    DWORD dwWait;
+    NTSTATUS status = 0;
+    PUNICODE_STRING name = NULL;
     ULONG bufferSize = 0x200;
     ULONG attempts = 8;
-    PUNICODE_STRING name;
 
-    name = MALLOC_ZERO(bufferSize);
-    if (name == NULL) {
-        ctx->oom = 1;
-        goto done;
-    }
-
-    // Note: also this is supposed to hang, hence why we do it in here.
-    if (GetFileType(ctx->hFile) != FILE_TYPE_DISK) {
-        name->Length = 0;  // means "no name", skipped by the caller
-        goto done;
-    }
+    *nameOut = NULL;
 
     // A loop is needed because the I/O subsystem likes to give us the
-    // wrong return lengths...
+    // wrong return lengths... Buffers are (re)allocated in here so
+    // that the worker never touches the heap.
     do {
-        status = NtQueryObject(
-            ctx->hFile, ObjectNameInformation, name, bufferSize, &bufferSize
-        );
+        name = MALLOC_ZERO(bufferSize);
+        if (name == NULL) {
+            PyErr_NoMemory();
+            return -1;
+        }
+
+        w = *workerRef;
+        if (w == NULL) {
+            w = psutil_worker_create();
+            if (w == NULL) {
+                FREE(name);
+                return -1;
+            }
+            *workerRef = w;
+        }
+
+        w->hFile = hFile;
+        w->fileName = name;
+        w->bufferSize = bufferSize;
+        w->state = QS_RUNNING;
+        SetEvent(w->hStartEvent);
+
+        dwWait = WaitForSingleObject(w->hDoneEvent, THREAD_TIMEOUT);
+        if (dwWait != WAIT_OBJECT_0) {
+            if (dwWait == WAIT_FAILED)
+                psutil_debug("WaitForSingleObject -> WAIT_FAILED");
+            if (InterlockedCompareExchange(&w->state, QS_ABANDONED, QS_RUNNING)
+                == QS_RUNNING)
+            {
+                // The worker is stuck; abandon it along with hFile
+                // and the name buffer. It cleans up by itself if it
+                // ever completes.
+                psutil_debug(
+                    "get handle name thread timed out after %i ms",
+                    THREAD_TIMEOUT
+                );
+                CloseHandle(w->hThread);
+                *workerRef = NULL;
+                return WAIT_TIMEOUT;
+            }
+            // The worker completed right after the timeout: consume.
+            WaitForSingleObject(w->hDoneEvent, INFINITE);
+        }
+
+        status = w->status;
         if (status == STATUS_BUFFER_OVERFLOW
             || status == STATUS_INFO_LENGTH_MISMATCH
             || status == STATUS_BUFFER_TOO_SMALL)
         {
             FREE(name);
-            name = MALLOC_ZERO(bufferSize);
-            if (name == NULL) {
-                ctx->oom = 1;
-                goto done;
-            }
+            name = NULL;
+            bufferSize = w->returnLength;
         }
         else {
             break;
         }
     } while (--attempts);
 
-done:
-    ctx->fileName = name;
-    ctx->status = status;
-    if (InterlockedCompareExchange(&ctx->state, QS_DONE, QS_RUNNING)
-        != QS_RUNNING)
-    {
-        // Main thread gave up on us: nobody consumes this.
+    if (!NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(status, "NtQueryObject");
         if (name != NULL)
             FREE(name);
-        CloseHandle(ctx->hFile);
-        FREE(ctx);
-    }
-    return 0;
-}
-
-
-// Return 0 on success (*nameOut set, may have Length 0), -1 on error
-// (Python exception set), WAIT_TIMEOUT if the query thread is stuck.
-// On WAIT_TIMEOUT ownership of hFile moves to the thread; the caller
-// must not close it.
-static DWORD
-psutil_threaded_get_filename(HANDLE hFile, PUNICODE_STRING *nameOut) {
-    DWORD dwWait;
-    HANDLE hThread;
-    QueryCtx *ctx;
-
-    *nameOut = NULL;
-    ctx = MALLOC_ZERO(sizeof(QueryCtx));
-    if (ctx == NULL) {
-        PyErr_NoMemory();
         return -1;
     }
-    ctx->hFile = hFile;
-    ctx->state = QS_RUNNING;
-
-    hThread = CreateThread(NULL, 0, psutil_get_filename, ctx, 0, NULL);
-    if (hThread == NULL) {
-        FREE(ctx);
-        psutil_oserror_wsyscall("CreateThread");
-        return -1;
-    }
-
-    dwWait = WaitForSingleObject(hThread, THREAD_TIMEOUT);
-    if (dwWait != WAIT_OBJECT_0) {
-        if (dwWait == WAIT_FAILED)
-            psutil_debug("WaitForSingleObject -> WAIT_FAILED");
-        if (InterlockedCompareExchange(&ctx->state, QS_ABANDONED, QS_RUNNING)
-            == QS_RUNNING)
-        {
-            // Abandon the stuck thread; it cleans up by itself if it
-            // ever completes.
-            psutil_debug(
-                "get handle name thread timed out after %i ms", THREAD_TIMEOUT
-            );
-            CloseHandle(hThread);
-            return WAIT_TIMEOUT;
-        }
-        // The thread completed right after the timeout: fall through
-        // and consume its result.
-    }
-    CloseHandle(hThread);
-
-    if (ctx->oom) {
-        FREE(ctx);
-        PyErr_NoMemory();
-        return -1;
-    }
-    if (!NT_SUCCESS(ctx->status)) {
-        psutil_SetFromNTStatusErr(ctx->status, "NtQueryObject");
-        if (ctx->fileName != NULL)
-            FREE(ctx->fileName);
-        FREE(ctx);
-        return -1;
-    }
-    *nameOut = ctx->fileName;
-    FREE(ctx);
+    *nameOut = name;
     return 0;
 }
 
@@ -300,6 +371,7 @@ PyObject *
 psutil_get_open_files(HANDLE hProcess) {
     PPROCESS_HANDLE_SNAPSHOT_INFORMATION snapshot = NULL;
     PPROCESS_HANDLE_TABLE_ENTRY_INFO entry = NULL;
+    Worker *worker = NULL;
     HANDLE hFile = NULL;
     PUNICODE_STRING fileName = NULL;
     ULONG_PTR i = 0;
@@ -336,10 +408,10 @@ psutil_get_open_files(HANDLE hProcess) {
             continue;
         }
 
-        dwRet = psutil_threaded_get_filename(hFile, &fileName);
+        dwRet = psutil_worker_get_filename(&worker, hFile, &fileName);
         if (dwRet == WAIT_TIMEOUT) {
-            // The abandoned thread owns hFile now. Closing it here
-            // would block: the thread is stuck in the kernel holding
+            // The abandoned worker owns hFile now. Closing it here
+            // would block: the worker is stuck in the kernel holding
             // a lock on this handle's file object, and CloseHandle()
             // needs the same lock.
             hFile = NULL;
@@ -375,6 +447,8 @@ error:
     goto exit;
 
 exit:
+    if (worker != NULL)
+        psutil_worker_destroy(worker);
     if (hFile != NULL)
         CloseHandle(hFile);
     if (fileName != NULL)
