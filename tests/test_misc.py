@@ -759,6 +759,62 @@ class TestSetupPy(PsutilTestCase):
         with mock.patch.dict(os.environ, {"CC": "gcc -pthread"}):
             assert setup.get_cc() == ["gcc", "-pthread"]
 
+    @staticmethod
+    def run_instructions(setup, **flags):
+        """Call print_install_instructions() and return what it wrote
+        to stderr.
+        """
+        with contextlib.ExitStack() as stack:
+            for name, value in flags.items():
+                stack.enter_context(mock.patch.object(setup, name, value))
+            f = stack.enter_context(contextlib.redirect_stderr(io.StringIO()))
+            setup.print_install_instructions()
+        return f.getvalue()
+
+    def test_instructions_are_silent_if_toolchain_is_ok(self):
+        # Else any unrelated build failure would wrongly blame the
+        # compiler or the headers.
+        setup = self.import_setup_py()
+        out = self.run_instructions(
+            setup, has_compiler=lambda: True, has_python_h=lambda: True
+        )
+        assert out == ""
+
+    def test_instructions_without_compiler(self):
+        setup = self.import_setup_py()
+        out = self.run_instructions(
+            setup,
+            has_compiler=lambda: False,
+            MACOS=False,
+            AIX=False,
+            PYPY=False,
+        )
+        assert "C compiler is not installed" in out
+        assert "install-sysdeps.sh" in out
+
+    def test_instructions_on_macos(self):
+        setup = self.import_setup_py()
+        out = self.run_instructions(
+            setup, has_compiler=lambda: False, MACOS=True
+        )
+        assert "xcode-select --install" in out
+        assert "install-sysdeps.sh" not in out
+
+    def test_instructions_without_headers(self):
+        # No command is suggested on platforms install-sysdeps.sh
+        # doesn't cover.
+        setup = self.import_setup_py()
+        out = self.run_instructions(
+            setup,
+            has_compiler=lambda: True,
+            has_python_h=lambda: False,
+            MACOS=False,
+            AIX=True,
+            PYPY=False,
+        )
+        assert "header files are not installed" in out
+        assert "Try running" not in out
+
     def test_detection_without_compiler(self):
         setup = self.import_setup_py()
         with mock.patch.dict(os.environ, {"CC": "psutil-no-such-cc"}):

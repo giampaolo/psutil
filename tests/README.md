@@ -6,8 +6,8 @@ Install deps (e.g. pytest):
 make install-pydeps-test
 ```
 
-Some tests shell out to CLI tools (`ps`, `ifconfig`, ...). On UNIX install
-them with:
+Some tests shell out to CLI tools (`ps`, `ifconfig`, ...). On UNIX install them
+with:
 
 ```bash
 make install-sysdeps-test
