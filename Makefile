@@ -129,22 +129,22 @@ test-misc:  ## Run miscellaneous tests.
 	$(RUN_TEST) -k "test_misc.py or Misc" $(ARGS)
 
 test-scripts:  ## Run scripts tests.
-	$(RUN_TEST) tests/test_scripts.py $(ARGS)
+	$(RUN_TEST) -k test_scripts.py $(ARGS)
 
 test-testutils:  ## Run test utils tests.
-	$(RUN_TEST) tests/test_testutils.py $(ARGS)
+	$(RUN_TEST) -k test_testutils.py $(ARGS)
 
 test-unicode:  ## Test APIs dealing with strings.
-	$(RUN_TEST) tests/test_unicode.py $(ARGS)
+	$(RUN_TEST) -k test_unicode.py $(ARGS)
 
 test-contracts:  ## APIs sanity tests.
-	$(RUN_TEST) tests/test_contracts.py $(ARGS)
+	$(RUN_TEST) -k test_contracts.py $(ARGS)
 
 test-docs:  ## Run doc sanity tests (outside testpaths, run on demand).
 	$(MAKE) -C docs test ARGS="$(ARGS)"
 
 test-type-hints:  ## Test type hints
-	$(RUN_TEST) tests/test_type_hints.py $(ARGS)
+	$(RUN_TEST) -k test_type_hints.py $(ARGS)
 
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
 	$(RUN_TEST) -k "test_connections.py or net_" $(ARGS)
