@@ -267,10 +267,10 @@ Others:
   :meth:`Process.as_dict`) it no longer costs an extra system-wide query.
   Reading 4 methods of that group in one :meth:`Process.oneshot` block is now
   around 3.9x faster than reading them without it, up from 2x.
-- :gh:`2925`: the C sources are now compiled in parallel, which makes building
-  psutil from source 2x to 3.6x faster depending on the platform. This mostly
-  benefits the platforms which get no wheels from PyPI (\*BSD, Solaris, AIX),
-  where ``pip install psutil`` always compiles.
+- :gh:`2925`: the C sources are now compiled in parallel, making builds 2x to
+  3.6x faster. This mostly benefits the platforms getting no wheels from PyPI
+  (\*BSD, Solaris, AIX), where ``pip install psutil`` always compiles. Use
+  :envvar:`PSUTIL_BUILD_JOBS` to cap the number of jobs.
 - :gh:`2927`: python dependencies (``make install-pydeps-*``) are now installed
   with ``uv`` when available, saving around 10 secs for each CI run.
 

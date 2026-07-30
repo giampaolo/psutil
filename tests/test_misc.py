@@ -754,6 +754,19 @@ class TestSetupPy(PsutilTestCase):
             return pytest.skip("setup.py not available")
         return import_module_by_path(path)
 
+    def test_num_cpus_env_var(self):
+        setup = self.import_setup_py()
+        with mock.patch.dict(os.environ, {"PSUTIL_BUILD_JOBS": "3"}):
+            assert setup.num_cpus() == 3
+        # Never return 0, else ThreadPoolExecutor() raises ValueError.
+        with mock.patch.dict(os.environ, {"PSUTIL_BUILD_JOBS": "0"}):
+            assert setup.num_cpus() == 1
+
+    def test_num_cpus_default(self):
+        setup = self.import_setup_py()
+        with mock.patch.dict(os.environ, clear=True):
+            assert setup.num_cpus() >= 1
+
     def test_get_cc(self):
         setup = self.import_setup_py()
         with mock.patch.dict(os.environ, {"CC": "gcc -pthread"}):

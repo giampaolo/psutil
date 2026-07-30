@@ -2889,11 +2889,22 @@ Environment variables
 
   .. versionadded:: 5.4.2
 
+.. envvar:: PSUTIL_BUILD_JOBS
+
+  By default, psutil compiles its C source files in parallel, using one job per
+  CPU, which makes installing from source 2x to 3.6x faster. Set this variable
+  to change the number of jobs, or to 1 to compile serially.
+
+  .. code-block:: bash
+
+     $ PSUTIL_BUILD_JOBS=1 python3 -m pip install --no-binary=psutil psutil
+
+  .. versionadded:: 8.0.0
+
+.. ============================================================================
+
 .. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt
 .. _`psleak`: https://github.com/giampaolo/psleak
-
-.. === Windows API
-
 .. _`GetExitCodeProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
 .. _`GetPerformanceInfo`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getperformanceinfo
 .. _`PROCESS_MEMORY_COUNTERS_EX`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex

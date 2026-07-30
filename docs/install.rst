@@ -168,6 +168,11 @@ To build from a Git checkout:
 
     python -m pip install --no-binary=psutil psutil
 
+.. note::
+   By default C source files are compiled in parallel, one job per CPU, which
+   makes building from source 2x to 3.6x faster. Use
+   :envvar:`PSUTIL_BUILD_JOBS` to change the number of jobs.
+
 Troubleshooting
 ---------------
 
