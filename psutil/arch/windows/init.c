@@ -12,7 +12,6 @@
 
 
 // Needed to make these globally visible.
-int PSUTIL_WINVER;
 SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 
@@ -265,7 +264,7 @@ psutil_loadlibs() {
 
 
 static int
-psutil_set_winver() {
+psutil_check_winver() {
     RTL_OSVERSIONINFOEXW versionInfo;
     ULONG maj;
     ULONG min;
@@ -285,10 +284,6 @@ psutil_set_winver() {
         );
         return 1;
     }
-    if (maj == 10 && min == 0)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_10;  // Windows 10 / 11, Server 2016+
-    else
-        PSUTIL_WINVER = PSUTIL_WINDOWS_NEW;
     return 0;
 }
 
@@ -298,7 +293,7 @@ int
 psutil_setup_windows(void) {
     if (psutil_loadlibs() != 0)
         return -1;
-    if (psutil_set_winver() != 0)
+    if (psutil_check_winver() != 0)
         return -1;
     GetSystemInfo(&PSUTIL_SYSTEM_INFO);
     InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);

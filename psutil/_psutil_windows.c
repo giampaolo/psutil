@@ -146,7 +146,6 @@ psutil_add_constants(PyObject *mod) {
         mod, "ERROR_SERVICE_DOES_NOT_EXIST", ERROR_SERVICE_DOES_NOT_EXIST
     );
     PSUTIL_ADD_INT(mod, "ERROR_PRIVILEGE_NOT_HELD", ERROR_PRIVILEGE_NOT_HELD);
-    PSUTIL_ADD_INT(mod, "WINVER", PSUTIL_WINVER);
 
     return 0;
 }
