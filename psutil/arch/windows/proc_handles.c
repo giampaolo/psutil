@@ -124,7 +124,7 @@ typedef struct {
 // The index is stable until reboot; resolve it once and cache it.
 // Return 0 on success, -1 on error (Python exception set).
 static int
-psutil_get_file_type_index(ULONG *indexOut) {
+get_file_type_index(ULONG *indexOut) {
     static ULONG cachedIndex = 0;
     NTSTATUS status;
     POBJECT_TYPES_INFORMATION typesInfo = NULL;
@@ -182,7 +182,7 @@ psutil_get_file_type_index(ULONG *indexOut) {
 
 
 static int
-psutil_enum_process_handles(
+enum_process_handles(
     HANDLE hProcess, PPROCESS_HANDLE_SNAPSHOT_INFORMATION *snapshot
 ) {
     NTSTATUS status;
@@ -233,7 +233,7 @@ psutil_enum_process_handles(
 // can hold a user-mode lock is off limits. Buffers are allocated and
 // freed by the main thread, which also reports errors.
 static DWORD WINAPI
-psutil_worker_loop(LPVOID lpvParam) {
+worker_loop(LPVOID lpvParam) {
     Worker *w = (Worker *)lpvParam;
     FILE_STANDARD_INFORMATION info;
     FILE_BASIC_INFORMATION basicInfo;
@@ -292,7 +292,7 @@ psutil_worker_loop(LPVOID lpvParam) {
 
 
 static Worker *
-psutil_worker_create(void) {
+worker_create(void) {
     Worker *w;
 
     w = MALLOC_ZERO(sizeof(Worker));
@@ -309,12 +309,7 @@ psutil_worker_create(void) {
     // Small stack: the thread only issues syscalls. Keeps the cost
     // down if the worker gets stuck and leaks.
     w->hThread = CreateThread(
-        NULL,
-        0x10000,
-        psutil_worker_loop,
-        w,
-        STACK_SIZE_PARAM_IS_A_RESERVATION,
-        NULL
+        NULL, 0x10000, worker_loop, w, STACK_SIZE_PARAM_IS_A_RESERVATION, NULL
     );
     if (w->hThread == NULL) {
         psutil_oserror_wsyscall("CreateThread");
@@ -335,7 +330,7 @@ error:
 // Only for a live (not abandoned) worker: it's idle, so it exits
 // right away and the wait is bounded.
 static void
-psutil_worker_destroy(Worker *w) {
+worker_destroy(Worker *w) {
     w->quit = 1;
     SetEvent(w->hStartEvent);
     WaitForSingleObject(w->hThread, INFINITE);
@@ -353,7 +348,7 @@ psutil_worker_destroy(Worker *w) {
 // if the kill fails); either way the caller must not touch hFile.
 // *workerRef is reset to NULL; the next call creates a new worker.
 static DWORD
-psutil_worker_get_filename(
+worker_get_filename(
     Worker **workerRef, HANDLE hFile, PUNICODE_STRING *nameOut
 ) {
     Worker *w = NULL;
@@ -377,7 +372,7 @@ psutil_worker_get_filename(
 
         w = *workerRef;
         if (w == NULL) {
-            w = psutil_worker_create();
+            w = worker_create();
             if (w == NULL) {
                 FREE(name);
                 return -1;
@@ -468,9 +463,9 @@ psutil_get_open_files(HANDLE hProcess) {
     if (!py_retlist)
         return NULL;
 
-    if (psutil_get_file_type_index(&fileTypeIndex) != 0)
+    if (get_file_type_index(&fileTypeIndex) != 0)
         goto error;
-    if (psutil_enum_process_handles(hProcess, &snapshot) != 0)
+    if (enum_process_handles(hProcess, &snapshot) != 0)
         goto error;
 
     for (i = 0; i < snapshot->NumberOfHandles; i++) {
@@ -493,7 +488,7 @@ psutil_get_open_files(HANDLE hProcess) {
             continue;
         }
 
-        dwRet = psutil_worker_get_filename(&worker, hFile, &fileName);
+        dwRet = worker_get_filename(&worker, hFile, &fileName);
         if (dwRet == WAIT_TIMEOUT) {
             // Already closed (or deliberately leaked) along with the
             // killed worker; skip this handle.
@@ -531,7 +526,7 @@ error:
 
 exit:
     if (worker != NULL)
-        psutil_worker_destroy(worker);
+        worker_destroy(worker);
     if (hFile != NULL)
         CloseHandle(hFile);
     if (fileName != NULL)
