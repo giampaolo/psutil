@@ -30,6 +30,8 @@ typedef LONG NTSTATUS;
 // Enums
 // ================================================================
 
+#undef  FileStandardInformation
+#define FileStandardInformation 5
 #undef  MemoryWorkingSetInformation
 #define MemoryWorkingSetInformation 0x1
 #undef  ObjectNameInformation
@@ -284,6 +286,15 @@ typedef struct _OBJECT_TYPE_INFORMATION2 {
 typedef struct _OBJECT_TYPES_INFORMATION {
     ULONG NumberOfTypes;
 } OBJECT_TYPES_INFORMATION, *POBJECT_TYPES_INFORMATION;
+
+// <winternl.h> declares NtQueryInformationFile but not this.
+typedef struct _FILE_STANDARD_INFORMATION {
+    LARGE_INTEGER AllocationSize;
+    LARGE_INTEGER EndOfFile;
+    ULONG NumberOfLinks;
+    BOOLEAN DeletePending;
+    BOOLEAN Directory;
+} FILE_STANDARD_INFORMATION, *PFILE_STANDARD_INFORMATION;
 
 typedef struct _PROCESS_HANDLE_TABLE_ENTRY_INFO {
     HANDLE HandleValue;

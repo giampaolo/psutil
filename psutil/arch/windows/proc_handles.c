@@ -10,6 +10,12 @@
 // enumerate them and NtQueryObject to obtain the corresponding file
 // name.
 //
+// Directories are filtered out here too, via
+// NtQueryInformationFile(FileStandardInformation), which answers from
+// the handle we already have. The Python layer used to do it with
+// os.stat(), which resolves the path from scratch and is a round trip
+// per file on network filesystems.
+//
 // NtQueryObject / GetFileType block forever on pipes, console and
 // other device handles with a pending blocking operation, so we call
 // them in a worker thread with a timeout. The worker is created
@@ -208,16 +214,31 @@ psutil_enum_process_handles(
 static DWORD WINAPI
 psutil_worker_loop(LPVOID lpvParam) {
     Worker *w = (Worker *)lpvParam;
+    FILE_STANDARD_INFORMATION info;
+    IO_STATUS_BLOCK iosb;
 
     while (1) {
         WaitForSingleObject(w->hStartEvent, INFINITE);
         if (w->quit)
             return 0;
         w->status = 0;  // success
-        // Note: also this is supposed to hang, hence why we do it in
-        // here. On a non-disk handle we skip the name query and leave
-        // the zeroed buffer, meaning "no name", skipped by the caller.
-        if (GetFileType(w->hFile) == FILE_TYPE_DISK) {
+        // Note: also these are supposed to hang, hence why we do them
+        // in here. When we skip the name query we leave the zeroed
+        // buffer, meaning "no name", skipped by the caller. That's the
+        // case for non-disk handles (pipes, sockets, ...), for
+        // directories, for files being deleted (their path no longer
+        // resolves) and for handles the query fails on (volumes, raw
+        // devices).
+        if (GetFileType(w->hFile) == FILE_TYPE_DISK
+            && NT_SUCCESS(NtQueryInformationFile(
+                w->hFile,
+                &iosb,
+                &info,
+                sizeof(info),
+                (FILE_INFORMATION_CLASS)FileStandardInformation
+            ))
+            && !info.Directory && !info.DeletePending)
+        {
             w->status = NtQueryObject(
                 w->hFile,
                 ObjectNameInformation,
