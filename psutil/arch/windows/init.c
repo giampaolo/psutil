@@ -240,9 +240,6 @@ psutil_loadlibs() {
     );
     if (!RtlNtStatusToDosErrorNoTeb)
         return -1;
-    GetTickCount64 = psutil_GetProcAddress("kernel32", "GetTickCount64");
-    if (!GetTickCount64)
-        return -1;
     RtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv6AddressToStringA"
     );
@@ -251,10 +248,6 @@ psutil_loadlibs() {
 
     // --- Optional
 
-    // minimum requirement: Win 7
-    QueryInterruptTime = psutil_GetProcAddressFromLib(
-        "kernelbase.dll", "QueryInterruptTime"
-    );
     // minimum requirement: Win 7
     GetActiveProcessorCount = psutil_GetProcAddress(
         "kernel32", "GetActiveProcessorCount"
