@@ -180,8 +180,6 @@ if WINDOWS:
         ('_WIN32_WINNT', get_winver()),
         ('_AVAIL_WINVER_', get_winver()),
         ('_CRT_SECURE_NO_WARNINGS', None),
-        # see: https://github.com/giampaolo/psutil/issues/348
-        ('PSAPI_VERSION', 1),
     ])
 
     if Py_GIL_DISABLED:
@@ -201,7 +199,6 @@ if WINDOWS:
             "netapi32",
             "pdh",
             "PowrProf",
-            "psapi",
             "shell32",
             "ws2_32",
         ],
