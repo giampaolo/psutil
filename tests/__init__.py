@@ -234,6 +234,16 @@ def _get_py_exe():
 
     env = os.environ.copy()
 
+    # Subprocesses (scripts, pyrun(), ...) get sys.path[0] set to the
+    # script's directory, so by default they import whatever psutil is
+    # installed instead of the one we're testing. Point them at ours.
+    # Derived from psutil.__file__ and not from ROOT_DIR because when
+    # testing wheels the source tree next to us has no C extension.
+    psutil_path = str(pathlib.Path(psutil.__file__).resolve().parent.parent)
+    env["PYTHONPATH"] = os.pathsep.join(
+        filter(None, [psutil_path, env.get("PYTHONPATH")])
+    )
+
     # On Windows virtual environments use a venv launcher startup
     # process. This does not play well when counting spawned processes,
     # or when relying on the PID of the spawned process to do some

@@ -827,8 +827,15 @@ class TestProcess(PsutilTestCase):
                 # the same result, causing the test to fail.
                 return pytest.skip('running as service account')
             assert username == getpass_user
-            if 'USERDOMAIN' in os.environ:
-                assert domain == os.environ['USERDOMAIN']
+            # For local accounts the domain is the computer name,
+            # which may differ from USERDOMAIN (e.g. "WORKGROUP").
+            expected = {
+                os.environ.get('USERDOMAIN'),
+                os.environ.get('COMPUTERNAME'),
+            }
+            expected = {x.upper() for x in expected if x}
+            if expected:
+                assert domain.upper() in expected
         else:
             assert username == getpass.getuser()
 
@@ -945,10 +952,12 @@ class TestProcess(PsutilTestCase):
             for file in files:
                 assert os.path.isfile(file.path), file
 
-        # another process
+        # Another process. It lives 60 secs because the loop below
+        # calls open_files() up to 100 times, which is slow on Window
+        # when the child holds handles on a network filesystem.
         cmdline = (
             f"import time; f = open(r'{testfn}', 'r'); [time.sleep(0.1) for x"
-            " in range(100)];"
+            " in range(600)];"
         )
         p = self.spawn_psproc([PYTHON_EXE, "-c", cmdline])
 
