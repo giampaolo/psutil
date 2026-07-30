@@ -4,58 +4,79 @@
  * found in the LICENSE file.
  */
 
-// This module retrieves handles opened by a process.
+// This module retrieves file handles opened by a process. The
+// handle-related calls below are listed in the order in which they
+// are made.
 //
-// We use NtQueryInformationProcess(ProcessHandleInformation) to
-// enumerate them and NtQueryObject to obtain the corresponding file
-// name.
+// call                          | purpose                         | blocks
+// ------------------------------+---------------------------------+-----------
+// NtQueryObject(                | find the object type index for  | no
+//     ObjectTypesInformation)   | "File"; cached until reboot     |
+// ------------------------------+---------------------------------+-----------
+// NtQueryInformationProcess(    | enumerate process handles       | no
+//     ProcessHandleInformation) |                                 |
+// ------------------------------+---------------------------------+-----------
+// DuplicateHandle()             | copy each File handle into this | no
+//                               | process so that we can query it |
+// ------------------------------+---------------------------------+-----------
+// GetFileType()                 | discard non-disk handles        | network
+// ------------------------------+---------------------------------+-----------
+// NtQueryInformationFile(       | reject directories and handles  | lock, wire
+//     FileStandardInformation)  | pending deletion                |
+// ------------------------------+---------------------------------+-----------
+// NtQueryInformationFile(       | reject directory index streams  | lock, wire
+//     FileBasicInformation)     | using FILE_ATTRIBUTE_DIRECTORY  |
+// ------------------------------+---------------------------------+-----------
+// NtQueryObject(                | get the path in device form:    | lock
+//     ObjectNameInformation)    | \Device\HarddiskVolume2\x\y.txt |
+// ------------------------------+---------------------------------+-----------
 //
-// Directories are filtered out here too, via
-// NtQueryInformationFile(FileStandardInformation), which answers from
-// the handle we already have. The Python layer used to do it with
-// os.stat(), which resolves the path from scratch and is a round trip
-// per file on network filesystems.
+//   lock
+//       Waits for the FILE_OBJECT lock. A blocking synchronous read
+//       may hold this lock indefinitely, as with an idle pipe.
+//       DuplicateHandle() creates another handle to the same
+//       FILE_OBJECT, so the duplicate inherits the same wait.
 //
-// NtQueryObject / GetFileType block forever on pipes, console and
-// other device handles with a pending blocking operation, so we call
-// them in a worker thread with a timeout. The worker is created
-// lazily, once per call, and reused for all the handles. On timeout
-// we kill it with TerminateThread() and create a new one for the
-// remaining handles. Killing it is safe because its body is strictly
-// syscalls: it can't be holding the heap or loader lock, and it
-// never exits on its own. The kernel wait it's stuck in is a
-// UserMode wait, which termination breaks (SystemInformer has done
-// the same for years). The old code deadlocked by killing a thread
-// that used the heap and the Python C API, see #1967. If the killed
-// thread doesn't die (never seen in practice) we abandon it and leak
-// its resources.
+//   wire
+//       In addition to waiting for the FILE_OBJECT lock, the query
+//       needs an answer from whatever serves the file behind
+//       \Device\Mup: an SMB, WebDAV or NFS server, or a user-mode
+//       filesystem provider. If it stops answering, the query blocks
+//       until the session times out, about a minute for SMB.
 //
-// The whole design (per-process handle snapshot, object type
-// pre-filter, reusable kill-on-timeout worker) mirrors what
-// SystemInformer (ex Process Hacker) does when its kernel driver is
-// not loaded:
-// - handle enumeration: PhEnumProcessHandles in
-//   https://github.com/winsiderss/systeminformer/blob/master/phlib/native.c
-// - type table, name query and kill-on-timeout worker pool:
-//   PhGetHandleInformationEx and PhpCallWithTimeout in
-//   https://github.com/winsiderss/systeminformer/blob/master/phlib/hndlinfo.c
+//   network
+//       Blocks on network handles only. NPFS and ConDrv answer
+//       GetFileType() without taking the FILE_OBJECT lock.
 //
-// Why the queries hang can be seen in the WRK kernel sources: they
-// all wait on the FILE_OBJECT lock, which a blocking synchronous
-// read holds for its whole duration. Even GetFileType, which is
-// NtQueryVolumeInformationFile(FileFsDeviceInformation), acquires it
-// before its no-IRP fast path:
-// https://github.com/9176324/WRK/blob/master/base/ntos/io/iomgr/qsfs.c
+// The first 3 calls run on the main thread. They are cheap and won't
+// block. The rest can block, so they run in a worker thread with a
+// timeout, created lazily and reused for every handle.
+//
+// On timeout, the worker is killed and replaced, or abandoned in the
+// unlikely case it refuses to die. Killing it is safe only because its
+// body is strictly syscalls: it never touches the heap, the Python C
+// API or the CRT, and it never exits on its own. The old code killed
+// a thread that did all of that and deadlocked, see #1967.
+//
+// Note: NtQueryInformationFile(FileVolumeNameInformation) (not used
+// here) is the only syscall that never blocks, on any handle. It
+// cannot replace any of the calls above though, because it returns the
+// backing device (e.g. \Device\Mup) and not the path. Nor can it be
+// used to skip the directory checks on network handles, since a
+// network directory would then be reported as a file.
+//
+// This design mirrors SystemInformer when its kernel driver is not
+// loaded:
+// https://github.com/winsiderss/systeminformer/blob/245c808f011/phlib/hndlinfo.c#L521
 //
 // History:
-// https://github.com/giampaolo/psutil/pull/597
-// https://github.com/giampaolo/psutil/pull/2190
-// https://github.com/giampaolo/psutil/pull/2894
+// - https://github.com/giampaolo/psutil/pull/597
+// - https://github.com/giampaolo/psutil/pull/2190
+// - https://github.com/giampaolo/psutil/pull/2894
 //
-// CREDITS: original implementation was written by Jeff Tang. It was
-// then rewritten by Giampaolo Rodola many years later. Utility
-// functions for getting the file handles and names were re-adapted
-// from the excellent ProcessHacker / SystemInformer.
+// CREDITS: the original implementation was written by Jeff Tang and
+// later rewritten by Giampaolo Rodola. The handle and name utilities
+// were adapted from SystemInformer.
 
 #include <windows.h>
 #include <Python.h>
@@ -215,20 +236,19 @@ static DWORD WINAPI
 psutil_worker_loop(LPVOID lpvParam) {
     Worker *w = (Worker *)lpvParam;
     FILE_STANDARD_INFORMATION info;
+    FILE_BASIC_INFORMATION basicInfo;
     IO_STATUS_BLOCK iosb;
+    BOOLEAN wanted;
 
     while (1) {
         WaitForSingleObject(w->hStartEvent, INFINITE);
         if (w->quit)
             return 0;
         w->status = 0;  // success
-        // Note: also these are supposed to hang, hence why we do them
-        // in here. When we skip the name query we leave the zeroed
-        // buffer, meaning "no name", skipped by the caller. That's the
-        // case for non-disk handles (pipes, sockets, ...), for
-        // directories, for files being deleted (their path no longer
-        // resolves) and for handles the query fails on (volumes, raw
-        // devices).
+        // These can block, which is why they run here. When we skip
+        // the name query the buffer is left zeroed, meaning "no
+        // name", and the caller skips the handle.
+        wanted = FALSE;
         if (GetFileType(w->hFile) == FILE_TYPE_DISK
             && NT_SUCCESS(NtQueryInformationFile(
                 w->hFile,
@@ -239,6 +259,25 @@ psutil_worker_loop(LPVOID lpvParam) {
             ))
             && !info.Directory && !info.DeletePending)
         {
+            wanted = TRUE;
+            // A handle to the index stream of a directory reports
+            // Directory = FALSE, e.g.
+            // "C:\$Extend\$ObjId:$O:$INDEX_ALLOCATION". The file
+            // attributes are what os.stat() looks at, and they get it
+            // right.
+            if (NT_SUCCESS(NtQueryInformationFile(
+                    w->hFile,
+                    &iosb,
+                    &basicInfo,
+                    sizeof(basicInfo),
+                    (FILE_INFORMATION_CLASS)FileBasicInformation
+                ))
+                && (basicInfo.FileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+            {
+                wanted = FALSE;
+            }
+        }
+        if (wanted) {
             w->status = NtQueryObject(
                 w->hFile,
                 ObjectNameInformation,
@@ -366,9 +405,7 @@ psutil_worker_get_filename(
                 psutil_debug("TerminateThread -> FALSE");
             dwWait = WaitForSingleObject(w->hThread, KILL_JOIN_TIMEOUT);
             if (dwWait == WAIT_OBJECT_0) {
-                // The worker is gone. It never acquired the file
-                // object lock (it was stuck waiting for it), so
-                // closing the handle here can't block.
+                // Worker is gone. Closing our duplicate won't block.
                 CloseHandle(w->hThread);
                 CloseHandle(w->hStartEvent);
                 CloseHandle(w->hDoneEvent);
