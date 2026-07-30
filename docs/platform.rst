@@ -30,7 +30,7 @@ Operating systems
    Platform          Minimum version   Year  How enforced                                       CI tested
    ================  ================  ====  =================================================  =========
    Linux             2.6.13 (soft)     2005  graceful fallbacks; no hard check                  yes
-   Windows           Vista             2007  hard check at import + build time                  yes
+   Windows           10                2015  hard check at import + build time                  yes
    macOS             10.7 (Lion)       2011  ``MAC_OS_X_VERSION_MIN_REQUIRED`` in C             yes
    FreeBSD           12.0              2018  graceful fallbacks via ``#if __FreeBSD_version``   yes
    NetBSD            5.0               2009  graceful fallbacks via ``#if __NetBSD_Version__``  yes
@@ -72,6 +72,8 @@ Support history
 ^^^^^^^^^^^^^^^
 
 * psutil 8.0.0 (2026-XX): drop Python 3.6 and 3.7
+* psutil 8.0.0 (2026-XX): drop Windows Vista, 7, 8 and 8.1 (+ Server 2008 to
+  2012 R2)
 * psutil 8.0.0 (2026-XX): Intel wheels now require **macOS 10.15**
 * psutil 8.0.0 (2026-XX): no longer publish wheels for **free-threaded 3.13**
 * psutil 7.2.0 (2025-12): publish wheels for **Linux musl**

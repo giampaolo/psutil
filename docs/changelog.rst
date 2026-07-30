@@ -177,6 +177,9 @@ Others:
 
 - :gh:`2872`: Dropped support for Python 3.6 and 3.7. Minimum version is now
   3.8.
+- :gh:`2893`, [Windows]: Dropped support for Windows Vista, 7, 8, 8.1 and their
+  server counterparts (Server 2008 to 2012 R2). Minimum version is now Windows
+  10 / Windows Server 2016.
 - :gh:`2576`: the C extension modules now use PEP 489 multi-phase
   initialization instead of single-phase, which is the preferred mechanism for
   extension modules. Runtime behavior is unchanged.
