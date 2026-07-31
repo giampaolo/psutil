@@ -549,7 +549,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (processHandle == NULL)
         return NULL;
 
-    py_retlist = psutil_get_open_files(pid, processHandle);
+    py_retlist = psutil_get_open_files(processHandle);
     CloseHandle(processHandle);
     return py_retlist;
 }
