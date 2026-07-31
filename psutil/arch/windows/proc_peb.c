@@ -15,10 +15,17 @@
 #include "../../arch/all/init.h"
 
 
+enum peb_field {
+    PEB_CMDLINE,
+    PEB_CWD,
+    PEB_ENVIRON,
+};
+
+
 // Given a pointer into a process's memory, figure out how much data
 // can be read from it.
 static int
-psutil_get_process_region_size(HANDLE hProcess, LPCVOID src, SIZE_T *psize) {
+get_proc_region_size(HANDLE hProcess, LPCVOID src, SIZE_T *psize) {
     MEMORY_BASIC_INFORMATION info;
 
     if (!VirtualQueryEx(hProcess, src, &info, sizeof(info))) {
@@ -31,19 +38,12 @@ psutil_get_process_region_size(HANDLE hProcess, LPCVOID src, SIZE_T *psize) {
 }
 
 
-enum psutil_process_data_kind {
-    KIND_CMDLINE,
-    KIND_CWD,
-    KIND_ENVIRON,
-};
-
-
 // Read a chunk of another process's memory. On error set a Python
 // exception and return -1. May fail with ERROR_NOACCESS (turned into
 // AccessDenied) or ERROR_PARTIAL_COPY, see:
 // https://github.com/giampaolo/psutil/issues/875
 static int
-psutil_read_proc_mem(HANDLE hProcess, LPCVOID src, LPVOID dst, SIZE_T size) {
+read_proc_mem(HANDLE hProcess, LPCVOID src, LPVOID dst, SIZE_T size) {
     if (!ReadProcessMemory(hProcess, src, dst, size, NULL)) {
         if (GetLastError() == ERROR_NOACCESS) {
             psutil_debug("ReadProcessMemory -> ERROR_NOACCESS");
@@ -64,9 +64,7 @@ psutil_read_proc_mem(HANDLE hProcess, LPCVOID src, LPVOID dst, SIZE_T size) {
 // parameter is not touched, -1 is returned, and an appropriate Python
 // exception is set.
 static int
-psutil_get_process_data(
-    DWORD pid, enum psutil_process_data_kind kind, WCHAR **pdata, SIZE_T *psize
-) {
+get_proc_data(DWORD pid, enum peb_field kind, WCHAR **pdata, SIZE_T *psize) {
     /* Several cases to consider:
 
        We (i.e. the python interpreter) and the target process are of
@@ -124,11 +122,11 @@ psutil_get_process_data(
         RTL_USER_PROCESS_PARAMETERS32 procParameters32;
 
         // read PEB
-        if (psutil_read_proc_mem(hProcess, ppeb32, &peb32, sizeof(peb32)) != 0)
+        if (read_proc_mem(hProcess, ppeb32, &peb32, sizeof(peb32)) != 0)
             goto error;
 
         // read process parameters
-        if (psutil_read_proc_mem(
+        if (read_proc_mem(
                 hProcess,
                 UlongToPtr(peb32.ProcessParameters),
                 &procParameters32,
@@ -140,15 +138,15 @@ psutil_get_process_data(
         }
 
         switch (kind) {
-            case KIND_CMDLINE:
+            case PEB_CMDLINE:
                 src = UlongToPtr(procParameters32.CommandLine.Buffer),
                 size = procParameters32.CommandLine.Length;
                 break;
-            case KIND_CWD:
+            case PEB_CWD:
                 src = UlongToPtr(procParameters32.CurrentDirectoryPath.Buffer);
                 size = procParameters32.CurrentDirectoryPath.Length;
                 break;
-            case KIND_ENVIRON:
+            case PEB_ENVIRON:
                 src = UlongToPtr(procParameters32.env);
                 break;
         }
@@ -188,16 +186,14 @@ psutil_get_process_data(
 
 
         // read peb
-        if (psutil_read_proc_mem(
-                hProcess, pbi.PebBaseAddress, &peb, sizeof(peb)
-            )
+        if (read_proc_mem(hProcess, pbi.PebBaseAddress, &peb, sizeof(peb))
             != 0)
         {
             goto error;
         }
 
         // read process parameters
-        if (psutil_read_proc_mem(
+        if (read_proc_mem(
                 hProcess,
                 peb.ProcessParameters,
                 &procParameters,
@@ -209,22 +205,22 @@ psutil_get_process_data(
         }
 
         switch (kind) {
-            case KIND_CMDLINE:
+            case PEB_CMDLINE:
                 src = procParameters.CommandLine.Buffer;
                 size = procParameters.CommandLine.Length;
                 break;
-            case KIND_CWD:
+            case PEB_CWD:
                 src = procParameters.CurrentDirectoryPath.Buffer;
                 size = procParameters.CurrentDirectoryPath.Length;
                 break;
-            case KIND_ENVIRON:
+            case PEB_ENVIRON:
                 src = procParameters.env;
                 break;
         }
     }
 
-    if (kind == KIND_ENVIRON) {
-        if (psutil_get_process_region_size(hProcess, src, &size) != 0)
+    if (kind == PEB_ENVIRON) {
+        if (get_proc_region_size(hProcess, src, &size) != 0)
             goto error;
     }
 
@@ -234,7 +230,7 @@ psutil_get_process_data(
         goto error;
     }
 
-    if (psutil_read_proc_mem(hProcess, src, buffer, size) != 0)
+    if (read_proc_mem(hProcess, src, buffer, size) != 0)
         goto error;
 
     CloseHandle(hProcess);
@@ -257,7 +253,7 @@ error:
 // method alternative to PEB which is less likely to result in
 // AccessDenied.
 static int
-psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
+get_cmdline_nopeb(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     HANDLE hProcess = NULL;
     ULONG bufLen = 0;
     NTSTATUS status;
@@ -371,9 +367,9 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     // - https://github.com/giampaolo/psutil/pull/1398
     // - https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/
     if (use_peb == 1)
-        func_ret = psutil_get_process_data(pid, KIND_CMDLINE, &data, &size);
+        func_ret = get_proc_data(pid, PEB_CMDLINE, &data, &size);
     else
-        func_ret = psutil_cmdline_query_proc(pid, &data, &size);
+        func_ret = get_cmdline_nopeb(pid, &data, &size);
     if (func_ret != 0)
         goto error;
 
@@ -427,7 +423,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     if (psutil_check_pid_running(pid) != 0)
         return NULL;
 
-    if (psutil_get_process_data(pid, KIND_CWD, &data, &size) != 0)
+    if (get_proc_data(pid, PEB_CWD, &data, &size) != 0)
         goto out;
 
     // convert wchar array to a Python unicode string
@@ -456,7 +452,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     if (psutil_check_pid_running(pid) != 0)
         return NULL;
 
-    if (psutil_get_process_data(pid, KIND_ENVIRON, &data, &size) != 0)
+    if (get_proc_data(pid, PEB_ENVIRON, &data, &size) != 0)
         goto out;
 
     // convert wchar array to a Python unicode string
