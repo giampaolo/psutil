@@ -66,13 +66,17 @@ psutil_swap_percent(PyObject *self, PyObject *args) {
     PDH_FMT_COUNTERVALUE counterValue;
     double percentUsage;
 
+    Py_BEGIN_ALLOW_THREADS
     s = PdhOpenQueryW(NULL, 0, &hQuery);
+    Py_END_ALLOW_THREADS
     if (s != ERROR_SUCCESS) {
         psutil_runtime_error("PdhOpenQueryW failed (0x%08X)", s);
         return NULL;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     s = PdhAddEnglishCounterW(hQuery, szCounterPath, 0, &hCounter);
+    Py_END_ALLOW_THREADS
     if (s != ERROR_SUCCESS) {
         PdhCloseQuery(hQuery);
         psutil_runtime_error(
@@ -83,7 +87,9 @@ psutil_swap_percent(PyObject *self, PyObject *args) {
         return NULL;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     s = PdhCollectQueryData(hQuery);
+    Py_END_ALLOW_THREADS
     if (s != ERROR_SUCCESS) {
         // If swap disabled this will fail.
         psutil_debug(
@@ -92,9 +98,11 @@ psutil_swap_percent(PyObject *self, PyObject *args) {
         percentUsage = 0;
     }
     else {
+        Py_BEGIN_ALLOW_THREADS
         s = PdhGetFormattedCounterValue(
             (PDH_HCOUNTER)hCounter, PDH_FMT_DOUBLE, 0, &counterValue
         );
+        Py_END_ALLOW_THREADS
         if (s != ERROR_SUCCESS) {
             PdhCloseQuery(hQuery);
             psutil_runtime_error(
