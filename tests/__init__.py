@@ -624,7 +624,9 @@ def filter_alien_children(procs):
         return procs
     names = {"wsl.exe", "conhost.exe"}
     aliens = {
-        x.pid for x in psutil.process_iter() if x.name().lower() in names
+        x.pid
+        for x in psutil.process_iter(["name"])
+        if (x.name() or "").lower() in names
     }
     return [x for x in procs if x.pid not in aliens]
 
