@@ -204,7 +204,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 }
                 if (n < 0) {  // error or truncated
                     psutil_runtime_error("str_format() error");
-                    break;
+                    goto error;
                 }
                 ptr += n;
                 remaining -= n;
@@ -245,8 +245,10 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                         buff_addr,
                         sizeof(buff_addr)
                     );
-                    if (!intRet)
+                    if (!intRet) {
+                        psutil_oserror_wsyscall("inet_ntop");
                         goto error;
+                    }
                     netmask_bits = pUnicast->OnLinkPrefixLength;
                     dwRetVal = ConvertLengthToIpv4Mask(
                         netmask_bits, &converted_netmask
@@ -259,8 +261,10 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                             buff_netmask,
                             sizeof(buff_netmask)
                         );
-                        if (!netmaskIntRet)
+                        if (!netmaskIntRet) {
+                            psutil_oserror_wsyscall("inet_ntop");
                             goto error;
+                        }
                     }
                 }
                 else if (family == AF_INET6) {
@@ -273,8 +277,10 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                         buff_addr,
                         sizeof(buff_addr)
                     );
-                    if (!intRet)
+                    if (!intRet) {
+                        psutil_oserror_wsyscall("inet_ntop");
                         goto error;
+                    }
                 }
                 else {
                     // we should never get here
