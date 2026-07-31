@@ -172,6 +172,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     DWORD retVal;
     DWORD pid;
     long timeout;
+    int running;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID "l", &pid, &timeout))
         return NULL;
@@ -187,10 +188,20 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
             // return None instead.
             Py_RETURN_NONE;
         }
-        else {
-            psutil_oserror_wsyscall("OpenProcess");
+        if (GetLastError() == ERROR_SUCCESS) {
+            // Yeah, it's this bad, see:
+            // https://github.com/giampaolo/psutil/issues/1877
+            running = psutil_pid_is_running(pid);
+            if (running == 0) {
+                psutil_debug("OpenProcess -> ERROR_SUCCESS turned into None");
+                Py_RETURN_NONE;
+            }
+            if (running == 1)
+                return psutil_oserror_ad("OpenProcess -> ERROR_SUCCESS");
             return NULL;
         }
+        psutil_oserror_wsyscall("OpenProcess");
+        return NULL;
     }
 
     // wait until the process has terminated
