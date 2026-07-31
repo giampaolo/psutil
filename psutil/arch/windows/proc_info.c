@@ -35,18 +35,23 @@ enum psutil_process_data_kind {
 };
 
 
-static void
-psutil_convert_winerr(ULONG err, char *syscall) {
-    char fullmsg[8192];
-
-    if (err == ERROR_NOACCESS) {
-        str_format(fullmsg, sizeof(fullmsg), "%s -> ERROR_NOACCESS", syscall);
-        psutil_debug(fullmsg);
-        psutil_oserror_ad(fullmsg);
+// Read a chunk of another process's memory. On error set a Python
+// exception and return -1. May fail with ERROR_NOACCESS (turned into
+// AccessDenied) or ERROR_PARTIAL_COPY, see:
+// https://github.com/giampaolo/psutil/issues/875
+static int
+psutil_read_proc_mem(HANDLE hProcess, LPCVOID src, LPVOID dst, SIZE_T size) {
+    if (!ReadProcessMemory(hProcess, src, dst, size, NULL)) {
+        if (GetLastError() == ERROR_NOACCESS) {
+            psutil_debug("ReadProcessMemory -> ERROR_NOACCESS");
+            psutil_oserror_ad("ReadProcessMemory -> ERROR_NOACCESS");
+        }
+        else {
+            psutil_oserror_wsyscall("ReadProcessMemory");
+        }
+        return -1;
     }
-    else {
-        psutil_oserror_wsyscall(syscall);
-    }
+    return 0;
 }
 
 
@@ -116,26 +121,18 @@ psutil_get_process_data(
         RTL_USER_PROCESS_PARAMETERS32 procParameters32;
 
         // read PEB
-        if (!ReadProcessMemory(hProcess, ppeb32, &peb32, sizeof(peb32), NULL))
-        {
-            // May fail with ERROR_PARTIAL_COPY, see:
-            // https://github.com/giampaolo/psutil/issues/875
-            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
+        if (psutil_read_proc_mem(hProcess, ppeb32, &peb32, sizeof(peb32)) != 0)
             goto error;
-        }
 
         // read process parameters
-        if (!ReadProcessMemory(
+        if (psutil_read_proc_mem(
                 hProcess,
                 UlongToPtr(peb32.ProcessParameters),
                 &procParameters32,
-                sizeof(procParameters32),
-                NULL
-            ))
+                sizeof(procParameters32)
+            )
+            != 0)
         {
-            // May fail with ERROR_PARTIAL_COPY, see:
-            // https://github.com/giampaolo/psutil/issues/875
-            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
@@ -188,28 +185,23 @@ psutil_get_process_data(
 
 
         // read peb
-        if (!ReadProcessMemory(
-                hProcess, pbi.PebBaseAddress, &peb, sizeof(peb), NULL
-            ))
+        if (psutil_read_proc_mem(
+                hProcess, pbi.PebBaseAddress, &peb, sizeof(peb)
+            )
+            != 0)
         {
-            // May fail with ERROR_PARTIAL_COPY, see:
-            // https://github.com/giampaolo/psutil/issues/875
-            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
         // read process parameters
-        if (!ReadProcessMemory(
+        if (psutil_read_proc_mem(
                 hProcess,
                 peb.ProcessParameters,
                 &procParameters,
-                sizeof(procParameters),
-                NULL
-            ))
+                sizeof(procParameters)
+            )
+            != 0)
         {
-            // May fail with ERROR_PARTIAL_COPY, see:
-            // https://github.com/giampaolo/psutil/issues/875
-            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
@@ -239,12 +231,8 @@ psutil_get_process_data(
         goto error;
     }
 
-    if (!ReadProcessMemory(hProcess, src, buffer, size, NULL)) {
-        // May fail with ERROR_PARTIAL_COPY, see:
-        // https://github.com/giampaolo/psutil/issues/875
-        psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
+    if (psutil_read_proc_mem(hProcess, src, buffer, size) != 0)
         goto error;
-    }
 
     CloseHandle(hProcess);
 
