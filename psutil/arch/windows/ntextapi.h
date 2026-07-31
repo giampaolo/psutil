@@ -90,20 +90,7 @@ NtQueryInformationFile(
 #define SystemTimeOfDayInformation 3
 
 
-// process suspend() / resume()
-typedef enum _KTHREAD_STATE {
-    Initialized,
-    Ready,
-    Running,
-    Standby,
-    Terminated,
-    Waiting,
-    Transition,
-    DeferredReady,
-    GateWait,
-    MaximumThreadState
-} KTHREAD_STATE, *PKTHREAD_STATE;
-
+// Process.threads()
 typedef enum _KWAIT_REASON {
     Executive,
     FreePage,
