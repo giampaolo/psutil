@@ -39,7 +39,10 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
+    // Opens /dev/kstat and snapshots the whole kstat chain.
+    Py_BEGIN_ALLOW_THREADS
     kc = kstat_open();
+    Py_END_ALLOW_THREADS
     if (kc == NULL)
         goto error;
 
@@ -157,7 +160,10 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
+    // Opens /dev/kstat and snapshots the whole kstat chain.
+    Py_BEGIN_ALLOW_THREADS
     kc = kstat_open();
+    Py_END_ALLOW_THREADS
     if (kc == NULL)
         goto error;
     sock = socket(AF_INET, SOCK_DGRAM, 0);
