@@ -175,8 +175,6 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
         pUnicast = pCurrAddresses->FirstUnicastAddress;
 
-        netmaskIntRet = NULL;
-
         py_nic_name = PyUnicode_FromWideChar(
             pCurrAddresses->FriendlyName, wcslen(pCurrAddresses->FriendlyName)
         );
@@ -236,6 +234,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
         // find out the IP address associated with the NIC
         if (pUnicast != NULL) {
             for (i = 0; pUnicast != NULL; i++) {
+                netmaskIntRet = NULL;
                 family = pUnicast->Address.lpSockaddr->sa_family;
                 if (family == AF_INET) {
                     struct sockaddr_in *sa_in = (struct sockaddr_in *)pUnicast

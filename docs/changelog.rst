@@ -468,6 +468,9 @@ Others:
 - :gh:`2938`, [Windows]: :func:`disk_partitions` returned a different
   :field:`opts` string for volume mount points than for the drive they live on:
   the drive type (``fixed``, ``cdrom``, ...) was missing.
+- :gh:`2940`, [Windows]: :func:`net_if_addrs` could report an IPv4
+  :field:`netmask` for an IPv6 address of the same NIC. The netmask was reset
+  once per interface instead of once per address.
 - :gh:`2965`, [Windows]: on systems with more than 64 CPUs :func:`cpu_times`
   with ``percpu=True`` and :func:`cpu_stats` read uninitialized memory: the
   kernel only returns entries for the calling thread's processor group, but the
