@@ -228,7 +228,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     char opts[50];
     HANDLE mp_h;
     BOOL mp_flag = TRUE;
-    LPTSTR fs_type[MAX_PATH + 1] = {0};
+    char fs_type[MAX_PATH + 1] = {0};
     DWORD pflags = 0;
     DWORD lpMaximumComponentLength = 0;  // max file name
     PyObject *py_retlist = PyList_New(0);
@@ -284,7 +284,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             NULL,
             &lpMaximumComponentLength,
             &pflags,
-            (LPTSTR)fs_type,
+            fs_type,
             _ARRAYSIZE(fs_type)
         );
         if (ret == 0) {
