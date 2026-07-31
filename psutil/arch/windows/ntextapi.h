@@ -8,10 +8,48 @@
 // clang-format off
 #if !defined(__NTEXTAPI_H__)
 #define __NTEXTAPI_H__
-#include <winternl.h>
 #include <iphlpapi.h>
 
+// We deliberately don't include <winternl.h>. What it offers is stub
+// versions of the structs below, padded with "Reserved" fields, and
+// including it claims the names we need for the real layouts. System
+// Informer's phnt headers leave it out for the same reason.
+// Everything it did give us is declared here instead.
+
 typedef LONG NTSTATUS;
+
+#ifndef NT_SUCCESS
+    #define NT_SUCCESS(status) (((NTSTATUS)(status)) >= 0)
+#endif
+
+typedef LONG KPRIORITY;
+
+typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR Buffer;
+} UNICODE_STRING, *PUNICODE_STRING;
+
+typedef struct _IO_STATUS_BLOCK {
+    union {
+        NTSTATUS Status;
+        PVOID Pointer;
+    } u;
+    ULONG_PTR Information;
+} IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
+
+// Really enums. We only ever pass the constants #defined below, so an
+// integer type does the job.
+typedef ULONG FILE_INFORMATION_CLASS;
+typedef ULONG OBJECT_INFORMATION_CLASS;
+
+NTSYSAPI NTSTATUS NTAPI
+NtQueryInformationFile(
+    HANDLE FileHandle,
+    PIO_STATUS_BLOCK IoStatusBlock,
+    PVOID FileInformation,
+    ULONG Length,
+    FILE_INFORMATION_CLASS FileInformationClass);
 
 // https://github.com/ajkhoury/TestDll/blob/master/nt_ddk.h
 #define STATUS_INFO_LENGTH_MISMATCH ((NTSTATUS)0xC0000004L)
@@ -30,27 +68,25 @@ typedef LONG NTSTATUS;
 // Enums
 // ================================================================
 
-#undef  FileBasicInformation
+// Members of the FILE_INFORMATION_CLASS, MEMORY_INFORMATION_CLASS,
+// OBJECT_INFORMATION_CLASS, PROCESSINFOCLASS and
+// SYSTEM_INFORMATION_CLASS enums. Values cross-checked against
+// System Informer's phnt (ntexapi.h, ntpsapi.h).
 #define FileBasicInformation 4
-#undef  FileStandardInformation
 #define FileStandardInformation 5
-#undef  MemoryWorkingSetInformation
-#define MemoryWorkingSetInformation 0x1
-#undef  ObjectNameInformation
+#define MemoryWorkingSetInformation 1
 #define ObjectNameInformation 1
-#undef  ObjectTypesInformation
 #define ObjectTypesInformation 3
-#undef  ProcessCommandLineInformation
+#define ProcessBasicInformation 0
 #define ProcessCommandLineInformation 60
-#undef  ProcessHandleInformation
 #define ProcessHandleInformation 51
-#undef  ProcessIoPriority
 #define ProcessIoPriority 33
-#undef  ProcessWow64Information
 #define ProcessWow64Information 26
-#undef  SystemProcessIdInformation
+#define SystemInterruptInformation 23
+#define SystemPerformanceInformation 2
 #define SystemProcessIdInformation 88
-#undef  SystemTimeOfDayInformation
+#define SystemProcessInformation 5
+#define SystemProcessorPerformanceInformation 8
 #define SystemTimeOfDayInformation 3
 
 
@@ -291,7 +327,6 @@ typedef struct _OBJECT_TYPES_INFORMATION {
     ULONG NumberOfTypes;
 } OBJECT_TYPES_INFORMATION, *POBJECT_TYPES_INFORMATION;
 
-// <winternl.h> declares NtQueryInformationFile but not these.
 typedef struct _FILE_BASIC_INFORMATION {
     LARGE_INTEGER CreationTime;
     LARGE_INTEGER LastAccessTime;
@@ -326,7 +361,7 @@ typedef struct _PROCESS_HANDLE_SNAPSHOT_INFORMATION {
 
 typedef struct _PROCESS_BASIC_INFORMATION2 {
     NTSTATUS ExitStatus;
-    PPEB PebBaseAddress;
+    PVOID PebBaseAddress;
     ULONG_PTR AffinityMask;
     KPRIORITY BasePriority;
     ULONG_PTR UniqueProcessId;
