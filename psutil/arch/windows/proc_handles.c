@@ -75,8 +75,8 @@
 // - https://github.com/giampaolo/psutil/pull/2894
 //
 // CREDITS: the original implementation was written by Jeff Tang and
-// later rewritten by Giampaolo Rodola. The handle and name utilities
-// were adapted from SystemInformer.
+// later rewritten by Giampaolo Rodola. Final implementation was
+// adapted using SystemInformer as a guide.
 
 #include <windows.h>
 #include <Python.h>
@@ -85,7 +85,6 @@
 
 
 #define THREAD_TIMEOUT 100  // ms
-// How long to wait for a killed worker to actually die.
 #define KILL_JOIN_TIMEOUT 1000  // ms
 
 typedef struct {
@@ -122,7 +121,7 @@ typedef struct {
 // Find the kernel object type index for "File" handles, so that we
 // can tell whether a handle refers to a file without touching it.
 // The index is stable until reboot; resolve it once and cache it.
-// Return 0 on success, -1 on error (Python exception set).
+// Return 0 on success, -1 on error.
 static int
 get_file_type_index(ULONG *indexOut) {
     static ULONG cachedIndex = 0;
@@ -277,6 +276,7 @@ worker_loop(LPVOID lpvParam) {
                 wanted = FALSE;
             }
         }
+
         if (wanted) {
             w->status = NtQueryObject(
                 w->hFile,
@@ -306,6 +306,7 @@ worker_create(void) {
         psutil_oserror_wsyscall("CreateEvent");
         goto error;
     }
+
     // Small stack: the thread only issues syscalls. Keeps the cost
     // down if the worker gets stuck and leaks.
     w->hThread = CreateThread(
@@ -341,12 +342,12 @@ worker_destroy(Worker *w) {
 }
 
 
-// Query the name of hFile on the worker thread, with a timeout.
-// Return 0 on success (*nameOut set, may have Length 0), -1 on error
-// (Python exception set), WAIT_TIMEOUT if the query got stuck. On
-// WAIT_TIMEOUT the worker is killed and hFile is closed (or leaked
-// if the kill fails); either way the caller must not touch hFile.
-// *workerRef is reset to NULL; the next call creates a new worker.
+// Query the name of hFile on the worker thread, with a timeout. Return
+// 0 on success (*nameOut set, may have Length 0), -1 on error (Python
+// exception set), WAIT_TIMEOUT if the query got stuck. On WAIT_TIMEOUT
+// the worker is killed and hFile is closed (or leaked if the kill
+// fails); either way the caller must not touch hFile. *workerRef is
+// reset to NULL; the next call creates a new worker.
 static DWORD
 worker_get_filename(
     Worker **workerRef, HANDLE hFile, PUNICODE_STRING *nameOut
@@ -360,9 +361,9 @@ worker_get_filename(
 
     *nameOut = NULL;
 
-    // A loop is needed because the I/O subsystem likes to give us the
-    // wrong return lengths... Buffers are (re)allocated in here so
-    // that the worker never touches the heap.
+    // A loop is needed because the I/O subsystem likes to give us the wrong
+    // return lengths... Buffers are (re)allocated in here so that the worker
+    // never touches the heap.
     do {
         name = MALLOC_ZERO(bufferSize);
         if (name == NULL) {
@@ -393,9 +394,8 @@ worker_get_filename(
                 "get handle name thread timed out after %i ms; killing it",
                 THREAD_TIMEOUT
             );
-            // The worker is stuck in the kernel. Kill it: its body is
-            // strictly syscalls, so there is no user-mode lock it can
-            // orphan.
+            // The worker is stuck in the kernel. Kill it: its body is strictly
+            // syscalls, so there is no user-mode lock it can orphan.
             if (!TerminateThread(w->hThread, 0))
                 psutil_debug("TerminateThread -> FALSE");
             dwWait = WaitForSingleObject(w->hThread, KILL_JOIN_TIMEOUT);
@@ -409,12 +409,11 @@ worker_get_filename(
                 FREE(w);
             }
             else {
-                // Should not happen: the thread is stuck in an
-                // unkillable kernel wait. Leak it, along with hFile,
-                // the events and the name buffer, which the kernel
-                // may still write to. The pending termination will
-                // kill the thread before it ever runs user code
-                // again.
+                // Should not happen: the thread is stuck in an unkillable
+                // kernel wait. Leak it, along with hFile, the events and the
+                // name buffer, which the kernel may still write to. The
+                // pending termination will kill the thread before it ever runs
+                // user code again.
                 psutil_debug("killed worker did not exit; leaking it");
                 CloseHandle(w->hThread);
             }

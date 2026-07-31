@@ -276,6 +276,13 @@ Others:
   :envvar:`PSUTIL_BUILD_JOBS` to cap the number of jobs.
 - :gh:`2927`: python dependencies (``make install-pydeps-*``) are now installed
   with ``uv`` when available, saving around 10 secs for each CI run.
+- :gh:`2932`, [Windows]: :meth:`Process.open_files` is around 600x faster (from
+  235 ms to 0.39 ms per call). It no longer enumerates every handle in the
+  system with ``NtQuerySystemInformation(SystemExtendedHandleInformation)``,
+  but per-process, via ``NtQueryInformationProcess(ProcessHandleInformation)``,
+  and the ones which are not files are skipped by object type index, before
+  being duplicated. Also, the internal thread used to query handle names is now
+  created once per call instead of once per handle.
 
 **Bug fixes**
 
@@ -287,11 +294,6 @@ Others:
 - :gh:`1534`, [NetBSD]: :meth:`Process.exe` is now fetched natively via
   ``sysctl(KERN_PROC_PATHNAME)`` instead of reading the ``/proc/pid/exe``
   symlink (a virtualization layer on NetBSD). (patch by Kamil Rytarowski)
-- :gh:`1967`, [Windows]: :meth:`Process.open_files` could deadlock the calling
-  process. On timeout, the internal thread querying a handle name was killed
-  with ``TerminateThread()``, which cannot terminate a thread blocked in the
-  kernel (e.g. on a pipe with a pending read) and left locks and memory in an
-  inconsistent state. The thread is now abandoned and cleans up after itself.
 - :gh:`2382`, [macOS]: :func:`cpu_freq` is now always defined on ARM64 and
   returns ``None`` when CPU frequency can't be determined. Previously it was
   left undefined (or raised :exc:`RuntimeError`) when the ``pmgr`` IORegistry
@@ -438,6 +440,12 @@ Others:
   number which didn't change when the process opened a file.
 - :gh:`2929`, [NetBSD], [OpenBSD]: :meth:`Process.open_files` always returned
   an empty list.
+- :gh:`2932`, [Windows]: :meth:`Process.open_files` could block for as long as
+  the SMB session timeout (around 1 minute) if the process had a file open on
+  an unreachable network share. Directories were filtered out by calling
+  :func:`os.stat` on each path, which resolves it from scratch, goes over the
+  wire and has no timeout. That check is now done in C, on the handle we
+  already have, inside the worker thread bounded by a timeout.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
