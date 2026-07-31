@@ -29,7 +29,6 @@ extern PyObject *ZombieProcessError;
     #if !defined(PSUTIL_OPENBSD)
         #define PSUTIL_HAS_SYSCTLBYNAME
         int psutil_sysctlbyname(const char *name, void *buf, size_t buflen);
-        int psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen);
     #endif
 #endif
 
