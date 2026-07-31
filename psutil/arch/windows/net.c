@@ -26,7 +26,11 @@ psutil_get_nic_addresses(void) {
     ret = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, &bufferLength);
     Py_END_ALLOW_THREADS
     if (ret != ERROR_BUFFER_OVERFLOW) {
-        psutil_runtime_error("GetAdaptersAddresses() syscall failed.");
+        psutil_runtime_error(
+            "GetAdaptersAddresses() syscall failed to determine the buffer "
+            "size (err=%lu)",
+            (unsigned long)ret
+        );
         return NULL;
     }
 
@@ -42,7 +46,10 @@ psutil_get_nic_addresses(void) {
     Py_END_ALLOW_THREADS
     if (ret != ERROR_SUCCESS) {
         free(buffer);
-        psutil_runtime_error("GetAdaptersAddresses() syscall failed.");
+        psutil_runtime_error(
+            "GetAdaptersAddresses() syscall failed (err=%lu)",
+            (unsigned long)ret
+        );
         return NULL;
     }
 
@@ -394,7 +401,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     dwRetVal = GetIfTable(pIfTable, &dwSize, FALSE);
     Py_END_ALLOW_THREADS
     if (dwRetVal != NO_ERROR) {
-        psutil_runtime_error("GetIfTable() syscall failed");
+        psutil_runtime_error(
+            "GetIfTable() syscall failed (err=%lu)", (unsigned long)dwRetVal
+        );
         goto error;
     }
 
