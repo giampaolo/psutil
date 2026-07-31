@@ -337,9 +337,7 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    ssp = (SERVICE_STATUS_PROCESS *)HeapAlloc(
-        GetProcessHeap(), 0, bytesNeeded
-    );
+    ssp = (SERVICE_STATUS_PROCESS *)MALLOC(bytesNeeded);
     if (ssp == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -365,7 +363,7 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
         goto error;
 
     CloseServiceHandle(hService);
-    HeapFree(GetProcessHeap(), 0, ssp);
+    FREE(ssp);
     PyMem_Free(service_name);
     return py_tuple;
 
@@ -374,7 +372,7 @@ error:
     if (hService)
         CloseServiceHandle(hService);
     if (ssp)
-        HeapFree(GetProcessHeap(), 0, ssp);
+        FREE(ssp);
     if (service_name)
         PyMem_Free(service_name);
     return NULL;

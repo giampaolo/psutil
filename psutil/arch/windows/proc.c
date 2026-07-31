@@ -491,7 +491,7 @@ psutil_GetProcWsetInformation(
                 status, "NtQueryVirtualMemory(MemoryWorkingSetInformation)"
             );
         }
-        HeapFree(GetProcessHeap(), 0, buffer);
+        FREE(buffer);
         return -1;
     }
 
@@ -544,7 +544,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, wsInfo);
+    FREE(wsInfo);
     CloseHandle(hProcess);
 
     return Py_BuildValue("I", wsCounters.NumberOfPrivatePages);
@@ -558,16 +558,16 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
     NTSTATUS status;
     HANDLE hProcess;
     DWORD access = PROCESS_SUSPEND_RESUME | PROCESS_QUERY_LIMITED_INFORMATION;
-    PyObject *suspend;
+    int suspend;
 
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &suspend))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "p", &pid, &suspend))
         return NULL;
 
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
         return NULL;
 
-    if (PyObject_IsTrue(suspend))
+    if (suspend)
         status = NtSuspendProcess(hProcess);
     else
         status = NtResumeProcess(hProcess);
@@ -646,7 +646,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
 
 static PTOKEN_USER
-_psutil_user_token_from_pid(DWORD pid) {
+user_token_from_pid(DWORD pid) {
     HANDLE hProcess = NULL;
     HANDLE hToken = NULL;
     PTOKEN_USER userToken = NULL;
@@ -716,7 +716,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    userToken = _psutil_user_token_from_pid(pid);
+    userToken = user_token_from_pid(pid);
     if (userToken == NULL)
         return NULL;
 
