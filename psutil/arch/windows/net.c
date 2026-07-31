@@ -14,46 +14,69 @@
 
 #include "../../arch/all/init.h"
 
+#define MAX_TRIES 3
+// We only read unicast addresses, the NIC name and description, the MAC
+// address and the interface index, so tell the API to skip the rest.
+#define GAA_FLAGS                                    \
+    (GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST \
+     | GAA_FLAG_SKIP_DNS_SERVER)
+
 
 static PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses(void) {
     ULONG bufferLength = 0;
     ULONG ret;
     PIP_ADAPTER_ADDRESSES buffer;
+    int attempt;
 
-    // Queries the network stack, may be slow with many adapters.
-    Py_BEGIN_ALLOW_THREADS
-    ret = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, &bufferLength);
-    Py_END_ALLOW_THREADS
-    if (ret != ERROR_BUFFER_OVERFLOW) {
-        psutil_runtime_error(
-            "GetAdaptersAddresses() syscall failed to determine the buffer "
-            "size (err=%lu)",
-            (unsigned long)ret
+    // A NIC showing up between the call determining the size and the
+    // one filling the buffer in makes the latter fail, hence the retry.
+    for (attempt = 0; attempt < MAX_TRIES; attempt++) {
+        // Queries the network stack, may be slow with many adapters.
+        Py_BEGIN_ALLOW_THREADS
+        ret = GetAdaptersAddresses(
+            AF_UNSPEC, GAA_FLAGS, NULL, NULL, &bufferLength
         );
-        return NULL;
-    }
+        Py_END_ALLOW_THREADS
+        if (ret != ERROR_BUFFER_OVERFLOW) {
+            psutil_runtime_error(
+                "GetAdaptersAddresses() syscall failed to determine the "
+                "buffer size (err=%lu)",
+                (unsigned long)ret
+            );
+            return NULL;
+        }
 
-    buffer = malloc(bufferLength);
-    if (buffer == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    memset(buffer, 0, bufferLength);
+        buffer = calloc(1, bufferLength);
+        if (buffer == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
 
-    Py_BEGIN_ALLOW_THREADS
-    ret = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, buffer, &bufferLength);
-    Py_END_ALLOW_THREADS
-    if (ret != ERROR_SUCCESS) {
+        Py_BEGIN_ALLOW_THREADS
+        ret = GetAdaptersAddresses(
+            AF_UNSPEC, GAA_FLAGS, NULL, buffer, &bufferLength
+        );
+        Py_END_ALLOW_THREADS
+        if (ret == ERROR_SUCCESS)
+            return buffer;
+
         free(buffer);
-        psutil_runtime_error(
-            "GetAdaptersAddresses() syscall failed (err=%lu)",
-            (unsigned long)ret
-        );
-        return NULL;
+        if (ret != ERROR_BUFFER_OVERFLOW) {
+            psutil_runtime_error(
+                "GetAdaptersAddresses() syscall failed (err=%lu)",
+                (unsigned long)ret
+            );
+            return NULL;
+        }
+        psutil_debug("GetAdaptersAddresses() buffer too small, retry");
     }
 
-    return buffer;
+    psutil_runtime_error(
+        "GetAdaptersAddresses() buffer was still too small after %d attempts",
+        MAX_TRIES
+    );
+    return NULL;
 }
 
 
