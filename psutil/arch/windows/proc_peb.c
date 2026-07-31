@@ -333,6 +333,9 @@ error:
 }
 
 
+// --------------------------------------------------------------------
+
+
 PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     WCHAR *data = NULL;
