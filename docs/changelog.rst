@@ -458,6 +458,10 @@ Others:
 - :gh:`2935`, [Windows]: :meth:`Process.kill` and :meth:`Process.terminate`
   leaked a process handle when ``TerminateProcess()`` failed with an error
   other than ``ERROR_ACCESS_DENIED``.
+- :gh:`2965`, [Windows]: on systems with more than 64 CPUs :func:`cpu_times`
+  with ``percpu=True`` and :func:`cpu_stats` read uninitialized memory: the
+  kernel only returns entries for the calling thread's processor group, but the
+  entries for the remaining CPUs were used as well.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^

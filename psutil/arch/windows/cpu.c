@@ -60,6 +60,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
     UINT i;
     unsigned int ncpus;
+    ULONG retlen = 0;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -85,7 +86,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         SystemProcessorPerformanceInformation,
         sppi,
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
-        NULL
+        &retlen
     );
     if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(
@@ -95,8 +96,11 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // computes system global times summing each
-    // processor value
+    // The kernel may return entries for less CPUs than ncpus: on
+    // systems with more than 64 CPUs it only covers the calling
+    // thread's processor group.
+    ncpus = retlen / sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+
     idle = user = kernel = interrupt = dpc = 0;
     for (i = 0; i < ncpus; i++) {
         user = (double)((HI_T * sppi[i].UserTime.HighPart)
@@ -226,7 +230,9 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
     _SYSTEM_INTERRUPT_INFORMATION *InterruptInformation = NULL;
     unsigned int ncpus;
+    unsigned int nentries;
     UINT i;
+    ULONG retlen = 0;
     ULONG64 dpcs = 0;
     ULONG interrupts = 0;
     ULONG ctx_switches;
@@ -271,7 +277,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         SystemInterruptInformation,
         InterruptInformation,
         ncpus * sizeof(SYSTEM_INTERRUPT_INFORMATION),
-        NULL
+        &retlen
     );
     if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(
@@ -279,7 +285,11 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         );
         goto error;
     }
-    for (i = 0; i < ncpus; i++) {
+    // The kernel may return entries for less CPUs than ncpus: on
+    // systems with more than 64 CPUs it only covers the calling
+    // thread's processor group.
+    nentries = retlen / sizeof(_SYSTEM_INTERRUPT_INFORMATION);
+    for (i = 0; i < nentries; i++) {
         dpcs += InterruptInformation[i].DpcCount;
     }
 
@@ -296,7 +306,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         SystemProcessorPerformanceInformation,
         sppi,
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
-        NULL
+        &retlen
     );
     if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(
@@ -306,7 +316,8 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    for (i = 0; i < ncpus; i++) {
+    nentries = retlen / sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+    for (i = 0; i < nentries; i++) {
         interrupts += sppi[i].InterruptCount;
     }
 
