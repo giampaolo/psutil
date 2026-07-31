@@ -4,7 +4,10 @@
  * found in the LICENSE file.
  */
 
-// Helper functions related to fetching process information.
+// Process cmdline(), cwd() and environ() implementations. All three
+// live in the process PEB (Process Environment Block), which we read
+// with ReadProcessMemory(). cmdline() can also avoid the PEB and use
+// NtQueryInformationProcess() instead, see psutil_proc_cmdline().
 
 #include <Python.h>
 #include <windows.h>
@@ -12,10 +15,17 @@
 #include "../../arch/all/init.h"
 
 
+enum peb_kind {
+    PEB_CMDLINE,
+    PEB_CWD,
+    PEB_ENVIRON,
+};
+
+
 // Given a pointer into a process's memory, figure out how much data
 // can be read from it.
 static int
-psutil_get_process_region_size(HANDLE hProcess, LPCVOID src, SIZE_T *psize) {
+get_proc_region_size(HANDLE hProcess, LPCVOID src, SIZE_T *psize) {
     MEMORY_BASIC_INFORMATION info;
 
     if (!VirtualQueryEx(hProcess, src, &info, sizeof(info))) {
@@ -28,25 +38,23 @@ psutil_get_process_region_size(HANDLE hProcess, LPCVOID src, SIZE_T *psize) {
 }
 
 
-enum psutil_process_data_kind {
-    KIND_CMDLINE,
-    KIND_CWD,
-    KIND_ENVIRON,
-};
-
-
-static void
-psutil_convert_winerr(ULONG err, char *syscall) {
-    char fullmsg[8192];
-
-    if (err == ERROR_NOACCESS) {
-        str_format(fullmsg, sizeof(fullmsg), "%s -> ERROR_NOACCESS", syscall);
-        psutil_debug(fullmsg);
-        psutil_oserror_ad(fullmsg);
+// Read a chunk of another process's memory. On error set a Python
+// exception and return -1. May fail with ERROR_NOACCESS (turned into
+// AccessDenied) or ERROR_PARTIAL_COPY, see:
+// https://github.com/giampaolo/psutil/issues/875
+static int
+read_proc_mem(HANDLE hProcess, LPCVOID src, LPVOID dst, SIZE_T size) {
+    if (!ReadProcessMemory(hProcess, src, dst, size, NULL)) {
+        if (GetLastError() == ERROR_NOACCESS) {
+            psutil_debug("ReadProcessMemory -> ERROR_NOACCESS");
+            psutil_oserror_ad("ReadProcessMemory -> ERROR_NOACCESS");
+        }
+        else {
+            psutil_oserror_wsyscall("ReadProcessMemory");
+        }
+        return -1;
     }
-    else {
-        psutil_oserror_wsyscall(syscall);
-    }
+    return 0;
 }
 
 
@@ -56,9 +64,7 @@ psutil_convert_winerr(ULONG err, char *syscall) {
 // parameter is not touched, -1 is returned, and an appropriate Python
 // exception is set.
 static int
-psutil_get_process_data(
-    DWORD pid, enum psutil_process_data_kind kind, WCHAR **pdata, SIZE_T *psize
-) {
+get_proc_data(DWORD pid, enum peb_kind kind, WCHAR **pdata, SIZE_T *psize) {
     /* Several cases to consider:
 
        We (i.e. the python interpreter) and the target process are of
@@ -116,39 +122,31 @@ psutil_get_process_data(
         RTL_USER_PROCESS_PARAMETERS32 procParameters32;
 
         // read PEB
-        if (!ReadProcessMemory(hProcess, ppeb32, &peb32, sizeof(peb32), NULL))
-        {
-            // May fail with ERROR_PARTIAL_COPY, see:
-            // https://github.com/giampaolo/psutil/issues/875
-            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
+        if (read_proc_mem(hProcess, ppeb32, &peb32, sizeof(peb32)) != 0)
             goto error;
-        }
 
         // read process parameters
-        if (!ReadProcessMemory(
+        if (read_proc_mem(
                 hProcess,
                 UlongToPtr(peb32.ProcessParameters),
                 &procParameters32,
-                sizeof(procParameters32),
-                NULL
-            ))
+                sizeof(procParameters32)
+            )
+            != 0)
         {
-            // May fail with ERROR_PARTIAL_COPY, see:
-            // https://github.com/giampaolo/psutil/issues/875
-            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
         switch (kind) {
-            case KIND_CMDLINE:
+            case PEB_CMDLINE:
                 src = UlongToPtr(procParameters32.CommandLine.Buffer),
                 size = procParameters32.CommandLine.Length;
                 break;
-            case KIND_CWD:
+            case PEB_CWD:
                 src = UlongToPtr(procParameters32.CurrentDirectoryPath.Buffer);
                 size = procParameters32.CurrentDirectoryPath.Length;
                 break;
-            case KIND_ENVIRON:
+            case PEB_ENVIRON:
                 src = UlongToPtr(procParameters32.env);
                 break;
         }
@@ -188,48 +186,41 @@ psutil_get_process_data(
 
 
         // read peb
-        if (!ReadProcessMemory(
-                hProcess, pbi.PebBaseAddress, &peb, sizeof(peb), NULL
-            ))
+        if (read_proc_mem(hProcess, pbi.PebBaseAddress, &peb, sizeof(peb))
+            != 0)
         {
-            // May fail with ERROR_PARTIAL_COPY, see:
-            // https://github.com/giampaolo/psutil/issues/875
-            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
         // read process parameters
-        if (!ReadProcessMemory(
+        if (read_proc_mem(
                 hProcess,
                 peb.ProcessParameters,
                 &procParameters,
-                sizeof(procParameters),
-                NULL
-            ))
+                sizeof(procParameters)
+            )
+            != 0)
         {
-            // May fail with ERROR_PARTIAL_COPY, see:
-            // https://github.com/giampaolo/psutil/issues/875
-            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
         switch (kind) {
-            case KIND_CMDLINE:
+            case PEB_CMDLINE:
                 src = procParameters.CommandLine.Buffer;
                 size = procParameters.CommandLine.Length;
                 break;
-            case KIND_CWD:
+            case PEB_CWD:
                 src = procParameters.CurrentDirectoryPath.Buffer;
                 size = procParameters.CurrentDirectoryPath.Length;
                 break;
-            case KIND_ENVIRON:
+            case PEB_ENVIRON:
                 src = procParameters.env;
                 break;
         }
     }
 
-    if (kind == KIND_ENVIRON) {
-        if (psutil_get_process_region_size(hProcess, src, &size) != 0)
+    if (kind == PEB_ENVIRON) {
+        if (get_proc_region_size(hProcess, src, &size) != 0)
             goto error;
     }
 
@@ -239,12 +230,8 @@ psutil_get_process_data(
         goto error;
     }
 
-    if (!ReadProcessMemory(hProcess, src, buffer, size, NULL)) {
-        // May fail with ERROR_PARTIAL_COPY, see:
-        // https://github.com/giampaolo/psutil/issues/875
-        psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
+    if (read_proc_mem(hProcess, src, buffer, size) != 0)
         goto error;
-    }
 
     CloseHandle(hProcess);
 
@@ -266,7 +253,7 @@ error:
 // method alternative to PEB which is less likely to result in
 // AccessDenied.
 static int
-psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
+get_cmdline_nopeb(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     HANDLE hProcess = NULL;
     ULONG bufLen = 0;
     NTSTATUS status;
@@ -274,7 +261,6 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     WCHAR *bufWchar = NULL;
     PUNICODE_STRING tmp = NULL;
     size_t size;
-    int ProcessCommandLineInformation = 60;
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)
@@ -288,7 +274,7 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     // https://github.com/giampaolo/psutil/issues/1501
     if (status == STATUS_NOT_FOUND) {
         psutil_oserror_ad(
-            "NtQueryInformationProcess(ProcessBasicInformation) -> "
+            "NtQueryInformationProcess(ProcessCommandLineInformation) -> "
             "STATUS_NOT_FOUND"
         );
         goto error;
@@ -298,7 +284,7 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
         && status != STATUS_INFO_LENGTH_MISMATCH)
     {
         psutil_SetFromNTStatusErr(
-            status, "NtQueryInformationProcess(ProcessBasicInformation)"
+            status, "NtQueryInformationProcess(ProcessCommandLineInformation)"
         );
         goto error;
     }
@@ -347,6 +333,9 @@ error:
 }
 
 
+// --------------------------------------------------------------------
+
+
 PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     WCHAR *data = NULL;
@@ -356,17 +345,13 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     int i;
     int func_ret;
     DWORD pid;
-    int pid_return;
-    int use_peb;
-    // TODO: shouldn't this be decref-ed in case of error on
-    // PyArg_ParseTuple?
-    PyObject *py_usepeb = Py_True;
+    int use_peb = 1;
     PyObject *py_retlist = NULL;
     PyObject *py_unicode = NULL;
     static char *keywords[] = {"pid", "use_peb", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(
-            args, kwdict, _Py_PARSE_PID "|O", keywords, &pid, &py_usepeb
+            args, kwdict, _Py_PARSE_PID "|p", keywords, &pid, &use_peb
         ))
     {
         return NULL;
@@ -374,13 +359,8 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     if ((pid == 0) || (pid == 4))
         return Py_BuildValue("[]");
 
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0)
-        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
-    if (pid_return == -1)
+    if (psutil_check_pid_running(pid) != 0)
         return NULL;
-
-    use_peb = (py_usepeb == Py_True) ? 1 : 0;
 
     // Reading the PEB to get the cmdline seem to be the best method if
     // somebody has tampered with the parameters after creating the
@@ -390,9 +370,9 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     // - https://github.com/giampaolo/psutil/pull/1398
     // - https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/
     if (use_peb == 1)
-        func_ret = psutil_get_process_data(pid, KIND_CMDLINE, &data, &size);
+        func_ret = get_proc_data(pid, PEB_CMDLINE, &data, &size);
     else
-        func_ret = psutil_cmdline_query_proc(pid, &data, &size);
+        func_ret = get_cmdline_nopeb(pid, &data, &size);
     if (func_ret != 0)
         goto error;
 
@@ -439,18 +419,14 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
     SIZE_T size;
-    int pid_return;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0)
-        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
-    if (pid_return == -1)
+    if (psutil_check_pid_running(pid) != 0)
         return NULL;
 
-    if (psutil_get_process_data(pid, KIND_CWD, &data, &size) != 0)
+    if (get_proc_data(pid, PEB_CWD, &data, &size) != 0)
         goto out;
 
     // convert wchar array to a Python unicode string
@@ -469,7 +445,6 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     DWORD pid;
     WCHAR *data = NULL;
     SIZE_T size;
-    int pid_return;
     PyObject *ret = NULL;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
@@ -477,13 +452,10 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     if ((pid == 0) || (pid == 4))
         return PyUnicode_FromString("");
 
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0)
-        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
-    if (pid_return == -1)
+    if (psutil_check_pid_running(pid) != 0)
         return NULL;
 
-    if (psutil_get_process_data(pid, KIND_ENVIRON, &data, &size) != 0)
+    if (get_proc_data(pid, PEB_ENVIRON, &data, &size) != 0)
         goto out;
 
     // convert wchar array to a Python unicode string
@@ -493,177 +465,4 @@ out:
     if (data != NULL)
         free(data);
     return ret;
-}
-
-
-// Fetch the whole process table via NtQuerySystemInformation. Walk it
-// with the PSUTIL_FIRST_PROCESS / PSUTIL_NEXT_PROCESS macros. The
-// caller owns *retBuffer and must free() it. Return 0 on success, else
-// -1 with Python exception set.
-int
-psutil_proc_table(PVOID *retBuffer) {
-    static ULONG initialBufferSize = 0x4000;
-    NTSTATUS status;
-    PVOID buffer;
-    ULONG bufferSize;
-
-    bufferSize = initialBufferSize;
-    buffer = malloc(bufferSize);
-    if (buffer == NULL) {
-        PyErr_NoMemory();
-        return -1;
-    }
-
-    while (TRUE) {
-        status = NtQuerySystemInformation(
-            SystemProcessInformation, buffer, bufferSize, &bufferSize
-        );
-        if (status == STATUS_BUFFER_TOO_SMALL
-            || status == STATUS_INFO_LENGTH_MISMATCH)
-        {
-            free(buffer);
-            buffer = malloc(bufferSize);
-            if (buffer == NULL) {
-                PyErr_NoMemory();
-                return -1;
-            }
-        }
-        else {
-            break;
-        }
-    }
-
-    if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
-            status, "NtQuerySystemInformation(SystemProcessInformation)"
-        );
-        free(buffer);
-        return -1;
-    }
-
-    if (bufferSize <= 0x20000)
-        initialBufferSize = bufferSize;
-
-    *retBuffer = buffer;
-    return 0;
-}
-
-
-// Find one process in the table. *retProcess points into *retBuffer,
-// which the caller owns and must free(). We use this as a fallback
-// when faster functions fail with access denied: it's slower because
-// it fetches all processes, but requires no privilege and works for
-// PID 0 too. Return 0 on success, else -1 with Python exception set.
-int
-psutil_proc_table_entry(
-    DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retBuffer
-) {
-    PVOID buffer;
-    PSYSTEM_PROCESS_INFORMATION process;
-
-    if (psutil_proc_table(&buffer) != 0)
-        return -1;
-
-    process = PSUTIL_FIRST_PROCESS(buffer);
-    do {
-        if ((ULONG_PTR)process->UniqueProcessId == pid) {
-            *retProcess = process;
-            *retBuffer = buffer;
-            return 0;
-        }
-    } while ((process = PSUTIL_NEXT_PROCESS(process)));
-
-    free(buffer);
-    psutil_oserror_nsp("NtQuerySystemInformation (no PID found)");
-    return -1;
-}
-
-
-// Get various process info by using NtQuerySystemInformation. We use
-// this as a fallback when faster functions fail with access denied.
-// This is slower because it iterates over all processes.
-PyObject *
-psutil_proc_oneshot(PyObject *self, PyObject *args) {
-    DWORD pid;
-    PSYSTEM_PROCESS_INFORMATION proc;
-    PVOID buffer = NULL;
-    ULONG i;
-    ULONG ctx_switches = 0;
-    int suspended = 1;  // a process with no threads counts as suspended
-    double user_time;
-    double kernel_time;
-    double create_time;
-    PyObject *dict = PyDict_New();
-
-    if (!dict)
-        return NULL;
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        goto error;
-    if (psutil_proc_table_entry(pid, &proc, &buffer) != 0)
-        goto error;
-
-    for (i = 0; i < proc->NumberOfThreads; i++) {
-        ctx_switches += proc->Threads[i].ContextSwitches;
-        if (proc->Threads[i].ThreadState != Waiting
-            || proc->Threads[i].WaitReason != Suspended)
-        {
-            suspended = 0;
-        }
-    }
-
-    user_time = (double)proc->UserTime.HighPart * HI_T
-                + (double)proc->UserTime.LowPart * LO_T;
-    kernel_time = (double)proc->KernelTime.HighPart * HI_T
-                  + (double)proc->KernelTime.LowPart * LO_T;
-
-    // Convert the LARGE_INTEGER union to a Unix time.
-    // It's the best I could find by googling and borrowing code here
-    // and there. The time returned has a precision of 1 second.
-    if (0 == pid || 4 == pid) {
-        // the python module will translate this into BOOT_TIME later
-        create_time = 0;
-    }
-    else {
-        create_time = psutil_LargeIntegerToUnixTime(proc->CreateTime);
-    }
-
-    // clang-format off
-    if (!pydict_add(dict, "num_handles", "k", proc->HandleCount)) goto error;
-    if (!pydict_add(dict, "ctx_switches", "k", ctx_switches)) goto error;
-    if (!pydict_add(dict, "is_suspended", "i", suspended)) goto error;
-    if (!pydict_add(dict, "user_time", "d", user_time)) goto error;
-    if (!pydict_add(dict, "kernel_time", "d", kernel_time)) goto error;
-    if (!pydict_add(dict, "create_time", "d", create_time)) goto error;
-    if (!pydict_add(dict, "num_threads", "k", proc->NumberOfThreads)) goto error;
-    // I/O
-    if (!pydict_add(dict, "io_rcount", "K", proc->ReadOperationCount.QuadPart)) goto error;
-    if (!pydict_add(dict, "io_wcount", "K", proc->WriteOperationCount.QuadPart)) goto error;
-    if (!pydict_add(dict, "io_rbytes", "K", proc->ReadTransferCount.QuadPart)) goto error;
-    if (!pydict_add(dict, "io_wbytes", "K", proc->WriteTransferCount.QuadPart)) goto error;
-    if (!pydict_add(dict, "io_count_others", "K", proc->OtherOperationCount.QuadPart)) goto error;
-    if (!pydict_add(dict, "io_bytes_others", "K", proc->OtherTransferCount.QuadPart)) goto error;
-    // proc memory
-    if (!pydict_add(dict, "PageFaultCount", "K", (ULONGLONG)proc->PageFaultCount)) goto error;
-    if (!pydict_add(dict, "HardFaultCount", "K", (ULONGLONG)proc->HardFaultCount)) goto error;
-    if (!pydict_add(dict, "PeakWorkingSetSize", "K", (ULONGLONG)proc->PeakWorkingSetSize)) goto error;
-    if (!pydict_add(dict, "WorkingSetSize", "K", (ULONGLONG)proc->WorkingSetSize)) goto error;
-    if (!pydict_add(dict, "QuotaPeakPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPeakPagedPoolUsage)) goto error;
-    if (!pydict_add(dict, "QuotaPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPagedPoolUsage)) goto error;
-    if (!pydict_add(dict, "QuotaPeakNonPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPeakNonPagedPoolUsage)) goto error;
-    if (!pydict_add(dict, "QuotaNonPagedPoolUsage", "K", (ULONGLONG)proc->QuotaNonPagedPoolUsage)) goto error;
-    if (!pydict_add(dict, "PagefileUsage", "K", (ULONGLONG)proc->PagefileUsage)) goto error;
-    if (!pydict_add(dict, "PeakPagefileUsage", "K", (ULONGLONG)proc->PeakPagefileUsage)) goto error;
-    if (!pydict_add(dict, "PrivatePageCount", "K", (ULONGLONG)proc->PrivatePageCount)) goto error;
-    if (!pydict_add(dict, "VirtualSize", "K", (ULONGLONG)proc->VirtualSize)) goto error;
-    if (!pydict_add(dict, "PeakVirtualSize", "K", (ULONGLONG)proc->PeakVirtualSize)) goto error;
-    // clang-format on
-
-    free(buffer);
-    return dict;
-
-error:
-    if (buffer != NULL)
-        free(buffer);
-    Py_DECREF(dict);
-    return NULL;
 }

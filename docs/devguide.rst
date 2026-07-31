@@ -101,7 +101,7 @@ On Windows using cmd.exe:
 .. code-block:: none
 
   set PSUTIL_DEBUG=1 && python.exe test_script.py
-  psutil-debug [psutil/arch/windows/proc_info.c:56]> ReadProcessMemory -> ERROR_NOACCESS (ignored)
+  psutil-debug [psutil/arch/windows/proc.c:56]> ReadProcessMemory -> ERROR_NOACCESS (ignored)
 
 Coding style
 ------------

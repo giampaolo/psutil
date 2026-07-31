@@ -104,7 +104,6 @@ PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     static long null_address[4] = {0, 0, 0, 0};
     DWORD pid;
-    int pid_return;
     PVOID table = NULL;
     PMIB_TCPTABLE_OWNER_PID tcp4Table;
     PMIB_UDPTABLE_OWNER_PID udp4Table;
@@ -138,12 +137,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     }
 
     if (pid != -1) {
-        pid_return = psutil_pid_is_running(pid);
-        if (pid_return == 0) {
-            psutil_conn_decref_objs();
-            return psutil_oserror_nsp("psutil_pid_is_running");
-        }
-        else if (pid_return == -1) {
+        if (psutil_check_pid_running(pid) != 0) {
             psutil_conn_decref_objs();
             return NULL;
         }

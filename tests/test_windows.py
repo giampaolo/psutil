@@ -977,7 +977,7 @@ class TestDualProcessImplementation(PsutilTestCase):
 class TestWow64Process(PsutilTestCase):
     """Test reading cmdline, cwd and environ of a 32 bit (WoW64)
     process, which requires reading its 32 bit PEB, see
-    psutil/arch/windows/proc_info.c.
+    psutil/arch/windows/proc_peb.c.
     """
 
     @staticmethod
