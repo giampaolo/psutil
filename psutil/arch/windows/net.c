@@ -80,9 +80,7 @@ psutil_get_nic_addresses(void) {
 }
 
 
-/*
- * Return a Python list of named tuples with overall network I/O information
- */
+// Return a dict of network I/O counters, one entry per NIC.
 PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {
     DWORD dwRetVal = 0;
@@ -172,9 +170,9 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     PCTSTR intRet;
     PCTSTR netmaskIntRet;
     char *ptr;
-    char buff_addr[1024];
-    char buff_macaddr[1024];
-    char buff_netmask[1024];
+    char buff_addr[INET6_ADDRSTRLEN];
+    char buff_macaddr[MAX_ADAPTER_ADDRESS_LENGTH * 3];
+    char buff_netmask[INET_ADDRSTRLEN];
     DWORD dwRetVal = 0;
     ULONG converted_netmask;
     UINT netmask_bits;
