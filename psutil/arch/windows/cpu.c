@@ -243,9 +243,9 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     if (ncpus == 0)
         goto error;
 
-    // get syscalls / ctx switches
+    // get syscalls / ctx switches (system-wide, not per CPU)
     spi = (_SYSTEM_PERFORMANCE_INFORMATION *)malloc(
-        ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION)
+        sizeof(_SYSTEM_PERFORMANCE_INFORMATION)
     );
     if (spi == NULL) {
         PyErr_NoMemory();
@@ -254,7 +254,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemPerformanceInformation,
         spi,
-        ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
+        sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
         NULL
     );
     if (!NT_SUCCESS(status)) {
