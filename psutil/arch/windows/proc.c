@@ -303,8 +303,8 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     // ...because NtQuerySystemInformation can succeed for terminated
     // processes.
-    if (psutil_pid_is_running(pid) == 0)
-        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
+    if (psutil_check_pid_running(pid) != 0)
+        return NULL;
 
     buffer = MALLOC_ZERO(bufferSize);
     if (!buffer) {

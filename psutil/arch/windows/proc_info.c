@@ -343,7 +343,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     int i;
     int func_ret;
     DWORD pid;
-    int pid_return;
     int use_peb = 1;
     PyObject *py_retlist = NULL;
     PyObject *py_unicode = NULL;
@@ -358,10 +357,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     if ((pid == 0) || (pid == 4))
         return Py_BuildValue("[]");
 
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0)
-        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
-    if (pid_return == -1)
+    if (psutil_check_pid_running(pid) != 0)
         return NULL;
 
     // Reading the PEB to get the cmdline seem to be the best method if
@@ -421,15 +417,11 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
     SIZE_T size;
-    int pid_return;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0)
-        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
-    if (pid_return == -1)
+    if (psutil_check_pid_running(pid) != 0)
         return NULL;
 
     if (psutil_get_process_data(pid, KIND_CWD, &data, &size) != 0)
@@ -451,7 +443,6 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     DWORD pid;
     WCHAR *data = NULL;
     SIZE_T size;
-    int pid_return;
     PyObject *ret = NULL;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
@@ -459,10 +450,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     if ((pid == 0) || (pid == 4))
         return PyUnicode_FromString("");
 
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0)
-        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
-    if (pid_return == -1)
+    if (psutil_check_pid_running(pid) != 0)
         return NULL;
 
     if (psutil_get_process_data(pid, KIND_ENVIRON, &data, &size) != 0)

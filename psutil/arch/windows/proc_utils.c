@@ -146,6 +146,20 @@ psutil_pid_is_running(DWORD pid) {
 }
 
 
+// Return 0 if the process is running, else -1 with NoSuchProcess or
+// another exception set.
+int
+psutil_check_pid_running(DWORD pid) {
+    int ret = psutil_pid_is_running(pid);
+
+    if (ret == 1)
+        return 0;
+    if (ret == 0)
+        psutil_oserror_nsp("psutil_pid_is_running -> 0");
+    return -1;
+}
+
+
 // Fetch the whole process table via NtQuerySystemInformation. Walk it
 // with the PSUTIL_FIRST_PROCESS / PSUTIL_NEXT_PROCESS macros. The
 // caller owns *retBuffer and must free() it. Return 0 on success, else
