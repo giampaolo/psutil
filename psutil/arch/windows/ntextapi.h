@@ -40,6 +40,8 @@ typedef LONG NTSTATUS;
 #define ObjectNameInformation 1
 #undef  ObjectTypesInformation
 #define ObjectTypesInformation 3
+#undef  ProcessCommandLineInformation
+#define ProcessCommandLineInformation 60
 #undef  ProcessHandleInformation
 #define ProcessHandleInformation 51
 #undef  ProcessIoPriority

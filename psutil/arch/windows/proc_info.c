@@ -262,7 +262,6 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     WCHAR *bufWchar = NULL;
     PUNICODE_STRING tmp = NULL;
     size_t size;
-    int ProcessCommandLineInformation = 60;
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)
@@ -276,7 +275,7 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     // https://github.com/giampaolo/psutil/issues/1501
     if (status == STATUS_NOT_FOUND) {
         psutil_oserror_ad(
-            "NtQueryInformationProcess(ProcessBasicInformation) -> "
+            "NtQueryInformationProcess(ProcessCommandLineInformation) -> "
             "STATUS_NOT_FOUND"
         );
         goto error;
@@ -286,7 +285,7 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
         && status != STATUS_INFO_LENGTH_MISMATCH)
     {
         psutil_SetFromNTStatusErr(
-            status, "NtQueryInformationProcess(ProcessBasicInformation)"
+            status, "NtQueryInformationProcess(ProcessCommandLineInformation)"
         );
         goto error;
     }
