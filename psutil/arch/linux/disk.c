@@ -37,13 +37,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    while (1) {
-        Py_BEGIN_ALLOW_THREADS
-        entry = getmntent(file);
-        Py_END_ALLOW_THREADS
-        if (entry == NULL)
-            break;
-
+    // NOTE: getmntent() is MT-Unsafe (it returns a pointer to a static
+    // buffer), so we can't release the GIL around it.
+    while ((entry = getmntent(file)) != NULL) {
         py_dev = PyUnicode_DecodeFSDefault(entry->mnt_fsname);
         if (!py_dev)
             goto error;
