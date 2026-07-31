@@ -276,12 +276,13 @@ Others:
   :envvar:`PSUTIL_BUILD_JOBS` to cap the number of jobs.
 - :gh:`2927`: python dependencies (``make install-pydeps-*``) are now installed
   with ``uv`` when available, saving around 10 secs for each CI run.
-- :gh:`2932`, [Windows]: :meth:`Process.open_files` is around 600x faster (from
-  235 ms to 0.39 ms per call). It no longer enumerates every handle in the
-  system with ``NtQuerySystemInformation(SystemExtendedHandleInformation)``,
-  but per-process, via ``NtQueryInformationProcess(ProcessHandleInformation)``,
-  and the ones which are not files are skipped by object type index, before
-  being duplicated. Also, the internal thread used to query handle names is now
+- :gh:`2932`, [Windows]: :meth:`Process.open_files` is 140x to 400x faster
+  (from 235 ms to 0.39 ms per call). It no longer enumerates every handle in
+  the system with
+  ``NtQuerySystemInformation(SystemExtendedHandleInformation)``, but
+  per-process, via ``NtQueryInformationProcess(ProcessHandleInformation)``, and
+  the ones which are not files are skipped by object type index, before being
+  duplicated. Also, the internal thread used to query handle names is now
   created once per call instead of once per handle.
 
 **Bug fixes**
@@ -440,12 +441,11 @@ Others:
   number which didn't change when the process opened a file.
 - :gh:`2929`, [NetBSD], [OpenBSD]: :meth:`Process.open_files` always returned
   an empty list.
-- :gh:`2932`, [Windows]: :meth:`Process.open_files` could block for as long as
-  the SMB session timeout (around 1 minute) if the process had a file open on
-  an unreachable network share. Directories were filtered out by calling
-  :func:`os.stat` on each path, which resolves it from scratch, goes over the
-  wire and has no timeout. That check is now done in C, on the handle we
-  already have, inside the worker thread bounded by a timeout.
+- :gh:`2932`, [Windows]: :meth:`Process.open_files` leaked a thread and a
+  handle for every name query which timed out (e.g. a pipe with a pending
+  read), and could hang for around 1 minute if the process had a file open on
+  an unreachable network share, where the :func:`os.stat` used to filter out
+  directories went over the wire with no timeout.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
