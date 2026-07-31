@@ -451,6 +451,9 @@ Others:
   process had a mapped file whose path is longer than 260 characters. The
   buffer size was passed to ``GetMappedFileNameW()`` in bytes instead of
   characters.
+- :gh:`2935`, [Windows]: :meth:`Process.kill` and :meth:`Process.terminate`
+  leaked a process handle when ``TerminateProcess()`` failed with an error
+  other than ``ERROR_ACCESS_DENIED``.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^

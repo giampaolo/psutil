@@ -155,6 +155,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
         // http://bugs.python.org/issue14252
         if (GetLastError() != ERROR_ACCESS_DENIED) {
             psutil_oserror_wsyscall("TerminateProcess");
+            CloseHandle(hProcess);
             return NULL;
         }
     }
