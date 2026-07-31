@@ -334,7 +334,9 @@ static void
 worker_destroy(Worker *w) {
     w->quit = 1;
     SetEvent(w->hStartEvent);
+    Py_BEGIN_ALLOW_THREADS
     WaitForSingleObject(w->hThread, INFINITE);
+    Py_END_ALLOW_THREADS
     CloseHandle(w->hThread);
     CloseHandle(w->hStartEvent);
     CloseHandle(w->hDoneEvent);
@@ -386,7 +388,12 @@ worker_get_filename(
         w->bufferSize = bufferSize;
         SetEvent(w->hStartEvent);
 
+        // The worker may hang on a lock or on the wire, hence the
+        // timeout. Don't make the rest of the interpreter wait with us.
+        Py_BEGIN_ALLOW_THREADS
         dwWait = WaitForSingleObject(w->hDoneEvent, THREAD_TIMEOUT);
+        Py_END_ALLOW_THREADS
+
         if (dwWait != WAIT_OBJECT_0) {
             if (dwWait == WAIT_FAILED)
                 psutil_debug("WaitForSingleObject -> WAIT_FAILED");
@@ -398,7 +405,9 @@ worker_get_filename(
             // syscalls, so there is no user-mode lock it can orphan.
             if (!TerminateThread(w->hThread, 0))
                 psutil_debug("TerminateThread -> FALSE");
+            Py_BEGIN_ALLOW_THREADS
             dwWait = WaitForSingleObject(w->hThread, KILL_JOIN_TIMEOUT);
+            Py_END_ALLOW_THREADS
             if (dwWait == WAIT_OBJECT_0) {
                 // Worker is gone. Closing our duplicate won't block.
                 CloseHandle(w->hThread);
