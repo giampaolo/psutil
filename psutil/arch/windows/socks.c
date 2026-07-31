@@ -33,7 +33,10 @@ __GetExtendedTcpTable(ULONG family) {
     ULONG size = 0;
     TCP_TABLE_CLASS class = TCP_TABLE_OWNER_PID_ALL;
 
+    // Snapshots the whole TCP table from the network stack.
+    Py_BEGIN_ALLOW_THREADS
     GetExtendedTcpTable(NULL, &size, FALSE, family, class, 0);
+    Py_END_ALLOW_THREADS
     // reserve 25% more space to be sure
     size = size + (size / 2 / 2);
 
@@ -43,7 +46,9 @@ __GetExtendedTcpTable(ULONG family) {
         return NULL;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     err = GetExtendedTcpTable(table, &size, FALSE, family, class, 0);
+    Py_END_ALLOW_THREADS
     if (err == NO_ERROR)
         return table;
 
@@ -65,7 +70,10 @@ __GetExtendedUdpTable(ULONG family) {
     ULONG size = 0;
     UDP_TABLE_CLASS class = UDP_TABLE_OWNER_PID;
 
+    // Snapshots the whole UDP table from the network stack.
+    Py_BEGIN_ALLOW_THREADS
     GetExtendedUdpTable(NULL, &size, FALSE, family, class, 0);
+    Py_END_ALLOW_THREADS
     // reserve 25% more space
     size = size + (size / 2 / 2);
 
@@ -75,7 +83,9 @@ __GetExtendedUdpTable(ULONG family) {
         return NULL;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     err = GetExtendedUdpTable(table, &size, FALSE, family, class, 0);
+    Py_END_ALLOW_THREADS
     if (err == NO_ERROR)
         return table;
 
