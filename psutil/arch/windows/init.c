@@ -8,7 +8,6 @@
 #include <windows.h>
 
 #include "../../arch/all/init.h"
-#include "ntextapi.h"
 
 
 // Needed to make these globally visible.

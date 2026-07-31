@@ -6,8 +6,8 @@
  */
 
 // clang-format off
-#if !defined(__NTEXTAPI_H__)
-#define __NTEXTAPI_H__
+#ifndef NTEXTAPI_H
+#define NTEXTAPI_H
 #include <iphlpapi.h>
 
 // We deliberately don't include <winternl.h>. What it offers is stub
@@ -663,5 +663,5 @@ RtlIpv4AddressToStringA(struct in_addr *Addr, PSTR S);
 NTSYSAPI PSTR NTAPI
 RtlIpv6AddressToStringA(struct in6_addr *Addr, PSTR P);
 
-#endif // __NTEXTAPI_H__
+#endif // NTEXTAPI_H
 // clang-format on
