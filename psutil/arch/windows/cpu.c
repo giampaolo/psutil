@@ -57,7 +57,7 @@ PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     double idle, kernel, systemt, user, interrupt, dpc;
     NTSTATUS status;
-    _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
+    SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
     UINT i;
     unsigned int ncpus;
     ULONG retlen = 0;
@@ -71,10 +71,10 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     if (ncpus == 0)
         goto error;
 
-    // allocates an array of _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
+    // allocates an array of SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
     // structures, one per processor
-    sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)malloc(
-        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)
+    sppi = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)malloc(
+        ncpus * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)
     );
     if (sppi == NULL) {
         PyErr_NoMemory();
@@ -85,7 +85,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
-        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+        ncpus * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
         &retlen
     );
     if (!NT_SUCCESS(status)) {
@@ -99,7 +99,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // The kernel may return entries for less CPUs than ncpus: on
     // systems with more than 64 CPUs it only covers the calling
     // thread's processor group.
-    ncpus = retlen / sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+    ncpus = retlen / sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
 
     idle = user = kernel = interrupt = dpc = 0;
     for (i = 0; i < ncpus; i++) {
@@ -226,9 +226,9 @@ return_none:
 PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
     NTSTATUS status;
-    _SYSTEM_PERFORMANCE_INFORMATION *spi = NULL;
-    _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
-    _SYSTEM_INTERRUPT_INFORMATION *InterruptInformation = NULL;
+    SYSTEM_PERFORMANCE_INFORMATION *spi = NULL;
+    SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
+    SYSTEM_INTERRUPT_INFORMATION *InterruptInformation = NULL;
     unsigned int ncpus;
     unsigned int nentries;
     UINT i;
@@ -244,8 +244,8 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
 
     // get syscalls / ctx switches (system-wide, not per CPU)
-    spi = (_SYSTEM_PERFORMANCE_INFORMATION *)malloc(
-        sizeof(_SYSTEM_PERFORMANCE_INFORMATION)
+    spi = (SYSTEM_PERFORMANCE_INFORMATION *)malloc(
+        sizeof(SYSTEM_PERFORMANCE_INFORMATION)
     );
     if (spi == NULL) {
         PyErr_NoMemory();
@@ -254,7 +254,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemPerformanceInformation,
         spi,
-        sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
+        sizeof(SYSTEM_PERFORMANCE_INFORMATION),
         NULL
     );
     if (!NT_SUCCESS(status)) {
@@ -266,7 +266,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
     // get DPCs
     InterruptInformation = malloc(
-        sizeof(_SYSTEM_INTERRUPT_INFORMATION) * ncpus
+        sizeof(SYSTEM_INTERRUPT_INFORMATION) * ncpus
     );
     if (InterruptInformation == NULL) {
         PyErr_NoMemory();
@@ -276,7 +276,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemInterruptInformation,
         InterruptInformation,
-        ncpus * sizeof(_SYSTEM_INTERRUPT_INFORMATION),
+        ncpus * sizeof(SYSTEM_INTERRUPT_INFORMATION),
         &retlen
     );
     if (!NT_SUCCESS(status)) {
@@ -288,14 +288,14 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     // The kernel may return entries for less CPUs than ncpus: on
     // systems with more than 64 CPUs it only covers the calling
     // thread's processor group.
-    nentries = retlen / sizeof(_SYSTEM_INTERRUPT_INFORMATION);
+    nentries = retlen / sizeof(SYSTEM_INTERRUPT_INFORMATION);
     for (i = 0; i < nentries; i++) {
         dpcs += InterruptInformation[i].DpcCount;
     }
 
     // get interrupts
-    sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)malloc(
-        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)
+    sppi = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)malloc(
+        ncpus * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)
     );
     if (sppi == NULL) {
         PyErr_NoMemory();
@@ -305,7 +305,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
-        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+        ncpus * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
         &retlen
     );
     if (!NT_SUCCESS(status)) {
@@ -316,7 +316,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    nentries = retlen / sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+    nentries = retlen / sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
     for (i = 0; i < nentries; i++) {
         interrupts += sppi[i].InterruptCount;
     }

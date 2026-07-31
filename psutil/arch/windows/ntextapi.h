@@ -199,17 +199,17 @@ typedef enum _WTS_CONNECTSTATE_CLASS {
 // ================================================================
 
 // cpu_stats(), per_cpu_times()
-typedef struct {
+typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
     LARGE_INTEGER IdleTime;
     LARGE_INTEGER KernelTime;
     LARGE_INTEGER UserTime;
     LARGE_INTEGER DpcTime;
     LARGE_INTEGER InterruptTime;
     ULONG InterruptCount;
-} _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
+} SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
 
 // cpu_stats()
-typedef struct {
+typedef struct _SYSTEM_PERFORMANCE_INFORMATION {
     LARGE_INTEGER IdleProcessTime;
     LARGE_INTEGER IoReadTransferCount;
     LARGE_INTEGER IoWriteTransferCount;
@@ -284,20 +284,20 @@ typedef struct {
     ULONG FirstLevelTbFills;
     ULONG SecondLevelTbFills;
     ULONG SystemCalls;
-} _SYSTEM_PERFORMANCE_INFORMATION;
+} SYSTEM_PERFORMANCE_INFORMATION;
 
 // cpu_stats()
-typedef struct {
+typedef struct _SYSTEM_INTERRUPT_INFORMATION {
     ULONG ContextSwitches;
     ULONG DpcCount;
     ULONG DpcRate;
     ULONG TimeIncrement;
     ULONG DpcBypassCount;
     ULONG ApcBypassCount;
-} _SYSTEM_INTERRUPT_INFORMATION;
+} SYSTEM_INTERRUPT_INFORMATION;
 
 // Process.open_files()
-typedef struct _OBJECT_TYPE_INFORMATION2 {
+typedef struct _OBJECT_TYPE_INFORMATION {
     UNICODE_STRING TypeName;
     ULONG TotalNumberOfObjects;
     ULONG TotalNumberOfHandles;
@@ -321,7 +321,7 @@ typedef struct _OBJECT_TYPE_INFORMATION2 {
     ULONG PoolType;
     ULONG DefaultPagedPoolCharge;
     ULONG DefaultNonPagedPoolCharge;
-} OBJECT_TYPE_INFORMATION2, *POBJECT_TYPE_INFORMATION2;
+} OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
 
 typedef struct _OBJECT_TYPES_INFORMATION {
     ULONG NumberOfTypes;
@@ -359,25 +359,21 @@ typedef struct _PROCESS_HANDLE_SNAPSHOT_INFORMATION {
     PROCESS_HANDLE_TABLE_ENTRY_INFO Handles[1];
 } PROCESS_HANDLE_SNAPSHOT_INFORMATION, *PPROCESS_HANDLE_SNAPSHOT_INFORMATION;
 
-typedef struct _PROCESS_BASIC_INFORMATION2 {
+typedef struct _PROCESS_BASIC_INFORMATION {
     NTSTATUS ExitStatus;
     PVOID PebBaseAddress;
     ULONG_PTR AffinityMask;
     KPRIORITY BasePriority;
     ULONG_PTR UniqueProcessId;
     ULONG_PTR InheritedFromUniqueProcessId;
-} PROCESS_BASIC_INFORMATION2, *PPROCESS_BASIC_INFORMATION2;
+} PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
 
-#define PROCESS_BASIC_INFORMATION PROCESS_BASIC_INFORMATION2
-
-typedef struct _CLIENT_ID2 {
+typedef struct _CLIENT_ID {
     HANDLE UniqueProcess;
     HANDLE UniqueThread;
-} CLIENT_ID2, *PCLIENT_ID2;
+} CLIENT_ID, *PCLIENT_ID;
 
-#define CLIENT_ID CLIENT_ID2
-
-typedef struct _SYSTEM_THREAD_INFORMATION2 {
+typedef struct _SYSTEM_THREAD_INFORMATION {
     LARGE_INTEGER KernelTime;
     LARGE_INTEGER UserTime;
     LARGE_INTEGER CreateTime;
@@ -389,11 +385,9 @@ typedef struct _SYSTEM_THREAD_INFORMATION2 {
     ULONG ContextSwitches;
     ULONG ThreadState;
     KWAIT_REASON WaitReason;
-} SYSTEM_THREAD_INFORMATION2, *PSYSTEM_THREAD_INFORMATION2;
+} SYSTEM_THREAD_INFORMATION, *PSYSTEM_THREAD_INFORMATION;
 
-#define SYSTEM_THREAD_INFORMATION SYSTEM_THREAD_INFORMATION2
-
-typedef struct _SYSTEM_PROCESS_INFORMATION2 {
+typedef struct _SYSTEM_PROCESS_INFORMATION {
     ULONG NextEntryOffset;                      // The address of the previous item plus the value in the NextEntryOffset member. For the last item in the array, NextEntryOffset is 0.
     ULONG NumberOfThreads;                      // The NumberOfThreads member contains the number of threads in the process.
     ULONGLONG WorkingSetPrivateSize;            // The total private memory that a process currently has allocated and is physically resident in memory. // since VISTA
@@ -429,10 +423,7 @@ typedef struct _SYSTEM_PROCESS_INFORMATION2 {
     LARGE_INTEGER WriteTransferCount;           // The total number of bytes written during a write operation.
     LARGE_INTEGER OtherTransferCount;           // The total number of bytes transferred during operations other than read and write operations.
     SYSTEM_THREAD_INFORMATION Threads[1];       // This type is not defined in the structure but was added for convenience.
-} SYSTEM_PROCESS_INFORMATION2, *PSYSTEM_PROCESS_INFORMATION2;
-
-#define SYSTEM_PROCESS_INFORMATION SYSTEM_PROCESS_INFORMATION2
-#define PSYSTEM_PROCESS_INFORMATION PSYSTEM_PROCESS_INFORMATION2
+} SYSTEM_PROCESS_INFORMATION, *PSYSTEM_PROCESS_INFORMATION;
 
 // cpu_freq()
 typedef struct _PROCESSOR_POWER_INFORMATION {
@@ -445,7 +436,7 @@ typedef struct _PROCESSOR_POWER_INFORMATION {
 } PROCESSOR_POWER_INFORMATION, *PPROCESSOR_POWER_INFORMATION;
 
 // PEB / cmdline(), cwd(), environ()
-typedef struct {
+typedef struct _RTL_USER_PROCESS_PARAMETERS {
     BYTE Reserved1[16];
     PVOID Reserved2[5];
     UNICODE_STRING CurrentDirectoryPath;
@@ -454,7 +445,7 @@ typedef struct {
     UNICODE_STRING ImagePathName;
     UNICODE_STRING CommandLine;
     LPCWSTR env;
-} RTL_USER_PROCESS_PARAMETERS_, *PRTL_USER_PROCESS_PARAMETERS_;
+} RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
 
 // users()
 typedef struct _WTS_SESSION_INFOW {
@@ -463,8 +454,6 @@ typedef struct _WTS_SESSION_INFOW {
                                  // connected to
     WTS_CONNECTSTATE_CLASS State; // connection state (see enum)
 } WTS_SESSION_INFOW, * PWTS_SESSION_INFOW;
-
-#define PWTS_SESSION_INFO PWTS_SESSION_INFOW
 
 typedef struct _WTS_CLIENT_ADDRESS {
     DWORD AddressFamily;  // AF_INET, AF_INET6, AF_IPX, AF_NETBIOS, AF_UNSPEC
@@ -526,7 +515,7 @@ typedef struct _SYSTEM_PROCESS_ID_INFORMATION {
 } SYSTEM_PROCESS_ID_INFORMATION, *PSYSTEM_PROCESS_ID_INFORMATION;
 
 // boot_time()
-typedef struct _SYSTEM_TIMEOFDAY_INFORMATION2 {
+typedef struct _SYSTEM_TIMEOFDAY_INFORMATION {
     LARGE_INTEGER BootTime;
     LARGE_INTEGER CurrentTime;
     LARGE_INTEGER TimeZoneBias;
@@ -534,33 +523,31 @@ typedef struct _SYSTEM_TIMEOFDAY_INFORMATION2 {
     ULONG Reserved;
     ULONGLONG BootTimeBias;
     ULONGLONG SleepTimeBias;
-} SYSTEM_TIMEOFDAY_INFORMATION2, *PSYSTEM_TIMEOFDAY_INFORMATION2;
-
-#define SYSTEM_TIMEOFDAY_INFORMATION SYSTEM_TIMEOFDAY_INFORMATION2
+} SYSTEM_TIMEOFDAY_INFORMATION, *PSYSTEM_TIMEOFDAY_INFORMATION;
 
 // ====================================================================
 // PEB structs for cmdline(), cwd(), environ()
 // ====================================================================
 
 #ifdef _WIN64
-typedef struct {
+typedef struct _PEB {
     BYTE Reserved1[2];
     BYTE BeingDebugged;
     BYTE Reserved2[21];
     PVOID LoaderData;
-    PRTL_USER_PROCESS_PARAMETERS_ ProcessParameters;
+    PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
     // more fields...
-} PEB_;
+} PEB;
 
 // When we are a 64 bit process accessing a 32 bit (WoW64)
 // process we need to use the 32 bit structure layout.
-typedef struct {
+typedef struct _UNICODE_STRING32 {
     USHORT Length;
     USHORT MaxLength;
     DWORD Buffer;
 } UNICODE_STRING32;
 
-typedef struct {
+typedef struct _RTL_USER_PROCESS_PARAMETERS32 {
     BYTE Reserved1[16];
     DWORD Reserved2[5];
     UNICODE_STRING32 CurrentDirectoryPath;
@@ -571,7 +558,7 @@ typedef struct {
     DWORD env;
 } RTL_USER_PROCESS_PARAMETERS32;
 
-typedef struct {
+typedef struct _PEB32 {
     BYTE Reserved1[2];
     BYTE BeingDebugged;
     BYTE Reserved2[1];
@@ -581,15 +568,15 @@ typedef struct {
     // more fields...
 } PEB32;
 #else  // ! _WIN64
-typedef struct {
+typedef struct _PEB {
     BYTE Reserved1[2];
     BYTE BeingDebugged;
     BYTE Reserved2[1];
     PVOID Reserved3[2];
     PVOID Ldr;
-    PRTL_USER_PROCESS_PARAMETERS_ ProcessParameters;
+    PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
     // more fields...
-} PEB_;
+} PEB;
 #endif  // _WIN64
 
 // ================================================================
@@ -643,7 +630,7 @@ BOOL(CALLBACK *_WTSEnumerateSessionsW)(
     HANDLE hServer,
     DWORD Reserved,
     DWORD Version,
-    PWTS_SESSION_INFO* ppSessionInfo,
+    PWTS_SESSION_INFOW* ppSessionInfo,
     DWORD* pCount
     );
 

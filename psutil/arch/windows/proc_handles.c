@@ -101,19 +101,19 @@ typedef struct {
 
 
 // ObjectTypesInformation buffer walking, adapted from SystemInformer's
-// phnt headers. Entries are variable-size: each OBJECT_TYPE_INFORMATION2
+// phnt headers. Entries are variable-size: each OBJECT_TYPE_INFORMATION
 // is followed by its type name buffer, padded to pointer alignment.
 // clang-format off
 #define ALIGN_UP_PTR(x) \
     (((ULONG_PTR)(x) + sizeof(ULONG_PTR) - 1) & ~(sizeof(ULONG_PTR) - 1))
 
 #define FIRST_OBJECT_TYPE(types) \
-    ((POBJECT_TYPE_INFORMATION2)ALIGN_UP_PTR( \
+    ((POBJECT_TYPE_INFORMATION)ALIGN_UP_PTR( \
         (ULONG_PTR)(types) + sizeof(OBJECT_TYPES_INFORMATION)))
 
 #define NEXT_OBJECT_TYPE(entry) \
-    ((POBJECT_TYPE_INFORMATION2)((ULONG_PTR)(entry) \
-        + sizeof(OBJECT_TYPE_INFORMATION2) \
+    ((POBJECT_TYPE_INFORMATION)((ULONG_PTR)(entry) \
+        + sizeof(OBJECT_TYPE_INFORMATION) \
         + ALIGN_UP_PTR((entry)->TypeName.MaximumLength)))
 // clang-format on
 
@@ -127,7 +127,7 @@ get_file_type_index(ULONG *indexOut) {
     static ULONG cachedIndex = 0;
     NTSTATUS status;
     POBJECT_TYPES_INFORMATION typesInfo = NULL;
-    POBJECT_TYPE_INFORMATION2 entry;
+    POBJECT_TYPE_INFORMATION entry;
     ULONG bufferSize = 0x1000;
     ULONG returnLength = 0;
     ULONG i;

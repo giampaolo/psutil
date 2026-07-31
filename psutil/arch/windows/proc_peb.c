@@ -170,8 +170,8 @@ get_proc_data(DWORD pid, enum peb_kind kind, WCHAR **pdata, SIZE_T *psize) {
     // Target process is of the same bitness as us.
     {
         PROCESS_BASIC_INFORMATION pbi;
-        PEB_ peb;
-        RTL_USER_PROCESS_PARAMETERS_ procParameters;
+        PEB peb;
+        RTL_USER_PROCESS_PARAMETERS procParameters;
 
         status = NtQueryInformationProcess(
             hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), NULL
