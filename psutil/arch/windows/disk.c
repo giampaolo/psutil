@@ -304,50 +304,46 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                 str_append(opts, sizeof(opts), ",compressed");
             if (pflags & FILE_READ_ONLY_VOLUME)
                 str_append(opts, sizeof(opts), ",readonly");
-
-            // Check for mount points on this volume and add/get info
-            // (checks first to know if we can even have mount points)
-            if (pflags & FILE_SUPPORTS_REPARSE_POINTS) {
-                mp_h = FindFirstVolumeMountPoint(
-                    drive_letter, mp_buf, MAX_PATH
-                );
-                if (mp_h != INVALID_HANDLE_VALUE) {
-                    mp_flag = TRUE;
-                    while (mp_flag) {
-                        // Append full mount path with drive letter
-                        str_copy(
-                            mp_path, sizeof(mp_path), drive_letter
-                        );  // initialize
-                        str_append(
-                            mp_path, sizeof(mp_path), mp_buf
-                        );  // append mount point
-
-                        if (!pylist_append_fmt(
-                                py_retlist,
-                                "(ssss)",
-                                drive_letter,
-                                mp_path,
-                                fs_type,  // typically "NTFS"
-                                opts
-                            ))
-                        {
-                            FindVolumeMountPointClose(mp_h);
-                            goto error;
-                        }
-
-                        // Continue looking for more mount points
-                        mp_flag = FindNextVolumeMountPoint(
-                            mp_h, mp_buf, MAX_PATH
-                        );
-                    }
-                    FindVolumeMountPointClose(mp_h);
-                }
-            }
         }
 
         if (strlen(opts) > 0)
             str_append(opts, sizeof(opts), ",");
         str_append(opts, sizeof(opts), psutil_get_drive_type(type));
+
+        // Check for mount points on this volume and add/get info
+        // (checks first to know if we can even have mount points)
+        if ((ret != 0) && (pflags & FILE_SUPPORTS_REPARSE_POINTS)) {
+            mp_h = FindFirstVolumeMountPoint(drive_letter, mp_buf, MAX_PATH);
+            if (mp_h != INVALID_HANDLE_VALUE) {
+                mp_flag = TRUE;
+                while (mp_flag) {
+                    // Append full mount path with drive letter
+                    str_copy(
+                        mp_path, sizeof(mp_path), drive_letter
+                    );  // initialize
+                    str_append(
+                        mp_path, sizeof(mp_path), mp_buf
+                    );  // append mount point
+
+                    if (!pylist_append_fmt(
+                            py_retlist,
+                            "(ssss)",
+                            drive_letter,
+                            mp_path,
+                            fs_type,  // typically "NTFS"
+                            opts
+                        ))
+                    {
+                        FindVolumeMountPointClose(mp_h);
+                        goto error;
+                    }
+
+                    // Continue looking for more mount points
+                    mp_flag = FindNextVolumeMountPoint(mp_h, mp_buf, MAX_PATH);
+                }
+                FindVolumeMountPointClose(mp_h);
+            }
+        }
 
         if (!pylist_append_fmt(
                 py_retlist,
