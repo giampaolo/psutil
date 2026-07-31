@@ -202,7 +202,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     char *drive_letter = drive_strings;
     char mp_buf[MAX_PATH];
     char mp_path[MAX_PATH];
-    int all;
+    int all = 0;
     int type;
     int ret;
     unsigned int old_mode = 0;
@@ -212,7 +212,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     LPTSTR fs_type[MAX_PATH + 1] = {0};
     DWORD pflags = 0;
     DWORD lpMaximumComponentLength = 0;  // max file name
-    PyObject *py_all;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL) {
@@ -223,9 +222,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     // see https://github.com/giampaolo/psutil/issues/264
     old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    if (!PyArg_ParseTuple(args, "O", &py_all))
+    if (!PyArg_ParseTuple(args, "p", &all))
         goto error;
-    all = PyObject_IsTrue(py_all);
 
     Py_BEGIN_ALLOW_THREADS
     num_bytes = GetLogicalDriveStrings(254, drive_letter);
