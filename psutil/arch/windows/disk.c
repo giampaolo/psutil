@@ -291,8 +291,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             // We might get here in case of a floppy hard drive, in
             // which case the error is (21, "device not ready").
             // Let's pretend it didn't happen as we already have
-            // the drive name and type ('removable').
-            str_append(opts, sizeof(opts), "");
+            // the drive name and type ('removable'). opts is left
+            // empty.
             SetLastError(0);
         }
         else {
