@@ -74,13 +74,12 @@ psutil_disk_usage(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
-    DISK_PERFORMANCE diskPerformance;
+    DISK_PERFORMANCE *diskPerformance = NULL;
     DWORD dwSize;
     HANDLE hDevice = NULL;
     char szDevice[MAX_PATH];
     char szDeviceDisplay[MAX_PATH];
     int devNum;
-    int i;
     DWORD ioctrlSize;
     BOOL ret;
     PyObject *py_retdict = PyDict_New();
@@ -88,6 +87,16 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
+
+    // Drivers may return a bigger struct than the one we know about,
+    // in which case the ioctl below asks for a bigger buffer.
+    ioctrlSize = sizeof(DISK_PERFORMANCE);
+    diskPerformance = malloc(ioctrlSize);
+    if (diskPerformance == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
     // Apparently there's no way to figure out how many times we have
     // to iterate in order to find valid drives.
     // Let's assume 32, which is higher than 26, the number of letters
@@ -108,16 +117,13 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             continue;
 
         // DeviceIoControl() sucks!
-        i = 0;
-        ioctrlSize = sizeof(diskPerformance);
         while (1) {
-            i += 1;
             ret = DeviceIoControl(
                 hDevice,
                 IOCTL_DISK_PERFORMANCE,
                 NULL,
                 0,
-                &diskPerformance,
+                diskPerformance,
                 ioctrlSize,
                 &dwSize,
                 NULL
@@ -125,9 +131,17 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             if (ret != 0)
                 break;  // OK!
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                // Retry with a bigger buffer (+ limit for retries).
-                if (i <= 1024) {
+                // Grow the buffer for real, up to a sane limit.
+                if (ioctrlSize < 1024 * 1024) {
+                    void *tmp;
+
                     ioctrlSize *= 2;
+                    tmp = realloc(diskPerformance, ioctrlSize);
+                    if (tmp == NULL) {
+                        PyErr_NoMemory();
+                        goto error;
+                    }
+                    diskPerformance = tmp;
                     continue;
                 }
             }
@@ -165,14 +179,16 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         str_format(szDeviceDisplay, MAX_PATH, "PhysicalDrive%i", devNum);
         py_tuple = Py_BuildValue(
             "(IILLKK)",
-            diskPerformance.ReadCount,
-            diskPerformance.WriteCount,
-            diskPerformance.BytesRead,
-            diskPerformance.BytesWritten,
+            diskPerformance->ReadCount,
+            diskPerformance->WriteCount,
+            diskPerformance->BytesRead,
+            diskPerformance->BytesWritten,
             // convert to ms:
             // https://github.com/giampaolo/psutil/issues/1012
-            (unsigned long long)(diskPerformance.ReadTime.QuadPart) / 10000000,
-            (unsigned long long)(diskPerformance.WriteTime.QuadPart) / 10000000
+            (unsigned long long)(diskPerformance->ReadTime.QuadPart)
+                / 10000000,
+            (unsigned long long)(diskPerformance->WriteTime.QuadPart)
+                / 10000000
         );
         if (!py_tuple)
             goto error;
@@ -184,13 +200,16 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         CloseHandle(hDevice);
     }
 
+    free(diskPerformance);
     return py_retdict;
 
 error:
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retdict);
-    if (hDevice != NULL)
+    if (hDevice != NULL && hDevice != INVALID_HANDLE_VALUE)
         CloseHandle(hDevice);
+    if (diskPerformance != NULL)
+        free(diskPerformance);
     return NULL;
 }
 

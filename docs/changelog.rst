@@ -458,6 +458,10 @@ Others:
 - :gh:`2935`, [Windows]: :meth:`Process.kill` and :meth:`Process.terminate`
   leaked a process handle when ``TerminateProcess()`` failed with an error
   other than ``ERROR_ACCESS_DENIED``.
+- :gh:`2937`, [Windows]: :func:`disk_io_counters` could let a disk driver write
+  past the end of the ``DISK_PERFORMANCE`` buffer. When the driver asked for
+  more space we retried passing a bigger size, but the buffer was a fixed size
+  struct on the stack. It is now allocated (and grown) on the heap.
 - :gh:`2965`, [Windows]: on systems with more than 64 CPUs :func:`cpu_times`
   with ``percpu=True`` and :func:`cpu_stats` read uninitialized memory: the
   kernel only returns entries for the calling thread's processor group, but the
