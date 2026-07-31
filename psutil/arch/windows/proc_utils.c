@@ -158,6 +158,23 @@ psutil_check_pid_running(DWORD pid) {
 }
 
 
+// A syscall against pid failed with an NTSTATUS. Raise NoSuchProcess
+// if the process is gone, else convert the status into the
+// appropriate Python exception. Always return NULL.
+PyObject *
+psutil_raise_for_nt_status(DWORD pid, NTSTATUS status, const char *syscall) {
+    int running = psutil_pid_is_running(pid);
+
+    if (running == 0)
+        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
+    if (running == -1) {
+        // report the original NTSTATUS failure instead
+        PyErr_Clear();
+    }
+    return psutil_SetFromNTStatusErr(status, syscall);
+}
+
+
 // Fetch the whole process table via NtQuerySystemInformation. Walk it
 // with the PSUTIL_FIRST_PROCESS / PSUTIL_NEXT_PROCESS macros. The
 // caller owns *retBuffer and must free() it. Return 0 on success, else

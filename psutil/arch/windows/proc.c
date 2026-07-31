@@ -387,11 +387,9 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     if (!NT_SUCCESS(status)) {
         FREE(buffer);
-        if (psutil_pid_is_running(pid) == 0)
-            psutil_oserror_nsp("psutil_pid_is_running -> 0");
-        else
-            psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
-        return NULL;
+        return psutil_raise_for_nt_status(
+            pid, status, "NtQuerySystemInformation(SystemProcessIdInformation)"
+        );
     }
 
     if (processIdInfo.ImageName.Buffer == NULL) {
@@ -497,13 +495,11 @@ psutil_GetProcWsetInformation(
         if (status == STATUS_ACCESS_DENIED) {
             psutil_oserror_ad("NtQueryVirtualMemory -> STATUS_ACCESS_DENIED");
         }
-        else if (psutil_pid_is_running(pid) == 0) {
-            psutil_oserror_nsp("psutil_pid_is_running -> 0");
-        }
         else {
-            PyErr_Clear();
-            psutil_SetFromNTStatusErr(
-                status, "NtQueryVirtualMemory(MemoryWorkingSetInformation)"
+            psutil_raise_for_nt_status(
+                pid,
+                status,
+                "NtQueryVirtualMemory(MemoryWorkingSetInformation)"
             );
         }
         FREE(buffer);
