@@ -282,18 +282,25 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
+    Py_BEGIN_ALLOW_THREADS
     sd = open("/dev/arp", O_RDWR);
+    Py_END_ALLOW_THREADS
     if (sd == -1) {
         PyErr_SetFromErrnoWithFilename(PyExc_OSError, "/dev/arp");
         goto error;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sd, I_PUSH, "tcp");
+    Py_END_ALLOW_THREADS
     if (ret == -1) {
         psutil_oserror();
         goto error;
     }
+
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sd, I_PUSH, "udp");
+    Py_END_ALLOW_THREADS
     if (ret == -1) {
         psutil_oserror();
         goto error;
@@ -318,7 +325,10 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     ctlbuf.len = tor.OPT_offset + tor.OPT_length;
     flags = 0;  // request to be sent in non-priority
 
-    if (putmsg(sd, &ctlbuf, (struct strbuf *)0, flags) == -1) {
+    Py_BEGIN_ALLOW_THREADS
+    ret = putmsg(sd, &ctlbuf, (struct strbuf *)0, flags);
+    Py_END_ALLOW_THREADS
+    if (ret == -1) {
         psutil_oserror();
         goto error;
     }
@@ -326,7 +336,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     ctlbuf.maxlen = sizeof(buf);
     for (;;) {
         flags = 0;
+        Py_BEGIN_ALLOW_THREADS
         getcode = getmsg(sd, &ctlbuf, (struct strbuf *)0, &flags);
+        Py_END_ALLOW_THREADS
         memcpy(&toa, buf, sizeof toa);
         memcpy(&tea, buf, sizeof tea);
 
@@ -362,7 +374,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         databuf_init = 1;
 
         flags = 0;
+        Py_BEGIN_ALLOW_THREADS
         getcode = getmsg(sd, (struct strbuf *)0, &databuf, &flags);
+        Py_END_ALLOW_THREADS
         if (getcode < 0) {
             psutil_oserror();
             goto error;
