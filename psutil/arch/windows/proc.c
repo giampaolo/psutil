@@ -1057,8 +1057,12 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     {
         if (baseAddress > maxAddr)
             break;
+        // nSize is in characters, not bytes.
         if (GetMappedFileNameW(
-                hProcess, baseAddress, mappedFileName, sizeof(mappedFileName)
+                hProcess,
+                baseAddress,
+                mappedFileName,
+                sizeof(mappedFileName) / sizeof(WCHAR)
             ))
         {
             py_str = PyUnicode_FromWideChar(

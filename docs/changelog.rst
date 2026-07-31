@@ -446,6 +446,11 @@ Others:
   read), and could hang for around 1 minute if the process had a file open on
   an unreachable network share, where the :func:`os.stat` used to filter out
   directories went over the wire with no timeout.
+- :gh:`2934`, [Windows], **[critical]**: :meth:`Process.memory_maps` could
+  crash the calling process with a stack buffer overflow if the inspected
+  process had a mapped file whose path is longer than 260 characters. The
+  buffer size was passed to ``GetMappedFileNameW()`` in bytes instead of
+  characters.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
