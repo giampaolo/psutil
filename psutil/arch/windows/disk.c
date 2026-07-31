@@ -282,6 +282,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             }
         }
 
+        // May spin up a removable drive or go over the wire for a
+        // network one, so do it without the GIL.
+        Py_BEGIN_ALLOW_THREADS
         ret = GetVolumeInformation(
             (LPCTSTR)drive_letter,
             NULL,  // we don't want the volume name
@@ -292,6 +295,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             fs_type,
             _ARRAYSIZE(fs_type)
         );
+        Py_END_ALLOW_THREADS
+
         if (ret == 0) {
             // We might get here in case of a floppy hard drive, in
             // which case the error is (21, "device not ready").
@@ -318,7 +323,10 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         // Check for mount points on this volume and add/get info
         // (checks first to know if we can even have mount points)
         if ((ret != 0) && (pflags & FILE_SUPPORTS_REPARSE_POINTS)) {
+            Py_BEGIN_ALLOW_THREADS
             mp_h = FindFirstVolumeMountPoint(drive_letter, mp_buf, MAX_PATH);
+            Py_END_ALLOW_THREADS
+
             if (mp_h != INVALID_HANDLE_VALUE) {
                 mp_flag = TRUE;
                 while (mp_flag) {
@@ -344,7 +352,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                     }
 
                     // Continue looking for more mount points
+                    Py_BEGIN_ALLOW_THREADS
                     mp_flag = FindNextVolumeMountPoint(mp_h, mp_buf, MAX_PATH);
+                    Py_END_ALLOW_THREADS
                 }
                 FindVolumeMountPointClose(mp_h);
             }
