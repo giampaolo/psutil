@@ -2,19 +2,27 @@
  * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- * Define Windows structs and constants which are considered private.
  */
+
+// Definitions for the NT native API, the ntdll.dll layer below Win32
+// that exposes the Nt* and Rtl* functions. Microsoft documents only
+// part of these APIs, and warns that they may change or become
+// unavailable in future Windows versions. In practice, these
+// interfaces are widely used, and have remained stable for decades.
+//
+// We do not include <winternl.h> because it provides only a subset of
+// the declarations needed here. The missing definitions are provided
+// below.
+//
+// https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntquerysysteminformation
+// https://www.geoffchappell.com/studies/windows/win32/ntdll/api/native.htm
 
 // clang-format off
 #ifndef NTEXTAPI_H
 #define NTEXTAPI_H
 #include <iphlpapi.h>
 
-// We deliberately don't include <winternl.h>. What it offers is stub
-// versions of the structs below, padded with "Reserved" fields, and
-// including it claims the names we need for the real layouts. System
-// Informer's phnt headers leave it out for the same reason.
-// Everything it did give us is declared here instead.
+// What <winternl.h> would have given us, declared here instead.
 
 typedef LONG NTSTATUS;
 
