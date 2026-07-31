@@ -14,15 +14,17 @@
 
 #include "../../arch/all/init.h"
 
+// 1st try guesses the size, 2nd uses the size the kernel asked for,
+// 3rd is in case a NIC shows up in between.
 #define MAX_TRIES 3
-// We only read unicast addresses, the NIC name and description, the MAC
-// address and the interface index, so tell the API to skip the rest.
+
+// net_if_addrs() needs the unicast addresses. Skip the rest.
 #define GAA_FLAGS                                    \
     (GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST \
      | GAA_FLAG_SKIP_DNS_SERVER)
-// net_io_counters() and net_if_stats() don't read the unicast addresses
-// either, so they can also skip those (which are the most expensive to
-// collect).
+
+// net_io_counters() and net_if_stats() don't need unicast, and it's
+// the expensive bit to collect.
 #define GAA_FLAGS_SKIP_UNICAST (GAA_FLAGS | GAA_FLAG_SKIP_UNICAST)
 
 
@@ -62,7 +64,10 @@ psutil_get_nic_addresses(ULONG flags) {
             );
             return NULL;
         }
-        psutil_debug("GetAdaptersAddresses() buffer too small, retry");
+        psutil_debug(
+            "GetAdaptersAddresses(): retry with %lu bytes",
+            (unsigned long)bufferLength
+        );
     }
 
     psutil_runtime_error(
