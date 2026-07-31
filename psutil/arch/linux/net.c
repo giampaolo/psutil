@@ -78,7 +78,11 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
     memset(&ethcmd, 0, sizeof ethcmd);
     ethcmd.cmd = ETHTOOL_GSET;
     ifr.ifr_data = (void *)&ethcmd;
+    // The driver may read the PHY / EEPROM to answer this, and it
+    // takes rtnl_lock() meanwhile.
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sock, SIOCETHTOOL, &ifr);
+    Py_END_ALLOW_THREADS
 
     if (ret != -1) {
         duplex = ethcmd.duplex;
