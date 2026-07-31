@@ -82,11 +82,13 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         dwRetVal = GetIfEntry2(&ifRow);
         Py_END_ALLOW_THREADS
         if (dwRetVal != NO_ERROR) {
-            psutil_runtime_error(
-                "GetIfEntry2() syscall failed for interface %lu",
-                (unsigned long)ifRow.InterfaceIndex
+            psutil_debug(
+                "GetIfEntry2() failed for interface %lu (err=%lu); skip it",
+                (unsigned long)ifRow.InterfaceIndex,
+                (unsigned long)dwRetVal
             );
-            goto error;
+            pCurrAddresses = pCurrAddresses->Next;
+            continue;
         }
 
         py_nic_info = Py_BuildValue(
