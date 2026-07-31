@@ -746,6 +746,10 @@ psutil_proc_username(PyObject *self, PyObject *args) {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
                 free(userName);
                 free(domainName);
+                // otherwise a failed malloc() on the next iteration
+                // would goto error and free() them again
+                userName = NULL;
+                domainName = NULL;
                 continue;
             }
             else if (GetLastError() == ERROR_NONE_MAPPED) {
