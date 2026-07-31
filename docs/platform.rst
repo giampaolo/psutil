@@ -72,6 +72,7 @@ Support history
 ^^^^^^^^^^^^^^^
 
 * psutil 8.0.0 (2026-XX): drop Python 3.6 and 3.7
+* psutil 8.0.0 (2026-XX): drop **PyPy** older than 7.3.14 on Windows
 * psutil 8.0.0 (2026-XX): drop Windows Vista, 7, 8 and 8.1 (+ Server 2008 to
   2012 R2)
 * psutil 8.0.0 (2026-XX): Intel wheels now require **macOS 10.15**

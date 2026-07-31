@@ -33,17 +33,6 @@ extern CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 #define AF_INET6 23
 #endif
 
-#if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
-#if !defined(PyErr_SetFromWindowsErrWithFilename)
-PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr, const char *filename);
-#endif
-#if !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
-PyObject *PyErr_SetExcFromWindowsErrWithFilenameObject(
-    PyObject *type, int ierr, PyObject *filename
-);
-#endif
-#endif
-
 double psutil_FiletimeToUnixTime(FILETIME ft);
 double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);
 int psutil_setup_windows(void);
