@@ -73,6 +73,7 @@ error:
 PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file;
+    int ret;
     struct mnttab mt;
     PyObject *py_dev = NULL;
     PyObject *py_mountp = NULL;
@@ -81,13 +82,21 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    Py_BEGIN_ALLOW_THREADS
     file = fopen(MNTTAB, "rb");
+    Py_END_ALLOW_THREADS
     if (file == NULL) {
         psutil_oserror();
         goto error;
     }
 
-    while (getmntent(file, &mt) == 0) {
+    while (1) {
+        Py_BEGIN_ALLOW_THREADS
+        ret = getmntent(file, &mt);
+        Py_END_ALLOW_THREADS
+        if (ret != 0)
+            break;
+
         py_dev = PyUnicode_DecodeFSDefault(mt.mnt_special);
         if (!py_dev)
             goto error;

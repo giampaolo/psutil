@@ -454,13 +454,21 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    Py_BEGIN_ALLOW_THREADS
     file = setmntent(MNTTAB, "rb");
+    Py_END_ALLOW_THREADS
     if (file == NULL) {
         psutil_oserror();
         goto error;
     }
-    mt = getmntent(file);
-    while (mt != NULL) {
+
+    while (1) {
+        Py_BEGIN_ALLOW_THREADS
+        mt = getmntent(file);
+        Py_END_ALLOW_THREADS
+        if (mt == NULL)
+            break;
+
         py_dev = PyUnicode_DecodeFSDefault(mt->mnt_fsname);
         if (!py_dev)
             goto error;
@@ -480,7 +488,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         }
         Py_CLEAR(py_dev);
         Py_CLEAR(py_mountp);
-        mt = getmntent(file);
     }
     endmntent(file);
     return py_retlist;
