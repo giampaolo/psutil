@@ -8,12 +8,25 @@
 #include <windows.h>
 
 #include "../../arch/all/init.h"
-#include "ntextapi.h"
 
 
 // Needed to make these globally visible.
 SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
+
+// Declared extern in ntextapi.h, assigned by psutil_loadlibs() below.
+_NtQueryInformationProcess NtQueryInformationProcess = NULL;
+_NtQueryObject NtQueryObject = NULL;
+_NtQuerySystemInformation NtQuerySystemInformation = NULL;
+_NtQueryVirtualMemory NtQueryVirtualMemory = NULL;
+_NtResumeProcess NtResumeProcess = NULL;
+_NtSetInformationProcess NtSetInformationProcess = NULL;
+_NtSuspendProcess NtSuspendProcess = NULL;
+_RtlGetVersion RtlGetVersion = NULL;
+_RtlNtStatusToDosErrorNoTeb RtlNtStatusToDosErrorNoTeb = NULL;
+_WTSEnumerateSessionsW WTSEnumerateSessionsW = NULL;
+_WTSFreeMemory WTSFreeMemory = NULL;
+_WTSQuerySessionInformationW WTSQuerySessionInformationW = NULL;
 
 
 // ====================================================================
