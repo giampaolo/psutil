@@ -15,7 +15,7 @@
 #include "../../arch/all/init.h"
 
 
-enum peb_field {
+enum peb_kind {
     PEB_CMDLINE,
     PEB_CWD,
     PEB_ENVIRON,
@@ -64,7 +64,7 @@ read_proc_mem(HANDLE hProcess, LPCVOID src, LPVOID dst, SIZE_T size) {
 // parameter is not touched, -1 is returned, and an appropriate Python
 // exception is set.
 static int
-get_proc_data(DWORD pid, enum peb_field kind, WCHAR **pdata, SIZE_T *psize) {
+get_proc_data(DWORD pid, enum peb_kind kind, WCHAR **pdata, SIZE_T *psize) {
     /* Several cases to consider:
 
        We (i.e. the python interpreter) and the target process are of
