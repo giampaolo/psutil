@@ -127,8 +127,9 @@ psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
 
 static int
 psutil_loadlibs() {
-    // --- Mandatory
-    NtQuerySystemInformation = psutil_GetProcAddressFromLib(
+    // --- Mandatory. ntdll is loaded in every process, so
+    // GetModuleHandle is enough.
+    NtQuerySystemInformation = psutil_GetProcAddress(
         "ntdll.dll", "NtQuerySystemInformation"
     );
     if (!NtQuerySystemInformation)
@@ -143,27 +144,25 @@ psutil_loadlibs() {
     );
     if (!NtSetInformationProcess)
         return -1;
-    NtQueryObject = psutil_GetProcAddressFromLib("ntdll.dll", "NtQueryObject");
+    NtQueryObject = psutil_GetProcAddress("ntdll.dll", "NtQueryObject");
     if (!NtQueryObject)
         return -1;
-    RtlGetVersion = psutil_GetProcAddressFromLib("ntdll.dll", "RtlGetVersion");
+    RtlGetVersion = psutil_GetProcAddress("ntdll.dll", "RtlGetVersion");
     if (!RtlGetVersion)
         return -1;
-    NtSuspendProcess = psutil_GetProcAddressFromLib(
-        "ntdll", "NtSuspendProcess"
-    );
+    NtSuspendProcess = psutil_GetProcAddress("ntdll.dll", "NtSuspendProcess");
     if (!NtSuspendProcess)
         return -1;
-    NtResumeProcess = psutil_GetProcAddressFromLib("ntdll", "NtResumeProcess");
+    NtResumeProcess = psutil_GetProcAddress("ntdll.dll", "NtResumeProcess");
     if (!NtResumeProcess)
         return -1;
-    NtQueryVirtualMemory = psutil_GetProcAddressFromLib(
-        "ntdll", "NtQueryVirtualMemory"
+    NtQueryVirtualMemory = psutil_GetProcAddress(
+        "ntdll.dll", "NtQueryVirtualMemory"
     );
     if (!NtQueryVirtualMemory)
         return -1;
-    RtlNtStatusToDosErrorNoTeb = psutil_GetProcAddressFromLib(
-        "ntdll", "RtlNtStatusToDosErrorNoTeb"
+    RtlNtStatusToDosErrorNoTeb = psutil_GetProcAddress(
+        "ntdll.dll", "RtlNtStatusToDosErrorNoTeb"
     );
     if (!RtlNtStatusToDosErrorNoTeb)
         return -1;
