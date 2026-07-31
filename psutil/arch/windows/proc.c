@@ -1048,7 +1048,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess = NULL;
     PVOID baseAddress;
-    WCHAR mappedFileName[MAX_PATH];
+    ULONG mappedFileNameSize = 0x7FFF + 1;  // NTFS_MAX_PATH + NUL
+    WCHAR *mappedFileName = NULL;
     LPVOID maxAddr;
     // required by GetMappedFileNameW
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
@@ -1063,6 +1064,12 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     if (NULL == hProcess)
         goto error;
 
+    mappedFileName = malloc(mappedFileNameSize * sizeof(WCHAR));
+    if (mappedFileName == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
     maxAddr = PSUTIL_SYSTEM_INFO.lpMaximumApplicationAddress;
     baseAddress = NULL;
 
@@ -1074,10 +1081,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             break;
         // nSize is in characters, not bytes.
         if (GetMappedFileNameW(
-                hProcess,
-                baseAddress,
-                mappedFileName,
-                sizeof(mappedFileName) / sizeof(WCHAR)
+                hProcess, baseAddress, mappedFileName, mappedFileNameSize
             ))
         {
             py_str = PyUnicode_FromWideChar(
@@ -1101,6 +1105,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         baseAddress = (PCHAR)baseAddress + basicInfo.RegionSize;
     }
 
+    free(mappedFileName);
     CloseHandle(hProcess);
     return py_retlist;
 
@@ -1109,6 +1114,8 @@ error:
     Py_DECREF(py_retlist);
     if (hProcess != NULL)
         CloseHandle(hProcess);
+    if (mappedFileName != NULL)
+        free(mappedFileName);
     return NULL;
 }
 

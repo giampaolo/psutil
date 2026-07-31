@@ -454,7 +454,7 @@ Others:
   crash the calling process with a stack buffer overflow if the inspected
   process had a mapped file whose path is longer than 260 characters. The
   buffer size was passed to ``GetMappedFileNameW()`` in bytes instead of
-  characters.
+  characters. Also, such paths are now returned in full instead of truncated.
 - :gh:`2935`, [Windows]: :meth:`Process.kill` and :meth:`Process.terminate`
   leaked a process handle when ``TerminateProcess()`` failed with an error
   other than ``ERROR_ACCESS_DENIED``.
