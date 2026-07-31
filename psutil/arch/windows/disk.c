@@ -279,8 +279,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
         ret = GetVolumeInformation(
             (LPCTSTR)drive_letter,
-            NULL,
-            _ARRAYSIZE(drive_letter),
+            NULL,  // we don't want the volume name
+            0,
             NULL,
             &lpMaximumComponentLength,
             &pflags,
