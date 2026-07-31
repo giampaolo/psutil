@@ -328,9 +328,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     uint64_t next_addr;
     int ret;
     int nregions = 0;
-    int failed_on_first = 0;
-    int truncated = 0;
-    int saved_errno = 0;
+    char *errmsg = NULL;
     struct proc_regioninfo ri;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
@@ -352,18 +350,17 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     while (1) {
         errno = 0;
         ret = proc_pidinfo(pid, PROC_PIDREGIONINFO, addr, &ri, sizeof(ri));
-        saved_errno = errno;
 
         if (ret <= 0) {
             // A failure on the first region means the process is gone or
             // not accessible; past that it just means we reached the end
             // of the address space.
             if (nregions == 0)
-                failed_on_first = 1;
+                errmsg = "proc_pidinfo(PROC_PIDREGIONINFO)";
             break;
         }
         if (ret != sizeof(ri)) {
-            truncated = 1;
+            errmsg = "proc_pidinfo(PROC_PIDREGIONINFO) truncated";
             break;
         }
         nregions += 1;
@@ -403,15 +400,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     }
     Py_END_ALLOW_THREADS
 
-    if (failed_on_first || truncated) {
-        errno = saved_errno;
-        psutil_raise_for_pid(
-            pid,
-            truncated ? "proc_pidinfo(PROC_PIDREGIONINFO) truncated"
-                      : "proc_pidinfo(PROC_PIDREGIONINFO)"
-        );
-        return NULL;
-    }
+    if (errmsg != NULL)
+        return psutil_raise_for_pid(pid, errmsg);
 
     return Py_BuildValue("K", (unsigned long long)private_pages * pagesize);
 }
