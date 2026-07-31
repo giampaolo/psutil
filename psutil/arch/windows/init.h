@@ -46,17 +46,12 @@ extern PyObject *TimeoutAbandoned;
 
 int _psutil_pids(DWORD **pids_array, int *pids_count);
 HANDLE psutil_handle_from_pid(DWORD pid, DWORD dwDesiredAccess);
-int psutil_assert_pid_exists(DWORD pid, char *err);
-int psutil_assert_pid_not_exists(DWORD pid, char *err);
 int psutil_pid_is_running(DWORD pid);
 int psutil_check_pid_running(DWORD pid);
 PyObject *psutil_raise_for_nt_status(
     DWORD pid, NTSTATUS status, const char *syscall
 );
 int psutil_set_se_debug();
-SC_HANDLE psutil_get_service_handle(
-    char service_name, DWORD scm_access, DWORD access
-);
 
 #define PSUTIL_FIRST_PROCESS(Processes) \
     ((PSYSTEM_PROCESS_INFORMATION)(Processes))
