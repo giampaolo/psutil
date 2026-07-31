@@ -123,6 +123,7 @@ PyObject *
 psutil_net_if_addrs(PyObject *self, PyObject *args) {
     struct ifaddrs *ifaddr, *ifa;
     int family;
+    int ret;
 
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_address = NULL;
@@ -132,7 +133,12 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (getifaddrs(&ifaddr) == -1) {
+
+    // Netlink round trip on Linux, a bunch of ioctls on AIX.
+    Py_BEGIN_ALLOW_THREADS
+    ret = getifaddrs(&ifaddr);
+    Py_END_ALLOW_THREADS
+    if (ret == -1) {
         psutil_oserror();
         goto error;
     }

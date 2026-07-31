@@ -591,7 +591,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     str_copy(ifr.ifr_name, sizeof(ifr.ifr_name), nic_name);
 
     // is up?
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
+    Py_END_ALLOW_THREADS
     if (ret == -1)
         goto error;
     if ((ifr.ifr_flags & IFF_UP) != 0)
@@ -601,7 +603,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     Py_INCREF(py_is_up);
 
     // MTU
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sock, SIOCGIFMTU, &ifr);
+    Py_END_ALLOW_THREADS
     if (ret == -1)
         goto error;
     mtu = ifr.ifr_mtu;

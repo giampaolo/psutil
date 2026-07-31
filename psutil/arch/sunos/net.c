@@ -65,7 +65,9 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
         // check if this is a network interface by sending a ioctl
         str_copy(ifr.lifr_name, sizeof(ifr.lifr_name), ksp->ks_name);
+        Py_BEGIN_ALLOW_THREADS
         ret = ioctl(sock, SIOCGLIFFLAGS, &ifr);
+        Py_END_ALLOW_THREADS
         if (ret == -1)
             goto next;
 
@@ -183,7 +185,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
                 continue;
 
             str_copy(ifr.lifr_name, sizeof(ifr.lifr_name), ksp->ks_name);
+            Py_BEGIN_ALLOW_THREADS
             ret = ioctl(sock, SIOCGLIFFLAGS, &ifr);
+            Py_END_ALLOW_THREADS
             if (ret == -1)
                 continue;  // not a network interface
 
@@ -221,7 +225,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
                 speed = 0;
 
             // mtu
+            Py_BEGIN_ALLOW_THREADS
             ret = ioctl(sock, SIOCGLIFMTU, &ifr);
+            Py_END_ALLOW_THREADS
             if (ret == -1)
                 goto error;
 
