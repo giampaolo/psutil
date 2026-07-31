@@ -20,42 +20,35 @@
 #define GAA_FLAGS                                    \
     (GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST \
      | GAA_FLAG_SKIP_DNS_SERVER)
+// net_io_counters() and net_if_stats() don't read the unicast addresses
+// either, so they can also skip those (which are the most expensive to
+// collect).
+#define GAA_FLAGS_SKIP_UNICAST (GAA_FLAGS | GAA_FLAG_SKIP_UNICAST)
 
 
 static PIP_ADAPTER_ADDRESSES
-psutil_get_nic_addresses(void) {
-    ULONG bufferLength = 0;
+psutil_get_nic_addresses(ULONG flags) {
+    // A 15KB buffer is recommended by MSDN as it's usually big enough
+    // to make GetAdaptersAddresses() succeed on the first call, saving
+    // an extra (expensive) syscall to determine the required size.
+    ULONG bufferLength = 15 * 1024;
     ULONG ret;
     PIP_ADAPTER_ADDRESSES buffer;
     int attempt;
 
-    // A NIC showing up between the call determining the size and the
-    // one filling the buffer in makes the latter fail, hence the retry.
     for (attempt = 0; attempt < MAX_TRIES; attempt++) {
-        // Queries the network stack, may be slow with many adapters.
-        Py_BEGIN_ALLOW_THREADS
-        ret = GetAdaptersAddresses(
-            AF_UNSPEC, GAA_FLAGS, NULL, NULL, &bufferLength
-        );
-        Py_END_ALLOW_THREADS
-        if (ret != ERROR_BUFFER_OVERFLOW) {
-            psutil_runtime_error(
-                "GetAdaptersAddresses() syscall failed to determine the "
-                "buffer size (err=%lu)",
-                (unsigned long)ret
-            );
-            return NULL;
-        }
-
         buffer = calloc(1, bufferLength);
         if (buffer == NULL) {
             PyErr_NoMemory();
             return NULL;
         }
 
+        // Queries the network stack, may be slow with many adapters.
+        // On ERROR_BUFFER_OVERFLOW `bufferLength` is set to the
+        // required size, so the retry uses a big enough buffer.
         Py_BEGIN_ALLOW_THREADS
         ret = GetAdaptersAddresses(
-            AF_UNSPEC, GAA_FLAGS, NULL, buffer, &bufferLength
+            AF_UNSPEC, flags, NULL, buffer, &bufferLength
         );
         Py_END_ALLOW_THREADS
         if (ret == ERROR_SUCCESS)
@@ -93,7 +86,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
-    pAddresses = psutil_get_nic_addresses();
+    pAddresses = psutil_get_nic_addresses(GAA_FLAGS_SKIP_UNICAST);
     if (pAddresses == NULL)
         goto error;
 
@@ -192,7 +185,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    pAddresses = psutil_get_nic_addresses();
+    pAddresses = psutil_get_nic_addresses(GAA_FLAGS);
     if (pAddresses == NULL)
         goto error;
     pCurrAddresses = pAddresses;
@@ -395,7 +388,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
 
-    pAddresses = psutil_get_nic_addresses();
+    pAddresses = psutil_get_nic_addresses(GAA_FLAGS_SKIP_UNICAST);
     if (pAddresses == NULL)
         goto error;
 
