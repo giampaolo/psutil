@@ -23,7 +23,10 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
+    // Opens /dev/kstat and snapshots the whole kstat chain.
+    Py_BEGIN_ALLOW_THREADS
     kc = kstat_open();
+    Py_END_ALLOW_THREADS
     if (kc == NULL) {
         psutil_oserror();
         goto error;
@@ -81,12 +84,16 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    Py_BEGIN_ALLOW_THREADS
     file = fopen(MNTTAB, "rb");
+    Py_END_ALLOW_THREADS
     if (file == NULL) {
         psutil_oserror();
         goto error;
     }
 
+    // NOTE: getmntent() fills a buffer owned by libc, so we can't
+    // release the GIL around it.
     while (getmntent(file, &mt) == 0) {
         py_dev = PyUnicode_DecodeFSDefault(mt.mnt_special);
         if (!py_dev)

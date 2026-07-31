@@ -23,13 +23,18 @@ psutil_get_service_handler(
     SC_HANDLE sc = NULL;
     SC_HANDLE hService = NULL;
 
+    // SCM calls are RPC to services.exe, they may be slow.
+    Py_BEGIN_ALLOW_THREADS
     sc = OpenSCManagerW(NULL, NULL, scm_access);
+    Py_END_ALLOW_THREADS
     if (sc == NULL) {
         psutil_oserror_wsyscall("OpenSCManagerW");
         return NULL;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     hService = OpenServiceW(sc, service_name, access);
+    Py_END_ALLOW_THREADS
     if (hService == NULL) {
         psutil_oserror_wsyscall("OpenServiceW");
         CloseServiceHandle(sc);
@@ -140,13 +145,17 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    // SCM calls are RPC to services.exe, they may be slow.
+    Py_BEGIN_ALLOW_THREADS
     sc = OpenSCManager(NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE);
+    Py_END_ALLOW_THREADS
     if (sc == NULL) {
         psutil_oserror_wsyscall("OpenSCManager");
         return NULL;
     }
 
     for (;;) {
+        Py_BEGIN_ALLOW_THREADS
         ok = EnumServicesStatusExW(
             sc,
             SC_ENUM_PROCESS_INFO,
@@ -159,6 +168,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
             &resumeHandle,
             NULL
         );
+        Py_END_ALLOW_THREADS
         if (ok || (GetLastError() != ERROR_MORE_DATA))
             break;
         if (lpService)
@@ -230,7 +240,9 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     // First call to QueryServiceConfigW() is necessary to get the
     // right size.
     bytesNeeded = 0;
+    Py_BEGIN_ALLOW_THREADS
     QueryServiceConfigW(hService, NULL, 0, &bytesNeeded);
+    Py_END_ALLOW_THREADS
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         psutil_oserror_wsyscall("QueryServiceConfigW");
         goto error;
@@ -242,7 +254,9 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     ok = QueryServiceConfigW(hService, qsc, bytesNeeded, &bytesNeeded);
+    Py_END_ALLOW_THREADS
     if (!ok) {
         psutil_oserror_wsyscall("QueryServiceConfigW");
         goto error;
@@ -322,9 +336,11 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
 
     // First call to QueryServiceStatusEx() is necessary to get the
     // right size.
+    Py_BEGIN_ALLOW_THREADS
     QueryServiceStatusEx(
         hService, SC_STATUS_PROCESS_INFO, NULL, 0, &bytesNeeded
     );
+    Py_END_ALLOW_THREADS
     if (GetLastError() == ERROR_MUI_FILE_NOT_FOUND) {
         // Also services.msc fails in the same manner, so we return an
         // empty string.
@@ -344,6 +360,7 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
     }
 
     // Actual call.
+    Py_BEGIN_ALLOW_THREADS
     ok = QueryServiceStatusEx(
         hService,
         SC_STATUS_PROCESS_INFO,
@@ -351,6 +368,7 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
         bytesNeeded,
         &bytesNeeded
     );
+    Py_END_ALLOW_THREADS
     if (!ok) {
         psutil_oserror_wsyscall("QueryServiceStatusEx");
         goto error;
@@ -393,9 +411,11 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     if (hService == NULL)
         return NULL;
 
+    Py_BEGIN_ALLOW_THREADS
     QueryServiceConfig2W(
         hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0, &bytesNeeded
     );
+    Py_END_ALLOW_THREADS
 
     if ((GetLastError() == ERROR_NOT_FOUND)
         || (GetLastError() == ERROR_MUI_FILE_NOT_FOUND))
@@ -419,6 +439,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     ok = QueryServiceConfig2W(
         hService,
         SERVICE_CONFIG_DESCRIPTION,
@@ -426,6 +447,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         bytesNeeded,
         &bytesNeeded
     );
+    Py_END_ALLOW_THREADS
     if (!ok) {
         psutil_oserror_wsyscall("QueryServiceConfig2W");
         goto error;
@@ -473,7 +495,10 @@ psutil_winservice_start(PyObject *self, PyObject *args) {
     if (hService == NULL)
         return NULL;
 
+    // Starts a process and waits for it to report back.
+    Py_BEGIN_ALLOW_THREADS
     ok = StartService(hService, 0, NULL);
+    Py_END_ALLOW_THREADS
     if (!ok) {
         psutil_oserror_wsyscall("StartService");
         goto error;

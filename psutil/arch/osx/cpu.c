@@ -210,19 +210,26 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     uint32_t min_mhz = UINT32_MAX;
     uint32_t max_mhz = 0;
     int found_any = 0;
+    int found_pmgr;
+    kern_return_t status;
 
     // No 'pmgr' entry (e.g. virtualized ARM64); frequency is
     // undeterminable, so return None (see #2382).
-    if (!psutil_find_pmgr_entry(&entry)) {
+    // Walks the IOKit registry (mach IPC), so no GIL.
+    Py_BEGIN_ALLOW_THREADS
+    found_pmgr = psutil_find_pmgr_entry(&entry);
+    Py_END_ALLOW_THREADS
+    if (!found_pmgr) {
         psutil_debug("'pmgr' entry not found in AppleARMIODevice");
         Py_RETURN_NONE;
     }
 
-    if (IORegistryEntryCreateCFProperties(
-            entry, &props, kCFAllocatorDefault, 0
-        ) != KERN_SUCCESS
-        || props == NULL)
-    {
+    Py_BEGIN_ALLOW_THREADS
+    status = IORegistryEntryCreateCFProperties(
+        entry, &props, kCFAllocatorDefault, 0
+    );
+    Py_END_ALLOW_THREADS
+    if (status != KERN_SUCCESS || props == NULL) {
         IOObjectRelease(entry);
         psutil_debug("IORegistryEntryCreateCFProperties failed");
         Py_RETURN_NONE;

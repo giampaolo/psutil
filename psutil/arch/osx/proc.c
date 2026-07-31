@@ -328,6 +328,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     uint64_t next_addr;
     int ret;
     int nregions = 0;
+    char *errmsg = NULL;
     struct proc_regioninfo ri;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
@@ -342,6 +343,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     // Sum up process private (unique) resident pages by walking its VM
     // regions. Roughly based on libtop_update_vm_regions in:
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
+    // The walk can take a long time (or hang) on a process we don't own,
+    // see https://github.com/giampaolo/psutil/issues/2885, so run it
+    // without the GIL. Exceptions are raised further below.
+    Py_BEGIN_ALLOW_THREADS
     while (1) {
         errno = 0;
         ret = proc_pidinfo(pid, PROC_PIDREGIONINFO, addr, &ri, sizeof(ri));
@@ -350,17 +355,13 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
             // A failure on the first region means the process is gone or
             // not accessible; past that it just means we reached the end
             // of the address space.
-            if (nregions == 0) {
-                psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDREGIONINFO)");
-                return NULL;
-            }
+            if (nregions == 0)
+                errmsg = "proc_pidinfo(PROC_PIDREGIONINFO)";
             break;
         }
         if (ret != sizeof(ri)) {
-            psutil_raise_for_pid(
-                pid, "proc_pidinfo(PROC_PIDREGIONINFO) truncated"
-            );
-            return NULL;
+            errmsg = "proc_pidinfo(PROC_PIDREGIONINFO) truncated";
+            break;
         }
         nregions += 1;
 
@@ -397,6 +398,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         }
         addr = next_addr;
     }
+    Py_END_ALLOW_THREADS
+
+    if (errmsg != NULL)
+        return psutil_raise_for_pid(pid, errmsg);
 
     return Py_BuildValue("K", (unsigned long long)private_pages * pagesize);
 }
