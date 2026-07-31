@@ -580,33 +580,93 @@ typedef struct _PEB {
 #endif  // _WIN64
 
 // ================================================================
-// Type defs for modules loaded at runtime.
+// Functions loaded at runtime.
 // ================================================================
+// The pointers live in init.c; psutil_loadlibs() assigns them on
+// module import.
 
-NTSTATUS (NTAPI *_NtQueryInformationProcess) (
+typedef NTSTATUS (NTAPI *NtQueryInformationProcessFn) (
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
     DWORD ProcessInformationLength,
     PDWORD ReturnLength);
 
-#define NtQueryInformationProcess _NtQueryInformationProcess
+extern NtQueryInformationProcessFn NtQueryInformationProcess;
 
-NTSTATUS (NTAPI *_NtQuerySystemInformation) (
+typedef NTSTATUS (NTAPI *NtQuerySystemInformationFn) (
     ULONG SystemInformationClass,
     PVOID SystemInformation,
     ULONG SystemInformationLength,
     PULONG ReturnLength);
 
-#define NtQuerySystemInformation _NtQuerySystemInformation
+extern NtQuerySystemInformationFn NtQuerySystemInformation;
 
-NTSTATUS (NTAPI *_NtSetInformationProcess) (
+typedef NTSTATUS (NTAPI *NtSetInformationProcessFn) (
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
     DWORD ProcessInformationLength);
 
-#define NtSetInformationProcess _NtSetInformationProcess
+extern NtSetInformationProcessFn NtSetInformationProcess;
+
+typedef NTSTATUS (NTAPI *NtQueryObjectFn) (
+    HANDLE Handle,
+    OBJECT_INFORMATION_CLASS ObjectInformationClass,
+    PVOID ObjectInformation,
+    ULONG ObjectInformationLength,
+    PULONG ReturnLength);
+
+extern NtQueryObjectFn NtQueryObject;
+
+typedef NTSTATUS (NTAPI *NtQueryVirtualMemoryFn) (
+    HANDLE ProcessHandle,
+    PVOID BaseAddress,
+    int MemoryInformationClass,
+    PVOID MemoryInformation,
+    SIZE_T MemoryInformationLength,
+    PSIZE_T ReturnLength);
+
+extern NtQueryVirtualMemoryFn NtQueryVirtualMemory;
+
+typedef NTSTATUS (WINAPI *NtResumeProcessFn) (HANDLE hProcess);
+
+extern NtResumeProcessFn NtResumeProcess;
+
+typedef NTSTATUS (WINAPI *NtSuspendProcessFn) (HANDLE hProcess);
+
+extern NtSuspendProcessFn NtSuspendProcess;
+
+typedef NTSTATUS (WINAPI *RtlGetVersionFn) (
+    PRTL_OSVERSIONINFOW lpVersionInformation);
+
+extern RtlGetVersionFn RtlGetVersion;
+
+typedef ULONG (WINAPI *RtlNtStatusToDosErrorNoTebFn) (NTSTATUS status);
+
+extern RtlNtStatusToDosErrorNoTebFn RtlNtStatusToDosErrorNoTeb;
+
+typedef BOOL (CALLBACK *WTSQuerySessionInformationWFn) (
+    HANDLE hServer,
+    DWORD SessionId,
+    WTS_INFO_CLASS WTSInfoClass,
+    LPWSTR* ppBuffer,
+    DWORD* pBytesReturned);
+
+extern WTSQuerySessionInformationWFn WTSQuerySessionInformationW;
+
+typedef BOOL (CALLBACK *WTSEnumerateSessionsWFn) (
+    HANDLE hServer,
+    DWORD Reserved,
+    DWORD Version,
+    PWTS_SESSION_INFOW* ppSessionInfo,
+    DWORD* pCount);
+
+extern WTSEnumerateSessionsWFn WTSEnumerateSessionsW;
+
+typedef VOID (CALLBACK *WTSFreeMemoryFn) (PVOID pMemory);
+
+extern WTSFreeMemoryFn WTSFreeMemory;
 
 // Declared in <ip2string.h>, which can't be included from user-mode
 // code (it expects kernel types we don't have). Exported by ntdll.lib.
@@ -615,76 +675,6 @@ RtlIpv4AddressToStringA(struct in_addr *Addr, PSTR S);
 
 NTSYSAPI PSTR NTAPI
 RtlIpv6AddressToStringA(struct in6_addr *Addr, PSTR P);
-
-BOOL(CALLBACK *_WTSQuerySessionInformationW) (
-    HANDLE hServer,
-    DWORD SessionId,
-    WTS_INFO_CLASS WTSInfoClass,
-    LPWSTR* ppBuffer,
-    DWORD* pBytesReturned
-    );
-
-#define WTSQuerySessionInformationW _WTSQuerySessionInformationW
-
-BOOL(CALLBACK *_WTSEnumerateSessionsW)(
-    HANDLE hServer,
-    DWORD Reserved,
-    DWORD Version,
-    PWTS_SESSION_INFOW* ppSessionInfo,
-    DWORD* pCount
-    );
-
-#define WTSEnumerateSessionsW _WTSEnumerateSessionsW
-
-VOID(CALLBACK *_WTSFreeMemory)(
-    IN PVOID pMemory
-    );
-
-#define WTSFreeMemory _WTSFreeMemory
-
-NTSTATUS (NTAPI *_NtQueryObject) (
-    HANDLE Handle,
-    OBJECT_INFORMATION_CLASS ObjectInformationClass,
-    PVOID ObjectInformation,
-    ULONG ObjectInformationLength,
-    PULONG ReturnLength);
-
-#define NtQueryObject _NtQueryObject
-
-NTSTATUS (WINAPI *_RtlGetVersion) (
-    PRTL_OSVERSIONINFOW lpVersionInformation
-);
-
-#define RtlGetVersion _RtlGetVersion
-
-NTSTATUS (WINAPI *_NtResumeProcess) (
-    HANDLE hProcess
-);
-
-#define NtResumeProcess _NtResumeProcess
-
-NTSTATUS (WINAPI *_NtSuspendProcess) (
-    HANDLE hProcess
-);
-
-#define NtSuspendProcess _NtSuspendProcess
-
-NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
-    HANDLE ProcessHandle,
-    PVOID BaseAddress,
-    int MemoryInformationClass,
-    PVOID MemoryInformation,
-    SIZE_T MemoryInformationLength,
-    PSIZE_T ReturnLength
-);
-
-#define NtQueryVirtualMemory _NtQueryVirtualMemory
-
-ULONG (WINAPI *_RtlNtStatusToDosErrorNoTeb) (
-    NTSTATUS status
-);
-
-#define RtlNtStatusToDosErrorNoTeb _RtlNtStatusToDosErrorNoTeb
 
 #endif // __NTEXTAPI_H__
 // clang-format on
