@@ -276,7 +276,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemInterruptInformation,
         InterruptInformation,
-        ncpus * sizeof(SYSTEM_INTERRUPT_INFORMATION),
+        ncpus * sizeof(_SYSTEM_INTERRUPT_INFORMATION),
         &retlen
     );
     if (!NT_SUCCESS(status)) {
