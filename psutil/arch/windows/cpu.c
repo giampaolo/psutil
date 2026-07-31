@@ -229,6 +229,8 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     UINT i;
     ULONG64 dpcs = 0;
     ULONG interrupts = 0;
+    ULONG ctx_switches;
+    ULONG syscalls;
 
     // retrieves number of processors
     ncpus = psutil_get_num_cpus(1);
@@ -308,16 +310,13 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         interrupts += sppi[i].InterruptCount;
     }
 
-    // done
+    ctx_switches = spi->ContextSwitches;
+    syscalls = spi->SystemCalls;
     free(spi);
     free(InterruptInformation);
     free(sppi);
     return Py_BuildValue(
-        "kkkk",
-        spi->ContextSwitches,
-        interrupts,
-        (unsigned long)dpcs,
-        spi->SystemCalls
+        "kkkk", ctx_switches, interrupts, (unsigned long)dpcs, syscalls
     );
 
 error:

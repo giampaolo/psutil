@@ -396,6 +396,8 @@ Others:
   ``resource.prlimit()`` accordingly. psutil now maps it back to
   :data:`psutil.RLIM_INFINITY` so the value stays consistent across Python
   versions.
+- :gh:`2847`, [Windows]: :func:`cpu_stats` read the context switches and
+  syscalls counts from a buffer it had just freed.
 - :gh:`2875`, [Windows]: :func:`sensors_battery` never returned
   :data:`POWER_TIME_UNKNOWN` when the remaining battery time was unknown; it
   returned ``4294967295`` instead of ``-1`` due to ``BatteryLifeTime`` being
