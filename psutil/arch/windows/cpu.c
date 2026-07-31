@@ -366,8 +366,8 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
 
     // Syscall.
     ret = CallNtPowerInformation(ProcessorInformation, NULL, 0, pBuffer, size);
-    if (ret != 0) {
-        psutil_runtime_error("CallNtPowerInformation syscall failed");
+    if (!NT_SUCCESS(ret)) {
+        psutil_SetFromNTStatusErr(ret, "CallNtPowerInformation");
         goto error;
     }
 
