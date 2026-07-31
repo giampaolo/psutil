@@ -81,6 +81,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     char szDeviceDisplay[MAX_PATH];
     int devNum;
     DWORD ioctrlSize;
+    DWORD err;
     BOOL ret;
     PyObject *py_retdict = PyDict_New();
     PyObject *py_tuple = NULL;
@@ -104,6 +105,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     for (devNum = 0; devNum <= 32; ++devNum) {
         py_tuple = NULL;
         str_format(szDevice, MAX_PATH, "\\\\.\\PhysicalDrive%d", devNum);
+        // Opening a disk device may block, so do it without the GIL.
+        Py_BEGIN_ALLOW_THREADS
         hDevice = CreateFile(
             szDevice,
             0,
@@ -113,11 +116,13 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             0,
             NULL
         );
+        Py_END_ALLOW_THREADS
         if (hDevice == INVALID_HANDLE_VALUE)
             continue;
 
         // DeviceIoControl() sucks!
         while (1) {
+            Py_BEGIN_ALLOW_THREADS
             ret = DeviceIoControl(
                 hDevice,
                 IOCTL_DISK_PERFORMANCE,
@@ -128,9 +133,12 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 &dwSize,
                 NULL
             );
+            // Grab it here: re-acquiring the GIL may clobber it.
+            err = GetLastError();
+            Py_END_ALLOW_THREADS
             if (ret != 0)
                 break;  // OK!
-            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+            if (err == ERROR_INSUFFICIENT_BUFFER) {
                 // Grow the buffer for real, up to a sane limit.
                 if (ioctrlSize < 1024 * 1024) {
                     void *tmp;
@@ -145,7 +153,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                     continue;
                 }
             }
-            else if (GetLastError() == ERROR_INVALID_FUNCTION) {
+            else if (err == ERROR_INVALID_FUNCTION) {
                 // This happens on AppVeyor:
                 // https://ci.appveyor.com/project/giampaolo/psutil/build/1364/job/ascpdi271b06jle3
                 // Assume it means we're dealing with some exotic disk
@@ -157,7 +165,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 );
                 goto next;
             }
-            else if (GetLastError() == ERROR_NOT_SUPPORTED) {
+            else if (err == ERROR_NOT_SUPPORTED) {
                 // Again, let's assume we're dealing with some exotic disk.
                 psutil_debug(
                     "DeviceIoControl -> ERROR_NOT_SUPPORTED; "
@@ -172,6 +180,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             // XXX: we can also bump into ERROR_MORE_DATA in which case
             // (quoting doc) we're supposed to retry with a bigger buffer
             // and specify  a new "starting point", whatever it means.
+            SetLastError(err);
             psutil_oserror();
             goto error;
         }
