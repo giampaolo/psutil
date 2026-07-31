@@ -16,18 +16,18 @@ SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 
 // Declared extern in ntextapi.h, assigned by psutil_loadlibs() below.
-NtQueryInformationProcessFn NtQueryInformationProcess = NULL;
-NtQueryObjectFn NtQueryObject = NULL;
-NtQuerySystemInformationFn NtQuerySystemInformation = NULL;
-NtQueryVirtualMemoryFn NtQueryVirtualMemory = NULL;
-NtResumeProcessFn NtResumeProcess = NULL;
-NtSetInformationProcessFn NtSetInformationProcess = NULL;
-NtSuspendProcessFn NtSuspendProcess = NULL;
-RtlGetVersionFn RtlGetVersion = NULL;
-RtlNtStatusToDosErrorNoTebFn RtlNtStatusToDosErrorNoTeb = NULL;
-WTSEnumerateSessionsWFn WTSEnumerateSessionsW = NULL;
-WTSFreeMemoryFn WTSFreeMemory = NULL;
-WTSQuerySessionInformationWFn WTSQuerySessionInformationW = NULL;
+_NtQueryInformationProcess NtQueryInformationProcess = NULL;
+_NtQueryObject NtQueryObject = NULL;
+_NtQuerySystemInformation NtQuerySystemInformation = NULL;
+_NtQueryVirtualMemory NtQueryVirtualMemory = NULL;
+_NtResumeProcess NtResumeProcess = NULL;
+_NtSetInformationProcess NtSetInformationProcess = NULL;
+_NtSuspendProcess NtSuspendProcess = NULL;
+_RtlGetVersion RtlGetVersion = NULL;
+_RtlNtStatusToDosErrorNoTeb RtlNtStatusToDosErrorNoTeb = NULL;
+_WTSEnumerateSessionsW WTSEnumerateSessionsW = NULL;
+_WTSFreeMemory WTSFreeMemory = NULL;
+_WTSQuerySessionInformationW WTSQuerySessionInformationW = NULL;
 
 
 // ====================================================================
