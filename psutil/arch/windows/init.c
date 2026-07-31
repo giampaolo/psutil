@@ -246,12 +246,17 @@ psutil_loadlibs() {
 static int
 psutil_check_winver() {
     RTL_OSVERSIONINFOEXW versionInfo;
+    NTSTATUS status;
     ULONG maj;
     ULONG min;
 
-    versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
     memset(&versionInfo, 0, sizeof(RTL_OSVERSIONINFOEXW));
-    RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
+    versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
+    status = RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
+    if (!NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(status, "RtlGetVersion");
+        return 1;
+    }
     maj = versionInfo.dwMajorVersion;
     min = versionInfo.dwMinorVersion;
     if (maj < 10) {
