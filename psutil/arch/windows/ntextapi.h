@@ -2,16 +2,62 @@
  * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- * Define Windows structs and constants which are considered private.
  */
 
+// Definitions for the NT native API, the ntdll.dll layer below Win32
+// that exposes the Nt* and Rtl* functions. Microsoft documents only
+// part of these APIs, and warns that they may change or become
+// unavailable in future Windows versions. In practice, these
+// interfaces are widely used, and have remained stable for decades.
+//
+// We do not include <winternl.h> because it provides only a subset of
+// the declarations needed here. The missing definitions are provided
+// below.
+//
+// https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntquerysysteminformation
+// https://www.geoffchappell.com/studies/windows/win32/ntdll/api/native.htm
+
 // clang-format off
-#if !defined(__NTEXTAPI_H__)
-#define __NTEXTAPI_H__
-#include <winternl.h>
+#ifndef NTEXTAPI_H
+#define NTEXTAPI_H
 #include <iphlpapi.h>
 
+// What <winternl.h> would have given us, declared here instead.
+
 typedef LONG NTSTATUS;
+
+#ifndef NT_SUCCESS
+    #define NT_SUCCESS(status) (((NTSTATUS)(status)) >= 0)
+#endif
+
+typedef LONG KPRIORITY;
+
+typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR Buffer;
+} UNICODE_STRING, *PUNICODE_STRING;
+
+typedef struct _IO_STATUS_BLOCK {
+    union {
+        NTSTATUS Status;
+        PVOID Pointer;
+    } u;
+    ULONG_PTR Information;
+} IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
+
+// Really enums. We only ever pass the constants #defined below, so an
+// integer type does the job.
+typedef ULONG FILE_INFORMATION_CLASS;
+typedef ULONG OBJECT_INFORMATION_CLASS;
+
+NTSYSAPI NTSTATUS NTAPI
+NtQueryInformationFile(
+    HANDLE FileHandle,
+    PIO_STATUS_BLOCK IoStatusBlock,
+    PVOID FileInformation,
+    ULONG Length,
+    FILE_INFORMATION_CLASS FileInformationClass);
 
 // https://github.com/ajkhoury/TestDll/blob/master/nt_ddk.h
 #define STATUS_INFO_LENGTH_MISMATCH ((NTSTATUS)0xC0000004L)
@@ -30,27 +76,25 @@ typedef LONG NTSTATUS;
 // Enums
 // ================================================================
 
-#undef  FileBasicInformation
+// Members of the FILE_INFORMATION_CLASS, MEMORY_INFORMATION_CLASS,
+// OBJECT_INFORMATION_CLASS, PROCESSINFOCLASS and
+// SYSTEM_INFORMATION_CLASS enums. Values cross-checked against
+// System Informer's phnt (ntexapi.h, ntpsapi.h).
 #define FileBasicInformation 4
-#undef  FileStandardInformation
 #define FileStandardInformation 5
-#undef  MemoryWorkingSetInformation
-#define MemoryWorkingSetInformation 0x1
-#undef  ObjectNameInformation
+#define MemoryWorkingSetInformation 1
 #define ObjectNameInformation 1
-#undef  ObjectTypesInformation
 #define ObjectTypesInformation 3
-#undef  ProcessCommandLineInformation
+#define ProcessBasicInformation 0
 #define ProcessCommandLineInformation 60
-#undef  ProcessHandleInformation
 #define ProcessHandleInformation 51
-#undef  ProcessIoPriority
 #define ProcessIoPriority 33
-#undef  ProcessWow64Information
 #define ProcessWow64Information 26
-#undef  SystemProcessIdInformation
+#define SystemInterruptInformation 23
+#define SystemPerformanceInformation 2
 #define SystemProcessIdInformation 88
-#undef  SystemTimeOfDayInformation
+#define SystemProcessInformation 5
+#define SystemProcessorPerformanceInformation 8
 #define SystemTimeOfDayInformation 3
 
 
@@ -163,17 +207,17 @@ typedef enum _WTS_CONNECTSTATE_CLASS {
 // ================================================================
 
 // cpu_stats(), per_cpu_times()
-typedef struct {
+typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
     LARGE_INTEGER IdleTime;
     LARGE_INTEGER KernelTime;
     LARGE_INTEGER UserTime;
     LARGE_INTEGER DpcTime;
     LARGE_INTEGER InterruptTime;
     ULONG InterruptCount;
-} _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
+} SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
 
 // cpu_stats()
-typedef struct {
+typedef struct _SYSTEM_PERFORMANCE_INFORMATION {
     LARGE_INTEGER IdleProcessTime;
     LARGE_INTEGER IoReadTransferCount;
     LARGE_INTEGER IoWriteTransferCount;
@@ -248,20 +292,20 @@ typedef struct {
     ULONG FirstLevelTbFills;
     ULONG SecondLevelTbFills;
     ULONG SystemCalls;
-} _SYSTEM_PERFORMANCE_INFORMATION;
+} SYSTEM_PERFORMANCE_INFORMATION;
 
 // cpu_stats()
-typedef struct {
+typedef struct _SYSTEM_INTERRUPT_INFORMATION {
     ULONG ContextSwitches;
     ULONG DpcCount;
     ULONG DpcRate;
     ULONG TimeIncrement;
     ULONG DpcBypassCount;
     ULONG ApcBypassCount;
-} _SYSTEM_INTERRUPT_INFORMATION;
+} SYSTEM_INTERRUPT_INFORMATION;
 
 // Process.open_files()
-typedef struct _OBJECT_TYPE_INFORMATION2 {
+typedef struct _OBJECT_TYPE_INFORMATION {
     UNICODE_STRING TypeName;
     ULONG TotalNumberOfObjects;
     ULONG TotalNumberOfHandles;
@@ -285,13 +329,12 @@ typedef struct _OBJECT_TYPE_INFORMATION2 {
     ULONG PoolType;
     ULONG DefaultPagedPoolCharge;
     ULONG DefaultNonPagedPoolCharge;
-} OBJECT_TYPE_INFORMATION2, *POBJECT_TYPE_INFORMATION2;
+} OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
 
 typedef struct _OBJECT_TYPES_INFORMATION {
     ULONG NumberOfTypes;
 } OBJECT_TYPES_INFORMATION, *POBJECT_TYPES_INFORMATION;
 
-// <winternl.h> declares NtQueryInformationFile but not these.
 typedef struct _FILE_BASIC_INFORMATION {
     LARGE_INTEGER CreationTime;
     LARGE_INTEGER LastAccessTime;
@@ -324,25 +367,21 @@ typedef struct _PROCESS_HANDLE_SNAPSHOT_INFORMATION {
     PROCESS_HANDLE_TABLE_ENTRY_INFO Handles[1];
 } PROCESS_HANDLE_SNAPSHOT_INFORMATION, *PPROCESS_HANDLE_SNAPSHOT_INFORMATION;
 
-typedef struct _PROCESS_BASIC_INFORMATION2 {
+typedef struct _PROCESS_BASIC_INFORMATION {
     NTSTATUS ExitStatus;
-    PPEB PebBaseAddress;
+    PVOID PebBaseAddress;
     ULONG_PTR AffinityMask;
     KPRIORITY BasePriority;
     ULONG_PTR UniqueProcessId;
     ULONG_PTR InheritedFromUniqueProcessId;
-} PROCESS_BASIC_INFORMATION2, *PPROCESS_BASIC_INFORMATION2;
+} PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
 
-#define PROCESS_BASIC_INFORMATION PROCESS_BASIC_INFORMATION2
-
-typedef struct _CLIENT_ID2 {
+typedef struct _CLIENT_ID {
     HANDLE UniqueProcess;
     HANDLE UniqueThread;
-} CLIENT_ID2, *PCLIENT_ID2;
+} CLIENT_ID, *PCLIENT_ID;
 
-#define CLIENT_ID CLIENT_ID2
-
-typedef struct _SYSTEM_THREAD_INFORMATION2 {
+typedef struct _SYSTEM_THREAD_INFORMATION {
     LARGE_INTEGER KernelTime;
     LARGE_INTEGER UserTime;
     LARGE_INTEGER CreateTime;
@@ -354,11 +393,9 @@ typedef struct _SYSTEM_THREAD_INFORMATION2 {
     ULONG ContextSwitches;
     ULONG ThreadState;
     KWAIT_REASON WaitReason;
-} SYSTEM_THREAD_INFORMATION2, *PSYSTEM_THREAD_INFORMATION2;
+} SYSTEM_THREAD_INFORMATION, *PSYSTEM_THREAD_INFORMATION;
 
-#define SYSTEM_THREAD_INFORMATION SYSTEM_THREAD_INFORMATION2
-
-typedef struct _SYSTEM_PROCESS_INFORMATION2 {
+typedef struct _SYSTEM_PROCESS_INFORMATION {
     ULONG NextEntryOffset;                      // The address of the previous item plus the value in the NextEntryOffset member. For the last item in the array, NextEntryOffset is 0.
     ULONG NumberOfThreads;                      // The NumberOfThreads member contains the number of threads in the process.
     ULONGLONG WorkingSetPrivateSize;            // The total private memory that a process currently has allocated and is physically resident in memory. // since VISTA
@@ -394,10 +431,7 @@ typedef struct _SYSTEM_PROCESS_INFORMATION2 {
     LARGE_INTEGER WriteTransferCount;           // The total number of bytes written during a write operation.
     LARGE_INTEGER OtherTransferCount;           // The total number of bytes transferred during operations other than read and write operations.
     SYSTEM_THREAD_INFORMATION Threads[1];       // This type is not defined in the structure but was added for convenience.
-} SYSTEM_PROCESS_INFORMATION2, *PSYSTEM_PROCESS_INFORMATION2;
-
-#define SYSTEM_PROCESS_INFORMATION SYSTEM_PROCESS_INFORMATION2
-#define PSYSTEM_PROCESS_INFORMATION PSYSTEM_PROCESS_INFORMATION2
+} SYSTEM_PROCESS_INFORMATION, *PSYSTEM_PROCESS_INFORMATION;
 
 // cpu_freq()
 typedef struct _PROCESSOR_POWER_INFORMATION {
@@ -410,7 +444,7 @@ typedef struct _PROCESSOR_POWER_INFORMATION {
 } PROCESSOR_POWER_INFORMATION, *PPROCESSOR_POWER_INFORMATION;
 
 // PEB / cmdline(), cwd(), environ()
-typedef struct {
+typedef struct _RTL_USER_PROCESS_PARAMETERS {
     BYTE Reserved1[16];
     PVOID Reserved2[5];
     UNICODE_STRING CurrentDirectoryPath;
@@ -419,7 +453,7 @@ typedef struct {
     UNICODE_STRING ImagePathName;
     UNICODE_STRING CommandLine;
     LPCWSTR env;
-} RTL_USER_PROCESS_PARAMETERS_, *PRTL_USER_PROCESS_PARAMETERS_;
+} RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
 
 // users()
 typedef struct _WTS_SESSION_INFOW {
@@ -428,8 +462,6 @@ typedef struct _WTS_SESSION_INFOW {
                                  // connected to
     WTS_CONNECTSTATE_CLASS State; // connection state (see enum)
 } WTS_SESSION_INFOW, * PWTS_SESSION_INFOW;
-
-#define PWTS_SESSION_INFO PWTS_SESSION_INFOW
 
 typedef struct _WTS_CLIENT_ADDRESS {
     DWORD AddressFamily;  // AF_INET, AF_INET6, AF_IPX, AF_NETBIOS, AF_UNSPEC
@@ -491,7 +523,7 @@ typedef struct _SYSTEM_PROCESS_ID_INFORMATION {
 } SYSTEM_PROCESS_ID_INFORMATION, *PSYSTEM_PROCESS_ID_INFORMATION;
 
 // boot_time()
-typedef struct _SYSTEM_TIMEOFDAY_INFORMATION2 {
+typedef struct _SYSTEM_TIMEOFDAY_INFORMATION {
     LARGE_INTEGER BootTime;
     LARGE_INTEGER CurrentTime;
     LARGE_INTEGER TimeZoneBias;
@@ -499,33 +531,31 @@ typedef struct _SYSTEM_TIMEOFDAY_INFORMATION2 {
     ULONG Reserved;
     ULONGLONG BootTimeBias;
     ULONGLONG SleepTimeBias;
-} SYSTEM_TIMEOFDAY_INFORMATION2, *PSYSTEM_TIMEOFDAY_INFORMATION2;
-
-#define SYSTEM_TIMEOFDAY_INFORMATION SYSTEM_TIMEOFDAY_INFORMATION2
+} SYSTEM_TIMEOFDAY_INFORMATION, *PSYSTEM_TIMEOFDAY_INFORMATION;
 
 // ====================================================================
 // PEB structs for cmdline(), cwd(), environ()
 // ====================================================================
 
 #ifdef _WIN64
-typedef struct {
+typedef struct _PEB {
     BYTE Reserved1[2];
     BYTE BeingDebugged;
     BYTE Reserved2[21];
     PVOID LoaderData;
-    PRTL_USER_PROCESS_PARAMETERS_ ProcessParameters;
+    PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
     // more fields...
-} PEB_;
+} PEB;
 
 // When we are a 64 bit process accessing a 32 bit (WoW64)
 // process we need to use the 32 bit structure layout.
-typedef struct {
+typedef struct _UNICODE_STRING32 {
     USHORT Length;
     USHORT MaxLength;
     DWORD Buffer;
 } UNICODE_STRING32;
 
-typedef struct {
+typedef struct _RTL_USER_PROCESS_PARAMETERS32 {
     BYTE Reserved1[16];
     DWORD Reserved2[5];
     UNICODE_STRING32 CurrentDirectoryPath;
@@ -536,7 +566,7 @@ typedef struct {
     DWORD env;
 } RTL_USER_PROCESS_PARAMETERS32;
 
-typedef struct {
+typedef struct _PEB32 {
     BYTE Reserved1[2];
     BYTE BeingDebugged;
     BYTE Reserved2[1];
@@ -546,45 +576,105 @@ typedef struct {
     // more fields...
 } PEB32;
 #else  // ! _WIN64
-typedef struct {
+typedef struct _PEB {
     BYTE Reserved1[2];
     BYTE BeingDebugged;
     BYTE Reserved2[1];
     PVOID Reserved3[2];
     PVOID Ldr;
-    PRTL_USER_PROCESS_PARAMETERS_ ProcessParameters;
+    PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
     // more fields...
-} PEB_;
+} PEB;
 #endif  // _WIN64
 
 // ================================================================
-// Type defs for modules loaded at runtime.
+// Functions loaded at runtime.
 // ================================================================
+// The pointers live in init.c; psutil_loadlibs() assigns them on
+// module import.
 
-NTSTATUS (NTAPI *_NtQueryInformationProcess) (
+typedef NTSTATUS (NTAPI *_NtQueryInformationProcess) (
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
     DWORD ProcessInformationLength,
     PDWORD ReturnLength);
 
-#define NtQueryInformationProcess _NtQueryInformationProcess
+extern _NtQueryInformationProcess NtQueryInformationProcess;
 
-NTSTATUS (NTAPI *_NtQuerySystemInformation) (
+typedef NTSTATUS (NTAPI *_NtQuerySystemInformation) (
     ULONG SystemInformationClass,
     PVOID SystemInformation,
     ULONG SystemInformationLength,
     PULONG ReturnLength);
 
-#define NtQuerySystemInformation _NtQuerySystemInformation
+extern _NtQuerySystemInformation NtQuerySystemInformation;
 
-NTSTATUS (NTAPI *_NtSetInformationProcess) (
+typedef NTSTATUS (NTAPI *_NtSetInformationProcess) (
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
     DWORD ProcessInformationLength);
 
-#define NtSetInformationProcess _NtSetInformationProcess
+extern _NtSetInformationProcess NtSetInformationProcess;
+
+typedef NTSTATUS (NTAPI *_NtQueryObject) (
+    HANDLE Handle,
+    OBJECT_INFORMATION_CLASS ObjectInformationClass,
+    PVOID ObjectInformation,
+    ULONG ObjectInformationLength,
+    PULONG ReturnLength);
+
+extern _NtQueryObject NtQueryObject;
+
+typedef NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
+    HANDLE ProcessHandle,
+    PVOID BaseAddress,
+    int MemoryInformationClass,
+    PVOID MemoryInformation,
+    SIZE_T MemoryInformationLength,
+    PSIZE_T ReturnLength);
+
+extern _NtQueryVirtualMemory NtQueryVirtualMemory;
+
+typedef NTSTATUS (WINAPI *_NtResumeProcess) (HANDLE hProcess);
+
+extern _NtResumeProcess NtResumeProcess;
+
+typedef NTSTATUS (WINAPI *_NtSuspendProcess) (HANDLE hProcess);
+
+extern _NtSuspendProcess NtSuspendProcess;
+
+typedef NTSTATUS (WINAPI *_RtlGetVersion) (
+    PRTL_OSVERSIONINFOW lpVersionInformation);
+
+extern _RtlGetVersion RtlGetVersion;
+
+typedef ULONG (WINAPI *_RtlNtStatusToDosErrorNoTeb) (NTSTATUS status);
+
+extern _RtlNtStatusToDosErrorNoTeb RtlNtStatusToDosErrorNoTeb;
+
+typedef BOOL (CALLBACK *_WTSQuerySessionInformationW) (
+    HANDLE hServer,
+    DWORD SessionId,
+    WTS_INFO_CLASS WTSInfoClass,
+    LPWSTR* ppBuffer,
+    DWORD* pBytesReturned);
+
+extern _WTSQuerySessionInformationW WTSQuerySessionInformationW;
+
+typedef BOOL (CALLBACK *_WTSEnumerateSessionsW) (
+    HANDLE hServer,
+    DWORD Reserved,
+    DWORD Version,
+    PWTS_SESSION_INFOW* ppSessionInfo,
+    DWORD* pCount);
+
+extern _WTSEnumerateSessionsW WTSEnumerateSessionsW;
+
+typedef VOID (CALLBACK *_WTSFreeMemory) (PVOID pMemory);
+
+extern _WTSFreeMemory WTSFreeMemory;
 
 // Declared in <ip2string.h>, which can't be included from user-mode
 // code (it expects kernel types we don't have). Exported by ntdll.lib.
@@ -594,75 +684,5 @@ RtlIpv4AddressToStringA(struct in_addr *Addr, PSTR S);
 NTSYSAPI PSTR NTAPI
 RtlIpv6AddressToStringA(struct in6_addr *Addr, PSTR P);
 
-BOOL(CALLBACK *_WTSQuerySessionInformationW) (
-    HANDLE hServer,
-    DWORD SessionId,
-    WTS_INFO_CLASS WTSInfoClass,
-    LPWSTR* ppBuffer,
-    DWORD* pBytesReturned
-    );
-
-#define WTSQuerySessionInformationW _WTSQuerySessionInformationW
-
-BOOL(CALLBACK *_WTSEnumerateSessionsW)(
-    HANDLE hServer,
-    DWORD Reserved,
-    DWORD Version,
-    PWTS_SESSION_INFO* ppSessionInfo,
-    DWORD* pCount
-    );
-
-#define WTSEnumerateSessionsW _WTSEnumerateSessionsW
-
-VOID(CALLBACK *_WTSFreeMemory)(
-    IN PVOID pMemory
-    );
-
-#define WTSFreeMemory _WTSFreeMemory
-
-NTSTATUS (NTAPI *_NtQueryObject) (
-    HANDLE Handle,
-    OBJECT_INFORMATION_CLASS ObjectInformationClass,
-    PVOID ObjectInformation,
-    ULONG ObjectInformationLength,
-    PULONG ReturnLength);
-
-#define NtQueryObject _NtQueryObject
-
-NTSTATUS (WINAPI *_RtlGetVersion) (
-    PRTL_OSVERSIONINFOW lpVersionInformation
-);
-
-#define RtlGetVersion _RtlGetVersion
-
-NTSTATUS (WINAPI *_NtResumeProcess) (
-    HANDLE hProcess
-);
-
-#define NtResumeProcess _NtResumeProcess
-
-NTSTATUS (WINAPI *_NtSuspendProcess) (
-    HANDLE hProcess
-);
-
-#define NtSuspendProcess _NtSuspendProcess
-
-NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
-    HANDLE ProcessHandle,
-    PVOID BaseAddress,
-    int MemoryInformationClass,
-    PVOID MemoryInformation,
-    SIZE_T MemoryInformationLength,
-    PSIZE_T ReturnLength
-);
-
-#define NtQueryVirtualMemory _NtQueryVirtualMemory
-
-ULONG (WINAPI *_RtlNtStatusToDosErrorNoTeb) (
-    NTSTATUS status
-);
-
-#define RtlNtStatusToDosErrorNoTeb _RtlNtStatusToDosErrorNoTeb
-
-#endif // __NTEXTAPI_H__
+#endif // NTEXTAPI_H
 // clang-format on

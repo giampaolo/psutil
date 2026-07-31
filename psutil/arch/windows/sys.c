@@ -16,7 +16,6 @@
 #include <Python.h>
 #include <windows.h>
 
-#include "ntextapi.h"
 #include "../../arch/all/init.h"
 
 
