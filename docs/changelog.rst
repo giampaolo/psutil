@@ -286,6 +286,9 @@ Others:
   the ones which are not files are skipped by object type index, before being
   duplicated. Also, the internal thread used to query handle names is now
   created once per call instead of once per handle.
+- :gh:`2939`: syscalls which can potentially block (disk devices, mount points,
+  NIC drivers, etc) now release the GIL. Before, a slow psutil call would
+  freeze all the other threads of the application for its whole duration.
 
 **Bug fixes**
 

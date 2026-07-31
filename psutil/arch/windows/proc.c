@@ -721,6 +721,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     ULONG nameSize = 0x100;
     ULONG domainNameSize = 0x100;
     SID_NAME_USE nameUse;
+    BOOL ok;
     PyObject *py_username = NULL;
     PyObject *py_domain = NULL;
     PyObject *py_tuple = NULL;
@@ -743,16 +744,21 @@ psutil_proc_username(PyObject *self, PyObject *args) {
             PyErr_NoMemory();
             goto error;
         }
-        if (!LookupAccountSidW(
-                NULL,
-                userToken->User.Sid,
-                userName,
-                &nameSize,
-                domainName,
-                &domainNameSize,
-                &nameUse
-            ))
-        {
+        // On a domain member this may go over the wire to a domain
+        // controller, so do it without the GIL.
+        Py_BEGIN_ALLOW_THREADS
+        ok = LookupAccountSidW(
+            NULL,
+            userToken->User.Sid,
+            userName,
+            &nameSize,
+            domainName,
+            &domainNameSize,
+            &nameUse
+        );
+        Py_END_ALLOW_THREADS
+
+        if (!ok) {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
                 free(userName);
                 free(domainName);

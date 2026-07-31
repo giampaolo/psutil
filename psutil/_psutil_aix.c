@@ -454,13 +454,17 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    Py_BEGIN_ALLOW_THREADS
     file = setmntent(MNTTAB, "rb");
+    Py_END_ALLOW_THREADS
     if (file == NULL) {
         psutil_oserror();
         goto error;
     }
-    mt = getmntent(file);
-    while (mt != NULL) {
+
+    // NOTE: getmntent() is MT-Unsafe (it returns a pointer to a static
+    // buffer), so we can't release the GIL around it.
+    while ((mt = getmntent(file)) != NULL) {
         py_dev = PyUnicode_DecodeFSDefault(mt->mnt_fsname);
         if (!py_dev)
             goto error;
@@ -480,7 +484,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         }
         Py_CLEAR(py_dev);
         Py_CLEAR(py_mountp);
-        mt = getmntent(file);
     }
     endmntent(file);
     return py_retlist;
@@ -588,7 +591,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     str_copy(ifr.ifr_name, sizeof(ifr.ifr_name), nic_name);
 
     // is up?
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
+    Py_END_ALLOW_THREADS
     if (ret == -1)
         goto error;
     if ((ifr.ifr_flags & IFF_UP) != 0)
@@ -598,7 +603,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     Py_INCREF(py_is_up);
 
     // MTU
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sock, SIOCGIFMTU, &ifr);
+    Py_END_ALLOW_THREADS
     if (ret == -1)
         goto error;
     mtu = ifr.ifr_mtu;

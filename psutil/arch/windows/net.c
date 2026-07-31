@@ -18,11 +18,14 @@
 static PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses(void) {
     ULONG bufferLength = 0;
+    ULONG ret;
     PIP_ADAPTER_ADDRESSES buffer;
 
-    if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, &bufferLength)
-        != ERROR_BUFFER_OVERFLOW)
-    {
+    // Queries the network stack, may be slow with many adapters.
+    Py_BEGIN_ALLOW_THREADS
+    ret = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, &bufferLength);
+    Py_END_ALLOW_THREADS
+    if (ret != ERROR_BUFFER_OVERFLOW) {
         psutil_runtime_error("GetAdaptersAddresses() syscall failed.");
         return NULL;
     }
@@ -34,9 +37,10 @@ psutil_get_nic_addresses(void) {
     }
     memset(buffer, 0, bufferLength);
 
-    if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, buffer, &bufferLength)
-        != ERROR_SUCCESS)
-    {
+    Py_BEGIN_ALLOW_THREADS
+    ret = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, buffer, &bufferLength);
+    Py_END_ALLOW_THREADS
+    if (ret != ERROR_SUCCESS) {
         free(buffer);
         psutil_runtime_error("GetAdaptersAddresses() syscall failed.");
         return NULL;
@@ -74,7 +78,9 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         SecureZeroMemory(&ifRow, sizeof(ifRow));
         ifRow.InterfaceIndex = pCurrAddresses->IfIndex;
 
+        Py_BEGIN_ALLOW_THREADS
         dwRetVal = GetIfEntry2(&ifRow);
+        Py_END_ALLOW_THREADS
         if (dwRetVal != NO_ERROR) {
             psutil_runtime_error(
                 "GetIfEntry2() syscall failed for interface %lu",
@@ -364,7 +370,10 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         goto error;
     }
     dwSize = sizeof(MIB_IFTABLE);
-    if (GetIfTable(pIfTable, &dwSize, FALSE) == ERROR_INSUFFICIENT_BUFFER) {
+    Py_BEGIN_ALLOW_THREADS
+    dwRetVal = GetIfTable(pIfTable, &dwSize, FALSE);
+    Py_END_ALLOW_THREADS
+    if (dwRetVal == ERROR_INSUFFICIENT_BUFFER) {
         free(pIfTable);
         pIfTable = (MIB_IFTABLE *)malloc(dwSize);
         if (pIfTable == NULL) {
@@ -374,7 +383,10 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     }
     // Make a second call to GetIfTable to get the actual
     // data we want.
-    if ((dwRetVal = GetIfTable(pIfTable, &dwSize, FALSE)) != NO_ERROR) {
+    Py_BEGIN_ALLOW_THREADS
+    dwRetVal = GetIfTable(pIfTable, &dwSize, FALSE);
+    Py_END_ALLOW_THREADS
+    if (dwRetVal != NO_ERROR) {
         psutil_runtime_error("GetIfTable() syscall failed");
         goto error;
     }

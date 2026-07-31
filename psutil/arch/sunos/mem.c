@@ -78,7 +78,10 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     uint_t sin = 0;
     uint_t sout = 0;
 
+    // Opens /dev/kstat and snapshots the whole kstat chain.
+    Py_BEGIN_ALLOW_THREADS
     kc = kstat_open();
+    Py_END_ALLOW_THREADS
     if (kc == NULL)
         return psutil_oserror();
     ;

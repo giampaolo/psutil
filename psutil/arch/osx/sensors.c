@@ -32,13 +32,18 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     int time_to_empty;  // units are minutes
     int is_power_plugged;
 
+    // Queries the power management stack (IPC + SMC).
+    Py_BEGIN_ALLOW_THREADS
     power_info = IOPSCopyPowerSourcesInfo();
+    Py_END_ALLOW_THREADS
     if (!power_info) {
         psutil_runtime_error("IOPSCopyPowerSourcesInfo() syscall failed");
         goto error;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     power_sources_list = IOPSCopyPowerSourcesList(power_info);
+    Py_END_ALLOW_THREADS
     if (!power_sources_list) {
         psutil_runtime_error("IOPSCopyPowerSourcesList() syscall failed");
         goto error;
