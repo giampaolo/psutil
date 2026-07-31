@@ -4,7 +4,10 @@
  * found in the LICENSE file.
  */
 
-// Helper functions related to fetching process information.
+// Process cmdline(), cwd() and environ() implementations. All three
+// live in the process PEB (Process Environment Block), which we read
+// with ReadProcessMemory(). cmdline() can also avoid the PEB and use
+// NtQueryInformationProcess() instead, see psutil_proc_cmdline().
 
 #include <Python.h>
 #include <windows.h>
