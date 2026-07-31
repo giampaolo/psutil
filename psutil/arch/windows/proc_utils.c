@@ -14,8 +14,8 @@
 
 
 // Return 1 if PID exists, 0 if not, -1 on error.
-int
-psutil_pid_in_pids(DWORD pid) {
+static int
+pid_in_pids(DWORD pid) {
     DWORD *pids_array = NULL;
     int pids_count = 0;
     int i;
@@ -35,62 +35,34 @@ psutil_pid_in_pids(DWORD pid) {
 }
 
 
-// Given a process handle checks whether it's actually running. If it
-// does return the handle, else return NULL with Python exception set.
-// This is needed because OpenProcess API sucks.
-HANDLE
-psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
+// Check whether the process behind an open handle is still alive.
+// Return 1 if it is, 0 if it's gone, -1 on error with a Python
+// exception set. The handle is left open in all cases.
+static int
+phandle_is_running(HANDLE hProcess, DWORD pid) {
     DWORD exitCode;
 
-    if (hProcess == NULL) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            // Yeah, this is the actual error code in case of
-            // "no such process".
-            psutil_oserror_nsp("OpenProcess -> ERROR_INVALID_PARAMETER");
-            return NULL;
+    if (!GetExitCodeProcess(hProcess, &exitCode)) {
+        if (GetLastError() == ERROR_ACCESS_DENIED) {
+            // Can't query the handle, but it's open, so the process
+            // exists.
+            psutil_debug("GetExitCodeProcess -> ERROR_ACCESS_DENIED (ignored)"
+            );
+            SetLastError(0);
+            return 1;
         }
-        if (GetLastError() == ERROR_SUCCESS) {
-            // Yeah, it's this bad.
-            // https://github.com/giampaolo/psutil/issues/1877
-            if (psutil_pid_in_pids(pid) == 1) {
-                psutil_debug("OpenProcess -> ERROR_SUCCESS turned into AD");
-                psutil_oserror_ad("OpenProcess -> ERROR_SUCCESS");
-            }
-            else {
-                psutil_debug("OpenProcess -> ERROR_SUCCESS turned into NSP");
-                psutil_oserror_nsp("OpenProcess -> ERROR_SUCCESS");
-            }
-            return NULL;
-        }
-        psutil_oserror_wsyscall("OpenProcess");
-        return NULL;
+        psutil_oserror_wsyscall("GetExitCodeProcess");
+        return -1;
     }
 
-    if (check_exit_code == 0)
-        return hProcess;
+    // XXX - maybe STILL_ACTIVE is not fully reliable as per:
+    // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
+    if (exitCode == STILL_ACTIVE)
+        return 1;
 
-    if (GetExitCodeProcess(hProcess, &exitCode)) {
-        // XXX - maybe STILL_ACTIVE is not fully reliable as per:
-        // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
-        if (exitCode == STILL_ACTIVE) {
-            return hProcess;
-        }
-        if (psutil_pid_in_pids(pid) == 1) {
-            return hProcess;
-        }
-        CloseHandle(hProcess);
-        psutil_oserror_nsp("GetExitCodeProcess != STILL_ACTIVE");
-        return NULL;
-    }
-
-    if (GetLastError() == ERROR_ACCESS_DENIED) {
-        psutil_debug("GetExitCodeProcess -> ERROR_ACCESS_DENIED (ignored)");
-        SetLastError(0);
-        return hProcess;
-    }
-    psutil_oserror_wsyscall("GetExitCodeProcess");
-    CloseHandle(hProcess);
-    return NULL;
+    // The process appears to be gone; double check against the full
+    // PID list.
+    return pid_in_pids(pid);
 }
 
 
@@ -101,6 +73,8 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
 HANDLE
 psutil_handle_from_pid(DWORD pid, DWORD access) {
     HANDLE hProcess;
+    int running;
+    int in_list;
 
     if (pid == 0) {
         // otherwise we'd get NoSuchProcess
@@ -108,14 +82,39 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
     }
 
     hProcess = OpenProcess(access, FALSE, pid);
-
-    if ((hProcess == NULL) && (GetLastError() == ERROR_ACCESS_DENIED)) {
-        psutil_oserror_wsyscall("OpenProcess");
+    if (hProcess == NULL) {
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            // Yeah, this is the actual error code in case of
+            // "no such process".
+            psutil_oserror_nsp("OpenProcess -> ERROR_INVALID_PARAMETER");
+        }
+        else if (GetLastError() == ERROR_SUCCESS) {
+            // Yeah, it's this bad.
+            // https://github.com/giampaolo/psutil/issues/1877
+            in_list = pid_in_pids(pid);
+            if (in_list == 1) {
+                psutil_debug("OpenProcess -> ERROR_SUCCESS turned into AD");
+                psutil_oserror_ad("OpenProcess -> ERROR_SUCCESS");
+            }
+            else if (in_list == 0) {
+                psutil_debug("OpenProcess -> ERROR_SUCCESS turned into NSP");
+                psutil_oserror_nsp("OpenProcess -> ERROR_SUCCESS");
+            }
+            // on -1 the exception is already set
+        }
+        else {
+            psutil_oserror_wsyscall("OpenProcess");
+        }
         return NULL;
     }
 
-    hProcess = psutil_check_phandle(hProcess, pid, 1);
-    return hProcess;
+    running = phandle_is_running(hProcess, pid);
+    if (running == 1)
+        return hProcess;
+    CloseHandle(hProcess);
+    if (running == 0)
+        psutil_oserror_nsp("GetExitCodeProcess != STILL_ACTIVE");
+    return NULL;
 }
 
 
@@ -123,26 +122,25 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
 int
 psutil_pid_is_running(DWORD pid) {
     HANDLE hProcess;
+    int running;
 
     // Special case for PID 0 System Idle Process
     if (pid == 0)
         return 1;
-    if (pid < 0)
-        return 0;
 
     hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
-
-    if (hProcess != NULL) {
-        hProcess = psutil_check_phandle(hProcess, pid, 1);
-        if (hProcess != NULL) {
-            CloseHandle(hProcess);
-            return 1;
-        }
-        CloseHandle(hProcess);
+    if (hProcess == NULL) {
+        // Can't tell from the error code alone; check the PID list.
+        return pid_in_pids(pid);
     }
 
+    running = phandle_is_running(hProcess, pid);
+    CloseHandle(hProcess);
+    // 0 means phandle_is_running() already vetted the PID list.
+    if (running != -1)
+        return running;
     PyErr_Clear();
-    return psutil_pid_in_pids(pid);
+    return pid_in_pids(pid);
 }
 
 

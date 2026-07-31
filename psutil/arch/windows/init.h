@@ -56,7 +56,6 @@ extern PyObject *TimeoutAbandoned;
 
 
 int _psutil_pids(DWORD **pids_array, int *pids_count);
-HANDLE psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code);
 HANDLE psutil_handle_from_pid(DWORD pid, DWORD dwDesiredAccess);
 int psutil_assert_pid_exists(DWORD pid, char *err);
 int psutil_assert_pid_not_exists(DWORD pid, char *err);
