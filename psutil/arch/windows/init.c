@@ -31,8 +31,6 @@ psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall) {
         err = WIN32_FROM_NTSTATUS(status);
     else
         err = RtlNtStatusToDosErrorNoTeb(status);
-    // if (GetLastError() != 0)
-    //     err = GetLastError();
     str_format(fullmsg, sizeof(fullmsg), "(originated from %s)", syscall);
     return PyErr_SetFromWindowsErrWithFilename(err, fullmsg);
 }
@@ -197,7 +195,7 @@ psutil_check_winver() {
     status = RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
     if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(status, "RtlGetVersion");
-        return 1;
+        return -1;
     }
     maj = versionInfo.dwMajorVersion;
     min = versionInfo.dwMinorVersion;
@@ -209,7 +207,7 @@ psutil_check_winver() {
             maj,
             min
         );
-        return 1;
+        return -1;
     }
     return 0;
 }
