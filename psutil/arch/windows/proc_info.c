@@ -344,16 +344,13 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     int func_ret;
     DWORD pid;
     int pid_return;
-    int use_peb;
-    // TODO: shouldn't this be decref-ed in case of error on
-    // PyArg_ParseTuple?
-    PyObject *py_usepeb = Py_True;
+    int use_peb = 1;
     PyObject *py_retlist = NULL;
     PyObject *py_unicode = NULL;
     static char *keywords[] = {"pid", "use_peb", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(
-            args, kwdict, _Py_PARSE_PID "|O", keywords, &pid, &py_usepeb
+            args, kwdict, _Py_PARSE_PID "|p", keywords, &pid, &use_peb
         ))
     {
         return NULL;
@@ -366,8 +363,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
         return psutil_oserror_nsp("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
-
-    use_peb = (py_usepeb == Py_True) ? 1 : 0;
 
     // Reading the PEB to get the cmdline seem to be the best method if
     // somebody has tampered with the parameters after creating the
