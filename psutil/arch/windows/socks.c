@@ -147,13 +147,6 @@ __GetExtendedUdpTable(ULONG family) {
 }
 
 
-#define psutil_conn_decref_objs() \
-    Py_XDECREF(_AF_INET);         \
-    Py_XDECREF(_AF_INET6);        \
-    Py_XDECREF(_SOCK_STREAM);     \
-    Py_XDECREF(_SOCK_DGRAM);
-
-
 /*
  * Return a list of network connections opened by a process
  */
@@ -168,6 +161,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PMIB_UDP6TABLE_OWNER_PID udp6Table;
     ULONG i;
     int ok;
+    psutil_conn_filters filters;
     CHAR addressBufferLocal[65];
     CHAR addressBufferRemote[65];
 
@@ -176,42 +170,29 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *py_type_filter = NULL;
     PyObject *py_addr_tuple_local = NULL;
     PyObject *py_addr_tuple_remote = NULL;
-    PyObject *_AF_INET = PyLong_FromLong((long)AF_INET);
-    PyObject *_AF_INET6 = PyLong_FromLong((long)AF_INET6);
-    PyObject *_SOCK_STREAM = PyLong_FromLong((long)SOCK_STREAM);
-    PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
 
     if (!PyArg_ParseTuple(
             args, _Py_PARSE_PID "OO", &pid, &py_af_filter, &py_type_filter
         ))
     {
-        goto error;
-    }
-
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        psutil_conn_decref_objs();
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         return NULL;
     }
 
+    if (psutil_parse_conn_filters(py_af_filter, py_type_filter, &filters) != 0)
+        return NULL;
+
     if (pid != -1) {
-        if (psutil_check_pid_running(pid) != 0) {
-            psutil_conn_decref_objs();
+        if (psutil_check_pid_running(pid) != 0)
             return NULL;
-        }
     }
 
     py_retlist = PyList_New(0);
-    if (py_retlist == NULL) {
-        psutil_conn_decref_objs();
+    if (py_retlist == NULL)
         return NULL;
-    }
 
     // TCP IPv4
 
-    if ((PySequence_Contains(py_af_filter, _AF_INET) == 1)
-        && (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1))
-    {
+    if (filters.tcp && filters.v4) {
         table = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
@@ -293,9 +274,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     }
 
     // TCP IPv6
-    if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1)
-        && (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1))
-    {
+    if (filters.tcp && filters.v6) {
         table = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
@@ -379,9 +358,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     // UDP IPv4
 
-    if ((PySequence_Contains(py_af_filter, _AF_INET) == 1)
-        && (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1))
-    {
+    if (filters.udp && filters.v4) {
         table = NULL;
         py_addr_tuple_local = NULL;
         table = __GetExtendedUdpTable(AF_INET);
@@ -438,9 +415,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     // UDP IPv6
 
-    if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1)
-        && (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1))
-    {
+    if (filters.udp && filters.v6) {
         table = NULL;
         py_addr_tuple_local = NULL;
         table = __GetExtendedUdpTable(AF_INET6);
@@ -495,11 +470,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         table = NULL;
     }
 
-    psutil_conn_decref_objs();
     return py_retlist;
 
 error:
-    psutil_conn_decref_objs();
     Py_XDECREF(py_addr_tuple_local);
     Py_XDECREF(py_addr_tuple_remote);
     Py_XDECREF(py_retlist);

@@ -132,6 +132,19 @@ int str_append(char *dst, size_t dst_size, const char *src);
 int str_copy(char *dst, size_t dst_size, const char *src);
 int str_format(char *buf, size_t size, const char *fmt, ...);
 
+// The (af_filter, type_filter) args that the Python layer passes to
+// net_connections().
+typedef struct {
+    int v4;
+    int v6;
+    int unix_;  // can't be "unix": gcc predefines it as a macro
+    int tcp;
+    int udp;
+} psutil_conn_filters;
+
+int psutil_parse_conn_filters(
+    PyObject *py_af_filter, PyObject *py_type_filter, psutil_conn_filters *out
+);
 int pydict_add(PyObject *dict, const char *key, const char *fmt, ...);
 int pylist_append_fmt(PyObject *list, const char *fmt, ...);
 int pylist_append_obj(PyObject *list, PyObject *obj);

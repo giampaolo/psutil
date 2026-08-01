@@ -574,6 +574,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     pid_t pid;
     int num_fds;
     int i;
+    psutil_conn_filters filters;
     unsigned long nb;
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
@@ -599,10 +600,8 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     if (pid == 0)
         return py_retlist;
 
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+    if (psutil_parse_conn_filters(py_af_filter, py_type_filter, &filters) != 0)
         goto error;
-    }
 
     fds_pointer = psutil_proc_list_fds(pid, &num_fds);
     if (fds_pointer == NULL)
@@ -653,30 +652,23 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
             //
             int fd, family, type, lport, rport, state;
             char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
-            int inseq;
-            PyObject *py_family;
-            PyObject *py_type;
 
             fd = (int)fdp_pointer->proc_fd;
             family = si.psi.soi_family;
             type = si.psi.soi_type;
 
             // apply filters
-            py_family = PyLong_FromLong((long)family);
-            inseq = PySequence_Contains(py_af_filter, py_family);
-            Py_DECREF(py_family);
-            if (inseq == -1)
-                goto error;
-            if (inseq == 0)
+            if (!((family == AF_INET && filters.v4)
+                  || (family == AF_INET6 && filters.v6)
+                  || (family == AF_UNIX && filters.unix_)))
+            {
                 continue;
-
-            py_type = PyLong_FromLong((long)type);
-            inseq = PySequence_Contains(py_type_filter, py_type);
-            Py_DECREF(py_type);
-            if (inseq == -1)
-                goto error;
-            if (inseq == 0)
+            }
+            if (!((type == SOCK_STREAM && filters.tcp)
+                  || (type == SOCK_DGRAM && filters.udp)))
+            {
                 continue;
+            }
 
             if ((family == AF_INET) || (family == AF_INET6)) {
                 if (family == AF_INET) {
