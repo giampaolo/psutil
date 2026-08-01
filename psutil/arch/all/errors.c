@@ -98,13 +98,34 @@ psutil_oserror_ad(const char *syscall) {
 }
 
 
-// Emit a RuntimeWarning, also printed by psutil_debug(). It never
-// raises: with -W error the exception is discarded.
+// Print a debug message to stderr. Don't call this directly, use the
+// psutil_debug() macro, which fills in `file` and `line` with the
+// caller's location.
 void
-psutil_warn(const char *fmt, ...) {
+_psutil_debug_impl(const char *file, int line, const char *fmt, ...) {
+    va_list args;
+
+    if (!PSUTIL_DEBUG)
+        return;
+    fprintf(stderr, "psutil-debug [%s:%d]> ", file, line);
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+    fprintf(stderr, "\n");
+}
+
+
+// Emit a RuntimeWarning, also printed as a debug message. It never
+// raises: with -W error the exception is discarded. Don't call this
+// directly, use the psutil_warn() macro, which fills in `file` and
+// `line` with the caller's location.
+void
+_psutil_warn_impl(const char *file, int line, const char *fmt, ...) {
     char msg[MSG_SIZE];
+    char full[MSG_SIZE + 512];
     va_list args;
     int ret;
+    PyGILState_STATE gstate;
 
     va_start(args, fmt);
     ret = vsnprintf(msg, sizeof(msg), fmt, args);
@@ -113,9 +134,17 @@ psutil_warn(const char *fmt, ...) {
     if (ret < 0)
         str_copy(msg, sizeof(msg), "psutil_warn: bad format");
 
-    psutil_debug("%s", msg);
-    if (PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1) != 0)
+    _psutil_debug_impl(file, line, "%s", msg);
+
+    str_format(
+        full, sizeof(full), "%s (originated from %s:%d)", msg, file, line
+    );
+    // Grab the GIL: unlike psutil_debug() this is safe to call also
+    // inside Py_BEGIN/END_ALLOW_THREADS blocks.
+    gstate = PyGILState_Ensure();
+    if (PyErr_WarnEx(PyExc_RuntimeWarning, full, 1) != 0)
         PyErr_Clear();
+    PyGILState_Release(gstate);
 }
 
 

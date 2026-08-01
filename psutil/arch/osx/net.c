@@ -45,14 +45,14 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
     for (next = buf; next < lim;) {
         if ((size_t)(lim - next) < offsetof(struct if_msghdr, ifm_addrs)) {
-            psutil_debug("truncated route message (skip remaining)");
+            psutil_warn("truncated route message (skip remaining)");
             break;
         }
 
         ifm = (struct if_msghdr *)next;
 
         if (ifm->ifm_msglen == 0 || next + ifm->ifm_msglen > lim) {
-            psutil_debug("ifm_msglen size mismatch (skip entry)");
+            psutil_warn("ifm_msglen size mismatch (skip entry)");
             break;
         }
 
@@ -63,14 +63,14 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
             struct if_msghdr2 *if2m = (struct if_msghdr2 *)ifm;
 
             if ((char *)if2m + sizeof(struct if_msghdr2) > lim) {
-                psutil_debug("if_msghdr2 + sockaddr_dl mismatch (skip entry)");
+                psutil_warn("if_msghdr2 + sockaddr_dl mismatch (skip entry)");
                 continue;
             }
 
             struct sockaddr_dl *sdl = (struct sockaddr_dl *)(if2m + 1);
 
             if ((char *)sdl + sizeof(struct sockaddr_dl) > lim) {
-                psutil_debug("not enough buffer for sockaddr_dl (skip entry)");
+                psutil_warn("not enough buffer for sockaddr_dl (skip entry)");
                 continue;
             }
 
