@@ -99,8 +99,7 @@ psutil_oserror_ad(const char *syscall) {
 
 
 // Print a debug message to stderr. Don't call this directly, use the
-// psutil_debug() macro, which fills in `file` and `line` with the
-// caller's location.
+// psutil_debug() macro.
 void
 _psutil_debug_impl(const char *file, int lineno, const char *fmt, ...) {
     va_list args;
@@ -117,8 +116,7 @@ _psutil_debug_impl(const char *file, int lineno, const char *fmt, ...) {
 
 // Emit a RuntimeWarning, also printed as a debug message. It never
 // raises: with -W error the exception is discarded. Don't call this
-// directly, use the psutil_warn() macro, which fills in `file` and
-// `lineno` with the caller's location.
+// directly, use the psutil_warn() macro.
 void
 _psutil_warn_impl(const char *file, int lineno, const char *fmt, ...) {
     char msg[MSG_SIZE];

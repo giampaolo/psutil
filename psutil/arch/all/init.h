@@ -113,16 +113,11 @@ extern int PSUTIL_TESTING;
 // --- Internal utils
 // ====================================================================
 
-// Print a debug message to stderr, including where it originated from
-// within the C code (file path + lineno).
 void _psutil_debug_impl(const char *file, int line, const char *fmt, ...);
 #define psutil_debug(...) _psutil_debug_impl(__FILE__, __LINE__, __VA_ARGS__)
 
-// Same as psutil_debug(), but also emit a RuntimeWarning with the
-// origin file + lineno appended to the message.
 void _psutil_warn_impl(const char *file, int line, const char *fmt, ...);
 #define psutil_warn(...) _psutil_warn_impl(__FILE__, __LINE__, __VA_ARGS__)
-
 
 PyObject *psutil_oserror(void);
 PyObject *psutil_oserror_ad(const char *msg);
