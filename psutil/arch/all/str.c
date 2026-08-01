@@ -28,15 +28,8 @@ str_error(const char *fmt, ...) {
     if (ret < 0)
         str_copy(msg, sizeof(msg), "str_error: bad format");
 
-    if (PSUTIL_TESTING) {
-        fprintf(stderr, "CRITICAL: %s\n", msg);
-        fflush(stderr);
-        exit(EXIT_FAILURE);  // terminate execution
-    }
-    else {
-        // Warn because we never check str_*() return value.
-        psutil_warn("%s", msg);
-    }
+    // Warn because we never check str_*() return value.
+    psutil_warn("%s", msg);
     return -1;
 }
 

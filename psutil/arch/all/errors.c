@@ -6,6 +6,7 @@
 
 #include <Python.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #if defined(PSUTIL_WINDOWS)
 #include <windows.h>
@@ -137,6 +138,13 @@ _psutil_warn_impl(const char *file, int lineno, const char *fmt, ...) {
     str_format(
         full, sizeof(full), "%s (originated from %s:%d)", msg, file, lineno
     );
+
+    if (PSUTIL_TESTING) {
+        fprintf(stderr, "CRITICAL: %s\n", full);
+        fflush(stderr);
+        exit(EXIT_FAILURE);  // terminate execution
+    }
+
     // Grab the GIL: unlike psutil_debug() this is safe to call also
     // inside Py_BEGIN/END_ALLOW_THREADS blocks.
     gstate = PyGILState_Ensure();
