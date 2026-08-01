@@ -592,6 +592,9 @@ class Process:
                 raise AccessDenied(self.pid, self._name)
             if 'no such process' in stderr.lower():
                 raise NoSuchProcess(self.pid, self._name)
+            if self.status() == ProcessStatus.STATUS_ZOMBIE:
+                # pfiles can't examine zombies
+                raise ZombieProcess(self.pid, self._name, self._ppid)
             msg = f"{cmd!r} command error\n{stderr}"
             raise RuntimeError(msg)
 
