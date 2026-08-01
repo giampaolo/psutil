@@ -133,6 +133,11 @@ class TestProcessAPIs(PsutilTestCase):
         )
         assert start_ps == start_psutil
 
+    def test_environ_zombie(self):
+        _parent, zombie = self.spawn_zombie()
+        with pytest.raises(psutil.ZombieProcess):
+            zombie.environ()
+
 
 @skipif(not BSD, reason="BSD only")
 class TestVmstat(PsutilTestCase):

@@ -13,10 +13,18 @@
 #ifdef PSUTIL_NETBSD
 // Same states as the kernel's P_ZOMBIE(), which we can't use here:
 // it reads p_stat, which in kinfo_proc2 is the LWP status. The
-// process one is p_realstat.
+// process one is p_realstat. A dying process goes SDYING -> SDEAD
+// -> SZOMB, and only the last one has the same value as its LWP
+// counterpart.
 #define PSUTIL_KINFO_ZOMBIE(kp)                            \
     ((kp).p_realstat == SZOMB || (kp).p_realstat == SDYING \
      || (kp).p_realstat == SDEAD)
+#elif defined(PSUTIL_OPENBSD)
+// According to /usr/include/sys/proc.h SZOMB is unused.
+// test_zombie_process() shows that SDEAD is the right equivalent.
+#define PSUTIL_KINFO_ZOMBIE(kp) ((kp).p_stat == SZOMB || (kp).p_stat == SDEAD)
+#elif defined(PSUTIL_FREEBSD)
+#define PSUTIL_KINFO_ZOMBIE(kp) ((kp).ki_stat == SZOMB)
 #endif
 
 #if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)

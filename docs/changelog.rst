@@ -507,6 +507,11 @@ Others:
 - :gh:`2951`, [OpenBSD]: :func:`cpu_times` returned times averaged across CPUs
   instead of summed, like on all the other platforms. Now it sums the per-CPU
   counters.
+- :gh:`2952`, [OpenBSD]: :meth:`Process.environ` raised ``OSError(EINVAL)`` for
+  a process which started exiting, e.g. mid-way to becoming a zombie. Also, for
+  consistency, :meth:`Process.environ` for a zombie now raises
+  :exc:`ZombieProcess` on all BSDs (NetBSD used to return an empty dict, see
+  :gh:`2911`).
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
