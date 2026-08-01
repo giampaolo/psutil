@@ -1893,7 +1893,10 @@ class TestPopen(PsutilTestCase):
         cmd = [
             PYTHON_EXE,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)];",
+            (
+                "print('ready', flush=True);"
+                "import time; [time.sleep(0.1) for x in range(100)];"
+            ),
         ]
         with psutil.Popen(
             cmd,
@@ -1907,6 +1910,8 @@ class TestPopen(PsutilTestCase):
             assert dir(proc)
             with pytest.raises(AttributeError):
                 proc.foo  # noqa: B018
+
+            assert proc.stdout.readline().strip() == b"ready"
             proc.terminate()
 
             expected = -signal.SIGTERM if POSIX else signal.SIGTERM
@@ -1922,14 +1927,8 @@ class TestPopen(PsutilTestCase):
                 with contextlib.suppress(psutil.Error):
                     status = f" child status: {proc.status()};"
             if ret != expected:
-                masked = (
-                    signal.pthread_sigmask(signal.SIG_BLOCK, [])
-                    if POSIX
-                    else ""
-                )
                 return pytest.fail(
                     f"wait() returned {ret} instead of {expected};"
-                    f" blocked signals in this process: {masked};"
                     f"{status}"
                     f" child stderr: {proc.stderr.read()}"
                 )
