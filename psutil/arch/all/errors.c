@@ -119,10 +119,13 @@ _psutil_debug_impl(const char *file, int lineno, const char *fmt, ...) {
 // raises: with -W error the exception is discarded. Use it for events
 // which are never supposed to happen, and imply a psutil bug. Don't
 // call this directly, use the psutil_warn() macro.
+// Plain [v]snprintf() and no str_*() helpers in here: their failure
+// path calls psutil_warn(), which would recurse back into us.
 void
 _psutil_warn_impl(const char *file, int lineno, const char *fmt, ...) {
     char msg[MSG_SIZE];
     char full[MSG_SIZE + 512];
+    const char *warning;
     va_list args;
     int ret;
     PyGILState_STATE gstate;
@@ -130,26 +133,30 @@ _psutil_warn_impl(const char *file, int lineno, const char *fmt, ...) {
     va_start(args, fmt);
     ret = vsnprintf(msg, sizeof(msg), fmt, args);
     va_end(args);
+    msg[sizeof(msg) - 1] = '\0';
     // If vsnprintf() failed msg is garbage.
-    if (ret < 0)
-        str_copy(msg, sizeof(msg), "psutil_warn: bad format");
+    warning = (ret < 0) ? "psutil_warn: bad format" : msg;
 
-    _psutil_debug_impl(file, lineno, "%s", msg);
+    _psutil_debug_impl(file, lineno, "%s", warning);
 
-    str_format(
-        full, sizeof(full), "%s (originated from %s:%d)", msg, file, lineno
+    ret = snprintf(
+        full, sizeof(full), "%s (originated from %s:%d)", warning, file, lineno
     );
+    full[sizeof(full) - 1] = '\0';
+    if (ret >= 0)
+        warning = full;
 
     if (PSUTIL_TESTING) {
-        fprintf(stderr, "CRITICAL: %s\n", full);
+        fprintf(stderr, "CRITICAL: %s\n", warning);
         fflush(stderr);
         exit(EXIT_FAILURE);  // terminate execution
     }
 
     // Grab the GIL: unlike psutil_debug() this is safe to call also
-    // inside Py_BEGIN/END_ALLOW_THREADS blocks.
+    // inside Py_BEGIN/END_ALLOW_THREADS blocks. Caveat: the
+    // PyGILState_* API doesn't support sub-interpreters.
     gstate = PyGILState_Ensure();
-    if (PyErr_WarnEx(PyExc_RuntimeWarning, full, 1) != 0)
+    if (PyErr_WarnEx(PyExc_RuntimeWarning, warning, 1) != 0)
         PyErr_Clear();
     PyGILState_Release(gstate);
 }

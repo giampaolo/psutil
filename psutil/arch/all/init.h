@@ -112,7 +112,12 @@ extern int PSUTIL_TESTING;
 // ====================================================================
 
 void _psutil_debug_impl(const char *file, int line, const char *fmt, ...);
-#define psutil_debug(...) _psutil_debug_impl(__FILE__, __LINE__, __VA_ARGS__)
+// The check avoids evaluating the args when debug mode is off.
+#define psutil_debug(...)                                        \
+    do {                                                         \
+        if (PSUTIL_DEBUG)                                        \
+            _psutil_debug_impl(__FILE__, __LINE__, __VA_ARGS__); \
+    } while (0)
 
 void _psutil_warn_impl(const char *file, int line, const char *fmt, ...);
 #define psutil_warn(...) _psutil_warn_impl(__FILE__, __LINE__, __VA_ARGS__)
