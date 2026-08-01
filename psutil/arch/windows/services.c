@@ -134,7 +134,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     BOOL ok;
     SC_HANDLE sc = NULL;
     DWORD bytesNeeded = 0;
-    DWORD srvCount;
+    DWORD srvCount = 0;
     DWORD resumeHandle = 0;
     DWORD dwBytes = 0;
     DWORD i;
@@ -151,6 +151,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     Py_END_ALLOW_THREADS
     if (sc == NULL) {
         psutil_oserror_wsyscall("OpenSCManager");
+        Py_DECREF(py_retlist);
         return NULL;
     }
 
@@ -175,6 +176,15 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
             free(lpService);
         dwBytes = bytesNeeded;
         lpService = (ENUM_SERVICE_STATUS_PROCESSW *)malloc(dwBytes);
+        if (lpService == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
+    }
+
+    if (!ok) {
+        psutil_oserror_wsyscall("EnumServicesStatusExW");
+        goto error;
     }
 
     for (i = 0; i < srvCount; i++) {
@@ -206,7 +216,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_DECREF(py_name);
+    Py_XDECREF(py_name);
     Py_XDECREF(py_display_name);
     Py_DECREF(py_retlist);
     if (sc != NULL)

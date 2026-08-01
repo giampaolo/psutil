@@ -483,6 +483,8 @@ Others:
 - :gh:`2941`, [Windows]: :func:`net_io_counters` raised :exc:`RuntimeError`,
   losing the counters of all the other NICs, if a NIC was disabled or unplugged
   mid-call. Now it's skipped.
+- :gh:`2943`, [Windows]: :func:`win_service_iter` could crash the interpreter
+  instead of raising an exception if the service enumeration failed.
 - :gh:`2965`, [Windows]: on systems with more than 64 CPUs :func:`cpu_times`
   with ``percpu=True`` and :func:`cpu_stats` read uninitialized memory: the
   kernel only returns entries for the calling thread's processor group, but the
