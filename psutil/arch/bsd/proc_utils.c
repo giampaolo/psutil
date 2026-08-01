@@ -115,11 +115,5 @@ is_zombie(size_t pid) {
         return 0;
     }
 
-#if defined(PSUTIL_FREEBSD)
-    return kp.ki_stat == SZOMB;
-#else
-    // NetBSD: a dying process goes SDYING -> SDEAD -> SZOMB, and
-    // only the last one has the same value as its LWP counterpart.
     return PSUTIL_KINFO_ZOMBIE(kp);
-#endif
 }

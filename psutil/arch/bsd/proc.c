@@ -279,25 +279,31 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    // A zombie has no environment. Force ESRCH, which the Python
+    // layer converts into ZombieProcess.
+    if (PSUTIL_KINFO_ZOMBIE(*p)) {
+        psutil_oserror_nsp("kvm_getprocs -> zombie");
+        goto error;
+    }
+
     // On *BSD kernels there are a few kernel-only system processes without an
     // environment (See e.g. "procstat -e 0 | 1 | 2 ..." on FreeBSD.)
     // Some system process have no stats attached at all
     // (they are marked with P_SYSTEM.)
     // On FreeBSD, it's possible that the process is swapped or paged out,
     // then there no access to the environ stored in the process' user area.
-    // On NetBSD, we cannot call kvm_getenvv2() for a zombie process,
-    // including one which is still exiting (it fails with EINVAL).
     // To make unittest suite happy, return an empty environment.
 #if defined(PSUTIL_FREEBSD)
     if (!((p)->ki_flag & P_INMEM) || ((p)->ki_flag & P_SYSTEM)) {
-#elif defined(PSUTIL_NETBSD)
-    if (PSUTIL_KINFO_ZOMBIE(*p)) {
-#elif defined(PSUTIL_OPENBSD)
-    if ((p)->p_flag & P_SYSTEM) {
-#endif
         kvm_close(kd);
         return py_retdict;
     }
+#elif defined(PSUTIL_OPENBSD)
+    if ((p)->p_flag & P_SYSTEM) {
+        kvm_close(kd);
+        return py_retdict;
+    }
+#endif
 
 #if defined(PSUTIL_NETBSD)
     envs = kvm_getenvv2(kd, p, 0);
@@ -332,14 +338,10 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 // system proc. EFAULT: started exiting.
                 if (psutil_kinfo_proc(pid, &kp) == -1)
                     goto error;  // reaped in the meantime, raises NSP
-                if (PSUTIL_KINFO_ZOMBIE(kp)) {
-                    psutil_debug(
-                        "proc %ld environ(): zombie, return empty dict", pid
-                    );
-                    kvm_close(kd);
-                    return py_retdict;
-                }
-                psutil_oserror_wsyscall("kvm_getenvv");
+                if (PSUTIL_KINFO_ZOMBIE(kp))
+                    psutil_oserror_nsp("kvm_getenvv -> zombie");
+                else
+                    psutil_oserror_wsyscall("kvm_getenvv");
                 break;
 #elif defined(PSUTIL_FREEBSD)
             case ENOMEM:

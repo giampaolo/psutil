@@ -135,14 +135,9 @@ class TestProcessAPIs(PsutilTestCase):
 
     def test_environ_zombie(self):
         # The kernel can't provide the environment of a zombie.
-        # NetBSD returns an empty dict; FreeBSD and OpenBSD raise
-        # ZombieProcess (their sysctl fails with ESRCH).
         _parent, zombie = self.spawn_zombie()
-        if NETBSD:
-            assert zombie.environ() == {}
-        else:
-            with pytest.raises(psutil.ZombieProcess):
-                zombie.environ()
+        with pytest.raises(psutil.ZombieProcess):
+            zombie.environ()
 
 
 @skipif(not BSD, reason="BSD only")
