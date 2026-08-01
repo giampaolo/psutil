@@ -161,6 +161,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PMIB_TCP6TABLE_OWNER_PID tcp6Table;
     PMIB_UDP6TABLE_OWNER_PID udp6Table;
     ULONG i;
+    int ok;
     CHAR addressBufferLocal[65];
     CHAR addressBufferRemote[65];
 
@@ -263,22 +264,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_remote == NULL)
                 goto error;
 
-            if (!pylist_append_fmt(
-                    py_retlist,
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET,
-                    SOCK_STREAM,
-                    py_addr_tuple_local,
-                    py_addr_tuple_remote,
-                    tcp4Table->table[i].dwState,
-                    tcp4Table->table[i].dwOwningPid
-                ))
-            {
-                goto error;
-            }
+            ok = pylist_append_fmt(
+                py_retlist,
+                "(iiiNNiI)",
+                -1,
+                AF_INET,
+                SOCK_STREAM,
+                py_addr_tuple_local,
+                py_addr_tuple_remote,
+                tcp4Table->table[i].dwState,
+                tcp4Table->table[i].dwOwningPid
+            );
+            // "N" consumes the references, whether it succeeds or not.
             py_addr_tuple_local = NULL;
             py_addr_tuple_remote = NULL;
+            if (!ok)
+                goto error;
         }
 
         free(table);
@@ -348,22 +349,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_remote == NULL)
                 goto error;
 
-            if (!pylist_append_fmt(
-                    py_retlist,
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET6,
-                    SOCK_STREAM,
-                    py_addr_tuple_local,
-                    py_addr_tuple_remote,
-                    tcp6Table->table[i].dwState,
-                    tcp6Table->table[i].dwOwningPid
-                ))
-            {
-                goto error;
-            }
+            ok = pylist_append_fmt(
+                py_retlist,
+                "(iiiNNiI)",
+                -1,
+                AF_INET6,
+                SOCK_STREAM,
+                py_addr_tuple_local,
+                py_addr_tuple_remote,
+                tcp6Table->table[i].dwState,
+                tcp6Table->table[i].dwOwningPid
+            );
+            // "N" consumes the references, whether it succeeds or not.
             py_addr_tuple_local = NULL;
             py_addr_tuple_remote = NULL;
+            if (!ok)
+                goto error;
         }
 
         free(table);
@@ -408,21 +409,21 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_local == NULL)
                 goto error;
 
-            if (!pylist_append_fmt(
-                    py_retlist,
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET,
-                    SOCK_DGRAM,
-                    py_addr_tuple_local,
-                    PyTuple_New(0),
-                    PSUTIL_CONN_NONE,
-                    udp4Table->table[i].dwOwningPid
-                ))
-            {
-                goto error;
-            }
+            ok = pylist_append_fmt(
+                py_retlist,
+                "(iiiNNiI)",
+                -1,
+                AF_INET,
+                SOCK_DGRAM,
+                py_addr_tuple_local,
+                PyTuple_New(0),
+                PSUTIL_CONN_NONE,
+                udp4Table->table[i].dwOwningPid
+            );
+            // "N" consumes the references, whether it succeeds or not.
             py_addr_tuple_local = NULL;
+            if (!ok)
+                goto error;
         }
 
         free(table);
@@ -467,21 +468,21 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_local == NULL)
                 goto error;
 
-            if (!pylist_append_fmt(
-                    py_retlist,
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET6,
-                    SOCK_DGRAM,
-                    py_addr_tuple_local,
-                    PyTuple_New(0),
-                    PSUTIL_CONN_NONE,
-                    udp6Table->table[i].dwOwningPid
-                ))
-            {
-                goto error;
-            }
+            ok = pylist_append_fmt(
+                py_retlist,
+                "(iiiNNiI)",
+                -1,
+                AF_INET6,
+                SOCK_DGRAM,
+                py_addr_tuple_local,
+                PyTuple_New(0),
+                PSUTIL_CONN_NONE,
+                udp6Table->table[i].dwOwningPid
+            );
+            // "N" consumes the references, whether it succeeds or not.
             py_addr_tuple_local = NULL;
+            if (!ok)
+                goto error;
         }
 
         free(table);
