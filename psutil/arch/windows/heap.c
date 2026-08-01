@@ -118,6 +118,9 @@ psutil_heap_trim(PyObject *self, PyObject *args) {
     if (hHeap == NULL)
         return psutil_oserror_wsyscall("GetProcessHeap");
 
+    // HeapCompact() returns 0 both on error and when the heap has no
+    // committed free blocks, in which case last-error is untouched.
+    SetLastError(0);
     largest_free = HeapCompact(hHeap, 0);
     if (largest_free == 0) {
         if (GetLastError() != NO_ERROR) {
