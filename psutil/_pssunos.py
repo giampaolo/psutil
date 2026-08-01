@@ -455,7 +455,7 @@ class Process:
             real = self._oneshot()[proc_info_map['gid']]
             effective = self._oneshot()[proc_info_map['egid']]
             saved = None
-        return ntp.puids(real, effective, saved)
+        return ntp.pgids(real, effective, saved)
 
     @wrap_exceptions
     def cpu_times(self):
