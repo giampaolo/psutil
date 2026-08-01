@@ -479,12 +479,11 @@ class TestSystemAPIs(PosixTestCase):
         if not tstamp:
             return pytest.skip(f"cannot interpret tstamp in who output\n{out}")
 
-        with self.subTest(psutil=str(psutil.users()), who=out):
-            for idx, u in enumerate(psutil.users()):
-                psutil_value = datetime.datetime.fromtimestamp(
-                    u.started
-                ).strftime(tstamp)
-                assert psutil_value == started[idx]
+        for idx, u in enumerate(psutil.users()):
+            psutil_value = datetime.datetime.fromtimestamp(u.started).strftime(
+                tstamp
+            )
+            assert psutil_value == started[idx]
 
     def test_pid_exists_let_raise(self):
         # According to "man 2 kill" possible error values for kill

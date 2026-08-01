@@ -22,7 +22,6 @@ import psutil
 from psutil import WINDOWS
 from psutil import _psutil
 
-from . import GITHUB_ACTIONS
 from . import HAS_BATTERY
 from . import PYPY
 from . import TOLERANCE_DISK_USAGE
@@ -266,16 +265,27 @@ class TestNetAPIs(WindowsTestCase):
                 )
 
     @retry_on_failure
-    @skipif(GITHUB_ACTIONS, reason="unreliable on GITHUB")
     def test_net_io_counters(self):
-        ps = psutil.net_io_counters(pernic=False)
-        wmi_recv = wmi_sent = 0
-        for nic in wmi.WMI().Win32_PerfRawData_Tcpip_NetworkInterface():
-            wmi_recv += int(nic.BytesReceivedPerSec)
-            wmi_sent += int(nic.BytesSentPerSec)
+        wmi_nics = [
+            (nic.Name, int(nic.BytesReceivedPerSec), int(nic.BytesSentPerSec))
+            for nic in wmi.WMI().Win32_PerfRawData_Tcpip_NetworkInterface()
+        ]
         tolerance = 1 * 1024 * 1024  # 1 MB
-        assert abs(ps.bytes_recv - wmi_recv) < tolerance
-        assert abs(ps.bytes_sent - wmi_sent) < tolerance
+        for name, io in psutil.net_io_counters(pernic=True).items():
+            if io.bytes_recv < tolerance and io.bytes_sent < tolerance:
+                # WMI does not list NICs with no traffic, e.g. the
+                # loopback pseudo-interface.
+                continue
+            for _, wmi_recv, wmi_sent in wmi_nics:
+                if (
+                    abs(io.bytes_recv - wmi_recv) < tolerance
+                    and abs(io.bytes_sent - wmi_sent) < tolerance
+                ):
+                    break
+            else:
+                return pytest.fail(
+                    f"no WMI match for {name!r} ({io!r}); wmi={wmi_nics!r}"
+                )
 
     def test_net_if_addrs(self):
         ps_addrs = set()
@@ -812,8 +822,6 @@ class TestProcessWMI(WindowsTestCase):
         p = psutil.Process(self.pid)
         assert p.name() == w.Caption
 
-    # This fail on github because using virtualenv for test environment
-    @skipif(GITHUB_ACTIONS, reason="unreliable path on GITHUB_ACTIONS")
     def test_exe(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)

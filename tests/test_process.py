@@ -929,7 +929,6 @@ class TestProcess(PsutilTestCase):
             p.cpu_affinity(combo)
             assert sorted(p.cpu_affinity()) == sorted(combo)
 
-    @skipif(FREEBSD, reason="broken on FREEBSD, see #595")
     def test_open_files(self):
         p = psutil.Process()
         testfn = self.get_testfn()
@@ -943,6 +942,10 @@ class TestProcess(PsutilTestCase):
             files = p.open_files()
             if HAS_PROC_OPEN_FILES_PATH:
                 filenames = [os.path.normcase(x.path) for x in files]
+                if FREEBSD and os.path.normcase(testfn) not in filenames:
+                    # FreeBSD may return an empty path, see #595
+                    assert f.fileno() in [x.fd for x in files]
+                    return pytest.skip("kernel didn't provide the path")
                 assert os.path.normcase(testfn) in filenames
             if LINUX:
                 for file in files:
@@ -950,6 +953,8 @@ class TestProcess(PsutilTestCase):
                         assert file.position == 1024
         if HAS_PROC_OPEN_FILES_PATH:
             for file in files:
+                if FREEBSD and not file.path:
+                    continue  # can be empty, see #595
                 assert os.path.isfile(file.path), file
 
         # Another process. It lives long enough for the polling loop
@@ -967,11 +972,15 @@ class TestProcess(PsutilTestCase):
                     break
                 time.sleep(0.01)
             else:
+                if FREEBSD and "" in filenames:
+                    # FreeBSD may return an empty path, see #595
+                    return pytest.skip("kernel didn't provide the path")
                 assert os.path.normcase(testfn) in filenames
             for file in filenames:
+                if FREEBSD and not file:
+                    continue  # can be empty, see #595
                 assert os.path.isfile(file), file
 
-    @skipif(FREEBSD, reason="broken on FREEBSD, see #595")
     def test_open_files_2(self):
         # test fd and path fields
         p = psutil.Process()
@@ -987,7 +996,11 @@ class TestProcess(PsutilTestCase):
             else:
                 return pytest.fail(f"no file found; files={p.open_files()!r}")
             if HAS_PROC_OPEN_FILES_PATH:
-                assert normcase(file.path) == normcase(fileobj.name)
+                if FREEBSD and not file.path:
+                    # can be empty, see #595
+                    pass
+                else:
+                    assert normcase(file.path) == normcase(fileobj.name)
             if WINDOWS:
                 assert file.fd == -1
             else:
@@ -1013,7 +1026,6 @@ class TestProcess(PsutilTestCase):
         assert p.num_fds() == start
 
     @skip_on_not_implemented(only_if=LINUX)
-    @skipif(OPENBSD or NETBSD, reason="not reliable on OPENBSD & NETBSD")
     def test_num_ctx_switches(self):
         p = psutil.Process()
         before = sum(p.num_ctx_switches())
@@ -1654,7 +1666,6 @@ class TestProcessWait(PsutilTestCase):
         # supposed to fail with ESRCH.
         assert p._proc.wait() is None
 
-    @skipif(NETBSD, reason="fails on NETBSD")
     def test_wait_stopped(self):
         p = self.spawn_psproc()
         if POSIX:
@@ -1885,7 +1896,6 @@ class TestPopen(PsutilTestCase):
     def tearDownClass(cls):
         reap_children()
 
-    @skipif(MACOS and GITHUB_ACTIONS, reason="hangs on OSX + CI")
     def test_misc(self):
         # XXX this test causes a ResourceWarning because
         # psutil.__subproc instance doesn't get properly freed.

@@ -93,8 +93,10 @@ class TestSystemAPIs(PsutilTestCase):
         syst = sysctl("hw.ncpu")
         assert psutil.cpu_count(logical=True) == syst
 
+    # hw.physmem is 32-bit and saturates above 4 GB on NetBSD, where
+    # NetBSDTestCase.test_vmem_total covers this instead.
     @skipif(not shutil.which("sysctl"), reason="sysctl cmd not available")
-    @skipif(NETBSD, reason="skipped on NETBSD")  # we check /proc/meminfo
+    @skipif(NETBSD, reason="hw.physmem overflows on NETBSD")
     def test_virtual_memory_total(self):
         num = sysctl('hw.physmem')
         assert num == psutil.virtual_memory().total
@@ -625,6 +627,10 @@ class NetBSDTestCase(PsutilTestCase):
         raise ValueError(f"can't find {look_for!r} in vmstat -s output")
 
     # --- virtual mem
+
+    def test_vmem_total(self):
+        num = self.parse_vmstat("pages managed")
+        assert num * PAGESIZE == psutil.virtual_memory().total
 
     @retry_on_failure
     def test_vmem_buffers(self):

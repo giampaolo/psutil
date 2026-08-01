@@ -44,6 +44,7 @@ from psutil import POSIX
 from psutil import WINDOWS
 
 from . import HAS_HEAP_INFO
+from . import PYPY
 from . import PsutilTestCase
 from . import isolated
 from . import retry_on_failure
@@ -228,6 +229,7 @@ class TestHeap(HeapTestCase):
         assert_within_percent(mem3.mmap_used, mem1.mmap_used, percent=10)
 
     @skipif(MACOS, reason="not supported on MACOS")
+    @skipif(PYPY, reason="unstable on PYPY")
     @retry_on_failure
     def test_mmap_used(self):
         """Test that a large malloc allocation increases mmap_used.

@@ -46,7 +46,6 @@ from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import MACOS_12PLUS
-from . import PYPY
 from . import UNICODE_SUFFIX
 from . import PsutilTestCase
 from . import check_net_address
@@ -251,10 +250,6 @@ class TestProcessIter(PsutilTestCase):
 
 
 class TestProcessAPIs(PsutilTestCase):
-    @skipif(
-        PYPY and WINDOWS,
-        reason="spawn_subproc() unreliable on PYPY + WINDOWS",
-    )
     def test_wait_procs(self):
         def callback(p):
             pids.append(p.pid)
@@ -314,10 +309,6 @@ class TestProcessAPIs(PsutilTestCase):
         for p in gone:
             assert hasattr(p, 'returncode')
 
-    @skipif(
-        PYPY and WINDOWS,
-        reason="spawn_subproc() unreliable on PYPY + WINDOWS",
-    )
     def test_wait_procs_no_timeout(self):
         sproc1 = self.spawn_subproc()
         sproc2 = self.spawn_subproc()
@@ -647,7 +638,7 @@ class TestCpuAPIs(PsutilTestCase):
                 if difference >= 0.05:
                     return None
 
-    @skipif(MACOS or SUNOS, reason="unreliable on MACOS and SUNOS")
+    @skipif(SUNOS, reason="unreliable on SUNOS")
     @retry_on_failure(30)
     def test_cpu_times_comparison(self):
         # Make sure the sum of all per cpu times is almost equal to

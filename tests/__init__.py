@@ -244,6 +244,12 @@ def _get_py_exe():
         filter(None, [psutil_path, env.get("PYTHONPATH")])
     )
 
+    if PYPY and POSIX:
+        libdir = os.path.dirname(os.path.realpath(sys.executable))
+        env["LD_LIBRARY_PATH"] = os.pathsep.join(
+            filter(None, [libdir, env.get("LD_LIBRARY_PATH")])
+        )
+
     # On Windows virtual environments use a venv launcher startup
     # process. This does not play well when counting spawned processes,
     # or when relying on the PID of the spawned process to do some
@@ -1539,6 +1545,7 @@ def tcp_socketpair(family, addr=("", 0)):
     Return a (server, client) tuple.
     """
     with socket.create_server(addr, family=family, backlog=5) as ll:
+        ll.settimeout(GLOBAL_TIMEOUT)
         addr = ll.getsockname()
         c = socket.socket(family, SOCK_STREAM)
         try:

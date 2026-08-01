@@ -84,8 +84,16 @@ class ProcInfo:
 
     def check_exception(self, exc):
         assert exc.pid == self.pid
-        if exc.name is not None:
-            assert exc.name == self.name
+        if exc.name is not None and exc.name != self.name:
+            # The process may have renamed itself in the meantime.
+            # Kernel threads do it all the time, e.g.
+            # "kworker/1:0-events" -> "kworker/1:0+events".
+            try:
+                curname = psutil.Process(self.pid).name()
+            except psutil.Error:
+                curname = None
+            # if the name did not change then something else is wrong
+            assert curname != self.name
         if isinstance(exc, psutil.ZombieProcess):
             try:
                 self.tcase.assert_proc_zombie(self.proc)
