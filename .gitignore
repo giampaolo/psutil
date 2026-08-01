@@ -20,4 +20,3 @@ docs/_build/
 dist/
 wheelhouse/
 .tests/
-test.psutilpy

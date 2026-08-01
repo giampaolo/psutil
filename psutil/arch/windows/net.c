@@ -416,7 +416,8 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         }
 
         py_nic_name = PyUnicode_FromWideChar(
-            pCurrAddresses->FriendlyName, wcslen(pCurrAddresses->FriendlyName)
+            pCurrAddresses->FriendlyName,
+            wcsnlen(pCurrAddresses->FriendlyName, IF_MAX_STRING_SIZE)
         );
         if (py_nic_name == NULL)
             goto error;
@@ -435,7 +436,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
             "(OiKk)",
             py_is_up,
             2,  // duplex is hard coded to 'full'
-            ifRow.TransmitLinkSpeed / 1000000,  // 64-bit, expressed in Mb
+            ifRow.TransmitLinkSpeed / 1000000,  // bits/s, we want Mb/s
             ifRow.Mtu
         );
         if (!py_ifc_info)
@@ -451,6 +452,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     }
 
     free(pAddresses);
+    Py_CLEAR(py_nic_name);
+    Py_CLEAR(py_ifc_info);
+    Py_CLEAR(py_is_up);
     return py_retdict;
 
 error:
