@@ -6,6 +6,7 @@
 
 #include <Python.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #if defined(PSUTIL_WINDOWS)
 #include <windows.h>
@@ -95,6 +96,62 @@ psutil_oserror_ad(const char *syscall) {
         Py_DECREF(exc);
     }
     return NULL;
+}
+
+
+// Print a debug message to stderr if PSUTIL_DEBUG mode is enabled.
+// Don't call this directly, use the psutil_debug() macro.
+void
+_psutil_debug_impl(const char *file, int lineno, const char *fmt, ...) {
+    va_list args;
+
+    if (!PSUTIL_DEBUG)
+        return;
+    fprintf(stderr, "psutil-debug [%s:%d]> ", file, lineno);
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+    fprintf(stderr, "\n");
+}
+
+
+// Emit a RuntimeWarning, also printed as a debug message. It never
+// raises: with -W error the exception is discarded. Use it for events
+// which are never supposed to happen, and imply a psutil bug. Don't
+// call this directly, use the psutil_warn() macro.
+void
+_psutil_warn_impl(const char *file, int lineno, const char *fmt, ...) {
+    char msg[MSG_SIZE];
+    char full[MSG_SIZE + 512];
+    va_list args;
+    int ret;
+    PyGILState_STATE gstate;
+
+    va_start(args, fmt);
+    ret = vsnprintf(msg, sizeof(msg), fmt, args);
+    va_end(args);
+    // If vsnprintf() failed msg is garbage.
+    if (ret < 0)
+        str_copy(msg, sizeof(msg), "psutil_warn: bad format");
+
+    _psutil_debug_impl(file, lineno, "%s", msg);
+
+    str_format(
+        full, sizeof(full), "%s (originated from %s:%d)", msg, file, lineno
+    );
+
+    if (PSUTIL_TESTING) {
+        fprintf(stderr, "CRITICAL: %s\n", full);
+        fflush(stderr);
+        exit(EXIT_FAILURE);  // terminate execution
+    }
+
+    // Grab the GIL: unlike psutil_debug() this is safe to call also
+    // inside Py_BEGIN/END_ALLOW_THREADS blocks.
+    gstate = PyGILState_Ensure();
+    if (PyErr_WarnEx(PyExc_RuntimeWarning, full, 1) != 0)
+        PyErr_Clear();
+    PyGILState_Release(gstate);
 }
 
 

@@ -16,6 +16,7 @@ import socket
 import subprocess
 import sys
 import textwrap
+import warnings
 from unittest import mock
 
 import psutil
@@ -29,6 +30,7 @@ from psutil._common import isfile_strict
 from psutil._common import memoize_when_activated
 from psutil._common import parse_environ_block
 from psutil._common import supports_ipv6
+from psutil._common import warn
 from psutil._common import wrap_numbers
 
 from . import HAS_NET_IO_COUNTERS
@@ -195,6 +197,7 @@ class TestMisc(PsutilTestCase):
         for name in dir_psutil:
             if name in {
                 'debug',
+                'warn',
                 'tests',
                 'test',
                 'PermissionError',
@@ -491,6 +494,20 @@ class TestCommonModule(PsutilTestCase):
         msg = f.getvalue()
         assert "no such file" in msg
         assert "/foo" in msg
+
+    def test_warn(self):
+        with mock.patch.object(psutil._common, "PSUTIL_TESTING", True):
+            with pytest.raises(RuntimeError, match="CRITICAL: hello"):
+                warn("hello")
+
+        with mock.patch.object(psutil._common, "PSUTIL_TESTING", False):
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                warn("hello")
+        assert len(ws) == 1
+        assert ws[0].category is RuntimeWarning
+        assert "hello" in str(ws[0].message)
+        assert __file__.replace('.pyc', '.py') in str(ws[0].message)
 
     def test_cat_bcat(self):
         testfn = self.get_testfn()

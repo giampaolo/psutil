@@ -393,7 +393,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 
         next_addr = ri.pri_address + ri.pri_size;
         if (ri.pri_size == 0 || next_addr <= addr) {
-            psutil_debug("prevent infinite loop");
+            psutil_warn("VM region walk not advancing; stopped early");
             break;
         }
         addr = next_addr;
