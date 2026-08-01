@@ -508,8 +508,9 @@ Others:
   instead of summed, like on all the other platforms. Now it sums the per-CPU
   counters.
 - :gh:`2952`, [OpenBSD]: :meth:`Process.environ` raised ``OSError(EINVAL)`` for
-  a zombie or exiting process. It now returns an empty dict, or raises
-  :exc:`NoSuchProcess` if the process is gone (same as NetBSD, see :gh:`2911`).
+  a process which started exiting, e.g. mid-way to becoming a zombie. Now it
+  returns an empty dict, or raises :exc:`NoSuchProcess` if the process is gone
+  (same as NetBSD, see :gh:`2911`).
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
