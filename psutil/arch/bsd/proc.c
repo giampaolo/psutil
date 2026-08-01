@@ -279,10 +279,9 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // A zombie has no environment. Force ESRCH, which the Python
-    // layer converts into ZombieProcess.
+    // A zombie has no environment.
     if (PSUTIL_KINFO_ZOMBIE(*p)) {
-        psutil_oserror_nsp("kvm_getprocs -> zombie");
+        PyErr_SetString(ZombieProcessError, "kvm_getprocs -> zombie");
         goto error;
     }
 
@@ -339,7 +338,9 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 if (psutil_kinfo_proc(pid, &kp) == -1)
                     goto error;  // reaped in the meantime, raises NSP
                 if (PSUTIL_KINFO_ZOMBIE(kp))
-                    psutil_oserror_nsp("kvm_getenvv -> zombie");
+                    PyErr_SetString(
+                        ZombieProcessError, "kvm_getenvv -> zombie"
+                    );
                 else
                     psutil_oserror_wsyscall("kvm_getenvv");
                 break;
