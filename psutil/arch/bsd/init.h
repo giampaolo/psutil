@@ -17,6 +17,10 @@
 #define PSUTIL_KINFO_ZOMBIE(kp)                            \
     ((kp).p_realstat == SZOMB || (kp).p_realstat == SDYING \
      || (kp).p_realstat == SDEAD)
+#elif defined(PSUTIL_OPENBSD)
+// According to /usr/include/sys/proc.h SZOMB is unused.
+// test_zombie_process() shows that SDEAD is the right equivalent.
+#define PSUTIL_KINFO_ZOMBIE(kp) ((kp).p_stat == SZOMB || (kp).p_stat == SDEAD)
 #endif
 
 #if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)

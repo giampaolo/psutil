@@ -117,14 +117,9 @@ is_zombie(size_t pid) {
 
 #if defined(PSUTIL_FREEBSD)
     return kp.ki_stat == SZOMB;
-#elif defined(PSUTIL_OPENBSD)
-    // According to /usr/include/sys/proc.h SZOMB is unused.
-    // test_zombie_process() shows that SDEAD is the right
-    // equivalent.
-    return ((kp.p_stat == SZOMB) || (kp.p_stat == SDEAD));
 #else
-    // A dying process goes SDYING -> SDEAD -> SZOMB, and only the
-    // last one has the same value as its LWP counterpart.
+    // NetBSD: a dying process goes SDYING -> SDEAD -> SZOMB, and
+    // only the last one has the same value as its LWP counterpart.
     return PSUTIL_KINFO_ZOMBIE(kp);
 #endif
 }

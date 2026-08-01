@@ -133,6 +133,18 @@ class TestProcessAPIs(PsutilTestCase):
         )
         assert start_ps == start_psutil
 
+    def test_environ_zombie(self):
+        # The kernel can't provide the environment of a zombie. We
+        # return an empty dict on NetBSD / OpenBSD, and raise
+        # ZombieProcess on FreeBSD (the sysctl fails with ESRCH).
+        # On OpenBSD it used to raise OSError(EINVAL) instead.
+        _parent, zombie = self.spawn_zombie()
+        if FREEBSD:
+            with pytest.raises(psutil.ZombieProcess):
+                zombie.environ()
+        else:
+            assert zombie.environ() == {}
+
 
 @skipif(not BSD, reason="BSD only")
 class TestVmstat(PsutilTestCase):

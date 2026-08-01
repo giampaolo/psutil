@@ -242,6 +242,9 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 #else
     struct kinfo_proc *p;
 #endif
+#ifdef PSUTIL_OPENBSD
+    struct kinfo_proc kp;
+#endif
 
     if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -314,9 +317,10 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
             case ESRCH:
                 psutil_oserror_nsp("kvm_getenvv -> ESRCH");
                 break;
-#if defined(PSUTIL_NETBSD)
+#if defined(PSUTIL_NETBSD) || defined(PSUTIL_OPENBSD)
             case EBUSY:
-                // p_reflock is write held, likely an exec in progress.
+                // An exec is in progress (NetBSD: p_reflock is write
+                // held; OpenBSD: PS_INEXEC is set).
                 psutil_debug(
                     "proc %ld environ(): return empty dict due to EBUSY", pid
                 );
@@ -324,8 +328,8 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 return py_retdict;
             case EINVAL:
             case EFAULT:
-                // The check above races. EINVAL: zombie, system proc
-                // or gone. EFAULT: started exiting.
+                // The check above races. EINVAL: zombie, exiting or
+                // system proc. EFAULT: started exiting.
                 if (psutil_kinfo_proc(pid, &kp) == -1)
                     goto error;  // reaped in the meantime, raises NSP
                 if (PSUTIL_KINFO_ZOMBIE(kp)) {
@@ -335,7 +339,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                     kvm_close(kd);
                     return py_retdict;
                 }
-                psutil_oserror_wsyscall("kvm_getenvv2");
+                psutil_oserror_wsyscall("kvm_getenvv");
                 break;
 #elif defined(PSUTIL_FREEBSD)
             case ENOMEM:
