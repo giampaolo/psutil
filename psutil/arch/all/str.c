@@ -16,7 +16,18 @@
 
 
 static int
-_error(const char *msg) {
+str_error(const char *fmt, ...) {
+    char msg[256];
+    va_list args;
+    int ret;
+
+    va_start(args, fmt);
+    ret = vsnprintf(msg, sizeof(msg), fmt, args);
+    va_end(args);
+    // If vsnprintf() failed msg is garbage.
+    if (ret < 0)
+        str_copy(msg, sizeof(msg), "str_error: bad format");
+
     if (PSUTIL_TESTING) {
         fprintf(stderr, "CRITICAL: %s\n", msg);
         fflush(stderr);
@@ -40,8 +51,8 @@ str_format(char *buf, size_t size, const char *fmt, ...) {
     va_list args;
     int ret;
 
-    if (size == 0)
-        return _error("str_format: invalid arg 'size' = 0");
+    if (!buf || !fmt || size == 0)
+        return str_error("str_format: invalid arg");
 
     va_start(args, fmt);
 #if defined(PSUTIL_WINDOWS)
@@ -52,58 +63,57 @@ str_format(char *buf, size_t size, const char *fmt, ...) {
     va_end(args);
 
     if (ret < 0 || (size_t)ret >= size) {
-        psutil_debug("str_format: error in format '%s'", fmt);
         buf[size - 1] = '\0';
-        return -1;
+        return str_error("str_format: failed or truncated, fmt '%s'", fmt);
     }
     return ret;
 }
 
 
 // Safely copy `src` to `dst`, always null-terminating. Replaces unsafe
-// strcpy/strncpy.
+// strcpy/strncpy. Returns 0 on success, -1 on truncation, in which
+// case dst holds as much of src as fits.
+// memmove() and not memcpy(): memcpy links memcpy@GLIBC_2.14 on
+// x86_64 Linux, raising the min glibc our Linux wheels require.
 int
 str_copy(char *dst, size_t dst_size, const char *src) {
-    if (dst_size == 0)
-        return _error("str_copy: invalid arg 'dst_size' = 0");
+    size_t src_len;
 
-#if defined(PSUTIL_WINDOWS)
-    if (strcpy_s(dst, dst_size, src) != 0)
-        return _error("str_copy: strcpy_s failed");
-#else
-    strncpy(dst, src, dst_size - 1);
-    dst[dst_size - 1] = '\0';
-#endif
+    if (!dst || !src || dst_size == 0)
+        return str_error("str_copy: invalid arg");
+
+    src_len = strlen(src);
+    if (src_len >= dst_size) {
+        memmove(dst, src, dst_size - 1);
+        dst[dst_size - 1] = '\0';
+        return str_error("str_copy: truncated");
+    }
+    memmove(dst, src, src_len + 1);
     return 0;
 }
 
 
 // Safely append `src` to `dst`, always null-terminating. Returns 0 on
-// success, -1 on truncation.
+// success, -1 on truncation, in which case dst holds as much of src
+// as fits.
 int
 str_append(char *dst, size_t dst_size, const char *src) {
-    size_t dst_len;
+    size_t dst_len, src_len, avail;
 
     if (!dst || !src || dst_size == 0)
-        return _error("str_append: invalid arg");
+        return str_error("str_append: invalid arg");
 
-#if defined(PSUTIL_WINDOWS)
-    dst_len = strnlen_s(dst, dst_size);
-    if (dst_len >= dst_size - 1)
-        return _error("str_append: destination full or truncated");
-    if (strcat_s(dst, dst_size, src) != 0)
-        return _error("str_append: strcat_s failed");
-#elif defined(PSUTIL_MACOS) || defined(PSUTIL_BSD)
-    dst_len = strlcat(dst, src, dst_size);
-    if (dst_len >= dst_size)
-        return _error("str_append: truncated");
-#else
     dst_len = strnlen(dst, dst_size);
-    if (dst_len >= dst_size - 1)
-        return _error("str_append: destination full or truncated");
-    strncat(dst, src, dst_size - dst_len - 1);
-    dst[dst_size - 1] = '\0';
-#endif
+    if (dst_len >= dst_size)
+        return str_error("str_append: dst is not null-terminated");
 
+    src_len = strlen(src);
+    avail = dst_size - dst_len - 1;
+    if (src_len > avail) {
+        memmove(dst + dst_len, src, avail);
+        dst[dst_size - 1] = '\0';
+        return str_error("str_append: truncated");
+    }
+    memmove(dst + dst_len, src, src_len + 1);
     return 0;
 }

@@ -41,12 +41,19 @@ psutil_oserror_wsyscall(const char *syscall) {
     PyErr_SetFromWindowsErrWithFilename(err, msg);
 #else
     PyObject *exc;
+    int saved_errno = errno;
     str_format(
-        msg, sizeof(msg), "%s (originated from %s)", strerror(errno), syscall
+        msg,
+        sizeof(msg),
+        "%s (originated from %s)",
+        strerror(saved_errno),
+        syscall
     );
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", errno, msg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", saved_errno, msg);
+    if (exc != NULL) {
+        PyErr_SetObject(PyExc_OSError, exc);
+        Py_DECREF(exc);
+    }
 #endif
     return NULL;
 }
@@ -62,8 +69,10 @@ psutil_oserror_nsp(const char *syscall) {
         msg, sizeof(msg), "force no such process (originated from %s)", syscall
     );
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
+    if (exc != NULL) {
+        PyErr_SetObject(PyExc_OSError, exc);
+        Py_DECREF(exc);
+    }
     return NULL;
 }
 
@@ -81,8 +90,10 @@ psutil_oserror_ad(const char *syscall) {
         syscall
     );
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
+    if (exc != NULL) {
+        PyErr_SetObject(PyExc_OSError, exc);
+        Py_DECREF(exc);
+    }
     return NULL;
 }
 
