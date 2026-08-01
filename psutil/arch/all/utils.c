@@ -4,6 +4,11 @@
  * found in the LICENSE file.
  */
 
+// Fixes clash between winsock2.h and windows.h
+#if defined(PSUTIL_WINDOWS)
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <Python.h>
 #include <stdarg.h>
 #include <math.h>
