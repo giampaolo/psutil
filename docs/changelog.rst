@@ -310,6 +310,10 @@ Others:
   left undefined (or raised :exc:`RuntimeError`) when the ``pmgr`` IORegistry
   entry or its frequency data was unavailable, e.g. on virtualized ARM64 like
   CI runners.
+- :gh:`2383`, [Windows]: :meth:`WindowsService.description` may fail with
+  ``ERROR_FILE_NOT_FOUND`` when the description points at a missing resource
+  (e.g. ``WaaSMedicSvc``), which also broke :meth:`WindowsService.as_dict`. Now
+  it returns an empty string instead.
 - :gh:`2411` [macOS]: :meth:`Process.cpu_times` and :meth:`Process.cpu_percent`
   calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
   lower).

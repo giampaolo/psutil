@@ -400,6 +400,7 @@ PyObject *
 psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     BOOL ok;
     DWORD bytesNeeded = 0;
+    DWORD err;
     SC_HANDLE hService = NULL;
     SERVICE_DESCRIPTIONW *scd = NULL;
     wchar_t *service_name = NULL;
@@ -416,19 +417,20 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0, &bytesNeeded
     );
     Py_END_ALLOW_THREADS
+    err = GetLastError();
 
-    if ((GetLastError() == ERROR_NOT_FOUND)
-        || (GetLastError() == ERROR_MUI_FILE_NOT_FOUND))
+    if ((err == ERROR_NOT_FOUND) || (err == ERROR_FILE_NOT_FOUND)
+        || (err == ERROR_MUI_FILE_NOT_FOUND))
     {
-        // E.g. services.msc fails in this manner, so we return an
-        // empty string.
-        psutil_debug("set empty string for NOT_FOUND service description");
+        psutil_debug(
+            "no description for service (err=%lu)", (unsigned long)err
+        );
         CloseServiceHandle(hService);
         PyMem_Free(service_name);
         return PyUnicode_FromString("");
     }
 
-    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+    if (err != ERROR_INSUFFICIENT_BUFFER) {
         psutil_oserror_wsyscall("QueryServiceConfig2W");
         goto error;
     }
