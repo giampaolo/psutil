@@ -110,16 +110,15 @@ psutil_get_thisproc_token(DWORD *err) {
 
 
 static void
-psutil_warn(DWORD err) {
+sedebug_warn(DWORD err) {
     char *msg =
         "psutil module couldn't set SE DEBUG mode for this process; "
         "please file an issue against psutil bug tracker";
 
-    psutil_debug("%s (err=%lu)", msg, (unsigned long)err);
-    if (err != ERROR_ACCESS_DENIED) {
-        if (PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1) != 0)
-            PyErr_Clear();  // -W error: we don't want to fail on import
-    }
+    if (err != ERROR_ACCESS_DENIED)
+        psutil_warn("%s (err=%lu)", msg, (unsigned long)err);
+    else
+        psutil_debug("%s (err=%lu)", msg, (unsigned long)err);
 }
 
 
@@ -134,13 +133,13 @@ psutil_set_se_debug() {
     DWORD err = 0;
 
     if ((hToken = psutil_get_thisproc_token(&err)) == NULL) {
-        psutil_warn(err);
+        sedebug_warn(err);
         return 0;
     }
 
     err = psutil_set_privilege(hToken, SE_DEBUG_NAME, TRUE);
     if (err != 0)
-        psutil_warn(err);
+        sedebug_warn(err);
 
     RevertToSelf();  // in case psutil_get_thisproc_token() impersonated
     CloseHandle(hToken);

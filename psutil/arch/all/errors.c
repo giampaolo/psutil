@@ -98,6 +98,27 @@ psutil_oserror_ad(const char *syscall) {
 }
 
 
+// Emit a RuntimeWarning, also printed by psutil_debug(). It never
+// raises: with -W error the exception is discarded.
+void
+psutil_warn(const char *fmt, ...) {
+    char msg[MSG_SIZE];
+    va_list args;
+    int ret;
+
+    va_start(args, fmt);
+    ret = vsnprintf(msg, sizeof(msg), fmt, args);
+    va_end(args);
+    // If vsnprintf() failed msg is garbage.
+    if (ret < 0)
+        str_copy(msg, sizeof(msg), "psutil_warn: bad format");
+
+    psutil_debug("%s", msg);
+    if (PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1) != 0)
+        PyErr_Clear();
+}
+
+
 // Set RuntimeError with formatted `msg` and optional arguments.
 PyObject *
 psutil_runtime_error(const char *msg, ...) {

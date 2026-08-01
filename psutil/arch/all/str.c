@@ -34,8 +34,8 @@ str_error(const char *fmt, ...) {
         exit(EXIT_FAILURE);  // terminate execution
     }
     else {
-        // Print debug msg because we never check str_*() return value.
-        psutil_debug("%s", msg);
+        // Warn because we never check str_*() return value.
+        psutil_warn("%s", msg);
     }
     return -1;
 }

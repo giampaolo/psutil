@@ -125,6 +125,7 @@ extern int PSUTIL_TESTING;
     } while (0)
 
 
+void psutil_warn(const char *fmt, ...);
 PyObject *psutil_oserror(void);
 PyObject *psutil_oserror_ad(const char *msg);
 PyObject *psutil_oserror_nsp(const char *msg);
