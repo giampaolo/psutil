@@ -17,7 +17,6 @@
 // https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntquerysysteminformation
 // https://www.geoffchappell.com/studies/windows/win32/ntdll/api/native.htm
 
-// clang-format off
 #ifndef NTEXTAPI_H
 #define NTEXTAPI_H
 #include <iphlpapi.h>
@@ -27,7 +26,7 @@
 typedef LONG NTSTATUS;
 
 #ifndef NT_SUCCESS
-    #define NT_SUCCESS(status) (((NTSTATUS)(status)) >= 0)
+#define NT_SUCCESS(status) (((NTSTATUS)(status)) >= 0)
 #endif
 
 typedef LONG KPRIORITY;
@@ -51,13 +50,13 @@ typedef struct _IO_STATUS_BLOCK {
 typedef ULONG FILE_INFORMATION_CLASS;
 typedef ULONG OBJECT_INFORMATION_CLASS;
 
-NTSYSAPI NTSTATUS NTAPI
-NtQueryInformationFile(
+NTSYSAPI NTSTATUS NTAPI NtQueryInformationFile(
     HANDLE FileHandle,
     PIO_STATUS_BLOCK IoStatusBlock,
     PVOID FileInformation,
     ULONG Length,
-    FILE_INFORMATION_CLASS FileInformationClass);
+    FILE_INFORMATION_CLASS FileInformationClass
+);
 
 // https://github.com/ajkhoury/TestDll/blob/master/nt_ddk.h
 #define STATUS_INFO_LENGTH_MISMATCH ((NTSTATUS)0xC0000004L)
@@ -67,10 +66,10 @@ NtQueryInformationFile(
 #define STATUS_BUFFER_OVERFLOW ((NTSTATUS)0x80000005L)
 
 // WtsApi32.h
-#define WTS_CURRENT_SERVER_HANDLE  ((HANDLE)NULL)
-#define WINSTATIONNAME_LENGTH    32
-#define DOMAIN_LENGTH            17
-#define USERNAME_LENGTH          20
+#define WTS_CURRENT_SERVER_HANDLE ((HANDLE)NULL)
+#define WINSTATIONNAME_LENGTH 32
+#define DOMAIN_LENGTH 17
+#define USERNAME_LENGTH 20
 
 // ================================================================
 // Enums
@@ -184,26 +183,27 @@ typedef enum _WTS_INFO_CLASS {
     WTSSessionInfo,
     WTSSessionInfoEx,
     WTSConfigInfo,
-    WTSValidationInfo,   // Info Class value used to fetch Validation Information through the WTSQuerySessionInformation
+    WTSValidationInfo,  // Info Class value used to fetch Validation
+                        // Information through the WTSQuerySessionInformation
     WTSSessionAddressV4,
     WTSIsRemoteSession
 } WTS_INFO_CLASS;
 
 typedef enum _WTS_CONNECTSTATE_CLASS {
-    WTSActive,              // User logged on to WinStation
-    WTSConnected,           // WinStation connected to client
-    WTSConnectQuery,        // In the process of connecting to client
-    WTSShadow,              // Shadowing another WinStation
-    WTSDisconnected,        // WinStation logged on without client
-    WTSIdle,                // Waiting for client to connect
-    WTSListen,              // WinStation is listening for connection
-    WTSReset,               // WinStation is being reset
-    WTSDown,                // WinStation is down due to error
-    WTSInit,                // WinStation in initialization
+    WTSActive,  // User logged on to WinStation
+    WTSConnected,  // WinStation connected to client
+    WTSConnectQuery,  // In the process of connecting to client
+    WTSShadow,  // Shadowing another WinStation
+    WTSDisconnected,  // WinStation logged on without client
+    WTSIdle,  // Waiting for client to connect
+    WTSListen,  // WinStation is listening for connection
+    WTSReset,  // WinStation is being reset
+    WTSDown,  // WinStation is down due to error
+    WTSInit,  // WinStation in initialization
 } WTS_CONNECTSTATE_CLASS;
 
 // ================================================================
-// Structs.
+// Structs
 // ================================================================
 
 // cpu_stats(), per_cpu_times()
@@ -395,6 +395,7 @@ typedef struct _SYSTEM_THREAD_INFORMATION {
     KWAIT_REASON WaitReason;
 } SYSTEM_THREAD_INFORMATION, *PSYSTEM_THREAD_INFORMATION;
 
+// clang-format off
 typedef struct _SYSTEM_PROCESS_INFORMATION {
     ULONG NextEntryOffset;                      // The address of the previous item plus the value in the NextEntryOffset member. For the last item in the array, NextEntryOffset is 0.
     ULONG NumberOfThreads;                      // The NumberOfThreads member contains the number of threads in the process.
@@ -432,15 +433,16 @@ typedef struct _SYSTEM_PROCESS_INFORMATION {
     LARGE_INTEGER OtherTransferCount;           // The total number of bytes transferred during operations other than read and write operations.
     SYSTEM_THREAD_INFORMATION Threads[1];       // This type is not defined in the structure but was added for convenience.
 } SYSTEM_PROCESS_INFORMATION, *PSYSTEM_PROCESS_INFORMATION;
+// clang-format on
 
 // cpu_freq()
 typedef struct _PROCESSOR_POWER_INFORMATION {
-   ULONG Number;
-   ULONG MaxMhz;
-   ULONG CurrentMhz;
-   ULONG MhzLimit;
-   ULONG MaxIdleState;
-   ULONG CurrentIdleState;
+    ULONG Number;
+    ULONG MaxMhz;
+    ULONG CurrentMhz;
+    ULONG MhzLimit;
+    ULONG MaxIdleState;
+    ULONG CurrentIdleState;
 } PROCESSOR_POWER_INFORMATION, *PPROCESSOR_POWER_INFORMATION;
 
 // PEB / cmdline(), cwd(), environ()
@@ -457,20 +459,19 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS {
 
 // users()
 typedef struct _WTS_SESSION_INFOW {
-    DWORD SessionId;             // session id
-    LPWSTR pWinStationName;      // name of WinStation this session is
-                                 // connected to
-    WTS_CONNECTSTATE_CLASS State; // connection state (see enum)
-} WTS_SESSION_INFOW, * PWTS_SESSION_INFOW;
+    DWORD SessionId;
+    LPWSTR pWinStationName;
+    WTS_CONNECTSTATE_CLASS State;
+} WTS_SESSION_INFOW, *PWTS_SESSION_INFOW;
 
 typedef struct _WTS_CLIENT_ADDRESS {
     DWORD AddressFamily;  // AF_INET, AF_INET6, AF_IPX, AF_NETBIOS, AF_UNSPEC
-    BYTE  Address[20];    // client network address
-} WTS_CLIENT_ADDRESS, * PWTS_CLIENT_ADDRESS;
+    BYTE Address[20];  // client network address
+} WTS_CLIENT_ADDRESS, *PWTS_CLIENT_ADDRESS;
 
 typedef struct _WTSINFOW {
-    WTS_CONNECTSTATE_CLASS State; // connection state (see enum)
-    DWORD SessionId;             // session id
+    WTS_CONNECTSTATE_CLASS State;  // connection state (see enum)
+    DWORD SessionId;  // session id
     DWORD IncomingBytes;
     DWORD OutgoingBytes;
     DWORD IncomingFrames;
@@ -479,26 +480,25 @@ typedef struct _WTSINFOW {
     DWORD OutgoingCompressedBytes;
     WCHAR WinStationName[WINSTATIONNAME_LENGTH];
     WCHAR Domain[DOMAIN_LENGTH];
-    WCHAR UserName[USERNAME_LENGTH + 1];// name of WinStation this session is
-                                 // connected to
+    WCHAR UserName[USERNAME_LENGTH + 1];  // name of WinStation this session is
+                                          // connected to
     LARGE_INTEGER ConnectTime;
     LARGE_INTEGER DisconnectTime;
     LARGE_INTEGER LastInputTime;
     LARGE_INTEGER LogonTime;
     LARGE_INTEGER CurrentTime;
-
-} WTSINFOW, * PWTSINFOW;
+} WTSINFOW, *PWTSINFOW;
 
 // memory_uss()
 typedef struct _MEMORY_WORKING_SET_BLOCK {
-    ULONG_PTR Protection : 5;
-    ULONG_PTR ShareCount : 3;
-    ULONG_PTR Shared : 1;
-    ULONG_PTR Node : 3;
+    ULONG_PTR Protection: 5;
+    ULONG_PTR ShareCount: 3;
+    ULONG_PTR Shared: 1;
+    ULONG_PTR Node: 3;
 #ifdef _WIN64
-    ULONG_PTR VirtualPage : 52;
+    ULONG_PTR VirtualPage: 52;
 #else
-    ULONG VirtualPage : 20;
+    ULONG VirtualPage: 20;
 #endif
 } MEMORY_WORKING_SET_BLOCK, *PMEMORY_WORKING_SET_BLOCK;
 
@@ -593,96 +593,101 @@ typedef struct _PEB {
 // The pointers live in init.c; psutil_loadlibs() assigns them on
 // module import.
 
-typedef NTSTATUS (NTAPI *_NtQueryInformationProcess) (
+typedef NTSTATUS(NTAPI *_NtQueryInformationProcess)(
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
     DWORD ProcessInformationLength,
-    PDWORD ReturnLength);
+    PDWORD ReturnLength
+);
 
 extern _NtQueryInformationProcess NtQueryInformationProcess;
 
-typedef NTSTATUS (NTAPI *_NtQuerySystemInformation) (
+typedef NTSTATUS(NTAPI *_NtQuerySystemInformation)(
     ULONG SystemInformationClass,
     PVOID SystemInformation,
     ULONG SystemInformationLength,
-    PULONG ReturnLength);
+    PULONG ReturnLength
+);
 
 extern _NtQuerySystemInformation NtQuerySystemInformation;
 
-typedef NTSTATUS (NTAPI *_NtSetInformationProcess) (
+typedef NTSTATUS(NTAPI *_NtSetInformationProcess)(
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
-    DWORD ProcessInformationLength);
+    DWORD ProcessInformationLength
+);
 
 extern _NtSetInformationProcess NtSetInformationProcess;
 
-typedef NTSTATUS (NTAPI *_NtQueryObject) (
+typedef NTSTATUS(NTAPI *_NtQueryObject)(
     HANDLE Handle,
     OBJECT_INFORMATION_CLASS ObjectInformationClass,
     PVOID ObjectInformation,
     ULONG ObjectInformationLength,
-    PULONG ReturnLength);
+    PULONG ReturnLength
+);
 
 extern _NtQueryObject NtQueryObject;
 
-typedef NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
+typedef NTSTATUS(NTAPI *_NtQueryVirtualMemory)(
     HANDLE ProcessHandle,
     PVOID BaseAddress,
     int MemoryInformationClass,
     PVOID MemoryInformation,
     SIZE_T MemoryInformationLength,
-    PSIZE_T ReturnLength);
+    PSIZE_T ReturnLength
+);
 
 extern _NtQueryVirtualMemory NtQueryVirtualMemory;
 
-typedef NTSTATUS (WINAPI *_NtResumeProcess) (HANDLE hProcess);
+typedef NTSTATUS(WINAPI *_NtResumeProcess)(HANDLE hProcess);
 
 extern _NtResumeProcess NtResumeProcess;
 
-typedef NTSTATUS (WINAPI *_NtSuspendProcess) (HANDLE hProcess);
+typedef NTSTATUS(WINAPI *_NtSuspendProcess)(HANDLE hProcess);
 
 extern _NtSuspendProcess NtSuspendProcess;
 
-typedef NTSTATUS (WINAPI *_RtlGetVersion) (
-    PRTL_OSVERSIONINFOW lpVersionInformation);
+typedef NTSTATUS(WINAPI *_RtlGetVersion)(
+    PRTL_OSVERSIONINFOW lpVersionInformation
+);
 
 extern _RtlGetVersion RtlGetVersion;
 
-typedef ULONG (WINAPI *_RtlNtStatusToDosErrorNoTeb) (NTSTATUS status);
+typedef ULONG(WINAPI *_RtlNtStatusToDosErrorNoTeb)(NTSTATUS status);
 
 extern _RtlNtStatusToDosErrorNoTeb RtlNtStatusToDosErrorNoTeb;
 
-typedef BOOL (CALLBACK *_WTSQuerySessionInformationW) (
+typedef BOOL(CALLBACK *_WTSQuerySessionInformationW)(
     HANDLE hServer,
     DWORD SessionId,
     WTS_INFO_CLASS WTSInfoClass,
-    LPWSTR* ppBuffer,
-    DWORD* pBytesReturned);
+    LPWSTR *ppBuffer,
+    DWORD *pBytesReturned
+);
 
 extern _WTSQuerySessionInformationW WTSQuerySessionInformationW;
 
-typedef BOOL (CALLBACK *_WTSEnumerateSessionsW) (
+typedef BOOL(CALLBACK *_WTSEnumerateSessionsW)(
     HANDLE hServer,
     DWORD Reserved,
     DWORD Version,
-    PWTS_SESSION_INFOW* ppSessionInfo,
-    DWORD* pCount);
+    PWTS_SESSION_INFOW *ppSessionInfo,
+    DWORD *pCount
+);
 
 extern _WTSEnumerateSessionsW WTSEnumerateSessionsW;
 
-typedef VOID (CALLBACK *_WTSFreeMemory) (PVOID pMemory);
+typedef VOID(CALLBACK *_WTSFreeMemory)(PVOID pMemory);
 
 extern _WTSFreeMemory WTSFreeMemory;
 
 // Declared in <ip2string.h>, which can't be included from user-mode
 // code (it expects kernel types we don't have). Exported by ntdll.lib.
-NTSYSAPI PSTR NTAPI
-RtlIpv4AddressToStringA(struct in_addr *Addr, PSTR S);
+NTSYSAPI PSTR NTAPI RtlIpv4AddressToStringA(struct in_addr *Addr, PSTR S);
 
-NTSYSAPI PSTR NTAPI
-RtlIpv6AddressToStringA(struct in6_addr *Addr, PSTR P);
+NTSYSAPI PSTR NTAPI RtlIpv6AddressToStringA(struct in6_addr *Addr, PSTR P);
 
-#endif // NTEXTAPI_H
-// clang-format on
+#endif  // NTEXTAPI_H
