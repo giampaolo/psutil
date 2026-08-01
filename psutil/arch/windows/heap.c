@@ -30,7 +30,7 @@ psutil_heap_info(PyObject *self, PyObject *args) {
     SIZE_T heap_used = 0;
     SIZE_T mmap_used = 0;
     DWORD heap_count;
-    DWORD written;
+    DWORD nhandles;
     _HEAPINFO hinfo = {0};
     hinfo._pentry = NULL;
     int status;
@@ -46,18 +46,34 @@ psutil_heap_info(PyObject *self, PyObject *args) {
         return psutil_oserror_wsyscall("_heapwalk");
 
     // Get number of heaps (+ heap handles).
-    heap_count = GetProcessHeaps(0, NULL);  // 1st: get count
-    if (heap_count == 0)
+    nhandles = GetProcessHeaps(0, NULL);  // 1st: get count
+    if (nhandles == 0)
         return psutil_oserror_wsyscall("GetProcessHeaps (1/2)");
-    heaps = (HANDLE *)malloc(heap_count * sizeof(HANDLE));
+
+    heaps = (HANDLE *)malloc(nhandles * sizeof(HANDLE));
     if (!heaps) {
         PyErr_NoMemory();
         return NULL;
     }
-    written = GetProcessHeaps(heap_count, heaps);  // 2nd: get heaps handles
-    if (written == 0) {
+
+    heap_count = GetProcessHeaps(nhandles, heaps);  // 2nd: get heaps handles
+    if (heap_count == 0) {
         free(heaps);
         return psutil_oserror_wsyscall("GetProcessHeaps (2/2)");
+    }
+    // The number of heaps may have changed between the two calls. If
+    // it shrank, fewer handles than `nhandles` were stored; if it
+    // grew, the extra heaps didn't fit in the buffer. Either way only
+    // the first min(heap_count, nhandles) buffer entries are valid.
+    if (heap_count != nhandles) {
+        psutil_debug(
+            "GetProcessHeaps(): heap count changed from %lu to %lu "
+            "between the two calls",
+            (unsigned long)nhandles,
+            (unsigned long)heap_count
+        );
+        if (heap_count < nhandles)
+            nhandles = heap_count;
     }
 
     // VirtualAlloc'd regions (large allocations / mmap|hblkhd equivalent).
@@ -66,7 +82,7 @@ psutil_heap_info(PyObject *self, PyObject *args) {
             && (mbi.AllocationProtect & PAGE_READWRITE))
         {
             int is_heap_region = 0;
-            for (DWORD i = 0; i < heap_count; i++) {
+            for (DWORD i = 0; i < nhandles; i++) {
                 if (mbi.AllocationBase == heaps[i]) {
                     is_heap_region = 1;
                     break;
