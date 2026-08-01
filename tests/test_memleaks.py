@@ -583,6 +583,5 @@ class TestBadargs2(MemoryLeakTestCase):
             ValueError, _psutil.proc_cpu_affinity_set, self.pid, [-1]
         )
 
-    @skipif(not POSIX, reason="POSIX only")
     def test_check_pid_range(self):
         self.execute_w_exc(ValueError, _psutil.check_pid_range, -1)
