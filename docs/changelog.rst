@@ -384,6 +384,8 @@ Others:
 - :gh:`2841`, [macOS]: :func:`cpu_freq` could raise :exc:`SystemError` when CPU
   frequency data is missing or invalid in the IORegistry (e.g. on Apple M5
   chips). It now returns ``None`` instead (see :gh:`2382`).
+- :gh:`2848`, [BSD]: fix a stack buffer overflow in :func:`net_io_counters`
+  when the kernel reports an unusually long interface name.
 - :gh:`2854`, [macOS]: :meth:`Process.cmdline` and :meth:`Process.environ`
   could raise :exc:`SystemError` after ``sysctl(KERN_PROCARGS2)`` failed with
   ``errno == 0``. They now raise :exc:`AccessDenied` instead.
