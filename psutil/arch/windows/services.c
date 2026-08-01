@@ -16,7 +16,7 @@
 // ==================================================================
 
 
-SC_HANDLE
+static SC_HANDLE
 psutil_get_service_handler(
     const wchar_t *service_name, DWORD scm_access, DWORD access
 ) {
@@ -351,13 +351,6 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
         hService, SC_STATUS_PROCESS_INFO, NULL, 0, &bytesNeeded
     );
     Py_END_ALLOW_THREADS
-    if (GetLastError() == ERROR_MUI_FILE_NOT_FOUND) {
-        // Also services.msc fails in the same manner, so we return an
-        // empty string.
-        CloseServiceHandle(hService);
-        PyMem_Free(service_name);
-        return PyUnicode_FromString("");
-    }
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         psutil_oserror_wsyscall("QueryServiceStatusEx");
         goto error;
