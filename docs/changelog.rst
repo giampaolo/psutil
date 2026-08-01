@@ -294,6 +294,11 @@ Others:
 - :gh:`2939`: syscalls which can potentially block (disk devices, mount points,
   NIC drivers, etc) now release the GIL. Before, a slow psutil call would
   freeze all the other threads of the application for its whole duration.
+- :gh:`2947`: psutil now emits a ``RuntimeWarning`` when it returns incomplete
+  or approximated results due to an unexpected condition (e.g. a sanity check
+  on kernel data which failed). Before, these events were only visible by
+  enabling debug mode via the :envvar:`PSUTIL_DEBUG` environment variable, so
+  in practice they went unnoticed.
 
 **Bug fixes**
 

@@ -99,8 +99,8 @@ psutil_oserror_ad(const char *syscall) {
 }
 
 
-// Print a debug message to stderr. Don't call this directly, use the
-// psutil_debug() macro.
+// Print a debug message to stderr if PSUTIL_DEBUG mode is enabled.
+// Don't call this directly, use the psutil_debug() macro.
 void
 _psutil_debug_impl(const char *file, int lineno, const char *fmt, ...) {
     va_list args;
