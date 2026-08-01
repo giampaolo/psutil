@@ -647,26 +647,20 @@ class TestCpuAPIs(PsutilTestCase):
                 if difference >= 0.05:
                     return None
 
-    @skipif(
-        (CI_TESTING and OPENBSD) or MACOS or SUNOS,
-        reason="unreliable on OPENBSD + CI",
-    )
+    @skipif(MACOS or SUNOS, reason="unreliable on MACOS and SUNOS")
     @retry_on_failure(30)
     def test_cpu_times_comparison(self):
         # Make sure the sum of all per cpu times is almost equal to
-        # base "one cpu" times. On OpenBSD the sum of per-CPUs is
-        # higher for some reason.
+        # base "one cpu" times.
         base = psutil.cpu_times()
         per_cpu = psutil.cpu_times(percpu=True)
         summed_values = base._make([sum(num) for num in zip(*per_cpu)])
-        for field in base._fields:
-            with self.subTest(
-                field=field, base=str(base), per_cpu=str(per_cpu)
-            ):
-                assert (
-                    abs(getattr(base, field) - getattr(summed_values, field))
-                    < 2
-                )
+        mismatches = {
+            field: (getattr(base, field), getattr(summed_values, field))
+            for field in base._fields
+            if abs(getattr(base, field) - getattr(summed_values, field)) >= 2
+        }
+        assert mismatches == {}
 
     def _test_cpu_percent(self, percent, last_ret, new_ret):
         try:
