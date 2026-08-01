@@ -59,13 +59,18 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
+    Py_END_ALLOW_THREADS
     if (!kd) {
         convert_kvm_err("kvm_openfiles", errbuf);
         goto error;
     }
 
+    // Walks the whole kernel file table, may take a while.
+    Py_BEGIN_ALLOW_THREADS
     ikf = kvm_getfiles(kd, KERN_FILE_BYPID, -1, sizeof(*ikf), &cnt);
+    Py_END_ALLOW_THREADS
     if (!ikf) {
         psutil_oserror_wsyscall("kvm_getfiles");
         goto error;

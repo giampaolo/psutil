@@ -13,6 +13,12 @@
 #include <utmpx.h>
 
 
+// The utmpx functions are not thread safe: there is one global
+// cursor per process, and each getutxent() call advances it. Two
+// threads iterating at the same time would each get only some of
+// the entries. The whole loop must run under a lock. On normal
+// builds the GIL acts as that lock, so this file must not release
+// it.
 static void
 setup() {
     UTXENT_MUTEX_LOCK();

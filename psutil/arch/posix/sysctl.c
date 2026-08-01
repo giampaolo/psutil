@@ -49,8 +49,16 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
     if (!mib || miblen == 0 || !buf || !buflen)
         return psutil_badargs("psutil_sysctl_malloc");
 
+    // Unlike the fixed-size reads in psutil_sysctl(), these queries
+    // fetch whole kernel tables (processes, sockets, disks). The
+    // kernel walks them under lock, which can take a while on busy
+    // systems, so release the GIL. This includes the size probes:
+    // counting the table costs about as much as copying it.
+
     // First query to determine required size
+    Py_BEGIN_ALLOW_THREADS
     ret = sysctl(mib, miblen, NULL, &needed, NULL, 0);
+    Py_END_ALLOW_THREADS
     if (ret == -1) {
         psutil_oserror_wsyscall("sysctl() malloc 1/3");
         return -1;
@@ -69,7 +77,9 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
         }
 
         size_t len = needed;
+        Py_BEGIN_ALLOW_THREADS
         ret = sysctl(mib, miblen, buffer, &len, NULL, 0);
+        Py_END_ALLOW_THREADS
 
         if (ret == 0) {
             // Success: return buffer and length
@@ -84,7 +94,10 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
             buffer = NULL;
 
             // Re-query needed size for next attempt
-            if (sysctl(mib, miblen, NULL, &needed, NULL, 0) == -1) {
+            Py_BEGIN_ALLOW_THREADS
+            ret = sysctl(mib, miblen, NULL, &needed, NULL, 0);
+            Py_END_ALLOW_THREADS
+            if (ret == -1) {
                 psutil_oserror_wsyscall("sysctl() malloc 2/3");
                 return -1;
             }
