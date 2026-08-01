@@ -59,6 +59,7 @@ psutil_users(PyObject *self, PyObject *args) {
     LPWSTR buffer_addr = NULL;
     LPWSTR buffer_info = NULL;
     PWTS_SESSION_INFOW sessions = NULL;
+    BOOL ok;
     DWORD count;
     DWORD i;
     DWORD sessionId;
@@ -82,7 +83,12 @@ psutil_users(PyObject *self, PyObject *args) {
         return py_retlist;
     }
 
-    if (WTSEnumerateSessionsW(hServer, 0, 1, &sessions, &count) == 0) {
+    // WTS calls are RPC to the Terminal Services service, they may be
+    // slow.
+    Py_BEGIN_ALLOW_THREADS
+    ok = WTSEnumerateSessionsW(hServer, 0, 1, &sessions, &count);
+    Py_END_ALLOW_THREADS
+    if (ok == 0) {
         if (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) {
             // On Windows Nano server, the Wtsapi32 API can be present, but
             // return WinError 120.
@@ -108,11 +114,12 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // username
         bytes = 0;
-        if (WTSQuerySessionInformationW(
-                hServer, sessionId, WTSUserName, &buffer_user, &bytes
-            )
-            == 0)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ok = WTSQuerySessionInformationW(
+            hServer, sessionId, WTSUserName, &buffer_user, &bytes
+        );
+        Py_END_ALLOW_THREADS
+        if (ok == 0) {
             psutil_oserror_wsyscall("WTSQuerySessionInformationW");
             goto error;
         }
@@ -121,11 +128,12 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // address
         bytes = 0;
-        if (WTSQuerySessionInformationW(
-                hServer, sessionId, WTSClientAddress, &buffer_addr, &bytes
-            )
-            == 0)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ok = WTSQuerySessionInformationW(
+            hServer, sessionId, WTSClientAddress, &buffer_addr, &bytes
+        );
+        Py_END_ALLOW_THREADS
+        if (ok == 0) {
             psutil_oserror_wsyscall("WTSQuerySessionInformationW");
             goto error;
         }
@@ -154,11 +162,12 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // login time
         bytes = 0;
-        if (WTSQuerySessionInformationW(
-                hServer, sessionId, WTSSessionInfo, &buffer_info, &bytes
-            )
-            == 0)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ok = WTSQuerySessionInformationW(
+            hServer, sessionId, WTSSessionInfo, &buffer_info, &bytes
+        );
+        Py_END_ALLOW_THREADS
+        if (ok == 0) {
             psutil_oserror_wsyscall("WTSQuerySessionInformationW");
             goto error;
         }
