@@ -49,11 +49,13 @@ psutil_heap_info(PyObject *self, PyObject *args) {
     nhandles = GetProcessHeaps(0, NULL);  // 1st: get count
     if (nhandles == 0)
         return psutil_oserror_wsyscall("GetProcessHeaps (1/2)");
+
     heaps = (HANDLE *)malloc(nhandles * sizeof(HANDLE));
     if (!heaps) {
         PyErr_NoMemory();
         return NULL;
     }
+
     heap_count = GetProcessHeaps(nhandles, heaps);  // 2nd: get heaps handles
     if (heap_count == 0) {
         free(heaps);

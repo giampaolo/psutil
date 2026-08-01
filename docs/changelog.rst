@@ -492,6 +492,9 @@ Others:
   mid-call. Now it's skipped.
 - :gh:`2943`, [Windows]: :func:`win_service_iter` could crash the interpreter
   instead of raising an exception if the service enumeration failed.
+- :gh:`2946`, [Windows]: if the number of process heaps changed while
+  :func:`heap_info` was running, it could read uninitialized memory and return
+  bogus :field:`mmap_used` and :field:`heap_count` values.
 - :gh:`2965`, [Windows]: on systems with more than 64 CPUs :func:`cpu_times`
   with ``percpu=True`` and :func:`cpu_stats` read uninitialized memory: the
   kernel only returns entries for the calling thread's processor group, but the
