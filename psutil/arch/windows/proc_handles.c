@@ -78,8 +78,8 @@
 // later rewritten by Giampaolo Rodola. Final implementation was
 // adapted using SystemInformer as a guide.
 
-#include <windows.h>
 #include <Python.h>
+#include <windows.h>
 
 #include "../../arch/all/init.h"
 
