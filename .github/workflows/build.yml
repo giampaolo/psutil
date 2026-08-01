@@ -98,7 +98,7 @@ jobs:
       # Cache dprint binary + plugins, which would otherwise recompiled on
       # every run (~5s).
       - name: Cache dprint
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.dprint
