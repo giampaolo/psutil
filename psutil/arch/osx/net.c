@@ -9,6 +9,7 @@
 // https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_osx.c
 
 #include <Python.h>
+#include <stddef.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <net/if.h>
@@ -43,8 +44,8 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     lim = buf + len;
 
     for (next = buf; next < lim;) {
-        if ((size_t)(lim - next) < sizeof(struct if_msghdr)) {
-            psutil_debug("struct if_msghdr size mismatch (skip entry)");
+        if ((size_t)(lim - next) < offsetof(struct if_msghdr, ifm_addrs)) {
+            psutil_debug("truncated route message (skip remaining)");
             break;
         }
 
