@@ -116,8 +116,9 @@ _psutil_debug_impl(const char *file, int lineno, const char *fmt, ...) {
 
 
 // Emit a RuntimeWarning, also printed as a debug message. It never
-// raises: with -W error the exception is discarded. Don't call this
-// directly, use the psutil_warn() macro.
+// raises: with -W error the exception is discarded. Use it for events
+// which are never supposed to happen, and imply a psutil bug. Don't
+// call this directly, use the psutil_warn() macro.
 void
 _psutil_warn_impl(const char *file, int lineno, const char *fmt, ...) {
     char msg[MSG_SIZE];
