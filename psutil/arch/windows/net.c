@@ -375,15 +375,10 @@ error:
 // TODO: get 'duplex' (currently it's hard coded to '2', aka 'full duplex')
 PyObject *
 psutil_net_if_stats(PyObject *self, PyObject *args) {
-    int i;
-    DWORD dwSize = 0;
+    MIB_IF_ROW2 ifRow;
     DWORD dwRetVal = 0;
-    MIB_IFTABLE *pIfTable = NULL;
-    MIB_IFROW *pIfRow;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
-    char descr[MAX_PATH];
-    int ifname_found;
 
     PyObject *py_nic_name = NULL;
     PyObject *py_retdict = PyDict_New();
@@ -397,72 +392,37 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     if (pAddresses == NULL)
         goto error;
 
-    pIfTable = (MIB_IFTABLE *)malloc(sizeof(MIB_IFTABLE));
-    if (pIfTable == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-    dwSize = sizeof(MIB_IFTABLE);
-    Py_BEGIN_ALLOW_THREADS
-    dwRetVal = GetIfTable(pIfTable, &dwSize, FALSE);
-    Py_END_ALLOW_THREADS
-    if (dwRetVal == ERROR_INSUFFICIENT_BUFFER) {
-        free(pIfTable);
-        pIfTable = (MIB_IFTABLE *)malloc(dwSize);
-        if (pIfTable == NULL) {
-            PyErr_NoMemory();
-            goto error;
-        }
-    }
-    // Make a second call to GetIfTable to get the actual
-    // data we want.
-    Py_BEGIN_ALLOW_THREADS
-    dwRetVal = GetIfTable(pIfTable, &dwSize, FALSE);
-    Py_END_ALLOW_THREADS
-    if (dwRetVal != NO_ERROR) {
-        psutil_runtime_error(
-            "GetIfTable() syscall failed (err=%lu)", (unsigned long)dwRetVal
-        );
-        goto error;
-    }
+    pCurrAddresses = pAddresses;
 
-    for (i = 0; i < (int)pIfTable->dwNumEntries; i++) {
-        pIfRow = (MIB_IFROW *)&pIfTable->table[i];
-
-        // GetIfTable is not able to give us NIC with "friendly names"
-        // so we determine them via GetAdapterAddresses() which
-        // provides friendly names *and* descriptions and find the
-        // ones that match.
-        ifname_found = 0;
+    while (pCurrAddresses) {
         Py_CLEAR(py_nic_name);
         Py_CLEAR(py_ifc_info);
+        Py_CLEAR(py_is_up);
 
-        pCurrAddresses = pAddresses;
-        while (pCurrAddresses) {
-            str_format(descr, MAX_PATH, "%wS", pCurrAddresses->Description);
-            if (lstrcmp(descr, pIfRow->bDescr) == 0) {
-                py_nic_name = PyUnicode_FromWideChar(
-                    pCurrAddresses->FriendlyName,
-                    wcslen(pCurrAddresses->FriendlyName)
-                );
-                if (py_nic_name == NULL)
-                    goto error;
-                ifname_found = 1;
-                break;
-            }
+        SecureZeroMemory(&ifRow, sizeof(ifRow));
+        ifRow.InterfaceIndex = pCurrAddresses->IfIndex;
+
+        Py_BEGIN_ALLOW_THREADS
+        dwRetVal = GetIfEntry2(&ifRow);
+        Py_END_ALLOW_THREADS
+        if (dwRetVal != NO_ERROR) {
+            psutil_debug(
+                "GetIfEntry2() failed for interface %lu (err=%lu); skip it",
+                (unsigned long)ifRow.InterfaceIndex,
+                (unsigned long)dwRetVal
+            );
             pCurrAddresses = pCurrAddresses->Next;
-        }
-        if (ifname_found == 0) {
-            // Name not found means GetAdapterAddresses() doesn't list
-            // this NIC, only GetIfTable, meaning it's not really a NIC
-            // interface so we skip it.
             continue;
         }
 
-        Py_CLEAR(py_is_up);
-        if ((pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_CONNECTED
-             || pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_OPERATIONAL)
-            && pIfRow->dwAdminStatus == 1)
+        py_nic_name = PyUnicode_FromWideChar(
+            pCurrAddresses->FriendlyName, wcslen(pCurrAddresses->FriendlyName)
+        );
+        if (py_nic_name == NULL)
+            goto error;
+
+        if (ifRow.OperStatus == IfOperStatusUp
+            && ifRow.AdminStatus == NET_IF_ADMIN_STATUS_UP)
         {
             py_is_up = Py_True;
         }
@@ -472,11 +432,11 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         Py_INCREF(py_is_up);
 
         py_ifc_info = Py_BuildValue(
-            "(Oikk)",
+            "(OiKk)",
             py_is_up,
-            2,  // there's no way to know duplex so let's assume 'full'
-            pIfRow->dwSpeed / 1000000,  // expressed in bytes, we want Mb
-            pIfRow->dwMtu
+            2,  // duplex is hard coded to 'full'
+            ifRow.TransmitLinkSpeed / 1000000,  // 64-bit, expressed in Mb
+            ifRow.Mtu
         );
         if (!py_ifc_info)
             goto error;
@@ -486,13 +446,11 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
 
         Py_CLEAR(py_ifc_info);
         Py_CLEAR(py_nic_name);
+
+        pCurrAddresses = pCurrAddresses->Next;
     }
 
-    free(pIfTable);
     free(pAddresses);
-    Py_CLEAR(py_nic_name);
-    Py_CLEAR(py_ifc_info);
-    Py_CLEAR(py_is_up);
     return py_retdict;
 
 error:
@@ -500,8 +458,6 @@ error:
     Py_XDECREF(py_ifc_info);
     Py_XDECREF(py_nic_name);
     Py_XDECREF(py_retdict);
-    if (pIfTable)
-        free(pIfTable);
     if (pAddresses)
         free(pAddresses);
     return NULL;

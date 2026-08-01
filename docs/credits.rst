@@ -122,11 +122,12 @@ Code contributors by year
 * :user:`Jinhyuk Hong <jinh-labs>` - :gh:`2855`
 * :user:`Karl Hill <karlhillx>` - :gh:`2857`
 * :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`
+* :user:`Marcel Telka <mtelka>` - :gh:`2687`
+* :user:`Omprakash Chauhan <omprakash2929>` - :gh:`2655`
 * :user:`Santhosh Raju <fraggerfox>` - :gh:`2805`
 * :user:`Sebastian Cao <cycsmail>` - :gh:`2628`
 * :user:`Sergey Fedorov <barracuda156>` - :gh:`2701`
 * :user:`Tobias Klauser <tklauser>` - :gh:`2711`
-* :user:`Marcel Telka <mtelka>` - :gh:`2687`
 
 2025
 ~~~~
