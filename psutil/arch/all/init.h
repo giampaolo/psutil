@@ -91,8 +91,7 @@ extern int PSUTIL_TESTING;
     #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
         #define _Py_PARSE_PID "L"
     #else
-        #error "_Py_PARSE_PID: sizeof(pid_t) is neither sizeof(int), "
-               "sizeof(long) or sizeof(long long)"
+        #error "_Py_PARSE_PID: sizeof(pid_t) is not int, long or long long"
     #endif
 #endif
 
@@ -103,8 +102,7 @@ extern int PSUTIL_TESTING;
     #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
         #define PyLong_FromPid PyLong_FromLongLong
     #else
-        #error "PyLong_FromPid: sizeof(pid_t) is neither sizeof(int), "
-               "sizeof(long) or sizeof(long long)"
+        #error "PyLong_FromPid: sizeof(pid_t) is not int, long or long long"
     #endif
 #endif
 // clang-format on
