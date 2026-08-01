@@ -80,6 +80,7 @@ psutil_users(PyObject *self, PyObject *args) {
         // If we don't run in an environment that is a Remote Desktop Services
         // environment the Wtsapi32 proc might not be present.
         // https://docs.microsoft.com/en-us/windows/win32/termserv/run-time-linking-to-wtsapi32-dll
+        psutil_debug("WTS procs not available; return empty list");
         return py_retlist;
     }
 
@@ -92,6 +93,10 @@ psutil_users(PyObject *self, PyObject *args) {
         if (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) {
             // On Windows Nano server, the Wtsapi32 API can be present, but
             // return WinError 120.
+            psutil_debug(
+                "WTSEnumerateSessionsW -> ERROR_CALL_NOT_IMPLEMENTED; "
+                "return empty list"
+            );
             return py_retlist;
         }
         psutil_oserror_wsyscall("WTSEnumerateSessionsW");
@@ -139,7 +144,7 @@ psutil_users(PyObject *self, PyObject *args) {
         }
 
         address = (PWTS_CLIENT_ADDRESS)buffer_addr;
-        if (address->AddressFamily == 2) {  // AF_INET == 2
+        if (address->AddressFamily == AF_INET) {
             str_format(
                 address_str,
                 sizeof(address_str),
@@ -192,9 +197,12 @@ psutil_users(PyObject *self, PyObject *args) {
     }
 
     WTSFreeMemory(sessions);
-    WTSFreeMemory(buffer_user);
-    WTSFreeMemory(buffer_addr);
-    WTSFreeMemory(buffer_info);
+    if (buffer_user != NULL)
+        WTSFreeMemory(buffer_user);
+    if (buffer_addr != NULL)
+        WTSFreeMemory(buffer_addr);
+    if (buffer_info != NULL)
+        WTSFreeMemory(buffer_info);
     return py_retlist;
 
 error:
