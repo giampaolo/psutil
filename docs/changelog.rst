@@ -328,6 +328,11 @@ Others:
 - :gh:`2628`, [Linux]: :func:`cpu_freq` no longer takes offline CPU cores into
   account. They were reported with all-zero frequencies, which dragged down the
   average ``current``, ``min`` and ``max`` values.
+- :gh:`2655`, [Windows]: :func:`net_if_stats` returned ``4294967295`` (32-bit
+  overflow) as the speed for network interfaces faster than ~4.29 Gbps (e.g. 5
+  Gbps NICs). Fixed by switching from the legacy ``GetIfTable()`` /
+  ``MIB_IFROW`` API to ``GetIfEntry2()`` / ``MIB_IF_ROW2``, which uses a 64-bit
+  ``TransmitLinkSpeed`` field.
 - :gh:`2711`, [Windows]: :func:`net_if_addrs` was returning ``None`` for the
   ``broadcast`` field of network interfaces instead of the correct broadcast
   address.
