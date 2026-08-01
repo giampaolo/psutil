@@ -73,8 +73,7 @@ psutil_get_file_from_sock(
 static int
 psutil_gather_inet(
     int proto,
-    int include_v4,
-    int include_v6,
+    const psutil_conn_filters *filters,
     PyObject *py_retlist,
     struct xfile *psutil_xfiles,
     int psutil_nxfiles
@@ -177,9 +176,9 @@ psutil_gather_inet(
         }
 
         // filter
-        if ((inp->inp_vflag & INP_IPV4) && (include_v4 == 0))
+        if ((inp->inp_vflag & INP_IPV4) && !filters->v4)
             continue;
-        if ((inp->inp_vflag & INP_IPV6) && (include_v6 == 0))
+        if ((inp->inp_vflag & INP_IPV6) && !filters->v6)
             continue;
 
         char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
@@ -359,8 +358,8 @@ error:
 
 PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
-    int include_v4, include_v6, include_unix, include_tcp, include_udp,
-        psutil_nxfiles;
+    int psutil_nxfiles;
+    psutil_conn_filters filters;
     struct xfile *psutil_xfiles;
     PyObject *py_af_filter = NULL;
     PyObject *py_type_filter = NULL;
@@ -371,20 +370,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "OO", &py_af_filter, &py_type_filter)) {
         goto error;
     }
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
-        goto error;
-    }
-
-    if ((include_v4 = psutil_int_in_seq(AF_INET, py_af_filter)) == -1)
-        goto error;
-    if ((include_v6 = psutil_int_in_seq(AF_INET6, py_af_filter)) == -1)
-        goto error;
-    if ((include_unix = psutil_int_in_seq(AF_UNIX, py_af_filter)) == -1)
-        goto error;
-    if ((include_tcp = psutil_int_in_seq(SOCK_STREAM, py_type_filter)) == -1)
-        goto error;
-    if ((include_udp = psutil_int_in_seq(SOCK_DGRAM, py_type_filter)) == -1)
+    if (psutil_parse_conn_filters(py_af_filter, py_type_filter, &filters) != 0)
         goto error;
 
     psutil_xfiles = malloc(sizeof(struct xfile));
@@ -397,11 +383,10 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error_free_psutil_xfiles;
 
     // TCP
-    if (include_tcp == 1) {
+    if (filters.tcp) {
         if (psutil_gather_inet(
                 IPPROTO_TCP,
-                include_v4,
-                include_v6,
+                &filters,
                 py_retlist,
                 psutil_xfiles,
                 psutil_nxfiles
@@ -412,11 +397,10 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         }
     }
     // UDP
-    if (include_udp == 1) {
+    if (filters.udp) {
         if (psutil_gather_inet(
                 IPPROTO_UDP,
-                include_v4,
-                include_v6,
+                &filters,
                 py_retlist,
                 psutil_xfiles,
                 psutil_nxfiles
@@ -427,7 +411,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         }
     }
     // UNIX
-    if (include_unix == 1) {
+    if (filters.unix_) {
         if (psutil_gather_unix(
                 SOCK_STREAM, py_retlist, psutil_xfiles, psutil_nxfiles
             )

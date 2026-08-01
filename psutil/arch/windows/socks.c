@@ -161,7 +161,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PMIB_UDP6TABLE_OWNER_PID udp6Table;
     ULONG i;
     int ok;
-    int include_v4, include_v6, include_tcp, include_udp;
+    psutil_conn_filters filters;
     CHAR addressBufferLocal[65];
     CHAR addressBufferRemote[65];
 
@@ -178,24 +178,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+    if (psutil_parse_conn_filters(py_af_filter, py_type_filter, &filters) != 0)
         return NULL;
-    }
 
     if (pid != -1) {
         if (psutil_check_pid_running(pid) != 0)
             return NULL;
     }
-
-    if ((include_v4 = psutil_int_in_seq(AF_INET, py_af_filter)) == -1)
-        return NULL;
-    if ((include_v6 = psutil_int_in_seq(AF_INET6, py_af_filter)) == -1)
-        return NULL;
-    if ((include_tcp = psutil_int_in_seq(SOCK_STREAM, py_type_filter)) == -1)
-        return NULL;
-    if ((include_udp = psutil_int_in_seq(SOCK_DGRAM, py_type_filter)) == -1)
-        return NULL;
 
     py_retlist = PyList_New(0);
     if (py_retlist == NULL)
@@ -203,7 +192,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     // TCP IPv4
 
-    if (include_v4 && include_tcp) {
+    if (filters.tcp && filters.v4) {
         table = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
@@ -285,7 +274,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     }
 
     // TCP IPv6
-    if (include_v6 && include_tcp) {
+    if (filters.tcp && filters.v6) {
         table = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
@@ -369,7 +358,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     // UDP IPv4
 
-    if (include_v4 && include_udp) {
+    if (filters.udp && filters.v4) {
         table = NULL;
         py_addr_tuple_local = NULL;
         table = __GetExtendedUdpTable(AF_INET);
@@ -426,7 +415,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     // UDP IPv6
 
-    if (include_v6 && include_udp) {
+    if (filters.udp && filters.v6) {
         table = NULL;
         py_addr_tuple_local = NULL;
         table = __GetExtendedUdpTable(AF_INET6);

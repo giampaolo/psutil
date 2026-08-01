@@ -7,6 +7,13 @@
 #include <Python.h>
 #include <stdarg.h>
 #include <math.h>
+#if defined(PSUTIL_WINDOWS)
+#include <winsock2.h>
+#else
+#include <sys/socket.h>
+#endif
+
+#include "init.h"
 
 
 // Build a Python object from a format string, append it to a list,
@@ -80,8 +87,8 @@ done:
 
 // Return 1 if `value` is in `py_seq`, 0 if it's not, -1 on error with
 // a Python exception set.
-int
-psutil_int_in_seq(int value, PyObject *py_seq) {
+static int
+int_in_seq(int value, PyObject *py_seq) {
     int inseq;
     PyObject *py_value;
 
@@ -91,6 +98,31 @@ psutil_int_in_seq(int value, PyObject *py_seq) {
     inseq = PySequence_Contains(py_seq, py_value);  // return -1 on failure
     Py_DECREF(py_value);
     return inseq;
+}
+
+
+// Parse the (af_filter, type_filter) args that the Python layer passes
+// to net_connections(). Return 0 on success, -1 on error with a Python
+// exception set.
+int
+psutil_parse_conn_filters(
+    PyObject *py_af_filter, PyObject *py_type_filter, psutil_conn_filters *out
+) {
+    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
+        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+        return -1;
+    }
+    if ((out->v4 = int_in_seq(AF_INET, py_af_filter)) == -1)
+        return -1;
+    if ((out->v6 = int_in_seq(AF_INET6, py_af_filter)) == -1)
+        return -1;
+    if ((out->unix_ = int_in_seq(AF_UNIX, py_af_filter)) == -1)
+        return -1;
+    if ((out->tcp = int_in_seq(SOCK_STREAM, py_type_filter)) == -1)
+        return -1;
+    if ((out->udp = int_in_seq(SOCK_DGRAM, py_type_filter)) == -1)
+        return -1;
+    return 0;
 }
 
 

@@ -27,7 +27,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     int rport;
     char lip[INET6_ADDRSTRLEN];
     char rip[INET6_ADDRSTRLEN];
-    int inseq;
+    psutil_conn_filters filters;
 
     char errbuf[_POSIX2_LINE_MAX];
     kvm_t *kd = NULL;
@@ -52,10 +52,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     {
         goto error;
     }
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+    if (psutil_parse_conn_filters(py_af_filter, py_type_filter, &filters) != 0)
         goto error;
-    }
 
     Py_BEGIN_ALLOW_THREADS
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
@@ -85,16 +83,17 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             continue;
         if (pid != -1 && kif->p_pid != (uint32_t)pid)
             continue;
-        inseq = psutil_int_in_seq(kif->so_family, py_af_filter);
-        if (inseq == -1)
-            goto error;
-        if (inseq == 0)
+        if (!((kif->so_family == AF_INET && filters.v4)
+              || (kif->so_family == AF_INET6 && filters.v6)
+              || (kif->so_family == AF_UNIX && filters.unix_)))
+        {
             continue;
-        inseq = psutil_int_in_seq(kif->so_type, py_type_filter);
-        if (inseq == -1)
-            goto error;
-        if (inseq == 0)
+        }
+        if (!((kif->so_type == SOCK_STREAM && filters.tcp)
+              || (kif->so_type == SOCK_DGRAM && filters.udp)))
+        {
             continue;
+        }
 
         // IPv4 / IPv6 socket
         if ((kif->so_family == AF_INET) || (kif->so_family == AF_INET6)) {
