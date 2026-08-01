@@ -73,12 +73,15 @@ __GetExtendedTcpTable(ULONG family) {
             );
             return NULL;
         }
-        psutil_debug("GetExtendedTcpTable: retry with a bigger buffer");
+        psutil_debug(
+            "GetExtendedTcpTable: retry (err=%lu)", (unsigned long)err
+        );
     }
 
     psutil_runtime_error(
-        "GetExtendedTcpTable() buffer was still too small after %d attempts",
-        MAX_TRIES
+        "GetExtendedTcpTable() failed %d times in a row (last err=%lu)",
+        MAX_TRIES,
+        (unsigned long)err
     );
     return NULL;
 }
@@ -130,12 +133,15 @@ __GetExtendedUdpTable(ULONG family) {
             );
             return NULL;
         }
-        psutil_debug("GetExtendedUdpTable: retry with a bigger buffer");
+        psutil_debug(
+            "GetExtendedUdpTable: retry (err=%lu)", (unsigned long)err
+        );
     }
 
     psutil_runtime_error(
-        "GetExtendedUdpTable() buffer was still too small after %d attempts",
-        MAX_TRIES
+        "GetExtendedUdpTable() failed %d times in a row (last err=%lu)",
+        MAX_TRIES,
+        (unsigned long)err
     );
     return NULL;
 }
