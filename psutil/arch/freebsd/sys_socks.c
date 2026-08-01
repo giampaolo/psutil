@@ -357,20 +357,6 @@ error:
 }
 
 
-static int
-psutil_int_in_seq(int value, PyObject *py_seq) {
-    int inseq;
-    PyObject *py_value;
-
-    py_value = PyLong_FromLong((long)value);
-    if (py_value == NULL)
-        return -1;
-    inseq = PySequence_Contains(py_seq, py_value);  // return -1 on failure
-    Py_DECREF(py_value);
-    return inseq;
-}
-
-
 PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     int include_v4, include_v6, include_unix, include_tcp, include_udp,

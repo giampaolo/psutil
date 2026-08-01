@@ -78,6 +78,22 @@ done:
 }
 
 
+// Return 1 if `value` is in `py_seq`, 0 if it's not, -1 on error with
+// a Python exception set.
+int
+psutil_int_in_seq(int value, PyObject *py_seq) {
+    int inseq;
+    PyObject *py_value;
+
+    py_value = PyLong_FromLong((long)value);
+    if (py_value == NULL)
+        return -1;
+    inseq = PySequence_Contains(py_seq, py_value);  // return -1 on failure
+    Py_DECREF(py_value);
+    return inseq;
+}
+
+
 double
 psutil_usage_percent(double used, double total, int round_) {
     double ret;

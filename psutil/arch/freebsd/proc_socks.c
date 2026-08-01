@@ -219,8 +219,6 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     PyObject *py_raddr = NULL;
     PyObject *py_af_filter = NULL;
     PyObject *py_type_filter = NULL;
-    PyObject *py_family = NULL;
-    PyObject *py_type = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -259,14 +257,14 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
         kif = &freep[i];
         if (kif->kf_type == KF_TYPE_SOCKET) {
             // apply filters
-            py_family = PyLong_FromLong((long)kif->kf_sock_domain);
-            inseq = PySequence_Contains(py_af_filter, py_family);
-            Py_DECREF(py_family);
+            inseq = psutil_int_in_seq(kif->kf_sock_domain, py_af_filter);
+            if (inseq == -1)
+                goto error;
             if (inseq == 0)
                 continue;
-            py_type = PyLong_FromLong((long)kif->kf_sock_type);
-            inseq = PySequence_Contains(py_type_filter, py_type);
-            Py_DECREF(py_type);
+            inseq = psutil_int_in_seq(kif->kf_sock_type, py_type_filter);
+            if (inseq == -1)
+                goto error;
             if (inseq == 0)
                 continue;
             // IPv4 / IPv6 socket

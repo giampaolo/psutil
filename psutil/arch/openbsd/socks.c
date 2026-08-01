@@ -42,8 +42,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *py_lpath = NULL;
     PyObject *py_af_filter = NULL;
     PyObject *py_type_filter = NULL;
-    PyObject *py_family = NULL;
-    PyObject *_type = NULL;
 
 
     if (py_retlist == NULL)
@@ -87,14 +85,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             continue;
         if (pid != -1 && kif->p_pid != (uint32_t)pid)
             continue;
-        py_family = PyLong_FromLong((long)kif->so_family);
-        inseq = PySequence_Contains(py_af_filter, py_family);
-        Py_DECREF(py_family);
+        inseq = psutil_int_in_seq(kif->so_family, py_af_filter);
+        if (inseq == -1)
+            goto error;
         if (inseq == 0)
             continue;
-        _type = PyLong_FromLong((long)kif->so_type);
-        inseq = PySequence_Contains(py_type_filter, _type);
-        Py_DECREF(_type);
+        inseq = psutil_int_in_seq(kif->so_type, py_type_filter);
+        if (inseq == -1)
+            goto error;
         if (inseq == 0)
             continue;
 

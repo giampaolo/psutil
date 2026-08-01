@@ -654,25 +654,18 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
             int fd, family, type, lport, rport, state;
             char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
             int inseq;
-            PyObject *py_family;
-            PyObject *py_type;
 
             fd = (int)fdp_pointer->proc_fd;
             family = si.psi.soi_family;
             type = si.psi.soi_type;
 
             // apply filters
-            py_family = PyLong_FromLong((long)family);
-            inseq = PySequence_Contains(py_af_filter, py_family);
-            Py_DECREF(py_family);
+            inseq = psutil_int_in_seq(family, py_af_filter);
             if (inseq == -1)
                 goto error;
             if (inseq == 0)
                 continue;
-
-            py_type = PyLong_FromLong((long)type);
-            inseq = PySequence_Contains(py_type_filter, py_type);
-            Py_DECREF(py_type);
+            inseq = psutil_int_in_seq(type, py_type_filter);
             if (inseq == -1)
                 goto error;
             if (inseq == 0)
