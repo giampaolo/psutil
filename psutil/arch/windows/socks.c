@@ -16,6 +16,7 @@
 
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
 #define STATUS_UNSUCCESSFUL 0xC0000001
+#define MAX_TRIES 3
 
 
 // Note about GetExtended[Tcp|Udp]Table syscalls: due to other processes
@@ -30,35 +31,55 @@ static PVOID
 __GetExtendedTcpTable(ULONG family) {
     DWORD err;
     PVOID table;
-    ULONG size = 0;
+    ULONG size;
+    int attempt;
     TCP_TABLE_CLASS class = TCP_TABLE_OWNER_PID_ALL;
 
-    // Snapshots the whole TCP table from the network stack.
-    Py_BEGIN_ALLOW_THREADS
-    GetExtendedTcpTable(NULL, &size, FALSE, family, class, 0);
-    Py_END_ALLOW_THREADS
-    // reserve 25% more space to be sure
-    size = size + (size / 2 / 2);
+    // The table can grow between the call asking for its size and the
+    // one reading it, hence the retry.
+    for (attempt = 0; attempt < MAX_TRIES; attempt++) {
+        size = 0;
+        // Snapshots the whole TCP table from the network stack.
+        Py_BEGIN_ALLOW_THREADS
+        err = GetExtendedTcpTable(NULL, &size, FALSE, family, class, 0);
+        Py_END_ALLOW_THREADS
+        if (err != ERROR_INSUFFICIENT_BUFFER) {
+            psutil_runtime_error(
+                "GetExtendedTcpTable() failed to determine the buffer size "
+                "(err=%lu)",
+                (unsigned long)err
+            );
+            return NULL;
+        }
+        // reserve 25% more space to be sure
+        size = size + (size / 2 / 2);
 
-    table = malloc(size);
-    if (table == NULL) {
-        PyErr_NoMemory();
-        return NULL;
+        table = malloc(size);
+        if (table == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
+        Py_BEGIN_ALLOW_THREADS
+        err = GetExtendedTcpTable(table, &size, FALSE, family, class, 0);
+        Py_END_ALLOW_THREADS
+        if (err == NO_ERROR)
+            return table;
+
+        free(table);
+        if (err != ERROR_INSUFFICIENT_BUFFER && err != STATUS_UNSUCCESSFUL) {
+            psutil_runtime_error(
+                "GetExtendedTcpTable() failed (err=%lu)", (unsigned long)err
+            );
+            return NULL;
+        }
+        psutil_debug("GetExtendedTcpTable: retry with a bigger buffer");
     }
 
-    Py_BEGIN_ALLOW_THREADS
-    err = GetExtendedTcpTable(table, &size, FALSE, family, class, 0);
-    Py_END_ALLOW_THREADS
-    if (err == NO_ERROR)
-        return table;
-
-    free(table);
-    if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
-        psutil_debug("GetExtendedTcpTable: retry with different bufsize");
-        return __GetExtendedTcpTable(family);
-    }
-
-    psutil_runtime_error("GetExtendedTcpTable failed");
+    psutil_runtime_error(
+        "GetExtendedTcpTable() buffer was still too small after %d attempts",
+        MAX_TRIES
+    );
     return NULL;
 }
 
@@ -67,35 +88,55 @@ static PVOID
 __GetExtendedUdpTable(ULONG family) {
     DWORD err;
     PVOID table;
-    ULONG size = 0;
+    ULONG size;
+    int attempt;
     UDP_TABLE_CLASS class = UDP_TABLE_OWNER_PID;
 
-    // Snapshots the whole UDP table from the network stack.
-    Py_BEGIN_ALLOW_THREADS
-    GetExtendedUdpTable(NULL, &size, FALSE, family, class, 0);
-    Py_END_ALLOW_THREADS
-    // reserve 25% more space
-    size = size + (size / 2 / 2);
+    // The table can grow between the call asking for its size and the
+    // one reading it, hence the retry.
+    for (attempt = 0; attempt < MAX_TRIES; attempt++) {
+        size = 0;
+        // Snapshots the whole UDP table from the network stack.
+        Py_BEGIN_ALLOW_THREADS
+        err = GetExtendedUdpTable(NULL, &size, FALSE, family, class, 0);
+        Py_END_ALLOW_THREADS
+        if (err != ERROR_INSUFFICIENT_BUFFER) {
+            psutil_runtime_error(
+                "GetExtendedUdpTable() failed to determine the buffer size "
+                "(err=%lu)",
+                (unsigned long)err
+            );
+            return NULL;
+        }
+        // reserve 25% more space to be sure
+        size = size + (size / 2 / 2);
 
-    table = malloc(size);
-    if (table == NULL) {
-        PyErr_NoMemory();
-        return NULL;
+        table = malloc(size);
+        if (table == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
+        Py_BEGIN_ALLOW_THREADS
+        err = GetExtendedUdpTable(table, &size, FALSE, family, class, 0);
+        Py_END_ALLOW_THREADS
+        if (err == NO_ERROR)
+            return table;
+
+        free(table);
+        if (err != ERROR_INSUFFICIENT_BUFFER && err != STATUS_UNSUCCESSFUL) {
+            psutil_runtime_error(
+                "GetExtendedUdpTable() failed (err=%lu)", (unsigned long)err
+            );
+            return NULL;
+        }
+        psutil_debug("GetExtendedUdpTable: retry with a bigger buffer");
     }
 
-    Py_BEGIN_ALLOW_THREADS
-    err = GetExtendedUdpTable(table, &size, FALSE, family, class, 0);
-    Py_END_ALLOW_THREADS
-    if (err == NO_ERROR)
-        return table;
-
-    free(table);
-    if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
-        psutil_debug("GetExtendedUdpTable: retry with different bufsize");
-        return __GetExtendedUdpTable(family);
-    }
-
-    psutil_runtime_error("GetExtendedUdpTable failed");
+    psutil_runtime_error(
+        "GetExtendedUdpTable() buffer was still too small after %d attempts",
+        MAX_TRIES
+    );
     return NULL;
 }
 
