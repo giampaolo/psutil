@@ -603,13 +603,20 @@ class Process:
             line = line.lstrip()
             if line.startswith('sockname: AF_UNIX'):
                 path = line.split(' ', 2)[2]
-                type = lines[i - 2].strip()
-                if type == 'SOCK_STREAM':
-                    type = socket.SOCK_STREAM
-                elif type == 'SOCK_DGRAM':
-                    type = socket.SOCK_DGRAM
-                else:
-                    type = -1
+                # The SOCK_* line appears a variable number of lines
+                # above "sockname:", depending on the pfiles version.
+                # Scan backwards until the fd header line.
+                type = -1
+                for j in range(i - 1, -1, -1):
+                    prev = lines[j].strip()
+                    if prev.startswith('SOCK_STREAM'):
+                        type = socket.SOCK_STREAM
+                        break
+                    if prev.startswith('SOCK_DGRAM'):
+                        type = socket.SOCK_DGRAM
+                        break
+                    if 'S_IFSOCK' in prev:
+                        break
                 yield (
                     -1,
                     socket.AF_UNIX,
