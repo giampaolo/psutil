@@ -512,8 +512,8 @@ Others:
   consistency, :meth:`Process.environ` for a zombie now raises
   :exc:`ZombieProcess` on all BSDs (NetBSD used to return an empty dict, see
   :gh:`2911`).
-- [SunOS]: :meth:`Process.gids` returned a ``puids`` namedtuple instead of
-  ``pgids``. :meth:`Process.nice` was offset by +20 compared to
+- :gh:`2953`, [SunOS]: :meth:`Process.gids` returned a ``puids`` namedtuple
+  instead of ``pgids``. :meth:`Process.nice` was offset by +20 compared to
   ``getpriority(3)``. :meth:`Process.net_connections` returned UNIX sockets
   with ``type=-1`` and ``fd=-1``. Also, :meth:`Process.net_connections` now
   raises :exc:`ZombieProcess` instead of ``RuntimeError`` for zombie processes.
