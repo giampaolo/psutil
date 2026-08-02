@@ -598,9 +598,6 @@ class Process:
             msg = f"{cmd!r} command error\n{stderr}"
             raise RuntimeError(msg)
 
-        # pfiles prints a block of lines for each fd. The SOCK_* type
-        # line comes before "sockname:" on illumos and after it on
-        # Solaris 11.4, so collect each fd block first.
         blocks = []
         cur = None
         for line in stdout.split('\n'):

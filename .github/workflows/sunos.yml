@@ -45,4 +45,4 @@ jobs:
             pkg install --accept developer/build/gnu-make || true
             gmake build
             gmake install-pydeps-test
-            gmake test-parallel
+            gmake test-memleaks-parallel
