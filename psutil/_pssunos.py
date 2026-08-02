@@ -598,27 +598,34 @@ class Process:
             msg = f"{cmd!r} command error\n{stderr}"
             raise RuntimeError(msg)
 
-        lines = stdout.split('\n')[2:]
-        for i, line in enumerate(lines):
-            line = line.lstrip()
-            if line.startswith('sockname: AF_UNIX'):
-                path = line.split(' ', 2)[2]
-                # The SOCK_* line appears a variable number of lines
-                # above "sockname:", depending on the pfiles version.
-                # Scan backwards until the fd header line.
-                type = -1
-                for j in range(i - 1, -1, -1):
-                    prev = lines[j].strip()
-                    if prev.startswith('SOCK_STREAM'):
-                        type = socket.SOCK_STREAM
-                        break
-                    if prev.startswith('SOCK_DGRAM'):
-                        type = socket.SOCK_DGRAM
-                        break
-                    if 'S_IFSOCK' in prev:
-                        break
+        # pfiles prints a block of lines for each fd. The SOCK_* type
+        # line comes before "sockname:" on illumos and after it on
+        # Solaris 11.4, so collect each fd block first.
+        blocks = []
+        cur = None
+        for line in stdout.split('\n'):
+            line = line.strip()
+            first, _, rest = line.partition(':')
+            if first.isdigit() and rest.lstrip().startswith('S_IF'):
+                cur = None
+                if 'S_IFSOCK' in rest:
+                    cur = (int(first), [])
+                    blocks.append(cur)
+            elif cur is not None:
+                cur[1].append(line)
+        for fd, block in blocks:
+            path = None
+            type = -1
+            for line in block:
+                if line.startswith('sockname: AF_UNIX'):
+                    path = line[len('sockname: AF_UNIX') :].strip()
+                elif line.startswith('SOCK_STREAM'):
+                    type = socket.SOCK_STREAM
+                elif line.startswith('SOCK_DGRAM'):
+                    type = socket.SOCK_DGRAM
+            if path is not None:
                 yield (
-                    -1,
+                    fd,
                     socket.AF_UNIX,
                     type,
                     path,
