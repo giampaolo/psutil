@@ -62,7 +62,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
         info.pr_rssize,  // rss
         info.pr_size,  // vms
         PSUTIL_TV2DOUBLE(info.pr_start),  // create time
-        info.pr_lwp.pr_nice,  // nice
+        info.pr_lwp.pr_nice - NZERO,  // nice
         info.pr_nlwp,  // no. of threads
         info.pr_lwp.pr_state,  // status code
         info.pr_ttydev,  // tty nr
