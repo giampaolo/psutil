@@ -43,6 +43,16 @@ jobs:
           run: |
             set -x
             pkg install --accept developer/build/gnu-make || true
+            # XXX temporary: dump pfiles output for unix sockets
+            python3 -c '
+            import socket, os, subprocess
+            s1 = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s1.bind("/tmp/pf_stream")
+            s2 = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            s2.bind("/tmp/pf_dgram")
+            s3, s4 = socket.socketpair()
+            subprocess.run(["pfiles", str(os.getpid())])
+            '
             gmake build
             gmake install-pydeps-test
             gmake test-parallel
