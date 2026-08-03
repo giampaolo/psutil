@@ -354,6 +354,17 @@ def check_decision(decision):
             raise BadDecision(f"{name}={value!r} not in {allowed}")
 
 
+def thinking_kwargs():
+    if MODEL.startswith(
+        ("claude-opus-5", "claude-sonnet-5", "claude-fable-5")
+    ):
+        return {
+            "thinking": {"type": "adaptive"},
+            "output_config": {"effort": "low"},
+        }
+    return {}
+
+
 def classify(client, title, body, files):
     """Ask Claude which labels apply.
 
@@ -364,8 +375,7 @@ def classify(client, title, body, files):
     message = client.messages.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
-        thinking={"type": "adaptive"},
-        output_config={"effort": "low"},
+        **thinking_kwargs(),
         tools=[SUBMIT_TOOL],
         tool_choice={"type": "tool", "name": "submit"},
         # Tools and system render before messages, so this one
@@ -446,7 +456,7 @@ def parse_cli():
         default="~/.github.api.key",
         help="file holding a GitHub token",
     )
-    p.add_argument("--model", default="claude-sonnet-5")
+    p.add_argument("--model", default="claude-haiku-4-5-20251001")
     p.add_argument(
         "--apply",
         action="store_true",
