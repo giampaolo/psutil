@@ -10,11 +10,13 @@ Usage:
     python3 scripts/internal/triage_labels.py 2635
     python3 scripts/internal/triage_labels.py 2635 1783 2029
     python3 scripts/internal/triage_labels.py 2635 --apply
+    python3 scripts/internal/triage_labels.py 2635 1783 --via-cli
 """
 
 import argparse
 import json
 import os
+import subprocess
 import sys
 import urllib.error
 import urllib.parse
@@ -25,12 +27,17 @@ HTTP_TIMEOUT = 30
 MAX_BODY_CHARS = 6000
 MAX_FILES = 100
 MAX_TOKENS = 2048
+# How long to give one `claude -p` call. A chunk of tickets takes a
+# minute or so; this is just there to stop a hung one hanging us.
+CLI_TIMEOUT = 900
 
 # Set by parse_cli().
 TOKEN = ""
 MODEL = ""
 NUMBERS = []
 APPLY = False
+VIA_CLI = False
+CHUNK = 0
 
 PROMPT = """\
 You are triaging a psutil issue or pull request. psutil is a Python
@@ -433,6 +440,84 @@ def classify(client, title, body, files):
     return block.input, message.usage
 
 
+# --- the model, through the claude CLI
+#
+# Same taxonomy, but billed against a Claude subscription instead of
+# API credits. Launching the CLI costs tens of thousands of tokens
+# before it reads a word of the prompt, so tickets go in a chunk at a
+# time and that overhead gets spread over all of them.
+
+
+def build_cli_prompt(items):
+    """One prompt covering a whole chunk of tickets.
+
+    There's no tool to call here, so the schema goes in the text and
+    the answer comes back as JSON.
+    """
+    schema = json.dumps(SUBMIT_TOOL["input_schema"]["properties"], indent=1)
+    tickets = "\n\n".join(
+        f"=== ITEM {number} ===\n"
+        + build_prompt(item["title"], item["body"], item["files"])
+        for number, item in items.items()
+    )
+    return (
+        PROMPT.replace("Answer with the submit tool.", "")
+        + f"\n\nYou are given {len(items)} items, each headed by"
+        " '=== ITEM <number> ==='. Judge each one on its own, with the"
+        " same care you'd give a single item.\n\nReply with ONLY a JSON"
+        " array, one object per item, in the order given. No prose, no"
+        " markdown fence. Each object carries a 'number' field plus"
+        f" exactly these:\n{schema}\n\n{tickets}"
+    )
+
+
+def classify_via_cli(items):
+    """Ask the claude CLI to label a chunk of tickets.
+
+    Returns {number: decision}. Anything that comes back malformed is
+    warned about and left out, rather than sinking the whole chunk.
+    """
+    proc = subprocess.run(
+        ["claude", "-p", "--model", MODEL, "--output-format", "json"],
+        input=build_cli_prompt(items),
+        capture_output=True,
+        text=True,
+        timeout=CLI_TIMEOUT,
+        check=False,
+    )
+    if proc.returncode != 0:
+        sys.exit(f"claude -p failed ({proc.returncode}): {proc.stderr[:500]}")
+    envelope = json.loads(proc.stdout)
+    usd = envelope.get("total_cost_usd") or 0
+    print(f"chunk of {len(items)}: ${usd:.4f} (${usd / len(items):.5f}/item)")
+
+    raw = envelope["result"].strip()
+    # It's told not to fence the JSON, but it sometimes does anyway.
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
+    try:
+        replies = json.loads(raw)
+    except json.JSONDecodeError as err:
+        sys.exit(f"claude -p didn't return JSON ({err}): {raw[:300]}")
+
+    out = {}
+    for reply in replies:
+        number = reply.pop("number", None)
+        if number not in items:
+            print(f"warning: unknown item {number!r}", file=sys.stderr)
+            continue
+        try:
+            check_decision(reply)
+        except BadDecision as err:
+            print(f"warning: #{number}: {err}", file=sys.stderr)
+            continue
+        out[number] = reply
+    missing = sorted(set(items) - set(out))
+    if missing:
+        print(f"warning: no decision for {missing}", file=sys.stderr)
+    return out
+
+
 def model_labels(decision):
     """Flatten a decision into the label set it implies."""
     out = set()
@@ -484,7 +569,7 @@ def report(item, decision):
 
 
 def parse_cli():
-    global TOKEN, MODEL, NUMBERS, APPLY
+    global TOKEN, MODEL, NUMBERS, APPLY, VIA_CLI, CHUNK
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("numbers", nargs="+", type=int, help="issue or PR numbers")
     p.add_argument(
@@ -498,12 +583,27 @@ def parse_cli():
         action="store_true",
         help="add the labels on GitHub; without this nothing is written",
     )
+    p.add_argument(
+        "--via-cli",
+        action="store_true",
+        help="go through the claude CLI instead of the paid API",
+    )
+    p.add_argument(
+        "--chunk",
+        type=int,
+        default=10,
+        help="tickets per claude CLI call (--via-cli only)",
+    )
     args = p.parse_args()
+    if args.chunk < 1:
+        p.error("--chunk must be at least 1")
     with open(os.path.expanduser(args.token)) as f:
         TOKEN = f.read().strip()
     MODEL = args.model
     NUMBERS = args.numbers
     APPLY = args.apply
+    VIA_CLI = args.via_cli
+    CHUNK = args.chunk
 
 
 def show_tokens(prefix, usage):
@@ -514,13 +614,34 @@ def show_tokens(prefix, usage):
     )
 
 
-def main():
-    parse_cli()
+def handle(item, decision, usage, totals, index):
+    """Print one decision and, with --apply, act on it."""
+    if index:
+        print()
+    report(item, decision)
+    if usage is not None:
+        for field in totals:
+            totals[field] += getattr(usage, field)
+        show_tokens("tokens:", usage)
+    add = model_labels(decision) - set(item["labels"])
+    drop = stale_labels(item, decision)
+    print(f"  to add:      {fmt(add)}")
+    print(f"  to drop:     {fmt(drop)}")
+    if not (add or drop):
+        return
+    if not APPLY:
+        print("  (--apply to do it)")
+        return
+    if add:
+        add_labels(item["number"], add)
+    for label in sorted(drop):
+        remove_label(item["number"], label)
+    print("  applied")
+
+
+def run_via_api(totals):
     client = make_client()
-    totals = dict.fromkeys(
-        ("input_tokens", "cache_read_input_tokens", "output_tokens"), 0
-    )
-    for n, number in enumerate(NUMBERS):
+    for index, number in enumerate(NUMBERS):
         item = fetch_item(number)
         try:
             decision, usage = classify(
@@ -528,27 +649,31 @@ def main():
             )
         except BadDecision as err:
             sys.exit(f"#{number}: {err}")
-        for field in totals:
-            totals[field] += getattr(usage, field)
-        if n:
-            print()
-        report(item, decision)
-        show_tokens("tokens:", usage)
-        add = model_labels(decision) - set(item["labels"])
-        drop = stale_labels(item, decision)
-        print(f"  to add:      {fmt(add)}")
-        print(f"  to drop:     {fmt(drop)}")
-        if not (add or drop):
-            continue
-        if not APPLY:
-            print("  (--apply to do it)")
-            continue
-        if add:
-            add_labels(number, add)
-        for label in sorted(drop):
-            remove_label(number, label)
-        print("  applied")
-    if len(NUMBERS) > 1:
+        handle(item, decision, usage, totals, index)
+
+
+def run_via_cli(totals):
+    # A chunk at a time, reported and applied as it lands, so a crash
+    # halfway doesn't throw away the chunks already done.
+    index = 0
+    for start in range(0, len(NUMBERS), CHUNK):
+        numbers = NUMBERS[start : start + CHUNK]
+        items = {number: fetch_item(number) for number in numbers}
+        for number, decision in classify_via_cli(items).items():
+            handle(items[number], decision, None, totals, index)
+            index += 1
+
+
+def main():
+    parse_cli()
+    totals = dict.fromkeys(
+        ("input_tokens", "cache_read_input_tokens", "output_tokens"), 0
+    )
+    if VIA_CLI:
+        run_via_cli(totals)
+    else:
+        run_via_api(totals)
+    if len(NUMBERS) > 1 and totals["output_tokens"]:
         print(
             f"\ntotal: {totals['input_tokens']} in,"
             f" {totals['cache_read_input_tokens']} cached,"
