@@ -37,9 +37,11 @@ You are triaging a psutil issue or pull request. psutil is a Python
 library that reads process and system information, with a Python layer
 per platform (_pslinux.py, _pswindows.py, ...) backed by C extensions.
 
-Assign at most ONE label per axis. Most items need a nature and a
-platform and nothing else. Leave an axis null rather than reaching for
-a label that only half fits: a wrong label is worse than no label.
+Assign at most ONE label per axis, except platform, which is a list
+and may name more than one OS. Most items need a nature and a platform
+and nothing else. Leave an axis null, or the list empty, rather than
+reaching for a label that only half fits: a wrong label is worse than
+no label.
 
 NATURE
 
@@ -51,17 +53,19 @@ questions, discussions and tracking issues that propose no change.
 
 PLATFORM
 
-Set this only when the item is specific to one OS. A bug that would
-happen anywhere is null, even when the reporter happens to be on Linux.
+Fill this only when the item is specific to some OS. A bug that would
+happen anywhere is an empty list, even when the reporter happens to be
+on Linux.
 
 A "[Linux]" tag in the title or a filled-in "* OS: ..." line is the
-reporter saying it outright, so take them at their word. If they name
-two, pick the one the report is mostly about.
+reporter saying it outright, so take them at their word. When they
+name two or three, list all of them.
 
 - linux, windows, macos, freebsd, openbsd, netbsd, sunos, aix, cygwin,
   wsl: the item is about that OS.
-- bsd: several BSDs at once. Prefer the specific label when only one is
-  involved.
+- bsd: almost never. Only when the item is about the BSDs as a family
+  and names none of them. If FreeBSD, OpenBSD or NetBSD appears
+  anywhere in the report, list those instead.
 - unix: shared POSIX code affecting several unices, where no single OS
   fits.
 
@@ -116,23 +120,27 @@ null label with high confidence means you are sure nothing applies.
 EXAMPLES
 
 Title: "Process.memory_info() returns 0 for all processes on Windows 11"
-nature=bug, platform=windows, area=null. A plain platform bug, which
-is the most common shape. No area label applies.
+nature=bug, platform=["windows"], area=null. A plain platform bug,
+which is the most common shape. No area label applies.
 
 Title: "add Process.num_threads() to the AIX implementation"
-nature=enhancement, platform=aix, area=new-api.
+nature=enhancement, platform=["aix"], area=new-api.
 
 Title: "test_disk_partitions fails on the macOS runner since the image
 bump"
-nature=bug, platform=macos, area=ci. The suite is fine; the runner
+nature=bug, platform=["macos"], area=ci. The suite is fine; the runner
 image changed. Not tests.
 
 Title: "test_cpu_percent asserts the wrong bound"
-nature=bug, platform=null, area=tests. The test code is wrong, and it
+nature=bug, platform=[], area=tests. The test code is wrong, and it
 is wrong everywhere.
 
 Title: "cpu_times() is 3x slower than it needs to be"
 nature=enhancement, area=performance.
+
+Title: "[OpenBSD, NetBSD] build failed"
+nature=bug, platform=["openbsd", "netbsd"]. Both named, so both go in.
+Not bsd.
 
 Answer with the submit tool."""
 
@@ -170,6 +178,9 @@ IGNORED_LABELS = {
 }
 
 AXES = ("nature", "platform", "area", "environment")
+# Axes holding a list instead of a single value. An item can be about
+# more than one OS, and plenty of them are.
+LIST_AXES = ("platform",)
 AXIS_LABELS = {
     "nature": NATURE_LABELS,
     "platform": PLATFORM_LABELS,
@@ -190,13 +201,29 @@ def nullable_enum(labels, description):
     }
 
 
+def enum_list(labels, description):
+    return {
+        "type": "array",
+        "items": {"type": "string", "enum": labels},
+        "description": description,
+    }
+
+
+def axis_values(decision, axis):
+    """What a decision puts on one axis, always as a set."""
+    value = decision[axis]
+    if axis in LIST_AXES:
+        return set(value)
+    return {value} if value else set()
+
+
 CONFIDENCE = {"type": "string", "enum": ["high", "medium", "low"]}
 
 DECISION_PROPS = {
     "nature": nullable_enum(NATURE_LABELS, "bug, enhancement, or null."),
     "nature_confidence": CONFIDENCE,
-    "platform": nullable_enum(
-        PLATFORM_LABELS, "The OS the item is specific to, else null."
+    "platform": enum_list(
+        PLATFORM_LABELS, "Every OS the item is specific to. Often empty."
     ),
     "platform_confidence": CONFIDENCE,
     "area": nullable_enum(AREA_LABELS, "What the item is about, else null."),
@@ -314,6 +341,8 @@ def allowed_values(prop):
     """The values a schema property accepts, None if unconstrained."""
     if "enum" in prop:
         return prop["enum"]
+    if prop.get("type") == "array":
+        return prop["items"]["enum"]
     for branch in prop.get("anyOf", []):
         if "enum" in branch:
             return [*branch["enum"], None]
@@ -350,8 +379,15 @@ def check_decision(decision):
         )
     for name, value in decision.items():
         allowed = allowed_values(DECISION_PROPS[name])
-        if allowed is not None and value not in allowed:
-            raise BadDecision(f"{name}={value!r} not in {allowed}")
+        if allowed is None:
+            continue
+        if not isinstance(value, list):
+            value = [value]
+        elif len(set(value)) != len(value):
+            raise BadDecision(f"{name}={value!r} has duplicates")
+        for one in value:
+            if one not in allowed:
+                raise BadDecision(f"{name}={one!r} not in {allowed}")
 
 
 def thinking_kwargs():
@@ -401,7 +437,9 @@ def classify(client, title, body, files):
 
 def model_labels(decision):
     """Flatten a decision into the label set it implies."""
-    out = {decision[axis] for axis in AXES if decision[axis]}
+    out = set()
+    for axis in AXES:
+        out |= axis_values(decision, axis)
     # docker is a kind of vm; every docker issue in the repo carries
     # both, so the hierarchy lives here rather than in the prompt.
     if decision["environment"] == "docker":
@@ -439,7 +477,7 @@ def report(item, decision):
     for axis in AXES:
         conf = decision.get(f"{axis}_confidence")
         suffix = f"  ({conf})" if conf else ""
-        print(f"  {axis:12s} {decision[axis] or '-'}{suffix}")
+        print(f"  {axis:12s} {fmt(axis_values(decision, axis))}{suffix}")
     print(
         f"  {'critical':12s} {decision['critical']}"
         f"  ({decision['critical_confidence']})"
