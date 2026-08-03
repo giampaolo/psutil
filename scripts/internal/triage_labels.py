@@ -85,9 +85,7 @@ these, not when it merely touches one.
 - wheels: building, publishing or installing wheels; manylinux;
   packaging.
 - new-api: proposes a public function, method or field that does not
-  exist yet. Much commoner than api; prefer it when both seem to fit.
-- api: changes the shape or behaviour of something already public, as
-  a deliberate design change rather than a bug fix.
+  exist yet.
 - performance: speed or resource usage is the point. Slow is
   performance, wrong is a bug, and an optimisation is usually
   enhancement and performance at once.
@@ -163,7 +161,7 @@ PLATFORM_LABELS = [
     "sunos", "aix", "cygwin", "wsl", "unix",
 ]  # fmt: skip
 AREA_LABELS = [
-    "doc", "tests", "ci", "scripts", "wheels", "new-api", "api",
+    "doc", "tests", "ci", "scripts", "wheels", "new-api",
     "performance", "memleak", "compatibility", "new-platform",
 ]  # fmt: skip
 ENV_LABELS = ["docker", "vm"]
