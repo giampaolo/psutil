@@ -156,6 +156,7 @@ include scripts/internal/print_sysinfo.py
 include scripts/internal/purge_installation.py
 include scripts/internal/refresh_adoption_stats.py
 include scripts/internal/rst_unused_targets.py
+include scripts/internal/triage_labels.py
 include scripts/iotop.py
 include scripts/killall.py
 include scripts/meminfo.py
