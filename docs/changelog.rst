@@ -310,6 +310,9 @@ Others:
 - :gh:`1534`, [NetBSD]: :meth:`Process.exe` is now fetched natively via
   ``sysctl(KERN_PROC_PATHNAME)`` instead of reading the ``/proc/pid/exe``
   symlink (a virtualization layer on NetBSD). (patch by Kamil Rytarowski)
+- :gh:`1801`, [FreeBSD]: :func:`cpu_freq` could raise :exc:`UnicodeDecodeError`
+  when the ``dev.cpu.N.freq_levels`` sysctl returned bytes which are not valid
+  UTF-8.
 - :gh:`2382`, [macOS]: :func:`cpu_freq` is now always defined on ARM64 and
   returns ``None`` when CPU frequency can't be determined. Previously it was
   left undefined (or raised :exc:`RuntimeError`) when the ``pmgr`` IORegistry
