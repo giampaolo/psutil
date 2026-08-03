@@ -93,11 +93,12 @@ class TestSystemAPIs(PsutilTestCase):
         syst = sysctl("hw.ncpu")
         assert psutil.cpu_count(logical=True) == syst
 
+    # On NetBSD total is UVM's managed pages, which is less than
+    # physical RAM. NetBSDTestCase.test_vmem_total covers it instead.
     @skipif(not shutil.which("sysctl"), reason="sysctl cmd not available")
+    @skipif(NETBSD, reason="hw.physmem is not what psutil reports")
     def test_virtual_memory_total(self):
-        # hw.physmem is 32-bit and saturates above 4 GB on NetBSD.
-        name = "hw.physmem64" if NETBSD else "hw.physmem"
-        num = sysctl(name)
+        num = sysctl('hw.physmem')
         assert num == psutil.virtual_memory().total
 
     @skipif(not shutil.which("ifconfig"), reason="ifconfig cmd not available")
@@ -626,6 +627,10 @@ class NetBSDTestCase(PsutilTestCase):
         raise ValueError(f"can't find {look_for!r} in vmstat -s output")
 
     # --- virtual mem
+
+    def test_vmem_total(self):
+        num = self.parse_vmstat("pages managed")
+        assert num * PAGESIZE == psutil.virtual_memory().total
 
     @retry_on_failure
     def test_vmem_buffers(self):
