@@ -60,21 +60,25 @@ questions, discussions and tracking issues that propose no change.
 
 PLATFORM
 
-Fill this only when the item is specific to some OS. A bug that would
-happen anywhere is an empty list, even when the reporter happens to be
-on Linux.
+Fill this only when the item is specific to where psutil runs: an OS,
+a container, an interpreter. A bug that would happen anywhere is an
+empty list, even when the reporter happens to be on Linux.
 
 A "[Linux]" tag in the title or a filled-in "* OS: ..." line is the
 reporter saying it outright, so take them at their word. When they
-name two or three, list all of them.
+name two or three, list all of them. These mix freely, so a container
+bug on Linux is ["linux", "vm"].
 
-- linux, windows, macos, freebsd, openbsd, netbsd, sunos, aix, cygwin,
-  wsl: the item is about that OS.
+- linux, windows, macos, freebsd, openbsd, netbsd, sunos, aix: the
+  item is about that OS.
 - bsd: almost never. Only when the item is about the BSDs as a family
   and names none of them. If FreeBSD, OpenBSD or NetBSD appears
   anywhere in the report, list those instead.
 - unix: shared POSIX code affecting several unices, where no single OS
   fits.
+- vm: any container or virtual OS, Docker included. Only when it's
+  material, not merely where the reporter happened to run.
+- pypy: the item is about running under PyPy, not CPython.
 
 AREA
 
@@ -101,14 +105,6 @@ these, not when it merely touches one.
   another library.
 - new-platform: support for an operating system psutil does not target
   yet.
-
-ENVIRONMENT
-
-Null unless a container or virtual machine is material to the report,
-not merely where the reporter happened to run.
-
-- docker: specifically Docker.
-- vm: any other container or virtualised environment.
 
 CRITICAL
 
@@ -165,13 +161,12 @@ Body:
 NATURE_LABELS = ["bug", "enhancement"]
 PLATFORM_LABELS = [
     "linux", "windows", "macos", "freebsd", "openbsd", "netbsd", "bsd",
-    "sunos", "aix", "cygwin", "wsl", "unix",
+    "sunos", "aix", "unix", "vm", "pypy",
 ]  # fmt: skip
 AREA_LABELS = [
     "doc", "tests", "ci", "scripts", "wheels", "new-api",
     "performance", "memleak", "compatibility", "new-platform",
 ]  # fmt: skip
-ENV_LABELS = ["docker", "vm"]
 
 # Bot workflow state and dependabot's own labels. The model never sees
 # these and they're stripped before any comparison.
@@ -182,15 +177,14 @@ IGNORED_LABELS = {
     "github_actions",
 }
 
-AXES = ("nature", "platform", "area", "environment")
-# Axes holding a list instead of a single value. An item can be about
-# more than one OS, and plenty of them are.
+AXES = ("nature", "platform", "area")
+# Axes holding a list instead of a single value. Plenty of items name
+# more than one OS, and a container bug is a platform on top of one.
 LIST_AXES = ("platform",)
 AXIS_LABELS = {
     "nature": NATURE_LABELS,
     "platform": PLATFORM_LABELS,
     "area": AREA_LABELS,
-    "environment": ENV_LABELS,
 }
 # Axes we'll drop a stale label from. Only the ones carrying a
 # confidence, so there's something to gate the removal on.
@@ -228,14 +222,13 @@ DECISION_PROPS = {
     "nature": nullable_enum(NATURE_LABELS, "bug, enhancement, or null."),
     "nature_confidence": CONFIDENCE,
     "platform": enum_list(
-        PLATFORM_LABELS, "Every OS the item is specific to. Often empty."
+        PLATFORM_LABELS,
+        "Every OS, container or interpreter the item is specific to."
+        " Often empty.",
     ),
     "platform_confidence": CONFIDENCE,
     "area": nullable_enum(AREA_LABELS, "What the item is about, else null."),
     "area_confidence": CONFIDENCE,
-    "environment": nullable_enum(
-        ENV_LABELS, "Container or VM, when material. Else null."
-    ),
     "critical": {
         "type": "boolean",
         "description": "Crash, segfault or corruption.",
@@ -523,10 +516,6 @@ def model_labels(decision):
     out = set()
     for axis in AXES:
         out |= axis_values(decision, axis)
-    # docker is a kind of vm; every docker issue in the repo carries
-    # both, so the hierarchy lives here rather than in the prompt.
-    if decision["environment"] == "docker":
-        out.add("vm")
     # critical is an escalation and the model wavers on it, so it only
     # goes on when it says so outright.
     if decision["critical"] and decision["critical_confidence"] == "high":
