@@ -44,9 +44,9 @@ You are triaging a psutil issue or pull request. psutil is a Python
 library that reads process and system information, with a Python layer
 per platform (_pslinux.py, _pswindows.py, ...) backed by C extensions.
 
-Assign at most ONE label per axis, except platform, which is a list
-and may name more than one OS. Most items need a nature and a platform
-and nothing else. Leave an axis null, or the list empty, rather than
+Nature takes at most one label. Platform and area are lists and may
+name more than one. Most items need a nature and a platform and
+nothing else. Leave an axis null, or the list empty, rather than
 reaching for a label that only half fits: a wrong label is worse than
 no label.
 
@@ -82,15 +82,17 @@ bug on Linux is ["linux", "vm"].
 
 AREA
 
-Usually null. Roughly half of all items are just a platform bug with no
-area at all.
+Usually empty. Roughly half of all items are just a platform bug with
+no area at all. Two is possible when an item genuinely is both, e.g. a
+cibuildwheel change inside a workflow file is ["wheels", "ci"]. Three
+is almost certainly wrong.
 
 The rule for all of them: the item has to be *specific* to the area,
 not merely touch it. A new feature updates the docs, adds tests and
 maybe a script, and it is still just the feature. Only reach for an
 area label when it is what the item is for. These get over-applied,
 so the labels already in the repo are a poor guide. When in doubt,
-leave it null.
+leave the list empty.
 
 - doc: prose under docs/, the README, docstrings, the doc build or
   theme. A docstring-only fix counts even though it lives in a .py
@@ -128,34 +130,35 @@ leave it null.
 CONFIDENCE
 
 Give nature, platform and area a confidence. Use low when the text is
-too thin to tell, so the choice can be discarded later. A null label
-with high confidence means you are sure nothing applies.
+too thin to tell, so the choice can be discarded later. An empty
+answer with high confidence means you are sure nothing applies, and
+is what lets a wrong label already on the ticket be cleared.
 
 EXAMPLES
 
 Title: "Process.memory_info() returns 0 for all processes on Windows 11"
-nature=bug, platform=["windows"], area=null. A plain platform bug,
+nature=bug, platform=["windows"], area=[]. A plain platform bug,
 which is the most common shape. No area label applies.
 
 Title: "add Process.num_threads() to the AIX implementation"
-nature=enhancement, platform=["aix"], area=new-api.
+nature=enhancement, platform=["aix"], area=["new-api"].
 
 Title: "test_disk_partitions fails on the macOS runner since the image
 bump"
-nature=bug, platform=["macos"], area=ci. The suite is fine; the runner
+nature=bug, platform=["macos"], area=["ci"]. The suite is fine; the runner
 image changed. Not tests.
 
 Title: "test_cpu_percent asserts the wrong bound"
-nature=bug, platform=[], area=tests. The test code is wrong, and it
+nature=bug, platform=[], area=["tests"]. The test code is wrong, and it
 is wrong everywhere.
 
 Title: "[SunOS] test_unix fails: invalid kind argument 'unix'"
-nature=bug, platform=["sunos"], area=null. A test is how this
+nature=bug, platform=["sunos"], area=[]. A test is how this
 surfaced, but net_connections() really is missing a kind on SunOS.
 Fix the code and the test goes green, so the bug is the item.
 
 Title: "cpu_times() is 3x slower than it needs to be"
-nature=enhancement, area=performance.
+nature=enhancement, area=["performance"].
 
 Title: "[OpenBSD, NetBSD] build failed"
 nature=bug, platform=["openbsd", "netbsd"]. Both named, so both go in.
@@ -198,7 +201,9 @@ IGNORED_LABELS = {
 AXES = ("nature", "platform", "area")
 # Axes holding a list instead of a single value. Plenty of items name
 # more than one OS, and a container bug is a platform on top of one.
-LIST_AXES = ("platform",)
+# Areas overlap too: a cibuildwheel change in a workflow file is both
+# wheels and ci.
+LIST_AXES = ("platform", "area")
 AXIS_LABELS = {
     "nature": NATURE_LABELS,
     "platform": PLATFORM_LABELS,
@@ -245,7 +250,10 @@ DECISION_PROPS = {
         " Often empty.",
     ),
     "platform_confidence": CONFIDENCE,
-    "area": nullable_enum(AREA_LABELS, "What the item is about, else null."),
+    "area": enum_list(
+        AREA_LABELS,
+        "What the item is specifically about. Usually empty, sometimes two.",
+    ),
     "area_confidence": CONFIDENCE,
 }
 
@@ -318,15 +326,18 @@ def remove_label(number, label):
 def stale_labels(item, decision):
     """Labels the model just contradicted on the same axis.
 
-    Only where it committed to an answer and was sure of it. A null or
-    a medium/low confidence means "I can't tell", which is not a reason
-    to delete what a human put there. Labels off the axes, critical
-    among them, are never touched.
+    Only where it was sure. Medium or low confidence means "I can't
+    tell", which is no reason to delete what a person put there.
+
+    A confident empty answer does count: the prompt asks for null with
+    high confidence to mean "certain nothing here applies", and that is
+    the only way a wrong label ever gets cleared. Labels off the axes,
+    critical among them, are never touched.
     """
     keep = model_labels(decision)
     out = set()
     for axis in REMOVABLE_AXES:
-        if not decision[axis] or decision[f"{axis}_confidence"] != "high":
+        if decision[f"{axis}_confidence"] != "high":
             continue
         out |= {x for x in item["labels"] if x in AXIS_LABELS[axis]} - keep
     return out
