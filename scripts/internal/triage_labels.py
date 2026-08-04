@@ -478,7 +478,10 @@ def fresh_labels(decision):
     """
     out = set()
     for axis in AXES:
-        if decision[f"{axis}_confidence"] != "low":
+        # type is exempt. It has no "neither" answer and the changelog
+        # has a section for each, so dropping a shaky one leaves the
+        # item with nowhere to go. A coin flip between two beats that.
+        if axis == "type" or decision[f"{axis}_confidence"] != "low":
             out |= axis_values(decision, axis)
     return out
 
