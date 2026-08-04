@@ -612,13 +612,16 @@ def stale_labels(item, decision, from_bot=()):
         conf = decision[f"{axis}_confidence"]
         if conf == "high":
             out |= {x for x in item["labels"] if x in AXIS_LABELS[axis]} - keep
-        elif conf == "medium":
-            # A label the old triage_bot.py applied gets no such
-            # benefit of the doubt. It matched words in the text and
-            # nothing more, so there's no judgement there to overrule:
-            # one ticket ticked every box in the template and came out
-            # with doc, new-api, performance, scripts, tests and
-            # wheels on it. Low confidence still isn't enough.
+        elif conf == "medium" and axis == "component":
+            # A component the old triage_bot.py applied gets no such
+            # benefit of the doubt. It came from the "Type:" line of
+            # the issue template, which reporters fill in by ticking
+            # everything: one ticket arrived with doc, new-api,
+            # performance, scripts, tests and wheels on it.
+            #
+            # Its platforms are a different matter and stay protected.
+            # Those it matched off a "[Linux]" title tag, which is the
+            # reporter saying it outright and is usually right.
             botted = {x for x in item["labels"] if x in AXIS_LABELS[axis]}
             out |= (botted & set(from_bot)) - keep
     return out
