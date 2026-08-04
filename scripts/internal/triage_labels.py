@@ -300,10 +300,7 @@ Body:
 
 # --- the label taxonomy, as axes
 #
-# The axis names are the label descriptions on GitHub: bug and
-# enhancement are described as "type", the OSes as "platform". Only
-# some of the component labels carry the description, but they group
-# the same way.
+# The axis names come from the label descriptions on GitHub.
 
 TYPE_LABELS = ["bug", "enhancement"]
 PLATFORM_LABELS = [
@@ -316,8 +313,7 @@ COMPONENT_LABELS = [
     "performance", "memleak", "compatibility", "new-platform",
 ]  # fmt: skip
 
-# Bot workflow state and dependabot's own labels. The model never sees
-# these and they're stripped before any comparison.
+# The model never sees these, and they're stripped before comparing.
 IGNORED_LABELS = {
     "imported",
     "need-more-info",
@@ -326,12 +322,7 @@ IGNORED_LABELS = {
 }
 
 AXES = ("type", "platform", "component", "critical")
-# Axes holding a list instead of a single value. Plenty of items name
-# more than one OS, and a container bug is a platform on top of one.
-# Components overlap too: a cibuildwheel change in a workflow file is
-# both wheels and ci.
 LIST_AXES = ("platform", "component")
-# Axes answered yes or no rather than with a label.
 BOOL_AXES = ("critical",)
 AXIS_LABELS = {
     "type": TYPE_LABELS,
@@ -339,19 +330,13 @@ AXIS_LABELS = {
     "component": COMPONENT_LABELS,
     "critical": CRITICAL_LABELS,
 }
-# Axes we'll drop a stale label from. Only the ones carrying a
-# confidence, so there's something to gate the removal on. critical is
-# missing on purpose: the maintainer sets it by his own judgement of
-# how much a bug hurts, and the text can suggest it but never rule it
-# out. We add, we never take away.
+# critical is missing on purpose. The text can suggest it but never
+# rule it out, so we add it and never take it away.
 REMOVABLE_AXES = ("type", "platform", "component")
 
-# Pairs that can't both be true. An item is a bug or an enhancement,
-# never both, and bsd means "the family, none of them named", so it
-# can't sit beside one that is. unix is the same idea one level up:
-# it's for POSIX code where no single OS fits, so naming any of them
-# rules it out. Without this a medium-confidence answer leaves the old
-# label in place next to the new one.
+# bsd means "the family, none of them named", so it can't sit beside
+# one that is. unix is the same idea a level up: it's for POSIX code
+# where no single OS fits.
 INCOMPATIBLE = (
     ("bug", "enhancement"),
     ("bsd", "freebsd"),
@@ -470,7 +455,7 @@ def fetch_item(number):
     return item
 
 
-# "Fixes #123", "closes gh-123", the full URL, all of it.
+# "Fixes #123", "closes gh-123", or the full issue URL.
 CLOSES = re.compile(
     r"\b(?:fix(?:e[sd])?|close[sd]?|resolve[sd]?)\b[\s:]*"
     r"(?:https?://github\.com/[\w.-]+/[\w.-]+/issues/|gh-|#)(\d+)",
@@ -479,7 +464,6 @@ CLOSES = re.compile(
 
 
 def closed_issues(item):
-    """Issues this PR says it fixes."""
     if not item["is_pr"]:
         return []
     seen = []
@@ -491,24 +475,14 @@ def closed_issues(item):
 
 
 def inherit_from_closed(labels, issue_labels):
-    """Take from the issue what the PR's own text can't show.
+    """Take critical from the issue a PR closes.
 
-    A PR and the issue it closes are about one defect, but they
-    describe different halves of it. The issue quotes the traceback;
-    the PR says "handle EFAULT" and never names an exception, so it
-    reads as an ordinary fix. Same for the platform: the reporter
-    said which OS, the patch just changes a file.
+    The issue quotes the traceback, the PR just says "handle EFAULT",
+    so the same defect reads as critical on one and not the other.
 
-    Across the sweep 31% of linked pairs ended up disagreeing, and
-    critical was the single biggest cause. That's the only thing taken
-    here. Whether something is a fix or a feature, and what area it
-    touches, the PR says perfectly well on its own.
-
-    Sharing a platform is what says the PR really is the fix. Plenty
-    of PRs close an issue in passing: "chore: test with Python 3.12"
-    closes a Windows disk_usage bug without being its fix, and it
-    shouldn't inherit anything. A patch that carries the same OS as
-    the report almost always is.
+    Sharing a platform is what says the PR really is the fix. "chore:
+    test with Python 3.12" closes a Windows bug without being its fix
+    and inherits nothing.
     """
     out = set(labels)
     ours = out & set(PLATFORM_LABELS)
@@ -541,16 +515,12 @@ def axis_of(label):
 def resolve_conflicts(labels, decision, current=frozenset()):
     """Drop the losing half of any impossible pair.
 
-    Only where the model picked a side, and only where it was sure of
-    the axis that decides it. Without that second test this quietly
-    undid the gate in stale_labels(): a medium-confidence "enhancement"
-    couldn't remove a hand-applied bug directly, but it could sit next
-    to it, be declared the winner here, and take it off anyway. Below
-    high confidence the label already on the ticket wins instead.
+    Gated on confidence, or it undoes stale_labels(): a medium
+    "enhancement" can't remove a hand-applied bug directly, but it
+    could sit beside it, win here, and take it off anyway.
 
-    Two labels that already contradicted each other before we touched
-    the ticket are left alone: that's the maintainer's mess, not one
-    we made.
+    A pair that already contradicted itself before we touched the
+    ticket is left alone.
     """
     out = set(labels)
     judged = model_labels(decision)
@@ -559,8 +529,7 @@ def resolve_conflicts(labels, decision, current=frozenset()):
             continue
         axis = axis_of(left) or axis_of(right)
         if axis and decision.get(f"{axis}_confidence") != "high":
-            # Not sure enough to overrule anyone. If the ticket already
-            # carried one of the two, that one stays and ours goes.
+            # Whatever the ticket already carried wins.
             held = {left, right} & set(current)
             if len(held) == 1:
                 out -= {left, right} - held
@@ -575,18 +544,14 @@ def resolve_conflicts(labels, decision, current=frozenset()):
 def fresh_labels(decision):
     """The labels a decision is willing to stand behind.
 
-    Removals already ignore anything below high confidence. Additions
-    used to go in regardless, which is how a "fix typos in comments"
-    PR ended up tagged bug on a low-confidence guess. Low means the
-    model is guessing, so nothing gets applied from that axis. Medium
-    still counts: it covers a good third of the corpus and is right
-    most of the time.
+    Low means the model is guessing, so that axis contributes nothing.
+    Medium still counts: a third of the corpus lands there and it's
+    right most of the time.
     """
     out = set()
     for axis in AXES:
-        # type is exempt. It has no "neither" answer and the changelog
-        # has a section for each, so dropping a shaky one leaves the
-        # item with nowhere to go. A coin flip between two beats that.
+        # type has no "neither" answer, so a shaky one still beats
+        # leaving the item out of the changelog entirely.
         if axis == "type" or decision[f"{axis}_confidence"] != "low":
             out |= axis_values(decision, axis)
     return out
@@ -595,16 +560,13 @@ def fresh_labels(decision):
 def stale_labels(item, decision, from_bot=()):
     """Labels the model just contradicted on the same axis.
 
-    Only where it was sure. Medium or low confidence means "I can't
-    tell", which is no reason to delete what a person put there.
+    Only where it was sure, since medium or low means "I can't tell"
+    and that's no reason to delete what a person put there. A confident
+    empty answer does count, and is the only way a wrong label ever
+    gets cleared.
 
-    A confident empty answer does count: the prompt asks for null with
-    high confidence to mean "certain nothing here applies", and that is
-    the only way a wrong label ever gets cleared. Labels off the axes
-    are never touched.
-
-    Pass from_bot for labels known to have been applied by the old
-    regex bot; those come off on medium confidence too.
+    from_bot is what the old regex bot applied; that comes off on
+    medium too.
     """
     keep = model_labels(decision)
     out = set()
@@ -613,15 +575,10 @@ def stale_labels(item, decision, from_bot=()):
         if conf == "high":
             out |= {x for x in item["labels"] if x in AXIS_LABELS[axis]} - keep
         elif conf == "medium" and axis == "component":
-            # A component the old triage_bot.py applied gets no such
-            # benefit of the doubt. It came from the "Type:" line of
-            # the issue template, which reporters fill in by ticking
-            # everything: one ticket arrived with doc, new-api,
-            # performance, scripts, tests and wheels on it.
-            #
-            # Its platforms are a different matter and stay protected.
-            # Those it matched off a "[Linux]" title tag, which is the
-            # reporter saying it outright and is usually right.
+            # The bot read components off the template's "Type:" line,
+            # which reporters fill in by ticking everything. Its
+            # platforms came from "[Linux]" title tags and are usually
+            # right, so those stay protected.
             botted = {x for x in item["labels"] if x in AXIS_LABELS[axis]}
             out |= (botted & set(from_bot)) - keep
     return out
