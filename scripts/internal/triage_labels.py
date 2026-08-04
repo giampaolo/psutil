@@ -490,7 +490,7 @@ def closed_issues(item):
     return seen
 
 
-def inherit_from_closed(labels, item, issue_labels):
+def inherit_from_closed(labels, issue_labels):
     """Take from the issue what the PR's own text can't show.
 
     A PR and the issue it closes are about one defect, but they
@@ -911,7 +911,7 @@ def handle(item, decision, usage, totals, index):
     for number in closed_issues(item):
         try:
             linked = fetch_item(number)["labels"]
-            judged = inherit_from_closed(judged, item, linked)
+            judged = inherit_from_closed(judged, linked)
         except SystemExit:
             # The issue may be gone, or in another repo. Not a reason
             # to give up on labelling the PR.
