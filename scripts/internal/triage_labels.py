@@ -87,6 +87,12 @@ lands everywhere: no platform at all. Four or more is nearly always
 this mistake. Don't read a PR's changed files as a list of platforms
 to claim.
 
+That rule is about the diff, not the title. Names written in the title
+always count, tagged or not: "[Windows/Linux/Mac] ..." and "publish
+macos and linux wheels" each name platforms out loud, so list them.
+An environment counts as the OS it runs on, so cygwin and msys are
+windows.
+
 One path does settle it. psutil/arch/ holds a directory per platform,
 and a diff that stays inside one of them says which: arch/windows/ is
 windows, arch/osx/ is macos, arch/solaris/ is sunos, arch/bsd/ is bsd,
