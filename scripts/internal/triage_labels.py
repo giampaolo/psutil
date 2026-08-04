@@ -97,9 +97,11 @@ where the symptom was noticed.
 - linux, windows, macos, freebsd, openbsd, netbsd, sunos, aix: the
   item is about that OS.
 
-- bsd: almost never. Only when the item is about the BSDs as a family
-  and names none of them. If FreeBSD, OpenBSD or NetBSD appears
-  anywhere in the report, list those instead.
+- bsd: the item is about the BSDs as a family. "on all 3 BSDs", a
+  "[BSD]" tag, a fix in the shared psutil/arch/bsd/ code. Listing the
+  three by name changes nothing: "all 3 BSDs (FreeBSD, OpenBSD,
+  NetBSD)" is still one bsd label, not three. Reach for the specific
+  ones only when the item is about some of them but not all.
 
 - unix: very rare. Shared POSIX code across several unices where no
   single OS fits and the item names none. It stands alone: the moment
