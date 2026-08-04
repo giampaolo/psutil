@@ -4,7 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Setup the right labels for GitHub issues and PRs by asking Claude.
+"""Setup the right labels for new GitHub issues and PRs by asking Claude.
 
 Usage:
     python3 scripts/internal/triage_labels.py 2635
@@ -38,11 +38,11 @@ You are triaging a psutil issue or pull request. psutil is a Python
 library that reads process and system information, with a Python layer
 per platform (_pslinux.py, _pswindows.py, ...) backed by C extensions.
 
-Type is always exactly one label. Platform and component are lists and
-may name more than one, though most items need a type and a platform
-and nothing else. On those two, leave the list empty rather than
-reaching for a label that only half fits: a wrong label is worse than
-no label.
+Type is always exactly one label. Platform, component and severity are
+lists and may name more than one, though most items need a type and a
+platform and nothing else. On the three lists, leave it empty rather
+than reaching for a label that only half fits: a wrong label is worse
+than no label.
 
 TYPE
 
@@ -199,26 +199,52 @@ in doubt, leave the list empty.
 - new-platform: support for an operating system psutil does not target
   yet.
 
-CRITICAL
+SEVERITY
 
-psutil's public API is allowed to raise NoSuchProcess, AccessDenied
-and ZombieProcess. Anything else escaping a psutil call is a defect
-of a different order: a RuntimeError, a SystemError, an
-OverflowError, a segfault or a hang. Set critical for those.
+Two ways a bug can be worse than a wrong answer. Usually neither
+applies. Both at once is rare, but allowed.
 
-It has to be psutil raising. People paste the whole traceback from
-whatever program hit the problem and most of those frames are
-somebody else's, so find psutil in the failing one before setting
-this. An umbrella or audit issue collecting many findings isn't one
-either. Neither is a wrong value, a slow call or a leak: those are
-plain bugs, however annoying.
+- critical: the process doesn't survive, or its memory is no longer
+  trustworthy. A segfault, a use-after-free, a double free, a buffer
+  overflow, an abort. A deadlock or a hang counts too: the process is
+  still there but it's never coming back.
+
+- badexc: psutil raises something it isn't allowed to. The public API
+  may raise NoSuchProcess, AccessDenied, ZombieProcess and
+  TimeoutExpired, and nothing else. Anything else getting out is this:
+  a RuntimeError, a SystemError, an OSError, a KeyError, an IndexError,
+  a UnicodeDecodeError. FileNotFoundError and PermissionError count as
+  well, being exactly what psutil should have turned into NoSuchProcess
+  and AccessDenied.
+
+  This is about the type, never the timing. One of those four raised
+  when it shouldn't have been, a false NoSuchProcess on a process that
+  is still alive say, is a wrong answer: a plain bug, not badexc.
+
+  Near misses, none of them badexc: an AssertionError is a test
+  failing. An ImportError or a DLL that won't load is a build that
+  didn't work. An AttributeError on a name that's gone is a caller on
+  an old API. NotImplementedError is how psutil says the platform
+  can't answer. A warning is not an exception. ValueError and
+  TypeError on a bad argument are the API working, though one escaping
+  a /proc or registry parse does count.
+
+It has to be psutil doing it: people paste whole tracebacks from
+whatever program hit the problem, so find psutil in the failing frame
+first. A wrong value, a slow call and a leak are plain bugs however
+annoying. So is a build that won't compile, which never got as far as
+running. An umbrella issue cataloguing ten crashes is about the audit,
+not any one crash, but a PR that fixes several things carries all of
+them: "[SunOS] various fixes" can end up with both labels.
 
 CONFIDENCE
 
-Give type, platform, component and critical a confidence. Use low when
-the text is too thin to tell, so the choice can be discarded later. An
-empty answer with high confidence means you are sure nothing applies,
-and is what lets a wrong label already on the ticket be cleared.
+Give type, platform, component and severity a confidence. Use low when
+the text is too thin to tell, so the choice can be discarded later. For
+type, platform and component an empty answer with high confidence means
+you are sure nothing applies, and is what lets a wrong label already on
+the ticket be cleared. Severity is only ever added, never taken away,
+so an empty one says nothing about what the ticket already carries.
 
 EXAMPLES
 
@@ -251,13 +277,23 @@ type=bug, platform=["openbsd", "netbsd"]. Both named, so both go in.
 Not bsd.
 
 Title: "macOS: fix SystemError in Process.cmdline() and environ()"
-type=bug, platform=["macos"], critical=true. SystemError isn't one of
-the three psutil is allowed to raise, so it counts however small the
-fix turns out to be.
+type=bug, platform=["macos"], severity=["badexc"]. SystemError isn't
+one of the four psutil is allowed to raise, so it counts however
+small the fix turns out to be.
+
+Title: "False NoSuchProcess('PID has been reused') on a process that is
+still alive"
+type=bug, platform=[], severity=[]. NoSuchProcess *is* one of the four.
+Raising it at the wrong moment is a wrong answer, not badexc.
+
+Title: "[Windows] win_service_iter() can segfault on enumeration
+failure"
+type=bug, platform=["windows"], severity=["critical"]. The process
+dies. Nothing was raised, so no badexc.
 
 Title: "[Windows] net_if_stats() reports the wrong link speed"
-type=bug, platform=["windows"], critical=false. A wrong number is a
-plain bug. Nothing got out that shouldn't have.
+type=bug, platform=["windows"], severity=[]. A wrong number is a
+plain bug. Nothing got out and nothing died.
 
 Title: "Fix refcount leaks on parse failure (Linux disk_partitions,
 SunOS proc)"
@@ -300,7 +336,7 @@ PLATFORM_LABELS = [
     "linux", "windows", "macos", "freebsd", "openbsd", "netbsd", "bsd",
     "sunos", "aix", "unix", "vm", "pypy",
 ]  # fmt: skip
-CRITICAL_LABELS = ["critical"]
+SEVERITY_LABELS = ["critical", "badexc"]
 COMPONENT_LABELS = [
     "doc", "tests", "ci", "scripts", "wheels", "new-api",
     "performance", "memleak", "compatibility", "new-platform",
@@ -314,17 +350,16 @@ IGNORED_LABELS = {
     "github_actions",
 }
 
-AXES = ("type", "platform", "component", "critical")
-LIST_AXES = ("platform", "component")
-BOOL_AXES = ("critical",)
+AXES = ("type", "platform", "component", "severity")
+LIST_AXES = ("platform", "component", "severity")
 AXIS_LABELS = {
     "type": TYPE_LABELS,
     "platform": PLATFORM_LABELS,
     "component": COMPONENT_LABELS,
-    "critical": CRITICAL_LABELS,
+    "severity": SEVERITY_LABELS,
 }
-# critical is missing on purpose. The text can suggest it but never
-# rule it out, so we add it and never take it away.
+# severity is missing on purpose. The text can suggest it but never
+# rule it out, so we add those and never take them away.
 REMOVABLE_AXES = ("type", "platform", "component")
 
 # bsd means "the family, none of them named", so it can't sit beside
@@ -359,8 +394,6 @@ def axis_values(decision, axis):
     value = decision[axis]
     if axis in LIST_AXES:
         return set(value)
-    if axis in BOOL_AXES:
-        return {axis} if value else set()
     return {value} if value else set()
 
 
@@ -384,14 +417,12 @@ DECISION_PROPS = {
         "What the item is specifically about. Usually empty, sometimes two.",
     ),
     "component_confidence": CONFIDENCE,
-    "critical": {
-        "type": "boolean",
-        "description": (
-            "psutil raises something other than NoSuchProcess,"
-            " AccessDenied or ZombieProcess."
-        ),
-    },
-    "critical_confidence": CONFIDENCE,
+    "severity": enum_list(
+        SEVERITY_LABELS,
+        "critical when the process dies, badexc when psutil raises"
+        " something it shouldn't. Usually empty.",
+    ),
+    "severity_confidence": CONFIDENCE,
 }
 
 SUBMIT_TOOL = {
