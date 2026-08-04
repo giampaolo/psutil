@@ -44,13 +44,13 @@ You are triaging a psutil issue or pull request. psutil is a Python
 library that reads process and system information, with a Python layer
 per platform (_pslinux.py, _pswindows.py, ...) backed by C extensions.
 
-Nature is always exactly one label. Platform and area are lists and
-may name more than one, though most items need a nature and a platform
+Type is always exactly one label. Platform and component are lists and
+may name more than one, though most items need a type and a platform
 and nothing else. On those two, leave the list empty rather than
 reaching for a label that only half fits: a wrong label is worse than
 no label.
 
-NATURE
+TYPE
 
 - bug: something is broken, wrong, or crashes.
 - enhancement: something new, faster, or improved.
@@ -94,19 +94,19 @@ where the symptom was noticed.
   material, not merely where the reporter happened to run.
 - pypy: the item is about running under PyPy, not CPython.
 
-AREA
+COMPONENT
 
 Usually empty. Roughly half of all items are just a platform bug with
-no area at all. Two is possible when an item genuinely is both, e.g. a
-cibuildwheel change inside a workflow file is ["wheels", "ci"]. Three
-is almost certainly wrong.
+no component at all. Two is possible when an item genuinely is both,
+e.g. a cibuildwheel change inside a workflow file is ["wheels", "ci"].
+Three is almost certainly wrong.
 
-The rule for all of them: the item has to be *specific* to the area,
-not merely touch it. A new feature updates the docs, adds tests and
-maybe a script, and it is still just the feature. Only reach for an
-area label when it is what the item is for. These get over-applied,
-so the labels already in the repo are a poor guide. When in doubt,
-leave the list empty.
+The rule for all of them: the item has to be *specific* to the
+component, not merely touch it. A new feature updates the docs, adds
+tests and maybe a script, and it is still just the feature. Only reach
+for a component label when it is what the item is for. These get
+over-applied, so the labels already in the repo are a poor guide. When
+in doubt, leave the list empty.
 
 - doc: prose under docs/, the README, docstrings, the doc build or
   theme. A docstring-only fix counts even though it lives in a .py
@@ -148,39 +148,39 @@ leave the list empty.
 
 CONFIDENCE
 
-Give nature, platform and area a confidence. Use low when the text is
-too thin to tell, so the choice can be discarded later. An empty
+Give type, platform and component a confidence. Use low when the text
+is too thin to tell, so the choice can be discarded later. An empty
 answer with high confidence means you are sure nothing applies, and
 is what lets a wrong label already on the ticket be cleared.
 
 EXAMPLES
 
 Title: "Process.memory_info() returns 0 for all processes on Windows 11"
-nature=bug, platform=["windows"], area=[]. A plain platform bug,
-which is the most common shape. No area label applies.
+type=bug, platform=["windows"], component=[]. A plain platform bug,
+which is the most common shape. No component label applies.
 
 Title: "add Process.num_threads() to the AIX implementation"
-nature=enhancement, platform=["aix"], area=["new-api"].
+type=enhancement, platform=["aix"], component=["new-api"].
 
 Title: "test_disk_partitions fails on the macOS runner since the image
 bump"
-nature=bug, platform=["macos"], area=["ci"]. The suite is fine; the runner
-image changed. Not tests.
+type=bug, platform=["macos"], component=["ci"]. The suite is fine; the
+runner image changed. Not tests.
 
 Title: "test_cpu_percent asserts the wrong bound"
-nature=bug, platform=[], area=["tests"]. The test code is wrong, and it
-is wrong everywhere.
+type=bug, platform=[], component=["tests"]. The test code is wrong, and
+it is wrong everywhere.
 
 Title: "[SunOS] test_unix fails: invalid kind argument 'unix'"
-nature=bug, platform=["sunos"], area=[]. A test is how this
+type=bug, platform=["sunos"], component=[]. A test is how this
 surfaced, but net_connections() really is missing a kind on SunOS.
 Fix the code and the test goes green, so the bug is the item.
 
 Title: "cpu_times() is 3x slower than it needs to be"
-nature=enhancement, area=["performance"].
+type=enhancement, component=["performance"].
 
 Title: "[OpenBSD, NetBSD] build failed"
-nature=bug, platform=["openbsd", "netbsd"]. Both named, so both go in.
+type=bug, platform=["openbsd", "netbsd"]. Both named, so both go in.
 Not bsd.
 
 Answer with the submit tool."""
@@ -197,13 +197,18 @@ Body:
 
 
 # --- the label taxonomy, as axes
+#
+# The axis names are the label descriptions on GitHub: bug and
+# enhancement are described as "type", the OSes as "platform". Only
+# some of the component labels carry the description, but they group
+# the same way.
 
-NATURE_LABELS = ["bug", "enhancement"]
+TYPE_LABELS = ["bug", "enhancement"]
 PLATFORM_LABELS = [
     "linux", "windows", "macos", "freebsd", "openbsd", "netbsd", "bsd",
     "sunos", "aix", "unix", "vm", "pypy",
 ]  # fmt: skip
-AREA_LABELS = [
+COMPONENT_LABELS = [
     "doc", "tests", "ci", "scripts", "wheels", "new-api",
     "performance", "memleak", "compatibility", "new-platform",
 ]  # fmt: skip
@@ -217,20 +222,20 @@ IGNORED_LABELS = {
     "github_actions",
 }
 
-AXES = ("nature", "platform", "area")
+AXES = ("type", "platform", "component")
 # Axes holding a list instead of a single value. Plenty of items name
 # more than one OS, and a container bug is a platform on top of one.
-# Areas overlap too: a cibuildwheel change in a workflow file is both
-# wheels and ci.
-LIST_AXES = ("platform", "area")
+# Components overlap too: a cibuildwheel change in a workflow file is
+# both wheels and ci.
+LIST_AXES = ("platform", "component")
 AXIS_LABELS = {
-    "nature": NATURE_LABELS,
+    "type": TYPE_LABELS,
     "platform": PLATFORM_LABELS,
-    "area": AREA_LABELS,
+    "component": COMPONENT_LABELS,
 }
 # Axes we'll drop a stale label from. Only the ones carrying a
 # confidence, so there's something to gate the removal on.
-REMOVABLE_AXES = ("nature", "platform", "area")
+REMOVABLE_AXES = ("type", "platform", "component")
 
 # Pairs that can't both be true. An item is a bug or an enhancement,
 # never both, and bsd means "the family, none of them named", so it
@@ -263,23 +268,23 @@ def axis_values(decision, axis):
 CONFIDENCE = {"type": "string", "enum": ["high", "medium", "low"]}
 
 DECISION_PROPS = {
-    "nature": {
+    "type": {
         "type": "string",
-        "enum": NATURE_LABELS,
-        "description": "bug, enhancement. Always one of the two.",
+        "enum": TYPE_LABELS,
+        "description": "bug or enhancement. Always one of the two.",
     },
-    "nature_confidence": CONFIDENCE,
+    "type_confidence": CONFIDENCE,
     "platform": enum_list(
         PLATFORM_LABELS,
         "Every OS, container or interpreter the item is specific to."
         " Often empty.",
     ),
     "platform_confidence": CONFIDENCE,
-    "area": enum_list(
-        AREA_LABELS,
+    "component": enum_list(
+        COMPONENT_LABELS,
         "What the item is specifically about. Usually empty, sometimes two.",
     ),
-    "area_confidence": CONFIDENCE,
+    "component_confidence": CONFIDENCE,
 }
 
 SUBMIT_TOOL = {
