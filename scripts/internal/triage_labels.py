@@ -67,8 +67,9 @@ is an enhancement even when the author ticked yes.
 PLATFORM
 
 Fill this only when the item is specific to where psutil runs: an OS,
-a container, an interpreter. A bug that would happen anywhere is an
-empty list, even when the reporter happens to be on Linux.
+a container, a different cPython implementation (PYPY). A bug that would
+happen anywhere is an empty list, even when the reporter happens to be
+on Linux.
 
 A "[Linux]" tag in the title or a filled-in "* OS: ..." line is the
 reporter saying it outright, so take them at their word. When they
