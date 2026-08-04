@@ -64,10 +64,6 @@ The template's "Bug fix: yes/no" line is a hint, not the answer. Read
 what the change does. Adding support for something that never worked
 is an enhancement even when the author ticked yes.
 
-The template's "Bug fix: yes/no" line is a hint, not the answer. Read
-what the change does. Adding support for something that never worked
-is an enhancement even when the author ticked yes.
-
 PLATFORM
 
 Fill this only when the item is specific to where psutil runs: an OS,
@@ -78,11 +74,6 @@ A "[Linux]" tag in the title or a filled-in "* OS: ..." line is the
 reporter saying it outright, so take them at their word. When they
 name two or three, list all of them. These mix freely, so a container
 bug on Linux is ["linux", "vm"].
-
-On a PR, the changed files outrank that line. People fill the template
-in loosely and it is often stale or plain wrong: a PR whose only file
-is .github/workflows/build.yml has no platform, whatever its "OS:"
-line claims. Believe the diff.
 
 On a PR, the changed files outrank that line. People fill the template
 in loosely and it is often stale or plain wrong: a PR whose only file
