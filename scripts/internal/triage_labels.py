@@ -441,6 +441,7 @@ def fetch_item(number):
         "is_pr": "pull_request" in raw,
         "labels": sorted(x["name"] for x in raw["labels"]),
         "files": [],
+        "by_bot": (raw.get("user") or {}).get("type") == "Bot",
     }
     if item["is_pr"]:
         files = gh_request(f"/repos/{REPO}/pulls/{number}/files")
@@ -801,6 +802,9 @@ def run_via_api(totals):
     client = make_client()
     for index, number in enumerate(NUMBERS):
         item = fetch_item(number)
+        if item["by_bot"]:
+            print(f"#{number}: opened by a bot, skipping")
+            continue
         try:
             decision, usage = classify(
                 client, item["title"], item["body"], item["files"]
