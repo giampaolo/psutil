@@ -44,9 +44,9 @@ You are triaging a psutil issue or pull request. psutil is a Python
 library that reads process and system information, with a Python layer
 per platform (_pslinux.py, _pswindows.py, ...) backed by C extensions.
 
-Nature takes at most one label. Platform and area are lists and may
-name more than one. Most items need a nature and a platform and
-nothing else. Leave an axis null, or the list empty, rather than
+Nature is always exactly one label. Platform and area are lists and
+may name more than one, though most items need a nature and a platform
+and nothing else. On those two, leave the list empty rather than
 reaching for a label that only half fits: a wrong label is worse than
 no label.
 
@@ -55,8 +55,10 @@ NATURE
 - bug: something is broken, wrong, or crashes.
 - enhancement: something new, faster, or improved.
 
-Almost every item is one or the other. Leave it null only for
-questions, discussions and tracking issues that propose no change.
+Every item gets one of the two, no exceptions. The changelog is split
+into those same two sections, so an item with neither has nowhere to
+go. Questions, discussions and tracking issues included: if nothing is
+broken, it's an enhancement.
 
 PLATFORM
 
@@ -242,15 +244,6 @@ INCOMPATIBLE = (
 )
 
 
-def nullable_enum(labels, description):
-    # Under strict mode a nullable enum has to be spelled as anyOf.
-    # "type": ["string", "null"] with None in the enum is rejected.
-    return {
-        "anyOf": [{"type": "string", "enum": labels}, {"type": "null"}],
-        "description": description,
-    }
-
-
 def enum_list(labels, description):
     return {
         "type": "array",
@@ -270,7 +263,11 @@ def axis_values(decision, axis):
 CONFIDENCE = {"type": "string", "enum": ["high", "medium", "low"]}
 
 DECISION_PROPS = {
-    "nature": nullable_enum(NATURE_LABELS, "bug, enhancement, or null."),
+    "nature": {
+        "type": "string",
+        "enum": NATURE_LABELS,
+        "description": "bug, enhancement. Always one of the two.",
+    },
     "nature_confidence": CONFIDENCE,
     "platform": enum_list(
         PLATFORM_LABELS,
