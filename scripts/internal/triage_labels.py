@@ -101,16 +101,21 @@ bug illustrated with examples, so the list stays empty. "OS: all" means
 empty no matter which names follow it. Ask what the fix changes, not
 where the symptom was noticed.
 
+
 - linux, windows, macos, freebsd, openbsd, netbsd, sunos, aix: the
   item is about that OS.
+
 - bsd: almost never. Only when the item is about the BSDs as a family
   and names none of them. If FreeBSD, OpenBSD or NetBSD appears
   anywhere in the report, list those instead.
+
 - unix: very rare. Shared POSIX code across several unices where no
   single OS fits and the item names none. It stands alone: the moment
   you can name one, list that instead.
+
 - vm: any container or virtual OS, Docker included. Only when it's
   material, not merely where the reporter happened to run.
+
 - pypy: the item is about running under PyPy, not CPython.
 
 COMPONENT
@@ -127,10 +132,12 @@ for a component label when it is what the item is for. These get
 over-applied, so the labels already in the repo are a poor guide. When
 in doubt, leave the list empty.
 
+
 - doc: prose under docs/, the README, docstrings, the doc build or
   theme. A docstring-only fix counts even though it lives in a .py
   file. A feature or bugfix that updates the docs on the way past
   does not: that one is the feature or the bug.
+
 - tests: the test suite and nothing else. A flaky test, a slow test, a
   test asserting the wrong thing, a skip, a test helper. For a PR the
   changed files settle it: touching library code (psutil/*.py,
@@ -138,37 +145,45 @@ in doubt, leave the list empty.
   no; tests plus boilerplate like HISTORY.rst or the Makefile is fine.
   A reported test failure that turns out to be a real bug is that bug,
   and the PR fixing it gets the bug's labels, never this one.
+
 - ci: psutil's own automation. Anything under .github/workflows/, plus
   cirrus, appveyor and travis. The runners and the test matrix, but
   equally the bots and release jobs that never run a test: a changed
   workflow file is nearly always this. Also a job failing for reasons
   unrelated to the code under test.
+
 - scripts: psutil's own scripts/ directory, including the examples.
   Not the reporter's script. People often paste one to show a bug;
   that bug is about whatever it exercises.
+
 - wheels: building or publishing psutil's wheels. The release matrix,
   manylinux, a wheel missing from PyPI. cibuildwheel settles it on its
   own: an item that touches it is about wheels, even when the change
   is to the workflow around it, in which case it is ci as well. A
   compile error on the reporter's own machine is just a build bug.
+
 - new-api: the public API grows. A brand new function or method, but
   equally a new argument on one that already exists, a new field in a
   namedtuple it returns, a new value it can now give back. Anything
   that hands callers something they couldn't reach before. Making an
   existing call work on one more platform is not this.
+
 - performance: speed or resource usage is the point. Slow is
   performance, wrong is a bug, and an optimisation is usually
   enhancement and performance at once. psutil's own build and CI count
   too: making the suite, the wheel build or a workflow faster is
   performance, on top of ci or wheels. A timing table, or a benchmark
   showing timings before and after, is the giveaway.
+
 - memleak: memory is leaked. Growth without bound, but also a single
   allocation or refcount never released, error paths included. If the
   text says leak and points at what leaks, that's this.
+
 - compatibility: psutil deliberately breaking backward compatibility.
   Dropping an old Python or OS version, removing or renaming a public
   API, changing what an existing one returns. A build or a test that
   fails on an old platform is not this, it's a plain bug.
+
 - new-platform: support for an operating system psutil does not target
   yet.
 
