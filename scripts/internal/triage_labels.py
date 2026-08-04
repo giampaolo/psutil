@@ -192,10 +192,16 @@ in doubt, leave the list empty.
 CRITICAL
 
 psutil's public API is allowed to raise NoSuchProcess, AccessDenied
-and ZombieProcess. Anything else getting out is a defect of a
-different order: a RuntimeError, a SystemError, an OverflowError, a
-segfault or a hang. Set critical for those. A wrong value, a slow
-call or a leak is a plain bug, however annoying, so leave it false.
+and ZombieProcess. Anything else escaping a psutil call is a defect
+of a different order: a RuntimeError, a SystemError, an
+OverflowError, a segfault or a hang. Set critical for those.
+
+It has to be psutil raising. People paste the whole traceback from
+whatever program hit the problem and most of those frames are
+somebody else's, so find psutil in the failing one before setting
+this. An umbrella or audit issue collecting many findings isn't one
+either. Neither is a wrong value, a slow call or a leak: those are
+plain bugs, however annoying.
 
 CONFIDENCE
 
