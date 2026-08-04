@@ -566,7 +566,7 @@ def parse_cli():
         default="~/.github.api.key",
         help="file holding a GitHub token",
     )
-    p.add_argument("--model", default="claude-haiku-4-5-20251001")
+    p.add_argument("--model", default="claude-sonnet-5")
     p.add_argument(
         "--apply",
         action="store_true",
