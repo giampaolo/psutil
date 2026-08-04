@@ -187,12 +187,20 @@ in doubt, leave the list empty.
 - new-platform: support for an operating system psutil does not target
   yet.
 
+CRITICAL
+
+psutil's public API is allowed to raise NoSuchProcess, AccessDenied
+and ZombieProcess. Anything else getting out is a defect of a
+different order: a RuntimeError, a SystemError, an OverflowError, a
+segfault or a hang. Set critical for those. A wrong value, a slow
+call or a leak is a plain bug, however annoying, so leave it false.
+
 CONFIDENCE
 
-Give type, platform and component a confidence. Use low when the text
-is too thin to tell, so the choice can be discarded later. An empty
-answer with high confidence means you are sure nothing applies, and
-is what lets a wrong label already on the ticket be cleared.
+Give type, platform, component and critical a confidence. Use low when
+the text is too thin to tell, so the choice can be discarded later. An
+empty answer with high confidence means you are sure nothing applies,
+and is what lets a wrong label already on the ticket be cleared.
 
 EXAMPLES
 
@@ -249,6 +257,7 @@ PLATFORM_LABELS = [
     "linux", "windows", "macos", "freebsd", "openbsd", "netbsd", "bsd",
     "sunos", "aix", "unix", "vm", "pypy",
 ]  # fmt: skip
+CRITICAL_LABELS = ["critical"]
 COMPONENT_LABELS = [
     "doc", "tests", "ci", "scripts", "wheels", "new-api",
     "performance", "memleak", "compatibility", "new-platform",
@@ -263,19 +272,25 @@ IGNORED_LABELS = {
     "github_actions",
 }
 
-AXES = ("type", "platform", "component")
+AXES = ("type", "platform", "component", "critical")
 # Axes holding a list instead of a single value. Plenty of items name
 # more than one OS, and a container bug is a platform on top of one.
 # Components overlap too: a cibuildwheel change in a workflow file is
 # both wheels and ci.
 LIST_AXES = ("platform", "component")
+# Axes answered yes or no rather than with a label.
+BOOL_AXES = ("critical",)
 AXIS_LABELS = {
     "type": TYPE_LABELS,
     "platform": PLATFORM_LABELS,
     "component": COMPONENT_LABELS,
+    "critical": CRITICAL_LABELS,
 }
 # Axes we'll drop a stale label from. Only the ones carrying a
-# confidence, so there's something to gate the removal on.
+# confidence, so there's something to gate the removal on. critical is
+# missing on purpose: the maintainer sets it by his own judgement of
+# how much a bug hurts, and the text can suggest it but never rule it
+# out. We add, we never take away.
 REMOVABLE_AXES = ("type", "platform", "component")
 
 # Pairs that can't both be true. An item is a bug or an enhancement,
@@ -313,6 +328,8 @@ def axis_values(decision, axis):
     value = decision[axis]
     if axis in LIST_AXES:
         return set(value)
+    if axis in BOOL_AXES:
+        return {axis} if value else set()
     return {value} if value else set()
 
 
@@ -336,6 +353,14 @@ DECISION_PROPS = {
         "What the item is specifically about. Usually empty, sometimes two.",
     ),
     "component_confidence": CONFIDENCE,
+    "critical": {
+        "type": "boolean",
+        "description": (
+            "psutil raises something other than NoSuchProcess,"
+            " AccessDenied or ZombieProcess."
+        ),
+    },
+    "critical_confidence": CONFIDENCE,
 }
 
 SUBMIT_TOOL = {
