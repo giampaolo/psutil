@@ -130,7 +130,10 @@ leave the list empty.
   exist yet.
 - performance: speed or resource usage is the point. Slow is
   performance, wrong is a bug, and an optimisation is usually
-  enhancement and performance at once.
+  enhancement and performance at once. psutil's own build and CI count
+  too: making the suite, the wheel build or a workflow faster is
+  performance, on top of ci or wheels. A timing table, or a benchmark
+  showing timings before and after, is the giveaway.
 - memleak: memory grows without bound.
 - compatibility: psutil deliberately breaking backward compatibility.
   Dropping an old Python or OS version, removing or renaming a public
