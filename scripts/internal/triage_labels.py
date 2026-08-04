@@ -169,7 +169,9 @@ in doubt, leave the list empty.
   enhancement and performance at once. psutil's own build and CI count
   too: making the suite, the wheel build or a workflow faster is
   performance, on top of ci or wheels. A timing table, or a benchmark
-  showing timings before and after, is the giveaway.
+  showing timings before and after, is the giveaway. So is releasing
+  and reacquiring the GIL around a blocking syscall, numbers or no
+  numbers: the whole point is letting other threads run.
 
 - memleak: memory is leaked. Growth without bound, but also a single
   allocation or refcount never released, error paths included. If the
