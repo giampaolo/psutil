@@ -256,6 +256,34 @@ Title: "[OpenBSD, NetBSD] build failed"
 type=bug, platform=["openbsd", "netbsd"]. Both named, so both go in.
 Not bsd.
 
+Title: "macOS: fix SystemError in Process.cmdline() and environ()"
+type=bug, platform=["macos"], critical=true. SystemError isn't one of
+the three psutil is allowed to raise, so it counts however small the
+fix turns out to be.
+
+Title: "[Windows] net_if_stats() reports the wrong link speed"
+type=bug, platform=["windows"], critical=false. A wrong number is a
+plain bug. Nothing got out that shouldn't have.
+
+Title: "Fix refcount leaks on parse failure (Linux disk_partitions,
+SunOS proc)"
+type=bug, platform=["linux", "sunos"], component=["memleak"]. Both
+named, and a leak down an error path is still a leak.
+
+Title: "Drop Python 3.6 and 3.7"
+type=enhancement, component=["compatibility"]. Installs that worked
+have to change. No platform: this isn't about where psutil runs.
+
+Title: "Upgrade cibuildwheel to 4.1.1, drop cp313t wheels"
+type=enhancement, component=["wheels", "ci", "compatibility"].
+cibuildwheel means wheels, it lands in a workflow so ci, and dropping
+a build target narrows what we ship. Three is unusual and here it's
+right.
+
+Title: "docs: add explanatory comments to the README examples"
+type=enhancement, component=["doc"]. Prose and nothing else, so doc is
+what the item is for rather than something it touched on the way past.
+
 Answer with the submit tool."""
 
 # Kept out of PROMPT so the cached prefix is byte-identical between
