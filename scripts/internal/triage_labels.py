@@ -447,17 +447,39 @@ def remove_label(number, label):
     gh_request(f"/repos/{REPO}/issues/{number}/labels/{path}", method="DELETE")
 
 
-def resolve_conflicts(labels, decision):
+def axis_of(label):
+    for axis, labels in AXIS_LABELS.items():
+        if label in labels:
+            return axis
+    return None
+
+
+def resolve_conflicts(labels, decision, current=frozenset()):
     """Drop the losing half of any impossible pair.
 
-    Only where the model picked a side. Two labels that already
-    contradicted each other before we touched the ticket are left
-    alone: that's the maintainer's mess, not one we made.
+    Only where the model picked a side, and only where it was sure of
+    the axis that decides it. Without that second test this quietly
+    undid the gate in stale_labels(): a medium-confidence "enhancement"
+    couldn't remove a hand-applied bug directly, but it could sit next
+    to it, be declared the winner here, and take it off anyway. Below
+    high confidence the label already on the ticket wins instead.
+
+    Two labels that already contradicted each other before we touched
+    the ticket are left alone: that's the maintainer's mess, not one
+    we made.
     """
     out = set(labels)
     judged = model_labels(decision)
     for left, right in INCOMPATIBLE:
         if not {left, right} <= out:
+            continue
+        axis = axis_of(left) or axis_of(right)
+        if axis and decision.get(f"{axis}_confidence") != "high":
+            # Not sure enough to overrule anyone. If the ticket already
+            # carried one of the two, that one stays and ours goes.
+            held = {left, right} & set(current)
+            if len(held) == 1:
+                out -= {left, right} - held
             continue
         if left in judged and right not in judged:
             out.discard(right)
