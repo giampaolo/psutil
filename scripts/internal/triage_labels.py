@@ -83,40 +83,53 @@ bug on Linux is ["linux", "vm"].
 AREA
 
 Usually null. Roughly half of all items are just a platform bug with no
-area at all. Use it when the item is fundamentally *about* one of
-these, not when it merely touches one.
+area at all.
 
-- doc: documentation, docstrings, README, the doc build.
-- tests: the test suite itself. A test asserting the wrong thing, a
-  missing test, a test helper.
+The rule for all of them: the item has to be *specific* to the area,
+not merely touch it. A new feature updates the docs, adds tests and
+maybe a script, and it is still just the feature. Only reach for an
+area label when it is what the item is for. These get over-applied,
+so the labels already in the repo are a poor guide. When in doubt,
+leave it null.
+
+- doc: prose under docs/, the README, docstrings, the doc build or
+  theme. A docstring-only fix counts even though it lives in a .py
+  file. A feature or bugfix that updates the docs on the way past
+  does not: that one is the feature or the bug.
+- tests: the test suite and nothing else. A flaky test, a slow test, a
+  test asserting the wrong thing, a skip, a test helper. For a PR the
+  changed files settle it: touching library code (psutil/*.py,
+  psutil/arch/, the C extensions) means the PR is about that code, so
+  no; tests plus boilerplate like HISTORY.rst or the Makefile is fine.
+  A reported test failure that turns out to be a real bug is that bug,
+  and the PR fixing it gets the bug's labels, never this one.
 - ci: the infrastructure that runs the tests. Workflow files, runner
   and matrix configuration, cirrus, appveyor, travis, a job failing for
   reasons unrelated to the code under test.
-- scripts: files under scripts/, including the example scripts.
-- wheels: building, publishing or installing wheels; manylinux;
-  packaging.
+- scripts: psutil's own scripts/ directory, including the examples.
+  Not the reporter's script. People often paste one to show a bug;
+  that bug is about whatever it exercises.
+- wheels: building or publishing psutil's wheels. cibuildwheel, the
+  release matrix, manylinux, a wheel missing from PyPI. A compile
+  error on the reporter's own machine is just a build bug.
 - new-api: proposes a public function, method or field that does not
   exist yet.
 - performance: speed or resource usage is the point. Slow is
   performance, wrong is a bug, and an optimisation is usually
   enhancement and performance at once.
 - memleak: memory grows without bound.
-- compatibility: breakage against a Python version, an OS version, or
-  another library.
+- compatibility: psutil deliberately breaking backward compatibility.
+  Dropping an old Python or OS version, removing or renaming a public
+  API, changing what an existing one returns. A build or a test that
+  fails on an old platform is not this, it's a plain bug.
 - new-platform: support for an operating system psutil does not target
   yet.
 
-CRITICAL
-
-True only for a segfault, a crash of the interpreter, memory
-corruption, or a failure that leaves psutil unusable. Not for ordinary
-wrong values or exceptions.
-
 CONFIDENCE
 
-Give nature, platform, area and critical a confidence. Use low when
-the text is too thin to tell, so the choice can be discarded later. A
-null label with high confidence means you are sure nothing applies.
+Give nature, platform and area a confidence. Use low when the text is
+too thin to tell, so the choice can be discarded later. A null label
+with high confidence means you are sure nothing applies.
 
 EXAMPLES
 
@@ -135,6 +148,11 @@ image changed. Not tests.
 Title: "test_cpu_percent asserts the wrong bound"
 nature=bug, platform=[], area=tests. The test code is wrong, and it
 is wrong everywhere.
+
+Title: "[SunOS] test_unix fails: invalid kind argument 'unix'"
+nature=bug, platform=["sunos"], area=null. A test is how this
+surfaced, but net_connections() really is missing a kind on SunOS.
+Fix the code and the test goes green, so the bug is the item.
 
 Title: "cpu_times() is 3x slower than it needs to be"
 nature=enhancement, area=performance.
@@ -229,11 +247,6 @@ DECISION_PROPS = {
     "platform_confidence": CONFIDENCE,
     "area": nullable_enum(AREA_LABELS, "What the item is about, else null."),
     "area_confidence": CONFIDENCE,
-    "critical": {
-        "type": "boolean",
-        "description": "Crash, segfault or corruption.",
-    },
-    "critical_confidence": CONFIDENCE,
 }
 
 SUBMIT_TOOL = {
@@ -307,7 +320,8 @@ def stale_labels(item, decision):
 
     Only where it committed to an answer and was sure of it. A null or
     a medium/low confidence means "I can't tell", which is not a reason
-    to delete what a human put there.
+    to delete what a human put there. Labels off the axes, critical
+    among them, are never touched.
     """
     keep = model_labels(decision)
     out = set()
@@ -315,12 +329,6 @@ def stale_labels(item, decision):
         if not decision[axis] or decision[f"{axis}_confidence"] != "high":
             continue
         out |= {x for x in item["labels"] if x in AXIS_LABELS[axis]} - keep
-    if (
-        "critical" in item["labels"]
-        and not decision["critical"]
-        and decision["critical_confidence"] == "high"
-    ):
-        out.add("critical")
     return out
 
 
@@ -516,10 +524,6 @@ def model_labels(decision):
     out = set()
     for axis in AXES:
         out |= axis_values(decision, axis)
-    # critical is an escalation and the model wavers on it, so it only
-    # goes on when it says so outright.
-    if decision["critical"] and decision["critical_confidence"] == "high":
-        out.add("critical")
     return out
 
 
@@ -550,10 +554,6 @@ def report(item, decision):
         conf = decision.get(f"{axis}_confidence")
         suffix = f"  ({conf})" if conf else ""
         print(f"  {axis:12s} {fmt(axis_values(decision, axis))}{suffix}")
-    print(
-        f"  {'critical':12s} {decision['critical']}"
-        f"  ({decision['critical_confidence']})"
-    )
     print(f"  already has: {fmt(set(item['labels']) - IGNORED_LABELS)}")
 
 
