@@ -175,10 +175,14 @@ in doubt, leave the list empty.
   allocation or refcount never released, error paths included. If the
   text says leak and points at what leaks, that's this.
 
-- compatibility: psutil deliberately breaking backward compatibility.
-  Dropping an old Python or OS version, removing or renaming a public
-  API, changing what an existing one returns. A build or a test that
-  fails on an old platform is not this, it's a plain bug.
+- compatibility: psutil deliberately narrowing what it supports or
+  what callers can rely on. Dropping an old Python or OS version,
+  dropping a wheel target or an interpreter build, removing a
+  dependency that moves the floor psutil builds on, removing or
+  renaming a public API, dropping a field from a namedtuple. The
+  test is whether working code has to change. Correcting a value
+  that was simply wrong is not this, it's the bug fix, and a build
+  or a test that fails on an old platform is a plain bug too.
 
 - new-platform: support for an operating system psutil does not target
   yet.
