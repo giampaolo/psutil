@@ -16,6 +16,7 @@ Usage:
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.error
@@ -469,6 +470,48 @@ def fetch_item(number):
     return item
 
 
+# "Fixes #123", "closes gh-123", the full URL, all of it.
+CLOSES = re.compile(
+    r"\b(?:fix(?:e[sd])?|close[sd]?|resolve[sd]?)\b[\s:]*"
+    r"(?:https?://github\.com/[\w.-]+/[\w.-]+/issues/|gh-|#)(\d+)",
+    re.IGNORECASE,
+)
+
+
+def closed_issues(item):
+    """Issues this PR says it fixes."""
+    if not item["is_pr"]:
+        return []
+    seen = []
+    for match in CLOSES.finditer(item["body"][:MAX_BODY_CHARS]):
+        number = int(match.group(1))
+        if number != item["number"] and number not in seen:
+            seen.append(number)
+    return seen
+
+
+def inherit_from_closed(labels, item, issue_labels):
+    """Take from the issue what the PR's own text can't show.
+
+    A PR and the issue it closes are about one defect, but they
+    describe different halves of it. The issue quotes the traceback;
+    the PR says "handle EFAULT" and never names an exception, so it
+    reads as an ordinary fix. Same for the platform: the reporter
+    said which OS, the patch just changes a file.
+
+    Across the sweep 31% of linked pairs ended up disagreeing, and
+    critical was the single biggest cause. Only those two are taken.
+    Whether something is a fix or a feature, and what area it touches,
+    the PR says perfectly well on its own.
+    """
+    out = set(labels)
+    if "critical" in issue_labels:
+        out.add("critical")
+    if not out & set(PLATFORM_LABELS):
+        out |= set(issue_labels) & set(PLATFORM_LABELS)
+    return out
+
+
 def add_labels(number, labels):
     """Add labels to a ticket. This endpoint never removes any."""
     gh_request(
@@ -842,7 +885,16 @@ def handle(item, decision, usage, totals, index):
         for field in totals:
             totals[field] += getattr(usage, field)
         show_tokens("tokens:", usage)
-    add = fresh_labels(decision) - set(item["labels"])
+    judged = fresh_labels(decision)
+    for number in closed_issues(item):
+        try:
+            linked = fetch_item(number)["labels"]
+            judged = inherit_from_closed(judged, item, linked)
+        except SystemExit:
+            # The issue may be gone, or in another repo. Not a reason
+            # to give up on labelling the PR.
+            print(f"  (couldn't read #{number}, ignoring the link)")
+    add = judged - set(item["labels"])
     drop = stale_labels(item, decision)
     print(f"  to add:      {fmt(add)}")
     print(f"  to drop:     {fmt(drop)}")
