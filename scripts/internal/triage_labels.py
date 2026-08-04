@@ -592,7 +592,7 @@ def fresh_labels(decision):
     return out
 
 
-def stale_labels(item, decision):
+def stale_labels(item, decision, from_bot=()):
     """Labels the model just contradicted on the same axis.
 
     Only where it was sure. Medium or low confidence means "I can't
@@ -600,15 +600,27 @@ def stale_labels(item, decision):
 
     A confident empty answer does count: the prompt asks for null with
     high confidence to mean "certain nothing here applies", and that is
-    the only way a wrong label ever gets cleared. Labels off the axes,
-    critical among them, are never touched.
+    the only way a wrong label ever gets cleared. Labels off the axes
+    are never touched.
+
+    Pass from_bot for labels known to have been applied by the old
+    regex bot; those come off on medium confidence too.
     """
     keep = model_labels(decision)
     out = set()
     for axis in REMOVABLE_AXES:
-        if decision[f"{axis}_confidence"] != "high":
-            continue
-        out |= {x for x in item["labels"] if x in AXIS_LABELS[axis]} - keep
+        conf = decision[f"{axis}_confidence"]
+        if conf == "high":
+            out |= {x for x in item["labels"] if x in AXIS_LABELS[axis]} - keep
+        elif conf == "medium":
+            # A label the old triage_bot.py applied gets no such
+            # benefit of the doubt. It matched words in the text and
+            # nothing more, so there's no judgement there to overrule:
+            # one ticket ticked every box in the template and came out
+            # with doc, new-api, performance, scripts, tests and
+            # wheels on it. Low confidence still isn't enough.
+            botted = {x for x in item["labels"] if x in AXIS_LABELS[axis]}
+            out |= (botted & set(from_bot)) - keep
     return out
 
 
