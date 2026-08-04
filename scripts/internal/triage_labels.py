@@ -165,7 +165,14 @@ in doubt, leave the list empty.
   manylinux, a wheel missing from PyPI. cibuildwheel settles it on its
   own: an item that touches it is about wheels, even when the change
   is to the workflow around it, in which case it is ci as well. A
-  compile error on the reporter's own machine is just a build bug.
+  compile error on the reporter's own machine is build-fail instead.
+
+- build-fail: psutil doesn't compile or link. A missing header, an
+  undeclared constant, an undefined symbol, a compiler that chokes on
+  the source. The reporter's own toolchain counts: no Python.h, no C
+  compiler installed, the wrong MSVC. So does an extension that built
+  but won't load for an undefined symbol. A test that fails, a compile
+  warning and a wheel missing from PyPI are not this.
 
 - new-api: the public API grows. A brand new function or method, but
   equally a new argument on one that already exists, a new field in a
@@ -340,6 +347,7 @@ SEVERITY_LABELS = ["critical", "badexc"]
 COMPONENT_LABELS = [
     "doc", "tests", "ci", "scripts", "wheels", "new-api",
     "performance", "memleak", "compatibility", "new-platform",
+    "build-fail",
 ]  # fmt: skip
 
 # The model never sees these, and they're stripped before comparing.
