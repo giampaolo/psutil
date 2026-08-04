@@ -75,6 +75,12 @@ lands everywhere: no platform at all. Four or more is nearly always
 this mistake. Don't read a PR's changed files as a list of platforms
 to claim.
 
+An OS named in passing is not the subject either. "Known cases are
+AccessDenied on Windows and a null ctime on NetBSD" is a cross-platform
+bug illustrated with examples, so the list stays empty. "OS: all" means
+empty no matter which names follow it. Ask what the fix changes, not
+where the symptom was noticed.
+
 - linux, windows, macos, freebsd, openbsd, netbsd, sunos, aix: the
   item is about that OS.
 - bsd: almost never. Only when the item is about the BSDs as a family
