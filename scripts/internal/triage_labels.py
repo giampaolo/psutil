@@ -762,8 +762,10 @@ def parse_cli():
 
 
 def show_tokens(prefix, usage):
+    # input_tokens excludes the cache write, which is most of it.
     print(
         f"  {prefix:12s} {usage.input_tokens} in,"
+        f" {usage.cache_creation_input_tokens} written,"
         f" {usage.cache_read_input_tokens} cached,"
         f" {usage.output_tokens} out"
     )
@@ -822,12 +824,19 @@ def run_via_api(totals):
 def main():
     parse_cli()
     totals = dict.fromkeys(
-        ("input_tokens", "cache_read_input_tokens", "output_tokens"), 0
+        (
+            "input_tokens",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+            "output_tokens",
+        ),
+        0,
     )
     run_via_api(totals)
     if len(NUMBERS) > 1 and totals["output_tokens"]:
         print(
             f"\ntotal: {totals['input_tokens']} in,"
+            f" {totals['cache_creation_input_tokens']} written,"
             f" {totals['cache_read_input_tokens']} cached,"
             f" {totals['output_tokens']} out"
         )
