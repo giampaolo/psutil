@@ -104,8 +104,10 @@ where the symptom was noticed.
   ones only when the item is about some of them but not all.
 
 - unix: very rare. Shared POSIX code across several unices where no
-  single OS fits and the item names none. It stands alone: the moment
-  you can name one, list that instead.
+  single OS fits and the item names none. Something POSIX has and
+  Windows doesn't counts even with nothing named: zombie processes,
+  signals, uid and gid, fork, terminals. It stands alone: the moment
+  you can name one OS, list that instead.
 
 - vm: any container or virtual OS, Docker included. Only when it's
   material, not merely where the reporter happened to run.
@@ -177,14 +179,15 @@ in doubt, leave the list empty.
   allocation or refcount never released, error paths included. If the
   text says leak and points at what leaks, that's this.
 
-- compatibility: psutil deliberately narrowing what it supports or
-  what callers can rely on. Dropping an old Python or OS version,
-  dropping a wheel target or an interpreter build, removing a
-  dependency that moves the floor psutil builds on, removing or
-  renaming a public API, dropping a field from a namedtuple. The
-  test is whether working code has to change. Correcting a value
-  that was simply wrong is not this, it's the bug fix, and a build
-  or a test that fails on an old platform is a plain bug too.
+- compatibility: psutil's support matrix moves, or what callers can
+  rely on does. Dropping an old Python or OS version, or restoring
+  one psutil had lost. Dropping a wheel target or an interpreter
+  build, removing a dependency that moves the floor psutil builds
+  on, removing or renaming a public API, dropping a field from a
+  namedtuple. The test is whether a working install or working code
+  has to change. Correcting a value that was simply wrong is not
+  this, it's the bug fix, and a one-off build error on a platform
+  psutil already supports is a plain bug, not a change of support.
 
 - new-platform: support for an operating system psutil does not target
   yet.
