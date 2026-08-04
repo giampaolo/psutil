@@ -87,6 +87,12 @@ lands everywhere: no platform at all. Four or more is nearly always
 this mistake. Don't read a PR's changed files as a list of platforms
 to claim.
 
+One path does settle it. psutil/arch/ holds a directory per platform,
+and a diff that stays inside one of them says which: arch/windows/ is
+windows, arch/osx/ is macos, arch/solaris/ is sunos, arch/bsd/ is bsd,
+arch/posix/ is unix. Only arch/all/ is everywhere. Land in two of them
+and you're back to the sweep above.
+
 An OS named in passing is not the subject either. "Known cases are
 AccessDenied on Windows and a null ctime on NetBSD" is a cross-platform
 bug illustrated with examples, so the list stays empty. "OS: all" means
@@ -106,7 +112,8 @@ where the symptom was noticed.
 - unix: very rare. Shared POSIX code across several unices where no
   single OS fits and the item names none. Something POSIX has and
   Windows doesn't counts even with nothing named: zombie processes,
-  signals, uid and gid, fork, terminals. It stands alone: the moment
+  signals, uid and gid, fork, terminals. So does a diff confined to
+  psutil/arch/posix/ or _psutil_posix.c. It stands alone: the moment
   you can name one OS, list that instead.
 
 - vm: any container or virtual OS, Docker included. Only when it's
