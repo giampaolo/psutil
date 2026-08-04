@@ -740,7 +740,10 @@ def parse_cli():
     p.add_argument(
         "--token",
         default="~/.github.api.key",
-        help="file holding a GitHub token",
+        help=(
+            "file holding a GitHub token. Ignored when GITHUB_TOKEN is"
+            " set, which is how CI passes it."
+        ),
     )
     p.add_argument("--model", default="claude-sonnet-5")
     p.add_argument(
@@ -749,8 +752,10 @@ def parse_cli():
         help="add the labels on GitHub; without this nothing is written",
     )
     args = p.parse_args()
-    with open(os.path.expanduser(args.token)) as f:
-        TOKEN = f.read().strip()
+    TOKEN = os.environ.get("GITHUB_TOKEN", "").strip()
+    if not TOKEN:
+        with open(os.path.expanduser(args.token)) as f:
+            TOKEN = f.read().strip()
     MODEL = args.model
     NUMBERS = args.numbers
     APPLY = args.apply
