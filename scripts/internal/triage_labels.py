@@ -60,6 +60,10 @@ into those same two sections, so an item with neither has nowhere to
 go. Questions, discussions and tracking issues included: if nothing is
 broken, it's an enhancement.
 
+The template's "Bug fix: yes/no" line is a hint, not the answer. Read
+what the change does. Adding support for something that never worked
+is an enhancement even when the author ticked yes.
+
 PLATFORM
 
 Fill this only when the item is specific to where psutil runs: an OS,
@@ -70,6 +74,11 @@ A "[Linux]" tag in the title or a filled-in "* OS: ..." line is the
 reporter saying it outright, so take them at their word. When they
 name two or three, list all of them. These mix freely, so a container
 bug on Linux is ["linux", "vm"].
+
+On a PR, the changed files outrank that line. People fill the template
+in loosely and it is often stale or plain wrong: a PR whose only file
+is .github/workflows/build.yml has no platform, whatever its "OS:"
+line claims. Believe the diff.
 
 Going wide is the opposite of specific, so leave it empty. A sweep
 across every arch/ directory, a refactor of shared code, anything that
@@ -88,8 +97,9 @@ where the symptom was noticed.
 - bsd: almost never. Only when the item is about the BSDs as a family
   and names none of them. If FreeBSD, OpenBSD or NetBSD appears
   anywhere in the report, list those instead.
-- unix: shared POSIX code affecting several unices, where no single OS
-  fits.
+- unix: very rare. Shared POSIX code across several unices where no
+  single OS fits and the item names none. It stands alone: the moment
+  you can name one, list that instead.
 - vm: any container or virtual OS, Docker included. Only when it's
   material, not merely where the reporter happened to run.
 - pypy: the item is about running under PyPy, not CPython.
@@ -119,17 +129,24 @@ in doubt, leave the list empty.
   no; tests plus boilerplate like HISTORY.rst or the Makefile is fine.
   A reported test failure that turns out to be a real bug is that bug,
   and the PR fixing it gets the bug's labels, never this one.
-- ci: the infrastructure that runs the tests. Workflow files, runner
-  and matrix configuration, cirrus, appveyor, travis, a job failing for
-  reasons unrelated to the code under test.
+- ci: psutil's own automation. Anything under .github/workflows/, plus
+  cirrus, appveyor and travis. The runners and the test matrix, but
+  equally the bots and release jobs that never run a test: a changed
+  workflow file is nearly always this. Also a job failing for reasons
+  unrelated to the code under test.
 - scripts: psutil's own scripts/ directory, including the examples.
   Not the reporter's script. People often paste one to show a bug;
   that bug is about whatever it exercises.
-- wheels: building or publishing psutil's wheels. cibuildwheel, the
-  release matrix, manylinux, a wheel missing from PyPI. A compile
-  error on the reporter's own machine is just a build bug.
-- new-api: proposes a public function, method or field that does not
-  exist yet.
+- wheels: building or publishing psutil's wheels. The release matrix,
+  manylinux, a wheel missing from PyPI. cibuildwheel settles it on its
+  own: an item that touches it is about wheels, even when the change
+  is to the workflow around it, in which case it is ci as well. A
+  compile error on the reporter's own machine is just a build bug.
+- new-api: the public API grows. A brand new function or method, but
+  equally a new argument on one that already exists, a new field in a
+  namedtuple it returns, a new value it can now give back. Anything
+  that hands callers something they couldn't reach before. Making an
+  existing call work on one more platform is not this.
 - performance: speed or resource usage is the point. Slow is
   performance, wrong is a bug, and an optimisation is usually
   enhancement and performance at once. psutil's own build and CI count
@@ -239,13 +256,23 @@ REMOVABLE_AXES = ("type", "platform", "component")
 
 # Pairs that can't both be true. An item is a bug or an enhancement,
 # never both, and bsd means "the family, none of them named", so it
-# can't sit beside one that is. Without this a medium-confidence answer
-# leaves the old label in place next to the new one.
+# can't sit beside one that is. unix is the same idea one level up:
+# it's for POSIX code where no single OS fits, so naming any of them
+# rules it out. Without this a medium-confidence answer leaves the old
+# label in place next to the new one.
 INCOMPATIBLE = (
     ("bug", "enhancement"),
     ("bsd", "freebsd"),
     ("bsd", "openbsd"),
     ("bsd", "netbsd"),
+    ("unix", "bsd"),
+    ("unix", "linux"),
+    ("unix", "macos"),
+    ("unix", "freebsd"),
+    ("unix", "openbsd"),
+    ("unix", "netbsd"),
+    ("unix", "sunos"),
+    ("unix", "aix"),
 )
 
 
