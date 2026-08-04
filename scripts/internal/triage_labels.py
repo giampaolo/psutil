@@ -368,6 +368,23 @@ def resolve_conflicts(labels, decision):
     return out
 
 
+def fresh_labels(decision):
+    """The labels a decision is willing to stand behind.
+
+    Removals already ignore anything below high confidence. Additions
+    used to go in regardless, which is how a "fix typos in comments"
+    PR ended up tagged bug on a low-confidence guess. Low means the
+    model is guessing, so nothing gets applied from that axis. Medium
+    still counts: it covers a good third of the corpus and is right
+    most of the time.
+    """
+    out = set()
+    for axis in AXES:
+        if decision[f"{axis}_confidence"] != "low":
+            out |= axis_values(decision, axis)
+    return out
+
+
 def stale_labels(item, decision):
     """Labels the model just contradicted on the same axis.
 
@@ -668,7 +685,7 @@ def handle(item, decision, usage, totals, index):
         for field in totals:
             totals[field] += getattr(usage, field)
         show_tokens("tokens:", usage)
-    add = model_labels(decision) - set(item["labels"])
+    add = fresh_labels(decision) - set(item["labels"])
     drop = stale_labels(item, decision)
     print(f"  to add:      {fmt(add)}")
     print(f"  to drop:     {fmt(drop)}")
