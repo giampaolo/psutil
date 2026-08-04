@@ -134,7 +134,9 @@ leave the list empty.
   too: making the suite, the wheel build or a workflow faster is
   performance, on top of ci or wheels. A timing table, or a benchmark
   showing timings before and after, is the giveaway.
-- memleak: memory grows without bound.
+- memleak: memory is leaked. Growth without bound, but also a single
+  allocation or refcount never released, error paths included. If the
+  text says leak and points at what leaks, that's this.
 - compatibility: psutil deliberately breaking backward compatibility.
   Dropping an old Python or OS version, removing or renaming a public
   API, changing what an existing one returns. A build or a test that
