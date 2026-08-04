@@ -115,9 +115,10 @@ where the symptom was noticed.
 COMPONENT
 
 Usually empty. Roughly half of all items are just a platform bug with
-no component at all. Two is possible when an item genuinely is both,
-e.g. a cibuildwheel change inside a workflow file is ["wheels", "ci"].
-Three is almost certainly wrong.
+no component at all. Two is common enough: a cibuildwheel change in a
+workflow file is ["wheels", "ci"]. Three is rarer but real, and a CI
+change to the wheel build that is also a speedup earns all three.
+Four is almost certainly wrong.
 
 The rule for all of them: the item has to be *specific* to the
 component, not merely touch it. A new feature updates the docs, adds
@@ -141,7 +142,8 @@ in doubt, leave the list empty.
   and the PR fixing it gets the bug's labels, never this one.
 
 - ci: psutil's own automation. Anything under .github/workflows/, plus
-  cirrus, appveyor and travis. The runners and the test matrix, but
+  cirrus, appveyor and travis. A "CI:" prefix in the title says it
+  outright, so take it. The runners and the test matrix, but
   equally the bots and release jobs that never run a test: a changed
   workflow file is nearly always this. Also a job failing for reasons
   unrelated to the code under test.
