@@ -69,6 +69,12 @@ reporter saying it outright, so take them at their word. When they
 name two or three, list all of them. These mix freely, so a container
 bug on Linux is ["linux", "vm"].
 
+Going wide is the opposite of specific, so leave it empty. A sweep
+across every arch/ directory, a refactor of shared code, anything that
+lands everywhere: no platform at all. Four or more is nearly always
+this mistake. Don't read a PR's changed files as a list of platforms
+to claim.
+
 - linux, windows, macos, freebsd, openbsd, netbsd, sunos, aix: the
   item is about that OS.
 - bsd: almost never. Only when the item is about the BSDs as a family
@@ -213,6 +219,17 @@ AXIS_LABELS = {
 # confidence, so there's something to gate the removal on.
 REMOVABLE_AXES = ("nature", "platform", "area")
 
+# Pairs that can't both be true. An item is a bug or an enhancement,
+# never both, and bsd means "the family, none of them named", so it
+# can't sit beside one that is. Without this a medium-confidence answer
+# leaves the old label in place next to the new one.
+INCOMPATIBLE = (
+    ("bug", "enhancement"),
+    ("bsd", "freebsd"),
+    ("bsd", "openbsd"),
+    ("bsd", "netbsd"),
+)
+
 
 def nullable_enum(labels, description):
     # Under strict mode a nullable enum has to be spelled as anyOf.
@@ -321,6 +338,25 @@ def add_labels(number, labels):
 def remove_label(number, label):
     path = urllib.parse.quote(label)
     gh_request(f"/repos/{REPO}/issues/{number}/labels/{path}", method="DELETE")
+
+
+def resolve_conflicts(labels, decision):
+    """Drop the losing half of any impossible pair.
+
+    Only where the model picked a side. Two labels that already
+    contradicted each other before we touched the ticket are left
+    alone: that's the maintainer's mess, not one we made.
+    """
+    out = set(labels)
+    judged = model_labels(decision)
+    for left, right in INCOMPATIBLE:
+        if not {left, right} <= out:
+            continue
+        if left in judged and right not in judged:
+            out.discard(right)
+        elif right in judged and left not in judged:
+            out.discard(left)
+    return out
 
 
 def stale_labels(item, decision):
