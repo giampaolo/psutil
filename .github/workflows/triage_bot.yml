@@ -15,9 +15,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # No `ref:` here on purpose. pull_request_target runs with our
-      # secrets, so checking out the PR's own head would hand them to
-      # whoever opened it. This gets the base branch, which is ours.
+      # No `ref:` on purpose. pull_request_target runs with our
+      # secrets, so checking out the PR's head would hand them over.
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 

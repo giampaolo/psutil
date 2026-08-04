@@ -666,14 +666,9 @@ def classify(client, title, body, files):
         **thinking_kwargs(),
         tools=[SUBMIT_TOOL],
         tool_choice={"type": "tool", "name": "submit"},
-        # Tools and system render before messages, so this one
-        # breakpoint caches the schema and the taxonomy together. The
-        # ticket goes after it, where it can vary without a miss.
-        system=[{
-            "type": "text",
-            "text": PROMPT,
-            "cache_control": {"type": "ephemeral"},
-        }],
+        # No caching. The 5 minute TTL never survives to the next
+        # issue, so it only ever pays for the write.
+        system=PROMPT,
         messages=[
             {"role": "user", "content": build_prompt(title, body, files)}
         ],
@@ -740,10 +735,7 @@ def parse_cli():
     p.add_argument(
         "--token",
         default="~/.github.api.key",
-        help=(
-            "file holding a GitHub token. Ignored when GITHUB_TOKEN is"
-            " set, which is how CI passes it."
-        ),
+        help="file holding a GitHub token. GITHUB_TOKEN wins.",
     )
     p.add_argument("--model", default="claude-sonnet-5")
     p.add_argument(
