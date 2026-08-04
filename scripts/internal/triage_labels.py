@@ -500,15 +500,22 @@ def inherit_from_closed(labels, item, issue_labels):
     said which OS, the patch just changes a file.
 
     Across the sweep 31% of linked pairs ended up disagreeing, and
-    critical was the single biggest cause. Only those two are taken.
-    Whether something is a fix or a feature, and what area it touches,
-    the PR says perfectly well on its own.
+    critical was the single biggest cause. That's the only thing taken
+    here. Whether something is a fix or a feature, and what area it
+    touches, the PR says perfectly well on its own.
+
+    Sharing a platform is what says the PR really is the fix. Plenty
+    of PRs close an issue in passing: "chore: test with Python 3.12"
+    closes a Windows disk_usage bug without being its fix, and it
+    shouldn't inherit anything. A patch that carries the same OS as
+    the report almost always is.
     """
     out = set(labels)
-    if "critical" in issue_labels:
-        out.add("critical")
-    if not out & set(PLATFORM_LABELS):
-        out |= set(issue_labels) & set(PLATFORM_LABELS)
+    ours = out & set(PLATFORM_LABELS)
+    theirs = set(issue_labels) & set(PLATFORM_LABELS)
+    if (ours & theirs) or not (ours or theirs):
+        if "critical" in issue_labels:
+            out.add("critical")
     return out
 
 
