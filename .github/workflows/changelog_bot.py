@@ -34,6 +34,7 @@ ERROR_FILE = None
 CHANGELOG_FILE = "docs/changelog.rst"
 CREDITS_FILE = "docs/credits.rst"
 MAX_DIFF_CHARS = 20_000
+COMPARE_MAX_FILES = 300
 MAX_TOKENS = 2048
 HTTP_TIMEOUT = 30
 
@@ -231,6 +232,7 @@ def fetch_pr_metadata():
         "body": pr.get("body") or "",
         "author": author,
         "author_name": author_name,
+        "head_sha": pr["head"]["sha"],
     }
 
 
@@ -239,6 +241,21 @@ def fetch_pr_diff():
         f"/repos/{REPO}/pulls/{PR_NUMBER}",
         accept="application/vnd.github.v3.diff",
     ).decode("utf-8", errors="replace")
+
+
+def stale_reason(head_sha):
+    """Why the branch is too old to receive an entry, if it is.
+    We commit on top of the PR head, so an entry written against a
+    stale copy of the docs makes the PR unmergeable.
+    """
+    data = json.loads(gh_request(f"/repos/{REPO}/compare/{head_sha}...master"))
+    files = [f["filename"] for f in data.get("files", [])]
+    stale = [f for f in (CHANGELOG_FILE, CREDITS_FILE) if f in files]
+    if stale:
+        return f"master has moved on: {' and '.join(stale)} changed"
+    if len(files) >= COMPARE_MAX_FILES:
+        return "master's diff is too big to tell whether the docs changed"
+    return None
 
 
 def ask_claude(pr, diff, block):
@@ -894,6 +911,15 @@ def main():
     parse_cli()
     print(f"Fetching PR #{PR_NUMBER} from {REPO}...")
     pr = fetch_pr_metadata()
+    stale = stale_reason(pr["head_sha"])
+    if stale:
+        write_file(
+            ERROR_FILE,
+            f"⚠️ The /changelog bot did nothing: {stale}. Committing an"
+            " entry now would make this PR unmergeable. Click **Update"
+            " branch**, then comment `/changelog` again.",
+        )
+        sys.exit(f"stale branch: {stale}")
     diff = fetch_pr_diff()
     with open(CHANGELOG_FILE) as f:
         block = changelog_context(f.read())
