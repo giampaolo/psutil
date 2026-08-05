@@ -9,7 +9,6 @@
 import datetime
 import errno
 import os
-import pty
 import re
 import shutil
 import subprocess
@@ -42,6 +41,7 @@ from . import terminate
 
 if POSIX:
     import mmap
+    import pty
     import resource
 
 
