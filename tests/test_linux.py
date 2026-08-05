@@ -2203,10 +2203,9 @@ class TestProcess(LinuxTestCase):
 
     def test_terminal_mocked(self):
         with mock.patch(
-            'psutil._pslinux._psposix.get_terminal_map', return_value={}
-        ) as m:
+            'psutil._pslinux._psposix._get_terminal_map', return_value={}
+        ):
             assert psutil._pslinux.Process(os.getpid()).terminal() is None
-            assert m.called
 
     def test_cmdline_mocked(self):
         # see: https://github.com/giampaolo/psutil/issues/639

@@ -397,11 +397,9 @@ class Process:
     @wrap_exceptions
     def terminal(self):
         tty_nr = self._oneshot_kinfo()["ttynr"]
-        tmap = _psposix.get_terminal_map()
-        try:
-            return tmap[tty_nr]
-        except KeyError:
+        if tty_nr == _psutil.NODEV:
             return None
+        return _psposix.get_terminal(tty_nr)
 
     @wrap_exceptions
     def memory_info(self):

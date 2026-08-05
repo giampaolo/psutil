@@ -23,6 +23,7 @@ from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
+from psutil import _psposix
 from psutil import _psutil
 
 from . import AARCH64
@@ -40,6 +41,7 @@ from . import terminate
 
 if POSIX:
     import mmap
+    import pty
     import resource
 
 
@@ -522,6 +524,25 @@ class TestSystemAPIs(PosixTestCase):
                 assert abs(usage.used - sys_used) < tolerance
                 assert abs(usage.free - sys_free) < tolerance
                 assert abs(usage.percent - sys_percent) <= 1
+
+    def test_terminal_pty_opened_later(self):
+        # A PTY opened after the map was cached must still resolve.
+        # See: https://github.com/giampaolo/psutil/issues/2830
+        _psposix._get_terminal_map()  # prime the cache
+        master, slave = pty.openpty()
+        self.addCleanup(os.close, master)
+        self.addCleanup(os.close, slave)
+        path = os.ttyname(slave)
+        assert _psposix.get_terminal(os.stat(path).st_rdev) == path
+
+    def test_terminal_skip_map(self):
+        # setsid() leaves the child without a controlling terminal.
+        # Such a process must not reach get_terminal().
+        p = self.spawn_psproc(start_new_session=True)
+        assert p.terminal() is None
+        with mock.patch.object(_psposix, "get_terminal") as m:
+            p.terminal()
+            assert not m.called
 
 
 class TestMisc(PosixTestCase):

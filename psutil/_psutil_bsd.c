@@ -7,6 +7,7 @@
  */
 
 #include <Python.h>
+#include <sys/types.h>  // NODEV
 #include <sys/proc.h>
 #include <sys/param.h>  // BSD version
 #include <netinet/tcp_fsm.h>  // for TCP connection states
@@ -86,6 +87,7 @@ static PyMethodDef mod_methods[] = {
 static int
 psutil_add_constants(PyObject *mod) {
     PSUTIL_ADD_INT(mod, "version", PSUTIL_VERSION);
+    PSUTIL_ADD_INT(mod, "NODEV", -1);
 
     // process status constants
 #ifdef PSUTIL_FREEBSD

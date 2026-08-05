@@ -5,6 +5,7 @@
  */
 
 #include <Python.h>
+#include <sys/types.h>  // NODEV
 #include <sys/time.h>  // needed for old macOS versions
 #include <sys/proc.h>
 #include <netinet/tcp_fsm.h>
@@ -69,6 +70,8 @@ psutil_add_constants(PyObject *mod) {
     PSUTIL_ADD_INT(mod, "SSLEEP", SSLEEP);
     PSUTIL_ADD_INT(mod, "SSTOP", SSTOP);
     PSUTIL_ADD_INT(mod, "SZOMB", SZOMB);
+    // for process tty
+    PSUTIL_ADD_INT(mod, "NODEV", (long)NODEV);
     // connection status constants
     PSUTIL_ADD_INT(mod, "TCPS_CLOSED", TCPS_CLOSED);
     PSUTIL_ADD_INT(mod, "TCPS_CLOSING", TCPS_CLOSING);

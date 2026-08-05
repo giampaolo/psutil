@@ -394,6 +394,10 @@ Others:
 - :gh:`2822`, [BSD]: :meth:`Process.cmdline` on NetBSD could raise
   ``OSError: [Errno 14] Bad address`` if the process about to exit. It now
   raises :exc:`NoSuchProcess` instead.
+- :gh:`2830`, [Linux], [macOS], [BSD]: :meth:`Process.terminal` returned
+  ``None`` for terminals opened after the first call, e.g. a new ``/dev/pts/N``
+  in a long running daemon. The list of terminal devices was cached forever,
+  and is now refreshed when it doesn't know a device.
 - :gh:`2841`, [macOS]: :func:`cpu_freq` could raise :exc:`SystemError` when CPU
   frequency data is missing or invalid in the IORegistry (e.g. on Apple M5
   chips). It now returns ``None`` instead (see :gh:`2382`).

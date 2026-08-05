@@ -1742,11 +1742,9 @@ class Process:
     @wrap_exceptions
     def terminal(self):
         tty_nr = int(self._parse_stat_file()['ttynr'])
-        tmap = _psposix.get_terminal_map()
-        try:
-            return tmap[tty_nr]
-        except KeyError:
+        if tty_nr == 0:
             return None
+        return _psposix.get_terminal(tty_nr)
 
     # May not be available on old kernels.
     if os.path.exists(f"/proc/{os.getpid()}/io"):
