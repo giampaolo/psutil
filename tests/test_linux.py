@@ -912,23 +912,26 @@ class TestCpuFreq(LinuxTestCase):
             else:
                 return orig_open(name, *args, **kwargs)
 
+        def glob_mock(pattern):
+            if pattern == "/sys/devices/system/cpu/cpufreq/policy[0-9]*":
+                return list(policies)
+            return orig_glob(pattern)
+
+        policies = [
+            f"/sys/devices/system/cpu/cpufreq/policy{n}" for n in range(2)
+        ]
+        orig_glob = glob.glob
         orig_open = open
         with mock.patch("builtins.open", side_effect=open_mock):
             with mock.patch('os.path.exists', return_value=True):
-                with mock.patch(
-                    'psutil._pslinux.cpu_count_logical', return_value=2
-                ):
+                with mock.patch("glob.glob", side_effect=glob_mock):
                     freq = psutil.cpu_freq(percpu=True)
                     assert freq[0].current == 100.0
-                    if freq[0].min != 0.0:
-                        assert freq[0].min == 200.0
-                    if freq[0].max != 0.0:
-                        assert freq[0].max == 300.0
+                    assert freq[0].min == 200.0
+                    assert freq[0].max == 300.0
                     assert freq[1].current == 400.0
-                    if freq[1].min != 0.0:
-                        assert freq[1].min == 500.0
-                    if freq[1].max != 0.0:
-                        assert freq[1].max == 600.0
+                    assert freq[1].min == 500.0
+                    assert freq[1].max == 600.0
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_no_scaling_cur_freq_file(self):
@@ -1604,7 +1607,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
             'disk_partitions',
             return_value=[('/dev/root', '/', 'ext4', 'rw')],
         ) as m:
-            part = psutil.disk_partitions()[0]
+            part = psutil.disk_partitions(all=True)[0]
             assert m.called
             if not GITHUB_ACTIONS:
                 assert part.device != "/dev/root"
