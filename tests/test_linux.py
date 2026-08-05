@@ -2212,7 +2212,7 @@ class TestProcess(LinuxTestCase):
     def test_terminal_new_pty(self):
         # A PTY opened after the map was cached must still resolve.
         # See: https://github.com/giampaolo/psutil/issues/2830
-        _psposix.get_terminal_map()  # prime the cache
+        _psposix._get_terminal_map()  # prime the cache
         master, slave = pty.openpty()
         self.addCleanup(os.close, master)
         self.addCleanup(os.close, slave)
