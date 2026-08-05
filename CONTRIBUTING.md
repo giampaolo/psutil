@@ -8,11 +8,10 @@
   https://groups.google.com/g/psutil.
 - Before submitting a new issue, **search** if there are existing issues for
   the same topic.
-- **Be clear** in describing what the problem is and try to be accurate in
-  editing the default issue **template**. There is a bot which automatically
-  assigns **labels** based on issue's title and body format. Labels help
-  keeping the issues properly organized and searchable (by OS, issue type,
-  etc.).
+- **Be clear** in describing what the problem is, and fill in the default
+  issue **template**. There is a bot which reads the title and description
+  and assigns **labels** automatically. Labels help keeping the issues
+  properly organized and searchable (by OS, issue type, etc.).
 - When reporting a malfunction, consider enabling
   [debug mode](https://psutil.io/devguide/#debug-mode) first.
 - To report a **security vulnerability**, use the
