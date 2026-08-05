@@ -111,6 +111,7 @@ Code contributors by year
 
 * :user:`Alex Chen <l46983284-cpu>` - :gh:`2859`
 * :user:`Amaan Qureshi <amaanq>` - :gh:`2770`
+* :user:`Anshul Nautiyal <ANSHUL-REAL>` - :gh:`2858`
 * :user:`Arman Luthra <Arman-Luthra>` - :gh:`2695`
 * :user:`Bert Pluymers <bertpl>` - :gh:`2642`
 * :user:`Data-hYg <Data-hYg>` - :gh:`2789`

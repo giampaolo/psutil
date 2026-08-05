@@ -425,6 +425,9 @@ Others:
   versions.
 - :gh:`2847`, [Windows]: :func:`cpu_stats` read the context switches and
   syscalls counts from a buffer it had just freed.
+- :gh:`2858`, [SunOS]: :func:`disk_io_counters` leaked the result dictionary
+  when ``kstat_read()`` failed mid-iteration; the error path now goes through
+  the existing cleanup block.
 - :gh:`2875`, [Windows]: :func:`sensors_battery` never returned
   :data:`POWER_TIME_UNKNOWN` when the remaining battery time was unknown; it
   returned ``4294967295`` instead of ``-1`` due to ``BatteryLifeTime`` being
