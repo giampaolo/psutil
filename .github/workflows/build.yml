@@ -85,7 +85,7 @@ jobs:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}
           path: wheelhouse
 
-  # Run linters
+  # Run linters + bots tests
   linters:
     if: *skip_same_repo_pr
     runs-on: ubuntu-latest
@@ -107,6 +107,10 @@ jobs:
       - name: "Run linters"
         run: |
           make ci-lint
+      - name: "Run bot tests"
+        run: |
+          ./scripts/internal/install-pydeps.sh pytest
+          make test-bots
 
   # Merge wheels and check sanity of the package distribution.
   merge-and-check-dist:

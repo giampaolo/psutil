@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -11,17 +9,21 @@ decision. These tests exercise the deterministic file surgery and the
 validation gate against small RST fixtures; no network or API is used.
 """
 
+import importlib.util
 import io
 import pathlib
 
 import pytest
 
-from . import ROOT_DIR
-from . import import_module_by_path
+BOT_PATH = pathlib.Path(__file__).parent.parent / "changelog_bot.py"
 
-BOT_PATH = (
-    pathlib.Path(ROOT_DIR) / ".github" / "workflows" / "changelog_bot.py"
-)
+
+def import_module_by_path(path):
+    spec = importlib.util.spec_from_file_location(path.stem, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
 
 cb = import_module_by_path(BOT_PATH)
 
