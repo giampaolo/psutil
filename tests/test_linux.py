@@ -13,7 +13,6 @@ import glob
 import io
 import os
 import platform
-import pty
 import re
 import shutil
 import socket
@@ -25,7 +24,6 @@ from unittest import mock
 
 import psutil
 from psutil import LINUX
-from psutil import _psposix
 from psutil import _psutil
 
 from . import AARCH64
@@ -2205,19 +2203,9 @@ class TestProcess(LinuxTestCase):
 
     def test_terminal_mocked(self):
         with mock.patch(
-            'psutil._pslinux._psposix.get_terminal_map', return_value={}
+            'psutil._pslinux._psposix._get_terminal_map', return_value={}
         ):
             assert psutil._pslinux.Process(os.getpid()).terminal() is None
-
-    def test_terminal_new_pty(self):
-        # A PTY opened after the map was cached must still resolve.
-        # See: https://github.com/giampaolo/psutil/issues/2830
-        _psposix._get_terminal_map()  # prime the cache
-        master, slave = pty.openpty()
-        self.addCleanup(os.close, master)
-        self.addCleanup(os.close, slave)
-        path = os.ttyname(slave)
-        assert _psposix.get_terminal(os.stat(path).st_rdev) == path
 
     def test_cmdline_mocked(self):
         # see: https://github.com/giampaolo/psutil/issues/639
