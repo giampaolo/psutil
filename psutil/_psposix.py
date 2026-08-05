@@ -23,7 +23,13 @@ if MACOS:
     from . import _psutil
 
 
-__all__ = ['pid_exists', 'wait_pid', 'disk_usage', 'get_terminal_map']
+__all__ = [
+    'pid_exists',
+    'wait_pid',
+    'disk_usage',
+    'get_terminal',
+    'get_terminal_map',
+]
 
 
 def pid_exists(pid):
@@ -354,3 +360,16 @@ def get_terminal_map():
         except FileNotFoundError:
             pass
     return ret
+
+
+def get_terminal(tty_nr):
+    """Path that terminal *tty_nr* refers to, or None.
+
+    Caller must first exclude process has no terminal. A cache miss may
+    be caused by a recently created device, so refresh the map once.
+    """
+    tmap = get_terminal_map()
+    if tty_nr in tmap:
+        return tmap[tty_nr]
+    get_terminal_map.cache_clear()
+    return get_terminal_map().get(tty_nr)
