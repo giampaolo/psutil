@@ -7,9 +7,9 @@
 """Setup the right labels for new GitHub issues and PRs by asking Claude.
 
 Usage:
-    python3 scripts/internal/triage_labels.py 2635
-    python3 scripts/internal/triage_labels.py 2635 1783 2029
-    python3 scripts/internal/triage_labels.py 2635 --apply
+    python3 .github/workflows/triage_labels.py 2635
+    python3 .github/workflows/triage_labels.py 2635 1783 2029
+    python3 .github/workflows/triage_labels.py 2635 --apply
 """
 
 import argparse
@@ -721,14 +721,6 @@ def classify(client, title, body, files):
     return block.input, message.usage
 
 
-# --- the model, through the claude CLI
-#
-# Same taxonomy, but billed against a Claude subscription instead of
-# API credits. Launching the CLI costs tens of thousands of tokens
-# before it reads a word of the prompt, so tickets go in a chunk at a
-# time and that overhead gets spread over all of them.
-
-
 def model_labels(decision):
     """Flatten a decision into the label set it implies."""
     out = set()
@@ -836,7 +828,7 @@ def handle(item, decision, usage, totals, index):
     print("  applied")
 
 
-def run_via_api(totals):
+def run(totals):
     client = make_client()
     for index, number in enumerate(NUMBERS):
         item = fetch_item(number)
@@ -863,7 +855,7 @@ def main():
         ),
         0,
     )
-    run_via_api(totals)
+    run(totals)
     if len(NUMBERS) > 1 and totals["output_tokens"]:
         print(
             f"\ntotal: {totals['input_tokens']} in,"

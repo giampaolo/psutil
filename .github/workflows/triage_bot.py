@@ -6,7 +6,7 @@
 
 """Bot triggered by Github Actions every time a new issue, PR or comment
 is created. Replies to common mistakes and closes what it can answer on
-its own. Labelling is scripts/internal/triage_labels.py's job.
+its own. Labelling is .github/workflows/triage_labels.py's job.
 """
 
 import functools

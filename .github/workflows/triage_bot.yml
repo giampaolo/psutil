@@ -36,9 +36,10 @@ jobs:
 
       - name: Label
         if: github.event_name != 'issue_comment'
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
         run: |
-          PYTHONUNBUFFERED=1 python3 scripts/internal/triage_labels.py "$NUMBER" --apply
+          PYTHONUNBUFFERED=1 python3 .github/workflows/triage_labels.py "$NUMBER" --apply

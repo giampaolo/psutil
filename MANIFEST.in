@@ -156,7 +156,6 @@ include scripts/internal/print_sysinfo.py
 include scripts/internal/purge_installation.py
 include scripts/internal/refresh_adoption_stats.py
 include scripts/internal/rst_unused_targets.py
-include scripts/internal/triage_labels.py
 include scripts/iotop.py
 include scripts/killall.py
 include scripts/meminfo.py
@@ -179,7 +178,6 @@ include tests/__init__.py
 include tests/conftest.py
 include tests/test_aix.py
 include tests/test_bsd.py
-include tests/test_changelog_bot.py
 include tests/test_connections.py
 include tests/test_contracts.py
 include tests/test_heap.py

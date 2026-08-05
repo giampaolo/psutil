@@ -143,6 +143,9 @@ test-contracts:  ## APIs sanity tests.
 test-docs:  ## Run doc sanity tests (outside testpaths, run on demand).
 	$(MAKE) -C docs test ARGS="$(ARGS)"
 
+test-bots:  ## Run GitHub bot tests (outside testpaths, run on demand).
+	$(RUN_TEST) .github/workflows/tests/ $(ARGS)
+
 test-type-hints:  ## Test type hints
 	$(RUN_TEST) -k test_type_hints.py $(ARGS)
 
