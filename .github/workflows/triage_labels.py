@@ -618,10 +618,6 @@ def stale_labels(item, decision, from_bot=()):
 
 
 # --- the model
-#
-# classify(), PROMPT and SUBMIT_TOOL are what moves into triage_bot.py.
-# Between them they touch nothing but the title, the body and the
-# changed files, which is what a webhook payload can hand over.
 
 
 class BadDecision(Exception):

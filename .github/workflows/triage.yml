@@ -1,18 +1,16 @@
-# Fired by Github Actions every time an issue, PR or comment is created.
+# Fired by Github Actions every time an issue or PR is created.
 
-name: triage-bot
+name: triage
 on:
   issues:
     types: [opened]
   pull_request_target:
     types: [opened]
-  issue_comment:
-    types: [created]
 permissions:
   issues: write
   pull-requests: write
 jobs:
-  build:
+  triage:
     runs-on: ubuntu-latest
     steps:
       # No `ref:` on purpose. pull_request_target runs with our
@@ -28,14 +26,13 @@ jobs:
       - name: Install deps
         run: python3 -m pip install PyGithub anthropic
 
-      - name: Reply and close
+      - name: Reply
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PYTHONUNBUFFERED=1 PYTHONWARNINGS=always python3 .github/workflows/triage_bot.py
+          PYTHONUNBUFFERED=1 PYTHONWARNINGS=always python3 .github/workflows/triage.py
 
       - name: Label
-        if: github.event_name != 'issue_comment'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

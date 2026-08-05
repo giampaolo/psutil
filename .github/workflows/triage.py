@@ -4,9 +4,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Bot triggered by Github Actions every time a new issue, PR or comment
-is created. Replies to common mistakes and closes what it can answer on
-its own. Labelling is .github/workflows/triage_labels.py's job.
+"""Bot triggered by Github Actions every time a new issue or PR is
+created. Replies to common mistakes. Labelling is
+.github/workflows/triage_labels.py's job.
 """
 
 import functools
@@ -21,17 +21,6 @@ ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 MAINTAINERS = {"giampaolo"}
 
 # --- replies
-
-REPLY_MISSING_PYTHON_HEADERS = """\
-It looks like you're missing `Python.h` headers. This usually means you have \
-to install them first, then retry psutil installation.
-Please read \
-[install](https://psutil.io/install/) \
-instructions for your platform. \
-This is an auto-generated response based on the text you submitted. \
-If this was a mistake or you think there's a bug with psutil installation \
-process, please add a comment to reopen this issue.
-"""
 
 REPLY_MAINTAINER_OWNED_FILES = """\
 ⚠️ Please **remove** your changes to `docs/changelog.rst` and / or \
@@ -67,14 +56,6 @@ def _get_event_data():
         return ret
 
 
-def is_event_new_issue():
-    data = _get_event_data()
-    try:
-        return data['action'] == 'opened' and 'issue' in data
-    except KeyError:
-        return False
-
-
 def is_event_new_pr():
     data = _get_event_data()
     try:
@@ -102,33 +83,6 @@ def log(msg):
         print(f">>> {msg} <<<", flush=True)
 
 
-def on_new_issue(issue):
-    def has_text(text):
-        return text in issue.title.lower() or (
-            issue.body and text in issue.body.lower()
-        )
-
-    def body_mentions_python_h():
-        if not issue.body:
-            return False
-        body = issue.body.replace(' ', '')
-        return (
-            "#include<Python.h>\n^~~~" in body
-            or "#include<Python.h>\r\n^~~~" in body
-        )
-
-    log("searching for missing Python.h")
-    if (
-        has_text("missing python.h")
-        or has_text("python.h: no such file or directory")
-        or body_mentions_python_h()
-    ):
-        log("found mention of Python.h")
-        issue.create_comment(REPLY_MISSING_PYTHON_HEADERS)
-        issue.edit(state='closed')
-        return
-
-
 def on_new_pr(issue):
     if issue.user.login in MAINTAINERS:
         return
@@ -147,10 +101,7 @@ def main():
     stype = "PR" if is_pr(issue) else "issue"
     log(f"running issue bot for {stype} {issue!r}")
 
-    if is_event_new_issue():
-        log(f"created new issue {issue}")
-        on_new_issue(issue)
-    elif is_event_new_pr():
+    if is_event_new_pr():
         log(f"created new PR {issue}")
         on_new_pr(issue)
     else:
