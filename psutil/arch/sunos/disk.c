@@ -36,9 +36,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         if (ksp->ks_type == KSTAT_TYPE_IO) {
             if (strcmp(ksp->ks_class, "disk") == 0) {
                 if (kstat_read(kc, ksp, &kio) == -1) {
-                    kstat_close(kc);
-                    return psutil_oserror();
-                    ;
+                    psutil_oserror();
+                    goto error;
                 }
                 py_disk_info = Py_BuildValue(
                     "(IIKKLL)",
