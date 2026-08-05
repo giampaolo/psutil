@@ -11,7 +11,7 @@ permissions:
 jobs:
   changelog:
     if: >
-      github.event.comment.body == '/changelog' &&
+      contains(github.event.comment.body, '/changelog') &&
       github.event.issue.pull_request != null
     runs-on: ubuntu-latest
 
@@ -27,7 +27,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMENTER: ${{ github.event.comment.user.login }}
+          BODY: ${{ github.event.comment.body }}
         run: |
+          # The `if:` above can't trim, and the browser sends the
+          # command as "\r\n/changelog\r\n\r\n".
+          if [ "$(printf '%s' "$BODY" | tr -d '[:space:]')" != "/changelog" ]
+          then
+            echo "Not a /changelog command"
+            exit 1
+          fi
           PERMISSION=$(gh api \
             "repos/${{ github.repository }}/collaborators/$COMMENTER/permission" \
             --jq '.permission')
