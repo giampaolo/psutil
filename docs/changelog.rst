@@ -177,10 +177,20 @@ Others:
 
 - :gh:`2872`: Dropped support for Python 3.6 and 3.7. Minimum version is now
   3.8.
+- :gh:`2893`, [Windows]: Dropped support for Windows Vista, 7, 8, 8.1 and their
+  server counterparts (Server 2008 to 2012 R2). Minimum version is now Windows
+  10 / Windows Server 2016.
+- :gh:`2936`, [Windows]: dropped support for PyPy older than 7.3.14 (December
+  2023).
 - :gh:`2576`: the C extension modules now use PEP 489 multi-phase
   initialization instead of single-phase, which is the preferred mechanism for
   extension modules. Runtime behavior is unchanged.
 - :gh:`2687`, [SunOS]: :func:`users` fails with ``ValueError``.
+- :gh:`2695`, [Windows]: :func:`net_io_counters` is ~5x faster.
+  ``GetAdaptersAddresses()`` is now invoked once instead of twice, and it skips
+  collecting unicast / anycast / multicast / DNS details, which were retrieved
+  but never used. :func:`net_if_stats` and :func:`net_if_addrs` also got
+  faster. (patch by :user:`Arman Luthra <Arman-Luthra>`)
 - :gh:`2747`: the field order of the named tuple returned by :func:`cpu_times`
   has been normalized on all platforms, and the first 3 fields are now always
   :field:`user`, :field:`system`, :field:`idle`. See compatibility notes below.
@@ -267,10 +277,28 @@ Others:
   :meth:`Process.as_dict`) it no longer costs an extra system-wide query.
   Reading 4 methods of that group in one :meth:`Process.oneshot` block is now
   around 3.9x faster than reading them without it, up from 2x.
-- :gh:`2925`: the C sources are now compiled in parallel, which makes building
-  psutil from source 2x to 3.6x faster depending on the platform. This mostly
-  benefits the platforms which get no wheels from PyPI (\*BSD, Solaris, AIX),
-  where ``pip install psutil`` always compiles.
+- :gh:`2925`: the C sources are now compiled in parallel, making builds 2x to
+  3.6x faster. This mostly benefits the platforms getting no wheels from PyPI
+  (\*BSD, Solaris, AIX), where ``pip install psutil`` always compiles. Use
+  :envvar:`PSUTIL_BUILD_JOBS` to cap the number of jobs.
+- :gh:`2927`: python dependencies (``make install-pydeps-*``) are now installed
+  with ``uv`` when available, saving around 10 secs for each CI run.
+- :gh:`2932`, [Windows]: :meth:`Process.open_files` is 140x to 400x faster
+  (from 235 ms to 0.39 ms per call). It no longer enumerates every handle in
+  the system with
+  ``NtQuerySystemInformation(SystemExtendedHandleInformation)``, but
+  per-process, via ``NtQueryInformationProcess(ProcessHandleInformation)``, and
+  the ones which are not files are skipped by object type index, before being
+  duplicated. Also, the internal thread used to query handle names is now
+  created once per call instead of once per handle.
+- :gh:`2939`: syscalls which can potentially block (disk devices, mount points,
+  NIC drivers, etc) now release the GIL. Before, a slow psutil call would
+  freeze all the other threads of the application for its whole duration.
+- :gh:`2947`: psutil now emits a ``RuntimeWarning`` when it returns incomplete
+  or approximated results due to an unexpected condition (e.g. a sanity check
+  on kernel data which failed). Before, these events were only visible by
+  enabling debug mode via the :envvar:`PSUTIL_DEBUG` environment variable, so
+  in practice they went unnoticed.
 
 **Bug fixes**
 
@@ -282,16 +310,18 @@ Others:
 - :gh:`1534`, [NetBSD]: :meth:`Process.exe` is now fetched natively via
   ``sysctl(KERN_PROC_PATHNAME)`` instead of reading the ``/proc/pid/exe``
   symlink (a virtualization layer on NetBSD). (patch by Kamil Rytarowski)
-- :gh:`1967`, [Windows]: :meth:`Process.open_files` could deadlock the calling
-  process. On timeout, the internal thread querying a handle name was killed
-  with ``TerminateThread()``, which cannot terminate a thread blocked in the
-  kernel (e.g. on a pipe with a pending read) and left locks and memory in an
-  inconsistent state. The thread is now abandoned and cleans up after itself.
+- :gh:`1801`, [FreeBSD]: :func:`cpu_freq` could raise :exc:`UnicodeDecodeError`
+  when the ``dev.cpu.N.freq_levels`` sysctl returned bytes which are not valid
+  UTF-8.
 - :gh:`2382`, [macOS]: :func:`cpu_freq` is now always defined on ARM64 and
   returns ``None`` when CPU frequency can't be determined. Previously it was
   left undefined (or raised :exc:`RuntimeError`) when the ``pmgr`` IORegistry
   entry or its frequency data was unavailable, e.g. on virtualized ARM64 like
   CI runners.
+- :gh:`2383`, [Windows]: :meth:`WindowsService.description` may fail with
+  ``ERROR_FILE_NOT_FOUND`` when the description points at a missing resource
+  (e.g. ``WaaSMedicSvc``), which also broke :meth:`WindowsService.as_dict`. Now
+  it returns an empty string instead.
 - :gh:`2411` [macOS]: :meth:`Process.cpu_times` and :meth:`Process.cpu_percent`
   calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
   lower).
@@ -306,6 +336,11 @@ Others:
 - :gh:`2628`, [Linux]: :func:`cpu_freq` no longer takes offline CPU cores into
   account. They were reported with all-zero frequencies, which dragged down the
   average ``current``, ``min`` and ``max`` values.
+- :gh:`2655`, [Windows]: :func:`net_if_stats` returned ``4294967295`` (32-bit
+  overflow) as the speed for network interfaces faster than ~4.29 Gbps (e.g. 5
+  Gbps NICs). Fixed by switching from the legacy ``GetIfTable()`` /
+  ``MIB_IFROW`` API to ``GetIfEntry2()`` / ``MIB_IF_ROW2``, which uses a 64-bit
+  ``TransmitLinkSpeed`` field.
 - :gh:`2711`, [Windows]: :func:`net_if_addrs` was returning ``None`` for the
   ``broadcast`` field of network interfaces instead of the correct broadcast
   address.
@@ -362,6 +397,8 @@ Others:
 - :gh:`2841`, [macOS]: :func:`cpu_freq` could raise :exc:`SystemError` when CPU
   frequency data is missing or invalid in the IORegistry (e.g. on Apple M5
   chips). It now returns ``None`` instead (see :gh:`2382`).
+- :gh:`2848`, [BSD]: fix a stack buffer overflow in :func:`net_io_counters`
+  when the kernel reports an unusually long interface name.
 - :gh:`2854`, [macOS]: :meth:`Process.cmdline` and :meth:`Process.environ`
   could raise :exc:`SystemError` after ``sysctl(KERN_PROCARGS2)`` failed with
   ``errno == 0``. They now raise :exc:`AccessDenied` instead.
@@ -386,6 +423,8 @@ Others:
   ``resource.prlimit()`` accordingly. psutil now maps it back to
   :data:`psutil.RLIM_INFINITY` so the value stays consistent across Python
   versions.
+- :gh:`2847`, [Windows]: :func:`cpu_stats` read the context switches and
+  syscalls counts from a buffer it had just freed.
 - :gh:`2875`, [Windows]: :func:`sensors_battery` never returned
   :data:`POWER_TIME_UNKNOWN` when the remaining battery time was unknown; it
   returned ``4294967295`` instead of ``-1`` due to ``BatteryLifeTime`` being
@@ -429,6 +468,58 @@ Others:
   ``EINVAL`` / ``EFAULT`` / ``EBUSY`` for a process which is exiting or is a
   zombie. It now returns an empty dict, or raises :exc:`NoSuchProcess` if the
   process is gone.
+- :gh:`2929`, [NetBSD]: :meth:`Process.num_fds` returned a wrong, system-wide
+  number which didn't change when the process opened a file.
+- :gh:`2929`, [NetBSD], [OpenBSD]: :meth:`Process.open_files` always returned
+  an empty list.
+- :gh:`2932`, [Windows]: :meth:`Process.open_files` leaked a thread and a
+  handle for every name query which timed out (e.g. a pipe with a pending
+  read), and could hang for around 1 minute if the process had a file open on
+  an unreachable network share, where the :func:`os.stat` used to filter out
+  directories went over the wire with no timeout.
+- :gh:`2934`, [Windows], **[critical]**: :meth:`Process.memory_maps` could
+  crash the calling process with a stack buffer overflow if the inspected
+  process had a mapped file whose path is longer than 260 characters. The
+  buffer size was passed to ``GetMappedFileNameW()`` in bytes instead of
+  characters. Also, such paths are now returned in full instead of truncated.
+- :gh:`2935`, [Windows]: :meth:`Process.kill` and :meth:`Process.terminate`
+  leaked a process handle when ``TerminateProcess()`` failed with an error
+  other than ``ERROR_ACCESS_DENIED``.
+- :gh:`2937`, [Windows]: :func:`disk_io_counters` could let a disk driver write
+  past the end of the ``DISK_PERFORMANCE`` buffer. When the driver asked for
+  more space we retried passing a bigger size, but the buffer was a fixed size
+  struct on the stack. It is now allocated (and grown) on the heap.
+- :gh:`2938`, [Windows]: :func:`disk_partitions` returned a different
+  :field:`opts` string for volume mount points than for the drive they live on:
+  the drive type (``fixed``, ``cdrom``, ...) was missing.
+- :gh:`2940`, [Windows]: :func:`net_if_addrs` could report an IPv4
+  :field:`netmask` for an IPv6 address of the same NIC. The netmask was reset
+  once per interface instead of once per address.
+- :gh:`2941`, [Windows]: :func:`net_io_counters` raised :exc:`RuntimeError`,
+  losing the counters of all the other NICs, if a NIC was disabled or unplugged
+  mid-call. Now it's skipped.
+- :gh:`2943`, [Windows]: :func:`win_service_iter` could crash the interpreter
+  instead of raising an exception if the service enumeration failed.
+- :gh:`2946`, [Windows]: if the number of process heaps changed while
+  :func:`heap_info` was running, it could read uninitialized memory and return
+  bogus :field:`mmap_used` and :field:`heap_count` values.
+- :gh:`2965`, [Windows]: on systems with more than 64 CPUs :func:`cpu_times`
+  with ``percpu=True`` and :func:`cpu_stats` read uninitialized memory: the
+  kernel only returns entries for the calling thread's processor group, but the
+  entries for the remaining CPUs were used as well.
+- :gh:`2951`, [OpenBSD]: :func:`cpu_times` returned times averaged across CPUs
+  instead of summed, like on all the other platforms. Now it sums the per-CPU
+  counters.
+- :gh:`2952`, [OpenBSD]: :meth:`Process.environ` raised ``OSError(EINVAL)`` for
+  a process which started exiting, e.g. mid-way to becoming a zombie. Also, for
+  consistency, :meth:`Process.environ` for a zombie now raises
+  :exc:`ZombieProcess` on all BSDs (NetBSD used to return an empty dict, see
+  :gh:`2911`).
+- :gh:`2953`, [SunOS]: :meth:`Process.gids` returned a ``puids`` namedtuple
+  instead of ``pgids``. :meth:`Process.nice` was offset by +20 compared to
+  ``getpriority(3)``. :meth:`Process.net_connections` returned UNIX sockets
+  with ``type=-1`` and ``fd=-1``. Also, :meth:`Process.net_connections` now
+  raises :exc:`ZombieProcess` instead of ``RuntimeError`` for zombie processes.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^

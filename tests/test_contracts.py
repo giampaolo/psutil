@@ -28,7 +28,6 @@ from psutil import ConnectionStatus
 from psutil import NicDuplex
 from psutil import ProcessStatus
 
-from . import GITHUB_ACTIONS
 from . import HAS_CPU_FREQ
 from . import HAS_NET_IO_COUNTERS
 from . import HAS_SENSORS_FANS
@@ -207,10 +206,6 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         else:
             not hasattr(psutil, "ProcessPriority")
 
-    @skipif(
-        GITHUB_ACTIONS and LINUX,
-        reason="unsupported on GITHUB_ACTIONS + LINUX",
-    )
     def test_rlimit(self):
         names = (
             "RLIM_INFINITY",
@@ -313,10 +308,6 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_ionice(self):
         assert hasattr(psutil.Process, "ionice") == (LINUX or WINDOWS)
 
-    @skipif(
-        GITHUB_ACTIONS and LINUX,
-        reason="unsupported on GITHUB_ACTIONS + LINUX",
-    )
     def test_rlimit(self):
         assert hasattr(psutil.Process, "rlimit") == (LINUX or FREEBSD)
 

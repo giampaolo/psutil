@@ -46,7 +46,6 @@ from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import MACOS_12PLUS
-from . import PYPY
 from . import UNICODE_SUFFIX
 from . import PsutilTestCase
 from . import check_net_address
@@ -251,10 +250,6 @@ class TestProcessIter(PsutilTestCase):
 
 
 class TestProcessAPIs(PsutilTestCase):
-    @skipif(
-        PYPY and WINDOWS,
-        reason="spawn_subproc() unreliable on PYPY + WINDOWS",
-    )
     def test_wait_procs(self):
         def callback(p):
             pids.append(p.pid)
@@ -314,10 +309,6 @@ class TestProcessAPIs(PsutilTestCase):
         for p in gone:
             assert hasattr(p, 'returncode')
 
-    @skipif(
-        PYPY and WINDOWS,
-        reason="spawn_subproc() unreliable on PYPY + WINDOWS",
-    )
     def test_wait_procs_no_timeout(self):
         sproc1 = self.spawn_subproc()
         sproc2 = self.spawn_subproc()
@@ -514,9 +505,10 @@ class TestMemoryAPIs(PsutilTestCase):
         assert mem.total >= 0, mem
         assert mem.used >= 0, mem
         if mem.total > 0:
-            # likely a system with no swap partition
-            assert mem.free > 0, mem
+            # free can be 0 if swap is entirely in use
+            assert mem.free >= 0, mem
         else:
+            # likely a system with no swap partition
             assert mem.free == 0, mem
         assert 0 <= mem.percent <= 100, mem
         assert mem.sin >= 0, mem
@@ -647,26 +639,20 @@ class TestCpuAPIs(PsutilTestCase):
                 if difference >= 0.05:
                     return None
 
-    @skipif(
-        (CI_TESTING and OPENBSD) or MACOS or SUNOS,
-        reason="unreliable on OPENBSD + CI",
-    )
+    @skipif(SUNOS, reason="unreliable on SUNOS")
     @retry_on_failure(30)
     def test_cpu_times_comparison(self):
         # Make sure the sum of all per cpu times is almost equal to
-        # base "one cpu" times. On OpenBSD the sum of per-CPUs is
-        # higher for some reason.
+        # base "one cpu" times.
         base = psutil.cpu_times()
         per_cpu = psutil.cpu_times(percpu=True)
         summed_values = base._make([sum(num) for num in zip(*per_cpu)])
-        for field in base._fields:
-            with self.subTest(
-                field=field, base=str(base), per_cpu=str(per_cpu)
-            ):
-                assert (
-                    abs(getattr(base, field) - getattr(summed_values, field))
-                    < 2
-                )
+        mismatches = {
+            field: (getattr(base, field), getattr(summed_values, field))
+            for field in base._fields
+            if abs(getattr(base, field) - getattr(summed_values, field)) >= 2
+        }
+        assert mismatches == {}
 
     def _test_cpu_percent(self, percent, last_ret, new_ret):
         try:

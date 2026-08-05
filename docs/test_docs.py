@@ -55,6 +55,10 @@ from testutil import feed_urls  # noqa: E402
 from testutil import find_canonical  # noqa: E402
 from testutil import og_value  # noqa: E402
 
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32", reason="docs are built on Linux only"
+)
+
 HTML_DIR = None
 
 

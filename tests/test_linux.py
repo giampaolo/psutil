@@ -61,6 +61,9 @@ SIOCGIFNETMASK = 0x891B
 SIOCGIFBRDADDR = 0x8919
 if LINUX:
     SECTOR_SIZE = 512
+# Overlayfs and btrfs give / an anonymous device (major 0), which has
+# no /proc/partitions or /sys/dev/block entry to look up.
+ROOTFS_ON_BLOCK_DEV = LINUX and os.major(os.stat("/").st_dev) != 0
 
 
 @skipif(not LINUX, reason="LINUX only")
@@ -1033,12 +1036,13 @@ class TestCpuTimes(LinuxTestCase):
 
 class TestCpuStats(LinuxTestCase):
 
-    # XXX: fails too often.
-    # def test_ctx_switches(self):
-    #     vmstat_value = vmstat("context switches")
-    #     psutil_value = psutil.cpu_stats().ctx_switches
-    #     assert abs(vmstat_value - psutil_value) < 500
+    @isolated
+    def test_ctx_switches(self):
+        vmstat_value = vmstat("context switches")
+        psutil_value = psutil.cpu_stats().ctx_switches
+        assert abs(vmstat_value - psutil_value) < 500
 
+    @isolated
     def test_interrupts(self):
         vmstat_value = vmstat("interrupts")
         psutil_value = psutil.cpu_stats().interrupts
@@ -1142,20 +1146,18 @@ class TestNetIfAddrs(LinuxTestCase):
             for addr in addrs:
                 assert addr in psutil_ipv6
 
-    # XXX - not reliable when having virtual NICs installed by Docker.
-    # @skipif(not shutil.which("ip"),
-    #                     reason="'ip' utility not available")
-    # def test_net_if_names(self):
-    #     out = sh("ip addr").strip()
-    #     nics = [x for x in psutil.net_if_addrs().keys() if ':' not in x]
-    #     found = 0
-    #     for line in out.split('\n'):
-    #         line = line.strip()
-    #         if re.search(r"^\d+:", line):
-    #             found += 1
-    #             name = line.split(':')[1].strip()
-    #             assert name in nics
-    #     assert len(nics) == found
+    @skipif(not shutil.which("ip"), reason="'ip' utility not available")
+    def test_net_if_names(self):
+        out = sh("ip addr").strip()
+        nics = [x for x in psutil.net_if_addrs() if ':' not in x]
+        found = 0
+        for line in out.split('\n'):
+            line = line.strip()
+            if re.search(r"^\d+:", line):
+                found += 1
+                name = line.split(':')[1].strip()
+                assert name in nics
+        assert len(nics) == found
 
 
 class TestNetIfStats(LinuxTestCase):
@@ -1567,7 +1569,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
                 finder.ask_sys_dev_block()
         finder.ask_sys_class_block()
 
-    @skipif(GITHUB_ACTIONS, reason="unsupported on GITHUB_ACTIONS")
+    @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
     def test_comparisons(self):
         finder = RootFsDeviceFinder()
         assert finder.find() is not None
@@ -1590,7 +1592,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
     @skipif(
         not shutil.which("findmnt"), reason="findmnt utility not available"
     )
-    @skipif(GITHUB_ACTIONS, reason="unsupported on GITHUB_ACTIONS")
+    @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
     def test_against_findmnt(self):
         psutil_value = RootFsDeviceFinder().find()
         findmnt_value = sh("findmnt -o SOURCE -rn /")

@@ -11,16 +11,8 @@
 #include "ntextapi.h"
 
 
-extern int PSUTIL_WINVER;
 extern SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 extern CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
-
-#define PSUTIL_WINDOWS_VISTA 60
-#define PSUTIL_WINDOWS_7 61
-#define PSUTIL_WINDOWS_8 62
-#define PSUTIL_WINDOWS_8_1 63
-#define PSUTIL_WINDOWS_10 100
-#define PSUTIL_WINDOWS_NEW MAXLONG
 
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
 #define MALLOC_ZERO(x) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (x))
@@ -41,17 +33,6 @@ extern CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 #define AF_INET6 23
 #endif
 
-#if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
-#if !defined(PyErr_SetFromWindowsErrWithFilename)
-PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr, const char *filename);
-#endif
-#if !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
-PyObject *PyErr_SetExcFromWindowsErrWithFilenameObject(
-    PyObject *type, int ierr, PyObject *filename
-);
-#endif
-#endif
-
 double psutil_FiletimeToUnixTime(FILETIME ft);
 double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);
 int psutil_setup_windows(void);
@@ -64,15 +45,13 @@ extern PyObject *TimeoutAbandoned;
 
 
 int _psutil_pids(DWORD **pids_array, int *pids_count);
-HANDLE psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code);
 HANDLE psutil_handle_from_pid(DWORD pid, DWORD dwDesiredAccess);
-int psutil_assert_pid_exists(DWORD pid, char *err);
-int psutil_assert_pid_not_exists(DWORD pid, char *err);
 int psutil_pid_is_running(DWORD pid);
-int psutil_set_se_debug();
-SC_HANDLE psutil_get_service_handle(
-    char service_name, DWORD scm_access, DWORD access
+int psutil_check_pid_running(DWORD pid);
+PyObject *psutil_raise_for_nt_status(
+    DWORD pid, NTSTATUS status, const char *syscall
 );
+int psutil_set_se_debug();
 
 #define PSUTIL_FIRST_PROCESS(Processes) \
     ((PSYSTEM_PROCESS_INFORMATION)(Processes))
@@ -99,7 +78,7 @@ PyObject *psutil_disk_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_disk_partitions(PyObject *self, PyObject *args);
 PyObject *psutil_disk_usage(PyObject *self, PyObject *args);
 PyObject *psutil_get_loadavg();
-PyObject *psutil_get_open_files(DWORD pid, HANDLE hProcess);
+PyObject *psutil_get_open_files(HANDLE hProcess);
 PyObject *psutil_getpagesize(PyObject *self, PyObject *args);
 PyObject *psutil_heap_info(PyObject *self, PyObject *args);
 PyObject *psutil_heap_trim(PyObject *self, PyObject *args);

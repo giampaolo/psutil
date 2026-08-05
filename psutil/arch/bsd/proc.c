@@ -242,6 +242,9 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 #else
     struct kinfo_proc *p;
 #endif
+#ifdef PSUTIL_OPENBSD
+    struct kinfo_proc kp;
+#endif
 
     if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -276,25 +279,30 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    // A zombie has no environment.
+    if (PSUTIL_KINFO_ZOMBIE(*p)) {
+        PyErr_SetString(ZombieProcessError, "kvm_getprocs -> zombie");
+        goto error;
+    }
+
     // On *BSD kernels there are a few kernel-only system processes without an
     // environment (See e.g. "procstat -e 0 | 1 | 2 ..." on FreeBSD.)
     // Some system process have no stats attached at all
     // (they are marked with P_SYSTEM.)
     // On FreeBSD, it's possible that the process is swapped or paged out,
     // then there no access to the environ stored in the process' user area.
-    // On NetBSD, we cannot call kvm_getenvv2() for a zombie process,
-    // including one which is still exiting (it fails with EINVAL).
     // To make unittest suite happy, return an empty environment.
 #if defined(PSUTIL_FREEBSD)
     if (!((p)->ki_flag & P_INMEM) || ((p)->ki_flag & P_SYSTEM)) {
-#elif defined(PSUTIL_NETBSD)
-    if (PSUTIL_KINFO_ZOMBIE(*p)) {
-#elif defined(PSUTIL_OPENBSD)
-    if ((p)->p_flag & P_SYSTEM) {
-#endif
         kvm_close(kd);
         return py_retdict;
     }
+#elif defined(PSUTIL_OPENBSD)
+    if ((p)->p_flag & P_SYSTEM) {
+        kvm_close(kd);
+        return py_retdict;
+    }
+#endif
 
 #if defined(PSUTIL_NETBSD)
     envs = kvm_getenvv2(kd, p, 0);
@@ -314,9 +322,10 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
             case ESRCH:
                 psutil_oserror_nsp("kvm_getenvv -> ESRCH");
                 break;
-#if defined(PSUTIL_NETBSD)
+#if defined(PSUTIL_NETBSD) || defined(PSUTIL_OPENBSD)
             case EBUSY:
-                // p_reflock is write held, likely an exec in progress.
+                // An exec is in progress (NetBSD: p_reflock is write
+                // held; OpenBSD: PS_INEXEC is set).
                 psutil_debug(
                     "proc %ld environ(): return empty dict due to EBUSY", pid
                 );
@@ -324,18 +333,16 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 return py_retdict;
             case EINVAL:
             case EFAULT:
-                // The check above races. EINVAL: zombie, system proc
-                // or gone. EFAULT: started exiting.
+                // The check above races. EINVAL: zombie, exiting or
+                // system proc. EFAULT: started exiting.
                 if (psutil_kinfo_proc(pid, &kp) == -1)
                     goto error;  // reaped in the meantime, raises NSP
-                if (PSUTIL_KINFO_ZOMBIE(kp)) {
-                    psutil_debug(
-                        "proc %ld environ(): zombie, return empty dict", pid
+                if (PSUTIL_KINFO_ZOMBIE(kp))
+                    PyErr_SetString(
+                        ZombieProcessError, "kvm_getenvv -> zombie"
                     );
-                    kvm_close(kd);
-                    return py_retdict;
-                }
-                psutil_oserror_wsyscall("kvm_getenvv2");
+                else
+                    psutil_oserror_wsyscall("kvm_getenvv");
                 break;
 #elif defined(PSUTIL_FREEBSD)
             case ENOMEM:
@@ -446,12 +453,12 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 #elif PSUTIL_OPENBSD
         regular = (kif->f_type == DTYPE_VNODE) && (kif->v_type == VREG);
         fd = kif->fd_fd;
-        // XXX - it appears path is not exposed in the kinfo_file struct.
+        // struct kinfo_file has no path field (FreeBSD has kf_path).
         path = "";
 #elif PSUTIL_NETBSD
         regular = (kif->ki_ftype == DTYPE_VNODE) && (kif->ki_vtype == VREG);
         fd = kif->ki_fd;
-        // XXX - it appears path is not exposed in the kinfo_file struct.
+        // struct kinfo_file has no path field (FreeBSD has kf_path).
         path = "";
 #endif
         if (regular == 1) {

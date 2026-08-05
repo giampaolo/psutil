@@ -84,8 +84,16 @@ class ProcInfo:
 
     def check_exception(self, exc):
         assert exc.pid == self.pid
-        if exc.name is not None:
-            assert exc.name == self.name
+        if exc.name is not None and exc.name != self.name:
+            # The process may have renamed itself in the meantime.
+            # Kernel threads do it all the time, e.g.
+            # "kworker/1:0-events" -> "kworker/1:0+events".
+            try:
+                curname = psutil.Process(self.pid).name()
+            except psutil.Error:
+                curname = None
+            # if the name did not change then something else is wrong
+            assert curname != self.name
         if isinstance(exc, psutil.ZombieProcess):
             try:
                 self.tcase.assert_proc_zombie(self.proc)
@@ -121,16 +129,13 @@ class ProcInfo:
                 self.check_exception(exc)
 
     def should_skip(self, fun_name):
-        if MACOS and CI_TESTING and fun_name == "memory_info_ex":
-            # XXX: memory_info_ex() needs task_for_pid() for fields
-            # with no pid-based source (peak_rss, compressed, ...).
-            # task_for_pid() can hang forever when taskgated is
-            # wedged, which happens on headless CI but not on real
-            # machines. See:
-            # https://github.com/giampaolo/psutil/issues/2885
-            return True
-        # XXX: open_files() is too slow on Windows
-        return WINDOWS and fun_name == "open_files"
+        # XXX: memory_info_ex() needs task_for_pid() for fields
+        # with no pid-based source (peak_rss, compressed, ...).
+        # task_for_pid() can hang forever when taskgated is
+        # wedged, which happens on headless CI but not on real
+        # machines. See:
+        # https://github.com/giampaolo/psutil/issues/2885
+        return MACOS and CI_TESTING and fun_name == "memory_info_ex"
 
     def call_getters(self):
         info = {'pid': self.pid}

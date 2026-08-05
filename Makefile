@@ -11,10 +11,10 @@ PYTHON = python3
 ARGS =
 FILES =
 
-PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade --upgrade-strategy eager
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
 DPRINT = ~/.dprint/bin/dprint
+INSTALL_PYDEPS = PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
@@ -72,23 +72,20 @@ uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON_ENV_VARS) $(PYTHON) -m pip uninstall -y -v psutil || true
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/purge_installation.py
 
-install-pip:  ## Install pip (no-op if already installed).
-	$(PYTHON) scripts/internal/install_pip.py
-
 install-sysdeps:  ## Install system deps needed to compile psutil.
 	./scripts/internal/install-sysdeps.sh
 
+install-sysdeps-test:  ## Install CLI tools needed to run unit tests.
+	./scripts/internal/install-sysdeps.sh --test-only
+
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
-	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group test
+	$(INSTALL_PYDEPS) --group test
 
 install-pydeps-lint:  ## Install python deps necessary to run linters.
-	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group lint
+	$(INSTALL_PYDEPS) --group lint
 
 install-pydeps-dev:  ## Install python deps meant for local development.
-	$(MAKE) install-pip
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) --group dev
+	$(INSTALL_PYDEPS) --group dev
 
 # ===================================================================
 # Tests
@@ -132,22 +129,25 @@ test-misc:  ## Run miscellaneous tests.
 	$(RUN_TEST) -k "test_misc.py or Misc" $(ARGS)
 
 test-scripts:  ## Run scripts tests.
-	$(RUN_TEST) tests/test_scripts.py $(ARGS)
+	$(RUN_TEST) -k test_scripts.py $(ARGS)
 
 test-testutils:  ## Run test utils tests.
-	$(RUN_TEST) tests/test_testutils.py $(ARGS)
+	$(RUN_TEST) -k test_testutils.py $(ARGS)
 
 test-unicode:  ## Test APIs dealing with strings.
-	$(RUN_TEST) tests/test_unicode.py $(ARGS)
+	$(RUN_TEST) -k test_unicode.py $(ARGS)
 
 test-contracts:  ## APIs sanity tests.
-	$(RUN_TEST) tests/test_contracts.py $(ARGS)
+	$(RUN_TEST) -k test_contracts.py $(ARGS)
 
 test-docs:  ## Run doc sanity tests (outside testpaths, run on demand).
 	$(MAKE) -C docs test ARGS="$(ARGS)"
 
+test-bots:  ## Run GitHub bot tests (outside testpaths, run on demand).
+	$(PYTHON) -m pytest -o addopts="" .github/workflows/tests/ $(ARGS)
+
 test-type-hints:  ## Test type hints
-	$(RUN_TEST) tests/test_type_hints.py $(ARGS)
+	$(RUN_TEST) -k test_type_hints.py $(ARGS)
 
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
 	$(RUN_TEST) -k "test_connections.py or net_" $(ARGS)
@@ -206,13 +206,14 @@ lint-rst:  ## Run linter for .rst files.
 lint-toml:  ## Run linter for pyproject.toml.
 	@$(call _ls,'*.toml') | xargs toml-sort --check
 
-lint-all:  ## Run all linters
-	$(MAKE) black
-	$(MAKE) ruff
-	$(MAKE) lint-c
-	$(MAKE) dprint
-	$(MAKE) lint-rst
-	$(MAKE) lint-toml
+lint-all:  ## Run all linters in parallel
+	$(MAKE) -j \
+		black \
+		ruff \
+		lint-c \
+		dprint \
+		lint-rst \
+		lint-toml
 
 # --- not mandatory linters (just run from time to time)
 
@@ -258,17 +259,16 @@ fix-all:  ## Run all code fixers.
 
 ci-lint:  ## Run all linters on GitHub CI.
 	$(MAKE) install-pydeps-lint
-	curl -fsSL https://dprint.dev/install.sh | sh
+	test -x $(DPRINT) || curl -fsSL https://dprint.dev/install.sh | sh
 	$(DPRINT) --version
 	clang-format --version
 	$(MAKE) lint-all
 
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-sysdeps
-	$(MAKE) install-pip
 	# Install psutil before the test deps: psleak depends on psutil,
 	# and a pre-installed one stops pip from pulling it from PyPI.
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .
+	$(INSTALL_PYDEPS) .
 	$(MAKE) install-pydeps-test
 	$(MAKE) build
 	$(MAKE) print-sysinfo
@@ -276,7 +276,7 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) test-memleaks-parallel
 
 ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
-	$(MAKE) install-sysdeps  # test pydeps already installed at this point
+	$(MAKE) install-sysdeps-test  # the wheel is already built
 	$(MAKE) print-sysinfo
 	# Warm pywin32's gen_py cache: concurrent first imports of wmi in
 	# the pytest workers corrupt it (EOFError from gencache).
@@ -290,8 +290,7 @@ ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	cd .tests/ && PYTHONPATH=$$(pwd) $(MAKE) -f ../Makefile test-memleaks-parallel
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
-	$(MAKE) install-pip
-	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
+	$(INSTALL_PYDEPS) setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
 	$(MAKE) create-sdist
 	mv wheelhouse/* dist/
 	$(MAKE) check-dist
@@ -314,7 +313,7 @@ create-wheels:  ## Create .whl files
 	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
 
 download-wheels:  ## Download latest wheels hosted on github.
-	$(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
+	$(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.api.key
 	$(MAKE) print-dist
 
 create-dist:  ## Create .tar.gz + .whl distribution.
@@ -340,10 +339,11 @@ check-wheels:  ## Check sanity of wheels.
 	$(PYTHON) -m twine check --strict dist/*.whl
 
 check-dist:  ## Run all sanity checks re. to the package distribution.
-	$(MAKE) check-manifest
-	$(MAKE) check-pyproject
-	$(MAKE) check-sdist
-	$(MAKE) check-wheels
+	$(MAKE) -j \
+		check-manifest \
+		check-pyproject \
+		check-sdist \
+		check-wheels
 
 # --- release
 

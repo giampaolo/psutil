@@ -14,7 +14,6 @@ from psutil import MACOS
 from psutil import _psutil
 
 from . import AARCH64
-from . import CI_TESTING
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
 from . import TOLERANCE_DISK_USAGE
@@ -93,28 +92,18 @@ class TestVirtualMemory(MacosTestCase):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
         assert sysctl_hwphymem == psutil.virtual_memory().total
 
-    @skipif(
-        CI_TESTING and MACOS and AARCH64,
-        reason="skipped on MACOS + ARM64 + CI_TESTING",
-    )
     @retry_on_failure
     def test_free(self):
         vmstat_val = vm_stat("free")
         psutil_val = psutil.virtual_memory().free
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
-    @skipif(
-        CI_TESTING and MACOS and AARCH64,
-        reason="skipped on MACOS + ARM64 + CI_TESTING",
-    )
     @retry_on_failure
     def test_active(self):
         vmstat_val = vm_stat("active")
         psutil_val = psutil.virtual_memory().active
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
-    # XXX: fails too often
-    @skipif(CI_TESTING, reason="skipped on CI_TESTING")
     @retry_on_failure
     def test_inactive(self):
         vmstat_val = vm_stat("inactive")

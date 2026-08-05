@@ -30,6 +30,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
 }
 
 
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
 PyObject *
 psutil_cpu_times(PyObject *self, PyObject *args) {
 #ifdef PSUTIL_NETBSD
@@ -37,16 +38,8 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 #else
     long cpu_time[CPUSTATES];
 #endif
-    size_t size = sizeof(cpu_time);
-    int ret;
 
-#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
-    ret = psutil_sysctlbyname("kern.cp_time", &cpu_time, size);
-#elif PSUTIL_OPENBSD
-    int mib[] = {CTL_KERN, KERN_CPTIME};
-    ret = psutil_sysctl(mib, 2, &cpu_time, size);
-#endif
-    if (ret != 0)
+    if (psutil_sysctlbyname("kern.cp_time", &cpu_time, sizeof(cpu_time)) != 0)
         return NULL;
     return Py_BuildValue(
         "(ddddd)",
@@ -57,3 +50,4 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
         (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC
     );
 }
+#endif

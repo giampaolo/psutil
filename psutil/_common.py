@@ -31,6 +31,7 @@ except ImportError:
 
 
 PSUTIL_DEBUG = bool(os.getenv('PSUTIL_DEBUG'))
+PSUTIL_TESTING = bool(os.getenv('PSUTIL_TESTING'))
 _DEFAULT = object()
 
 # fmt: off
@@ -45,7 +46,7 @@ __all__ = [
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
     'open_text', 'open_binary', 'cat', 'bcat',
-    'bytes2human', 'conn_to_ntuple', 'debug',
+    'bytes2human', 'conn_to_ntuple', 'debug', 'warn',
     # shell utils
     'hilite', 'term_supports_colors', 'print_color',
 ]
@@ -743,3 +744,22 @@ def debug(msg):
         print(  # noqa: T201
             f"psutil-debug [{fname}:{lineno}]> {msg}", file=sys.stderr
         )
+
+
+def warn(msg):
+    """Emit a RuntimeWarning. Use it for events which are never
+    supposed to happen, and imply a psutil bug.
+    """
+    import inspect
+
+    fname, lineno, _, _lines, _index = inspect.getframeinfo(
+        inspect.currentframe().f_back
+    )
+    msg = f"{msg} (originated from {fname}:{lineno})"
+    if PSUTIL_TESTING:
+        msg = f"CRITICAL: {msg}"
+        raise RuntimeError(msg)
+    try:
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
+    except RuntimeWarning:
+        pass  # -W error: we never want to fail because of a warning

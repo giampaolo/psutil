@@ -22,6 +22,7 @@ from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import debug
 from ._common import memoize_when_activated
+from ._common import warn
 from ._enums import BatteryTime
 from ._enums import ConnectionStatus
 from ._enums import NicDuplex
@@ -340,7 +341,7 @@ if NETBSD:
         INIT_BOOT_TIME = boot_time()
     except Exception as err:  # noqa: BLE001
         # Don't want to crash at import time.
-        debug(f"ignoring exception on import: {err!r}")
+        warn(f"boot_time() failed on import: {err!r}")
         INIT_BOOT_TIME = 0
 
     def adjust_proc_create_time(ctime):

@@ -128,6 +128,8 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     char sensor[26];
     char available_freq_levels[1000] = {0};
     size_t size;
+    PyObject *py_freq_levels;
+    PyObject *py_retlist;
 
     if (!PyArg_ParseTuple(args, "i", &core))
         return NULL;
@@ -144,7 +146,12 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     if (psutil_sysctlbyname(sensor, &available_freq_levels, size) != 0)
         psutil_debug("cpu freq levels failed (ignored)");
 
-    return Py_BuildValue("is", current, available_freq_levels);
+    py_freq_levels = PyUnicode_DecodeFSDefault(available_freq_levels);
+    if (py_freq_levels == NULL)
+        return NULL;
+    py_retlist = Py_BuildValue("iO", current, py_freq_levels);
+    Py_DECREF(py_freq_levels);
+    return py_retlist;
 
 error:
     if (errno == ENOENT)

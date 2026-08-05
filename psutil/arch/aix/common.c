@@ -22,12 +22,18 @@ psutil_kread(
     size_t len  // length to read
 ) {
     int br;
+    off64_t off;
 
-    if (lseek64(Kd, (off64_t)addr, L_SET) == (off64_t)-1) {
+    Py_BEGIN_ALLOW_THREADS
+    off = lseek64(Kd, (off64_t)addr, L_SET);
+    Py_END_ALLOW_THREADS
+    if (off == (off64_t)-1) {
         psutil_oserror();
         return 1;
     }
+    Py_BEGIN_ALLOW_THREADS
     br = read(Kd, buf, len);
+    Py_END_ALLOW_THREADS
     if (br == -1) {
         psutil_oserror();
         return 1;
@@ -58,11 +64,14 @@ psutil_read_process_table(int *num) {
     }
     Np = PROCINFO_INCR;
     p = processes;
-    while ((i = getprocs64(
-                p, PROCSIZE, (struct fdsinfo64 *)NULL, 0, &pid, PROCINFO_INCR
-            ))
-           == PROCINFO_INCR)
-    {
+    for (;;) {
+        Py_BEGIN_ALLOW_THREADS
+        i = getprocs64(
+            p, PROCSIZE, (struct fdsinfo64 *)NULL, 0, &pid, PROCINFO_INCR
+        );
+        Py_END_ALLOW_THREADS
+        if (i != PROCINFO_INCR)
+            break;
         np += PROCINFO_INCR;
         if (np >= Np) {
             msz = (size_t)(PROCSIZE * (Np + PROCINFO_INCR));

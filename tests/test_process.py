@@ -50,6 +50,7 @@ from . import HAS_PROC_IO_COUNTERS
 from . import HAS_PROC_IONICE
 from . import HAS_PROC_MEMORY_FOOTPRINT
 from . import HAS_PROC_MEMORY_MAPS
+from . import HAS_PROC_OPEN_FILES_PATH
 from . import HAS_PROC_RLIMIT
 from . import HAS_PROC_THREADS
 from . import PYPY
@@ -826,8 +827,15 @@ class TestProcess(PsutilTestCase):
                 # the same result, causing the test to fail.
                 return pytest.skip('running as service account')
             assert username == getpass_user
-            if 'USERDOMAIN' in os.environ:
-                assert domain == os.environ['USERDOMAIN']
+            # For local accounts the domain is the computer name,
+            # which may differ from USERDOMAIN (e.g. "WORKGROUP").
+            expected = {
+                os.environ.get('USERDOMAIN'),
+                os.environ.get('COMPUTERNAME'),
+            }
+            expected = {x.upper() for x in expected if x}
+            if expected:
+                assert domain.upper() in expected
         else:
             assert username == getpass.getuser()
 
@@ -921,8 +929,6 @@ class TestProcess(PsutilTestCase):
             p.cpu_affinity(combo)
             assert sorted(p.cpu_affinity()) == sorted(combo)
 
-    # TODO: #595
-    @skipif(BSD, reason="broken on BSD")
     def test_open_files(self):
         p = psutil.Process()
         testfn = self.get_testfn()
@@ -934,34 +940,47 @@ class TestProcess(PsutilTestCase):
             # give the kernel some time to see the new file
             call_until(lambda: len(p.open_files()) != len(files))
             files = p.open_files()
-            filenames = [os.path.normcase(x.path) for x in files]
-            assert os.path.normcase(testfn) in filenames
+            if HAS_PROC_OPEN_FILES_PATH:
+                filenames = [os.path.normcase(x.path) for x in files]
+                if FREEBSD and os.path.normcase(testfn) not in filenames:
+                    # FreeBSD may return an empty path, see #595
+                    assert f.fileno() in [x.fd for x in files]
+                    return pytest.skip("kernel didn't provide the path")
+                assert os.path.normcase(testfn) in filenames
             if LINUX:
                 for file in files:
                     if file.path == testfn:
                         assert file.position == 1024
-        for file in files:
-            assert os.path.isfile(file.path), file
+        if HAS_PROC_OPEN_FILES_PATH:
+            for file in files:
+                if FREEBSD and not file.path:
+                    continue  # can be empty, see #595
+                assert os.path.isfile(file.path), file
 
-        # another process
+        # Another process. It lives long enough for the polling loop
+        # below to see the file appear.
         cmdline = (
             f"import time; f = open(r'{testfn}', 'r'); [time.sleep(0.1) for x"
-            " in range(100)];"
+            " in range(600)];"
         )
         p = self.spawn_psproc([PYTHON_EXE, "-c", cmdline])
 
-        for x in range(100):
-            filenames = [os.path.normcase(x.path) for x in p.open_files()]
-            if testfn in filenames:
-                break
-            time.sleep(0.01)
-        else:
-            assert os.path.normcase(testfn) in filenames
-        for file in filenames:
-            assert os.path.isfile(file), file
+        if HAS_PROC_OPEN_FILES_PATH:
+            for x in range(100):
+                filenames = [os.path.normcase(x.path) for x in p.open_files()]
+                if testfn in filenames:
+                    break
+                time.sleep(0.01)
+            else:
+                if FREEBSD and "" in filenames:
+                    # FreeBSD may return an empty path, see #595
+                    return pytest.skip("kernel didn't provide the path")
+                assert os.path.normcase(testfn) in filenames
+            for file in filenames:
+                if FREEBSD and not file:
+                    continue  # can be empty, see #595
+                assert os.path.isfile(file), file
 
-    # TODO: #595
-    @skipif(BSD, reason="broken on BSD")
     def test_open_files_2(self):
         # test fd and path fields
         p = psutil.Process()
@@ -976,7 +995,12 @@ class TestProcess(PsutilTestCase):
                     break
             else:
                 return pytest.fail(f"no file found; files={p.open_files()!r}")
-            assert normcase(file.path) == normcase(fileobj.name)
+            if HAS_PROC_OPEN_FILES_PATH:
+                if FREEBSD and not file.path:
+                    # can be empty, see #595
+                    pass
+                else:
+                    assert normcase(file.path) == normcase(fileobj.name)
             if WINDOWS:
                 assert file.fd == -1
             else:
@@ -1002,7 +1026,6 @@ class TestProcess(PsutilTestCase):
         assert p.num_fds() == start
 
     @skip_on_not_implemented(only_if=LINUX)
-    @skipif(OPENBSD or NETBSD, reason="not reliable on OPENBSD & NETBSD")
     def test_num_ctx_switches(self):
         p = psutil.Process()
         before = sum(p.num_ctx_switches())
@@ -1643,7 +1666,6 @@ class TestProcessWait(PsutilTestCase):
         # supposed to fail with ESRCH.
         assert p._proc.wait() is None
 
-    @skipif(NETBSD, reason="fails on NETBSD")
     def test_wait_stopped(self):
         p = self.spawn_psproc()
         if POSIX:
@@ -1874,7 +1896,6 @@ class TestPopen(PsutilTestCase):
     def tearDownClass(cls):
         reap_children()
 
-    @skipif(MACOS and GITHUB_ACTIONS, reason="hangs on OSX + CI")
     def test_misc(self):
         # XXX this test causes a ResourceWarning because
         # psutil.__subproc instance doesn't get properly freed.
@@ -1882,7 +1903,10 @@ class TestPopen(PsutilTestCase):
         cmd = [
             PYTHON_EXE,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)];",
+            (
+                "print('ready', flush=True);"
+                "import time; [time.sleep(0.1) for x in range(100)];"
+            ),
         ]
         with psutil.Popen(
             cmd,
@@ -1896,20 +1920,28 @@ class TestPopen(PsutilTestCase):
             assert dir(proc)
             with pytest.raises(AttributeError):
                 proc.foo  # noqa: B018
+
+            assert proc.stdout.readline().strip() == b"ready"
             proc.terminate()
-        expected = -signal.SIGTERM if POSIX else signal.SIGTERM
-        ret = proc.wait(5)
-        if ret != expected:
-            # Seen once on NetBSD: SIGTERM had no effect and the child
-            # ran to completion. Leave some evidence behind.
-            masked = (
-                signal.pthread_sigmask(signal.SIG_BLOCK, []) if POSIX else ""
-            )
-            return pytest.fail(
-                f"wait() returned {ret} instead of {expected};"
-                f" blocked signals in this process: {masked};"
-                f" child stderr: {proc.stderr.read()}"
-            )
+
+            expected = -signal.SIGTERM if POSIX else signal.SIGTERM
+            # Wait longer than the child sleeps (10 secs). If SIGTERM
+            # gets lost (seen on NetBSD) we want the child to run to
+            # completion, so that wait() returns and we can print the
+            # evidence below, instead of just timing out.
+            status = ""
+            try:
+                ret = proc.wait(20)
+            except psutil.TimeoutExpired:
+                ret = "<timeout>"
+                with contextlib.suppress(psutil.Error):
+                    status = f" child status: {proc.status()};"
+            if ret != expected:
+                return pytest.fail(
+                    f"wait() returned {ret} instead of {expected};"
+                    f"{status}"
+                    f" child stderr: {proc.stderr.read()}"
+                )
 
     def test_ctx_manager(self):
         with psutil.Popen(

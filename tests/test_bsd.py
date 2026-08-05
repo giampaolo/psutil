@@ -93,8 +93,10 @@ class TestSystemAPIs(PsutilTestCase):
         syst = sysctl("hw.ncpu")
         assert psutil.cpu_count(logical=True) == syst
 
+    # On NetBSD total is UVM's managed pages, which is less than
+    # physical RAM. NetBSDTestCase.test_vmem_total covers it instead.
     @skipif(not shutil.which("sysctl"), reason="sysctl cmd not available")
-    @skipif(NETBSD, reason="skipped on NETBSD")  # we check /proc/meminfo
+    @skipif(NETBSD, reason="hw.physmem is not what psutil reports")
     def test_virtual_memory_total(self):
         num = sysctl('hw.physmem')
         assert num == psutil.virtual_memory().total
@@ -132,6 +134,11 @@ class TestProcessAPIs(PsutilTestCase):
             "%a %b %e %H:%M:%S %Y", time.localtime(start_psutil)
         )
         assert start_ps == start_psutil
+
+    def test_environ_zombie(self):
+        _parent, zombie = self.spawn_zombie()
+        with pytest.raises(psutil.ZombieProcess):
+            zombie.environ()
 
 
 @skipif(not BSD, reason="BSD only")
@@ -620,6 +627,10 @@ class NetBSDTestCase(PsutilTestCase):
         raise ValueError(f"can't find {look_for!r} in vmstat -s output")
 
     # --- virtual mem
+
+    def test_vmem_total(self):
+        num = self.parse_vmstat("pages managed")
+        assert num * PAGESIZE == psutil.virtual_memory().total
 
     @retry_on_failure
     def test_vmem_buffers(self):

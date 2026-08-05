@@ -27,7 +27,11 @@ open_address_space(pid_t pid, const char *procfs_path) {
     char proc_path[PATH_MAX];
 
     str_format(proc_path, PATH_MAX, "%s/%i/as", procfs_path, pid);
+    // Reading another process's address space may need to page it
+    // back in from swap.
+    Py_BEGIN_ALLOW_THREADS
     fd = open(proc_path, O_RDONLY);
+    Py_END_ALLOW_THREADS
     if (fd < 0)
         psutil_oserror();
 
@@ -44,7 +48,9 @@ read_offt(int fd, off_t offset, char *buf, size_t buf_size) {
     int r;
 
     while (to_read) {
+        Py_BEGIN_ALLOW_THREADS
         r = pread(fd, buf + stored, to_read, offset + stored);
+        Py_END_ALLOW_THREADS
         if (r < 0)
             goto error;
         else if (r == 0)
@@ -70,18 +76,24 @@ read_cstring_offt(int fd, off_t offset) {
     int r;
     int i = 0;
     off_t end = offset;
+    off_t off;
     size_t len;
     char buf[STRING_SEARCH_BUF_SIZE];
     char *result = NULL;
 
-    if (lseek(fd, offset, SEEK_SET) == (off_t)-1) {
+    Py_BEGIN_ALLOW_THREADS
+    off = lseek(fd, offset, SEEK_SET);
+    Py_END_ALLOW_THREADS
+    if (off == (off_t)-1) {
         psutil_oserror();
         goto error;
     }
 
     // Search end of string
     for (;;) {
+        Py_BEGIN_ALLOW_THREADS
         r = read(fd, buf, sizeof(buf));
+        Py_END_ALLOW_THREADS
         if (r == -1) {
             psutil_oserror();
             goto error;

@@ -91,8 +91,7 @@ extern int PSUTIL_TESTING;
     #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
         #define _Py_PARSE_PID "L"
     #else
-        #error "_Py_PARSE_PID: sizeof(pid_t) is neither sizeof(int), "
-               "sizeof(long) or sizeof(long long)"
+        #error "_Py_PARSE_PID: sizeof(pid_t) is not int, long or long long"
     #endif
 #endif
 
@@ -103,8 +102,7 @@ extern int PSUTIL_TESTING;
     #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
         #define PyLong_FromPid PyLong_FromLongLong
     #else
-        #error "PyLong_FromPid: sizeof(pid_t) is neither sizeof(int), "
-               "sizeof(long) or sizeof(long long)"
+        #error "PyLong_FromPid: sizeof(pid_t) is not int, long or long long"
     #endif
 #endif
 // clang-format on
@@ -113,17 +111,16 @@ extern int PSUTIL_TESTING;
 // --- Internal utils
 // ====================================================================
 
-// Print a debug message to stderr, including where it originated from
-// within the C code (file path + lineno).
-#define psutil_debug(...)                                              \
-    do {                                                               \
-        if (!PSUTIL_DEBUG)                                             \
-            break;                                                     \
-        fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
-        fprintf(stderr, __VA_ARGS__);                                  \
-        fprintf(stderr, "\n");                                         \
+void _psutil_debug_impl(const char *file, int line, const char *fmt, ...);
+// The check avoids evaluating the args when debug mode is off.
+#define psutil_debug(...)                                        \
+    do {                                                         \
+        if (PSUTIL_DEBUG)                                        \
+            _psutil_debug_impl(__FILE__, __LINE__, __VA_ARGS__); \
     } while (0)
 
+void _psutil_warn_impl(const char *file, int line, const char *fmt, ...);
+#define psutil_warn(...) _psutil_warn_impl(__FILE__, __LINE__, __VA_ARGS__)
 
 PyObject *psutil_oserror(void);
 PyObject *psutil_oserror_ad(const char *msg);
@@ -135,6 +132,19 @@ int str_append(char *dst, size_t dst_size, const char *src);
 int str_copy(char *dst, size_t dst_size, const char *src);
 int str_format(char *buf, size_t size, const char *fmt, ...);
 
+// The (af_filter, type_filter) args that the Python layer passes to
+// net_connections().
+typedef struct {
+    int v4;
+    int v6;
+    int unix_;  // can't be "unix": gcc predefines it as a macro
+    int tcp;
+    int udp;
+} psutil_conn_filters;
+
+int psutil_parse_conn_filters(
+    PyObject *py_af_filter, PyObject *py_type_filter, psutil_conn_filters *out
+);
 int pydict_add(PyObject *dict, const char *key, const char *fmt, ...);
 int pylist_append_fmt(PyObject *list, const char *fmt, ...);
 int pylist_append_obj(PyObject *list, PyObject *obj);

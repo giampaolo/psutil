@@ -74,10 +74,7 @@ from contextlib import closing
 import psutil
 from psutil import BSD
 from psutil import MACOS
-from psutil import NETBSD
-from psutil import OPENBSD
 from psutil import POSIX
-from psutil import WINDOWS
 
 from . import ASCII_FS
 from . import CI_TESTING
@@ -85,7 +82,6 @@ from . import HAS_NET_CONNECTIONS_UNIX
 from . import HAS_PROC_ENVIRON
 from . import HAS_PROC_MEMORY_MAPS
 from . import INVALID_UNICODE_SUFFIX
-from . import PYPY
 from . import TESTFN_PREFIX
 from . import UNICODE_SUFFIX
 from . import PsutilTestCase
@@ -216,8 +212,6 @@ class TestFSAPIs(BaseUnicodeTest):
         if self.expect_exact_path_match():
             assert cwd == dname
 
-    @skipif(PYPY and WINDOWS, reason="fails on PYPY + WINDOWS")
-    @skipif(NETBSD or OPENBSD, reason="broken on NETBSD or OPENBSD")
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
@@ -284,7 +278,6 @@ class TestFSAPIs(BaseUnicodeTest):
                 assert isinstance(path, str)
 
 
-@skipif(CI_TESTING, reason="unreliable on CI")
 class TestFSAPIsWithInvalidPath(TestFSAPIs):
     """Test FS APIs with a funky, invalid path name."""
 
@@ -305,7 +298,6 @@ class TestNonFSAPIS(BaseUnicodeTest):
     funky_suffix = UNICODE_SUFFIX
 
     @skipif(not HAS_PROC_ENVIRON, reason="not supported")
-    @skipif(PYPY and WINDOWS, reason="segfaults on PYPY + WINDOWS")
     def test_proc_environ(self):
         # Note: differently from others, this test does not deal
         # with fs paths.

@@ -74,7 +74,8 @@ __all__ = [
     "HAS_PROC_MEMORY_FOOTPRINT", "HAS_PROC_MEMORY_MAPS",
     "HAS_PROC_CPU_NUM", "HAS_PROC_RLIMIT", "HAS_SENSORS_BATTERY",
     "HAS_BATTERY", "HAS_SENSORS_FANS", "HAS_SENSORS_TEMPERATURES",
-    "HAS_NET_CONNECTIONS_UNIX", "MACOS_11PLUS", "MACOS_12PLUS", "COVERAGE",
+    "HAS_NET_CONNECTIONS_UNIX", "HAS_PROC_OPEN_FILES_PATH",
+    "MACOS_11PLUS", "MACOS_12PLUS", "COVERAGE",
     "AARCH64", "PYTEST_PARALLEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_subproc', 'spawn_zombie',
@@ -201,6 +202,7 @@ HAS_PROC_MEMORY_FOOTPRINT = hasattr(psutil.Process, "memory_footprint")
 HAS_PROC_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_PROC_RLIMIT = hasattr(psutil.Process, "rlimit")
 HAS_PROC_THREADS = hasattr(psutil.Process, "threads")
+HAS_PROC_OPEN_FILES_PATH = not (NETBSD or OPENBSD)
 
 SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 
@@ -231,6 +233,22 @@ def _get_py_exe():
             return exe
 
     env = os.environ.copy()
+
+    # Subprocesses (scripts, pyrun(), ...) get sys.path[0] set to the
+    # script's directory, so by default they import whatever psutil is
+    # installed instead of the one we're testing. Point them at ours.
+    # Derived from psutil.__file__ and not from ROOT_DIR because when
+    # testing wheels the source tree next to us has no C extension.
+    psutil_path = str(pathlib.Path(psutil.__file__).resolve().parent.parent)
+    env["PYTHONPATH"] = os.pathsep.join(
+        filter(None, [psutil_path, env.get("PYTHONPATH")])
+    )
+
+    if PYPY and POSIX:
+        libdir = os.path.dirname(os.path.realpath(sys.executable))
+        env["LD_LIBRARY_PATH"] = os.pathsep.join(
+            filter(None, [libdir, env.get("LD_LIBRARY_PATH")])
+        )
 
     # On Windows virtual environments use a venv launcher startup
     # process. This does not play well when counting spawned processes,
@@ -612,7 +630,9 @@ def filter_alien_children(procs):
         return procs
     names = {"wsl.exe", "conhost.exe"}
     aliens = {
-        x.pid for x in psutil.process_iter() if x.name().lower() in names
+        x.pid
+        for x in psutil.process_iter(["name"])
+        if (x.name() or "").lower() in names
     }
     return [x for x in procs if x.pid not in aliens]
 
@@ -1525,6 +1545,7 @@ def tcp_socketpair(family, addr=("", 0)):
     Return a (server, client) tuple.
     """
     with socket.create_server(addr, family=family, backlog=5) as ll:
+        ll.settimeout(GLOBAL_TIMEOUT)
         addr = ll.getsockname()
         c = socket.socket(family, SOCK_STREAM)
         try:

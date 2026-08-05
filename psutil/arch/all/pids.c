@@ -15,7 +15,9 @@
 PyObject *
 psutil_check_pid_range(PyObject *self, PyObject *args) {
 #ifdef PSUTIL_WINDOWS
-    DWORD pid;
+    // Not DWORD: it's unsigned, which would make the < 0 check below
+    // always false. _Py_PARSE_PID is "i" on Windows anyway.
+    int pid;
 #else
     pid_t pid;
 #endif

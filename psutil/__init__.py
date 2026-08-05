@@ -59,6 +59,7 @@ from ._common import TimeoutExpired
 from ._common import ZombieProcess
 from ._common import debug
 from ._common import memoize_when_activated
+from ._common import warn
 from ._common import wrap_numbers as _wrap_numbers
 from ._enums import BatteryTime
 from ._enums import ConnectionStatus
@@ -2570,7 +2571,7 @@ def net_if_addrs() -> dict[str, list[snicaddr]]:
             try:
                 broadcast = _common.broadcast_addr(nt)
             except Exception as err:  # noqa: BLE001
-                debug(err)
+                warn(f"broadcast_addr() failed: {err!r}")
             else:
                 if broadcast is not None:
                     nt = nt._replace(broadcast=broadcast)

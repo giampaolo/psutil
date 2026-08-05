@@ -21,6 +21,7 @@ from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
+from ._common import warn
 from ._enums import BatteryTime
 from ._enums import ConnectionStatus
 from ._enums import NicDuplex
@@ -247,7 +248,7 @@ try:
     INIT_BOOT_TIME = boot_time()
 except Exception as err:  # noqa: BLE001
     # Don't want to crash at import time.
-    debug(f"ignoring exception on import: {err!r}")
+    warn(f"boot_time() failed on import: {err!r}")
     INIT_BOOT_TIME = 0
 
 

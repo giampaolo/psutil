@@ -23,7 +23,6 @@ from ._common import TimeoutExpired
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import debug
-from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
@@ -694,18 +693,15 @@ class Process:
     @wrap_exceptions
     @retry_error_partial_copy
     def cmdline(self):
-        if _psutil.WINVER >= _psutil.WINDOWS_8_1:
-            # PEB method detects cmdline changes but requires more
-            # privileges: https://github.com/giampaolo/psutil/pull/1398
-            try:
-                return _psutil.proc_cmdline(self.pid, use_peb=True)
-            except OSError as err:
-                if is_permission_err(err):
-                    return _psutil.proc_cmdline(self.pid, use_peb=False)
-                else:
-                    raise
-        else:
+        # PEB method detects cmdline changes but requires more
+        # privileges: https://github.com/giampaolo/psutil/pull/1398
+        try:
             return _psutil.proc_cmdline(self.pid, use_peb=True)
+        except OSError as err:
+            if is_permission_err(err):
+                return _psutil.proc_cmdline(self.pid, use_peb=False)
+            else:
+                raise
 
     @wrap_exceptions
     @retry_error_partial_copy
@@ -949,17 +945,16 @@ class Process:
     def open_files(self):
         if self.pid in {0, 4}:
             return []
-        ret = set()
         # Filenames come in in native format like:
         # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
         # Convert the first part in the corresponding drive letter
-        # (e.g. "C:\") by using Windows's QueryDosDevice()
+        # (e.g. "C:\") by using Windows's QueryDosDevice(). Directories
+        # are already filtered out by the C extension.
         raw_file_names = _psutil.proc_open_files(self.pid)
-        for file in raw_file_names:
-            file = convert_dos_path(file)
-            if isfile_strict(file):
-                ntuple = ntp.popenfile(file, -1)
-                ret.add(ntuple)
+        ret = {
+            ntp.popenfile(convert_dos_path(file), -1)
+            for file in raw_file_names
+        }
         return list(ret)
 
     @wrap_exceptions

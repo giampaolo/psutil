@@ -5,148 +5,20 @@
 # found in the LICENSE file.
 
 """Bot triggered by Github Actions every time a new issue, PR or comment
-is created. Assign labels, provide replies, closes issues, etc. depending
-on the situation.
+is created. Replies to common mistakes and closes what it can answer on
+its own. Labelling is .github/workflows/triage_labels.py's job.
 """
 
 import functools
 import json
 import os
 import pathlib
-import re
 from pprint import pprint as pp
 
 from github import Github
 
 ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
-SCRIPTS_DIR = ROOT_DIR / 'scripts'
 MAINTAINERS = {"giampaolo"}
-
-# fmt: off
-LABELS_MAP = {
-    # platforms
-    "linux": [
-        "linux", "ubuntu", "redhat", "mint", "centos", "red hat", "archlinux",
-        "debian", "alpine", "gentoo", "fedora", "slackware", "suse", "RHEL",
-        "opensuse", "manylinux", "apt ", "apt-", "rpm", "yum", "kali",
-        "/sys/class", "/proc/net", "/proc/disk", "/proc/smaps",
-        "/proc/vmstat",
-    ],
-    "windows": [
-        "windows", "win32", "WinError", "WindowsError", "win10", "win7",
-        "win ", "mingw", "msys", "studio", "microsoft",
-        "CloseHandle", "GetLastError", "NtQuery", "DLL", "MSVC", "TCHAR",
-        "WCHAR", ".bat", "OpenProcess", "TerminateProcess",
-        "windows error", "NtWow64", "NTSTATUS", "Visual Studio",
-    ],
-    "macos": [
-        "macos", "mac ", "osx", "os x", "mojave", "sierra", "capitan",
-        "yosemite", "catalina", "mojave", "big sur", "xcode", "darwin",
-        "dylib", "m1",
-    ],
-    "aix": ["aix"],
-    "cygwin": ["cygwin"],
-    "freebsd": ["freebsd"],
-    "netbsd": ["netbsd"],
-    "openbsd": ["openbsd"],
-    "sunos": ["sunos", "solaris"],
-    "wsl": ["wsl"],
-    "unix": [
-        "psposix", "waitpid", "statvfs", "/dev/tty",
-        "/dev/pts", "posix",
-    ],
-    "pypy": ["pypy"],
-    "docker": ["docker", "docker-compose"],
-    "vm": [
-        "docker", "docker-compose", "vmware", "lxc", "hyperv", "virtualpc",
-        "virtualbox", "bhyve", "openvz", "lxc", "xen", "kvm", "qemu", "heroku",
-    ],
-    # types
-    "enhancement": ["enhancement"],
-    "memleak": ["memory leak", "leaks memory", "memleak", "mem leak"],
-    "api": ["idea", "proposal", "api", "feature"],
-    "performance": ["performance", "speedup", "speed up", "slow", "fast"],
-    "wheels": ["wheel", "wheels"],
-    "scripts": [
-        "example script", "examples script", "example dir", "scripts/",
-    ],
-    # bug
-    "bug": [
-        "fail", "can't execute", "can't install", "cannot execute",
-        "cannot install", "install error", "crash", "critical",
-    ],
-    # doc
-    "doc": [
-        "doc ", "document ", "documentation", "readthedocs", "pythonhosted",
-        "HISTORY", "README", "dev guide", "devguide", "sphinx", "docfix",
-        "index.rst",
-    ],
-    # tests
-    "tests": [
-        " test ", "tests", "travis", "coverage", "cirrus",
-        "continuous integration", "unittest", "pytest", "unit test",
-    ],
-    # critical errors
-    "critical": [
-        "WinError", "WindowsError", "RuntimeError", "ZeroDivisionError",
-        "SystemError", "MemoryError", "core dump", "segfault",
-        "segmentation fault",
-    ],
-}
-
-OS_LABELS = [
-    "linux", "windows", "macos", "freebsd", "openbsd", "netbsd", "openbsd",
-    "bsd", "sunos", "unix", "wsl", "aix", "cygwin",
-]
-# fmt: on
-
-LABELS_MAP['scripts'].extend(
-    [x for x in os.listdir(SCRIPTS_DIR) if x.endswith('.py')]
-)
-
-ILLOGICAL_PAIRS = [
-    ('bug', 'enhancement'),
-    ('doc', 'tests'),
-    ('scripts', 'doc'),
-    ('scripts', 'tests'),
-    ('bsd', 'freebsd'),
-    ('bsd', 'openbsd'),
-    ('bsd', 'netbsd'),
-]
-
-PATH_LABELS = {
-    "linux": (
-        "psutil/_pslinux.py",
-        "psutil/_psutil_linux.c",
-        "psutil/arch/linux/",
-    ),
-    "windows": (
-        "psutil/_pswindows.py",
-        "psutil/_psutil_windows.c",
-        "psutil/arch/windows/",
-    ),
-    "macos": (
-        "psutil/_psosx.py",
-        "psutil/_psutil_osx.c",
-        "psutil/arch/osx/",
-    ),
-    "freebsd": ("psutil/arch/freebsd/",),
-    "openbsd": ("psutil/arch/openbsd/",),
-    "netbsd": ("psutil/arch/netbsd/",),
-    "sunos": (
-        "psutil/_pssunos.py",
-        "psutil/_psutil_sunos.c",
-        "psutil/arch/sunos/",
-    ),
-    "aix": (
-        "psutil/_psaix.py",
-        "psutil/_psutil_aix.c",
-        "psutil/arch/aix/",
-    ),
-    "doc": ("docs/",),
-    "tests": ("tests/",),
-    "scripts": ("scripts/",),
-}
 
 # --- replies
 
@@ -176,11 +48,6 @@ This is an auto-generated response.
 
 def is_pr(issue):
     return issue.pull_request is not None
-
-
-def has_label(issue, label):
-    assigned = [x.name for x in issue.labels]
-    return label in assigned
 
 
 def get_repo():
@@ -235,98 +102,6 @@ def log(msg):
         print(f">>> {msg} <<<", flush=True)
 
 
-def add_label(issue, label):
-    def should_add(issue, label):
-        if has_label(issue, label):
-            log(f"already has label {label!r}")
-            return False
-
-        for left, right in ILLOGICAL_PAIRS:
-            if label == left and has_label(issue, right):
-                log(f"already has label f{label}")
-                return False
-
-        return not has_label(issue, label)
-
-    if not should_add(issue, label):
-        log(f"should not add label {label!r}")
-        return
-
-    log(f"add label {label!r}")
-    issue.add_to_labels(label)
-
-
-def _guess_labels_from_text(text):
-    assert isinstance(text, str), text
-    for label, keywords in LABELS_MAP.items():
-        for keyword in keywords:
-            if keyword.lower() in text.lower():
-                yield (label, keyword)
-
-
-def add_labels_from_text(issue, text):
-    assert isinstance(text, str), text
-    for label, keyword in _guess_labels_from_text(text):
-        add_label(issue, label)
-
-
-def add_labels_from_new_body(issue, text):
-    assert isinstance(text, str), text
-    log("start searching for template lines in new issue/PR body")
-    # add os label
-    r = re.search(r"\* OS:.*?\n", text)
-    log("search for 'OS: ...' line")
-    if r:
-        log("found")
-        add_labels_from_text(issue, r.group(0))
-    else:
-        log("not found")
-
-    # add bug/enhancement label
-    log("search for 'Bug fix: y/n' line")
-    r = re.search(r"\* Bug fix:.*?\n", text)
-    if (
-        is_pr(issue)
-        and r is not None
-        and not has_label(issue, "bug")
-        and not has_label(issue, "enhancement")
-    ):
-        log("found")
-        s = r.group(0).lower()
-        if 'yes' in s:
-            add_label(issue, 'bug')
-        else:
-            add_label(issue, 'enhancement')
-    else:
-        log("not found")
-
-    # add type labels
-    log("search for 'Type: ...' line")
-    r = re.search(r"\* Type:.*?\n", text)
-    if r:
-        log("found")
-        s = r.group(0).lower()
-        if 'doc' in s:
-            add_label(issue, 'doc')
-        if 'performance' in s:
-            add_label(issue, 'performance')
-        if 'scripts' in s:
-            add_label(issue, 'scripts')
-        if 'tests' in s:
-            add_label(issue, 'tests')
-        if 'wheels' in s:
-            add_label(issue, 'wheels')
-        if 'new-api' in s:
-            add_label(issue, 'new-api')
-        if 'new-platform' in s:
-            add_label(issue, 'new-platform')
-    else:
-        log("not found")
-
-
-# --- events
-
-
 def on_new_issue(issue):
     def has_text(text):
         return text in issue.title.lower() or (
@@ -360,16 +135,6 @@ def on_new_pr(issue):
     pr = get_repo().get_pull(issue.number)
     files = [x.filename for x in pr.get_files()]
 
-    # Label by changed file paths (title/body keywords often miss). For
-    # OS labels only fill in if text guessing (which runs first) found
-    # none, so an explicit [OS] tag wins over a PR touching many OSes.
-    has_os = any(x.name in OS_LABELS for x in issue.get_labels())
-    for label, prefixes in PATH_LABELS.items():
-        if label in OS_LABELS and has_os:
-            continue
-        if any(f.startswith(prefixes) for f in files):
-            add_label(issue, label)
-
     # changelog.rst / credits.rst are maintainer-owned; ask to drop them.
     owned = ("docs/changelog.rst", "docs/credits.rst")
     if any(f in files for f in owned):
@@ -384,15 +149,9 @@ def main():
 
     if is_event_new_issue():
         log(f"created new issue {issue}")
-        add_labels_from_text(issue, issue.title)
-        if issue.body:
-            add_labels_from_new_body(issue, issue.body)
         on_new_issue(issue)
     elif is_event_new_pr():
         log(f"created new PR {issue}")
-        add_labels_from_text(issue, issue.title)
-        if issue.body:
-            add_labels_from_new_body(issue, issue.body)
         on_new_pr(issue)
     else:
         log("unhandled event")

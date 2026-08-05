@@ -76,19 +76,26 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
+    // This opens /dev/mem, /dev/kmem and reads the kernel symbol table
+    // off disk, so do it without the GIL.
+    Py_BEGIN_ALLOW_THREADS
     kd = kvm_openfiles(0, 0, 0, O_RDONLY, errbuf);
+    Py_END_ALLOW_THREADS
     if (!kd) {
         // Usually fails due to EPERM against /dev/mem. We retry with
         // KVM_NO_FILES which apparently has the same effect.
         // https://stackoverflow.com/questions/22369736/
         psutil_debug("kvm_openfiles(O_RDONLY) failed");
+        Py_BEGIN_ALLOW_THREADS
         kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
+        Py_END_ALLOW_THREADS
         if (!kd) {
             convert_kvm_err("kvm_openfiles()", errbuf);
             goto error;
         }
     }
 
+    Py_BEGIN_ALLOW_THREADS
     kp = kvm_getprocs(
         kd,
         KERN_PROC_PID | KERN_PROC_SHOW_THREADS | KERN_PROC_KTHREAD,
@@ -96,6 +103,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         sizeof(*kp),
         &nentries
     );
+    Py_END_ALLOW_THREADS
     if (!kp) {
         if (strstr(errbuf, "Permission denied") != NULL)
             psutil_oserror_ad("kvm_getprocs");
