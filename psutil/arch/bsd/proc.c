@@ -40,6 +40,7 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     long memdata;
     long memstack;
     long peak_rss;
+    long ttynr;
     int oncpu;
     int status;
     double create_time;
@@ -163,6 +164,13 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     status = KP(stat);
 #endif
 
+    // Controlling terminal, normalized to -1 when there's none.
+#ifdef PSUTIL_FREEBSD
+    ttynr = kp.ki_tdev == NODEV ? -1 : (long)kp.ki_tdev;
+#else
+    ttynr = kp.p_tdev == (uint32_t)NODEV ? -1 : (long)kp.p_tdev;
+#endif
+
     // clang-format off
     if (!pydict_add(dict, "ppid", _Py_PARSE_PID, KP(ppid))) goto error;
     if (!pydict_add(dict, "status", "i", status)) goto error;
@@ -172,8 +180,7 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "real_gid", "l", (long)KP(rgid))) goto error;
     if (!pydict_add(dict, "effective_gid", "l", (long)KP(groups)[0])) goto error;
     if (!pydict_add(dict, "saved_gid", "l", (long)KP(svgid))) goto error;
-    if (!pydict_add(dict, "ttynr", "l",
-                    KP(tdev) == NODEV ? -1L : (long)KP(tdev))) goto error;
+    if (!pydict_add(dict, "ttynr", "l", ttynr)) goto error;
     if (!pydict_add(dict, "create_time", "d", create_time)) goto error;
     if (!pydict_add(dict, "ctx_switches_vol", "l", (long)KP_RU(nvcsw))) goto error;
     if (!pydict_add(dict, "ctx_switches_unvol", "l", (long)KP_RU(nivcsw))) goto error;
