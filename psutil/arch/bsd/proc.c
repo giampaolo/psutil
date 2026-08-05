@@ -172,7 +172,8 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "real_gid", "l", (long)KP(rgid))) goto error;
     if (!pydict_add(dict, "effective_gid", "l", (long)KP(groups)[0])) goto error;
     if (!pydict_add(dict, "saved_gid", "l", (long)KP(svgid))) goto error;
-    if (!pydict_add(dict, "ttynr", "l", (long)KP(tdev))) goto error;
+    if (!pydict_add(dict, "ttynr", "l",
+                    KP(tdev) == NODEV ? -1L : (long)KP(tdev))) goto error;
     if (!pydict_add(dict, "create_time", "d", create_time)) goto error;
     if (!pydict_add(dict, "ctx_switches_vol", "l", (long)KP_RU(nvcsw))) goto error;
     if (!pydict_add(dict, "ctx_switches_unvol", "l", (long)KP_RU(nivcsw))) goto error;

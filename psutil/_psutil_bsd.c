@@ -87,7 +87,7 @@ static PyMethodDef mod_methods[] = {
 static int
 psutil_add_constants(PyObject *mod) {
     PSUTIL_ADD_INT(mod, "version", PSUTIL_VERSION);
-    PSUTIL_ADD_INT(mod, "NODEV", (long)NODEV);
+    PSUTIL_ADD_INT(mod, "NODEV", -1);
 
     // process status constants
 #ifdef PSUTIL_FREEBSD
