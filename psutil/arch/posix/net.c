@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 #ifdef PSUTIL_AIX
-#include "arch/aix/ifaddrs.h"
+#include "../../arch/aix/ifaddrs.h"
 #else
 #include <ifaddrs.h>
 #endif
