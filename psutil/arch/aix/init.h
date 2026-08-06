@@ -7,6 +7,18 @@
  */
 
 #include <Python.h>
+#include <sys/core.h>
+
+#define PROCINFO_INCR (256)
+#define PROCSIZE (sizeof(struct procentry64))
+#define FDSINFOSIZE (sizeof(struct fdsinfo64))
+#define KMEM "/dev/kmem"
+
+typedef u_longlong_t KA_T;
+
+struct procentry64 *psutil_read_process_table(
+    int *num  // out - number of processes read
+);
 
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_stats(PyObject *self, PyObject *args);
