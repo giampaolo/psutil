@@ -17,14 +17,6 @@
 
 typedef u_longlong_t KA_T;
 
-// psutil_kread() - read from kernel memory
-int psutil_kread(
-    int Kd,  // kernel memory file descriptor
-    KA_T addr,  // kernel memory address
-    char *buf,  // buffer to receive data
-    size_t len  // length to read
-);
-
 struct procentry64 *psutil_read_process_table(
     int *num  // out - number of processes read
 );

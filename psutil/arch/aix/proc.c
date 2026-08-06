@@ -83,6 +83,54 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
 }
 
 
+struct procentry64 *
+psutil_read_process_table(int *num) {
+    size_t msz;
+    pid32_t pid = 0;
+    struct procentry64 *processes = (struct procentry64 *)NULL;
+    struct procentry64 *p;
+    int Np = 0;  // number of processes allocated in 'processes'
+    int np = 0;  // number of processes read into 'processes'
+    int i;  // number of processes read in current iteration
+
+    msz = (size_t)(PROCSIZE * PROCINFO_INCR);
+    processes = (struct procentry64 *)malloc(msz);
+    if (!processes) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    Np = PROCINFO_INCR;
+    p = processes;
+    for (;;) {
+        Py_BEGIN_ALLOW_THREADS
+        i = getprocs64(
+            p, PROCSIZE, (struct fdsinfo64 *)NULL, 0, &pid, PROCINFO_INCR
+        );
+        Py_END_ALLOW_THREADS
+        if (i != PROCINFO_INCR)
+            break;
+        np += PROCINFO_INCR;
+        if (np >= Np) {
+            msz = (size_t)(PROCSIZE * (Np + PROCINFO_INCR));
+            processes = (struct procentry64 *)realloc((char *)processes, msz);
+            if (!processes) {
+                PyErr_NoMemory();
+                return NULL;
+            }
+            Np += PROCINFO_INCR;
+        }
+        p = (struct procentry64 *)((char *)processes + (np * PROCSIZE));
+    }
+
+    // add the number of processes read in the last iteration
+    if (i > 0)
+        np += i;
+
+    *num = np;
+    return processes;
+}
+
+
 // Return process ppid, rss, vms, ctime, nice, nthreads, status and tty
 // as a Python tuple.
 static PyObject *
