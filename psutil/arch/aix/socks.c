@@ -27,7 +27,6 @@
 
 #include "../../arch/all/init.h"
 #include "net_kernel_structs.h"
-#include "net_connections.h"
 #include "init.h"
 
 

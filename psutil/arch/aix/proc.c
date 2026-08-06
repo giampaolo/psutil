@@ -50,7 +50,6 @@
 
 #include "../../arch/all/init.h"
 #include "ifaddrs.h"
-#include "net_connections.h"
 #include "init.h"
 
 

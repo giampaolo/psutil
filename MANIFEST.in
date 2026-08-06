@@ -33,10 +33,9 @@ include psutil/arch/aix/ifaddrs.h
 include psutil/arch/aix/init.h
 include psutil/arch/aix/mem.c
 include psutil/arch/aix/net.c
-include psutil/arch/aix/net_connections.c
-include psutil/arch/aix/net_connections.h
 include psutil/arch/aix/net_kernel_structs.h
 include psutil/arch/aix/proc.c
+include psutil/arch/aix/socks.c
 include psutil/arch/aix/sys.c
 include psutil/arch/all/errors.c
 include psutil/arch/all/init.c
