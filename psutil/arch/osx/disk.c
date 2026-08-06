@@ -20,6 +20,8 @@
 
 #include "../../arch/all/init.h"
 
+#define MAX_DISK_NAME_SIZE 64
+
 
 PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
@@ -294,12 +296,11 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             goto error;
         }
 
-        const int kMaxDiskNameSize = 64;
-        char disk_name[kMaxDiskNameSize];
+        char disk_name[MAX_DISK_NAME_SIZE];
         if (!CFStringGetCString(
                 disk_name_ref,
                 disk_name,
-                kMaxDiskNameSize,
+                sizeof(disk_name),
                 CFStringGetSystemEncoding()
             ))
         {
