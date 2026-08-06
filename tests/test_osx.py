@@ -15,7 +15,6 @@ from psutil import _psutil
 
 from . import AARCH64
 from . import HAS_BATTERY
-from . import HAS_CPU_FREQ
 from . import TOLERANCE_DISK_USAGE
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
@@ -171,10 +170,9 @@ class TestCpuAPIs(MacosTestCase):
         num = sysctl("sysctl hw.physicalcpu")
         assert num == psutil.cpu_count(logical=False)
 
-    @skipif(
-        MACOS and AARCH64 and not HAS_CPU_FREQ,
-        reason="not available on MACOS + AARCH64",
-    )
+    # On Apple Silicon cpu_freq() reads IOKit, and there's no sysctl
+    # (or any other CLI tool) to compare it against.
+    @skipif(AARCH64, reason="no hw.cpufrequency sysctl on Apple Silicon")
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()
         assert freq.current * 1000 * 1000 == sysctl("sysctl hw.cpufrequency")
