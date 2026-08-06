@@ -52,12 +52,13 @@
 #include "ifaddrs.h"
 #include "net_connections.h"
 #include "common.h"
+#include "init.h"
 
 
 #define TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
 
-static PyObject *
+PyObject *
 psutil_boot_time(PyObject *self, PyObject *args) {
     float boot_time = 0.0;
     struct utmpx *ut;

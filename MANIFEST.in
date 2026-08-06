@@ -32,6 +32,7 @@ include psutil/arch/aix/cpu.c
 include psutil/arch/aix/disk.c
 include psutil/arch/aix/ifaddrs.c
 include psutil/arch/aix/ifaddrs.h
+include psutil/arch/aix/init.h
 include psutil/arch/aix/mem.c
 include psutil/arch/aix/net.c
 include psutil/arch/aix/net_connections.c

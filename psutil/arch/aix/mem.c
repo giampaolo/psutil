@@ -52,12 +52,13 @@
 #include "ifaddrs.h"
 #include "net_connections.h"
 #include "common.h"
+#include "init.h"
 
 
 #define TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
 
-static PyObject *
+PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     int rc;
     long pagesize = psutil_getpagesize();
@@ -82,7 +83,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 }
 
 
-static PyObject *
+PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
     int rc;
     long pagesize = psutil_getpagesize();

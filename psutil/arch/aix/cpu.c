@@ -52,12 +52,13 @@
 #include "ifaddrs.h"
 #include "net_connections.h"
 #include "common.h"
+#include "init.h"
 
 
 #define TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
 
-static PyObject *
+PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int ncpu, rc, i;
     long ticks;
@@ -121,7 +122,7 @@ error:
 }
 
 
-static PyObject *
+PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
     int ncpu, rc, i;
     // perfstat_cpu_total_t doesn't have invol/vol cswitch, only pswitch

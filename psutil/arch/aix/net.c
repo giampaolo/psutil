@@ -52,12 +52,13 @@
 #include "ifaddrs.h"
 #include "net_connections.h"
 #include "common.h"
+#include "init.h"
 
 
 #define TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
 
-static PyObject *
+PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {
     perfstat_netinterface_t *statp = NULL;
     int tot, i;
@@ -128,7 +129,7 @@ error:
 }
 
 
-static PyObject *
+PyObject *
 psutil_net_if_stats(PyObject *self, PyObject *args) {
     char *nic_name;
     int sock = 0;

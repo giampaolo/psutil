@@ -52,12 +52,13 @@
 #include "ifaddrs.h"
 #include "net_connections.h"
 #include "common.h"
+#include "init.h"
 
 
 #define TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
 
-static PyObject *
+PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file = NULL;
     struct mntent *mt = NULL;
@@ -112,7 +113,7 @@ error:
 }
 
 
-static PyObject *
+PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
     PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;
