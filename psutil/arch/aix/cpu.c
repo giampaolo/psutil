@@ -48,10 +48,10 @@
 #include <libperfstat.h>
 #include <unistd.h>
 
-#include "arch/all/init.h"
-#include "arch/aix/ifaddrs.h"
-#include "arch/aix/net_connections.h"
-#include "arch/aix/common.h"
+#include "../../arch/all/init.h"
+#include "ifaddrs.h"
+#include "net_connections.h"
+#include "common.h"
 
 
 #define TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
