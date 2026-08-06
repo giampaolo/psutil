@@ -77,7 +77,6 @@ from psutil import MACOS
 from psutil import POSIX
 
 from . import ASCII_FS
-from . import CI_TESTING
 from . import HAS_NET_CONNECTIONS_UNIX
 from . import HAS_PROC_ENVIRON
 from . import HAS_PROC_MEMORY_MAPS
@@ -120,6 +119,14 @@ def try_unicode(suffix):
         if sproc is not None:
             terminate(sproc)
         safe_rmpath(testfn)
+
+
+def find_sock(cons):
+    """The UNIX socket bound by the test, among the ones already open."""
+    for conn in cons:
+        if os.path.basename(conn.laddr).startswith(TESTFN_PREFIX):
+            return conn
+    raise ValueError("connection not found")
 
 
 # ===================================================================
@@ -231,22 +238,15 @@ class TestFSAPIs(BaseUnicodeTest):
         name = self.get_testfn(suffix=self.funky_suffix)
         sock = bind_unix_socket(name)
         with closing(sock):
-            conn = psutil.Process().net_connections('unix')[0]
+            cons = psutil.Process().net_connections('unix')
+            conn = find_sock(cons)
             assert isinstance(conn.laddr, str)
-            if not conn.laddr and MACOS and CI_TESTING:
-                return pytest.skip("unreliable on OSX")
             assert conn.laddr == name
 
     @skipif(not POSIX, reason="POSIX only")
     @skipif(not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets")
     @skip_on_access_denied
     def test_net_connections(self):
-        def find_sock(cons):
-            for conn in cons:
-                if os.path.basename(conn.laddr).startswith(TESTFN_PREFIX):
-                    return conn
-            raise ValueError("connection not found")
-
         name = self.get_testfn(suffix=self.funky_suffix)
         sock = bind_unix_socket(name)
         with closing(sock):
