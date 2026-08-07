@@ -365,14 +365,15 @@ def _check_conn_kind(kind):
 
 
 class _UidResolver:
-    """Maps uids to user names, optionally reusing answers for the duration of a scan.
+    """Maps uids to user names, optionally reusing answers for one scan.
 
-    pwd.getpwuid() goes through NSS, which on a host resolving users over LDAP costs a
-    fraction of a millisecond. A system has orders of magnitude fewer users than
-    processes, so resolving the same handful of uids once per process is pure waste.
+    pwd.getpwuid() goes through NSS, which on a host resolving users over
+    LDAP costs a fraction of a millisecond. A system has orders of
+    magnitude fewer users than processes, so resolving the same handful of
+    uids once per process is pure waste.
 
-    Reuse is off by default: a bare username() call must not hand back a name that was
-    only valid at some arbitrary point in the past.
+    Reuse is off by default: a bare username() call must not hand back a
+    name that was only valid at some arbitrary point in the past.
     """
 
     def __init__(self):
@@ -382,9 +383,10 @@ class _UidResolver:
     def reusing(self) -> Generator[None, None, None]:
         """Resolve each uid at most once inside this block.
 
-        Nesting keeps the outer block's cache. Concurrent use from several threads is
-        safe: the mapping does not depend on the caller, so the worst case is that one
-        scan resolves a uid another one had already looked up.
+        Nesting keeps the outer block's cache. Concurrent use from several
+        threads is safe: the mapping does not depend on the caller, so the
+        worst case is that one scan resolves a uid another one had already
+        looked up.
         """
         previous = self._cache
         self._cache = {} if previous is None else previous
@@ -394,10 +396,19 @@ class _UidResolver:
             self._cache = previous
 
     def resolve(self, uid: int) -> str:
+        """The name for *uid*, or its decimal form if nothing resolves it.
+
+        An unresolvable uid costs the same round trip as one that resolves,
+        so the fallback is cached as well: the processes left behind by a
+        deleted account all share a single uid.
+        """
         cache = self._cache
         if cache is not None and uid in cache:
             return cache[uid]
-        name = pwd.getpwuid(uid).pw_name  # KeyError: caller turns it into str(uid)
+        try:
+            name = pwd.getpwuid(uid).pw_name
+        except KeyError:
+            name = str(uid)
         if cache is not None:
             cache[uid] = name
         return name
@@ -956,12 +967,7 @@ class Process:
             uids = self.uids()
             if self._is_ad_value(uids):
                 return uids
-            real_uid = uids.real
-            try:
-                return _uid_resolver.resolve(real_uid)
-            except KeyError:
-                # the uid can't be resolved by the system
-                return str(real_uid)
+            return _uid_resolver.resolve(uids.real)
         else:
             return self._proc.username()
 

@@ -248,6 +248,31 @@ class TestProcessIter(PsutilTestCase):
         psutil.process_iter.cache_clear()
         assert not psutil._pmap
 
+    def _scan_usernames(self):
+        procs = psutil.process_iter(attrs=["uids", "username"], ad_value=None)
+        pairs = [(p._prefetch["uids"], p._prefetch["username"]) for p in procs]
+        uids = {u.real for u, _name in pairs if u is not None}
+        # one process per user would leave the callers nothing to prove
+        assert len(pairs) > len(uids)
+        return pairs, uids
+
+    @skipif(not POSIX, reason="POSIX only")
+    def test_username_resolves_each_uid_once(self):
+        real_getpwuid = psutil.pwd.getpwuid
+        with mock.patch("psutil.pwd.getpwuid", side_effect=real_getpwuid) as m:
+            _pairs, uids = self._scan_usernames()
+        assert m.call_count <= len(uids)
+
+    @skipif(not POSIX, reason="POSIX only")
+    def test_username_resolves_each_unknown_uid_once(self):
+        # an unresolvable uid costs the same lookup as one that resolves
+        with mock.patch("psutil.pwd.getpwuid", side_effect=KeyError) as m:
+            pairs, uids = self._scan_usernames()
+        assert m.call_count <= len(uids)
+        for proc_uids, name in pairs:
+            if proc_uids is not None:
+                assert name == str(proc_uids.real)
+
 
 class TestProcessAPIs(PsutilTestCase):
     def test_wait_procs(self):
