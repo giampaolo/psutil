@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Install python deps with uv, installing uv itself if missing. Falls back
+# Install Python deps with uv, installing uv itself if missing. Falls back
 # on pip where uv ships no binary for the platform (BSD, AIX, SunOS).
 # NOTE: this script MUST be kept compatible with the `sh` shell.
 
@@ -42,15 +42,18 @@ find_uv() {
 install_uv() {
     install_pip || return
     echo "installing uv"
-    # --only-binary: pickup the .whl, else fail
+    # --only-binary: pick up the .whl, else fail
     PIP_BREAK_SYSTEM_PACKAGES=1 "$PYTHON" -m pip install \
         --only-binary=:all: \
         --upgrade \
-        'uv>=0.5.8'
+        'uv>=0.8.8'
 }
 
 uv_install() {
     echo "installing $* via uv"
+    # Outside a venv, use the user base. pip automatically falls back there
+    # when the system Python is not writable; uv does not. --prefix is not
+    # exactly pip --user, but avoids requiring a venv or root.
     user_base=$("$PYTHON" -c \
         'import sys, site; print("" if sys.prefix != sys.base_prefix else site.getuserbase())')
     if [ -n "$user_base" ]; then
