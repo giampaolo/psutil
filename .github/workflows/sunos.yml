@@ -19,6 +19,7 @@ on:
       - "psutil/arch/posix/**"
       - "psutil/arch/sunos/**"
       - "pyproject.toml"
+      - "scripts/internal/install-pydeps.sh"
       - "scripts/internal/install-sysdeps.sh"
       - "setup.py"
   pull_request:
