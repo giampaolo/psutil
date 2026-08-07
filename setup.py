@@ -313,7 +313,11 @@ elif AIX:
 
     ext = Extension(
         'psutil._psutil',
-        sources=sources + glob.glob("psutil/arch/aix/*.c"),
+        sources=(
+            sources
+            + ["psutil/_psutil_aix.c"]
+            + glob.glob("psutil/arch/aix/*.c")
+        ),
         libraries=["perfstat"],
         define_macros=macros,
         **py_limited_api,
