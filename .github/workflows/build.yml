@@ -70,10 +70,7 @@ jobs:
           key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
           restore-keys: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-
 
-      # cibuildwheel finds uv on PATH. Linux gets it from the container
-      # image instead, so this only matters for macOS and Windows.
       - name: Install uv
-        if: runner.os != 'Linux'
         shell: bash
         run: PYTHON=python ./scripts/internal/install-pydeps.sh uv
 

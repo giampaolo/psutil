@@ -58,7 +58,7 @@ uv_install() {
         set -- --prefix "$user_base" "$@"
     fi
     $UV pip install \
-        --python "$(command -v "$PYTHON")" \
+        --python "$("$PYTHON" -c 'import sys; print(sys.executable)')" \
         --upgrade \
         "$@"
 }
