@@ -62,20 +62,24 @@ uv_install() {
         "$@"
 }
 
-if [ $# -eq 0 ]; then
-    echo "usage: $0 <pkg>" >&2
-    exit 1
-fi
+main() {
+    if [ $# -eq 0 ]; then
+        echo "usage: $0 <pkg>" >&2
+        exit 1
+    fi
 
-find_uv
-
-if [ -z "$UV" ]; then
-    install_uv || echo "$0: uv unavailable on this platform, using pip" >&2
     find_uv
-fi
 
-if [ -n "$UV" ]; then
-    uv_install "$@"
-else
-    pip_install "$@"
-fi
+    if [ -z "$UV" ]; then
+        install_uv || echo "$0: uv unavailable on this platform, using pip" >&2
+        find_uv
+    fi
+
+    if [ -n "$UV" ]; then
+        uv_install "$@"
+    else
+        pip_install "$@"
+    fi
+}
+
+main "$@"
