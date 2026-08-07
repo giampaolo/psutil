@@ -32,16 +32,15 @@ pip_install() {
 
 find_uv() {
     if command -v uv > /dev/null 2>&1; then
-        UV=uv
-    elif "$PYTHON" -m uv --version > /dev/null 2>&1; then
-        UV="$PYTHON -m uv"
+        UV=$(command -v uv)
     else
-        UV=
+        UV=$("$PYTHON" -c \
+            'from uv import find_uv_bin; print(find_uv_bin())' 2>/dev/null) || UV=
     fi
 }
 
 install_uv() {
-    install_pip
+    install_pip || return
     echo "installing uv"
     # --only-binary: pickup the .whl, else fail
     PIP_BREAK_SYSTEM_PACKAGES=1 "$PYTHON" -m pip install \
@@ -57,7 +56,7 @@ uv_install() {
     if [ -n "$user_base" ]; then
         set -- --prefix "$user_base" "$@"
     fi
-    $UV pip install \
+    "$UV" pip install \
         --python "$("$PYTHON" -c 'import sys; print(sys.executable)')" \
         --upgrade \
         "$@"
