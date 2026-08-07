@@ -144,9 +144,12 @@ class TestProcess(PsutilTestCase):
 
     def test_cpu_percent_numcpus_none(self):
         # See: https://github.com/giampaolo/psutil/issues/1087
-        with mock.patch('psutil.cpu_count', return_value=None) as m:
-            psutil.Process().cpu_percent()
-            assert m.called
+        # cpu_percent() must not depend on cpu_count(), which is allowed
+        # to return None.
+        with mock.patch('psutil.cpu_count', return_value=None):
+            p = psutil.Process()
+            p.cpu_percent()
+            assert isinstance(p.cpu_percent(), float)
 
     def test_cpu_times(self):
         times = psutil.Process().cpu_times()
