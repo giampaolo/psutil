@@ -54,8 +54,6 @@ jobs:
         with:
           python-version: 3.x
 
-      - uses: astral-sh/setup-uv@v9.0.0 # needed by install-pydeps.sh
-
       - name: Install dependencies
         run: |
           make install-pydeps-test
@@ -102,7 +100,6 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: 3.x
-      - uses: astral-sh/setup-uv@v9.0.0
       - name: Install dependencies
         run: |
           make install-pydeps-test
