@@ -35,7 +35,6 @@
 #include "arch/aix/init.h"
 
 
-// define the psutil C module methods and initialize the module.
 static PyMethodDef mod_methods[] = {
     // --- process-related functions
     {"proc_args", psutil_proc_args, METH_VARARGS},
@@ -73,10 +72,6 @@ static PyMethodDef mod_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 static int
 psutil_add_constants(PyObject *mod) {
@@ -117,11 +112,8 @@ psutil_exec(PyObject *mod) {
     return 0;
 }
 
+
 PyMODINIT_FUNC
 PyInit__psutil(void) {
     return psutil_mod_init("_psutil", mod_methods, psutil_exec);
 }
-
-#ifdef __cplusplus
-}
-#endif
