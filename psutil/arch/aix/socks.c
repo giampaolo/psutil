@@ -27,8 +27,40 @@
 
 #include "../../arch/all/init.h"
 #include "net_kernel_structs.h"
-#include "net_connections.h"
-#include "common.h"
+#include "init.h"
+
+
+// Read from kernel memory.
+static int
+psutil_kread(
+    int Kd,  // kernel memory file descriptor
+    KA_T addr,  // kernel memory address
+    char *buf,  // buffer to receive data
+    size_t len  // length to read
+) {
+    int br;
+    off64_t off;
+
+    Py_BEGIN_ALLOW_THREADS
+    off = lseek64(Kd, (off64_t)addr, L_SET);
+    Py_END_ALLOW_THREADS
+    if (off == (off64_t)-1) {
+        psutil_oserror();
+        return 1;
+    }
+    Py_BEGIN_ALLOW_THREADS
+    br = read(Kd, buf, len);
+    Py_END_ALLOW_THREADS
+    if (br == -1) {
+        psutil_oserror();
+        return 1;
+    }
+    if (br != len) {
+        psutil_runtime_error("size mismatch when reading kernel memory fd");
+        return 1;
+    }
+    return 0;
+}
 
 
 #define NO_SOCKET (PyObject *)(-1)
