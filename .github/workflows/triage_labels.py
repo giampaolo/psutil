@@ -370,24 +370,6 @@ AXIS_LABELS = {
 # rule it out, so we add those and never take them away.
 REMOVABLE_AXES = ("type", "platform", "component")
 
-# bsd means "the family, none of them named", so it can't sit beside
-# one that is. unix is the same idea a level up: it's for POSIX code
-# where no single OS fits.
-INCOMPATIBLE = (
-    ("bug", "enhancement"),
-    ("bsd", "freebsd"),
-    ("bsd", "openbsd"),
-    ("bsd", "netbsd"),
-    ("unix", "bsd"),
-    ("unix", "linux"),
-    ("unix", "macos"),
-    ("unix", "freebsd"),
-    ("unix", "openbsd"),
-    ("unix", "netbsd"),
-    ("unix", "sunos"),
-    ("unix", "aix"),
-)
-
 
 def enum_list(labels, description):
     return {
@@ -395,6 +377,30 @@ def enum_list(labels, description):
         "items": {"type": "string", "enum": labels},
         "description": description,
     }
+
+
+GENERAL_PLATFORMS = {
+    "bsd": {"freebsd", "openbsd", "netbsd"},
+    "unix": {
+        "aix",
+        "bsd",
+        "freebsd",
+        "linux",
+        "macos",
+        "netbsd",
+        "openbsd",
+        "sunos",
+    },
+}
+
+
+def drop_general_platforms(labels):
+    """Drop unix / bsd when the same answer also names an OS."""
+    out = set(labels)
+    for general, specific in GENERAL_PLATFORMS.items():
+        if out & specific:
+            out.discard(general)
+    return out
 
 
 def axis_values(decision, axis):
@@ -538,42 +544,6 @@ def remove_label(number, label):
     gh_request(f"/repos/{REPO}/issues/{number}/labels/{path}", method="DELETE")
 
 
-def axis_of(label):
-    for axis, labels in AXIS_LABELS.items():
-        if label in labels:
-            return axis
-    return None
-
-
-def resolve_conflicts(labels, decision, current=frozenset()):
-    """Drop the losing half of any impossible pair.
-
-    Gated on confidence, or it undoes stale_labels(): a medium
-    "enhancement" can't remove a hand-applied bug directly, but it
-    could sit beside it, win here, and take it off anyway.
-
-    A pair that already contradicted itself before we touched the
-    ticket is left alone.
-    """
-    out = set(labels)
-    judged = model_labels(decision)
-    for left, right in INCOMPATIBLE:
-        if not {left, right} <= out:
-            continue
-        axis = axis_of(left) or axis_of(right)
-        if axis and decision.get(f"{axis}_confidence") != "high":
-            # Whatever the ticket already carried wins.
-            held = {left, right} & set(current)
-            if len(held) == 1:
-                out -= {left, right} - held
-            continue
-        if left in judged and right not in judged:
-            out.discard(right)
-        elif right in judged and left not in judged:
-            out.discard(left)
-    return out
-
-
 def fresh_labels(decision):
     """The labels a decision is willing to stand behind.
 
@@ -587,7 +557,7 @@ def fresh_labels(decision):
         # leaving the item out of the changelog entirely.
         if axis == "type" or decision[f"{axis}_confidence"] != "low":
             out |= axis_values(decision, axis)
-    return out
+    return drop_general_platforms(out)
 
 
 def stale_labels(item, decision, from_bot=()):

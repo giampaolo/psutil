@@ -74,10 +74,14 @@ class TestStaleLabels:
         assert tl.stale_labels(item, decision) == set()
 
 
-class TestResolveConflicts:
-    def test_existing_label_wins_when_unsure(self):
-        decision = decide(type="enhancement", type_confidence="medium")
-        out = tl.resolve_conflicts(
-            {"bug", "enhancement"}, decision, current={"bug"}
-        )
-        assert out == {"bug"}
+class TestDropGeneralPlatforms:
+    def test_named_os_wins_over_the_general_one(self):
+        decision = decide(platform=["unix", "linux"])
+        assert tl.fresh_labels(decision) == {"bug", "linux"}
+
+        decision = decide(platform=["bsd", "freebsd"])
+        assert tl.fresh_labels(decision) == {"bug", "freebsd"}
+
+    def test_general_one_stays_when_nothing_names_an_os(self):
+        decision = decide(platform=["unix", "pypy"])
+        assert tl.fresh_labels(decision) == {"bug", "unix", "pypy"}
