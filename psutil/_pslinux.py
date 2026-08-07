@@ -1263,20 +1263,34 @@ def sensors_temperatures():
             # https://github.com/giampaolo/psutil/issues/1323
             continue
 
-        high = bcat(base + '_max', fallback=None)
-        critical = bcat(base + '_crit', fallback=None)
-        label = cat(base + '_label', fallback='').strip()
+        raw_high = bcat(base + '_max', fallback=None)
+        raw_crit = bcat(base + '_crit', fallback=None)
 
-        if high is not None:
+        def _is_zero_kelvin(val):
             try:
-                high = float(high) / 1000.0
-            except ValueError:
+                return int(val) == -273150
+            except (ValueError, TypeError):
+                return False
+
+        label = cat(base + '_label', fallback='').strip()
+        high = None
+        if raw_high is not None:
+            if _is_zero_kelvin(raw_high):
                 high = None
-        if critical is not None:
-            try:
-                critical = float(critical) / 1000.0
-            except ValueError:
+            else:
+                try:
+                    high = float(raw_high) / 1000.0
+                except (ValueError, TypeError):
+                    pass
+        critical = None
+        if raw_crit is not None:
+            if _is_zero_kelvin(raw_crit):
                 critical = None
+            else:
+                try:
+                    critical = float(raw_crit) / 1000.0
+                except (ValueError, TypeError):
+                    pass
 
         ret[unit_name].append((label, current, high, critical))
 
@@ -1314,16 +1328,28 @@ def sensors_temperatures():
                         os.path.join(base, trip_point + "_temp"), fallback=None
                     )
 
+                def _is_zero_kelvin(val):
+                    try:
+                        return int(val) == -273150
+                    except (ValueError, TypeError):
+                        return False
+
                 if high is not None:
-                    try:
-                        high = float(high) / 1000.0
-                    except ValueError:
+                    if _is_zero_kelvin(high):
                         high = None
+                    else:
+                        try:
+                            high = float(high) / 1000.0
+                        except (ValueError, TypeError):
+                            high = None
                 if critical is not None:
-                    try:
-                        critical = float(critical) / 1000.0
-                    except ValueError:
+                    if _is_zero_kelvin(critical):
                         critical = None
+                    else:
+                        try:
+                            critical = float(critical) / 1000.0
+                        except (ValueError, TypeError):
+                            critical = None
 
             ret[unit_name].append(('', current, high, critical))
 
