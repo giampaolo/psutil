@@ -7,29 +7,16 @@
  */
 
 #include <Python.h>
+#include <fcntl.h>
+#include <procinfo.h>
+#include <stdlib.h>
 #include <sys/limits.h>
 #include <sys/proc.h>
 #include <sys/procfs.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/sysinfo.h>
-#include <sys/thread.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <utmp.h>
-#include <utmpx.h>
-#include <mntent.h>
-#include <sys/ioctl.h>
-#include <sys/tihdr.h>
-#include <stropts.h>
-#include <netinet/tcp_fsm.h>
-#include <arpa/inet.h>
-#include <net/if.h>
 #include <libperfstat.h>
 #include <unistd.h>
 
 #include "../../arch/all/init.h"
-#include "ifaddrs.h"
 #include "init.h"
 
 
@@ -468,7 +455,3 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     free(processes);
     return psutil_oserror_nsp("psutil_read_process_table (no PID found)");
 }
-
-
-#if defined(CURR_VERSION_NETINTERFACE) && CURR_VERSION_NETINTERFACE >= 3
-#endif

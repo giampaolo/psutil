@@ -17,6 +17,7 @@
 #include "init.h"
 
 
+#if defined(CURR_VERSION_NETINTERFACE) && CURR_VERSION_NETINTERFACE >= 3
 PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {
     perfstat_netinterface_t *statp = NULL;
@@ -86,6 +87,7 @@ error:
     Py_DECREF(py_retdict);
     return NULL;
 }
+#endif  // CURR_VERSION_NETINTERFACE
 
 
 PyObject *
