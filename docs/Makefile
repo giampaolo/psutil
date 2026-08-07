@@ -14,11 +14,6 @@ OUTDIR = $(BUILDDIR)/html
 # Builder + source + output shared by html and the autoreload targets.
 DIRHTML = -b dirhtml -d $(DOCTREES) . $(OUTDIR)
 
-# --- install
-
-install-pydeps:  ## Install python deps necessary to build the doc.
-	PYTHON=$(PYTHON) ../scripts/internal/install-pydeps.sh -r requirements.txt
-
 # --- sphinx
 
 clean:  ## Remove all build files

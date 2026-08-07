@@ -89,6 +89,9 @@ install-pydeps-test:  ## Install python deps necessary to run unit tests.
 install-pydeps-lint:  ## Install python deps necessary to run linters.
 	$(INSTALL_PYDEPS) --group lint
 
+install-pydeps-docs:  ## Install python deps necessary to build the doc.
+	$(INSTALL_PYDEPS) --group docs
+
 install-pydeps-dev:  ## Install python deps meant for local development.
 	$(INSTALL_PYDEPS) --group dev
 

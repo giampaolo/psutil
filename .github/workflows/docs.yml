@@ -56,9 +56,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          make install-pydeps-test
+          make install-pydeps-docs
           make install-pydeps-lint
-          make -C docs install-pydeps
+          make install-pydeps-test
           pip install .                   # codeautolink imports psutil
 
       - name: Lint rst
@@ -103,7 +103,7 @@ jobs:
       - name: Install dependencies
         run: |
           make install-pydeps-test
-          make -C docs install-pydeps
+          make install-pydeps-docs
 
       - name: Wait for the live site to serve this commit
         # deploy-pages reports "live" before the CDN edge catches up,

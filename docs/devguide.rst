@@ -200,8 +200,8 @@ Documentation
 
   .. code-block:: bash
 
+     make install-pydeps-docs
      cd docs/
-     python3 -m pip install -r requirements.txt
      make html
 
 - The documentation is hosted at https://psutil.io. It's a single version,
