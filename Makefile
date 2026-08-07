@@ -78,11 +78,19 @@ install-sysdeps:  ## Install system deps needed to compile psutil.
 install-sysdeps-test:  ## Install CLI tools needed to run unit tests.
 	./scripts/internal/install-sysdeps.sh --test-only
 
+# ---
+
+install-pydeps-build:  ## Install python deps necessary to compile psutil.
+	$(INSTALL_PYDEPS) --group build
+
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	$(INSTALL_PYDEPS) --group test
 
 install-pydeps-lint:  ## Install python deps necessary to run linters.
 	$(INSTALL_PYDEPS) --group lint
+
+install-pydeps-docs:  ## Install python deps necessary to build the doc.
+	$(INSTALL_PYDEPS) --group docs
 
 install-pydeps-dev:  ## Install python deps meant for local development.
 	$(INSTALL_PYDEPS) --group dev

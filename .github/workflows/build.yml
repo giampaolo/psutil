@@ -70,10 +70,12 @@ jobs:
           key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
           restore-keys: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-
 
+      - name: Install uv
+        shell: bash
+        run: PYTHON=python ./scripts/internal/install-pydeps.sh uv
+
       - name: Build wheels + run tests
         uses: pypa/cibuildwheel@v4.1.1
-        with:
-          extras: uv # required by build-frontend in pyproject.toml
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_CACHE_PATH: ${{ runner.temp }}/cibw-cache
@@ -94,7 +96,6 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: 3.x
-      - uses: astral-sh/setup-uv@v9.0.0 # needed by install-pydeps.sh
       # Cache dprint binary + plugins, which would otherwise recompiled on
       # every run (~5s).
       - name: Cache dprint
@@ -121,7 +122,6 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: 3.x
-      - uses: astral-sh/setup-uv@v9.0.0 # needed by install-pydeps.sh
       - uses: actions/upload-artifact/merge@v7
         with:
           name: wheels

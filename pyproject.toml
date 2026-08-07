@@ -6,14 +6,17 @@ requires = ["setuptools>=75.3.4"]  # latest version supporting Python 3.8
 # Dev-only deps (PEP 735), not part of the published package
 # metadata. Install with `pip install --group <name>` or the
 # `make install-pydeps-*` targets.
+build = [
+    "setuptools>=75.3.4",  # latest version supporting Python 3.8
+]
 test = [
     "psleak @ https://github.com/giampaolo/psleak/archive/refs/heads/master.tar.gz",
     "pytest-instafail",
     "pytest-xdist",
     "pytest>=9",  # needed to interpret the [tool.pytest] block
     "pywin32 ; os_name == 'nt' and implementation_name != 'pypy'",
-    "setuptools",
     "wmi ; os_name == 'nt' and implementation_name != 'pypy'",
+    {include-group = "build"},
 ]
 lint = [
     "black",
@@ -39,8 +42,22 @@ dev = [
     "virtualenv",
     "vulture",
     "wheel",
+    {include-group = "build"},
     {include-group = "lint"},
     {include-group = "test"},
+]
+docs = [
+    "ablog==0.11.13",
+    "matplotlib==3.10.8",
+    "sphinx-autobuild",
+    "sphinx-codeautolink==0.18.1",
+    "sphinx-last-updated-by-git==0.3.8",
+    "sphinx-notfound-page==1.1.0",
+    "sphinx-sitemap==2.9.0",
+    "sphinx==9.1.0",
+    "sphinx_copybutton==0.5.2",
+    "sphinx_design==0.7.0",
+    "sphinxext-opengraph==0.13.0",
 ]
 
 [tool.black]

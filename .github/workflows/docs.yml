@@ -25,13 +25,12 @@
 on:
   push:
     branches: [master]
-    paths:
+    paths: &docs_paths
       - "docs/**"
       - ".github/workflows/docs.yml"
+      - "pyproject.toml"
   pull_request:
-    paths:
-      - "docs/**"
-      - ".github/workflows/docs.yml"
+    paths: *docs_paths
   workflow_dispatch:
 
 name: docs
@@ -42,8 +41,6 @@ concurrency:
 
 jobs:
   build:
-    # Skip same-repo PR runs: the push event already covers them.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -54,13 +51,11 @@ jobs:
         with:
           python-version: 3.x
 
-      - uses: astral-sh/setup-uv@v9.0.0 # needed by install-pydeps.sh
-
       - name: Install dependencies
         run: |
-          make install-pydeps-test
+          make install-pydeps-docs
           make install-pydeps-lint
-          make -C docs install-pydeps
+          make install-pydeps-test
           pip install .                   # codeautolink imports psutil
 
       - name: Lint rst
@@ -102,11 +97,10 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: 3.x
-      - uses: astral-sh/setup-uv@v9.0.0
       - name: Install dependencies
         run: |
           make install-pydeps-test
-          make -C docs install-pydeps
+          make install-pydeps-docs
 
       - name: Wait for the live site to serve this commit
         # deploy-pages reports "live" before the CDN edge catches up,
