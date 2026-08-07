@@ -62,11 +62,10 @@ build:  ## Compile (in parallel) without installing.
 	$(PYTHON_ENV_VARS) $(PYTHON) setup.py build_ext --inplace
 	$(PYTHON_ENV_VARS) $(PYTHON) -c "import psutil"  # make sure it actually worked
 
-install:  ## Install this package as current user in "edit" mode.
-	$(MAKE) build
-	# If not in a virtualenv, add --user to the install command.
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop `$(PYTHON) -c \
-		"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
+install:  ## Install this package as current user in edit / development mode.
+	# --no-build-isolation: build with the setuptools we already have
+	# (make install-pydeps-build) instead of downloading another copy.
+	$(INSTALL_PYDEPS) --no-build-isolation --editable .
 
 uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON_ENV_VARS) $(PYTHON) -m pip uninstall -y -v psutil || true
