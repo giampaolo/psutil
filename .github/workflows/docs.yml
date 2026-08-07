@@ -25,13 +25,12 @@
 on:
   push:
     branches: [master]
-    paths:
+    paths: &docs_paths
       - "docs/**"
       - ".github/workflows/docs.yml"
+      - "pyproject.toml"
   pull_request:
-    paths:
-      - "docs/**"
-      - ".github/workflows/docs.yml"
+    paths: *docs_paths
   workflow_dispatch:
 
 name: docs
