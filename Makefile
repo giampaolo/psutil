@@ -2,7 +2,7 @@
 #
 # - To use this on Windows install Git For Windows first, then launch a Git
 #   Bash Shell.
-# - To use a specific Python version run: `make install PYTHON=python3.3`.
+# - To use a specific Python version run: `make install PYTHON=python3.13`.
 # - To append an argument to a command use ARGS, e.g: `make test ARGS="-k
 #   some_test`.
 
@@ -16,11 +16,16 @@ SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
 DPRINT = ~/.dprint/bin/dprint
 INSTALL_PYDEPS = PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh
 
-# if make is invoked with no arg, default to `make help`
+# `make` called with no args is like `make help`
 .DEFAULT_GOAL := help
 
 # install git hook (skipped in worktrees, where .git is a file)
 _ := $(shell test -d .git && mkdir -p .git/hooks/ && ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit)
+
+# phony all targets that have a ## docstring
+_PHONY := $(shell awk -F':.*?## ' \
+	'/^[a-zA-Z0-9_.-]+:.*?## / {print $$1}' $(MAKEFILE_LIST))
+.PHONY: $(_PHONY)
 
 # ===================================================================
 # Install
@@ -54,7 +59,6 @@ clean:  ## Remove all build files.
 		pytest-cache-files* \
 		wheelhouse
 
-.PHONY: build
 build:  ## Compile (in parallel) without installing.
 	@# "build_ext -i" copies compiled *.so files in ./psutil directory in order
 	@# to allow "import psutil" when using the interactive interpreter from
@@ -63,9 +67,10 @@ build:  ## Compile (in parallel) without installing.
 	$(PYTHON_ENV_VARS) $(PYTHON) -c "import psutil"  # make sure it actually worked
 
 install:  ## Install this package as current user in edit / development mode.
-	# --no-build-isolation: build with the setuptools we already have
-	# (make install-pydeps-build) instead of downloading another copy.
-	$(INSTALL_PYDEPS) --no-build-isolation --editable .
+	# --no-build-isolation: reuse setuptools installed above instead of
+	# downloading another copy into a temporary build env.
+	$(PYTHON_ENV_VARS) $(INSTALL_PYDEPS) --no-build-isolation --editable .
+	$(PYTHON_ENV_VARS) $(PYTHON) -c "import psutil"  # make sure it actually worked
 
 uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON_ENV_VARS) $(PYTHON) -m pip uninstall -y -v psutil || true
@@ -416,7 +421,7 @@ grep-todos:  ## Look for TODOs in the source files.
 bench-oneshot:  ## Benchmarks for oneshot() ctx manager (see #799).
 	$(PYTHON) scripts/internal/bench_oneshot.py
 
-bench-oneshot-2:  ## Same as above but using perf module (supposed to be more precise)
+bench-oneshot-2:  ## Same as above but using perf module (more precise).
 	$(PYTHON) scripts/internal/bench_oneshot_2.py
 
 find-broken-links:  ## Look for broken links in source files.
