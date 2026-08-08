@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
+import zlib
 from datetime import datetime
 from datetime import timezone
 
@@ -49,6 +50,14 @@ VALID_BLOG_TAGS = frozenset({
 
 sys.path.insert(0, str(HERE))  # so that "import conf" wins
 import conf  # noqa: E402
+import substitutions  # noqa: E402
+from testutil import feed_urls  # noqa: E402
+from testutil import find_canonical  # noqa: E402
+from testutil import og_value  # noqa: E402
+
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32", reason="docs are built on Linux only"
+)
 
 HTML_DIR = None
 
@@ -80,7 +89,14 @@ def blog_posts():
 
 
 def read_html(*parts):
-    return HTML_DIR.joinpath(*parts).read_text()
+    # dirhtml writes each page as <slug>/index.html; only the root
+    # index.html stays flat. Translate the historical "<slug>.html".
+    rel = pathlib.Path(*parts)
+    if rel.name == "index.html":
+        path = HTML_DIR / rel
+    else:
+        path = HTML_DIR / rel.with_suffix("") / "index.html"
+    return path.read_text()
 
 
 def post_title(rst):
@@ -102,30 +118,24 @@ def post_tags(rst):
 
 def blog_html(rst):
     """Read the built HTML for a blog post given its source .rst."""
-    rel = rst.relative_to(BLOG).with_suffix(".html")
-    return (HTML_DIR / "blog" / rel).read_text()
+    rel = rst.relative_to(BLOG).with_suffix("")
+    return (HTML_DIR / "blog" / rel / "index.html").read_text()
 
 
 def source_rst_for(html_path):
-    """Return the .rst source for an HTML page, or None for pages
+    """Return the .rst source for a built page, or None for pages
     generated without a source (ablog archives, sphinx auto-pages
     like genindex/search/py-modindex).
     """
-    rel = html_path.relative_to(HTML_DIR).with_suffix(".rst")
-    src = DOCS / rel
+    rel = html_path.relative_to(HTML_DIR)
+    if rel.name != "index.html":
+        return None
+    if rel.parent == pathlib.Path("."):
+        slug = "index"  # root home page
+    else:
+        slug = rel.parent.as_posix()
+    src = DOCS / (slug + ".rst")
     return src if src.is_file() else None
-
-
-def og_value(html, prop):
-    """Pull the `content` of a `<meta property="og:..." ...>` tag.
-    Sphinx and ablog don't agree on attribute order, so accept both.
-    """
-    m = re.search(
-        rf'<meta (?:property="{prop}" content="([^"]*)"'
-        rf'|content="([^"]*)" property="{prop}")',
-        html,
-    )
-    return (m.group(1) or m.group(2)) if m else None
 
 
 def all_html_pages():
@@ -137,6 +147,32 @@ def all_html_pages():
         if source_rst_for(p) is None:
             continue
         yield p
+
+
+class TestSourceRefs:
+    """Checks on the .rst sources, no build needed."""
+
+    def test_src_role_targets_exist(self, subtests):
+        # :src:`path` links to the file on GitHub. Nothing validates
+        # the path: rename or move the file and the link 404s, with
+        # no build warning. Both the bare and the labelled
+        # (`text <path>`) forms are used.
+        pat = re.compile(r":src:`([^`]+)`")
+        for rst in sorted(DOCS.rglob("*.rst")):
+            for target in pat.findall(rst.read_text()):
+                m = re.search(r"<([^>]+)>", target)
+                if m:
+                    target = m.group(1)
+                with subtests.test(rst=rst.relative_to(ROOT), ref=target):
+                    assert (ROOT / target).exists()
+
+    def test_first_commit_date(self):
+        # _ext/substitutions.py hardcodes it to keep git out of the
+        # build. Check it against the real history.
+        cmd = ["git", "log", "--reverse", "--format=%ct"]
+        out = subprocess.check_output(cmd, cwd=ROOT).split(b"\n", 1)[0]
+        first = datetime.fromtimestamp(int(out), tz=timezone.utc)
+        assert first.date() == substitutions.FIRST_COMMIT
 
 
 class TestBlogPostFiles:
@@ -179,7 +215,20 @@ class TestHtmlBuild:
 
     def test_files_exist(self):
         assert (HTML_DIR / "index.html").exists()
-        assert (HTML_DIR / "blog.html").exists()
+        assert (HTML_DIR / "blog" / "index.html").exists()
+
+    def test_github_pages_control_files(self):
+        # sphinx.ext.githubpages writes these: .nojekyll stops Jekyll
+        # from dropping _static/, CNAME is derived from html_baseurl.
+        assert (HTML_DIR / ".nojekyll").is_file()
+        assert (HTML_DIR / "CNAME").read_text().strip() == "psutil.io"
+
+    def test_substitutions_expanded(self):
+        # _ext/substitutions.py expands {{years_in_development}}. If
+        # the hook breaks, the literal token ships instead.
+        html = read_html("index.html")
+        assert f"{substitutions.years_in_development()} years" in html
+        assert "{{" not in html
 
     def test_changelog_anchors(self):
         # Indirectly test _ext/changelog_anchors.py. Every X.Y.Z
@@ -209,12 +258,22 @@ class TestHtmlBuild:
         assert 'href="https://docs.python.org/3/' in html
 
     def test_footer_last_updated_matches_git(self, subtests):
+        def is_merge_checkout():
+            ret = subprocess.run(
+                ["git", "rev-parse", "-q", "--verify", "HEAD^2"],
+                capture_output=True,
+                check=False,
+            )
+            return ret.returncode == 0
+
+        if is_merge_checkout():
+            pytest.skip("merge commit")
         # Skip pages that pull in external files via `.. include::`
         # or `.. raw:: <fmt> :file:`. sphinx-last-updated-by-git
         # walks those deps and picks the latest commit timestamp,
         # which we don't replicate here.
         dep_pat = re.compile(r"^\.\. (?:include|raw)::", re.MULTILINE)
-        date_pat = re.compile(r"<span>Updated: (\d{4}-\d{2}-\d{2})</span>")
+        date_pat = re.compile(r"Updated: <a\b[^>]*>(\d{4}-\d{2}-\d{2})</a>")
         for html in all_html_pages():
             src = source_rst_for(html)
             if dep_pat.search(src.read_text()):
@@ -222,7 +281,15 @@ class TestHtmlBuild:
             m = date_pat.search(html.read_text())
             if m is None:
                 continue  # page doesn't render the footer date
-            cmd = ["git", "log", "-1", "--format=%ct", "--", str(src)]
+            cmd = [
+                "git",
+                "log",
+                "-1",
+                "--author-date-order",
+                "--format=%at",
+                "--",
+                str(src),
+            ]
             ts = subprocess.check_output(cmd).strip()
             if not ts:
                 continue  # untracked source file
@@ -232,27 +299,86 @@ class TestHtmlBuild:
             with subtests.test(page=html.relative_to(HTML_DIR)):
                 assert m.group(1) == expected
 
+    def test_footer_github_links_resolve(self, subtests):
+        # ablog and codeautolink generate pages with no .rst behind
+        # them (blog/tag/*, blog/2025, _modules/*). Their footer
+        # links used to be built from the page name anyway, so they
+        # 404ed on GitHub.
+        pat = re.compile(
+            r'github\.com/giampaolo/psutil/(?:edit|commits)/master/(\S+?)"'
+        )
+        for page in sorted(HTML_DIR.rglob("*.html")):
+            html = page.read_text(encoding="utf-8", errors="replace")
+            for target in set(pat.findall(html)):
+                with subtests.test(page=page.relative_to(HTML_DIR)):
+                    assert (ROOT / target).is_file()
+
 
 @pytest.mark.usefixtures("build_html")
 class TestSitemap:
 
     def test_known_pages_listed(self, subtests):
         # sphinx-sitemap should emit one <url> per built HTML page
-        # (source docs + blog posts + ablog-generated pages),
-        # rooted at html_baseurl.
+        # (source docs + blog posts + ablog-generated pages), rooted at
+        # html_baseurl. dirhtml gives directory-style URLs (trailing
+        # slash); the home page is the bare root.
         sitemap = HTML_DIR / "sitemap.xml"
         assert sitemap.exists()
         ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
         tree = ET.parse(sitemap)
         urls = {u.text for u in tree.getroot().findall("s:url/s:loc", ns)}
         for page in (
-            "index.html",
-            "api.html",
-            "changelog.html",
-            "blog/2026/event-driven-process-waiting.html",
+            "",
+            "api/",
+            "changelog/",
+            "blog/2026/event-driven-process-waiting/",
         ):
             with subtests.test(page=page):
                 assert conf.html_baseurl + page in urls
+
+    def test_no_duplicate_urls(self):
+        # ablog re-renders the blog index on top of blog.rst, so
+        # sphinx-sitemap lists that URL twice unless we dedupe.
+        sitemap = HTML_DIR / "sitemap.xml"
+        ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        urls = [
+            u.text
+            for u in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns)
+        ]
+        dupes = sorted({u for u in urls if urls.count(u) > 1})
+        assert dupes == []
+
+    def test_listed_pages_have_description(self, subtests):
+        # ablog's generated pages come with no doctree, so
+        # sphinxext-opengraph skips them and emits no description.
+        pat = re.compile(r'<meta[^>]*name="description"', re.IGNORECASE)
+        sitemap = HTML_DIR / "sitemap.xml"
+        ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        for url in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns):
+            rel = url.text.replace(conf.html_baseurl, "")
+            page = HTML_DIR / rel / "index.html"
+            with subtests.test(page=rel or "/"):
+                assert pat.search(page.read_text(errors="replace"))
+
+    def test_excludes_utility_pages(self, subtests):
+        # sitemap_excludes must use the dirhtml dir form ("search/",
+        # not "search.html") or utility + ablog pages leak in.
+        sitemap = HTML_DIR / "sitemap.xml"
+        ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        urls = {
+            u.text
+            for u in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns)
+        }
+        for slug in (
+            "genindex",
+            "py-modindex",
+            "search",
+            "404",
+            "blog/archive",
+            "blog/drafts",
+        ):
+            with subtests.test(slug=slug):
+                assert conf.html_baseurl + slug + "/" not in urls
 
     def test_has_every_blog_post(self, subtests):
         # Catches drift between ablog's post registry and
@@ -266,8 +392,8 @@ class TestSitemap:
             for u in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns)
         }
         for rst in blog_posts():
-            rel = rst.relative_to(BLOG).with_suffix(".html")
-            expected = conf.html_baseurl + "blog/" + rel.as_posix()
+            rel = rst.relative_to(BLOG).with_suffix("")
+            expected = conf.html_baseurl + "blog/" + rel.as_posix() + "/"
             with subtests.test(rst=rst):
                 assert expected in urls
 
@@ -277,23 +403,27 @@ class TestCanonicalUrl:
 
     def test_link_on_pages(self, subtests):
         # Sphinx emits <link rel="canonical"> using html_baseurl. If
-        # html_baseurl is misconfigured (e.g. lacks the /latest/
-        # prefix while the deploy is version-pathed), every shared
-        # URL points at a 404.
-        pattern = re.compile(
-            r'<link (?:rel="canonical" href="([^"]*)"'
-            r'|href="([^"]*)" rel="canonical")'
-        )
+        # html_baseurl is misconfigured, every shared URL points at a
+        # 404.
         for page in (
             "index.html",
             "api.html",
             "blog/2026/event-driven-process-waiting.html",
         ):
-            m = pattern.search(read_html(page))
+            url = find_canonical(read_html(page))
             with subtests.test(page=page):
-                assert m is not None
-                url = m.group(1) or m.group(2)
+                assert url is not None
                 assert url.startswith(conf.html_baseurl)
+
+    def test_og_urls_rooted_at_baseurl(self, subtests):
+        # og:url + og:image must point at the deployed domain; they
+        # once lagged html_baseurl and pointed at the old host.
+        html = read_html("api.html")
+        for prop in ("og:url", "og:image"):
+            val = og_value(html, prop)
+            with subtests.test(prop=prop):
+                assert val is not None
+                assert val.startswith(conf.html_baseurl)
 
 
 @pytest.mark.usefixtures("build_html")
@@ -302,7 +432,7 @@ class TestRightToc:
     def test_visibility(self, subtests):
         has_toc = ("api.html", "faq.html", "glossary.html", "blog.html")
         no_toc = ("index.html", "genindex.html", "search.html")
-        pat = re.compile(r'<aside[^>]*\bclass="[^"]*\bright-toc\b')
+        pat = re.compile(r'<aside[^>]*\bclass="[^"]*\bright-sidebar\b')
         for file in has_toc:
             with subtests.test(file=file):
                 assert pat.search(read_html(file))
@@ -311,12 +441,13 @@ class TestRightToc:
                 assert not pat.search(read_html(file))
 
     def test_hash_targets_resolve(self, subtests):
-        # Every <a href="#..."> inside the right-toc must point to an
-        # id that exists on the same page. Otherwise the JS hash-match
-        # path in right-toc.js silently misses on direct URL load.
+        # Every <a href="#..."> inside the right-sidebar must point to
+        # an id that exists on the same page. Otherwise the JS
+        # hash-match path in right-toc.js silently misses on direct
+        # URL load.
         html = read_html("api.html")
         m = re.search(
-            r'<aside[^>]*\bclass="[^"]*\bright-toc\b[^"]*"[^>]*>(.*?)</aside>',
+            r'<aside[^>]*\bclass="[^"]*\bright-sidebar\b[^"]*"[^>]*>(.*?)</aside>',
             html,
             re.DOTALL,
         )
@@ -334,11 +465,12 @@ class TestRightToc:
         html = read_html("glossary.html")
         assert 'data-toc-mode="glossary"' in html
         m = re.search(
-            r'<aside class="right-toc right-toc--glossary"[^>]*>(.*?)</aside>',
+            r'<aside class="right-sidebar'
+            r' right-sidebar--glossary"[^>]*>(.*?)</aside>',
             html,
             re.DOTALL,
         )
-        assert m, "right-toc--glossary aside not found"
+        assert m, "right-sidebar--glossary aside not found"
         terms = re.findall(r'<a href="#term-[^"]*">([^<]+)</a>', m.group(1))
         assert terms
         assert terms == sorted(terms, key=str.lower)
@@ -357,7 +489,7 @@ class TestCodeAutoLink:
         html = read_html("api-overview.html")
         assert (
             '<a class="sphinx-codeautolink-a" '
-            'href="api.html#psutil.Process.name"'
+            'href="../api/#psutil.Process.name"'
             in html
         )
 
@@ -386,19 +518,14 @@ class TestAtomFeed:
         assert non_utc == []
 
     def test_uses_canonical_url(self):
-        # Regression: feed-level + per-entry URLs must include the
-        # RTD version path (/latest/) so they match the deployed
-        # location. Without it, feed readers 404. This check needs
-        # updating when the Single Version toggle is flipped at
-        # 8.0.0 — see the TODO on html_baseurl in conf.py.
+        # Regression: feed-level + per-entry URLs must be rooted at
+        # html_baseurl so they match the deployed location. Without
+        # it, feed readers 404.
         feed = HTML_DIR / "blog" / "atom.xml"
-        ns = {"a": "http://www.w3.org/2005/Atom"}
         root = ET.parse(feed).getroot()
-        urls = [link.get("href") for link in root.findall("a:link", ns)]
-        for e in root.findall("a:entry", ns):
-            urls.append(e.find("a:id", ns).text)
-            urls.extend(link.get("href") for link in e.findall("a:link", ns))
-        bad = [u for u in urls if u and "/latest/" not in u]
+        bad = [
+            u for u in feed_urls(root) if not u.startswith(conf.html_baseurl)
+        ]
         assert bad == []
 
     def test_link_on_every_page_exactly_once(self, subtests):
@@ -421,8 +548,11 @@ class TestOpenGraph:
         for rst in sorted(DOCS.rglob("*.rst")):
             if rst.name == "blog.rst":
                 continue
-            rel = rst.relative_to(DOCS).with_suffix(".html")
-            html_path = HTML_DIR / rel
+            rel = rst.relative_to(DOCS)
+            if rel.name == "index.rst" and rel.parent == pathlib.Path("."):
+                html_path = HTML_DIR / "index.html"
+            else:
+                html_path = HTML_DIR / rel.with_suffix("") / "index.html"
             html = html_path.read_text()
             with subtests.test(rst=rst):
                 for needle in (
@@ -555,3 +685,279 @@ class TestBlogPosts:
                     assert "post-meta-featured" in html
                 else:
                     assert "post-meta-featured" not in html
+
+
+@pytest.mark.usefixtures("build_html")
+class TestNoExternalAssets:
+    """Stylesheets and fonts are self-hosted, not pulled from a CDN."""
+
+    ASSET_LINK_RE = re.compile(
+        r'<link\b[^>]*\brel="(?:stylesheet|preload)"[^>]*>', re.IGNORECASE
+    )
+    HREF_RE = re.compile(r'\bhref="([^"]+)"')
+
+    @staticmethod
+    def is_external(url):
+        return url.startswith(("http://", "https://", "//"))
+
+    def test_no_external_stylesheets(self, subtests):
+        # Analytics <script>s are deliberately external; only links count.
+        for page in all_html_pages():
+            urls = []
+            for tag in self.ASSET_LINK_RE.findall(page.read_text()):
+                urls += self.HREF_RE.findall(tag)
+            external = [u for u in urls if self.is_external(u)]
+            with subtests.test(page=page.relative_to(HTML_DIR)):
+                assert external == []
+
+    def test_no_external_css_urls(self, subtests):
+        css_dir = HTML_DIR / "_static" / "css"
+        for css in sorted(css_dir.glob("*.css")):
+            if css.name == "giscus.css":
+                continue  # runs in the giscus iframe, imports its theme
+            urls = re.findall(r'url\(\s*["\']?([^"\')]+)', css.read_text())
+            external = [u for u in urls if self.is_external(u)]
+            with subtests.test(css=css.name):
+                assert external == []
+
+
+@pytest.mark.usefixtures("build_html")
+class TestFonts:
+    """Every @font-face points at a font file that ships in the build."""
+
+    def test_font_face_files_exist(self, subtests):
+        css_dir = HTML_DIR / "_static" / "css"
+        face_re = re.compile(r"@font-face\s*\{[^}]*\}", re.DOTALL)
+        url_re = re.compile(r'url\(\s*["\']?([^"\')]+)')
+        found = 0
+        for css in sorted(css_dir.glob("*.css")):
+            for block in face_re.findall(css.read_text()):
+                for url in url_re.findall(block):
+                    found += 1
+                    resolved = (css.parent / url).resolve()
+                    with subtests.test(css=css.name, url=url):
+                        assert resolved.is_file()
+        assert found > 0
+
+
+@pytest.mark.usefixtures("build_html")
+class TestNoIndex:
+    """Utility pages are noindex'd (layout.html); content pages aren't."""
+
+    NOINDEX_RE = re.compile(
+        r'<meta[^>]*name="robots"[^>]*content="noindex"', re.IGNORECASE
+    )
+
+    def test_utility_pages_noindex(self, subtests):
+        for name in ("genindex", "py-modindex", "404"):
+            path = HTML_DIR / name / "index.html"
+            if not path.is_file():
+                continue
+            with subtests.test(page=name):
+                assert self.NOINDEX_RE.search(path.read_text())
+
+    def test_content_pages_indexable(self, subtests):
+        for name in ("index.html", "api.html", "install.html"):
+            with subtests.test(page=name):
+                assert not self.NOINDEX_RE.search(read_html(name))
+
+
+@pytest.mark.usefixtures("build_html")
+class TestLogo:
+    """The top-bar logo must land on the site root from every page."""
+
+    LOGO_RE = re.compile(r'<a class="topbar-logo" href="([^"]+)"')
+
+    def logo_href(self, *parts):
+        m = self.LOGO_RE.search(read_html(*parts))
+        assert m
+        return m.group(1)
+
+    def test_home_logo_targets_root(self):
+        # Not "#", which would strand the user on /# (regression).
+        assert self.logo_href("index.html") == "./"
+
+    def test_content_page_logo_targets_root(self):
+        assert self.logo_href("faq.html") == "../"
+
+    def test_404_logo_is_absolute_root(self):
+        # The 404 is served from arbitrary paths, so a relative/self
+        # link breaks; it must be the absolute root.
+        assert self.logo_href("404.html") == "/"
+
+
+@pytest.mark.usefixtures("build_html")
+class TestNotFound:
+    """The 404 is served from arbitrary paths, so every link on it must
+    be absolute; a relative one resolves against the request path and
+    404s again.
+    """
+
+    def test_root_404_html_exists(self):
+        # notfound_extras copies 404/index.html -> /404.html so static
+        # servers (GitHub Pages, Starlette) serve it for missing paths.
+        assert (HTML_DIR / "404.html").is_file()
+
+    def test_content_root_is_absolute(self):
+        # data-content_root drives JS-built URLs (search, highlight).
+        # On the 404, served from any depth, it must be absolute or a
+        # deep-path 404's search results resolve against the wrong base.
+        m = re.search(r'data-content_root="([^"]+)"', read_html("404.html"))
+        assert m
+        assert m.group(1) == "/"
+
+    def test_all_links_absolute(self):
+        html = read_html("404.html")
+        links = re.findall(r'(?:href|src|action)="([^"]+)"', html)
+        rel = [
+            u
+            for u in links
+            if not u.startswith(
+                ("/", "http://", "https://", "//", "#", "mailto:")
+            )
+        ]
+        assert rel == []
+
+    def test_helpful_links_present(self, subtests):
+        # Body "jump to ..." cross-references. Regression: notfound
+        # leaves these relative, so they used to break from deep paths.
+        html = read_html("404.html")
+        for target in ("/install/", "/api/", "/faq/", "/recipes/", "/blog/"):
+            with subtests.test(target=target):
+                assert f'href="{target}"' in html
+
+
+@pytest.mark.usefixtures("build_html")
+class TestSidebarIcons:
+    """Left-sidebar icons attach via href-based selectors in
+    doc-icons.css. When the URL scheme changed (.html -> dirhtml dirs)
+    the selectors silently stopped matching and every icon vanished.
+    """
+
+    def test_every_sidebar_link_has_icon_selector(self, subtests):
+        css = (HTML_DIR / "_static" / "css" / "doc-icons.css").read_text()
+        fragments = re.findall(r'href\*="([^"]+)"', css)
+        assert fragments
+        nav = re.search(
+            r'<nav[^>]*class="[^"]*left-sidebar.*?</nav>',
+            read_html("faq.html"),
+            re.DOTALL,
+        )
+        assert nav, "left-sidebar not found"
+        # Non-current page links look like "../<slug>/".
+        hrefs = re.findall(r'href="(\.\./[a-z-]+/)"', nav.group(0))
+        assert hrefs
+        for href in sorted(set(hrefs)):
+            with subtests.test(href=href):
+                assert any(frag in href for frag in fragments)
+
+
+@pytest.mark.usefixtures("build_html")
+class TestUrlScheme:
+    """dirhtml URL-scheme invariants.
+
+    Pages are served as directories (/faq/), so any hand-rolled
+    "<page>.html" link is dead. These guard the scheme site-wide
+    rather than one feature at a time.
+    """
+
+    SKIP = ("http://", "https://", "//", "mailto:", "data:", "#")
+
+    def resolve(self, page, url):
+        """On-disk path a link points at, or None if not checkable."""
+        url = url.split("#", 1)[0].split("?", 1)[0]
+        if not url or url.startswith(self.SKIP):
+            return None
+        if url.startswith("/"):
+            return HTML_DIR / url.lstrip("/")
+        return (page.parent / url).resolve()
+
+    def test_no_broken_internal_links(self):
+        # Offline link checker over every built page. This is the net
+        # that catches ".html" URLs dirhtml turned into 404s: blog tag
+        # refs, the search form action, raw-HTML blocks, extensions.
+        broken = []
+        pages = sorted(HTML_DIR.rglob("*.html"))
+        assert pages
+        for page in pages:
+            rel = page.relative_to(HTML_DIR)
+            if any(part.startswith("_") for part in rel.parts):
+                continue
+            html = page.read_text(encoding="utf-8", errors="replace")
+            for url in re.findall(r'(?:href|src|action)="([^"]*)"', html):
+                target = self.resolve(page, url)
+                if target is None:
+                    continue
+                if not (target.is_file() or (target / "index.html").is_file()):
+                    broken.append(f"{rel} -> {url}")
+        assert broken == []
+
+    def test_pages_canonicalize_to_directory_urls(self, subtests):
+        for page, slug in (
+            ("faq.html", "faq/"),
+            ("api.html", "api/"),
+            ("blog.html", "blog/"),
+        ):
+            with subtests.test(page=page):
+                expected = conf.html_baseurl + slug
+                assert find_canonical(read_html(page)) == expected
+
+    def test_blog_index_og_url_is_directory(self):
+        # opengraph_override hand-builds this one; it used to emit
+        # blog.html, a URL dirhtml never writes.
+        val = og_value(read_html("blog.html"), "og:url")
+        assert val == conf.html_baseurl + "blog/"
+
+    def test_home_canonical_is_root(self):
+        # The home page canonicalizes to the bare domain, not /index.
+        assert find_canonical(read_html("index.html")) == conf.html_baseurl
+
+    def test_sitemap_urls_are_extensionless(self):
+        # The sitemap must agree with the canonical URLs; a stray
+        # .html means the two disagree.
+        sitemap = HTML_DIR / "sitemap.xml"
+        ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        urls = [
+            u.text
+            for u in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns)
+        ]
+        assert urls
+        assert not [u for u in urls if u.endswith(".html")]
+
+    def test_search_builder_is_dirhtml(self):
+        # searchtools.js builds result URLs as "<docname>/" only when
+        # BUILDER == "dirhtml"; otherwise it appends LINK_SUFFIX
+        # (.html) and every search result 404s.
+        opts = (HTML_DIR / "_static" / "documentation_options.js").read_text()
+        assert "BUILDER: 'dirhtml'" in opts
+
+    def test_no_absolute_self_links_with_html(self):
+        # The link checker skips absolute http(s) URLs, so a hardcoded
+        # "https://psutil.io/faq.html" would slip straight past it.
+        base = conf.html_baseurl.rstrip("/")
+        pat = re.compile(re.escape(base) + r"/[^\s\"'<>]*\.html")
+        bad = []
+        for page in sorted(HTML_DIR.rglob("*.html")):
+            rel = page.relative_to(HTML_DIR)
+            if any(part.startswith("_") for part in rel.parts):
+                continue
+            text = page.read_text(encoding="utf-8", errors="replace")
+            bad += [f"{rel} -> {hit}" for hit in pat.findall(text)]
+        assert bad == []
+
+    def test_atom_feed_urls_are_extensionless(self):
+        # Feed readers persist these; a .html entry id is a dead link
+        # that stays dead in every subscriber's reader.
+        root = ET.parse(HTML_DIR / "blog" / "atom.xml").getroot()
+        urls = feed_urls(root)
+        assert urls
+        assert [u for u in urls if ".html" in u] == []
+
+    def test_objects_inv_uris_are_extensionless(self):
+        # Other projects intersphinx against this inventory; a stale
+        # .html URI breaks every cross-reference they make into us.
+        raw = (HTML_DIR / "objects.inv").read_bytes()
+        # 4 plain-text header lines, then zlib-compressed entries.
+        entries = zlib.decompress(raw.split(b"\n", 4)[4]).decode("utf-8")
+        assert entries
+        assert ".html" not in entries

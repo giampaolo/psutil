@@ -12,7 +12,7 @@
    <script>document.body.classList.add('home-page');</script>
 
    <div class="hero">
-     <div class="hero-title"><img src="_static/images/logo-psutil.svg" class="hero-logo" alt="psutil logo"><span>psutil<span/></div>
+     <h1 class="hero-title"><img src="_static/images/logo-psutil.svg" class="hero-logo" alt="psutil logo"><span>psutil</span></h1>
      <div class="hero-subtitle">Process and System Utilities for Python</div>
    </div>
 
@@ -22,8 +22,8 @@
    processes and system utilization in Python. It is useful mainly for system
    monitoring, profiling, limiting process resources, and managing running
    processes. Psutil implements many functionalities offered by UNIX command
-   line tool such as *ps, top, free, iotop, netstat, ifconfig, lsof* and others
-   (see :doc:`shell equivalents <shell-equivalents>`).
+   line tool such as *ps, top, free, iotop, netstat, ifconfig, lsof* and
+   others.
 
 .. ============================================================================
 .. Install one-liner
@@ -53,16 +53,16 @@
 .. raw:: html
 
    <div class="home-platforms">
-     <a class="home-platforms-label" href="platform.html">Runs on</a>
+     <a class="home-platforms-label" href="platform/">Runs on</a>
      <div class="home-platforms-pills">
-       <a class="home-platform-pill" href="platform.html">Linux</a>
-       <a class="home-platform-pill" href="platform.html">Windows</a>
-       <a class="home-platform-pill" href="platform.html">macOS</a>
-       <a class="home-platform-pill" href="platform.html">FreeBSD</a>
-       <a class="home-platform-pill" href="platform.html">OpenBSD</a>
-       <a class="home-platform-pill" href="platform.html">NetBSD</a>
-       <a class="home-platform-pill" href="platform.html">Solaris</a>
-       <a class="home-platform-pill" href="platform.html">AIX</a>
+       <a class="home-platform-pill" href="platform/">Linux</a>
+       <a class="home-platform-pill" href="platform/">Windows</a>
+       <a class="home-platform-pill" href="platform/">macOS</a>
+       <a class="home-platform-pill" href="platform/">FreeBSD</a>
+       <a class="home-platform-pill" href="platform/">OpenBSD</a>
+       <a class="home-platform-pill" href="platform/">NetBSD</a>
+       <a class="home-platform-pill" href="platform/">Solaris</a>
+       <a class="home-platform-pill" href="platform/">AIX</a>
      </div>
    </div>
 
@@ -74,28 +74,28 @@
 
    <div class="home-section-label">Explore the API</div>
    <div class="home-feature-cards">
-     <a class="home-feature-card" href="api.html#cpu">
-       <img class="home-icon-svg" src="_static/images/icon-cpu.svg" alt="CPU">
+     <a class="home-feature-card" href="api/#cpu">
+       <img class="home-icon-svg" src="_static/images/icon-cpu.svg" alt="">
        <div class="home-feature-title">CPU</div>
      </a>
-     <a class="home-feature-card" href="api.html#memory">
-       <img class="home-icon-svg" src="_static/images/icon-memory.svg" alt="Memory">
+     <a class="home-feature-card" href="api/#memory">
+       <img class="home-icon-svg" src="_static/images/icon-memory.svg" alt="">
        <div class="home-feature-title">Memory</div>
      </a>
-     <a class="home-feature-card" href="api.html#disks">
-       <i class="fa fa-hdd-o home-icon-fa"></i>
+     <a class="home-feature-card" href="api/#disks">
+       <img class="home-icon-svg" src="_static/images/icon-disks.svg" alt="">
        <div class="home-feature-title">Disks</div>
      </a>
-     <a class="home-feature-card" href="api.html#network">
-       <img class="home-icon-svg" src="_static/images/icon-network.svg" alt="Network">
+     <a class="home-feature-card" href="api/#network">
+       <img class="home-icon-svg" src="_static/images/icon-network.svg" alt="">
        <div class="home-feature-title">Network</div>
      </a>
-     <a class="home-feature-card" href="api.html#sensors">
-       <i class="fa fa-thermometer-half home-icon-fa"></i>
+     <a class="home-feature-card" href="api/#sensors">
+       <img class="home-icon-svg" src="_static/images/icon-sensors.svg" alt="">
        <div class="home-feature-title">Sensors</div>
      </a>
-     <a class="home-feature-card" href="api.html#processes">
-       <img class="home-icon-svg" src="_static/images/icon-processes.svg" alt="Processes">
+     <a class="home-feature-card" href="api/#processes">
+       <img class="home-icon-svg" src="_static/images/icon-processes.svg" alt="">
        <div class="home-feature-title">Processes</div>
      </a>
    </div>
@@ -226,17 +226,18 @@
 
 .. raw:: html
 
+   <div class="home-section-label">Stats</div>
    <div class="home-stats">
      <a class="home-stat" href="https://clickpy.clickhouse.com/dashboard/psutil">
-       <span class="home-stat-num">330+ million</span>
+       <span class="home-stat-num">370+ million</span>
        <span class="home-stat-label">downloads per month</span>
      </a>
      <a class="home-stat" href="https://github.com/giampaolo/psutil/network/dependents">
-       <span class="home-stat-num">760,000+</span>
+       <span class="home-stat-num">780,000+</span>
        <span class="home-stat-label">GitHub repositories</span>
      </a>
-     <a class="home-stat" href="timeline.html">
-       <span class="home-stat-num">17 years</span>
+     <a class="home-stat" href="timeline/">
+       <span class="home-stat-num">{{years_in_development}} years</span>
        <span class="home-stat-label">in active development</span>
      </a>
    </div>

@@ -15,24 +15,11 @@
 // See discussion at: https://bugs.python.org/issue33166#msg314631
 static unsigned int
 psutil_get_num_cpus(int fail_on_err) {
-    unsigned int ncpus = 0;
+    unsigned int ncpus;
 
-    // Minimum requirement: Windows 7
-    if (GetActiveProcessorCount != NULL) {
-        ncpus = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
-        if ((ncpus == 0) && (fail_on_err == 1)) {
-            psutil_oserror();
-        }
-    }
-    else {
-        psutil_debug(
-            "GetActiveProcessorCount() not available; "
-            "using GetSystemInfo()"
-        );
-        ncpus = (unsigned int)PSUTIL_SYSTEM_INFO.dwNumberOfProcessors;
-        if ((ncpus <= 0) && (fail_on_err == 1)) {
-            psutil_runtime_error("GetSystemInfo failed to retrieve CPU count");
-        }
+    ncpus = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+    if ((ncpus == 0) && (fail_on_err == 1)) {
+        psutil_oserror();
     }
     return ncpus;
 }
@@ -70,9 +57,10 @@ PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     double idle, kernel, systemt, user, interrupt, dpc;
     NTSTATUS status;
-    _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
+    SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
     UINT i;
     unsigned int ncpus;
+    ULONG retlen = 0;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -83,10 +71,10 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     if (ncpus == 0)
         goto error;
 
-    // allocates an array of _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
+    // allocates an array of SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
     // structures, one per processor
-    sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)malloc(
-        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)
+    sppi = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)malloc(
+        ncpus * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)
     );
     if (sppi == NULL) {
         PyErr_NoMemory();
@@ -97,8 +85,8 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
-        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
-        NULL
+        ncpus * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+        &retlen
     );
     if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(
@@ -108,8 +96,11 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // computes system global times summing each
-    // processor value
+    // The kernel may return entries for less CPUs than ncpus: on
+    // systems with more than 64 CPUs it only covers the calling
+    // thread's processor group.
+    ncpus = retlen / sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+
     idle = user = kernel = interrupt = dpc = 0;
     for (i = 0; i < ncpus; i++) {
         user = (double)((HI_T * sppi[i].UserTime.HighPart)
@@ -168,16 +159,10 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     DWORD ncpus = 0;
     DWORD prev_processor_info_size = 0;
 
-    // GetLogicalProcessorInformationEx() is available from Windows 7
-    // onward. Differently from GetLogicalProcessorInformation()
-    // it supports process groups, meaning this is able to report more
-    // than 64 CPUs. See:
+    // Differently from GetLogicalProcessorInformation(),
+    // GetLogicalProcessorInformationEx() supports process groups,
+    // meaning this is able to report more than 64 CPUs. See:
     // https://bugs.python.org/issue33166
-    if (GetLogicalProcessorInformationEx == NULL) {
-        psutil_debug("Win < 7; cpu_count_cores() forced to None");
-        Py_RETURN_NONE;
-    }
-
     while (1) {
         rc = GetLogicalProcessorInformationEx(RelationAll, buffer, &length);
         if (rc == FALSE) {
@@ -241,22 +226,26 @@ return_none:
 PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
     NTSTATUS status;
-    _SYSTEM_PERFORMANCE_INFORMATION *spi = NULL;
-    _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
-    _SYSTEM_INTERRUPT_INFORMATION *InterruptInformation = NULL;
+    SYSTEM_PERFORMANCE_INFORMATION *spi = NULL;
+    SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
+    SYSTEM_INTERRUPT_INFORMATION *InterruptInformation = NULL;
     unsigned int ncpus;
+    unsigned int nentries;
     UINT i;
+    ULONG retlen = 0;
     ULONG64 dpcs = 0;
     ULONG interrupts = 0;
+    ULONG ctx_switches;
+    ULONG syscalls;
 
     // retrieves number of processors
     ncpus = psutil_get_num_cpus(1);
     if (ncpus == 0)
         goto error;
 
-    // get syscalls / ctx switches
-    spi = (_SYSTEM_PERFORMANCE_INFORMATION *)malloc(
-        ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION)
+    // get syscalls / ctx switches (system-wide, not per CPU)
+    spi = (SYSTEM_PERFORMANCE_INFORMATION *)malloc(
+        sizeof(SYSTEM_PERFORMANCE_INFORMATION)
     );
     if (spi == NULL) {
         PyErr_NoMemory();
@@ -265,7 +254,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemPerformanceInformation,
         spi,
-        ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
+        sizeof(SYSTEM_PERFORMANCE_INFORMATION),
         NULL
     );
     if (!NT_SUCCESS(status)) {
@@ -277,7 +266,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
     // get DPCs
     InterruptInformation = malloc(
-        sizeof(_SYSTEM_INTERRUPT_INFORMATION) * ncpus
+        sizeof(SYSTEM_INTERRUPT_INFORMATION) * ncpus
     );
     if (InterruptInformation == NULL) {
         PyErr_NoMemory();
@@ -288,7 +277,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         SystemInterruptInformation,
         InterruptInformation,
         ncpus * sizeof(SYSTEM_INTERRUPT_INFORMATION),
-        NULL
+        &retlen
     );
     if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(
@@ -296,13 +285,17 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         );
         goto error;
     }
-    for (i = 0; i < ncpus; i++) {
+    // The kernel may return entries for less CPUs than ncpus: on
+    // systems with more than 64 CPUs it only covers the calling
+    // thread's processor group.
+    nentries = retlen / sizeof(SYSTEM_INTERRUPT_INFORMATION);
+    for (i = 0; i < nentries; i++) {
         dpcs += InterruptInformation[i].DpcCount;
     }
 
     // get interrupts
-    sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)malloc(
-        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)
+    sppi = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)malloc(
+        ncpus * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)
     );
     if (sppi == NULL) {
         PyErr_NoMemory();
@@ -312,8 +305,8 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
-        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
-        NULL
+        ncpus * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+        &retlen
     );
     if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(
@@ -323,20 +316,18 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    for (i = 0; i < ncpus; i++) {
+    nentries = retlen / sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+    for (i = 0; i < nentries; i++) {
         interrupts += sppi[i].InterruptCount;
     }
 
-    // done
+    ctx_switches = spi->ContextSwitches;
+    syscalls = spi->SystemCalls;
     free(spi);
     free(InterruptInformation);
     free(sppi);
     return Py_BuildValue(
-        "kkkk",
-        spi->ContextSwitches,
-        interrupts,
-        (unsigned long)dpcs,
-        spi->SystemCalls
+        "kkkk", ctx_switches, interrupts, (unsigned long)dpcs, syscalls
     );
 
 error:
@@ -375,8 +366,8 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
 
     // Syscall.
     ret = CallNtPowerInformation(ProcessorInformation, NULL, 0, pBuffer, size);
-    if (ret != 0) {
-        psutil_runtime_error("CallNtPowerInformation syscall failed");
+    if (!NT_SUCCESS(ret)) {
+        psutil_SetFromNTStatusErr(ret, "CallNtPowerInformation");
         goto error;
     }
 

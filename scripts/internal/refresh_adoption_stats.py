@@ -5,11 +5,10 @@
 # be found in the LICENSE file.
 
 """Refresh the dynamic numbers in docs/adoption.rst and README.rst
-(monthly downloads, GitHub repository dependents, package
-dependents).
+(monthly downloads and GitHub repository dependents).
 
-Intended to run locally before tagging a release. RTD's build does NOT
-call this.
+Intended to run locally before tagging a release. The docs build does
+NOT call this.
 """
 
 import json
@@ -63,21 +62,18 @@ def fetch_monthly_downloads():
 
 
 def fetch_github_dependents():
-    """Scrape the 'Used by' counts from GitHub's dependents graph.
-    Two numbers: repositories using psutil, packages depending on it.
+    """Scrape the 'Used by' repository count from GitHub's dependents
+    graph.
     """
     html = fetch(DEPENDENTS_URL)
-    # The page renders the counts as:
+    # The page renders the count as:
     #   <number>
     #     Repositories
     # ...with the number on one line and the label on the next.
     repos_re = re.search(r"([\d,]+)\s+Repositories", html)
-    pkgs_re = re.search(r"([\d,]+)\s+Packages", html)
-    if not (repos_re and pkgs_re):
+    if not repos_re:
         sys.exit("could not parse GitHub dependents page")
-    repos = int(repos_re.group(1).replace(",", ""))
-    packages = int(pkgs_re.group(1).replace(",", ""))
-    return repos, packages
+    return int(repos_re.group(1).replace(",", ""))
 
 
 def main():
@@ -86,16 +82,13 @@ def main():
     print(f"  monthly downloads: {monthly:,}")
 
     print(f"fetching {DEPENDENTS_URL} ...")
-    repos, packages = fetch_github_dependents()
+    repos = fetch_github_dependents()
     print(f"  repos:    {repos:,}")
-    print(f"  packages: {packages:,}")
 
-    # Repos are at the 100k+ scale, packages at the 10k+ scale.
-    # Floor each to a bucket size that hides week-to-week noise but
-    # still moves visibly between releases.
+    # Repos are at the 100k+ scale. Floor to a bucket size that hides
+    # week-to-week noise but still moves visibly between releases.
     new_downloads = round_millions(monthly)  # "330+ million"
     new_repos = f"{floor_to(repos, 10_000):,}+"  # "760,000+"
-    new_packages = f"{floor_to(packages, 1_000):,}+"  # "15,000+"
 
     # In adoption.rst and README.rst the numbers are wrapped in
     # **bold**; in index.rst they live inside a <span class=
@@ -111,10 +104,6 @@ def main():
             re.compile(r"\*\*[\d,]+\+\*\*(?=\s+`?GitHub repositories)"),
             f"**{new_repos}**",
         ),
-        (
-            re.compile(r"\*\*[\d,]+\+\*\*(?=\s+packages depending)"),
-            f"**{new_packages}**",
-        ),
         # index.rst home-stats banner.
         (
             re.compile(
@@ -128,13 +117,6 @@ def main():
                 r'<span class="home-stat-label">GitHub)'
             ),
             rf"\g<1>{new_repos}\g<2>",
-        ),
-        (
-            re.compile(
-                r'(<span class="home-stat-num">)[\d,]+\+(</span>\s*\n\s*'
-                r'<span class="home-stat-label">packages)'
-            ),
-            rf"\g<1>{new_packages}\g<2>",
         ),
     ]
 

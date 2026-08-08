@@ -2,9 +2,17 @@
 
 PYTHON = python3
 PYTHONWARNINGS = always,ignore:::sphinx_sitemap,ignore:importing 'Const',ignore:::matplotlib.projections,ignore:::notfound.extension
+# sphinx and sphinx-autobuild, both with the same warning filter.
 SPHINXBUILD = PYTHONWARNINGS="$(PYTHONWARNINGS)" $(PYTHON) -m sphinx
+SPHINXAUTOBUILD = PYTHONWARNINGS="$(PYTHONWARNINGS)" sphinx-autobuild
+# Warnings as errors, parallel. Shared by html and autoreload so the
+# live preview matches what CI builds.
+SPHINXOPTS = --fail-on-warning --jobs=auto
 BUILDDIR = _build
-ALLSPHINXOPTS = --fail-on-warning --jobs=auto -d $(BUILDDIR)/doctrees .
+DOCTREES = $(BUILDDIR)/doctrees
+OUTDIR = $(BUILDDIR)/html
+# Builder + source + output shared by html and the autoreload targets.
+DIRHTML = -b dirhtml -d $(DOCTREES) . $(OUTDIR)
 
 # --- sphinx
 
@@ -12,29 +20,36 @@ clean:  ## Remove all build files
 	rm -rf $(BUILDDIR)
 
 html:  ## Generate doc in HTML format. Warnings are turned into failures.
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
-	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
+	$(SPHINXBUILD) $(SPHINXOPTS) $(DIRHTML)
+	@echo "Build finished. The HTML pages are in $(OUTDIR)."
 
 autoreload:  ## Rebuild HTML + live-reload browser on file changes (requires sphinx-autobuild)
-	sphinx-autobuild -d $(BUILDDIR)/doctrees . $(BUILDDIR)/html
+	$(SPHINXAUTOBUILD) $(SPHINXOPTS) $(DIRHTML)
 
 autoreload-hard:  ## Same as above but re-writes all files on every refresh
 	make clean
-	sphinx-autobuild -a -d $(BUILDDIR)/doctrees . $(BUILDDIR)/html
+	$(SPHINXAUTOBUILD) $(SPHINXOPTS) -a $(DIRHTML)
 
 # --- checkers
 
-check-links:  ## Check links
-	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) $(BUILDDIR)/linkcheck
-	@echo "Link check complete; look for any errors in the above output " \
-	      "or in $(BUILDDIR)/linkcheck/output.txt."
+check-links:  ## Check links. Prints only broken URLs / warnings.
+	$(SPHINXBUILD) $(SPHINXOPTS) --quiet -b linkcheck -d $(DOCTREES) . $(BUILDDIR)/linkcheck
+	@echo "Link check complete; full report in $(BUILDDIR)/linkcheck/output.txt."
 
 check-codeautolink:  ## Report sphinx-codeautolink resolution failures (non-fatal).
 	$(MAKE) clean
-	$(PYTHON) -m sphinx -b html --jobs=auto \
+	$(PYTHON) -m sphinx --jobs=auto \
 		-D codeautolink_warn_on_failed_resolve=1 \
 		-D codeautolink_warn_on_missing_inventory=1 \
-		-d $(BUILDDIR)/doctrees . $(BUILDDIR)/html 2>&1
+		-b html -d $(DOCTREES) . $(OUTDIR) 2>&1
+
+# --- tests
+
+test:  ## Run doc sanity tests.
+	$(PYTHON) -m pytest test_docs.py $(ARGS)
+
+test-online-doc:  ## Smoke tests against the live docs site.
+	PSUTIL_DOCS_ONLINE=1 $(PYTHON) -m pytest test_docs_online.py -v
 
 # --- tools
 

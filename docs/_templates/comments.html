@@ -1,0 +1,21 @@
+{#-
+  Blog comments (giscus). Post pages only, unless the post carries a
+  bare ":no_comments:" field. Config comes from conf.py via
+  _ext/giscus.py.
+
+  Hidden until js/giscus.js has the widget up, so a reader with JS
+  off gets nothing rather than an empty box. data-term is the source
+  path, not the URL, so a domain change keeps threads attached.
+-#}
+{% if is_blog_post and giscus_repo %}
+<section class="comments" aria-labelledby="comments-heading" hidden>
+  <h2 id="comments-heading">{{ _('Comments') }}</h2>
+  <div class="giscus"
+       data-repo="{{ giscus_repo|e }}"
+       data-repo-id="{{ giscus_repo_id|e }}"
+       data-category="{{ giscus_category|e }}"
+       data-category-id="{{ giscus_category_id|e }}"
+       data-term="{{ pagename|e }}"
+       data-theme-url="{{ pathto('_static/css/giscus.css', 1)|e }}"></div>
+</section>
+{% endif %}

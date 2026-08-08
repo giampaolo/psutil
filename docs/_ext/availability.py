@@ -47,10 +47,10 @@ class Availability(SphinxDirective):
 
     def run(self):
         title = sphinx_gettext("Availability")
-        sep = nodes.Text(": ")
+        sep = nodes.Text(" ")
         parsed, msgs = self.state.inline_text(self.arguments[0], self.lineno)
         pnode = nodes.paragraph(
-            title, "", nodes.emphasis(title, title), sep, *parsed, *msgs
+            title, "", nodes.emphasis(title, title + ":"), sep, *parsed, *msgs
         )
         self.set_source_info(pnode)
         cnode = nodes.container("", pnode, classes=["availability"])

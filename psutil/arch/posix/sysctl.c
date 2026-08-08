@@ -49,8 +49,16 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
     if (!mib || miblen == 0 || !buf || !buflen)
         return psutil_badargs("psutil_sysctl_malloc");
 
+    // Unlike the fixed-size reads in psutil_sysctl(), these queries
+    // fetch whole kernel tables (processes, sockets, disks). The
+    // kernel walks them under lock, which can take a while on busy
+    // systems, so release the GIL. This includes the size probes:
+    // counting the table costs about as much as copying it.
+
     // First query to determine required size
+    Py_BEGIN_ALLOW_THREADS
     ret = sysctl(mib, miblen, NULL, &needed, NULL, 0);
+    Py_END_ALLOW_THREADS
     if (ret == -1) {
         psutil_oserror_wsyscall("sysctl() malloc 1/3");
         return -1;
@@ -69,7 +77,9 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
         }
 
         size_t len = needed;
+        Py_BEGIN_ALLOW_THREADS
         ret = sysctl(mib, miblen, buffer, &len, NULL, 0);
+        Py_END_ALLOW_THREADS
 
         if (ret == 0) {
             // Success: return buffer and length
@@ -84,7 +94,10 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
             buffer = NULL;
 
             // Re-query needed size for next attempt
-            if (sysctl(mib, miblen, NULL, &needed, NULL, 0) == -1) {
+            Py_BEGIN_ALLOW_THREADS
+            ret = sysctl(mib, miblen, NULL, &needed, NULL, 0);
+            Py_END_ALLOW_THREADS
+            if (ret == -1) {
                 psutil_oserror_wsyscall("sysctl() malloc 2/3");
                 return -1;
             }
@@ -156,88 +169,5 @@ psutil_sysctlbyname(const char *name, void *buf, size_t buflen) {
 }
 
 
-// Allocate buffer for sysctlbyname with retry on ENOMEM or size mismatch.
-// The caller is responsible for freeing the memory.
-int
-psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
-    int ret;
-    int max_retries = MAX_RETRIES;
-    size_t needed = 0;
-    size_t len = 0;
-    char *buffer = NULL;
-    char errbuf[256];
-
-    if (!name || !buf || !buflen)
-        return psutil_badargs("psutil_sysctlbyname_malloc");
-
-    // First query to determine required size.
-    ret = sysctlbyname(name, NULL, &needed, NULL, 0);
-    if (ret == -1) {
-        str_format(
-            errbuf, sizeof(errbuf), "sysctlbyname('%s') malloc 1/3", name
-        );
-        psutil_oserror_wsyscall(errbuf);
-        return -1;
-    }
-
-    if (needed == 0) {
-        psutil_debug("psutil_sysctlbyname_malloc() size = 0");
-    }
-
-    while (max_retries-- > 0) {
-        // Zero-initialize buffer to prevent uninitialized bytes.
-        buffer = calloc(1, needed);
-        if (buffer == NULL) {
-            PyErr_NoMemory();
-            return -1;
-        }
-
-        len = needed;
-        ret = sysctlbyname(name, buffer, &len, NULL, 0);
-        if (ret == 0) {
-            // Success: return buffer and actual length.
-            *buf = buffer;
-            *buflen = len;
-            return 0;
-        }
-
-        // Handle buffer too small. Re-query and retry.
-        if (errno == ENOMEM) {
-            free(buffer);
-            buffer = NULL;
-
-            if (sysctlbyname(name, NULL, &needed, NULL, 0) == -1) {
-                str_format(
-                    errbuf,
-                    sizeof(errbuf),
-                    "sysctlbyname('%s') malloc 2/3",
-                    name
-                );
-                psutil_oserror_wsyscall(errbuf);
-                return -1;
-            }
-
-            psutil_debug("psutil_sysctlbyname_malloc() retry");
-            continue;
-        }
-
-        // Other errors: clean up and give up.
-        free(buffer);
-        str_format(
-            errbuf, sizeof(errbuf), "sysctlbyname('%s') malloc 3/3", name
-        );
-        psutil_oserror_wsyscall(errbuf);
-        return -1;
-    }
-
-    str_format(
-        errbuf,
-        sizeof(errbuf),
-        "sysctlbyname('%s') buffer allocation retry limit exceeded",
-        name
-    );
-    psutil_runtime_error(errbuf);
-    return -1;
-}
 #endif  // PSUTIL_HAS_SYSCTLBYNAME
 #endif  // PSUTIL_HAS_SYSCTL

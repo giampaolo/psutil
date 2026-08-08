@@ -19,6 +19,7 @@
 PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
     int i;
+    int ret;
     struct statinfo stats;
 
     PyObject *py_retdict = PyDict_New();
@@ -26,7 +27,10 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
-    if (devstat_checkversion(NULL) < 0) {
+    Py_BEGIN_ALLOW_THREADS
+    ret = devstat_checkversion(NULL);
+    Py_END_ALLOW_THREADS
+    if (ret < 0) {
         psutil_runtime_error("devstat_checkversion() syscall failed");
         goto error;
     }
@@ -38,7 +42,10 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     }
     bzero(stats.dinfo, sizeof(struct devinfo));
 
-    if (devstat_getdevs(NULL, &stats) == -1) {
+    Py_BEGIN_ALLOW_THREADS
+    ret = devstat_getdevs(NULL, &stats);
+    Py_END_ALLOW_THREADS
+    if (ret == -1) {
         psutil_runtime_error("devstat_getdevs() syscall failed");
         goto error;
     }

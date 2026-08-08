@@ -168,6 +168,14 @@ was assigned the same PID.
 creation time, and returns ``False`` if the PID was reused. Prefer it over
 :func:`pid_exists`.
 
+.. note::
+
+  On FreeBSD, OpenBSD, SunOS and AIX the PID reuse check is disabled, and
+  process identity is based on the PID alone. That's because on these platforms
+  the process creation time is not stable across system clock updates (e.g.
+  NTP), which previously caused false :exc:`NoSuchProcess` exceptions for
+  processes which were still alive (:gh:`2888`).
+
 .. _faq_zombie_process:
 
 What is a zombie process?

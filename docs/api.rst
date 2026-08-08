@@ -216,6 +216,11 @@ CPU
   If :field:`min` and :field:`max` cannot be determined they are set to
   ``0.0``.
 
+  On some systems the CPU frequency cannot be determined at all (e.g. certain
+  virtual machines, containers or CPU architectures). In that case this returns
+  ``None``, or an empty list if *percpu* is ``True``. This can happen on Linux,
+  macOS and FreeBSD; on Windows and OpenBSD a value is always returned.
+
   .. code-block:: pycon
 
      >>> import psutil
@@ -236,6 +241,10 @@ CPU
 
   .. versionchanged:: 5.9.1
      added OpenBSD support.
+
+  .. versionchanged:: 8.0.0
+     on macOS ARM64 this may return ``None`` when CPU frequency data is
+     unavailable (e.g. on virtual machines), instead of raising.
 
 .. function:: getloadavg()
 
@@ -314,6 +323,7 @@ Memory
   .. list-table::
      :header-rows: 1
      :widths: 9 15 14 14 26
+     :class: wide-table
 
      * - Field
        - Linux
@@ -940,6 +950,11 @@ Other system info
      [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0, pid=1352),
       suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
 
+  .. note::
+    On UNIX this reads the ``utmp`` database, and returns an empty list if
+    nothing maintains it, e.g. on musl libc (Alpine Linux), which doesn't
+    implement it. ``who`` is empty too in that case.
+
   .. versionchanged:: 5.3.0
      added :field:`pid` field.
 
@@ -1136,10 +1151,13 @@ Process class
   by :meth:`threads`).
 
   When calling methods of this class, always be prepared to catch
-  :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions. The builtin
-  :func:`hash` can be used on instances to uniquely identify a process over
-  time (the hash combines PID and creation time), so instances can also be used
-  in a :class:`set`.
+  :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions. Instances can be
+  compared for equality and used in a :class:`set` or as :class:`dict` keys:
+  two instances are equal if they have the same PID and creation time. If the
+  creation time of either instance is unknown (e.g. on :exc:`AccessDenied`, or
+  for zombie processes), identity falls back on the PID alone. The same applies
+  on the platforms where creation time is not part of process identity (see
+  :ref:`faq_pid_reuse`).
 
   .. note::
 
@@ -1148,7 +1166,8 @@ Process class
     process. To prevent this, use :meth:`is_running` first. Some methods (e.g.,
     setters and signal-related methods) perform an additional check using PID +
     creation time, and will raise :exc:`NoSuchProcess` if the PID has been
-    reused. See :ref:`faq_pid_reuse` for details.
+    reused. This check is not available on all platforms. See
+    :ref:`faq_pid_reuse` for details.
 
   .. note::
 
@@ -1210,6 +1229,10 @@ Process class
        ...     p.status()  # from cache
        ...
        >>>
+
+    Which methods share a syscall, and therefore get cached, depends on the
+    platform, so the example above is indicative. See
+    :ref:`perf-oneshot-methods` for the full list.
 
     .. seealso::
       - :doc:`performance`
@@ -2056,8 +2079,9 @@ Process class
     .. warning::
       - Windows: this is not guaranteed to enumerate all file handles (see
         :ref:`faq_open_files_windows`)
-      - BSD: can return empty-string paths due to a kernel bug (see
-        `issue 595 <https://github.com/giampaolo/psutil/pull/595>`_)
+      - NetBSD, OpenBSD: :field:`path` is always an empty string. The kernel
+        doesn't expose it (there's no path field in ``struct kinfo_file``).
+      - FreeBSD: :field:`path` can be an empty string (:gh:`595`).
 
     .. versionchanged:: 3.1.0
        no longer hangs on Windows.
@@ -2666,7 +2690,7 @@ Process I/O priority constants
 Represent the I/O priority class of a process (Linux and Windows only). They
 can be used in conjunction with :meth:`Process.ionice` (*ioclass* argument).
 
-Linux (see :manpage:`ioprio_get(2)`):
+- Linux (see :manpage:`ioprio_get(2)`):
 
   .. data:: IOPRIO_CLASS_RT
 
@@ -2684,7 +2708,7 @@ Linux (see :manpage:`ioprio_get(2)`):
 
      No priority set (default; treated as :data:`IOPRIO_CLASS_BE`).
 
-Windows:
+- Windows:
 
   .. data:: IOPRIO_VERYLOW
   .. data:: IOPRIO_LOW
@@ -2712,7 +2736,7 @@ explained in :func:`resource.getrlimit` documentation.
    these constants are now :class:`ProcessRlimit` enum members (were plain
    integers). See :ref:`migration guide <migration-8.0>`.
 
-Linux / FreeBSD:
+- Linux / FreeBSD:
 
   .. data:: RLIM_INFINITY
   .. data:: RLIMIT_AS
@@ -2726,7 +2750,7 @@ Linux / FreeBSD:
   .. data:: RLIMIT_RSS
   .. data:: RLIMIT_STACK
 
-Linux specific:
+- Linux specific:
 
   .. data:: RLIMIT_LOCKS
   .. data:: RLIMIT_MSGQUEUE
@@ -2735,7 +2759,7 @@ Linux specific:
   .. data:: RLIMIT_RTTIME
   .. data:: RLIMIT_SIGPENDING
 
-FreeBSD specific:
+- FreeBSD specific:
 
   .. data:: RLIMIT_SWAP
 
@@ -2870,11 +2894,22 @@ Environment variables
 
   .. versionadded:: 5.4.2
 
+.. envvar:: PSUTIL_BUILD_JOBS
+
+  By default, psutil compiles its C source files in parallel, using one job per
+  CPU, which makes installing from source 2x to 3.6x faster. Set this variable
+  to change the number of jobs, or to 1 to compile serially.
+
+  .. code-block:: bash
+
+     $ PSUTIL_BUILD_JOBS=1 python3 -m pip install --no-binary=psutil psutil
+
+  .. versionadded:: 8.0.0
+
+.. ============================================================================
+
 .. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt
 .. _`psleak`: https://github.com/giampaolo/psleak
-
-.. === Windows API
-
 .. _`GetExitCodeProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
 .. _`GetPerformanceInfo`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getperformanceinfo
 .. _`PROCESS_MEMORY_COUNTERS_EX`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex

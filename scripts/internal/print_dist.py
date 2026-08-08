@@ -8,6 +8,7 @@
 
 import argparse
 import collections
+import fnmatch
 import os
 import pathlib
 import sys
@@ -19,6 +20,25 @@ from _bootstrap import load_module  # noqa: E402
 _common = load_module(ROOT_DIR / "psutil" / "_common.py")
 bytes2human = _common.bytes2human
 print_color = _common.print_color
+
+# Tags are spelled out because they change silently when a different
+# Python builds the wheel. Trailing manylinux ones follow the image.
+EXPECTED_WHEELS = [
+    "*-cp38-abi3-manylinux2010_x86_64.*.whl",
+    "*-cp38-abi3-manylinux2014_aarch64.*.whl",
+    "*-cp38-abi3-musllinux_1_2_x86_64.whl",
+    "*-cp38-abi3-musllinux_1_2_aarch64.whl",
+    "*-cp38-abi3-macosx_10_15_x86_64.whl",
+    "*-cp38-abi3-macosx_11_0_arm64.whl",
+    "*-cp38-abi3-win_amd64.whl",
+    "*-cp38-abi3-win_arm64.whl",
+    "*-cp314-cp314t-manylinux2010_x86_64.*.whl",
+    "*-cp314-cp314t-manylinux2014_aarch64.*.whl",
+    "*-cp314-cp314t-macosx_10_15_x86_64.whl",
+    "*-cp314-cp314t-macosx_11_0_arm64.whl",
+    "*-cp314-cp314t-win_amd64.whl",
+    "*-cp314-cp314t-win_arm64.whl",
+]
 
 
 class Wheel:
@@ -94,6 +114,26 @@ class Tarball(Wheel):
         return "-"
 
 
+def check_dist(wheels, tarballs):
+    """Assert the full expected set of wheels + one sdist is present.
+    Returns a list of error strings (empty means all good).
+    """
+    names = [w.name for w in wheels]
+    errors = [
+        f"missing wheel: {pat}"
+        for pat in EXPECTED_WHEELS
+        if not any(fnmatch.fnmatch(n, pat) for n in names)
+    ]
+    errors += [
+        f"unexpected wheel: {n}"
+        for n in names
+        if not any(fnmatch.fnmatch(n, p) for p in EXPECTED_WHEELS)
+    ]
+    if len(tarballs) != 1:
+        errors.append(f"expected 1 sdist, found {len(tarballs)}")
+    return errors
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -101,6 +141,11 @@ def main():
         nargs="?",
         default="dist",
         help='directory containing tar.gz or wheel files',
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="assert the full expected set of wheels is present",
     )
     args = parser.parse_args()
 
@@ -141,6 +186,23 @@ def main():
         f"\n\ntotals: files={tot_files}, size={bytes2human(tot_size)}",
         bold=True,
     )
+
+    if args.check:
+        all_pkgs = [p for pkgs in groups.values() for p in pkgs]
+        tarballs = [p for p in all_pkgs if isinstance(p, Tarball)]
+        wheels = [p for p in all_pkgs if not isinstance(p, Tarball)]
+        errors = check_dist(wheels, tarballs)
+        if errors:
+            print_color("\ndist check FAILED:", color='red', bold=True)
+            for err in errors:
+                print_color("  " + err, color='red')
+            print_color(
+                "\nif intentional, update EXPECTED_WHEELS in "
+                + os.path.basename(__file__),
+                bold=True,
+            )
+            sys.exit(1)
+        print_color("\ndist check: OK", color='green', bold=True)
 
 
 if __name__ == '__main__':

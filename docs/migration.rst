@@ -25,7 +25,8 @@ Key breaking changes in 8.0:
   4.0 and removed in 7.0).
 - New :attr:`Process.attrs`: :class:`frozenset` of valid attribute names;
   ``process_iter(attrs=[])`` is deprecated.
-- Python 3.6 dropped.
+- Python 3.6 and 3.7 dropped.
+- Windows < 10 dropped.
 
 .. important::
 
@@ -187,10 +188,17 @@ It also makes it easy to pass all or a subset of attributes.
   # all except connections
   psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
 
-Python 3.6 dropped
-^^^^^^^^^^^^^^^^^^^^
+Python 3.6 and 3.7 dropped
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Python 3.6 is no longer supported. Minimum version is Python 3.7.
+Minimum version is now Python 3.8.
+
+Windows < 10 dropped
+^^^^^^^^^^^^^^^^^^^^^
+
+Support for Windows Vista, 7, 8, 8.1 and their server counterparts (Server 2008
+to 2012 R2) was removed. Minimum version is now Windows 10 / Windows Server
+2016. The last release supporting them is the 7.2.x series. See :gh:`2893`.
 
 Git tags renamed
 ^^^^^^^^^^^^^^^^^

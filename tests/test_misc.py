@@ -13,25 +13,36 @@ import json
 import os
 import pickle
 import socket
+import subprocess
 import sys
+import textwrap
+import warnings
 from unittest import mock
 
 import psutil
+from psutil import POSIX
 from psutil import WINDOWS
+from psutil import _psutil
 from psutil._common import bcat
+from psutil._common import broadcast_addr
 from psutil._common import cat
 from psutil._common import debug
 from psutil._common import isfile_strict
 from psutil._common import memoize_when_activated
 from psutil._common import parse_environ_block
 from psutil._common import supports_ipv6
+from psutil._common import warn
 from psutil._common import wrap_numbers
+from psutil._ntuples import snicaddr
 
 from . import HAS_NET_IO_COUNTERS
+from . import ROOT_DIR
 from . import PsutilTestCase
+from . import import_module_by_path
 from . import process_namespace
 from . import pytest
 from . import reload_module
+from . import skipif
 from . import system_namespace
 
 # ===================================================================
@@ -42,7 +53,7 @@ from . import system_namespace
 class TestSpecialMethods(PsutilTestCase):
     def test_check_pid_range(self):
         with pytest.raises(OverflowError):
-            psutil._psplatform.cext.check_pid_range(2**128)
+            _psutil.check_pid_range(2**128)
         with pytest.raises(psutil.NoSuchProcess):
             psutil.Process(2**128)
 
@@ -174,18 +185,6 @@ class TestSpecialMethods(PsutilTestCase):
             == "timeout after 5 seconds (pid=321, name='name')"
         )
 
-    def test_process__eq__(self):
-        p1 = psutil.Process()
-        p2 = psutil.Process()
-        assert p1 == p2
-        p2._ident = (0, 0)
-        assert p1 != p2
-        assert p1 != 'foo'
-
-    def test_process__hash__(self):
-        s = {psutil.Process(), psutil.Process()}
-        assert len(s) == 1
-
 
 # ===================================================================
 # --- Misc, generic, corner cases
@@ -200,6 +199,7 @@ class TestMisc(PsutilTestCase):
         for name in dir_psutil:
             if name in {
                 'debug',
+                'warn',
                 'tests',
                 'test',
                 'PermissionError',
@@ -319,43 +319,55 @@ class TestMisc(PsutilTestCase):
         assert b.pid == 4567
         assert b.name == 'name'
 
-    def test_ad_on_process_creation(self):
-        # We are supposed to be able to instantiate Process also in case
-        # of zombie processes or access denied.
-        with mock.patch.object(
-            psutil.Process, '_get_ident', side_effect=psutil.AccessDenied
-        ) as meth:
-            psutil.Process()
-            assert meth.called
-
-        with mock.patch.object(
-            psutil.Process, '_get_ident', side_effect=psutil.ZombieProcess(1)
-        ) as meth:
-            psutil.Process()
-            assert meth.called
-
-        with mock.patch.object(
-            psutil.Process, '_get_ident', side_effect=ValueError
-        ) as meth:
-            with pytest.raises(ValueError):
-                psutil.Process()
-            assert meth.called
-
-        with mock.patch.object(
-            psutil.Process, '_get_ident', side_effect=psutil.NoSuchProcess(1)
-        ) as meth:
-            with pytest.raises(psutil.NoSuchProcess):
-                psutil.Process()
-            assert meth.called
-
     def test_sanity_version_check(self):
         # see: https://github.com/giampaolo/psutil/issues/564
-        with mock.patch(
-            "psutil._psplatform.cext.version", return_value="0.0.0"
-        ):
+        with mock.patch.object(_psutil, "version", return_value="0.0.0"):
             with pytest.raises(ImportError) as cm:
                 reload_module(psutil)
             assert "version conflict" in str(cm.value).lower()
+
+    def test_reload_keeps_all(self):
+        # A reload reuses the module dict, so the enum constants are
+        # already there and used to not make it back into __all__.
+        before = sorted(psutil.__all__)
+        reload_module(psutil)
+        assert sorted(psutil.__all__) == before
+
+
+# ===================================================================
+# --- C extension
+# ===================================================================
+
+
+class TestCExtension(PsutilTestCase):
+
+    def test_exceptions_survive_reimport(self):
+        # PEP 489 multi-phase init re-runs the C exec slot on re-import;
+        # the C exceptions are cached in process-global vars so their
+        # identity survives. Run in a subprocess: re-importing the
+        # module (del from sys.modules + import) mutates global state and
+        # would leak into other tests.
+        attrs = (
+            ["TimeoutExpired", "TimeoutAbandoned"]
+            if WINDOWS
+            else ["ZombieProcessError"]
+        )
+        code = textwrap.dedent(f"""
+            import importlib
+            import sys
+
+            from psutil import _psutil
+
+            attrs = {attrs!r}
+            before = {{a: getattr(_psutil, a) for a in attrs}}
+            del sys.modules[_psutil.__name__]
+            new = importlib.import_module(_psutil.__name__)
+            for a in attrs:
+                assert getattr(new, a) is before[a], a
+        """)
+        subprocess.check_output(
+            [sys.executable, "-c", code], stderr=subprocess.STDOUT
+        )
 
 
 # ===================================================================
@@ -485,6 +497,20 @@ class TestCommonModule(PsutilTestCase):
         assert "no such file" in msg
         assert "/foo" in msg
 
+    def test_warn(self):
+        with mock.patch.object(psutil._common, "PSUTIL_TESTING", True):
+            with pytest.raises(RuntimeError, match="CRITICAL: hello"):
+                warn("hello")
+
+        with mock.patch.object(psutil._common, "PSUTIL_TESTING", False):
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                warn("hello")
+        assert len(ws) == 1
+        assert ws[0].category is RuntimeWarning
+        assert "hello" in str(ws[0].message)
+        assert __file__.replace('.pyc', '.py') in str(ws[0].message)
+
     def test_cat_bcat(self):
         testfn = self.get_testfn()
         with open(testfn, "w") as f:
@@ -497,6 +523,25 @@ class TestCommonModule(PsutilTestCase):
             bcat(testfn + '-invalid')
         assert cat(testfn + '-invalid', fallback="bar") == "bar"
         assert bcat(testfn + '-invalid', fallback="bar") == "bar"
+
+    def test_broadcast_addr(self):
+        def addr(address, netmask):
+            return snicaddr(socket.AF_INET, address, netmask, None, None)
+
+        assert (
+            broadcast_addr(addr("10.1.1.86", "255.255.255.0")) == "10.1.1.255"
+        )
+        assert (
+            broadcast_addr(addr("172.20.10.7", "255.255.255.240"))
+            == "172.20.10.15"
+        )
+
+    def test_broadcast_addr_single_host(self):
+        # A /32 is a single-host network, it has no broadcast address.
+        nt = snicaddr(
+            socket.AF_INET, "89.234.156.160", "255.255.255.255", None, None
+        )
+        assert broadcast_addr(nt) is None
 
 
 # ===================================================================
@@ -711,7 +756,7 @@ class TestWrapNumbers(PsutilTestCase):
         wrap_numbers.cache_clear('disk_io')
         wrap_numbers.cache_clear('?!?')
 
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_cache_clear_public_apis(self):
         if not psutil.disk_io_counters() or not psutil.net_io_counters():
             return pytest.skip("no disks or NICs available")
@@ -731,3 +776,98 @@ class TestWrapNumbers(PsutilTestCase):
         psutil.net_io_counters.cache_clear()
         caches = wrap_numbers.cache_info()
         assert caches == ({}, {}, {})
+
+
+# ===================================================================
+# --- Test setup.py
+# ===================================================================
+
+
+@skipif(not POSIX, reason="POSIX only")
+class TestSetupPy(PsutilTestCase):
+    @staticmethod
+    def import_setup_py():
+        path = os.path.join(ROOT_DIR, "setup.py")
+        if not os.path.exists(path):
+            return pytest.skip("setup.py not available")
+        return import_module_by_path(path)
+
+    def test_num_cpus_env_var(self):
+        setup = self.import_setup_py()
+        with mock.patch.dict(os.environ, {"PSUTIL_BUILD_JOBS": "3"}):
+            assert setup.num_cpus() == 3
+        # Never return 0, else ThreadPoolExecutor() raises ValueError.
+        with mock.patch.dict(os.environ, {"PSUTIL_BUILD_JOBS": "0"}):
+            assert setup.num_cpus() == 1
+
+    def test_num_cpus_default(self):
+        setup = self.import_setup_py()
+        with mock.patch.dict(os.environ, clear=True):
+            assert setup.num_cpus() >= 1
+
+    def test_get_cc(self):
+        setup = self.import_setup_py()
+        with mock.patch.dict(os.environ, {"CC": "gcc -pthread"}):
+            assert setup.get_cc() == ["gcc", "-pthread"]
+
+    @staticmethod
+    def run_instructions(setup, **flags):
+        """Call print_install_instructions() and return what it wrote
+        to stderr.
+        """
+        with contextlib.ExitStack() as stack:
+            for name, value in flags.items():
+                stack.enter_context(mock.patch.object(setup, name, value))
+            f = stack.enter_context(contextlib.redirect_stderr(io.StringIO()))
+            setup.print_install_instructions()
+        return f.getvalue()
+
+    def test_instructions_are_silent_if_toolchain_is_ok(self):
+        # Else any unrelated build failure would wrongly blame the
+        # compiler or the headers.
+        setup = self.import_setup_py()
+        out = self.run_instructions(
+            setup, has_compiler=lambda: True, has_python_h=lambda: True
+        )
+        assert out == ""
+
+    def test_instructions_without_compiler(self):
+        setup = self.import_setup_py()
+        out = self.run_instructions(
+            setup,
+            has_compiler=lambda: False,
+            MACOS=False,
+            AIX=False,
+            PYPY=False,
+        )
+        assert "C compiler is not installed" in out
+        assert "install-sysdeps.sh" in out
+
+    def test_instructions_on_macos(self):
+        setup = self.import_setup_py()
+        out = self.run_instructions(
+            setup, has_compiler=lambda: False, MACOS=True
+        )
+        assert "xcode-select --install" in out
+        assert "install-sysdeps.sh" not in out
+
+    def test_instructions_without_headers(self):
+        # No command is suggested on platforms install-sysdeps.sh
+        # doesn't cover.
+        setup = self.import_setup_py()
+        out = self.run_instructions(
+            setup,
+            has_compiler=lambda: True,
+            has_python_h=lambda: False,
+            MACOS=False,
+            AIX=True,
+            PYPY=False,
+        )
+        assert "header files are not installed" in out
+        assert "Try running" not in out
+
+    def test_detection_without_compiler(self):
+        setup = self.import_setup_py()
+        with mock.patch.dict(os.environ, {"CC": "psutil-no-such-cc"}):
+            assert setup.has_compiler() is False
+            assert setup.has_python_h() is False

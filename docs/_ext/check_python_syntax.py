@@ -31,7 +31,7 @@ def check_python_blocks(app, doctree, docname):
             continue
 
         try:
-            ast.parse(code)
+            ast.parse(code, feature_version=(3, 8))
         except SyntaxError as err:
             lineno = node.line or "?"
             msg = (

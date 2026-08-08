@@ -18,7 +18,7 @@ import time
 
 _HERE = pathlib.Path(__file__).resolve().parent
 _ROOT_DIR = _HERE.parent
-sys.path.insert(0, str(_HERE / '_ext'))  # needed to load local extensions
+sys.path.insert(0, str(_HERE / "_ext"))  # needed to load local extensions
 
 
 # Load _bootstrap.py (at the repo root) without putting the repo
@@ -56,6 +56,7 @@ _third_party_exts = [
     "ablog",
     "notfound.extension",  # custom 404 page
     "sphinx.ext.extlinks",
+    "sphinx.ext.githubpages",  # writes .nojekyll + CNAME from html_baseurl
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "sphinx_codeautolink",
@@ -66,15 +67,19 @@ _third_party_exts = [
 ]
 
 _local_exts = [  # defined in the _ext/ folder
+    "ablog_extras",
     "availability",
     "changelog_anchors",
     "check_python_syntax",
     "field_role",
     "genindex_filter",
+    "giscus",
     "glossary_toc",
+    "notfound_extras",
     "opengraph_override",
     "post_banner",
     "proc_role",
+    "substitutions",
 ]
 
 extensions = _third_party_exts + _local_exts
@@ -86,7 +91,7 @@ extensions = _third_party_exts + _local_exts
 project = PROJECT_NAME
 author = AUTHOR
 version = release = VERSION
-copyright = f"2009-{THIS_YEAR}, {AUTHOR}"  # shown in the footer
+copyright = f"2009-{THIS_YEAR} {AUTHOR}"  # shown in the footer
 
 # =====================================================================
 # Cross-references and external links
@@ -112,7 +117,6 @@ manpages_url = "https://manpages.debian.org/{path}"
 # Paths
 # =====================================================================
 
-html_static_path = ["_static"]
 exclude_patterns = ["_build"]
 rst_prolog = ".. currentmodule:: psutil\n"  # Prepended to every .rst file
 
@@ -123,19 +127,11 @@ rst_prolog = ".. currentmodule:: psutil\n"  # Prepended to every .rst file
 # Canonical site URL. Picked up by Sphinx for <link rel="canonical">
 # tags. Reused below by sphinxext-opengraph (og:url), sphinx-sitemap,
 # and (via blog_baseurl) ablog's atom feed.
-#
-#         -------- TODO / IMPORTANT -------
-#
-# At 8.0.0 release, change this to the final base URL
-# (https://psutil.readthedocs.io/ or https://psutil.org/) and flip the
-# RTD Single Version toggle at the same time.
-html_baseurl = "https://psutil.readthedocs.io/latest/"
+html_baseurl = "https://psutil.io/"
 
-#         -------- TODO / IMPORTANT -------
-#
 # sphinx-notfound-page: absolute URL prefix for static files and
-# nav links on 404.html. Will become "/" when we switch domain.
-notfound_urls_prefix = "/latest/"
+# nav links on 404.html.
+notfound_urls_prefix = "/"
 
 html_title = PROJECT_NAME
 html_favicon = "_static/images/favicon.svg"
@@ -156,56 +152,56 @@ copybutton_exclude = ".linenos, .gp"
 # Theming
 # =====================================================================
 
-html_theme = "sphinx_rtd_theme"
+# Custom psutil-sphinx-theme, built on top of Sphinx's `basic` theme.
 
-if html_theme == "sphinx_rtd_theme":
-    html_theme_options = {
-        "collapse_navigation": False,
-        "navigation_depth": 1,
-        "titles_only": True,
-        "flyout_display": "attached",
-        "version_selector": False,
-        "language_selector": False,
-    }
-    templates_path = ["_templates", "_static/images"]
-    pygments_style = "tango"  # https://pygments.org/styles/
-    html_css_files = [
-        (
-            "https://fonts.googleapis.com/css2"
-            "?family=Inter:wght@400;500;600;700"
-            "&family=JetBrains+Mono:wght@400;600"
-            "&family=Merriweather:ital,wght@0,400;0,700;1,400"
-            "&display=swap"
-        ),
-        "css/custom.css",
-        "css/code.css",
-        "css/home.css",
-        "css/blog.css",
-        "css/right-toc.css",
-        "css/prev-next.css",
-    ]
-    html_js_files = [
-        "js/highlight-repl.js",
-        "js/external-urls.js",
-        ("js/theme-toggle.js", {"defer": "defer"}),
-        ("js/sidebar-close.js", {"defer": "defer"}),
-        ("js/search-shortcuts.js", {"defer": "defer"}),
-        ("js/right-toc.js", {"defer": "defer"}),
-        ("js/github-meta.js", {"defer": "defer"}),
-        ("js/home-install-copy.js", {"defer": "defer"}),
-    ]
+html_theme = "basic"
+html_theme_options = {
+    "globaltoc_maxdepth": 1,
+    "globaltoc_collapse": False,
+    "globaltoc_includehidden": True,
+}
+html_static_path = ["_static"]
+html_extra_path = ["_extra"]  # robots.txt, copied verbatim to site root
+templates_path = ["_templates"]
+pygments_style = "tango"  # base palette (overridden by css/code.css)
+
+
+def _css_files():
+    css_dir = _HERE / "_static" / "css"
+    # giscus.css is loaded inside the giscus iframe (see
+    # _templates/comments.html), never by our own pages. Linking it
+    # here would make every page fetch its @import from giscus.app.
+    files = sorted(
+        p.name for p in css_dir.glob("*.css") if p.name != "giscus.css"
+    )
+    head = ["base.css", "fonts.css", "fontawesome.css", "typography.css"]
+    tail = ["home.css"]
+    middle = [f for f in files if f not in head + tail]
+    return [f"css/{name}" for name in head + middle + tail if name in files]
+
+
+html_css_files = _css_files()
+
+
+def _js_files():
+    js_dir = _HERE / "_static" / "js"
+    files = sorted(p.name for p in js_dir.glob("*.js"))
+    return [(f"js/{name}", {"defer": "defer"}) for name in files]
+
+
+html_js_files = _js_files()
 
 # =====================================================================
 # Blog (ablog package)
 # =====================================================================
 
 # Force UTC for build-time timestamps so atom feed entries are
-# the same across build hosts (RTD runs UTC; local devs may not).
+# the same across build hosts (CI runs UTC; local devs may not).
 os.environ["TZ"] = "UTC"
 if hasattr(time, "tzset"):
     time.tzset()
 
-# Fix for ablog which shows local dates locally (not on RTD)
+# Fix for ablog, which otherwise formats dates in the local locale.
 try:
     locale.setlocale(locale.LC_TIME, "C")
 except locale.Error:
@@ -214,6 +210,15 @@ except locale.Error:
 # Drives atom feed entry <id>s and <link>s. Same value as html_baseurl
 # so feed URLs track canonicals URLs.
 blog_baseurl = html_baseurl
+
+# =====================================================================
+# Comments (giscus)
+# =====================================================================
+
+giscus_repo = "giampaolo/psutil-blog-comments"
+giscus_repo_id = "R_kgDOTfVGLA"
+giscus_category = "User Comments"
+giscus_category_id = "DIC_kwDOTfVGLM4DBrKC"
 
 # =====================================================================
 # sphinxext-opengraph
@@ -240,6 +245,23 @@ ogp_social_cards = {"image": _logo, "image_mini": _logo}
 # the default {lang}{version} prefix (we don't use either in URLs).
 sitemap_url_scheme = "{link}"
 sitemap_show_lastmod = True
+# dirhtml URLs are directories, so match the dir form (e.g. "search/",
+# not "search.html") or these leak into the sitemap.
+sitemap_excludes = [
+    "search/",
+    "genindex/",
+    "py-modindex/",
+    "404/",
+    "_modules/*",
+    "blog/archive/",
+    "blog/drafts/",
+    "blog/tag/",
+    "blog/tag/*",
+    "blog/category/",
+    "blog/category/*",
+    "blog/author/",
+    "blog/author/*",
+]
 # Suppress sphinx-sitemap warning (turned into error by
 # --fail-on-warning) occurring on CI.
 suppress_warnings = ["git.too_shallow"]
@@ -275,13 +297,12 @@ def setup(app):
     # collection of docs/test_docs.py doesn't hit it.
     import psutil  # noqa: F401
 
-    # Monkey patch ablog to support parallel builds:
-    # https://github.com/sunpy/ablog/pull/330.
-    def merge_ablog_posts(app, env, docnames, other):
-        if hasattr(other, "ablog_posts"):
-            if not hasattr(env, "ablog_posts"):
-                env.ablog_posts = {}
-            env.ablog_posts.update(other.ablog_posts)
+    # ablog and sphinx-codeautolink synthesize pages (blog/tag/*,
+    # blog/2025, _modules/*) with no .rst behind them. The footer's
+    # "Edit on GitHub" / "Updated" links would point at files that
+    # don't exist.
+    def set_has_rst_source(app, pagename, templatename, context, doctree):
+        path = pathlib.Path(app.env.doc2path(pagename))
+        context["has_rst_source"] = path.is_file()
 
-    app.connect("env-merge-info", merge_ablog_posts)
-    app.extensions["ablog"].parallel_read_safe = True
+    app.connect("html-page-context", set_has_rst_source)

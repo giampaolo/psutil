@@ -21,7 +21,7 @@ from collections import defaultdict
 
 from . import _ntuples as ntp
 from . import _psposix
-from . import _psutil_linux as cext
+from . import _psutil
 from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess
@@ -57,14 +57,18 @@ __extra__all__ = ['PROCFS_PATH']
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_PROC_SMAPS = os.path.exists(f"/proc/{os.getpid()}/smaps")
 HAS_PROC_SMAPS_ROLLUP = os.path.exists(f"/proc/{os.getpid()}/smaps_rollup")
-HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
-HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
+HAS_PROC_IO_PRIORITY = hasattr(_psutil, "proc_ioprio_get")
+HAS_CPU_AFFINITY = hasattr(_psutil, "proc_cpu_affinity_get")
 
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
-PAGESIZE = cext.getpagesize()
+PAGESIZE = _psutil.getpagesize()
 LITTLE_ENDIAN = sys.byteorder == 'little'
 UNSET = object()
+
+# Python 3.15 changed resource.prlimit() to return RLIM_INFINITY as the
+# unsigned 2**64-1 instead of -1; used to map it back to -1.
+RLIM_INFINITY_UNSIGNED = _psutil.RLIM_INFINITY & 0xFFFFFFFFFFFFFFFF
 
 # "man iostat" states that sectors are equivalent with blocks and have
 # a size of 512 bytes. Despite this value can be queried at runtime
@@ -255,8 +259,8 @@ def virtual_memory():
     mems = {}
     with open_binary(f"{get_procfs_path()}/meminfo") as f:
         for line in f:
-            fields = line.split()
-            mems[fields[0]] = int(fields[1]) * 1024
+            key, value = line.split(b':', 1)
+            mems[key + b':'] = int(value.split()[0]) * 1024
 
     # /proc doc states that the available fields in /proc/meminfo vary
     # by architecture and compile options, but these 3 values are also
@@ -375,8 +379,11 @@ def swap_memory():
     mems = {}
     with open_binary(f"{get_procfs_path()}/meminfo") as f:
         for line in f:
-            fields = line.split()
-            mems[fields[0]] = int(fields[1]) * 1024
+            # Note: some fields (e.g. "ShadowCallStack:10373888 kB")
+            # may not have a space after the colon, see:
+            # https://github.com/giampaolo/psutil/issues/2809
+            key, value = line.split(b':', 1)
+            mems[key + b':'] = int(value.split()[0]) * 1024
     # We prefer /proc/meminfo over sysinfo() syscall so that
     # psutil.PROCFS_PATH can be used in order to allow retrieval
     # for linux containers, see:
@@ -385,7 +392,7 @@ def swap_memory():
         total = mems[b'SwapTotal:']
         free = mems[b'SwapFree:']
     except KeyError:
-        _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
+        _, _, _, _, total, free, unit_multiplier = _psutil.linux_sysinfo()
         total *= unit_multiplier
         free *= unit_multiplier
 
@@ -426,9 +433,9 @@ def swap_memory():
 
 
 # malloc / heap functions; require glibc
-if hasattr(cext, "heap_info"):
-    heap_info = cext.heap_info
-    heap_trim = cext.heap_trim
+if hasattr(_psutil, "heap_info"):
+    heap_info = _psutil.heap_info
+    heap_trim = _psutil.heap_trim
 
 
 # =====================================================================
@@ -634,9 +641,11 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                 curr = bcat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
                 if curr is None:
                     online_path = f"/sys/devices/system/cpu/cpu{i}/online"
-                    # if cpu core is offline, set to all zeroes
+                    # If the CPU core is offline skip it instead of
+                    # reporting it as all zeroes, otherwise it drags
+                    # down the average frequency. See:
+                    # https://github.com/giampaolo/psutil/issues/2628
                     if cat(online_path, fallback=None) == "0\n":
-                        ret.append(ntp.scpufreq(0.0, 0.0, 0.0))
                         continue
                     msg = "can't find current frequency file"
                     raise NotImplementedError(msg)
@@ -650,7 +659,7 @@ else:
 
     def cpu_freq():
         """Alternate implementation using /proc/cpuinfo.
-        min and max frequencies are not available and are set to None.
+        min and max frequencies are not available and are set to 0.
         """
         return [ntp.scpufreq(x, 0.0, 0.0) for x in _cpu_get_cpuinfo_freq()]
 
@@ -660,7 +669,7 @@ else:
 # =====================================================================
 
 
-net_if_addrs = cext.net_if_addrs
+net_if_addrs = _psutil.net_if_addrs
 
 
 class _Ipv6UnsupportedError(Exception):
@@ -961,17 +970,17 @@ def net_io_counters():
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
     duplex_map = {
-        cext.DUPLEX_FULL: NicDuplex.NIC_DUPLEX_FULL,
-        cext.DUPLEX_HALF: NicDuplex.NIC_DUPLEX_HALF,
-        cext.DUPLEX_UNKNOWN: NicDuplex.NIC_DUPLEX_UNKNOWN,
+        _psutil.DUPLEX_FULL: NicDuplex.NIC_DUPLEX_FULL,
+        _psutil.DUPLEX_HALF: NicDuplex.NIC_DUPLEX_HALF,
+        _psutil.DUPLEX_UNKNOWN: NicDuplex.NIC_DUPLEX_UNKNOWN,
     }
     names = net_io_counters().keys()
     ret = {}
     for name in names:
         try:
-            mtu = cext.net_if_mtu(name)
-            flags = cext.net_if_flags(name)
-            duplex, speed = cext.net_if_duplex_speed(name)
+            mtu = _psutil.net_if_mtu(name)
+            flags = _psutil.net_if_flags(name)
+            duplex, speed = _psutil.net_if_duplex_speed(name)
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1279
             if err.errno != errno.ENODEV:
@@ -1132,8 +1141,8 @@ class RootFsDeviceFinder:
         with open_text(path) as f:
             for line in f:
                 if line.startswith("DEVNAME="):
-                    name = line.strip().rpartition("DEVNAME=")[2]
-                    if name:  # just for extra safety
+                    # just for extra safety
+                    if name := line.strip().rpartition("DEVNAME=")[2]:
                         return f"/dev/{name}"
 
     def ask_sys_class_block(self):
@@ -1197,7 +1206,7 @@ def disk_partitions(all=False):
         mounts_path = os.path.realpath(f"{procfs_path}/self/mounts")
 
     retlist = []
-    partitions = cext.disk_partitions(mounts_path)
+    partitions = _psutil.disk_partitions(mounts_path)
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
@@ -1462,7 +1471,7 @@ def sensors_battery():
 def users():
     """Return currently connected users as a list of named tuples."""
     retlist = []
-    rawlist = cext.users()
+    rawlist = _psutil.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         nt = ntp.suser(user, tty or None, hostname, tstamp, pid)
@@ -1748,11 +1757,9 @@ class Process:
     @wrap_exceptions
     def terminal(self):
         tty_nr = int(self._parse_stat_file()['ttynr'])
-        tmap = _psposix.get_terminal_map()
-        try:
-            return tmap[tty_nr]
-        except KeyError:
+        if tty_nr == 0:
             return None
+        return _psposix.get_terminal(tty_nr)
 
     # May not be available on old kernels.
     if os.path.exists(f"/proc/{os.getpid()}/io"):
@@ -2088,26 +2095,25 @@ class Process:
         #   return int(data.split()[18])
 
         # Use C implementation
-        return cext.proc_priority_get(self.pid)
+        return _psutil.proc_priority_get(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
-        return cext.proc_priority_set(self.pid, value)
+        return _psutil.proc_priority_set(self.pid, value)
 
     # starting from CentOS 6.
     if HAS_CPU_AFFINITY:
 
         @wrap_exceptions
         def cpu_affinity_get(self):
-            return cext.proc_cpu_affinity_get(self.pid)
+            return _psutil.proc_cpu_affinity_get(self.pid)
 
         def _get_eligible_cpus(
             self, _re=re.compile(br"Cpus_allowed_list:\t(\d+)-(\d+)")
         ):
             # See: https://github.com/giampaolo/psutil/issues/956
             data = self._read_status_file()
-            match = _re.findall(data)
-            if match:
+            if match := _re.findall(data):
                 return list(range(int(match[0][0]), int(match[0][1]) + 1))
             else:
                 return list(range(len(per_cpu_times())))
@@ -2115,7 +2121,7 @@ class Process:
         @wrap_exceptions
         def cpu_affinity_set(self, cpus):
             try:
-                cext.proc_cpu_affinity_set(self.pid, cpus)
+                _psutil.proc_cpu_affinity_set(self.pid, cpus)
             except (OSError, ValueError) as err:
                 if isinstance(err, ValueError) or err.errno == errno.EINVAL:
                     eligible_cpus = self._get_eligible_cpus()
@@ -2140,7 +2146,7 @@ class Process:
 
         @wrap_exceptions
         def ionice_get(self):
-            ioclass, value = cext.proc_ioprio_get(self.pid)
+            ioclass, value = _psutil.proc_ioprio_get(self.pid)
             ioclass = ProcessIOPriority(ioclass)
             return ntp.pionice(ioclass, value)
 
@@ -2157,7 +2163,7 @@ class Process:
             if value < 0 or value > 7:
                 msg = "value not in 0-7 range"
                 raise ValueError(msg)
-            return cext.proc_ioprio_set(self.pid, ioclass, value)
+            return _psutil.proc_ioprio_set(self.pid, ioclass, value)
 
     if hasattr(resource, "prlimit"):
 
@@ -2172,7 +2178,14 @@ class Process:
             try:
                 if limits is None:
                     # get
-                    return resource.prlimit(self.pid, resource_)
+                    soft, hard = resource.prlimit(self.pid, resource_)
+                    # Python 3.15 returns RLIM_INFINITY as the unsigned
+                    # 2**64-1 instead of -1; map it back for consistency.
+                    if soft == RLIM_INFINITY_UNSIGNED:
+                        soft = _psutil.RLIM_INFINITY
+                    if hard == RLIM_INFINITY_UNSIGNED:
+                        hard = _psutil.RLIM_INFINITY
+                    return soft, hard
                 else:
                     # set
                     if len(limits) != 2:

@@ -5,33 +5,27 @@
     <div align="center">
         <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/images/logo-psutil-readme.svg" alt="psutil" /></a>
         <p align="center">Process and System Utilities for Python</p>
-        <a href="https://psutil.readthedocs.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://psutil.readthedocs.io/latest/blog.html"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://psutil.readthedocs.io/latest/adoption.html"><b>Who uses psutil</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.io/blog/"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.io/adoption/"><b>Who uses psutil</b></a>&nbsp;&nbsp;&nbsp;
     </div>
 
     <br/>
 
     <div align="center">
-      <a href="https://clickpy.clickhouse.com/dashboard/psutil">
-        <img src="https://static.pepy.tech/badge/psutil/month" alt="Downloads">
-      </a>
+      <a href="https://clickpy.clickhouse.com/dashboard/psutil"><img src="https://static.pepy.tech/badge/psutil/month" alt="Downloads"></a>
 
-      <a href="https://repology.org/metapackage/python:psutil/versions">
-        <img src="https://repology.org/badge/tiny-repos/python:psutil.svg" alt="Binary packages">
-      </a>
+      <a href="https://repology.org/metapackage/python:psutil/versions"><img src="https://repology.org/badge/tiny-repos/python:psutil.svg" alt="Binary packages"></a>
 
-      <a href="https://pypi.org/project/psutil">
-        <img src="https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=yellowgreen" alt="Latest version">
-      </a>
+      <a href="https://pypi.org/project/psutil"><img src="https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=yellowgreen" alt="Latest version"></a>
+    </div>
 
-      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild">
-        <img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml.svg?label=Linux%2C%20macOS%2C%20Win" alt="Linux, macOS, Windows">
-      </a>
+    <div align="center">
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml.svg?label=Linux%2C%20macOS%2C%20Win" alt="Linux, macOS, Windows"></a>
 
-      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Absd-tests">
-        <img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=BSD" alt="FreeBSD, NetBSD, OpenBSD">
-      </a>
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Absd"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=BSD" alt="FreeBSD, NetBSD, OpenBSD"></a>
+
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Adocs"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/docs.yml.svg?label=docs" alt="Documentation"></a>
     </div>
 
 .. </PYPI-EXCLUDE>
@@ -42,11 +36,10 @@ About
 psutil is a cross-platform library for retrieving information about running
 **processes** and **system utilization** (CPU, memory, disks, network, sensors)
 in Python. It is useful mainly for **system monitoring**, **profiling**,
-**limiting process resources**, and **managing running processes**.
-
-It implements many functionalities offered by UNIX command line tool such as
+**limiting process resources**, and **managing running processes**. It
+implements many functionalities offered by UNIX command line tool such as
 *ps, top, free, iotop, netstat, ifconfig, lsof* and others (see
-`shell equivalents`_). psutil supports the following platforms:
+`shell equivalents`_). Psutil supports the following platforms:
 
 - **Linux**
 - **Windows**
@@ -60,12 +53,10 @@ Adoption
 
 psutil is among the
 `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__ most-downloaded
-packages on PyPI, with **330+ million** downloads per month, **760,000+**
+packages on PyPI, with **370+ million** downloads per month and **780,000+**
 `GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__
-using it, and **15,000+** packages depending on it.
-
-See also `adoptions <https://psutil.readthedocs.io/latest/adoption.html>`__ and
-`alternatives <https://psutil.readthedocs.io/latest/alternatives.html>`__.
+using it. See also `adoptions <https://psutil.io/adoption/>`__ and
+`alternatives <https://psutil.io/alternatives/>`__.
 
 Install
 =======
@@ -74,13 +65,12 @@ Install
 
     pip install psutil
 
-For platform-specific details see
-`installation <https://psutil.readthedocs.io/latest/install.html>`_.
+For platform-specific details see `installation <https://psutil.io/install/>`_.
 
 Documentation
 =============
 
-psutil documentation is available at https://psutil.readthedocs.io/latest.
+psutil documentation is available at https://psutil.io.
 
 .. <PYPI-EXCLUDE>
 
@@ -92,24 +82,18 @@ Sponsors
     <table border="0" cellpadding="10" cellspacing="0" class="sponsor-table">
       <tr>
         <td align="center" style="vertical-align: middle;">
-          <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img width="160" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-tidelift.svg" class="sponsor-logo">
-          </a>
+          <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme"><img width="160" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-tidelift.svg" class="sponsor-logo"></a>
         </td>
         <td align="center" style="vertical-align: middle;">
-          <a href="https://sansec.io/">
-            <img width="145" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-sansec.svg" class="sponsor-logo">
-          </a>
+          <a href="https://sansec.io/"><img width="145" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-sansec.svg" class="sponsor-logo"></a>
         </td>
         <td align="center" style="vertical-align: middle;">
-          <a href="https://www.apivoid.com/">
-            <img width="130" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-apivoid.svg" class="sponsor-logo">
-          </a>
+          <a href="https://www.apivoid.com/"><img width="130" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-apivoid.svg" class="sponsor-logo"></a>
         </td>
       </tr>
     </table>
 
-    <div style="text-align: center;"><sup><a href="https://psutil.readthedocs.io/latest/funding.html">add your logo</a></sup></div>
+    <div style="text-align: center;"><sup><a href="https://psutil.io/funding/">add your logo</a></sup></div>
 
 .. </PYPI-EXCLUDE>
 
@@ -117,8 +101,8 @@ Example usages
 ==============
 
 For the full API with more examples, see the
-`API overview <https://psutil.readthedocs.io/latest/api-overview.html>`_ and
-`API reference <https://psutil.readthedocs.io/latest/api.html>`_.
+`API overview <https://psutil.io/api-overview/>`_ and
+`API reference <https://psutil.io/api/>`_.
 
 **CPU**
 
@@ -198,7 +182,7 @@ For the full API with more examples, see the
     3 ksoftirqd/0
     ...
 
-.. _`shell equivalents`: https://psutil.readthedocs.io/latest/shell-equivalents.html
+.. _`shell equivalents`: https://psutil.io/shell-equivalents/
 
 .. <PYPI-EXCLUDE>
 

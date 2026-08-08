@@ -21,7 +21,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
         return NULL;
     }
     return Py_BuildValue(
-        "iidI",
+        "iidi",
         sps.ACLineStatus,  // whether AC is connected: 0=no, 1=yes, 255=unknown
         // status flag:
         // 1, 2, 4 = high, low, critical
@@ -29,6 +29,6 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
         // 128 = no battery
         sps.BatteryFlag,
         (double)sps.BatteryLifePercent,  // percent
-        sps.BatteryLifeTime  // remaining secs
+        (int)sps.BatteryLifeTime
     );
 }

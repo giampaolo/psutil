@@ -1,0 +1,5 @@
+{# Override of basic theme's globaltoc.html: render only the toctree,
+   without the "Table of Contents" h3 heading. #}
+{{ toctree(includehidden=theme_globaltoc_includehidden,
+           collapse=theme_globaltoc_collapse,
+           maxdepth=theme_globaltoc_maxdepth) }}

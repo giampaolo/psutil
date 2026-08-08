@@ -2,12 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Right-side per-page TOC. Modeled after pydata-sphinx-theme.
+// Right-side per-page TOC. Scroll-spy + auto-positioning so the
+// current heading stays visible inside the (independently scrolling)
+// TOC. Modeled after pydata-sphinx-theme.
 
 (function () {
     "use strict";
 
-    var pageToc = document.querySelector(".right-toc");
+    var pageToc = document.querySelector(".right-sidebar");
     if (!pageToc) {
         return;
     }
@@ -20,7 +22,7 @@
     });
 
     var tocLinks = Array.prototype.slice.call(
-        pageToc.querySelectorAll("a[href^=\"#\"]")
+        pageToc.querySelectorAll('a[href^="#"]'),
     );
 
     if (tocLinks.length === 0) {
@@ -74,7 +76,7 @@
     var titleHeight = 0;
 
     function refreshTitleHeight() {
-        var title = pageToc.querySelector(".right-toc-title");
+        var title = pageToc.querySelector(".right-sidebar-title");
         if (title) {
             titleHeight = title.offsetHeight;
         }
@@ -111,12 +113,10 @@
         }
 
         if (activeLink) {
-            activeLink.classList.remove("scroll-current");
             activeLink.removeAttribute("aria-current");
         }
 
         activeLis.forEach(function (li) {
-            li.classList.remove("scroll-current");
             li.classList.remove("scroll-current-leaf");
         });
 
@@ -127,24 +127,13 @@
             return;
         }
 
-        tocLink.classList.add("scroll-current");
         tocLink.setAttribute("aria-current", "true");
 
         var leaf = tocLink.parentNode && tocLink.parentNode.closest("li");
 
         if (leaf) {
-            leaf.classList.add("scroll-current");
             leaf.classList.add("scroll-current-leaf");
-
             activeLis.push(leaf);
-
-            var li = leaf.parentNode && leaf.parentNode.closest("li");
-
-            while (li) {
-                li.classList.add("scroll-current");
-                activeLis.push(li);
-                li = li.parentNode && li.parentNode.closest("li");
-            }
         }
 
         ensureVisibleInToc(tocLink);
@@ -167,7 +156,7 @@
 
         refreshTitleHeight();
 
-        var topbar = document.querySelector(".top-bar");
+        var topbar = document.querySelector(".topbar");
         var headerHeight = topbar ? topbar.offsetHeight : 0;
 
         // Active band: top 30% of viewport below the header.
@@ -226,7 +215,7 @@
 
     window.addEventListener(
         "resize",
-        debounce(connectIntersectionObserver, 300)
+        debounce(connectIntersectionObserver, 300),
     );
 
     connectIntersectionObserver();
@@ -244,10 +233,12 @@
     // away from that section in between).
     window.addEventListener("click", function (e) {
         var link = e.target.closest("a");
-        if (link
-            && link.hash
-            && link.hash === location.hash
-            && link.origin === location.origin) {
+        if (
+            link &&
+            link.hash &&
+            link.hash === location.hash &&
+            link.origin === location.origin
+        ) {
             syncTocHash(link.hash);
         }
     });
