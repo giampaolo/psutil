@@ -45,6 +45,8 @@ if POSIX:
     import pty
     import resource
 
+NO_UTMP = LINUX and not os.path.exists("/var/run/utmp")
+
 
 def ps(fmt, pid=None):
     """Wrapper for calling the ps command with a little bit of cross-platform
@@ -375,14 +377,17 @@ class TestProcess(PosixTestCase):
         mem = psutil.Process().memory_info_ex()
         if not hasattr(mem, "peak_rss"):
             return pytest.skip("not supported")
+        assert mem.peak_rss >= mem.rss
         ru = resource.getrusage(resource.RUSAGE_SELF)
-        # VmHWM (from /proc/pid/status) and ru_maxrss both track peak
-        # RSS but are synced independently. Allow 5% tolerance.
-        if MACOS:
-            rss_diff = abs(mem.peak_rss - ru.ru_maxrss)
+        if LINUX:
+            # ru_maxrss is computed from the per-CPU RSS counters, which
+            # lag behind the exact value exposed as VmHWM. The gap is
+            # absolute (tens of MBs) and grows with the number of CPUs,
+            # so only compare the order of magnitude.
+            assert mem.peak_rss == pytest.approx(ru.ru_maxrss * 1024, rel=1)
         else:
             rss_diff = abs(mem.peak_rss - ru.ru_maxrss * 1024)
-        assert rss_diff <= mem.peak_rss * 0.05
+            assert rss_diff <= mem.peak_rss * 0.05
 
 
 class TestSystemAPIs(PosixTestCase):
@@ -424,6 +429,7 @@ class TestSystemAPIs(PosixTestCase):
                 )
 
     @skipif(is_busybox("who"), reason="busybox who has no -u option")
+    @skipif(NO_UTMP, reason="no /var/run/utmp file")
     @retry_on_failure
     def test_users(self):
         out = sh("who -u")

@@ -32,7 +32,6 @@ from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
 from . import HAS_PROC_RLIMIT
-from . import RISCV64
 from . import TOLERANCE_DISK_USAGE
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
@@ -53,6 +52,7 @@ from . import skipif
 if LINUX:
     from psutil._pslinux import CLOCK_TICKS
     from psutil._pslinux import RootFsDeviceFinder
+    from psutil._pslinux import _cpu_get_cpuinfo_freq
     from psutil._pslinux import calculate_avail_vmem
     from psutil._pslinux import open_binary
 
@@ -66,6 +66,7 @@ if LINUX:
 # Overlayfs and btrfs give / an anonymous device (major 0), which has
 # no /proc/partitions or /sys/dev/block entry to look up.
 ROOTFS_ON_BLOCK_DEV = LINUX and os.major(os.stat("/").st_dev) != 0
+CPUINFO_HAS_MHZ = LINUX and bool(_cpu_get_cpuinfo_freq())
 
 
 @skipif(not LINUX, reason="LINUX only")
@@ -824,10 +825,7 @@ class TestCpuFreq(LinuxTestCase):
             assert psutil.cpu_freq()
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
-    @skipif(
-        AARCH64 or RISCV64,
-        reason=f"{platform.machine()} does not report mhz in /proc/cpuinfo",
-    )
+    @skipif(not CPUINFO_HAS_MHZ, reason="no 'cpu MHz' in /proc/cpuinfo")
     def test_emulate_use_cpuinfo(self):
         # Emulate a case where /sys/devices/system/cpu/cpufreq* does not
         # exist and /proc/cpuinfo is used instead.
@@ -1178,7 +1176,7 @@ class TestNetIfAddrs(LinuxTestCase):
             line = line.strip()
             if re.search(r"^\d+:", line):
                 found += 1
-                name = line.split(':')[1].strip()
+                name = line.split(':')[1].strip().split('@')[0]
                 assert name in nics
         assert len(nics) == found
 
