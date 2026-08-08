@@ -5,6 +5,10 @@
 # - To use a specific Python version run: `make install PYTHON=python3.13`.
 # - To append an argument to a command use ARGS, e.g: `make test ARGS="-k
 #   some_test`.
+# - Needs GNU make >= 4.0, and must also parse with BSD make, which runs
+#   `make ci-test` on the *BSD CI. BSD make dies on a `:` inside `$(...)`,
+#   so keep those out of file scope. Other GNU-only bits are fine as long
+#   as they stay in targets the BSDs don't run.
 
 # Configurable
 PYTHON = python3
@@ -18,14 +22,10 @@ INSTALL_PYDEPS = PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh
 
 # `make` called with no args is like `make help`
 .DEFAULT_GOAL := help
+.PHONY: build test
 
 # install git hook (skipped in worktrees, where .git is a file)
 _ := $(shell test -d .git && mkdir -p .git/hooks/ && ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit)
-
-# phony all targets
-_PHONY := $(shell grep -hoE '^[a-zA-Z0-9_-][a-zA-Z0-9_.-]*:' $(MAKEFILE_LIST) \
-	| tr -d :)
-.PHONY: $(_PHONY)
 
 # ===================================================================
 # Install
@@ -105,7 +105,7 @@ install-pydeps-dev:  ## Install python deps meant for local development.
 
 # - cache dir on Windows often causes "Permission denied" errors
 # - on CI drop instafail so failures gather in one block at the end
-_PYTEST_EXTRA := $(shell { if [ "$$OS" = "Windows_NT" ]; then printf '%s ' '-o cache_dir=/tmp/pytest-psutil-cache'; fi; if [ -n "$$CI" ]; then printf '%s ' '-p no:instafail'; fi; })
+_PYTEST_EXTRA != { if [ "$$OS" = "Windows_NT" ]; then printf '%s ' '-o cache_dir=/tmp/pytest-psutil-cache'; fi; if [ -n "$$CI" ]; then printf '%s ' '-p no:instafail'; fi; }
 
 RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --durations=5 $(_PYTEST_EXTRA)
 RUN_TEST_MEMLEAKS = PYTHONMALLOC=malloc $(RUN_TEST) -k test_memleaks.py
