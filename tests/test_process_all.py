@@ -40,6 +40,7 @@ from . import is_win_secure_system_proc
 from . import process_namespace
 
 API_DURATIONS = collections.Counter()
+PF_KTHREAD = 0x00200000  # include/linux/sched.h
 
 
 @pytest.hookimpl(wrapper=True)
@@ -82,12 +83,28 @@ class ProcInfo:
         self.ppid = None
         self.tcase = PsutilTestCase()
 
+    def is_kernel_thread(self):
+        # The kernel renames these continuously, e.g. "kworker/1:0-events"
+        # -> "kworker/1:0+events" -> "kworker/1:0-kblockd", so their name
+        # says nothing about whether it's still the same process.
+        if not LINUX:
+            return False
+        try:
+            with open(f"{psutil.PROCFS_PATH}/{self.pid}/stat", "rb") as f:
+                data = f.read()
+        except OSError:
+            return False  # process is gone; caller handles that
+        fields = data[data.rfind(b")") + 2 :].split()
+        return bool(int(fields[6]) & PF_KTHREAD)
+
     def check_exception(self, exc):
         assert exc.pid == self.pid
-        if exc.name is not None and exc.name != self.name:
+        if (
+            exc.name is not None
+            and exc.name != self.name
+            and not self.is_kernel_thread()
+        ):
             # The process may have renamed itself in the meantime.
-            # Kernel threads do it all the time, e.g.
-            # "kworker/1:0-events" -> "kworker/1:0+events".
             try:
                 curname = psutil.Process(self.pid).name()
             except psutil.Error:
