@@ -510,6 +510,9 @@ Others:
 - :gh:`2946`, [Windows]: if the number of process heaps changed while
   :func:`heap_info` was running, it could read uninitialized memory and return
   bogus :field:`mmap_used` and :field:`heap_count` values.
+- :gh:`2964`, [POSIX]: :func:`net_if_addrs` returned the interface's own
+  address as :field:`broadcast` for ``/32`` IPv4 addresses. A single-host
+  network has no broadcast address, so ``None`` is returned now.
 - :gh:`2965`, [Windows]: on systems with more than 64 CPUs :func:`cpu_times`
   with ``percpu=True`` and :func:`cpu_stats` read uninitialized memory: the
   kernel only returns entries for the calling thread's processor group, but the

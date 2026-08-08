@@ -24,6 +24,7 @@ from psutil import POSIX
 from psutil import WINDOWS
 from psutil import _psutil
 from psutil._common import bcat
+from psutil._common import broadcast_addr
 from psutil._common import cat
 from psutil._common import debug
 from psutil._common import isfile_strict
@@ -32,6 +33,7 @@ from psutil._common import parse_environ_block
 from psutil._common import supports_ipv6
 from psutil._common import warn
 from psutil._common import wrap_numbers
+from psutil._ntuples import snicaddr
 
 from . import HAS_NET_IO_COUNTERS
 from . import ROOT_DIR
@@ -521,6 +523,25 @@ class TestCommonModule(PsutilTestCase):
             bcat(testfn + '-invalid')
         assert cat(testfn + '-invalid', fallback="bar") == "bar"
         assert bcat(testfn + '-invalid', fallback="bar") == "bar"
+
+    def test_broadcast_addr(self):
+        def addr(address, netmask):
+            return snicaddr(socket.AF_INET, address, netmask, None, None)
+
+        assert (
+            broadcast_addr(addr("10.1.1.86", "255.255.255.0")) == "10.1.1.255"
+        )
+        assert (
+            broadcast_addr(addr("172.20.10.7", "255.255.255.240"))
+            == "172.20.10.15"
+        )
+
+    def test_broadcast_addr_single_host(self):
+        # A /32 is a single-host network, it has no broadcast address.
+        nt = snicaddr(
+            socket.AF_INET, "89.234.156.160", "255.255.255.255", None, None
+        )
+        assert broadcast_addr(nt) is None
 
 
 # ===================================================================
