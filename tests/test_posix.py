@@ -10,7 +10,6 @@ import datetime
 import errno
 import os
 import re
-import shutil
 import subprocess
 import time
 from unittest import mock
@@ -32,6 +31,7 @@ from . import PYTHON_EXE
 from . import PsutilTestCase
 from . import isolated
 from . import pytest
+from . import requires_cli
 from . import retry_on_failure
 from . import sh
 from . import skip_on_access_denied
@@ -406,7 +406,7 @@ class TestSystemAPIs(PosixTestCase):
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
     @skipif(SUNOS, reason="unreliable on SUNOS")
-    @skipif(not shutil.which("ifconfig"), reason="no ifconfig cmd")
+    @requires_cli("ifconfig")
     @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_nic_names(self):
         output = sh("ifconfig -a")

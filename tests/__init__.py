@@ -86,7 +86,7 @@ __all__ = [
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
     'system_namespace', 'is_win_secure_system_proc', 'serial', 'isolated',
-    'skipif',
+    'skipif', 'requires_cli',
     # type hints
     'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
@@ -988,6 +988,21 @@ serial = pytest.mark.xdist_group(name="serial")
 isolated = pytest.mark.isolated
 
 skipif = pytest.mark.skipif
+
+
+def requires_cli(cmd):
+    """Skip test if CLI command is not available."""
+
+    def outer(fun):
+        @functools.wraps(fun)
+        def inner(*args, **kwargs):
+            if not shutil.which(cmd):
+                pytest.skip(f"{cmd} cmd not available")
+            return fun(*args, **kwargs)
+
+        return inner
+
+    return outer
 
 
 class PsutilTestCase(unittest.TestCase):

@@ -41,6 +41,7 @@ from . import call_until
 from . import isolated
 from . import pytest
 from . import reload_module
+from . import requires_cli
 from . import retry_on_failure
 from . import safe_rmpath
 from . import serial
@@ -723,12 +724,12 @@ class TestCpuCountLogical(LinuxTestCase):
         count = len([x for x in ls if re.search(r"cpu\d+$", x) is not None])
         assert psutil.cpu_count() == count
 
-    @skipif(not shutil.which("nproc"), reason="nproc utility not available")
+    @requires_cli("nproc")
     def test_against_nproc(self):
         num = int(sh("nproc --all"))
         assert psutil.cpu_count(logical=True) == num
 
-    @skipif(not shutil.which("lscpu"), reason="lscpu utility not available")
+    @requires_cli("lscpu")
     def test_against_lscpu(self):
         out = sh("lscpu -p")
         num = len([x for x in out.split('\n') if not x.startswith('#')])
@@ -772,7 +773,7 @@ class TestCpuCountLogical(LinuxTestCase):
 
 
 class TestCpuCountCores(LinuxTestCase):
-    @skipif(not shutil.which("lscpu"), reason="lscpu utility not available")
+    @requires_cli("lscpu")
     def test_against_lscpu(self):
         out = sh("lscpu -p")
         core_ids = set()
@@ -1098,7 +1099,7 @@ class TestNetIfAddrs(LinuxTestCase):
                     address = addr.address.split('%')[0]
                     assert address in get_ipv6_addresses(name)
 
-    @skipif(not shutil.which("ip"), reason="'ip' command not available")
+    @requires_cli("ip")
     @retry_on_failure
     def test_against_ip_addr_v4(self):
         # Parse IPv4 addresses per interface from `ip addr` output and
@@ -1126,7 +1127,7 @@ class TestNetIfAddrs(LinuxTestCase):
             for addr in addrs:
                 assert addr in psutil_ipv4
 
-    @skipif(not shutil.which("ip"), reason="'ip' command not available")
+    @requires_cli("ip")
     @retry_on_failure
     def test_against_ip_addr_v6(self):
         # Parse IPv6 addresses per interface from `ip addr` output and
@@ -1156,7 +1157,7 @@ class TestNetIfAddrs(LinuxTestCase):
             for addr in addrs:
                 assert addr in psutil_ipv6
 
-    @skipif(not shutil.which("ip"), reason="'ip' utility not available")
+    @requires_cli("ip")
     def test_net_if_names(self):
         out = sh("ip addr").strip()
         nics = [x for x in psutil.net_if_addrs() if ':' not in x]
@@ -1171,9 +1172,7 @@ class TestNetIfAddrs(LinuxTestCase):
 
 
 class TestNetIfStats(LinuxTestCase):
-    @skipif(
-        not shutil.which("ifconfig"), reason="ifconfig utility not available"
-    )
+    @requires_cli("ifconfig")
     def test_against_ifconfig(self):
         for name, stats in psutil.net_if_stats().items():
             try:
@@ -1191,9 +1190,7 @@ class TestNetIfStats(LinuxTestCase):
             with open(f"/sys/class/net/{name}/mtu") as f:
                 assert stats.mtu == int(f.read().strip())
 
-    @skipif(
-        not shutil.which("ifconfig"), reason="ifconfig utility not available"
-    )
+    @requires_cli("ifconfig")
     def test_flags(self):
         # first line looks like this:
         # "eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500"
@@ -1225,9 +1222,7 @@ class TestNetIfStats(LinuxTestCase):
 
 
 class TestNetIoCounters(LinuxTestCase):
-    @skipif(
-        not shutil.which("ifconfig"), reason="ifconfig utility not available"
-    )
+    @requires_cli("ifconfig")
     @retry_on_failure
     def test_against_ifconfig(self):
         def ifconfig(nic):
@@ -1305,7 +1300,7 @@ class TestNetConnections(LinuxTestCase):
             assert m.called
 
     @serial
-    @skipif(not shutil.which("ss"), reason="'ss' command not available")
+    @requires_cli("ss")
     def test_against_ss(self):
         # Listening ports are stable, so an exact set comparison is
         # reliable.
@@ -1529,9 +1524,7 @@ class TestDiskIoCounters(LinuxTestCase):
             with pytest.raises(NotImplementedError):
                 psutil.disk_io_counters()
 
-    @skipif(
-        not shutil.which("iostat"), reason="'iostat' command not available"
-    )
+    @requires_cli("iostat")
     @retry_on_failure
     def test_against_iostat(self):
         # Cross-check read_bytes/write_bytes against 'iostat -d -k'
@@ -1599,9 +1592,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
         if base and c:
             assert base == c
 
-    @skipif(
-        not shutil.which("findmnt"), reason="findmnt utility not available"
-    )
+    @requires_cli("findmnt")
     @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
     def test_against_findmnt(self):
         psutil_value = RootFsDeviceFinder().find()
@@ -1812,7 +1803,7 @@ class TestMisc(LinuxTestCase):
 
 @skipif(not HAS_BATTERY, reason="no battery")
 class TestSensorsBattery(LinuxTestCase):
-    @skipif(not shutil.which("acpi"), reason="acpi utility not available")
+    @requires_cli("acpi")
     def test_percent(self):
         out = sh("acpi -b")
         acpi_value = int(out.split(",")[1].strip().replace('%', ''))

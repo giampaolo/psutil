@@ -38,6 +38,7 @@ from . import is_namedtuple
 from . import process_namespace
 from . import pytest
 from . import reap_children
+from . import requires_cli
 from . import retry
 from . import safe_mkdir
 from . import safe_rmpath
@@ -422,6 +423,23 @@ class TestTestingUtils(PsutilTestCase):
         ns = system_namespace()
         fun = next(x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs')[0]
         assert fun() == psutil.net_if_addrs()
+
+    def test_requires_cli(self):
+        @requires_cli(os.path.basename(PYTHON_EXE))
+        def fun1():
+            return 42
+
+        path = os.path.dirname(PYTHON_EXE)
+        with mock.patch.dict(os.environ, {"PATH": path}):
+            assert fun1() == 42
+
+        # not available
+        @requires_cli("does-not-exist")
+        def fun2():
+            1 / 0  # noqa: B018
+
+        with pytest.raises(pytest.skip.Exception):
+            fun2()
 
 
 class TestOtherUtils(PsutilTestCase):

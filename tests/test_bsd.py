@@ -12,7 +12,6 @@
 import datetime
 import os
 import re
-import shutil
 import time
 from unittest import mock
 
@@ -28,6 +27,7 @@ from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
 from . import isolated
 from . import pytest
+from . import requires_cli
 from . import retry_on_failure
 from . import sh
 from . import skipif
@@ -88,20 +88,20 @@ class TestSystemAPIs(PsutilTestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 return pytest.fail(f"psutil={usage.used}, df={used}")
 
-    @skipif(not shutil.which("sysctl"), reason="sysctl cmd not available")
+    @requires_cli("sysctl")
     def test_cpu_count_logical(self):
         syst = sysctl("hw.ncpu")
         assert psutil.cpu_count(logical=True) == syst
 
     # On NetBSD total is UVM's managed pages, which is less than
     # physical RAM. NetBSDTestCase.test_vmem_total covers it instead.
-    @skipif(not shutil.which("sysctl"), reason="sysctl cmd not available")
+    @requires_cli("sysctl")
     @skipif(NETBSD, reason="hw.physmem is not what psutil reports")
     def test_virtual_memory_total(self):
         num = sysctl('hw.physmem')
         assert num == psutil.virtual_memory().total
 
-    @skipif(not shutil.which("ifconfig"), reason="ifconfig cmd not available")
+    @requires_cli("ifconfig")
     def test_net_if_stats(self):
         for name, stats in psutil.net_if_stats().items():
             try:
