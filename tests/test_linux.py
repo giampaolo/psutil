@@ -1098,7 +1098,14 @@ class TestNetIfAddrs(LinuxTestCase):
                     if addr.broadcast is not None:
                         assert addr.broadcast == get_ipv4_broadcast(name)
                     else:
-                        assert get_ipv4_broadcast(name) == '0.0.0.0'
+                        # SIOCGIFBRDADDR shares a union with the peer
+                        # address, so on a /32 it echoes the address
+                        # back and on a ptp link it gives the peer.
+                        assert get_ipv4_broadcast(name) in {
+                            '0.0.0.0',
+                            addr.address,
+                            addr.ptp,
+                        }
                 elif addr.family == socket.AF_INET6:
                     # IPv6 addresses can have a percent symbol at the end.
                     # E.g. these 2 are equivalent:
