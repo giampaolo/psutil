@@ -11,9 +11,10 @@ build = [
 ]
 test = [
     "psleak @ https://github.com/giampaolo/psleak/archive/refs/heads/master.tar.gz",
+    "pytest ; python_version < '3.10'",
     "pytest-instafail",
     "pytest-xdist",
-    "pytest>=9",  # needed to interpret the [tool.pytest] block
+    "pytest>=9 ; python_version >= '3.10'",
     "pywin32 ; os_name == 'nt' and implementation_name != 'pypy'",
     "wmi ; os_name == 'nt' and implementation_name != 'pypy'",
     {include-group = "build"},
@@ -281,7 +282,8 @@ spaces_before_inline_comment = 2
 spaces_indent_inline_array = 4
 trailing_comma_inline_array = true
 
-[tool.pytest]
+# Avoid recent [tool.pytest] to stay compatible with pytest < 9.
+[tool.pytest.ini_options]
 addopts = [
     "--capture=no",
     "--instafail",
