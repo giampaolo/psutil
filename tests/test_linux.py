@@ -1051,17 +1051,25 @@ class TestCpuTimes(LinuxTestCase):
 
 class TestCpuStats(LinuxTestCase):
 
+    @staticmethod
+    def assert_close_to_vmstat(vmstat_value, psutil_value):
+        # Old procps keeps these counters in 32 bits, so it wraps once
+        # the kernel goes past 2**32 and psutil doesn't.
+        if psutil_value >= 2**32 and vmstat_value < 2**32:
+            return pytest.skip("vmstat truncated the counter to 32 bits")
+        assert abs(vmstat_value - psutil_value) < 500
+
     @isolated
     def test_ctx_switches(self):
         vmstat_value = vmstat("context switches")
         psutil_value = psutil.cpu_stats().ctx_switches
-        assert abs(vmstat_value - psutil_value) < 500
+        self.assert_close_to_vmstat(vmstat_value, psutil_value)
 
     @isolated
     def test_interrupts(self):
         vmstat_value = vmstat("interrupts")
         psutil_value = psutil.cpu_stats().interrupts
-        assert abs(vmstat_value - psutil_value) < 500
+        self.assert_close_to_vmstat(vmstat_value, psutil_value)
 
 
 class TestLoadAvg(LinuxTestCase):
