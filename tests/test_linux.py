@@ -725,13 +725,15 @@ class TestCpuCountLogical(LinuxTestCase):
         reason="/sys/devices/system/cpu does not exist",
     )
     def test_against_sysdev_cpu_num(self):
+        # The kernel creates a directory for every *possible* CPU, so
+        # this is an upper bound: cpu_count() counts the online ones.
         ls = os.listdir("/sys/devices/system/cpu")
         count = len([x for x in ls if re.search(r"cpu\d+$", x) is not None])
-        assert psutil.cpu_count() == count
+        assert psutil.cpu_count() <= count
 
     @requires_cli("nproc")
     def test_against_nproc(self):
-        num = int(sh("nproc --all"))
+        num = int(sh("nproc"))
         assert psutil.cpu_count(logical=True) == num
 
     @requires_cli("lscpu")
@@ -2607,8 +2609,14 @@ class TestProcessAgainstStatus(LinuxTestCase):
     def test_cpu_affinity(self):
         value = self.read_status_file("Cpus_allowed_list:")
         if '-' in str(value):
+            # The mask covers the possible CPUs, while sched_getaffinity
+            # only reports the online ones.
+            with open("/sys/devices/system/cpu/online") as f:
+                online = f.read().strip()
+            omin, omax = map(int, online.split('-'))
             min_, max_ = map(int, value.split('-'))
-            assert self.proc.cpu_affinity() == list(range(min_, max_ + 1))
+            expected = [x for x in range(min_, max_ + 1) if omin <= x <= omax]
+            assert self.proc.cpu_affinity() == expected
 
     def test_cpu_affinity_eligible_cpus(self):
         value = self.read_status_file("Cpus_allowed_list:")
