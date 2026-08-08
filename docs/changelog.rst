@@ -536,6 +536,11 @@ Others:
 - :gh:`2967`, [Linux]: :func:`cpu_freq` returned ``None`` on ppc machines
   without cpufreq sysfs. On s390x it matched both ``cpu MHz dynamic`` and
   ``cpu MHz static``, reporting twice as many CPUs as the machine has.
+- :gh:`2512`, [Linux]: :func:`cpu_freq` with ``percpu=True`` returned one entry
+  per cpufreq policy instead of one per CPU, so on hardware where a policy is
+  shared by several CPUs (POWER9, Apple M1, RISC-V) it reported fewer entries
+  than :func:`cpu_count`. Each policy is now asked which CPUs it affects.
+  (patch by Julien Stephan)
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^

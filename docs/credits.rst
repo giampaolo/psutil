@@ -121,6 +121,7 @@ Code contributors by year
 * :user:`Gabriel Changamire <gabrielchangamire-arch>` - :gh:`2809`
 * :user:`Hanson Wang <hansonw>` - :gh:`2810`
 * :user:`Jinhyuk Hong <jinh-labs>` - :gh:`2855`
+* :user:`Julien Stephan <justeph>` - :gh:`2512`
 * :user:`Karl Hill <karlhillx>` - :gh:`2857`
 * :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`
 * :user:`Marcel Telka <mtelka>` - :gh:`2687`

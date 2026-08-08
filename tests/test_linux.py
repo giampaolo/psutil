@@ -923,6 +923,8 @@ class TestCpuFreq(LinuxTestCase):
                 "/sys/devices/system/cpu/cpufreq/policy1"
             ):
                 return io.BytesIO(b"600000")
+            elif n.endswith('/affected_cpus'):
+                return io.BytesIO(b"0" if "/policy0/" in n else b"1")
             elif name == '/proc/cpuinfo':
                 return io.BytesIO(b"cpu MHz     : 100\ncpu MHz     : 400")
             else:
@@ -955,6 +957,37 @@ class TestCpuFreq(LinuxTestCase):
                         assert freq[1].min == 500.0
                     if freq[1].max != 0.0:
                         assert freq[1].max == 600.0
+
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
+    def test_emulate_shared_policy(self):
+        # A single policy governing 4 CPUs must yield 4 entries, see:
+        # https://github.com/giampaolo/psutil/issues/2512
+        def open_mock(name, *args, **kwargs):
+            if name.endswith('/affected_cpus'):
+                return io.BytesIO(b"0 1 2 3")
+            elif name.endswith('/scaling_cur_freq'):
+                return io.BytesIO(b"100000")
+            elif name.endswith('/scaling_min_freq'):
+                return io.BytesIO(b"200000")
+            elif name.endswith('/scaling_max_freq'):
+                return io.BytesIO(b"300000")
+            elif name == '/proc/cpuinfo':
+                return io.BytesIO(b"")
+            return orig_open(name, *args, **kwargs)
+
+        def glob_mock(pattern):
+            if pattern == "/sys/devices/system/cpu/cpufreq/policy[0-9]*":
+                return ["/sys/devices/system/cpu/cpufreq/policy0"]
+            return orig_glob(pattern)
+
+        orig_glob = glob.glob
+        orig_open = open
+        with mock.patch("builtins.open", side_effect=open_mock):
+            with mock.patch("glob.glob", side_effect=glob_mock):
+                freq = psutil.cpu_freq(percpu=True)
+        assert len(freq) == 4
+        for nt in freq:
+            assert nt == (100.0, 200.0, 300.0)
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_no_scaling_cur_freq_file(self):
@@ -1002,6 +1035,9 @@ class TestCpuFreq(LinuxTestCase):
             # Only CPUs 0 and 1 are online; 2 and 3 are offline.
             if name == '/proc/cpuinfo':
                 return io.BytesIO(b"cpu MHz\t: 200\ncpu MHz\t: 400")
+            elif name.endswith('/affected_cpus'):
+                num = re.search(r"/policy(\d+)/", name).group(1)
+                return io.BytesIO(num.encode())
             elif "/policy0/" in name or "/policy1/" in name:
                 if name.endswith('/scaling_cur_freq'):
                     cur = b"200000" if "/policy0/" in name else b"400000"
