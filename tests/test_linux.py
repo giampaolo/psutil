@@ -766,11 +766,9 @@ class TestCpuCountLogical(LinuxTestCase):
             # parsing works as expected.
             with open('/proc/cpuinfo', 'rb') as f:
                 cpuinfo_data = f.read()
-            fake_file = io.BytesIO(cpuinfo_data)
-            with mock.patch(
-                'psutil._common.open', return_value=fake_file, create=True
-            ) as m:
+            with mock_open_content({"/proc/cpuinfo": cpuinfo_data}) as m:
                 assert psutil._pslinux.cpu_count_logical() == original
+                assert m.called
 
             # Finally, let's make /proc/cpuinfo return meaningless data;
             # this way we'll fall back on relying on /proc/stat
