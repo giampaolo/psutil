@@ -364,6 +364,59 @@ def _check_conn_kind(kind):
 # =====================================================================
 
 
+class _UidResolver:
+    """Maps uids to user names, optionally reusing answers for one scan.
+
+    pwd.getpwuid() goes through NSS, which on a host resolving users over
+    LDAP costs a fraction of a millisecond. A system has orders of
+    magnitude fewer users than processes, so resolving the same handful of
+    uids once per process is pure waste.
+
+    Reuse is off by default: a bare username() call must not hand back a
+    name that was only valid at some arbitrary point in the past.
+    """
+
+    def __init__(self):
+        self._cache = None
+
+    @contextlib.contextmanager
+    def reusing(self) -> Generator[None, None, None]:
+        """Resolve each uid at most once inside this block.
+
+        Nesting keeps the outer block's cache. Concurrent use from several
+        threads is safe: the mapping does not depend on the caller, so the
+        worst case is that one scan resolves a uid another one had already
+        looked up.
+        """
+        previous = self._cache
+        self._cache = {} if previous is None else previous
+        try:
+            yield
+        finally:
+            self._cache = previous
+
+    def resolve(self, uid: int) -> str:
+        """The name for *uid*, or its decimal form if nothing resolves it.
+
+        An unresolvable uid costs the same round trip as one that resolves,
+        so the fallback is cached as well: the processes left behind by a
+        deleted account all share a single uid.
+        """
+        cache = self._cache
+        if cache is not None and uid in cache:
+            return cache[uid]
+        try:
+            name = pwd.getpwuid(uid).pw_name
+        except KeyError:
+            name = str(uid)
+        if cache is not None:
+            cache[uid] = name
+        return name
+
+
+_uid_resolver = _UidResolver()
+
+
 def _use_prefetch(method):
     """Decorator returning cached values from `process_iter(attrs=...)`.
 
@@ -914,12 +967,7 @@ class Process:
             uids = self.uids()
             if self._is_ad_value(uids):
                 return uids
-            real_uid = uids.real
-            try:
-                return pwd.getpwuid(real_uid).pw_name
-            except KeyError:
-                # the uid can't be resolved by the system
-                return str(real_uid)
+            return _uid_resolver.resolve(uids.real)
         else:
             return self._proc.username()
 
@@ -1846,23 +1894,24 @@ def process_iter(
         remove(pid)
     try:
         ls = sorted(list(pmap.items()) + list(dict.fromkeys(new_pids).items()))
-        for pid, proc in ls:
-            try:
-                if proc is None:  # new process
-                    proc = add(pid)
-                proc._prefetch = {}  # clear cache
-                proc._ad_value = _SENTINEL
-                if attrs is not None:
-                    proc._prefetch = proc.as_dict(
-                        attrs=attrs, ad_value=ad_value
-                    )
-                    proc._ad_value = ad_value
-                yield proc
-            except ZombieProcess:
-                if proc is not None:
-                    yield proc  # zombie processes are still valid
-            except NoSuchProcess:
-                remove(pid)
+        with _uid_resolver.reusing():
+            for pid, proc in ls:
+                try:
+                    if proc is None:  # new process
+                        proc = add(pid)
+                    proc._prefetch = {}  # clear cache
+                    proc._ad_value = _SENTINEL
+                    if attrs is not None:
+                        proc._prefetch = proc.as_dict(
+                            attrs=attrs, ad_value=ad_value
+                        )
+                        proc._ad_value = ad_value
+                    yield proc
+                except ZombieProcess:
+                    if proc is not None:
+                        yield proc  # zombie processes are still valid
+                except NoSuchProcess:
+                    remove(pid)
     finally:
         _pmap = pmap
 
