@@ -923,6 +923,8 @@ class TestCpuFreq(LinuxTestCase):
                 "/sys/devices/system/cpu/cpufreq/policy1"
             ):
                 return io.BytesIO(b"600000")
+            elif n.endswith('/affected_cpus'):
+                return io.BytesIO(b"0" if "/policy0/" in n else b"1")
             elif name == '/proc/cpuinfo':
                 return io.BytesIO(b"cpu MHz     : 100\ncpu MHz     : 400")
             else:
@@ -1002,6 +1004,9 @@ class TestCpuFreq(LinuxTestCase):
             # Only CPUs 0 and 1 are online; 2 and 3 are offline.
             if name == '/proc/cpuinfo':
                 return io.BytesIO(b"cpu MHz\t: 200\ncpu MHz\t: 400")
+            elif name.endswith('/affected_cpus'):
+                num = re.search(r"/policy(\d+)/", name).group(1)
+                return io.BytesIO(num.encode())
             elif "/policy0/" in name or "/policy1/" in name:
                 if name.endswith('/scaling_cur_freq'):
                     cur = b"200000" if "/policy0/" in name else b"400000"

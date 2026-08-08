@@ -615,15 +615,29 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
         Contrarily to other OSes, Linux updates these values in
         real-time.
         """
+        pjoin = os.path.join
         cpuinfo_freqs = _cpu_get_cpuinfo_freq()
         paths = glob.glob(
             "/sys/devices/system/cpu/cpufreq/policy[0-9]*"
         ) or glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq")
-        paths.sort(key=lambda x: int(re.search(r"[0-9]+", x).group()))
+
+        # One policy may govern more than one CPU, so ask each policy
+        # which CPUs it affects instead of assuming one per CPU. Offline
+        # CPUs are listed by no policy, and are therefore left out.
+        # https://github.com/giampaolo/psutil/issues/2512
+        cpu_to_path = {}
+        for path in paths:
+            affected = bcat(pjoin(path, "affected_cpus"), fallback=None)
+            if affected is None:
+                cpu_to_path[int(re.search(r"[0-9]+", path).group())] = path
+            else:
+                for cpu in affected.split():
+                    cpu_to_path[int(cpu)] = path
+
         ret = []
-        pjoin = os.path.join
-        for i, path in enumerate(paths):
-            if len(paths) == len(cpuinfo_freqs):
+        for i, cpu in enumerate(sorted(cpu_to_path)):
+            path = cpu_to_path[cpu]
+            if len(cpu_to_path) == len(cpuinfo_freqs):
                 # take cached value from cpuinfo if available, see:
                 # https://github.com/giampaolo/psutil/issues/1851
                 curr = cpuinfo_freqs[i] * 1000
@@ -634,7 +648,7 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                 # https://github.com/giampaolo/psutil/issues/1071
                 curr = bcat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
                 if curr is None:
-                    online_path = f"/sys/devices/system/cpu/cpu{i}/online"
+                    online_path = f"/sys/devices/system/cpu/cpu{cpu}/online"
                     # If the CPU core is offline skip it instead of
                     # reporting it as all zeroes, otherwise it drags
                     # down the average frequency. See:
