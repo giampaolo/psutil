@@ -982,14 +982,27 @@ class TestCpuFreq(LinuxTestCase):
                 return ["/sys/devices/system/cpu/cpufreq/policy0"]
             return orig_glob(pattern)
 
+        def exists_mock(path):
+            # Make sure the sysfs-based implementation is used.
+            if path.startswith("/sys/devices/system/cpu/"):
+                return True
+            return orig_exists(path)
+
+        orig_exists = os.path.exists
         orig_glob = glob.glob
         orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock):
-            with mock.patch("glob.glob", side_effect=glob_mock):
-                freq = psutil.cpu_freq(percpu=True)
-        assert len(freq) == 4
-        for nt in freq:
-            assert nt == (100.0, 200.0, 300.0)
+        try:
+            with mock.patch("os.path.exists", side_effect=exists_mock):
+                reload_module(psutil._pslinux)
+                with mock.patch("glob.glob", side_effect=glob_mock):
+                    with mock.patch("builtins.open", side_effect=open_mock):
+                        freq = psutil.cpu_freq(percpu=True)
+            assert len(freq) == 4
+            for nt in freq:
+                assert nt == (100.0, 200.0, 300.0)
+        finally:
+            reload_module(psutil._pslinux)
+            reload_module(psutil)
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_no_scaling_cur_freq_file(self):
