@@ -2566,15 +2566,20 @@ def net_if_addrs() -> dict[str, list[snicaddr]]:
         nt = _ntp.snicaddr(fam, addr, mask, broadcast, ptp)
 
         # On Windows broadcast is None, so we determine it via
-        # ipaddress module.
-        if WINDOWS and fam in {socket.AF_INET, socket.AF_INET6}:
+        # ipaddress module. On POSIX a /32 has no broadcast address,
+        # but getifaddrs() hands back the local address.
+        if nt.netmask and (
+            fam == socket.AF_INET or (WINDOWS and fam == socket.AF_INET6)
+        ):
             try:
-                broadcast = _common.broadcast_addr(nt)
+                calculated = _common.broadcast_addr(nt)
             except Exception as err:  # noqa: BLE001
                 warn(f"broadcast_addr() failed: {err!r}")
             else:
-                if broadcast is not None:
-                    nt = nt._replace(broadcast=broadcast)
+                if calculated is None:
+                    nt = nt._replace(broadcast=None)
+                elif WINDOWS:
+                    nt = nt._replace(broadcast=calculated)
 
         ret[name].append(nt)
 
