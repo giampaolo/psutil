@@ -53,6 +53,8 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil import _enums
+from psutil._common import ENCODING
+from psutil._common import ENCODING_ERRS
 from psutil._common import debug
 from psutil._common import supports_ipv6
 
@@ -525,6 +527,8 @@ def sh(cmd, **kwds):
     kwds.setdefault("stdout", subprocess.PIPE)
     kwds.setdefault("stderr", subprocess.PIPE)
     kwds.setdefault("universal_newlines", True)
+    kwds.setdefault("encoding", ENCODING)
+    kwds.setdefault("errors", ENCODING_ERRS)
     kwds.setdefault("creationflags", flags)
     if isinstance(cmd, str):
         cmd = shlex.split(cmd)
