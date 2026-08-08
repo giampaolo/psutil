@@ -38,6 +38,7 @@ from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
 from . import ThreadTask
 from . import call_until
+from . import is_busybox
 from . import isolated
 from . import pytest
 from . import reload_module
@@ -191,6 +192,8 @@ def vmstat(stat):
 
 
 def get_free_version_info():
+    if is_busybox("free"):
+        return pytest.skip("busybox free has no -V option")
     out = sh(["free", "-V"]).strip()
     if 'UNKNOWN' in out:
         return pytest.skip("can't determine free version")

@@ -92,7 +92,7 @@ __all__ = [
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
-    'get_winver', 'kernel_version',
+    'get_winver', 'kernel_version', 'is_busybox',
     # sync primitives
     'call_until', 'wait_for_pid', 'wait_for_file', 'wait_for_file_subproc',
     # network
@@ -713,6 +713,15 @@ def get_winver():
     wv = sys.getwindowsversion()
     sp = wv.service_pack_major or 0
     return (wv[0], wv[1], sp)
+
+
+@functools.lru_cache
+def is_busybox(cmd):
+    """Whether cmd is provided by busybox / Alpine Linux."""
+    path = shutil.which(cmd)
+    if path is None:
+        return False
+    return os.path.basename(os.path.realpath(path)) == "busybox"
 
 
 # ===================================================================

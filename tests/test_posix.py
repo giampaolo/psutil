@@ -29,6 +29,7 @@ from . import AARCH64
 from . import HAS_NET_IO_COUNTERS
 from . import PYTHON_EXE
 from . import PsutilTestCase
+from . import is_busybox
 from . import isolated
 from . import pytest
 from . import requires_cli
@@ -49,6 +50,8 @@ def ps(fmt, pid=None):
     """Wrapper for calling the ps command with a little bit of cross-platform
     support for a narrow range of features.
     """
+    if is_busybox("ps"):
+        return pytest.skip("busybox ps lacks the needed options")
 
     cmd = ['ps']
 
@@ -420,6 +423,7 @@ class TestSystemAPIs(PosixTestCase):
                     f" output\n{output}"
                 )
 
+    @skipif(is_busybox("who"), reason="busybox who has no -u option")
     @retry_on_failure
     def test_users(self):
         out = sh("who -u")
@@ -451,6 +455,7 @@ class TestSystemAPIs(PosixTestCase):
             if user.pid is not None:
                 assert user.pid > 0
 
+    @skipif(is_busybox("who"), reason="busybox who has no -u option")
     @retry_on_failure
     def test_users_started(self):
         out = sh("who -u")
