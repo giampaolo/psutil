@@ -1169,11 +1169,13 @@ class PsutilTestCase(unittest.TestCase):
             with pytest.raises(psutil.ZombieProcess) as cm:
                 proc.memory_maps()
             self._check_proc_exc(proc, cm.value)
-        # Zombie cannot be signaled or terminated.
-        proc.suspend()
-        proc.resume()
-        proc.terminate()
-        proc.kill()
+        # Zombie cannot be signaled or terminated. Another user's zombie
+        # can't be signaled at all, so only try on our own.
+        if not POSIX or proc.uids().real == os.getuid():
+            proc.suspend()
+            proc.resume()
+            proc.terminate()
+            proc.kill()
         assert proc.is_running()
         assert psutil.pid_exists(proc.pid)
         assert_in_pids(proc)

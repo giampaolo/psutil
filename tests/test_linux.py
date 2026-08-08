@@ -808,6 +808,19 @@ class TestCpuCountCores(LinuxTestCase):
 
 
 class TestCpuFreq(LinuxTestCase):
+    def test_cpuinfo_freq_ppc(self):
+        content = b"clock\t\t: 2750.000000MHz\nclock\t\t: 2500.000000MHz\n"
+        with mock_open_content({"/proc/cpuinfo": content}):
+            assert _cpu_get_cpuinfo_freq() == [2750.0, 2500.0]
+
+    def test_cpuinfo_freq_s390x(self):
+        content = (
+            b"cpu MHz dynamic : 5200\ncpu MHz static  : 5000\n"
+            b"cpu MHz dynamic : 5100\ncpu MHz static  : 5000\n"
+        )
+        with mock_open_content({"/proc/cpuinfo": content}):
+            assert _cpu_get_cpuinfo_freq() == [5200.0, 5100.0]
+
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     @skipif(AARCH64, reason="aarch64 does not always expose frequency")
     def test_emulate_use_second_file(self):
@@ -1098,7 +1111,14 @@ class TestNetIfAddrs(LinuxTestCase):
                     if addr.broadcast is not None:
                         assert addr.broadcast == get_ipv4_broadcast(name)
                     else:
-                        assert get_ipv4_broadcast(name) == '0.0.0.0'
+                        # SIOCGIFBRDADDR shares a union with the peer
+                        # address, so on a /32 it echoes the address
+                        # back and on a ptp link it gives the peer.
+                        assert get_ipv4_broadcast(name) in {
+                            '0.0.0.0',
+                            addr.address,
+                            addr.ptp,
+                        }
                 elif addr.family == socket.AF_INET6:
                     # IPv6 addresses can have a percent symbol at the end.
                     # E.g. these 2 are equivalent:
