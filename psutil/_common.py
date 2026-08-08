@@ -408,24 +408,26 @@ def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
 
 def broadcast_addr(addr):
     """Given the address ntuple returned by ``net_if_addrs()``
-    calculates the broadcast address.
+    calculates the broadcast address. Returns None for a single-host
+    network (/32 or /128), which has no broadcast address.
     """
     import ipaddress
 
     if not addr.address or not addr.netmask:
         return None
     if addr.family == socket.AF_INET:
-        return str(
-            ipaddress.IPv4Network(
-                f"{addr.address}/{addr.netmask}", strict=False
-            ).broadcast_address
+        net = ipaddress.IPv4Network(
+            f"{addr.address}/{addr.netmask}", strict=False
         )
-    if addr.family == socket.AF_INET6:
-        return str(
-            ipaddress.IPv6Network(
-                f"{addr.address}/{addr.netmask}", strict=False
-            ).broadcast_address
+    elif addr.family == socket.AF_INET6:
+        net = ipaddress.IPv6Network(
+            f"{addr.address}/{addr.netmask}", strict=False
         )
+    else:
+        return None
+    if net.prefixlen == net.max_prefixlen:
+        return None
+    return str(net.broadcast_address)
 
 
 def deprecated_method(replacement):

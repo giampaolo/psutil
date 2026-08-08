@@ -271,14 +271,14 @@ class TestAvailSystemAPIs(PsutilTestCase):
     def test_heap_info(self):
         hasit = hasattr(psutil, "heap_info")
         if LINUX:
-            assert hasit == bool(platform.libc_ver() != ("", ""))
+            assert hasit == (platform.libc_ver()[0] == "glibc")
         else:
             assert hasit == MACOS or WINDOWS or BSD
 
     def test_heap_trim(self):
         hasit = hasattr(psutil, "heap_trim")
         if LINUX:
-            assert hasit == bool(platform.libc_ver() != ("", ""))
+            assert hasit == (platform.libc_ver()[0] == "glibc")
         else:
             assert hasit == MACOS or WINDOWS or BSD
 
