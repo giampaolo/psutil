@@ -25,6 +25,7 @@ import socket
 import stat
 import subprocess
 import sys
+import sysconfig
 import tempfile
 import textwrap
 import threading
@@ -38,10 +39,7 @@ from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_STREAM
 
-try:
-    import pytest
-except ImportError:
-    pytest = None
+import pytest
 
 import psutil
 import psutil._ntuples as ntuples
@@ -240,8 +238,12 @@ def _get_py_exe():
     # Derived from psutil.__file__ and not from ROOT_DIR because when
     # testing wheels the source tree next to us has no C extension.
     psutil_path = str(pathlib.Path(psutil.__file__).resolve().parent.parent)
+    paths = [psutil_path]
+    # Handle venvs.
+    if sys.prefix != sys.base_prefix:
+        paths.append(sysconfig.get_paths()["purelib"])
     env["PYTHONPATH"] = os.pathsep.join(
-        filter(None, [psutil_path, env.get("PYTHONPATH")])
+        filter(None, [*paths, env.get("PYTHONPATH")])
     )
 
     if PYPY and POSIX:
