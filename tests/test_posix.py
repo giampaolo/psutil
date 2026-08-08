@@ -386,7 +386,9 @@ class TestProcess(PosixTestCase):
             # so only compare the order of magnitude.
             assert mem.peak_rss == pytest.approx(ru.ru_maxrss * 1024, rel=1)
         else:
-            rss_diff = abs(mem.peak_rss - ru.ru_maxrss * 1024)
+            # ru_maxrss is in bytes on macOS, in KB everywhere else.
+            maxrss = ru.ru_maxrss if MACOS else ru.ru_maxrss * 1024
+            rss_diff = abs(mem.peak_rss - maxrss)
             assert rss_diff <= mem.peak_rss * 0.05
 
 
