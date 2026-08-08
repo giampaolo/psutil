@@ -808,6 +808,19 @@ class TestCpuCountCores(LinuxTestCase):
 
 
 class TestCpuFreq(LinuxTestCase):
+    def test_cpuinfo_freq_ppc(self):
+        content = b"clock\t\t: 2750.000000MHz\nclock\t\t: 2500.000000MHz\n"
+        with mock_open_content({"/proc/cpuinfo": content}):
+            assert _cpu_get_cpuinfo_freq() == [2750.0, 2500.0]
+
+    def test_cpuinfo_freq_s390x(self):
+        content = (
+            b"cpu MHz dynamic : 5200\ncpu MHz static  : 5000\n"
+            b"cpu MHz dynamic : 5100\ncpu MHz static  : 5000\n"
+        )
+        with mock_open_content({"/proc/cpuinfo": content}):
+            assert _cpu_get_cpuinfo_freq() == [5200.0, 5100.0]
+
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     @skipif(AARCH64, reason="aarch64 does not always expose frequency")
     def test_emulate_use_second_file(self):

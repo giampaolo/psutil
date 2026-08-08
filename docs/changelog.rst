@@ -533,6 +533,9 @@ Others:
   ``getpriority(3)``. :meth:`Process.net_connections` returned UNIX sockets
   with ``type=-1`` and ``fd=-1``. Also, :meth:`Process.net_connections` now
   raises :exc:`ZombieProcess` instead of ``RuntimeError`` for zombie processes.
+- :gh:`2967`, [Linux]: :func:`cpu_freq` returned ``None`` on ppc machines
+  without cpufreq sysfs. On s390x it matched both ``cpu MHz dynamic`` and
+  ``cpu MHz static``, reporting twice as many CPUs as the machine has.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
