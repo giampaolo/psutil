@@ -7,8 +7,8 @@
 """Install pip, or upgrade it if it's too old.
 
 Note: build.yml builds wheels on Python 3.8 (the floor), but doesn't
-run tests with it, nor installs deps, so this script is never called,
-and only works on Python 3.10+.
+run tests with it, nor installs deps, so this script is never called
+there.
 """
 
 import re
@@ -24,7 +24,13 @@ except ImportError:
     pip = None
 
 
-URL = "https://bootstrap.pypa.io/get-pip.py"
+if sys.version_info >= (3, 10):
+    URL = "https://bootstrap.pypa.io/get-pip.py"
+else:
+    URL = "https://bootstrap.pypa.io/pip/{}.{}/get-pip.py".format(
+        *sys.version_info[:2]
+    )
+
 # Needed by "pip install --group" (PEP 735), used by the
 # install-pydeps-* makefile targets.
 MIN_VERSION = (25, 1)
