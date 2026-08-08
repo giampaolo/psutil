@@ -435,10 +435,9 @@ class TestSystemAPIs(PosixTestCase):
             user = line.split()[0]
             terminal = line.split()[1]
             if LINUX or MACOS:
-                try:
-                    pid = int(line.split()[-2])
-                except ValueError:
-                    pid = int(line.split()[-1])
+                pid = next(
+                    int(x) for x in reversed(line.split()) if x.isdigit()
+                )
                 susers.append((user, terminal, pid))
             else:
                 susers.append((user, terminal))

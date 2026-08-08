@@ -1601,7 +1601,11 @@ class TestRootFsDeviceFinder(LinuxTestCase):
     def test_against_findmnt(self):
         psutil_value = RootFsDeviceFinder().find()
         findmnt_value = sh("findmnt -o SOURCE -rn /")
-        assert psutil_value == findmnt_value
+        # findmnt prints the friendly alias (e.g. /dev/mapper/vg-root),
+        # psutil the kernel name it points to (e.g. /dev/dm-0).
+        assert os.path.realpath(psutil_value) == os.path.realpath(
+            findmnt_value
+        )
 
     def test_disk_partitions_mocked(self):
         with mock.patch.object(
