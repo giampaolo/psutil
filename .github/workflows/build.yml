@@ -38,6 +38,7 @@ jobs:
         include:
           - { os: ubuntu-latest, arch: x86_64 }
           - { os: ubuntu-24.04-arm, arch: aarch64 }
+          - { os: ubuntu-24.04-arm, arch: armv7l }
           # Intel runners are slow, and installing the free-threaded
           # framework alone takes ~90s there. Give it its own lane so it
           # runs next to cp314 instead of after it.

@@ -105,6 +105,9 @@ install_test_deps() {
 }
 
 main() {
+    if [ "$HAS_APT" ]; then
+        $SUDO apt-get update
+    fi
     if [ $TEST_ONLY ]; then
         install_test_deps
     else
