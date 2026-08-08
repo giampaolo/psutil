@@ -213,6 +213,10 @@ class TestInternalScripts(ScriptsTestCase):
                 import_module_by_path(path)
             except SystemExit:
                 pass
+            except ImportError as err:
+                if "pyperf" in str(err):
+                    continue
+                raise
 
     def test_print_api_speed(self):
         self.assert_stdout("print_api_speed.py", "-t", "2")
