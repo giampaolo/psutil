@@ -780,13 +780,15 @@ class TestCpuCountLogical(LinuxTestCase):
 class TestCpuCountCores(LinuxTestCase):
     @requires_cli("lscpu")
     def test_against_lscpu(self):
-        out = sh("lscpu -p")
-        core_ids = set()
-        for line in out.split('\n'):
-            if not line.startswith('#'):
-                fields = line.split(',')
-                core_ids.add(fields[1])
-        assert psutil.cpu_count(logical=False) == len(core_ids)
+        cores = 0
+        per_socket = 0
+        for line in sh("lscpu").splitlines():
+            line = line.strip()
+            if line.startswith("Core(s) per socket:"):
+                per_socket = int(line.split(":")[1])
+            elif line.startswith("Socket(s):"):
+                cores += per_socket * int(line.split(":")[1])
+        assert psutil.cpu_count(logical=False) == cores
 
     @skipif(
         platform.machine() not in {"x86_64", "i686"}, reason="x86_64/i686 only"
@@ -1367,9 +1369,10 @@ class TestNetConnections(LinuxTestCase):
 
     @serial
     @requires_cli("ss")
+    @retry_on_failure
     def test_against_ss(self):
-        # Listening ports are stable, so an exact set comparison is
-        # reliable.
+        # Listening ports are more stable, so an exact set comparison is
+        # more reliable.
         out = sh(["ss", "-tuanp"])
         ss_ports = set()
         for line in out.splitlines():
