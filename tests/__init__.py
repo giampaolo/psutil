@@ -407,6 +407,8 @@ def spawn_subproc(cmd=None, **kwds):
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
         wait_for_pid(sproc.pid)
+        if LINUX:
+            _wait_for_cmdline(sproc.pid)
     return sproc
 
 
@@ -824,6 +826,21 @@ def wait_for_file_subproc(fname, sproc, delete=True, empty=False):
             stderr = stderr.decode(errors="replace")
         msg = f"subprocess died (exit {ret}):\n{stderr}"
         raise RuntimeError(msg) from err
+
+
+@retry(
+    exception=AssertionError,
+    logfun=None,
+    timeout=GLOBAL_TIMEOUT,
+    interval=0.001,
+)
+def _wait_for_cmdline(pid):
+    # Popen() returns before the kernel publishes argv, so for a moment
+    # /proc/pid/cmdline reads back empty.
+    try:
+        assert psutil.Process(pid).cmdline()
+    except (psutil.NoSuchProcess, psutil.ZombieProcess):
+        return
 
 
 @retry(
