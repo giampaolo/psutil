@@ -22,9 +22,9 @@ INSTALL_PYDEPS = PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh
 # install git hook (skipped in worktrees, where .git is a file)
 _ := $(shell test -d .git && mkdir -p .git/hooks/ && ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit)
 
-# phony all targets that have a ## docstring
-_PHONY := $(shell awk -F':.*?## ' \
-	'/^[a-zA-Z0-9_.-]+:.*?## / {print $$1}' $(MAKEFILE_LIST))
+# phony all targets
+_PHONY := $(shell grep -hoE '^[a-zA-Z0-9_-][a-zA-Z0-9_.-]*:' $(MAKEFILE_LIST) \
+	| tr -d :)
 .PHONY: $(_PHONY)
 
 # ===================================================================
@@ -105,7 +105,7 @@ install-pydeps-dev:  ## Install python deps meant for local development.
 
 # - cache dir on Windows often causes "Permission denied" errors
 # - on CI drop instafail so failures gather in one block at the end
-_PYTEST_EXTRA != { if [ "$$OS" = "Windows_NT" ]; then printf '%s ' '-o cache_dir=/tmp/pytest-psutil-cache'; fi; if [ -n "$$CI" ]; then printf '%s ' '-p no:instafail'; fi; }
+_PYTEST_EXTRA := $(shell { if [ "$$OS" = "Windows_NT" ]; then printf '%s ' '-o cache_dir=/tmp/pytest-psutil-cache'; fi; if [ -n "$$CI" ]; then printf '%s ' '-p no:instafail'; fi; })
 
 RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --durations=5 $(_PYTEST_EXTRA)
 RUN_TEST_MEMLEAKS = PYTHONMALLOC=malloc $(RUN_TEST) -k test_memleaks.py
