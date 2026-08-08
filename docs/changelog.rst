@@ -517,6 +517,9 @@ Others:
   with ``percpu=True`` and :func:`cpu_stats` read uninitialized memory: the
   kernel only returns entries for the calling thread's processor group, but the
   entries for the remaining CPUs were used as well.
+- :gh:`2966`, [Linux]: :meth:`Process.cpu_affinity` over-decref'ed the CPU
+  numbers it returned, corrupting CPython's small integer cache and segfaulting
+  the interpreter. Python <= 3.11 only.
 - :gh:`2951`, [OpenBSD]: :func:`cpu_times` returned times averaged across CPUs
   instead of summed, like on all the other platforms. Now it sums the per-CPU
   counters.
