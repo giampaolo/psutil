@@ -214,7 +214,7 @@ class TestInternalScripts(ScriptsTestCase):
             except SystemExit:
                 pass
             except ImportError as err:
-                if "pyperf" in str(err):
+                if "pyperf" in str(err) or "requests" in str(err):
                     continue
                 raise
 
