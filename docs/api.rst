@@ -950,6 +950,11 @@ Other system info
      [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0, pid=1352),
       suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
 
+  .. note::
+    On UNIX this reads the ``utmp`` database, and returns an empty list if
+    nothing maintains it, e.g. on musl libc (Alpine Linux), which doesn't
+    implement it. ``who`` is empty too in that case.
+
   .. versionchanged:: 5.3.0
      added :field:`pid` field.
 

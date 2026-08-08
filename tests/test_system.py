@@ -350,8 +350,9 @@ class TestMiscAPIs(PsutilTestCase):
         assert bt > 0
         assert bt < time.time()
 
-    @skipif(CI_TESTING and not psutil.users(), reason="unreliable on CI")
     def test_users(self):
+        if not psutil.users():
+            return pytest.skip("no users logged in")
         users = psutil.users()
         assert users
         for user in users:

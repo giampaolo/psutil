@@ -109,8 +109,9 @@ class TestExampleScripts(ScriptsTestCase):
     def test_procinfo(self):
         self.assert_stdout('procinfo.py', str(os.getpid()))
 
-    @skipif(CI_TESTING and not psutil.users(), reason="no users")
     def test_who(self):
+        if not psutil.users():
+            return pytest.skip("no users logged in")
         self.assert_stdout('who.py')
 
     def test_ps(self):
