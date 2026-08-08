@@ -539,6 +539,24 @@ class Process:
     __repr__ = __str__
 
     @staticmethod
+    def _get_ordering_ctime(proc):
+        """Return a ctime usable for chronological parent/child checks.
+
+        None means ordering cannot be established, so callers must keep
+        the relationship rather than risk discarding a real process.
+        """
+        ctime = proc._ident[1]
+        if WINDOWS and not ctime:
+            # Windows identity uses an AccessDenied-prone fast path.
+            # Retry through create_time(), which has a slower fallback.
+            try:
+                return proc.create_time()
+            except (AccessDenied, ZombieProcess):
+                return None
+        # On other platforms a falsey identity ctime is not trustworthy.
+        return ctime or None
+
+    @staticmethod
     def _cmp_idents(ident1, ident2):
         """Compare two `(pid, ctime)` identity tuples and return
         "same", "different" or "unknown". "unknown" means ctime is
@@ -734,13 +752,17 @@ class Process:
             return None
         ppid = self.ppid()
         if ppid is not None:
-            # Get a fresh (non-cached) ctime in case the system clock
-            # was updated. TODO: use a monotonic ctime on platforms
-            # where it's supported.
-            proc_ctime = Process(self.pid).create_time()
+            # Recreate self after ppid() so an intervening exit can
+            # still be observed.
+            proc_ctime = self._get_ordering_ctime(Process(self.pid))
             try:
                 parent = Process(ppid)
-                if parent.create_time() <= proc_ctime:
+                parent_ctime = self._get_ordering_ctime(parent)
+                if (
+                    proc_ctime is None
+                    or parent_ctime is None
+                    or parent_ctime <= proc_ctime
+                ):
                     return parent
                 # ...else ppid has been reused by another process
             except NoSuchProcess:
@@ -1150,19 +1172,23 @@ class Process:
         """
         self._raise_if_pid_reused()
         ppid_map = _ppid_map()
-        # Get a fresh (non-cached) ctime in case the system clock was
-        # updated. TODO: use a monotonic ctime on platforms where it's
-        # supported.
-        proc_ctime = Process(self.pid).create_time()
+        # Recreate self after _ppid_map() so an intervening exit can
+        # still be observed.
+        proc_ctime = self._get_ordering_ctime(Process(self.pid))
         ret = []
         if not recursive:
             for pid, ppid in ppid_map.items():
                 if ppid == self.pid:
                     try:
                         child = Process(pid)
+                        child_ctime = self._get_ordering_ctime(child)
                         # if child happens to be older than its parent
                         # (self) it means child's PID has been reused
-                        if proc_ctime <= child.create_time():
+                        if (
+                            proc_ctime is None
+                            or child_ctime is None
+                            or proc_ctime <= child_ctime
+                        ):
                             ret.append(child)
                     except (NoSuchProcess, ZombieProcess):
                         pass
@@ -1186,9 +1212,14 @@ class Process:
                 for child_pid in reverse_ppid_map[pid]:
                     try:
                         child = Process(child_pid)
+                        child_ctime = self._get_ordering_ctime(child)
                         # if child happens to be older than its parent
                         # (self) it means child's PID has been reused
-                        intime = proc_ctime <= child.create_time()
+                        intime = (
+                            proc_ctime is None
+                            or child_ctime is None
+                            or proc_ctime <= child_ctime
+                        )
                         if intime:
                             ret.append(child)
                             stack.append(child_pid)
