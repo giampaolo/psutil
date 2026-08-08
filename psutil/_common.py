@@ -60,7 +60,7 @@ __all__ = [
 
 POSIX = os.name == "posix"
 WINDOWS = os.name == "nt"
-LINUX = sys.platform.startswith("linux")
+LINUX = sys.platform.startswith(("linux", "android"))
 MACOS = sys.platform.startswith("darwin")
 OSX = MACOS  # deprecated alias
 FREEBSD = sys.platform.startswith(("freebsd", "midnightbsd"))

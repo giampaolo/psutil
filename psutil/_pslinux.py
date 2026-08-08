@@ -1172,7 +1172,8 @@ def disk_partitions(all=False):
     """Return mounted disk partitions as a list of named tuples."""
     fstypes = set()
     procfs_path = get_procfs_path()
-    if not all:
+
+    def fstypes_from_filesystems():
         with open_text(f"{procfs_path}/filesystems") as f:
             for line in f:
                 line = line.strip()
@@ -1183,6 +1184,23 @@ def disk_partitions(all=False):
                     fstype = line.split("\t")[1]
                     if fstype == "zfs":
                         fstypes.add("zfs")
+        return fstypes
+
+    def fstypes_from_mountinfo():
+        with open_text(f"{procfs_path}/self/mountinfo") as f:
+            for line in f:
+                line = line.strip().split()
+                if len(line) > 1:
+                    for i in range(len(line) - 1):
+                        if line[i] == "-":
+                            fstypes.add(line[i + 1])
+        return fstypes
+
+    if not all:
+        try:
+            fstypes = fstypes_from_filesystems()
+        except PermissionError:
+            fstypes = fstypes_from_mountinfo()
 
     # See: https://github.com/giampaolo/psutil/issues/1307
     if procfs_path == "/proc" and os.path.isfile('/etc/mtab'):
