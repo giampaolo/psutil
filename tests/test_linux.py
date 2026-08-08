@@ -180,6 +180,7 @@ def free_physmem():
     raise ValueError(f"can't find 'Mem' in 'free' output:\n{out}")
 
 
+@requires_cli("vmstat")
 def vmstat(stat):
     out = sh(["vmstat", "-s"], env={"LANG": "C.UTF-8"})
     for line in out.split("\n"):
