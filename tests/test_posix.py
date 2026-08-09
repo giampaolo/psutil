@@ -332,16 +332,33 @@ class TestProcess(PosixTestCase):
     @isolated
     @retry_on_failure
     def test_num_ctx_switches(self):
-        ru = resource.getrusage(resource.RUSAGE_SELF)
-        cws = psutil.Process().num_ctx_switches()
+        # getrusage() keeps counting threads which already exited, and
+        # /proc/pid/status only sees the live ones, so the totals drift
+        # apart for good. Compare how much each grows instead.
+        p = psutil.Process()
+        ru1 = resource.getrusage(resource.RUSAGE_SELF)
+        cws1 = p.num_ctx_switches()
+        for _ in range(100):
+            time.sleep(0.001)  # each sleep blocks, hence a switch
+        ru2 = resource.getrusage(resource.RUSAGE_SELF)
+        cws2 = p.num_ctx_switches()
+
         tol = 50
         if MACOS:
-            assert cws.voluntary + cws.involuntary == pytest.approx(
-                ru.ru_nvcsw + ru.ru_nivcsw, abs=tol * 2
+            psutil_delta = (cws2.voluntary + cws2.involuntary) - (
+                cws1.voluntary + cws1.involuntary
             )
+            ru_delta = (ru2.ru_nvcsw + ru2.ru_nivcsw) - (
+                ru1.ru_nvcsw + ru1.ru_nivcsw
+            )
+            assert psutil_delta == pytest.approx(ru_delta, abs=tol * 2)
         else:
-            assert cws.voluntary == pytest.approx(ru.ru_nvcsw, abs=tol)
-            assert cws.involuntary == pytest.approx(ru.ru_nivcsw, abs=tol)
+            assert cws2.voluntary - cws1.voluntary == pytest.approx(
+                ru2.ru_nvcsw - ru1.ru_nvcsw, abs=tol
+            )
+            assert cws2.involuntary - cws1.involuntary == pytest.approx(
+                ru2.ru_nivcsw - ru1.ru_nivcsw, abs=tol
+            )
 
     @retry_on_failure
     def test_cpu_times(self):
