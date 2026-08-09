@@ -70,9 +70,9 @@ install_build_deps() {
             $SUDO env PKG_PATH="$PKG_PATH" /usr/sbin/pkg_add -v pkgin
         fi
         $SUDO "$PKGIN" update
-        $SUDO "$PKGIN" -y install 'python311-*'  # no gcc12: base gcc compiles psutil just fine
+        $SUDO "$PKGIN" -y install 'python314-*'  # no gcc12: base gcc compiles psutil just fine
         if [ ! -e /usr/pkg/bin/python3 ]; then
-            $SUDO ln -s /usr/pkg/bin/python3.11 /usr/pkg/bin/python3
+            $SUDO ln -s /usr/pkg/bin/python3.14 /usr/pkg/bin/python3
         fi
     # OpenBSD
     elif [ $OPENBSD ]; then

@@ -5,7 +5,7 @@ This page summarises the breaking changes introduced in each major release and
 shows the code changes required to upgrade.
 
 .. note::
-  Minor and patch releases (e.g. 6.1.x, 7.1.x) never contain breaking changes.
+  Minor and patch releases (e.g. 6.1.x, 7.1.x) do not contain breaking changes.
   Only major releases are listed here.
 
 .. _migration-8.0:
@@ -15,14 +15,15 @@ Migrating to 8.0
 
 Key breaking changes in 8.0:
 
-- :func:`process_iter` pre-fetches values
-- :attr:`Process.info` is deprecated: use direct methods.
-- Named tuple field order changed: stop positional unpacking.
+- :func:`process_iter` now pre-fetches values.
+- :attr:`Process.info` is deprecated: use direct methods instead.
+- Named tuple field order changed: use attribute access instead of positional
+  unpacking.
 - Some return types are now enums instead of strings.
-- :meth:`Process.memory_full_info` deprecated: use
+- :meth:`Process.memory_full_info` is deprecated: use
   :meth:`Process.memory_footprint`.
-- New :meth:`Process.memory_info_ex` (unrelated to the old method deprecated in
-  4.0 and removed in 7.0).
+- New :meth:`Process.memory_info_ex` method (unrelated to the old method
+  deprecated in 4.0 and removed in 7.0).
 - New :attr:`Process.attrs`: :class:`frozenset` of valid attribute names;
   ``process_iter(attrs=[])`` is deprecated.
 - Python 3.6 and 3.7 dropped.
@@ -36,9 +37,9 @@ Key breaking changes in 8.0:
 process_iter(): p.info is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:func:`process_iter` now caches pre-fetched values internally, so they can be
-accessed via normal method calls instead of the :attr:`Process.info` dict.
-``p.info`` still works, but raises :exc:`DeprecationWarning`.
+:func:`process_iter` now caches pre-fetched values internally, so normal method
+calls can return them without using the :attr:`Process.info` dict. ``p.info``
+still works, but raises :exc:`DeprecationWarning`.
 
 .. code-block:: python
 
@@ -52,12 +53,12 @@ accessed via normal method calls instead of the :attr:`Process.info` dict.
   for p in psutil.process_iter(attrs=["name", "status"]):
       print(p.name(), p.status())  # return cached values, never raise
 
-When ``attrs`` are specified, method calls return cached values (no extra
-syscall), and :exc:`AccessDenied` / :exc:`ZombieProcess` are handled
-transparently (returning ``ad_value``).
+When ``attrs`` are specified, the corresponding method calls return cached
+values without extra syscalls. :exc:`AccessDenied` / :exc:`ZombieProcess` are
+handled transparently by returning ``ad_value``.
 
-If you relied on :attr:`Process.info` because you needed a dict structure, use
-:meth:`Process.as_dict` instead.
+If you need a dict, use :meth:`Process.as_dict` instead of
+:attr:`Process.info`.
 
 .. code-block:: python
 
@@ -73,8 +74,8 @@ If you relied on :attr:`Process.info` because you needed a dict structure, use
       print(p.as_dict(attrs))  # return cached values, never raise
 
 .. note::
-  If ``"name"`` was pre-fetched via ``attrs``, calling ``p.name()`` no longer
-  raises :exc:`AccessDenied`. It returns ``ad_value`` instead. If you need the
+  If ``"name"`` was pre-fetched via ``attrs``, ``p.name()`` returns
+  ``ad_value`` instead of raising :exc:`AccessDenied`. If you need the
   exception, do not include the method in ``attrs``.
 
 Named tuple field order changed
@@ -106,13 +107,13 @@ Named tuple field order changed
     Use :meth:`Process.page_faults` instead.
   - Windows: old aliases (:field:`wset`, :field:`peak_wset`, :field:`pagefile`,
     :field:`private`, :field:`peak_pagefile`, :field:`num_page_faults`) were
-    renamed. Old names still work but raise :exc:`DeprecationWarning`.
+    renamed. The old names still work but raise :exc:`DeprecationWarning`.
     :field:`paged_pool`, :field:`nonpaged_pool`, :field:`peak_paged_pool`,
-    :field:`peak_nonpaged_pool` were moved to :meth:`Process.memory_info_ex`.
+    :field:`peak_nonpaged_pool` moved to :meth:`Process.memory_info_ex`.
   - BSD: a new :field:`peak_rss` field was added.
 
 - :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired`
-  fields were added. Code using positional unpacking will break:
+  fields were added. Positional unpacking will break:
 
   .. code-block:: python
 
@@ -127,46 +128,44 @@ cpu_times() interrupt renamed to irq on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The :field:`interrupt` field of :func:`cpu_times` on Windows was renamed to
-:field:`irq` to match the name used on Linux and BSD. The old name still works
-but raises :exc:`DeprecationWarning`.
+:field:`irq` to match Linux and BSD. The old name still works but raises
+:exc:`DeprecationWarning`.
 
 Status and connection fields are now enums
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - :meth:`Process.status` now returns a :class:`ProcessStatus` member instead of
   a plain ``str``.
-- :meth:`Process.net_connections` and :func:`net_connections` :field:`status`
-  field now returns a :class:`ConnectionStatus` member instead of a plain
-  ``str``.
+- The :field:`status` field returned by :meth:`Process.net_connections` and
+  :func:`net_connections` is now a :class:`ConnectionStatus` member instead of
+  a plain ``str``.
 
-Because both are :class:`enum.StrEnum` subclasses they compare equal to their
+Because both are :class:`enum.StrEnum` subclasses, they compare equal to their
 string values, so existing comparisons like
-``p.status() == psutil.STATUS_RUNNING`` continue to work unchanged. Code
-inspecting :func:`repr` or :class:`type` may need updating.
+``p.status() == psutil.STATUS_RUNNING`` continue to work. Code inspecting
+:func:`repr` or :class:`type` may need updating.
 
 memory_full_info() is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`Process.memory_full_info` is deprecated. Use
-:meth:`Process.memory_footprint` instead (same fields).
+:meth:`Process.memory_footprint` instead; it returns the same fields.
 
 New memory_info_ex() method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 8.0 introduces a new :meth:`Process.memory_info_ex` method that extends
 :meth:`Process.memory_info` with platform-specific metrics (e.g.
-:field:`peak_rss`, :field:`swap`, :field:`rss_anon` on Linux). This is
-**unrelated** to the old :meth:`Process.memory_info_ex` that was deprecated in
-4.0 and removed in 7.0 (which corresponded to what later became
-:meth:`Process.memory_full_info`).
+:field:`peak_rss`, :field:`swap`, :field:`rss_anon` on Linux). It is
+**unrelated** to the old :meth:`Process.memory_info_ex`, deprecated in 4.0 and
+removed in 7.0, which later became :meth:`Process.memory_full_info`.
 
 New Process.attrs class attribute
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:attr:`Process.attrs` is a new :class:`frozenset` exposing the valid attribute
-names accepted by :meth:`Process.as_dict` and :func:`process_iter`. It replaces
-the previous pattern of creating a throwaway process just to discover available
-names:
+:attr:`Process.attrs` is a new :class:`frozenset` containing the valid
+attribute names accepted by :meth:`Process.as_dict` and :func:`process_iter`.
+It avoids creating a throwaway process just to discover them:
 
 .. code-block:: python
 
@@ -191,22 +190,23 @@ It also makes it easy to pass all or a subset of attributes.
 Python 3.6 and 3.7 dropped
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Minimum version is now Python 3.8.
+The minimum version is now Python 3.8.
 
 Windows < 10 dropped
 ^^^^^^^^^^^^^^^^^^^^^
 
 Support for Windows Vista, 7, 8, 8.1 and their server counterparts (Server 2008
-to 2012 R2) was removed. Minimum version is now Windows 10 / Windows Server
-2016. The last release supporting them is the 7.2.x series. See :gh:`2893`.
+to 2012 R2) was removed. The minimum version is now Windows 10 / Windows Server
+2016. The last release supporting older versions is the 7.2.x series. See
+:gh:`2893`.
 
 Git tags renamed
 ^^^^^^^^^^^^^^^^^
 
 Git tags were renamed from ``release-X.Y.Z`` to ``vX.Y.Z`` (e.g.
-``release-7.2.2`` → ``v7.2.2``). Old tags are kept for backward compatibility.
-If you reference psutil tags in scripts or URLs, update them to the new format.
-See :gh:`2788`.
+``release-7.2.2`` → ``v7.2.2``). Old tags remain for backward compatibility. If
+your scripts or URLs reference psutil tags, update them to the new format. See
+:gh:`2788`.
 
 -------------------------------------------------------------------------------
 
@@ -218,14 +218,14 @@ Migrating to 7.0
 Process.memory_info_ex() removed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The long-deprecated :meth:`Process.memory_info_ex` was removed (it was
-deprecated since 4.0.0 in 2016). Use :meth:`Process.memory_full_info` instead.
+:meth:`Process.memory_info_ex`, deprecated since 4.0.0 in 2016, was removed.
+Use :meth:`Process.memory_full_info` instead.
 
 .. note::
 
   In 8.0, a new :meth:`Process.memory_info_ex` method was introduced with
-  different semantics: it extends :meth:`Process.memory_info` with
-  platform-specific metrics. It is unrelated to the old method documented here.
+  different semantics. It extends :meth:`Process.memory_info` with
+  platform-specific metrics and is unrelated to the old method documented here.
 
 .. code-block:: python
 
@@ -238,8 +238,8 @@ deprecated since 4.0.0 in 2016). Use :meth:`Process.memory_full_info` instead.
 Python 2.7 dropped
 ^^^^^^^^^^^^^^^^^^^^
 
-Python 2.7 is no longer supported. The last release to support Python 2.7 is
-psutil 6.1.x:
+Python 2.7 is no longer supported. The last release supporting it is psutil
+6.1.x:
 
 .. code-block:: bash
 
@@ -256,8 +256,8 @@ Process.connections() renamed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`Process.connections` was renamed to :meth:`Process.net_connections` for
-consistency with the system-level :func:`net_connections`. The old name
-triggers a :exc:`DeprecationWarning` and will be removed in a future release:
+consistency with the system-level :func:`net_connections`. The old name raises
+:exc:`DeprecationWarning` and will be removed in a future release:
 
 .. code-block:: python
 
@@ -273,8 +273,7 @@ disk_partitions() lost two fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The :field:`maxfile` and :field:`maxpath` fields were removed from the named
-tuple returned by :func:`disk_partitions`. Code unpacking the tuple
-positionally will break:
+tuple returned by :func:`disk_partitions`. Positional unpacking will break:
 
 .. code-block:: python
 
@@ -290,9 +289,9 @@ process_iter() no longer checks for PID reuse
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :func:`process_iter` no longer preemptively checks whether yielded PIDs have
-been reused (this made it ~20× faster). If you need to verify that a process
-object is still alive and refers to the same process, use
-:meth:`Process.is_running` explicitly:
+been reused, making it ~20× faster. To verify that a process object is still
+alive and refers to the same process, use :meth:`Process.is_running`
+explicitly:
 
 .. code-block:: python
 
@@ -307,12 +306,12 @@ object is still alive and refers to the same process, use
 Migrating to 5.0
 -----------------
 
-5.0.0 was the largest renaming in psutil history. All ``get_*`` and ``set_*``
-:class:`Process` methods lost their prefix, and several module-level names were
-changed.
+5.0.0 introduced the largest API renaming in psutil history. All ``get_*`` and
+``set_*`` :class:`Process` methods lost their prefix, and several module-level
+names were changed.
 
-Old :class:`Process` method names still worked but raised
-:exc:`DeprecationWarning`. They were fully removed in 6.0.
+The old :class:`Process` method names continued to work with
+:exc:`DeprecationWarning` until they were removed in 6.0.
 
 Process methods
 ^^^^^^^^^^^^^^^^

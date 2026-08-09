@@ -4,8 +4,8 @@ Install psutil
 Linux, Windows, macOS (wheels)
 ------------------------------
 
-Prebuilt wheels are distributed for these platforms, so you won't need a C
-compiler. Install psutil with:
+Prebuilt wheels are distributed for these platforms, so a C compiler is not
+required. Install psutil with:
 
 .. code-block:: none
 
@@ -18,31 +18,23 @@ Inside a virtual environment you can also use
 
     uv pip install psutil
 
-If wheels are not available for your platform or architecture, or you wish to
-build and install psutil from source, keep reading.
+If no wheel is available for your platform or architecture, pip will build
+psutil from source (see below).
 
 .. _install_from_source:
 
-Compile psutil from source
---------------------------
+Build psutil from source
+------------------------
 
-Compiling psutil requires two things: a C compiler and the Python development
-headers. On Linux, FreeBSD, NetBSD, OpenBSD and Solaris the
-`install-sysdeps.sh`_ script installs the required system dependencies. From an
-existing Git checkout:
-
-.. code-block:: none
-
-    make install-sysdeps
-
-...or run the latest development version of the script directly from GitHub:
+Building psutil from source requires a C compiler and the Python development
+headers. On Linux, FreeBSD, NetBSD, OpenBSD and Solaris, the
+`install-sysdeps.sh`_ script can install them for you:
 
 .. code-block:: none
 
     curl -fsSL https://raw.githubusercontent.com/giampaolo/psutil/master/scripts/internal/install-sysdeps.sh | sh
 
-Alternatively, install the required dependencies manually as described below,
-then head to :ref:`build_and_install`.
+Alternatively, install them manually as described below.
 
 Linux
 ^^^^^
@@ -110,7 +102,7 @@ FreeBSD
 
 .. code-block:: none
 
-    pkg install python312 py312-pip
+    pkg install python3
 
 OpenBSD
 ^^^^^^^
@@ -118,19 +110,20 @@ OpenBSD
 .. code-block:: none
 
     export PKG_PATH=https://cdn.openbsd.org/pub/OpenBSD/`uname -r`/packages/`uname -m`/
-    pkg_add -v python%3 py3-pip
+    pkg_add -v python%3
 
 NetBSD
 ^^^^^^
 
-Assuming Python 3.11:
+pkgsrc has no version-agnostic python3 package, so choose one of the available
+Python 3 versions. For example:
 
 .. code-block:: none
 
     export PKG_PATH="https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/`uname -m`/`uname -r`/All"
     pkg_add -v pkgin
     pkgin update
-    pkgin install python311 py311-pip
+    pkgin install python314
 
 Solaris
 ^^^^^^^
@@ -153,22 +146,18 @@ development headers from the `AIX Toolbox`_.
 Build and install
 -----------------
 
-To build from a Git checkout:
+To build and install psutil from a Git checkout:
 
 .. code-block:: none
 
     git clone https://github.com/giampaolo/psutil.git
     cd psutil
+    make install-sysdeps
     make build
     make install
 
-...or download and install the latest source distribution from `PyPI`_:
-
-.. code-block:: none
-
-    python -m pip install --no-binary=psutil psutil
-
 .. note::
+
    By default C source files are compiled in parallel, one job per CPU, which
    makes building from source 2x to 3.6x faster. Use
    :envvar:`PSUTIL_BUILD_JOBS` to change the number of jobs.
@@ -208,4 +197,3 @@ instead of modifying the system Python installation:
 .. _`get-pip.py`: https://bootstrap.pypa.io/get-pip.py
 .. _`Git for Windows`: https://git-scm.com/install/windows
 .. _`install-sysdeps.sh`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/install-sysdeps.sh
-.. _`PyPI`: https://pypi.org/project/psutil/
