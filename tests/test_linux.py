@@ -780,14 +780,19 @@ class TestCpuCountLogical(LinuxTestCase):
 class TestCpuCountCores(LinuxTestCase):
     @requires_cli("lscpu")
     def test_against_lscpu(self):
-        cores = 0
-        per_socket = 0
+        pairs = []
+        per_socket = ""
         for line in sh("lscpu").splitlines():
-            line = line.strip()
-            if line.startswith("Core(s) per socket:"):
-                per_socket = int(line.split(":")[1])
-            elif line.startswith("Socket(s):"):
-                cores += per_socket * int(line.split(":")[1])
+            key, _, value = line.partition(":")
+            key, value = key.strip(), value.strip()
+            if key == "Core(s) per socket":
+                per_socket = value
+            elif key == "Socket(s)":
+                pairs.append((per_socket, value))
+        # In a VM lscpu may print "-" instead of a number.
+        if not pairs or not all(x.isdigit() and y.isdigit() for x, y in pairs):
+            return pytest.skip("lscpu doesn't report the number of cores")
+        cores = sum(int(x) * int(y) for x, y in pairs)
         assert psutil.cpu_count(logical=False) == cores
 
     @skipif(
