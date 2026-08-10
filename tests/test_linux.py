@@ -53,6 +53,7 @@ if LINUX:
     from psutil._pslinux import CLOCK_TICKS
     from psutil._pslinux import RootFsDeviceFinder
     from psutil._pslinux import _cpu_get_cpuinfo_freq
+    from psutil._pslinux import _parse_cpulist
     from psutil._pslinux import calculate_avail_vmem
     from psutil._pslinux import open_binary
 
@@ -706,6 +707,34 @@ class TestSwapMemory(LinuxTestCase):
 # =====================================================================
 # --- system CPU
 # =====================================================================
+
+
+class TestParseCpuList(LinuxTestCase):
+    def test_valid(self):
+        cases = [
+            ("0", [0]),
+            ("0-3", [0, 1, 2, 3]),
+            ("0-3,8", [0, 1, 2, 3, 8]),
+            (
+                "0-3,8-11,14,17",
+                [0, 1, 2, 3, 8, 9, 10, 11, 14, 17],
+            ),
+            (" 0-0 ", [0]),
+            ("", []),
+        ]
+        for value, expected in cases:
+            with self.subTest(value=value):
+                assert _parse_cpulist(value) == expected
+
+    def test_invalid_integer(self):
+        for value in ("x", "0-x", "0-1-2"):
+            with self.subTest(value=value):
+                with pytest.raises(ValueError):
+                    _parse_cpulist(value)
+
+    def test_reversed_range(self):
+        with pytest.raises(ValueError, match="invalid CPU range"):
+            _parse_cpulist("3-1")
 
 
 class TestCpuCountLogical(LinuxTestCase):
@@ -2511,6 +2540,12 @@ class TestProcess(LinuxTestCase):
             assert gids.saved == 1006
             assert p._proc._get_eligible_cpus() == list(range(8))
 
+    def test_status_file_cpus_allowed_list(self):
+        content = b"Cpus_allowed_list:\t0-3,8\n"
+        with mock_open_content({f"/proc/{os.getpid()}/status": content}):
+            p = psutil.Process()
+            assert p._proc._get_eligible_cpus() == [0, 1, 2, 3, 8]
+
     def test_net_connections_enametoolong(self):
         # Simulate a case where /proc/{pid}/fd/{fd} symlink points to
         # a file with full path longer than PATH_MAX, see:
@@ -2624,11 +2659,9 @@ class TestProcessAgainstStatus(LinuxTestCase):
     def test_cpu_affinity_eligible_cpus(self):
         value = self.read_status_file("Cpus_allowed_list:")
         with mock.patch("psutil._pslinux.per_cpu_times") as m:
-            self.proc._proc._get_eligible_cpus()
-        if '-' in str(value):
-            assert not m.called
-        else:
-            assert m.called
+            cpus = self.proc._proc._get_eligible_cpus()
+        assert cpus == _parse_cpulist(str(value))
+        assert not m.called
 
 
 # =====================================================================
