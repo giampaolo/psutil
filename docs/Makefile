@@ -13,6 +13,10 @@ DOCTREES = $(BUILDDIR)/doctrees
 OUTDIR = $(BUILDDIR)/html
 # Builder + source + output shared by html and the autoreload targets.
 DIRHTML = -b dirhtml -d $(DOCTREES) . $(OUTDIR)
+# "make autoreload" gets its own dir. Sharing one with the other targets makes
+# them delete files from under each other.
+LIVEDIR = $(BUILDDIR)/live
+LIVE_DIRHTML = -b dirhtml -d $(LIVEDIR)/doctrees . $(LIVEDIR)/html
 
 # --- sphinx
 
@@ -24,11 +28,11 @@ html:  ## Generate doc in HTML format. Warnings are turned into failures.
 	@echo "Build finished. The HTML pages are in $(OUTDIR)."
 
 autoreload:  ## Rebuild HTML + live-reload browser on file changes (requires sphinx-autobuild)
-	$(SPHINXAUTOBUILD) $(SPHINXOPTS) $(DIRHTML)
+	$(SPHINXAUTOBUILD) $(SPHINXOPTS) $(LIVE_DIRHTML)
 
 autoreload-hard:  ## Same as above but re-writes all files on every refresh
-	make clean
-	$(SPHINXAUTOBUILD) $(SPHINXOPTS) -a $(DIRHTML)
+	rm -rf $(LIVEDIR)
+	$(SPHINXAUTOBUILD) $(SPHINXOPTS) -a $(LIVE_DIRHTML)
 
 # --- checkers
 

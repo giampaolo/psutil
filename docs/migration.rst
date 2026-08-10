@@ -34,6 +34,8 @@ Key breaking changes in 8.0:
   Do not rely on positional unpacking of named tuples. Always use attribute
   access (e.g. ``t.rss``).
 
+.. _migration-8.0-process-iter:
+
 process_iter(): p.info is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -78,15 +80,16 @@ If you need a dict, use :meth:`Process.as_dict` instead of
   ``ad_value`` instead of raising :exc:`AccessDenied`. If you need the
   exception, do not include the method in ``attrs``.
 
+.. _migration-8.0-namedtuples:
+
 Named tuple field order changed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - :func:`cpu_times`: :field:`user`, :field:`system`, :field:`idle` fields
   changed order on Linux, macOS and BSD. They are now always the first 3 fields
   on all platforms, with platform-specific fields (e.g. :field:`nice`)
-  following. Positional access (e.g. ``cpu_times()[3]``) will silently return
-  the wrong field. Always use attribute access instead (e.g.
-  ``cpu_times().idle``).
+  following. Positional access (e.g. ``cpu_times()[3]``) silently returns the
+  wrong field.
 
   .. code-block:: python
 
@@ -98,31 +101,24 @@ Named tuple field order changed
     user, system, idle = t.user, t.system, t.idle
 
 - :meth:`Process.memory_info`: the returned named tuple changed size and field
-  order. Always use attribute access (e.g. ``p.memory_info().rss``) instead of
-  positional unpacking.
+  order.
 
-  - Linux: :field:`lib` and :field:`dirty` fields removed (aliases emitting
-    :exc:`DeprecationWarning` are kept).
+  - Linux: :field:`lib` and :field:`dirty` fields removed (they were always 0
+    since Linux 2.6). Aliases returning 0 and emitting
+    :exc:`DeprecationWarning` are kept.
   - macOS: :field:`pfaults` and :field:`pageins` removed with **no aliases**.
     Use :meth:`Process.page_faults` instead.
-  - Windows: old aliases (:field:`wset`, :field:`peak_wset`, :field:`pagefile`,
-    :field:`private`, :field:`peak_pagefile`, :field:`num_page_faults`) were
-    renamed. The old names still work but raise :exc:`DeprecationWarning`.
+  - Windows: old fields were renamed: :field:`wset` → :field:`rss`,
+    :field:`peak_wset` → :field:`peak_rss`, :field:`pagefile` and
+    :field:`private` → :field:`vms`, :field:`peak_pagefile` →
+    :field:`peak_vms`, :field:`num_page_faults` → :meth:`Process.page_faults`.
+    The old names still work but raise :exc:`DeprecationWarning`.
     :field:`paged_pool`, :field:`nonpaged_pool`, :field:`peak_paged_pool`,
     :field:`peak_nonpaged_pool` moved to :meth:`Process.memory_info_ex`.
   - BSD: a new :field:`peak_rss` field was added.
 
 - :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired`
-  fields were added. Positional unpacking will break:
-
-  .. code-block:: python
-
-    # before
-    total, avail, percent, used, free = psutil.virtual_memory()
-
-    # after
-    m = psutil.virtual_memory()
-    total, avail, percent, used, free = m.total, m.available, m.percent, m.used, m.free
+  fields were added.
 
 cpu_times() interrupt renamed to irq on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -131,34 +127,54 @@ The :field:`interrupt` field of :func:`cpu_times` on Windows was renamed to
 :field:`irq` to match Linux and BSD. The old name still works but raises
 :exc:`DeprecationWarning`.
 
-Status and connection fields are now enums
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _migration-8.0-enums:
 
-- :meth:`Process.status` now returns a :class:`ProcessStatus` member instead of
-  a plain ``str``.
-- The :field:`status` field returned by :meth:`Process.net_connections` and
-  :func:`net_connections` is now a :class:`ConnectionStatus` member instead of
-  a plain ``str``.
+Constants and fields are now enums
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Because both are :class:`enum.StrEnum` subclasses, they compare equal to their
-string values, so existing comparisons like
-``p.status() == psutil.STATUS_RUNNING`` continue to work. Code inspecting
-:func:`repr` or :class:`type` may need updating.
+These now yield enum members instead of plain ``str`` / ``int``, and the
+matching module constants are members of the same enums:
+
+- :meth:`Process.status` → :class:`ProcessStatus`
+- :field:`status` field of :meth:`Process.net_connections` and
+  :func:`net_connections` → :class:`ConnectionStatus`
+- :meth:`Process.nice` on Windows → :class:`ProcessPriority`
+- :field:`ioclass` field of :meth:`Process.ionice` → :class:`ProcessIOPriority`
+- :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>` of :meth:`Process.rlimit` →
+  :class:`ProcessRlimit`
+
+They subclass :class:`enum.StrEnum` / :class:`enum.IntEnum`, so they compare
+equal to the values they replace: ``p.status() == psutil.STATUS_RUNNING`` keeps
+working. Only code inspecting :func:`repr` or :class:`type` needs updating.
+
+.. _migration-8.0-memory-full-info:
 
 memory_full_info() is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`Process.memory_full_info` is deprecated. Use
-:meth:`Process.memory_footprint` instead; it returns the same fields.
+:meth:`Process.memory_footprint` instead; it returns the same fields
+(:field:`uss`, :field:`pss` and :field:`swap`).
+
+.. _migration-8.0-memory-info-ex:
 
 New memory_info_ex() method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 8.0 introduces a new :meth:`Process.memory_info_ex` method that extends
-:meth:`Process.memory_info` with platform-specific metrics (e.g.
-:field:`peak_rss`, :field:`swap`, :field:`rss_anon` on Linux). It is
-**unrelated** to the old :meth:`Process.memory_info_ex`, deprecated in 4.0 and
-removed in 7.0, which later became :meth:`Process.memory_full_info`.
+:meth:`Process.memory_info` with platform-specific metrics. It is **unrelated**
+to the old :meth:`Process.memory_info_ex`, deprecated in 4.0 and removed in
+7.0, which later became :meth:`Process.memory_full_info`.
+
+- Linux: :field:`peak_rss`, :field:`peak_vms`, :field:`rss_anon`,
+  :field:`rss_file`, :field:`rss_shmem`, :field:`swap`, :field:`hugetlb`.
+- macOS: :field:`peak_rss`, :field:`rss_anon`, :field:`rss_file`,
+  :field:`wired`, :field:`compressed`, :field:`phys_footprint`.
+- Windows: :field:`virtual`, :field:`peak_virtual`, :field:`paged_pool`,
+  :field:`nonpaged_pool`, :field:`peak_paged_pool`,
+  :field:`peak_nonpaged_pool`.
+
+.. _migration-8.0-attrs:
 
 New Process.attrs class attribute
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -192,6 +208,8 @@ Python 3.6 and 3.7 dropped
 
 The minimum version is now Python 3.8.
 
+.. _migration-8.0-windows:
+
 Windows < 10 dropped
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -199,6 +217,8 @@ Support for Windows Vista, 7, 8, 8.1 and their server counterparts (Server 2008
 to 2012 R2) was removed. The minimum version is now Windows 10 / Windows Server
 2016. The last release supporting older versions is the 7.2.x series. See
 :gh:`2893`.
+
+.. _migration-8.0-git-tags:
 
 Git tags renamed
 ^^^^^^^^^^^^^^^^^
