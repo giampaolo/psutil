@@ -982,7 +982,7 @@ class Process:
         if value:
             msg = "value argument not accepted on Windows"
             raise TypeError(msg)
-        if ioclass not in ProcessIOPriority:
+        if ioclass not in tuple(ProcessIOPriority):
             msg = f"{ioclass} is not a valid priority"
             raise ValueError(msg)
         _psutil.proc_io_priority_set(self.pid, ioclass)
