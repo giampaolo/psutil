@@ -277,7 +277,7 @@ ci-lint:  ## Run all linters on GitHub CI.
 	clang-format --version
 	$(MAKE) lint-all
 
-ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
+ci-test:  ## Run tests on GitHub CI.
 	$(MAKE) install-sysdeps
 	# Install psutil before the test deps: psleak depends on psutil,
 	# and a pre-installed one stops pip from pulling it from PyPI.
@@ -285,6 +285,9 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-pydeps-test
 	$(MAKE) build
 	$(MAKE) print-sysinfo
+	# Warm pywin32's gen_py cache: concurrent first imports of wmi in
+	# the pytest workers corrupt it (EOFError from gencache).
+	if [ "$$OS" = "Windows_NT" ]; then $(PYTHON) -c "import wmi"; fi
 	$(MAKE) test-parallel
 	$(MAKE) test-memleaks-parallel
 
