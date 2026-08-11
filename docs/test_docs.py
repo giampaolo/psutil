@@ -50,6 +50,7 @@ VALID_BLOG_TAGS = frozenset({
 
 sys.path.insert(0, str(HERE))  # so that "import conf" wins
 import conf  # noqa: E402
+import label_role  # noqa: E402
 import substitutions  # noqa: E402
 from testutil import feed_urls  # noqa: E402
 from testutil import find_canonical  # noqa: E402
@@ -249,6 +250,13 @@ class TestHtmlBuild:
         # of links.
         html = read_html("changelog.html")
         assert 'href="https://github.com/giampaolo/psutil/issues/' in html
+
+    def test_label_role_resolves(self):
+        source = (DOCS / "changelog.rst").read_text()
+        html = read_html("changelog.html")
+        for label in label_role.LABELS:
+            badge = f'class="cl-label cl-label-{label}">{label}<'
+            assert source.count(f":label:`{label}`") == html.count(badge)
 
     def test_intersphinx_resolves(self):
         # Check intersphinx_mapping["python"] in conf.py. If it does

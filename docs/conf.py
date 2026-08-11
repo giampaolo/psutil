@@ -75,6 +75,7 @@ _local_exts = [  # defined in the _ext/ folder
     "genindex_filter",
     "giscus",
     "glossary_toc",
+    "label_role",
     "notfound_extras",
     "opengraph_override",
     "post_banner",
