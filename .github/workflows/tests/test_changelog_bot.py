@@ -34,9 +34,9 @@ Changelog
 8.0.0 (IN DEVELOPMENT)
 ^^^^^^^^^^^^^^^^^^^^^^
 
-**Enhancements**
+**New APIs**
 
-- :gh:`100`: enhancement one.
+- :gh:`100`: new API one.
 
 **Bug fixes**
 
@@ -84,14 +84,12 @@ class TestInsert:
         assert lines[idx + 2].startswith("7.2.2")
 
     def test_inserts_into_correct_section(self):
-        out = cb.insert_entry(
-            CHANGELOG, "Enhancements", "- :gh:`300`: new enh."
-        )
+        out = cb.insert_entry(CHANGELOG, "New APIs", "- :gh:`300`: new api.")
         lines = self._lines(out)
-        enh = lines.index("**Enhancements**")
+        api = lines.index("**New APIs**")
         bug = lines.index("**Bug fixes**")
-        idx = lines.index("- :gh:`300`: new enh.")
-        assert enh < idx < bug
+        idx = lines.index("- :gh:`300`: new api.")
+        assert api < idx < bug
 
     def test_inserts_in_sorted_position(self):
         # 150 < 200, so it must come before it (#123 before #124).
@@ -102,14 +100,14 @@ class TestInsert:
         )
 
     def test_inserts_into_last_run_of_grouped_section(self):
-        # An Enhancements section split into pseudo-header groups: a new
+        # A section split into pseudo-header groups: a new
         # entry goes into the last run, sorted, never into an earlier
         # group even if its number would sort there.
         text = """\
 8.0.0 (IN DEVELOPMENT)
 ^^^^^^^^^^^^^^^^^^^^^^
 
-**Enhancements**
+**Performance**
 
 New APIs:
 
@@ -121,7 +119,7 @@ Others:
 - :gh:`200`: other two.
 - :gh:`400`: other four.
 """
-        out = cb.insert_entry(text, "Enhancements", "- :gh:`250`: new misc.")
+        out = cb.insert_entry(text, "Performance", "- :gh:`250`: new misc.")
         lines = self._lines(out)
         new = lines.index("- :gh:`250`: new misc.")
         # In the Others run (after that header), not New APIs.
@@ -137,18 +135,18 @@ Others:
         assert lines[idx + 1] == "  a second line."
         assert lines[idx + 2] == ""
 
-    def test_creates_missing_section_after_enhancements(self):
+    def test_creates_missing_section_in_canonical_order(self):
         text = """\
 8.0.0 (IN DEVELOPMENT)
 ^^^^^^^^^^^^^^^^^^^^^^
 
-**Enhancements**
+**New APIs**
 
-- :gh:`100`: enh.
+- :gh:`100`: api.
 """
         out = cb.insert_entry(text, "Bug fixes", "- :gh:`300`: new bug.")
         lines = self._lines(out)
-        assert lines.index("**Enhancements**") < lines.index("**Bug fixes**")
+        assert lines.index("**New APIs**") < lines.index("**Bug fixes**")
         assert lines.index("**Bug fixes**") < lines.index(
             "- :gh:`300`: new bug."
         )
@@ -160,9 +158,9 @@ Others:
 8.0.0 (IN DEVELOPMENT)
 ^^^^^^^^^^^^^^^^^^^^^^
 
-**Enhancements**
+**New APIs**
 
-- :gh:`100`: enh.
+- :gh:`100`: api.
 """
         out = cb.insert_entry(text, "Bug fixes", "- :gh:`300`: new bug.")
         lines = self._lines(out)
@@ -170,7 +168,7 @@ Others:
         assert lines[hdr + 1] == ""
         assert lines[hdr + 2] == "- :gh:`300`: new bug."
 
-    def test_created_enhancements_has_blank_line_before_entry(self):
+    def test_created_mid_order_section_has_blank_line_before_entry(self):
         text = """\
 8.0.0 (IN DEVELOPMENT)
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -179,13 +177,13 @@ Others:
 
 - :gh:`200`: bug.
 """
-        out = cb.insert_entry(text, "Enhancements", "- :gh:`300`: new enh.")
+        out = cb.insert_entry(text, "Performance", "- :gh:`300`: faster.")
         lines = self._lines(out)
-        hdr = lines.index("**Enhancements**")
+        hdr = lines.index("**Performance**")
         assert lines[hdr + 1] == ""
-        assert lines[hdr + 2] == "- :gh:`300`: new enh."
+        assert lines[hdr + 2] == "- :gh:`300`: faster."
 
-    def test_creates_missing_enhancements_before_bug_fixes(self):
+    def test_creates_missing_section_before_later_one(self):
         text = """\
 8.0.0 (IN DEVELOPMENT)
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -194,9 +192,138 @@ Others:
 
 - :gh:`200`: bug.
 """
-        out = cb.insert_entry(text, "Enhancements", "- :gh:`300`: new enh.")
+        out = cb.insert_entry(text, "Performance", "- :gh:`300`: faster.")
         lines = self._lines(out)
-        assert lines.index("**Enhancements**") < lines.index("**Bug fixes**")
+        assert lines.index("**Performance**") < lines.index("**Bug fixes**")
+
+
+class TestLabels:
+    def test_inject_in_badge_order_and_wrapped(self):
+        entry = (
+            "- :gh:`300`, [NetBSD]: a fairly long entry describing a"
+            " double free\n  in :func:`swap_memory` on some systems."
+        )
+        out = cb.inject_labels(entry, ["bug", "critical", "memleak", "netbsd"])
+        first = out.splitlines()[0]
+        assert first.startswith(
+            "- :gh:`300`, [NetBSD], :label:`critical`, :label:`memleak`:"
+        )
+        assert all(len(ln) <= 79 for ln in out.splitlines())
+
+    def test_compatibility_becomes_breaking(self):
+        out = cb.inject_labels(
+            "- :gh:`300`: renamed.", ["compatibility", "windows"]
+        )
+        assert out.startswith("- :gh:`300`, :label:`breaking`: renamed.")
+
+    def test_no_labels_no_badges(self):
+        out = cb.inject_labels("- :gh:`300`: plain.", ["bug", "linux"])
+        assert ":label:" not in out
+
+    def test_wrap_never_splits_inside_roles(self):
+        entry = (
+            "- :gh:`300`: fix by"
+            " :user:`Somebody With A Very Long Name <handle>` plus"
+            " ``a b c`` and more words to push this over the limit for"
+            " sure."
+        )
+        out = cb.inject_labels(entry, [])
+        flat = " ".join(ln.strip() for ln in out.splitlines())
+        assert ":user:`Somebody With A Very Long Name <handle>`" in flat
+        assert "``a b c``" in flat
+
+
+class TestPlatformTags:
+    def test_backed_tag_passes(self):
+        cb.check_platform_tags("- :gh:`1`, [Linux]: x.", ["bug", "linux"])
+
+    def test_family_tag_backed_by_member(self):
+        cb.check_platform_tags("- :gh:`1`, [BSD]: x.", ["freebsd"])
+        cb.check_platform_tags("- :gh:`1`, [UNIX]: x.", ["sunos"])
+
+    def test_unbacked_tag_rejected(self):
+        with pytest.raises(cb.ValidationError):
+            cb.check_platform_tags("- :gh:`1`, [Windows]: x.", ["linux"])
+
+    def test_brackets_in_prose_are_not_tags(self):
+        cb.check_platform_tags(
+            "- :gh:`1`: raises ``[Errno 2]`` sometimes.", []
+        )
+
+
+class TestTierOrdering:
+    def test_labelled_entry_inserted_before_plain_ones(self):
+        entry = "- :gh:`300`, :label:`critical`: segfault."
+        out = cb.insert_entry(CHANGELOG, "Bug fixes", entry)
+        lines = out.splitlines()
+        assert lines.index(entry) < lines.index("- :gh:`200`: bug one.")
+
+    def test_plain_entry_lands_after_labelled_run(self):
+        text = """\
+8.0.0 (IN DEVELOPMENT)
+^^^^^^^^^^^^^^^^^^^^^^
+
+**Bug fixes**
+
+- :gh:`500`, :label:`critical`: boom.
+- :gh:`100`: plain.
+"""
+        out = cb.insert_entry(text, "Bug fixes", "- :gh:`300`: also plain.")
+        lines = out.splitlines()
+        assert lines.index("- :gh:`100`: plain.") < lines.index(
+            "- :gh:`300`: also plain."
+        )
+        assert lines.index(
+            "- :gh:`500`, :label:`critical`: boom."
+        ) < lines.index("- :gh:`100`: plain.")
+
+
+class TestBugfixRouting:
+    SPLIT = """\
+Changelog
+=========
+
+8.0.0 (IN DEVELOPMENT)
+^^^^^^^^^^^^^^^^^^^^^^
+
+**Bug fixes: cross-platform**
+
+- :gh:`10`: everywhere.
+
+**Bug fixes: Windows**
+
+- :gh:`20`, [Windows]: win bug.
+
+**Bug fixes: BSD**
+
+- :gh:`30`, [NetBSD]: bsd bug.
+"""
+
+    def test_routes_by_platform_tag(self):
+        assert (
+            cb.bugfix_section(self.SPLIT, "- :gh:`40`, [Windows]: x.")
+            == "Bug fixes: Windows"
+        )
+        assert (
+            cb.bugfix_section(self.SPLIT, "- :gh:`40`, [FreeBSD]: x.")
+            == "Bug fixes: BSD"
+        )
+
+    def test_untagged_or_mixed_goes_cross_platform(self):
+        assert (
+            cb.bugfix_section(self.SPLIT, "- :gh:`40`: x.")
+            == "Bug fixes: cross-platform"
+        )
+        assert (
+            cb.bugfix_section(self.SPLIT, "- :gh:`40`, [Linux], [SunOS]: x.")
+            == "Bug fixes: cross-platform"
+        )
+
+    def test_plain_block_stays_plain(self):
+        assert (
+            cb.bugfix_section(CHANGELOG, "- :gh:`40`, [Windows]: x.")
+            == "Bug fixes"
+        )
 
 
 class TestOrderCheck:
@@ -718,7 +845,9 @@ class TestRunDecision:
             "amend_gh": 200,
             "skip_reason": None,
         }
-        cl_status, cr_status, gh = cb.run_decision(pr, decision, year="2026")
+        cl_status, cr_status, gh = cb.run_decision(
+            pr, decision, year="2026", get_labels=lambda _: []
+        )
         assert cl_status == "amended"
         assert gh == 200
         assert "- :gh:`200`: bug one, now also two." in clp.read_text()
@@ -743,7 +872,9 @@ class TestRunDecision:
             "amend_gh": None,
             "skip_reason": "already covered.",
         }
-        cl_status, cr_status, _ = cb.run_decision(pr, decision, year="2026")
+        cl_status, cr_status, _ = cb.run_decision(
+            pr, decision, year="2026", get_labels=lambda _: []
+        )
         assert cl_status == "skipped"
         assert cr_status == "skipped"
         assert clp.read_text() == before_cl
@@ -768,11 +899,64 @@ class TestRunDecision:
             "amend_gh": 200,
             "skip_reason": None,
         }
-        cl_status, cr_status, gh = cb.run_decision(pr, decision, year="2026")
+        cl_status, cr_status, gh = cb.run_decision(
+            pr, decision, year="2026", get_labels=lambda _: []
+        )
         assert cl_status == "skipped"
         assert cr_status == "skipped"
         assert gh is None
         assert clp.read_text() == before
+
+    def test_insert_injects_badges_from_tracker_labels(self):
+        clp, _ = self._setup_files()
+        pr = {
+            "number": 2810,
+            "title": "Fix #300",
+            "body": "Fixes #300",
+            "author": "bob",
+            "author_name": "Bob",
+        }
+        decision = {
+            "action": "insert",
+            "section": "Bug fixes",
+            "entry_text": "- :gh:`300`, [Linux]: fix a double free.",
+            "amend_gh": None,
+            "skip_reason": None,
+        }
+        cl_status, _, _gh = cb.run_decision(
+            pr,
+            decision,
+            year="2026",
+            get_labels=lambda _: ["bug", "critical", "linux"],
+        )
+        assert cl_status == "inserted"
+        text = clp.read_text()
+        entry = "- :gh:`300`, [Linux], :label:`critical`: fix a double free."
+        assert entry in text
+        # Labelled, so it leads the section.
+        lines = text.splitlines()
+        assert lines.index(entry) < lines.index("- :gh:`200`: bug one.")
+        # The comment shows the final entry, not the model's draft.
+        assert decision["entry_text"] == entry
+
+    def test_model_written_badge_is_rejected(self):
+        self._setup_files()
+        pr = {
+            "number": 2810,
+            "title": "t",
+            "body": "Fixes #300",
+            "author": "bob",
+            "author_name": "Bob",
+        }
+        decision = {
+            "action": "insert",
+            "section": "Bug fixes",
+            "entry_text": "- :gh:`300`, :label:`critical`: sneaky.",
+            "amend_gh": None,
+            "skip_reason": None,
+        }
+        with pytest.raises(cb.ValidationError):
+            cb.run_decision(pr, decision, year="2026", get_labels=lambda _: [])
 
     def test_validation_failure_writes_nothing(self):
         clp, _ = self._setup_files()
@@ -793,7 +977,7 @@ class TestRunDecision:
             "skip_reason": None,
         }
         with pytest.raises(cb.ValidationError):
-            cb.run_decision(pr, decision, year="2026")
+            cb.run_decision(pr, decision, year="2026", get_labels=lambda _: [])
         assert clp.read_text() == before_cl
 
 

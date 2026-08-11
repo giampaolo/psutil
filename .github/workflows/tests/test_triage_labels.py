@@ -50,11 +50,9 @@ class TestFreshLabels:
         )
         assert tl.fresh_labels(decision) == {"bug", "tests"}
 
-    def test_low_confidence_type_is_kept_anyway(self):
-        # There's no third answer, and an item with neither bug nor
-        # enhancement has nowhere to go in the changelog.
-        decision = decide(type="enhancement", type_confidence="low")
-        assert tl.fresh_labels(decision) == {"enhancement"}
+    def test_low_confidence_type_contributes_nothing(self):
+        decision = decide(type="bug", type_confidence="low")
+        assert tl.fresh_labels(decision) == set()
 
 
 class TestStaleLabels:
@@ -69,9 +67,14 @@ class TestStaleLabels:
     def test_severity_is_never_removed(self):
         # severity is add-only: the text can suggest critical but it
         # can never prove the absence of one.
-        item = {"labels": ["bug", "critical"]}
+        item = {"labels": ["bug", "critical", "memleak"]}
         decision = decide(severity=[], severity_confidence="high")
         assert tl.stale_labels(item, decision) == set()
+
+    def test_confident_null_type_clears_bug(self):
+        item = {"labels": ["bug", "linux"]}
+        decision = decide(type=None, platform=["linux"])
+        assert tl.stale_labels(item, decision) == {"bug"}
 
 
 class TestDropGeneralPlatforms:
