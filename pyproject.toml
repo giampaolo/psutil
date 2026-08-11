@@ -313,12 +313,16 @@ width = 79
 # Wheels (what we build and where)
 # =============================================================================
 #
-# platform    builds              3.9 import check   full test suite
-# ----------  ------------------  -----------------  ---------------
-# Linux       3.9, 3.14, 3.14t    yes                3.14
+# The test suite runs in build.yml, against a source build. Here we only
+# import the wheel, except on Linux x86_64, which also runs the tests
+# against the installed wheel to catch packaging mistakes.
+#
+# platform    builds              3.9 import check   test suite
+# ----------  ------------------  -----------------  -----------
+# Linux       3.9, 3.14, 3.14t    yes                3.14 x86_64
 # Linux MUSL  3.9, 3.14           yes                no
-# Windows     3.9, 3.14, 3.14t    yes                3.14
-# macOS       3.14, 3.14t         no                 3.14
+# Windows     3.9, 3.14, 3.14t    yes                no
+# macOS       3.14, 3.14t         no                 no
 [tool.cibuildwheel]
 skip = [
     "cp3*t-musllinux*",
@@ -339,6 +343,6 @@ environment = {MACOSX_DEPLOYMENT_TARGET = "10.15"}
 repair-wheel-command = ""
 
 [[tool.cibuildwheel.overrides]]
-select = "cp314-{manylinux,macosx,win}*"
+select = "cp314-manylinux_x86_64"
 test-groups = ["test"]  # same as doing `pip install --group test`
 test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"

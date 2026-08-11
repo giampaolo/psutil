@@ -1,13 +1,13 @@
-# Runs CI tests and generates wheels on the following platforms:
+# Runs CI tests against a source build on the following platforms:
 # * Linux
 # * macOS
 # * Windows
 #
+# Wheels are built by wheels.yml.
+#
 # Useful URLs:
-# * https://github.com/pypa/cibuildwheel
 # * https://github.com/actions/checkout
 # * https://github.com/actions/setup-python
-# * https://github.com/actions/upload-artifact
 
 on:
   workflow_dispatch:
@@ -27,7 +27,7 @@ jobs:
 
   # Run tests on Linux, macOS, Windows
   tests:
-    name: "${{ matrix.os }}, ${{ matrix.arch }}${{ matrix.tag && format(' ({0})', matrix.tag) || '' }}"
+    name: "${{ matrix.os }}, py${{ matrix.python }}"
     # Skip same-repo PR runs: the push event already covers them.
     if: &skip_same_repo_pr github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ${{ matrix.os }}
@@ -36,56 +36,23 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, arch: x86_64 }
-          - { os: ubuntu-24.04-arm, arch: aarch64 }
-          # Intel runners are slow, and installing the free-threaded
-          # framework alone takes ~90s there. Give it its own lane so it
-          # runs next to cp314 instead of after it.
-          - { os: macos-15-intel, arch: x86_64, build: "cp314-*", tag: cp314 }
-          - { os: macos-15-intel, arch: x86_64, build: "cp314t-*", tag: cp314t }
-          - { os: macos-15, arch: arm64 }
-          - { os: windows-2025, arch: AMD64 }
-          - { os: windows-11-arm, arch: ARM64, python: "3.13" }
+          - { os: ubuntu-latest, python: "3.14" }
+          - { os: ubuntu-latest, python: "3.14t" }
+          - { os: macos-15, python: "3.14" }
+          - { os: windows-2025, python: "3.14" }
     steps:
       - uses: actions/checkout@v7
 
-      # Host Python only launches cibuildwheel. Default 3.11; some jobs
-      # override matrix.python to hit their runner's toolcache.
       - name: Install Python
         uses: actions/setup-python@v7
         with:
-          python-version: ${{ matrix.python || '3.11' }}
+          python-version: ${{ matrix.python }}
 
-      # Cache the CPython interpreters cibuildwheel downloads, so later
-      # pushes reuse them. Linux gets them from the container, so skip it.
-      # Worth ~90 secs on Windows, measured by removing it (see #2931).
-      - name: Cache cibuildwheel interpreters
-        if: runner.os != 'Linux'
-        uses: actions/cache@v6
-        with:
-          path: ${{ runner.temp }}/cibw-cache
-          # Refresh the cache every time build.yml or pyproject.toml change.
-          # restore-keys falls back to the previous entry meanwhile, so an
-          # unrelated edit doesn't mean re-downloading everything.
-          key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-${{ hashFiles('.github/workflows/build.yml', 'pyproject.toml') }}
-          restore-keys: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-
-
-      - name: Install uv
+      # setup-python always provides "python"; "python3" is missing on
+      # Windows, and the Makefile defaults to it.
+      - name: Run tests
         shell: bash
-        run: PYTHON=python ./scripts/internal/install-pydeps.sh uv
-
-      - name: Build wheels + run tests
-        uses: pypa/cibuildwheel@v4.1.1
-        env:
-          CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_CACHE_PATH: ${{ runner.temp }}/cibw-cache
-          CIBW_BUILD: "${{ matrix.build || '*' }}"
-
-      - name: Upload wheels
-        uses: actions/upload-artifact@v7
-        with:
-          name: wheels-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}
-          path: wheelhouse
+        run: make PYTHON=python ci-test
 
   # Run linters + bots tests
   linters:
@@ -112,25 +79,3 @@ jobs:
         run: |
           ./scripts/internal/install-pydeps.sh pytest
           make test-bots
-
-  # Merge wheels and check sanity of the package distribution.
-  merge-and-check-dist:
-    needs: [tests]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: 3.x
-      - uses: actions/upload-artifact/merge@v7
-        with:
-          name: wheels
-          pattern: wheels-*
-          separate-directories: false
-          delete-merged: true
-      - uses: actions/download-artifact@v8
-        with:
-          name: wheels
-          path: wheelhouse
-      - run: |
-          make ci-check-dist
