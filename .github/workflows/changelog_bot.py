@@ -33,9 +33,10 @@ ERROR_FILE = None
 
 CHANGELOG_FILE = "docs/changelog.rst"
 CREDITS_FILE = "docs/credits.rst"
+MODEL = "claude-sonnet-5"
 MAX_DIFF_CHARS = 20_000
 COMPARE_MAX_FILES = 300
-MAX_TOKENS = 2048
+MAX_TOKENS = 4096  # thinking tokens count against this too
 HTTP_TIMEOUT = 30
 
 PROMPT = """\
@@ -306,8 +307,10 @@ def ask_claude(pr, diff, block):
         sys.exit("ANTHROPIC_API_KEY is not set")
     client = anthropic.Anthropic(api_key=api_key)
     message = client.messages.create(
-        model="claude-sonnet-4-6",
+        model=MODEL,
         max_tokens=MAX_TOKENS,
+        thinking={"type": "adaptive"},
+        output_config={"effort": "low"},
         tools=[SUBMIT_TOOL],
         tool_choice={"type": "tool", "name": "submit"},
         messages=[{"role": "user", "content": prompt}],
