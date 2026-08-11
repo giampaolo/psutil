@@ -2,12 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Sphinx role providing the changelog labels, e.g. :label:`critical`.
-
-Each one renders as a colored badge and mirrors a label on the issue
-tracker. Names are validated, so a typo fails the build instead of
-silently rendering as plain text.
-"""
+"""Sphinx role providing the changelog labels, e.g. :label:`critical`."""
 
 from docutils import nodes
 
