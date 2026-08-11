@@ -17,11 +17,11 @@ on:
   pull_request:
     paths-ignore:
       - "docs/**"
-name: build
+name: tests
 concurrency:
   # Cancel build if a new one starts, but don't interrupt all jobs on the first
   # failure.
-  group: build-${{ github.ref }}
+  group: test-${{ github.ref }}
   cancel-in-progress: true
 jobs:
 
@@ -36,11 +36,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # https://github.com/actions/python-versions/blob/main/versions-manifest.json
           - { os: ubuntu-latest, python: "3.14" } # x86_64
-          - { os: ubuntu-24.04-arm, python: "3.14" } # aarch64
-          - { os: macos-15-intel, python: "3.14" } # x86_64
+          - { os: ubuntu-24.04-arm, python: "3.9" } # aarch64
           - { os: macos-15, python: "3.14" } # arm64
-          - { os: windows-2025, python: "3.14" } # AMD64
+          - { os: macos-15-intel, python: "3.9" } # x86_64
+          - { os: windows-2025, python: "3.10" } # AMD64
           - { os: windows-11-arm, python: "3.14" } # ARM64
     steps:
       - uses: actions/checkout@v7
