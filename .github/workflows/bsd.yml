@@ -47,6 +47,7 @@ jobs:
           usesh: true
           run: |
             make ci-test
+            make test-memleaks-parallel
 
   openbsd:
     # if: false
@@ -61,6 +62,7 @@ jobs:
           usesh: true
           run: |
             make ci-test
+            make test-memleaks-parallel
 
   netbsd:
     # if: false
@@ -75,3 +77,4 @@ jobs:
           usesh: true
           run: |
             make ci-test
+            make test-memleaks-parallel

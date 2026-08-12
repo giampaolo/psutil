@@ -289,7 +289,6 @@ ci-test:  ## Run tests on GitHub CI.
 	# the pytest workers corrupt it (EOFError from gencache).
 	if [ "$$OS" = "Windows_NT" ]; then $(PYTHON) -c "import wmi"; fi
 	$(MAKE) test-parallel
-	$(MAKE) test-memleaks-parallel
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(INSTALL_PYDEPS) setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit

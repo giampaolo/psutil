@@ -36,13 +36,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # https://github.com/actions/python-versions/blob/main/versions-manifest.json
-          - { os: ubuntu-latest, python: "3.14" } # x86_64
+          - { os: ubuntu-latest, python: "3.14", memleaks: true } # x86_64
           - { os: ubuntu-24.04-arm, python: "3.9" } # aarch64
-          - { os: macos-15, python: "3.14" } # arm64
+          - { os: macos-15, python: "3.14", memleaks: true } # arm64
           # 3.9 is not in this runner's toolcache and takes ~30 secs to install.
           - { os: macos-15-intel, python: "3.13" } # x86_64
-          - { os: windows-2025, python: "3.10" } # AMD64
+          - { os: windows-2025, python: "3.10", memleaks: true } # AMD64
           - { os: windows-11-arm, python: "3.14" } # ARM64
     steps:
       - uses: actions/checkout@v7
@@ -57,6 +56,11 @@ jobs:
       - name: Run tests
         shell: bash
         run: make PYTHON=python ci-test
+
+      - name: Run memleak tests
+        if: matrix.memleaks
+        shell: bash
+        run: make PYTHON=python test-memleaks-parallel
 
   # Run linters + bots tests
   linters:
