@@ -330,6 +330,7 @@ skip = [
 ]
 build-frontend = "build[uv]"
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
+audit-command = ""  # disabled, made by "make ci-check-dist" already
 
 # Pin it, else it follows whichever Python builds the wheel. arm64
 # has its own 11.0 floor and ignores this.
