@@ -309,36 +309,3 @@ markers = [
 
 [tool.rstwrap]
 width = 79
-
-# Wheels (what we build and where)
-# =============================================================================
-#
-# Tests run in tests.yml against a source build. Here we only check that
-# the wheel imports.
-#
-# platform    builds
-# ----------  ------------
-# Linux       3.9, 3.14t
-# Linux MUSL  3.9
-# Windows     3.9, 3.14t
-# macOS       3.14, 3.14t
-[tool.cibuildwheel]
-skip = [
-    "cp3*t-musllinux*",
-    "cp314-{manylinux,musllinux,win}*",
-    "cp39-macosx*",
-    "cp3{10,11,12,13}-*",
-]
-build-frontend = "build[uv]"
-test-command = "python -c \"import psutil; print(psutil.__version__)\""
-audit-command = ""  # disabled, made by "make ci-check-dist" already
-
-# Pin it, else it follows whichever Python builds the wheel. arm64
-# has its own 11.0 floor and ignores this.
-[tool.cibuildwheel.macos]
-environment = {MACOSX_DEPLOYMENT_TARGET = "10.15"}
-
-# We only link Windows system DLLs, so there's nothing for delvewheel
-# (the default since cibuildwheel 4) to bundle.
-[tool.cibuildwheel.windows]
-repair-wheel-command = ""
