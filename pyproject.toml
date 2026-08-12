@@ -316,15 +316,16 @@ width = 79
 # Tests run in tests.yml against a source build. Here we only check that
 # the wheel imports.
 #
-# platform    builds              3.9 import check
-# ----------  ------------------  ----------------
-# Linux       3.9, 3.14, 3.14t    yes
-# Linux MUSL  3.9, 3.14           yes
-# Windows     3.9, 3.14, 3.14t    yes
-# macOS       3.14, 3.14t         no
+# platform    builds
+# ----------  ------------
+# Linux       3.9, 3.14t
+# Linux MUSL  3.9
+# Windows     3.9, 3.14t
+# macOS       3.14, 3.14t
 [tool.cibuildwheel]
 skip = [
     "cp3*t-musllinux*",
+    "cp314-{manylinux,musllinux,win}*",
     "cp39-macosx*",
     "cp3{10,11,12,13}-*",
 ]

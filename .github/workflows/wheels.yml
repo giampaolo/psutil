@@ -3,6 +3,7 @@
 #
 # Useful URLs:
 # * https://github.com/pypa/cibuildwheel
+# * https://github.com/astral-sh/setup-uv
 # * https://github.com/actions/checkout
 # * https://github.com/actions/setup-python
 # * https://github.com/actions/upload-artifact
@@ -43,8 +44,11 @@ jobs:
           # because installing a framework costs ~90 secs.
           - { os: macos-15, arch: "arm64 x86_64", archname: both, build: "cp314-*", tag: cp314 }
           - { os: macos-15, arch: "arm64 x86_64", archname: both, build: "cp314t-*", tag: cp314t }
-          - { os: windows-2025, arch: AMD64 }
-          - { os: windows-11-arm, arch: ARM64 }
+          # Same idea for Windows.
+          - { os: windows-2025, arch: AMD64, build: "cp39-*", tag: abi3 }
+          - { os: windows-2025, arch: AMD64, build: "cp314t-*", tag: cp314t }
+          - { os: windows-11-arm, arch: ARM64, build: "cp39-*", tag: abi3 }
+          - { os: windows-11-arm, arch: ARM64, build: "cp314t-*", tag: cp314t }
     steps:
       - uses: actions/checkout@v7
 
@@ -64,10 +68,16 @@ jobs:
           key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-${{ hashFiles('.github/workflows/wheels.yml', 'pyproject.toml') }}
           restore-keys: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-
 
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v4.1.1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v9.0.0
         with:
-          extras: uv
+          version: "0.12.3"
+
+      # Not pypa/cibuildwheel: that action pip-installs itself from an
+      # sdist on every lane, which takes ~18 secs instead of ~5.
+      - name: Build wheels
+        shell: bash
+        run: uvx --from 'cibuildwheel[uv]==4.1.1' cibuildwheel --output-dir wheelhouse
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_CACHE_PATH: ${{ runner.temp }}/cibw-cache

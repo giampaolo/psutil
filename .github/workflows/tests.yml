@@ -39,8 +39,7 @@ jobs:
           - { os: ubuntu-latest, python: "3.14", memleaks: true } # x86_64
           - { os: ubuntu-24.04-arm, python: "3.9" } # aarch64
           - { os: macos-15, python: "3.14", memleaks: true } # arm64
-          # 3.9 is not in this runner's toolcache and takes ~30 secs to install.
-          - { os: macos-15-intel, python: "3.13" } # x86_64
+          - { os: macos-15-intel, python: "3.13" } # x86_64 (py 3.9 install is too slow)
           - { os: windows-2025, python: "3.10", memleaks: true } # AMD64
           - { os: windows-11-arm, python: "3.14" } # ARM64
     steps:
