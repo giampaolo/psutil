@@ -36,6 +36,7 @@ from psutil._common import broadcast_addr
 from . import AARCH64
 from . import ASCII_FS
 from . import CI_TESTING
+from . import FREE_THREADED
 from . import GITHUB_ACTIONS
 from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
@@ -375,8 +376,10 @@ class TestMiscAPIs(PsutilTestCase):
     def test_heap_info(self):
         m = psutil.heap_info()
         assert m.heap_used > 0
-        if MACOS:
-            assert m.mmap_used == 0  # not supported
+        if MACOS or FREE_THREADED:
+            # macOS doesn't support it. Free-threaded builds allocate via
+            # mimalloc, so glibc's malloc arena stays mostly unused.
+            assert m.mmap_used == 0
         else:
             assert m.mmap_used > 0
         if WINDOWS:

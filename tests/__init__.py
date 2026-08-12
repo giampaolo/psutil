@@ -114,6 +114,7 @@ __all__ = [
 # --- platforms
 
 PYPY = '__pypy__' in sys.builtin_module_names
+FREE_THREADED = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 # whether we're running this test suite on a Continuous Integration service
 GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
 CI_TESTING = GITHUB_ACTIONS
