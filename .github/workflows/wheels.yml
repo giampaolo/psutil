@@ -45,16 +45,9 @@ jobs:
           - { os: macos-15-intel, arch: x86_64, build: "cp314t-*", tag: cp314t }
           - { os: macos-15, arch: arm64 }
           - { os: windows-2025, arch: AMD64 }
-          - { os: windows-11-arm, arch: ARM64, python: "3.13" }
+          - { os: windows-11-arm, arch: ARM64 }
     steps:
       - uses: actions/checkout@v7
-
-      # Host Python only launches cibuildwheel. Default 3.11; some jobs
-      # override matrix.python to hit their runner's toolcache.
-      - name: Install Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python || '3.11' }}
 
       # Cache the CPython interpreters cibuildwheel downloads, so later
       # pushes reuse them. Windows only: Linux takes them from the
@@ -72,12 +65,10 @@ jobs:
           key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-${{ hashFiles('.github/workflows/wheels.yml', 'pyproject.toml') }}
           restore-keys: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-
 
-      - name: Install uv
-        shell: bash
-        run: PYTHON=python ./scripts/internal/install-pydeps.sh uv
-
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.1.1
+        with:
+          extras: uv
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_CACHE_PATH: ${{ runner.temp }}/cibw-cache
@@ -88,6 +79,7 @@ jobs:
         with:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}
           path: wheelhouse
+          compression-level: 0
 
   # Merge wheels and check sanity of the package distribution.
   merge-and-check-dist:
