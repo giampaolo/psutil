@@ -10,7 +10,9 @@ build = [
     "setuptools>=75.3.4",  # latest version supporting Python 3.8
 ]
 test = [
-    "psleak @ git+https://github.com/giampaolo/psleak@master",
+    # BSD VMs have no git
+    "psleak @ git+https://github.com/giampaolo/psleak@master ; platform_system not in 'FreeBSD OpenBSD NetBSD'",
+    "psleak @ https://github.com/giampaolo/psleak/archive/refs/heads/master.tar.gz ; platform_system in 'FreeBSD OpenBSD NetBSD'",
     "pytest ; python_version < '3.10'",
     "pytest-instafail",
     "pytest-xdist",
