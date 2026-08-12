@@ -279,11 +279,10 @@ ci-lint:  ## Run all linters on GitHub CI.
 
 ci-test:  ## Run tests on GitHub CI.
 	$(MAKE) install-sysdeps
-	# Install psutil before the test deps: psleak depends on psutil,
-	# and a pre-installed one stops pip from pulling it from PyPI.
-	$(INSTALL_PYDEPS) .
+	# Editable install: it builds in-place, and having psutil already
+	# installed stops pip from pulling it from PyPI for psleak.
+	$(INSTALL_PYDEPS) --editable .
 	$(MAKE) install-pydeps-test
-	$(MAKE) build
 	$(MAKE) print-sysinfo
 	# Warm pywin32's gen_py cache: concurrent first imports of wmi in
 	# the pytest workers corrupt it (EOFError from gencache).

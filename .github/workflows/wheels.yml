@@ -81,7 +81,7 @@ jobs:
           compression-level: 0
 
   # Merge wheels and check sanity of the package distribution.
-  merge-and-check-dist:
+  check-dist:
     needs: [wheels]
     runs-on: ubuntu-latest
     steps:
