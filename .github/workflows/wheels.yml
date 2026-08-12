@@ -33,8 +33,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, arch: x86_64 }
-          - { os: ubuntu-24.04-arm, arch: aarch64 }
+          # manylinux and musllinux share a runner, so give them a lane
+          # each instead of building one set after the other.
+          - { os: ubuntu-latest, arch: x86_64, build: "*manylinux*", tag: manylinux }
+          - { os: ubuntu-latest, arch: x86_64, build: "*musllinux*", tag: musllinux }
+          - { os: ubuntu-24.04-arm, arch: aarch64, build: "*manylinux*", tag: manylinux }
+          - { os: ubuntu-24.04-arm, arch: aarch64, build: "*musllinux*", tag: musllinux }
           # Intel runners are slow, and installing the free-threaded
           # framework alone takes ~90s there. Give it its own lane so it
           # runs next to cp314 instead of after it.
@@ -54,10 +58,12 @@ jobs:
           python-version: ${{ matrix.python || '3.11' }}
 
       # Cache the CPython interpreters cibuildwheel downloads, so later
-      # pushes reuse them. Linux gets them from the container, so skip it.
+      # pushes reuse them. Windows only: Linux takes them from the
+      # container, and macOS installs a .pkg into /Library/Frameworks,
+      # leaving nothing behind to cache.
       # Worth ~90 secs on Windows, measured by removing it (see #2931).
       - name: Cache cibuildwheel interpreters
-        if: runner.os != 'Linux'
+        if: runner.os == 'Windows'
         uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/cibw-cache

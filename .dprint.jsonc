@@ -11,6 +11,7 @@
         ],
     },
     "yaml": {
+        "printWidth": 120,
         "associations": [
             "**/*.yml",
             "**/*.yaml",
