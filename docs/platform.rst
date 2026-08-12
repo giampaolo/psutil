@@ -165,7 +165,7 @@ Support history
      - Change
    * - :pypi:`8.0.0`
      -
-     - add wheels for Linux ppc64le and s390x
+     - add wheels for Linux ppc64le and s390x architectures
    * - :pypi:`8.0.0`
      -
      - drop Python 3.6 and 3.7

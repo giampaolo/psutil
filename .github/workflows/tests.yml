@@ -6,6 +6,7 @@
 # Wheels are built by wheels.yml.
 #
 # Useful URLs:
+# * https://github.com/actions/cache
 # * https://github.com/actions/checkout
 # * https://github.com/actions/setup-python
 
@@ -27,7 +28,7 @@ jobs:
 
   # Run tests on Linux, macOS, Windows
   tests:
-    name: "${{ matrix.os }}, py${{ matrix.python }}"
+    name: "${{ matrix.osname }} ${{ matrix.arch }} (py${{ matrix.python }})"
     # Skip same-repo PR runs: the push event already covers them.
     if: &skip_same_repo_pr github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ${{ matrix.os }}
@@ -36,12 +37,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, python: "3.14", memleaks: true } # x86_64
-          - { os: ubuntu-24.04-arm, python: "3.9" } # aarch64
-          - { os: macos-15, python: "3.14", memleaks: true } # arm64
-          - { os: macos-15-intel, python: "3.13" } # x86_64 (py 3.9 install is too slow)
-          - { os: windows-2025, python: "3.10", memleaks: true } # AMD64
-          - { os: windows-11-arm, python: "3.14" } # ARM64
+          - { os: ubuntu-latest, osname: linux, arch: x86_64, python: "3.14", memleaks: true }
+          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, python: "3.9" }
+          - { os: macos-15, osname: macos, arch: arm64, python: "3.14", memleaks: true }
+          - { os: macos-15-intel, osname: macos, arch: x86_64, python: "3.13" } # py 3.9 install is too slow
+          - { os: windows-2025, osname: win, arch: AMD64, python: "3.10", memleaks: true }
+          - { os: windows-11-arm, osname: win, arch: ARM64, python: "3.14" }
     steps:
       - uses: actions/checkout@v7
 
@@ -70,8 +71,8 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: 3.x
-      # Cache dprint binary + plugins, which would otherwise recompiled on
-      # every run (~5s).
+      # Cache dprint binary + plugins, which would otherwise be recompiled
+      # on every run (~5s).
       - name: Cache dprint
         uses: actions/cache@v6
         with:

@@ -5,7 +5,9 @@
 # * https://github.com/pypa/cibuildwheel
 # * https://github.com/astral-sh/setup-uv
 # * https://github.com/docker/setup-qemu-action
+# * https://github.com/actions/cache
 # * https://github.com/actions/checkout
+# * https://github.com/actions/download-artifact
 # * https://github.com/actions/setup-python
 # * https://github.com/actions/upload-artifact
 
@@ -25,7 +27,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   wheels:
-    name: "${{ matrix.os }}, ${{ matrix.arch }}${{ matrix.tag && format(' ({0})', matrix.tag) || '' }}"
+    name: "${{ matrix.osname }} ${{ matrix.archname || matrix.arch }}${{ matrix.tag && format(' ({0})', matrix.tag) || '' }}"
     # Skip same-repo PR runs: the push event already covers them.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ${{ matrix.os }}
@@ -36,22 +38,22 @@ jobs:
         include:
           # manylinux and musllinux share a runner, so give them a lane
           # each instead of building one set after the other.
-          - { os: ubuntu-latest, arch: x86_64, build: "*manylinux*", tag: manylinux }
-          - { os: ubuntu-latest, arch: x86_64, build: "*musllinux*", tag: musllinux }
-          - { os: ubuntu-24.04-arm, arch: aarch64, build: "*manylinux*", tag: manylinux }
-          - { os: ubuntu-24.04-arm, arch: aarch64, build: "*musllinux*", tag: musllinux }
-          - { os: ubuntu-latest, arch: ppc64le, build: "cp39-manylinux*", tag: abi3, qemu: ppc64le }
-          - { os: ubuntu-latest, arch: s390x, build: "cp39-manylinux*", tag: abi3, qemu: s390x }
+          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "*manylinux*", tag: manylinux }
+          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "*musllinux*", tag: musllinux }
+          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "*manylinux*", tag: manylinux }
+          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "*musllinux*", tag: musllinux }
+          - { os: ubuntu-latest, osname: linux, arch: ppc64le, build: "cp39-manylinux*", tag: abi3, qemu: ppc64le }
+          - { os: ubuntu-latest, osname: linux, arch: s390x, build: "cp39-manylinux*", tag: abi3, qemu: s390x }
           # Apple Silicon cross-builds x86_64 and tests it under Rosetta, so
-          # one runner covers both arches. cp314 and cp314t get a lane each
-          # because installing a framework costs ~90 secs.
-          - { os: macos-15, arch: "arm64 x86_64", archname: both, build: "cp314-*", tag: cp314 }
-          - { os: macos-15, arch: "arm64 x86_64", archname: both, build: "cp314t-*", tag: cp314t }
+          # one runner covers both arches. Each interpreter gets its own
+          # lane because installing a framework costs ~90 secs.
+          - { os: macos-15, osname: macos, arch: "arm64 x86_64", archname: both, build: "cp314-*", tag: cp314 }
+          - { os: macos-15, osname: macos, arch: "arm64 x86_64", archname: both, build: "cp314t-*", tag: cp314t }
           # Same idea for Windows.
-          - { os: windows-2025, arch: AMD64, build: "cp39-*", tag: abi3 }
-          - { os: windows-2025, arch: AMD64, build: "cp314t-*", tag: cp314t }
-          - { os: windows-11-arm, arch: ARM64, build: "cp39-*", tag: abi3 }
-          - { os: windows-11-arm, arch: ARM64, build: "cp314t-*", tag: cp314t }
+          - { os: windows-2025, osname: win, arch: AMD64, build: "cp39-*", tag: abi3 }
+          - { os: windows-2025, osname: win, arch: AMD64, build: "cp314t-*", tag: cp314t }
+          - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp39-*", tag: abi3 }
+          - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp314t-*", tag: cp314t }
     steps:
       - uses: actions/checkout@v7
 
