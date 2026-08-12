@@ -33,17 +33,20 @@ DAYS = 30
 CACHE_DAYS = 7
 # pypinfo defaults to 10 rows, which would turn "%" into a share of the
 # top 10. Raising it is free: BigQuery scans the same bytes either way.
-LIMIT = 100
+LIMIT = 1000
 # pypinfo's own --all means "every installer, not just pip". Without it
 # we'd miss the ~46% of downloads that come from uv.
 PYPINFO = f"pypinfo --json --all --days {DAYS} --limit"
 SDIST = "sdist (built from source)"
+FREETHREADED = "wheel (free-threaded)"
 PYPISTATS_URL = "https://pypistats.org/api/packages/{}/{}"
 TOP_PACKAGES_URL = (
     "https://hugovk.dev/top-pypi-packages/top-pypi-packages.min.json"
 )
+LABEL_WIDTH = 36
 LAST_UPDATE = None
 bytes_billed = 0
+MAX_ROWS = 20
 # Python versions that reached end-of-life.
 EOL_PYTHONS = {"2.6", "2.7", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9"}
 
@@ -193,7 +196,7 @@ def downloads_by_system_release():
     The high limit prevents the many distinct Linux kernel versions
     from crowding out the niche OSes.
     """
-    cmd = f"{PYPINFO} 5000 {PKGNAME} system system-release"
+    cmd = f"{PYPINFO} 20000 {PKGNAME} system system-release"
     return query(cmd)['rows']
 
 
@@ -222,6 +225,53 @@ def downloads_by_dimension(key):
     totals = collections.Counter()
     for row in query(cmd)['rows']:
         totals[row[key]] += row['download_count']
+    return totals
+
+
+CPU_ALIASES = {
+    "": "unknown",
+    "amd64": "x86_64",
+    "arm64": "aarch64",
+    "armv8l": "armv7l",
+    "i386": "i686",
+    "i86pc": "x86_64",
+    "none": "unknown",
+    "sun4v": "sparc64",
+    "x86": "i686",
+}
+
+CPU_NAMES = {
+    "aarch64",
+    "armv6l",
+    "armv7l",
+    "e2k",
+    "i686",
+    "loongarch64",
+    "mips",
+    "mips64",
+    "ppc",
+    "ppc64",
+    "ppc64le",
+    "riscv64",
+    "s390x",
+    "sparc64",
+    "sw_64",
+    "unknown",
+    "wasm32",
+    "x86_64",
+}
+
+
+def normalize_cpu(name):
+    name = str(name).lower()
+    name = CPU_ALIASES.get(name, name)
+    return name if name in CPU_NAMES else "other"
+
+
+def downloads_by_cpu():
+    totals = collections.Counter()
+    for name, num in downloads_by_dimension('cpu').items():
+        totals[normalize_cpu(name)] += num
     return totals
 
 
@@ -259,6 +309,17 @@ def downloads_by_other_systems():
     return totals
 
 
+@file_cache
+def bq_monthly_usage_cached(month):
+    return bq_monthly_usage()
+
+
+def monthly_usage():
+    if bytes_billed:
+        return bq_monthly_usage()
+    return bq_monthly_usage_cached(datetime.date.today().strftime("%Y-%m"))
+
+
 def bq_monthly_usage():
     """Bytes billed to the BigQuery project since the start of the
     month. The free tier is 1 TiB. This query itself bills the 20 MiB
@@ -284,46 +345,65 @@ def downloads_by_wheel():
     those are the users who would benefit from a new wheel.
     """
     # EXPENSIVE: ~45 GB scanned per call, the priciest query here.
-    # Every psutil file ever published gets a row, hence the big limit:
+    # A file gets one row per (system, cpu) combo, hence the big limit:
     # cutting the tail undercounts sdist and free-threaded.
     cmd = f"{PYPINFO} 20000 {PKGNAME} file system cpu"
     totals = collections.Counter()
-    sdists = collections.Counter()
+    subs = {SDIST: collections.Counter(), FREETHREADED: collections.Counter()}
     for row in query(cmd)['rows']:
         name = row['file']
         if name.endswith(".metadata"):
             continue  # PEP 658 sidecar, not an actual download
         num = row['download_count']
+        freethreaded = re.search(r"-(cp\d+t)-", name)
         if name.endswith((".tar.gz", ".zip")):
             totals[SDIST] += num
-            system = row['system_name'] or "null"
-            cpu = row['cpu'] or "null"
-            sdists[f"{system} / {cpu}"] += num
-        elif re.search(r"-cp\d+t-", name):
-            totals["wheel (free-threaded)"] += num
+            system = row['system_name']
+            if not system or system == "None":
+                system = "unknown"
+            subs[SDIST][f"{system} / {normalize_cpu(row['cpu'])}"] += num
+        elif freethreaded:
+            totals[FREETHREADED] += num
+            if normalize_cpu(row['cpu']) == "unknown":
+                key = "no platform reported by the client"
+            else:
+                plat = name.rsplit("-", 1)[-1][: -len(".whl")].split(".")[0]
+                key = f"{freethreaded.group(1)} / {plat}"
+            subs[FREETHREADED][key] += num
         elif "-abi3-" in name:
             totals["wheel (abi3)"] += num
         else:
             totals["wheel (version specific)"] += num
-    return totals, sdists
+    return totals, subs
 
 
 # --- print
 
 
-def print_table(title, left, rows, percent=True, total=None):
+def fold(rows, key, limit=MAX_ROWS):
+    if not limit or len(rows) <= limit:
+        return rows
+    tail = rows[limit:]
+    return rows[:limit] + [{
+        key: f"+ {len(tail)} more",
+        'download_count': sum(x['download_count'] for x in tail),
+    }]
+
+
+def print_table(title, left, rows, percent=True, total=None, limit=MAX_ROWS):
     if total is None:
         total = sum(x['download_count'] for x in rows)
+    rows = fold(rows, left, limit)
     if percent:
-        header = f"{title:<30}  {'Downloads':>15}  {'%':>7}"
+        header = f"{title:<{LABEL_WIDTH}}  {'Downloads':>15}  {'%':>7}"
     else:
-        header = f"{title:<30}  {'Downloads':>15}"
+        header = f"{title:<{LABEL_WIDTH}}  {'Downloads':>15}"
     print(hilite(header, color="brown", bold=True))
     print(hilite("-" * len(header), color="grey"))
     for row in rows:
         num = row['download_count']
         lval = str(row[left] or "null")
-        line = f"{lval:<30}  {num:>15,}"
+        line = f"{lval:<{LABEL_WIDTH}}  {num:>15,}"
         if percent:
             line += f"  {100 * num / total:>7.2f}"
         print(line)
@@ -378,18 +458,32 @@ def print_expensive():
     print_table(
         'psutil versions',
         'version',
-        to_rows(downloads_by_dimension('version'), 'version')[:LIMIT],
+        to_rows(downloads_by_dimension('version'), 'version'),
     )
-    wheels, sdists = downloads_by_wheel()
+    wheels, subs = downloads_by_wheel()
     rows = []
     for row in to_rows(wheels, 'wheel_type'):
         rows.append(row)
         if row['wheel_type'] == SDIST:
             rows.extend(
-                {'wheel_type': f"    {name}", 'download_count': num}
-                for name, num in sdists.most_common()
+                {
+                    'wheel_type': "    " + r['wheel_type'],
+                    'download_count': r['download_count'],
+                }
+                for r in fold(to_rows(subs[SDIST], 'wheel_type'), 'wheel_type')
             )
-    print_table('Wheel types', 'wheel_type', rows, total=sum(wheels.values()))
+    print_table(
+        'Wheel types',
+        'wheel_type',
+        rows,
+        total=sum(wheels.values()),
+        limit=None,
+    )
+    print_table(
+        'Free-threaded wheels',
+        'wheel',
+        to_rows(subs[FREETHREADED], 'wheel'),
+    )
     print_table(
         'Implementations',
         'implementation',
@@ -400,7 +494,7 @@ def print_expensive():
         'installer_name',
         to_rows(downloads_by_dimension('installer_name'), 'installer_name'),
     )
-    print_table('CPUs', 'cpu', to_rows(downloads_by_dimension('cpu'), 'cpu'))
+    print_table('CPUs', 'cpu', to_rows(downloads_by_cpu(), 'cpu'))
     print_table(
         'libc',
         'libc_name',
@@ -423,7 +517,7 @@ def print_expensive():
     )
     print_table('Distros', 'distro_name', downloads_by_distro()['rows'])
 
-    billed = bq_monthly_usage()
+    billed = monthly_usage()
     pct = 100 * billed / 1024**4
     s = (
         f"BigQuery free tier used this month: {bytes2human(billed)} of 1"
