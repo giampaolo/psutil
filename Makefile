@@ -291,20 +291,6 @@ ci-test:  ## Run tests on GitHub CI.
 	$(MAKE) test-parallel
 	$(MAKE) test-memleaks-parallel
 
-ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
-	$(MAKE) install-sysdeps-test  # the wheel is already built
-	$(MAKE) print-sysinfo
-	# Warm pywin32's gen_py cache: concurrent first imports of wmi in
-	# the pytest workers corrupt it (EOFError from gencache).
-	if [ "$$OS" = "Windows_NT" ]; then $(PYTHON) -c "import wmi"; fi
-	# Tests must be run from a separate directory so pytest does not import
-	# from the source tree and instead exercises only the installed wheel.
-	rm -rf .tests tests/__pycache__
-	mkdir -p .tests
-	cp -r tests .tests/
-	cd .tests/ && PYTHONPATH=$$(pwd) $(MAKE) -f ../Makefile test-parallel
-	cd .tests/ && PYTHONPATH=$$(pwd) $(MAKE) -f ../Makefile test-memleaks-parallel
-
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(INSTALL_PYDEPS) setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
 	$(MAKE) create-sdist
