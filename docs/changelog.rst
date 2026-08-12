@@ -161,6 +161,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
 
 **Build and packaging**
 
+- :gh:`2976`, [Linux]: publish ppc64le and s390x wheels.
 - :gh:`2788`, :label:`breaking`: git tags renamed from ``release-X.Y.Z`` to
   ``vX.Y.Z``. Old tags are kept for backward compatibility. See
   :ref:`migration guide <migration-8.0-git-tags>`.
@@ -178,7 +179,6 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   ``changelog.rst`` and ``credits.rst`` when commenting with /changelog.
 - :gh:`2766`: remove remaining Python 2.7 compatibility shims from
   ``setup.py``, simplifying the build infrastructure.
-- :gh:`2092`, [Linux]: publish ppc64le and s390x wheels.
 - :gh:`2844`: removed docs/ from tarball. Tarball before: 586K. Tarball now:
   396K.
 - :gh:`2883`: the platform-specific C extension modules (``_psutil_linux``,
