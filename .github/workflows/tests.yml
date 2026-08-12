@@ -1,0 +1,89 @@
+# Runs CI tests against a source build on the following platforms:
+# * Linux
+# * macOS
+# * Windows
+#
+# Wheels are built by wheels.yml.
+#
+# Useful URLs:
+# * https://github.com/actions/checkout
+# * https://github.com/actions/setup-python
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - "docs/**"
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+name: tests
+concurrency:
+  # Cancel run if a new one starts, but don't interrupt all jobs on the first
+  # failure.
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+
+  # Run tests on Linux, macOS, Windows
+  tests:
+    name: "${{ matrix.os }}, py${{ matrix.python }}"
+    # Skip same-repo PR runs: the push event already covers them.
+    if: &skip_same_repo_pr github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, python: "3.14", memleaks: true } # x86_64
+          - { os: ubuntu-24.04-arm, python: "3.9" } # aarch64
+          - { os: macos-15, python: "3.14", memleaks: true } # arm64
+          # 3.9 is not in this runner's toolcache and takes ~30 secs to install.
+          - { os: macos-15-intel, python: "3.13" } # x86_64
+          - { os: windows-2025, python: "3.10", memleaks: true } # AMD64
+          - { os: windows-11-arm, python: "3.14" } # ARM64
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+
+      # setup-python always provides "python"; "python3" is missing on
+      # Windows, and the Makefile defaults to it.
+      - name: Run tests
+        shell: bash
+        run: make PYTHON=python ci-test
+
+      - name: Run memleak tests
+        if: matrix.memleaks
+        shell: bash
+        run: make PYTHON=python test-memleaks-parallel
+
+  # Run linters + bots tests
+  linters:
+    if: *skip_same_repo_pr
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: 3.x
+      # Cache dprint binary + plugins, which would otherwise recompiled on
+      # every run (~5s).
+      - name: Cache dprint
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.dprint
+            ~/.cache/dprint
+          key: dprint-${{ hashFiles('.dprint.jsonc') }}
+      - name: "Run linters"
+        run: |
+          make ci-lint
+      - name: "Run bot tests"
+        run: |
+          ./scripts/internal/install-pydeps.sh pytest
+          make test-bots

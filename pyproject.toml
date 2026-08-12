@@ -313,12 +313,15 @@ width = 79
 # Wheels (what we build and where)
 # =============================================================================
 #
-# platform    builds              3.9 import check   full test suite
-# ----------  ------------------  -----------------  ---------------
-# Linux       3.9, 3.14, 3.14t    yes                3.14
-# Linux MUSL  3.9, 3.14           yes                no
-# Windows     3.9, 3.14, 3.14t    yes                3.14
-# macOS       3.14, 3.14t         no                 3.14
+# Tests run in tests.yml against a source build. Here we only check that
+# the wheel imports.
+#
+# platform    builds              3.9 import check
+# ----------  ------------------  ----------------
+# Linux       3.9, 3.14, 3.14t    yes
+# Linux MUSL  3.9, 3.14           yes
+# Windows     3.9, 3.14, 3.14t    yes
+# macOS       3.14, 3.14t         no
 [tool.cibuildwheel]
 skip = [
     "cp3*t-musllinux*",
@@ -327,6 +330,7 @@ skip = [
 ]
 build-frontend = "build[uv]"
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
+audit-command = ""  # disabled, made by "make ci-check-dist" already
 
 # Pin it, else it follows whichever Python builds the wheel. arm64
 # has its own 11.0 floor and ignores this.
@@ -337,8 +341,3 @@ environment = {MACOSX_DEPLOYMENT_TARGET = "10.15"}
 # (the default since cibuildwheel 4) to bundle.
 [tool.cibuildwheel.windows]
 repair-wheel-command = ""
-
-[[tool.cibuildwheel.overrides]]
-select = "cp314-{manylinux,macosx,win}*"
-test-groups = ["test"]  # same as doing `pip install --group test`
-test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"

@@ -277,30 +277,17 @@ ci-lint:  ## Run all linters on GitHub CI.
 	clang-format --version
 	$(MAKE) lint-all
 
-ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
+ci-test:  ## Run tests on GitHub CI.
 	$(MAKE) install-sysdeps
-	# Install psutil before the test deps: psleak depends on psutil,
-	# and a pre-installed one stops pip from pulling it from PyPI.
-	$(INSTALL_PYDEPS) .
+	# Editable install: it builds in-place, and having psutil already
+	# installed stops pip from pulling it from PyPI for psleak.
+	$(INSTALL_PYDEPS) --editable .
 	$(MAKE) install-pydeps-test
-	$(MAKE) build
-	$(MAKE) print-sysinfo
-	$(MAKE) test-parallel
-	$(MAKE) test-memleaks-parallel
-
-ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
-	$(MAKE) install-sysdeps-test  # the wheel is already built
 	$(MAKE) print-sysinfo
 	# Warm pywin32's gen_py cache: concurrent first imports of wmi in
 	# the pytest workers corrupt it (EOFError from gencache).
 	if [ "$$OS" = "Windows_NT" ]; then $(PYTHON) -c "import wmi"; fi
-	# Tests must be run from a separate directory so pytest does not import
-	# from the source tree and instead exercises only the installed wheel.
-	rm -rf .tests tests/__pycache__
-	mkdir -p .tests
-	cp -r tests .tests/
-	cd .tests/ && PYTHONPATH=$$(pwd) $(MAKE) -f ../Makefile test-parallel
-	cd .tests/ && PYTHONPATH=$$(pwd) $(MAKE) -f ../Makefile test-memleaks-parallel
+	$(MAKE) test-parallel
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(INSTALL_PYDEPS) setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit

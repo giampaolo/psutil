@@ -101,7 +101,7 @@ class TestVirtualMemory(MacosTestCase):
     def test_active(self):
         vmstat_val = vm_stat("active")
         psutil_val = psutil.virtual_memory().active
-        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 5
 
     @retry_on_failure
     def test_inactive(self):

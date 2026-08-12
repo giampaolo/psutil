@@ -51,11 +51,13 @@ install_uv() {
 
 uv_install() {
     echo "installing $* via uv"
-    # Outside a venv, use the user base. pip automatically falls back there
-    # when the system Python is not writable; uv does not. --prefix is not
-    # exactly pip --user, but avoids requiring a venv or root.
+    # When the interpreter is not writable, pip falls back to the user
+    # base; uv does not, so check ourselves. --prefix is not exactly
+    # pip --user, but avoids requiring a venv or root.
     user_base=$("$PYTHON" -c \
-        'import sys, site; print("" if sys.prefix != sys.base_prefix else site.getuserbase())')
+        'import os, site, sysconfig
+writable = os.access(sysconfig.get_path("purelib"), os.W_OK)
+print("" if writable else site.getuserbase())')
     if [ -n "$user_base" ]; then
         set -- --prefix "$user_base" "$@"
     fi

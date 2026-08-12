@@ -1,0 +1,103 @@
+# Generates wheels for all platforms, architectures and free-threaded builds,
+# then checks the resulting distribution. Tests are run by tests.yml.
+#
+# Useful URLs:
+# * https://github.com/pypa/cibuildwheel
+# * https://github.com/actions/checkout
+# * https://github.com/actions/setup-python
+# * https://github.com/actions/upload-artifact
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - "docs/**"
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+name: wheels
+concurrency:
+  # Cancel run if a new one starts, but don't interrupt all jobs on the first
+  # failure.
+  group: wheels-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  wheels:
+    name: "${{ matrix.os }}, ${{ matrix.arch }}${{ matrix.tag && format(' ({0})', matrix.tag) || '' }}"
+    # Skip same-repo PR runs: the push event already covers them.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # manylinux and musllinux share a runner, so give them a lane
+          # each instead of building one set after the other.
+          - { os: ubuntu-latest, arch: x86_64, build: "*manylinux*", tag: manylinux }
+          - { os: ubuntu-latest, arch: x86_64, build: "*musllinux*", tag: musllinux }
+          - { os: ubuntu-24.04-arm, arch: aarch64, build: "*manylinux*", tag: manylinux }
+          - { os: ubuntu-24.04-arm, arch: aarch64, build: "*musllinux*", tag: musllinux }
+          # Apple Silicon cross-builds x86_64 and tests it under Rosetta, so
+          # one runner covers both arches. cp314 and cp314t get a lane each
+          # because installing a framework costs ~90 secs.
+          - { os: macos-15, arch: "arm64 x86_64", archname: both, build: "cp314-*", tag: cp314 }
+          - { os: macos-15, arch: "arm64 x86_64", archname: both, build: "cp314t-*", tag: cp314t }
+          - { os: windows-2025, arch: AMD64 }
+          - { os: windows-11-arm, arch: ARM64 }
+    steps:
+      - uses: actions/checkout@v7
+
+      # Cache the CPython interpreters cibuildwheel downloads, so later
+      # pushes reuse them. Windows only: Linux takes them from the
+      # container, and macOS installs a .pkg into /Library/Frameworks,
+      # leaving nothing behind to cache.
+      # Worth ~90 secs on Windows, measured by removing it (see #2931).
+      - name: Cache cibuildwheel interpreters
+        if: runner.os == 'Windows'
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/cibw-cache
+          # Refresh the cache every time wheels.yml or pyproject.toml change.
+          # restore-keys falls back to the previous entry meanwhile, so an
+          # unrelated edit doesn't mean re-downloading everything.
+          key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-${{ hashFiles('.github/workflows/wheels.yml', 'pyproject.toml') }}
+          restore-keys: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v4.1.1
+        with:
+          extras: uv
+        env:
+          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_CACHE_PATH: ${{ runner.temp }}/cibw-cache
+          CIBW_BUILD: "${{ matrix.build || '*' }}"
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v7
+        with:
+          name: wheels-${{ matrix.os }}-${{ matrix.archname || matrix.arch }}-${{ matrix.tag || 'all' }}
+          path: wheelhouse
+          compression-level: 0
+
+  # Merge wheels and check sanity of the package distribution.
+  check-dist:
+    needs: [wheels]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: 3.x
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: wheels-*
+          path: wheelhouse
+          merge-multiple: true
+      - run: |
+          make ci-check-dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels
+          path: dist/*.whl
+          compression-level: 0
