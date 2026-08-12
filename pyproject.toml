@@ -10,7 +10,7 @@ build = [
     "setuptools>=75.3.4",  # latest version supporting Python 3.8
 ]
 test = [
-    "psleak @ https://github.com/giampaolo/psleak/archive/refs/heads/master.tar.gz",
+    "psleak @ git+https://github.com/giampaolo/psleak@master",
     "pytest ; python_version < '3.10'",
     "pytest-instafail",
     "pytest-xdist",
