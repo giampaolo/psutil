@@ -843,14 +843,15 @@ def wait_for_file_subproc(fname, sproc, delete=True, empty=False):
 
 
 @retry(
-    exception=AssertionError,
+    exception=(AssertionError, psutil.AccessDenied),
     logfun=None,
     timeout=GLOBAL_TIMEOUT,
     interval=0.001,
 )
 def _wait_for_cmdline(pid):
     # Popen() returns before the kernel publishes argv, so for a moment
-    # cmdline reads back empty.
+    # cmdline reads back empty on Linux, and raises AccessDenied on
+    # macOS, where sysctl(KERN_PROCARGS2) fails with EINVAL.
     try:
         assert psutil.Process(pid).cmdline()
     except (psutil.NoSuchProcess, psutil.ZombieProcess):
