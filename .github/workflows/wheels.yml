@@ -38,12 +38,11 @@ jobs:
           - { os: ubuntu-latest, arch: x86_64, build: "*musllinux*", tag: musllinux }
           - { os: ubuntu-24.04-arm, arch: aarch64, build: "*manylinux*", tag: manylinux }
           - { os: ubuntu-24.04-arm, arch: aarch64, build: "*musllinux*", tag: musllinux }
-          # Intel runners are slow, and installing the free-threaded
-          # framework alone takes ~90s there. Give it its own lane so it
-          # runs next to cp314 instead of after it.
-          - { os: macos-15-intel, arch: x86_64, build: "cp314-*", tag: cp314 }
-          - { os: macos-15-intel, arch: x86_64, build: "cp314t-*", tag: cp314t }
-          - { os: macos-15, arch: arm64 }
+          # Apple Silicon cross-builds x86_64 and tests it under Rosetta, so
+          # one runner covers both arches. cp314 and cp314t get a lane each
+          # because installing a framework costs ~90 secs.
+          - { os: macos-15, arch: "arm64 x86_64", archname: both, build: "cp314-*", tag: cp314 }
+          - { os: macos-15, arch: "arm64 x86_64", archname: both, build: "cp314t-*", tag: cp314t }
           - { os: windows-2025, arch: AMD64 }
           - { os: windows-11-arm, arch: ARM64 }
     steps:
@@ -77,7 +76,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v7
         with:
-          name: wheels-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}
+          name: wheels-${{ matrix.os }}-${{ matrix.archname || matrix.arch }}-${{ matrix.tag || 'all' }}
           path: wheelhouse
           compression-level: 0
 
