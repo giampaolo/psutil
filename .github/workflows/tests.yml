@@ -19,7 +19,7 @@ on:
       - "docs/**"
 name: tests
 concurrency:
-  # Cancel build if a new one starts, but don't interrupt all jobs on the first
+  # Cancel run if a new one starts, but don't interrupt all jobs on the first
   # failure.
   group: test-${{ github.ref }}
   cancel-in-progress: true

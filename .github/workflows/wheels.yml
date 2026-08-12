@@ -1,6 +1,5 @@
-# Generates wheels for all platforms, archs and free-threaded builds, then
-# checks the resulting distribution. Tests are run by build.yml, except for
-# one lane here which runs them against the built wheel.
+# Generates wheels for all platforms, architectures and free-threaded builds,
+# then checks the resulting distribution. Tests are run by tests.yml.
 #
 # Useful URLs:
 # * https://github.com/pypa/cibuildwheel
@@ -18,7 +17,7 @@ on:
       - "docs/**"
 name: wheels
 concurrency:
-  # Cancel build if a new one starts, but don't interrupt all jobs on the first
+  # Cancel run if a new one starts, but don't interrupt all jobs on the first
   # failure.
   group: wheels-${{ github.ref }}
   cancel-in-progress: true

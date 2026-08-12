@@ -313,7 +313,7 @@ width = 79
 # Wheels (what we build and where)
 # =============================================================================
 #
-# Tests run in build.yml, against a source build. Here we only check that
+# Tests run in tests.yml against a source build. Here we only check that
 # the wheel imports.
 #
 # platform    builds              3.9 import check
