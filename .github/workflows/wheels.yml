@@ -90,15 +90,15 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: 3.x
-      - uses: actions/upload-artifact/merge@v7
-        with:
-          name: wheels
-          pattern: wheels-*
-          separate-directories: false
-          delete-merged: true
       - uses: actions/download-artifact@v8
         with:
-          name: wheels
+          pattern: wheels-*
           path: wheelhouse
+          merge-multiple: true
       - run: |
           make ci-check-dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels
+          path: dist/*.whl
+          compression-level: 0
