@@ -114,6 +114,7 @@ __all__ = [
 # --- platforms
 
 PYPY = '__pypy__' in sys.builtin_module_names
+FREE_THREADED = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 # whether we're running this test suite on a Continuous Integration service
 GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
 CI_TESTING = GITHUB_ACTIONS
@@ -411,8 +412,7 @@ def spawn_subproc(cmd=None, **kwds):
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
         wait_for_pid(sproc.pid)
-        if LINUX:
-            _wait_for_cmdline(sproc.pid)
+        _wait_for_cmdline(sproc.pid)
     return sproc
 
 
@@ -844,14 +844,15 @@ def wait_for_file_subproc(fname, sproc, delete=True, empty=False):
 
 
 @retry(
-    exception=AssertionError,
+    exception=(AssertionError, psutil.AccessDenied),
     logfun=None,
     timeout=GLOBAL_TIMEOUT,
     interval=0.001,
 )
 def _wait_for_cmdline(pid):
     # Popen() returns before the kernel publishes argv, so for a moment
-    # /proc/pid/cmdline reads back empty.
+    # cmdline reads back empty on Linux, and raises AccessDenied on
+    # macOS, where sysctl(KERN_PROCARGS2) fails with EINVAL.
     try:
         assert psutil.Process(pid).cmdline()
     except (psutil.NoSuchProcess, psutil.ZombieProcess):

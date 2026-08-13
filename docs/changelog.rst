@@ -161,6 +161,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
 
 **Build and packaging**
 
+- :gh:`2976`, [Linux]: publish ppc64le and s390x wheels.
 - :gh:`2788`, :label:`breaking`: git tags renamed from ``release-X.Y.Z`` to
   ``vX.Y.Z``. Old tags are kept for backward compatibility. See
   :ref:`migration guide <migration-8.0-git-tags>`.

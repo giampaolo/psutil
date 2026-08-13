@@ -27,7 +27,6 @@ from psutil import LINUX
 from psutil import _psutil
 
 from . import AARCH64
-from . import GITHUB_ACTIONS
 from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
@@ -1698,11 +1697,8 @@ class TestRootFsDeviceFinder(LinuxTestCase):
         ) as m:
             part = psutil.disk_partitions(all=True)[0]
             assert m.called
-            if not GITHUB_ACTIONS:
-                assert part.device != "/dev/root"
-                assert part.device == RootFsDeviceFinder().find()
-            else:
-                assert part.device == "/dev/root"
+            assert part.device != "/dev/root"
+            assert part.device == RootFsDeviceFinder().find()
 
 
 # =====================================================================

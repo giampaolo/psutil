@@ -24,14 +24,21 @@ print_color = _common.print_color
 # Tags are spelled out because they change silently when a different
 # Python builds the wheel. Trailing manylinux ones follow the image.
 EXPECTED_WHEELS = [
+    # Linux
     "*-cp38-abi3-manylinux2010_x86_64.*.whl",
     "*-cp38-abi3-manylinux2014_aarch64.*.whl",
+    "*-cp38-abi3-manylinux2014_ppc64le.*.whl",
+    "*-cp38-abi3-manylinux2014_s390x.*.whl",
+    # Linux musl
     "*-cp38-abi3-musllinux_1_2_x86_64.whl",
     "*-cp38-abi3-musllinux_1_2_aarch64.whl",
+    # macOS
     "*-cp38-abi3-macosx_10_15_x86_64.whl",
     "*-cp38-abi3-macosx_11_0_arm64.whl",
+    # Windows
     "*-cp38-abi3-win_amd64.whl",
     "*-cp38-abi3-win_arm64.whl",
+    # Free-threading
     "*-cp314-cp314t-manylinux2010_x86_64.*.whl",
     "*-cp314-cp314t-manylinux2014_aarch64.*.whl",
     "*-cp314-cp314t-macosx_10_15_x86_64.whl",
@@ -92,6 +99,10 @@ class Wheel:
             return 'arm64'
         if self.name.endswith("aarch64.whl"):
             return 'aarch64'
+        if self.name.endswith("ppc64le.whl"):
+            return 'ppc64le'
+        if self.name.endswith("s390x.whl"):
+            return 's390x'
         return '?'
 
     def pyver(self):

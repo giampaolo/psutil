@@ -6,9 +6,8 @@
 
 """Install pip, or upgrade it if it's too old.
 
-Note: build.yml builds wheels on Python 3.8 (the floor), but doesn't
-run tests with it, nor installs deps, so this script is never called
-there.
+Note: we build wheels on Python 3.8 (the floor), but don't run tests
+for it, nor installs deps, so this script is never called there.
 """
 
 import re

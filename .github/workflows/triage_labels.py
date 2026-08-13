@@ -71,7 +71,7 @@ bug on Linux is ["linux", "vm"].
 
 On a PR, the changed files outrank that line. People fill the template
 in loosely and it is often stale or plain wrong: a PR whose only file
-is .github/workflows/build.yml has no platform, whatever its "OS:"
+is .github/workflows/tests.yml has no platform, whatever its "OS:"
 line claims. Believe the diff.
 
 Going wide is the opposite of specific, so leave it empty. A sweep
