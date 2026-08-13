@@ -426,6 +426,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
 - :gh:`2841`, [macOS]: :func:`cpu_freq` could raise :exc:`SystemError` when CPU
   frequency data is missing or invalid in the IORegistry (e.g. on Apple M5
   chips). It now returns ``None`` instead (see :gh:`2382`).
+- :gh:`2853`, [macOS]: :func:`virtual_memory` and :func:`swap_memory` could
+  raise :exc:`RuntimeError` (``(ipc/mig) array not large enough``) on newer
+  macOS versions.
 - :gh:`2854`, [macOS]: :meth:`Process.cmdline` and :meth:`Process.environ`
   could raise :exc:`SystemError` after ``sysctl(KERN_PROCARGS2)`` failed with
   ``errno == 0``. They now raise :exc:`AccessDenied` instead.
