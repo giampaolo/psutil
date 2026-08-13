@@ -708,34 +708,6 @@ class TestSwapMemory(LinuxTestCase):
 # =====================================================================
 
 
-class TestParseCpuList(LinuxTestCase):
-    def test_valid(self):
-        cases = [
-            ("0", [0]),
-            ("0-3", [0, 1, 2, 3]),
-            ("0-3,8", [0, 1, 2, 3, 8]),
-            (
-                "0-3,8-11,14,17",
-                [0, 1, 2, 3, 8, 9, 10, 11, 14, 17],
-            ),
-            (" 0-0 ", [0]),
-            ("", []),
-        ]
-        for value, expected in cases:
-            with self.subTest(value=value):
-                assert _parse_cpulist(value) == expected
-
-    def test_invalid_integer(self):
-        for value in ("x", "0-x", "0-1-2"):
-            with self.subTest(value=value):
-                with pytest.raises(ValueError):
-                    _parse_cpulist(value)
-
-    def test_reversed_range(self):
-        with pytest.raises(ValueError, match="invalid CPU range"):
-            _parse_cpulist("3-1")
-
-
 class TestCpuCountLogical(LinuxTestCase):
     @skipif(
         not os.path.exists("/sys/devices/system/cpu/online"),

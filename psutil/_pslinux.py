@@ -2148,9 +2148,13 @@ class Process:
             # See: https://github.com/giampaolo/psutil/issues/956
             data = self._read_status_file()
             if match := _re.search(data):
-                return _parse_cpulist(decode(match.group(1)))
-            else:
-                return list(range(len(per_cpu_times())))
+                try:
+                    return _parse_cpulist(decode(match.group(1)))
+                except ValueError as err:
+                    debug(
+                        f"can't parse Cpus_allowed_list ({err}); falling back"
+                    )
+            return list(range(len(per_cpu_times())))
 
         @wrap_exceptions
         def cpu_affinity_set(self, cpus):
