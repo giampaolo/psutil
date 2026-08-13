@@ -64,6 +64,11 @@ jobs:
       - name: Doc sanity tests
         run: make -C docs test
 
+      - name: Refresh adoption stats
+        # Change is not committed to GIT, but ends up on the live site.
+        continue-on-error: true
+        run: python3 scripts/internal/refresh_adoption_stats.py
+
       - name: Build HTML
         run: make -C docs html
 
