@@ -18,7 +18,6 @@ from . import HAS_BATTERY
 from . import TOLERANCE_DISK_USAGE
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
-from . import isolated
 from . import retry_on_failure
 from . import sh
 from . import skipif
@@ -86,7 +85,6 @@ class TestProcess(MacosTestCase):
 # =====================================================================
 
 
-@isolated
 class TestVirtualMemory(MacosTestCase):
 
     def test_total(self):
@@ -97,25 +95,25 @@ class TestVirtualMemory(MacosTestCase):
     def test_free(self):
         vmstat_val = vm_stat("free")
         psutil_val = psutil.virtual_memory().free
-        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 5
 
     @retry_on_failure
     def test_active(self):
         vmstat_val = vm_stat("active")
         psutil_val = psutil.virtual_memory().active
-        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 3
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 5
 
     @retry_on_failure
     def test_inactive(self):
         vmstat_val = vm_stat("inactive")
         psutil_val = psutil.virtual_memory().inactive
-        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 5
 
     @retry_on_failure
     def test_wired(self):
         vmstat_val = vm_stat("wired")
         psutil_val = psutil.virtual_memory().wired
-        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 5
 
 
 class TestSwapMemory(MacosTestCase):

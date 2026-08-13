@@ -47,6 +47,8 @@ Changelog
   only a directory path).
 - :gh:`2816`, [OpenBSD]: :func:`swap_memory` :field:`sin` and :field:`sout` are
   no longer set to ``0``.
+- :gh:`2977`: new :func:`bytes2human` utility function, converting a number of
+  bytes to a human-readable string (e.g. ``9.8K``).
 
 Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
 :gh:`2733`).

@@ -619,8 +619,8 @@ def bcat(fname, fallback=_DEFAULT):
     return cat(fname, fallback=fallback, _open=open_binary)
 
 
-def bytes2human(n, format="%(value).1f%(symbol)s"):
-    """Used by various scripts. See: https://code.activestate.com/recipes/578019-bytes-to-human-human-to-bytes-converter/?in=user-4178764.
+def bytes2human(n):
+    """Convert n bytes to a human-readable string.
 
     >>> bytes2human(10000)
     '9.8K'
@@ -634,8 +634,8 @@ def bytes2human(n, format="%(value).1f%(symbol)s"):
     for symbol in reversed(symbols[1:]):
         if abs(n) >= prefix[symbol]:
             value = float(n) / prefix[symbol]
-            return format % locals()
-    return format % dict(symbol=symbols[0], value=n)
+            return f"{value:.1f}{symbol}"
+    return f"{float(n):.1f}{symbols[0]}"
 
 
 def get_procfs_path():

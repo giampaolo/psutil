@@ -2865,6 +2865,23 @@ Other constants
   .. versionchanged:: 5.4.0
      also available on AIX.
 
+Utilities
+---------
+
+.. function:: bytes2human(n)
+
+  Convert *n* bytes to a human-readable string.
+
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.bytes2human(10000)
+     '9.8K'
+     >>> psutil.bytes2human(100001221)
+     '95.4M'
+
+  .. versionadded:: 8.0.0
+
 .. _const-version-info:
 
 .. data:: version_info
