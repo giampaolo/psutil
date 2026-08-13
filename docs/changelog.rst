@@ -368,6 +368,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
   old ``time.time() - uptime()`` computation that sampled two counters from
   Python and produced sub-second differences.
+- :gh:`1959`, [Windows]: :func:`disk_partitions` could raise
+  ``UnicodeDecodeError`` on systems whose ANSI code page is not UTF-8 (e.g.
+  cp1251). It now uses the wide-char Windows APIs throughout.
 - :gh:`2383`, [Windows]: :meth:`WindowsService.description` may fail with
   ``ERROR_FILE_NOT_FOUND`` when the description points at a missing resource
   (e.g. ``WaaSMedicSvc``), which also broke :meth:`WindowsService.as_dict`. Now
