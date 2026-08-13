@@ -8,6 +8,8 @@ full :doc:`API reference <api>`.
 System related functions
 ------------------------
 
+.. _api-overview-cpu:
+
 CPU
 ^^^
 
@@ -63,6 +65,8 @@ CPU
     (3.14, 3.89, 4.67)
     >>>
 
+.. _api-overview-memory:
+
 Memory
 ^^^^^^
 
@@ -91,6 +95,8 @@ Memory
           sout=677842944)
     >>>
 
+.. _api-overview-disks:
+
 Disks
 ^^^^^
 
@@ -116,6 +122,8 @@ Disks
             write_merged_count=812396,
             busy_time=4523412)
     >>>
+
+.. _api-overview-network:
 
 Network
 ^^^^^^^
@@ -204,6 +212,8 @@ Network
                         flags='up,broadcast,running,multicast')}
     >>>
 
+.. _api-overview-sensors:
+
 Sensors
 ^^^^^^^
 
@@ -238,6 +248,8 @@ Other system info
     >>> psutil.boot_time()
     1365519115.0
     >>>
+
+.. _api-overview-processes:
 
 Processes
 ---------

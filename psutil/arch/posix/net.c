@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 #ifdef PSUTIL_AIX
-#include "arch/aix/ifaddrs.h"
+#include "../../arch/aix/ifaddrs.h"
 #else
 #include <ifaddrs.h>
 #endif
@@ -123,6 +123,7 @@ PyObject *
 psutil_net_if_addrs(PyObject *self, PyObject *args) {
     struct ifaddrs *ifaddr, *ifa;
     int family;
+    int ret;
 
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_address = NULL;
@@ -132,7 +133,12 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (getifaddrs(&ifaddr) == -1) {
+
+    // Netlink round trip on Linux, a bunch of ioctls on AIX.
+    Py_BEGIN_ALLOW_THREADS
+    ret = getifaddrs(&ifaddr);
+    Py_END_ALLOW_THREADS
+    if (ret == -1) {
         psutil_oserror();
         goto error;
     }
@@ -244,7 +250,10 @@ psutil_net_if_mtu(PyObject *self, PyObject *args) {
         goto error;
 
     str_copy(ifr.ifr_name, sizeof(ifr.ifr_name), nic_name);
+    // A NIC driver may take a while to answer.
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sock, SIOCGIFMTU, &ifr);
+    Py_END_ALLOW_THREADS
     if (ret == -1)
         goto error;
     close(sock);
@@ -285,7 +294,10 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
     }
 
     str_copy(ifr.ifr_name, sizeof(ifr.ifr_name), nic_name);
+    // A NIC driver may take a while to answer.
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
+    Py_END_ALLOW_THREADS
     if (ret == -1) {
         psutil_oserror_wsyscall("ioctl(SIOCGIFFLAGS)");
         goto error;
@@ -466,7 +478,10 @@ psutil_net_if_is_running(PyObject *self, PyObject *args) {
         goto error;
 
     str_copy(ifr.ifr_name, sizeof(ifr.ifr_name), nic_name);
+    // A NIC driver may take a while to answer.
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
+    Py_END_ALLOW_THREADS
     if (ret == -1)
         goto error;
 
@@ -649,7 +664,10 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
     // speed / duplex
     memset(&ifmed, 0, sizeof(struct ifmediareq));
     str_copy(ifmed.ifm_name, sizeof(ifmed.ifm_name), nic_name);
+    // A NIC driver may take a while to answer.
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmed);
+    Py_END_ALLOW_THREADS
     if (ret == -1) {
         speed = 0;
         duplex = 0;

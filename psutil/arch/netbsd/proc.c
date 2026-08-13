@@ -48,14 +48,8 @@ error:
 }
 
 
-// XXX: This is no longer used as per
-// https://github.com/giampaolo/psutil/pull/557#issuecomment-171912820
-// Current implementation uses /proc instead.
-// Left here just in case.
-/*
 PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
-#if __NetBSD_Version__ >= 799000000
     pid_t pid;
     char pathname[MAXPATHLEN];
     int error;
@@ -63,7 +57,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     int ret;
     size_t size;
 
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (pid == 0) {
         // else returns ENOENT
@@ -76,21 +70,17 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     mib[3] = KERN_PROC_PATHNAME;
 
     size = sizeof(pathname);
-    error = sysctl(mib, 4, NULL, &size, NULL, 0);
-    if (error == -1) {
-        psutil_oserror();
-        return NULL;
-    }
-
     error = sysctl(mib, 4, pathname, &size, NULL, 0);
     if (error == -1) {
-        psutil_oserror();
-        return NULL;
+        return psutil_oserror_wsyscall("sysctl(KERN_PROC_PATHNAME)");
     }
+
     if (size == 0 || strlen(pathname) == 0) {
         ret = psutil_pid_exists(pid);
-        if (ret == -1)
+        if (ret == -1) {
+            psutil_oserror();
             return NULL;
+        }
         else if (ret == 0)
             return psutil_oserror_nsp("psutil_pid_exists -> 0");
         else
@@ -98,11 +88,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     }
 
     return PyUnicode_DecodeFSDefault(pathname);
-#else
-    return Py_BuildValue("s", "");
-#endif
 }
-*/
 
 
 PyObject *
@@ -221,6 +207,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
             if (errno == EBUSY) {
                 // Usually happens with TestProcess.test_long_cmdline. See:
                 // https://github.com/giampaolo/psutil/issues/2250
+                // psutil_sysctl_malloc() sets a Python exception before
+                // returning -1; clear it before retrying or returning so we
+                // don't leave a pending exception on a non-NULL return value.
+                PyErr_Clear();
                 attempt += 1;
                 if (attempt < max_attempts) {
                     psutil_debug("proc %zu cmdline(): retry on EBUSY", pid);
@@ -230,6 +220,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
                     psutil_debug(
                         "proc %zu cmdline(): return [] due to EBUSY", pid
                     );
+                    PyErr_Clear();
                     return py_retlist;
                 }
             }
@@ -249,6 +240,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     }
 
     free(procargs);
+    PyErr_Clear();
     return py_retlist;
 
 error:

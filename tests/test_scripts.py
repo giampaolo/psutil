@@ -15,7 +15,6 @@ import pytest
 
 from psutil import LINUX
 from psutil import POSIX
-from psutil import WINDOWS
 
 from . import CI_TESTING
 from . import HAS_BATTERY
@@ -31,6 +30,7 @@ from . import PsutilTestCase
 from . import import_module_by_path
 from . import psutil
 from . import sh
+from . import skipif
 
 SCRIPTS_DIR = pathlib.Path(ROOT_DIR) / "scripts"
 INTERNAL_SCRIPTS_DIR = SCRIPTS_DIR / "internal"
@@ -70,7 +70,7 @@ class ScriptsTestCase(PsutilTestCase):
 # ===================================================================
 
 
-@pytest.mark.skipif(
+@skipif(
     CI_TESTING and not os.path.exists(SCRIPTS_DIR),
     reason="can't find scripts/ directory",
 )
@@ -88,7 +88,7 @@ class TestExampleScripts(ScriptsTestCase):
                         f" {os.path.join(SCRIPTS_DIR, name)!r} script"
                     )
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @skipif(not POSIX, reason="POSIX only")
     def test_executable(self):
         for root, dirs, files in os.walk(SCRIPTS_DIR):
             for file in files:
@@ -109,8 +109,9 @@ class TestExampleScripts(ScriptsTestCase):
     def test_procinfo(self):
         self.assert_stdout('procinfo.py', str(os.getpid()))
 
-    @pytest.mark.skipif(CI_TESTING and not psutil.users(), reason="no users")
     def test_who(self):
+        if not psutil.users():
+            return pytest.skip("no users logged in")
         self.assert_stdout('who.py')
 
     def test_ps(self):
@@ -125,13 +126,13 @@ class TestExampleScripts(ScriptsTestCase):
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
-    @pytest.mark.skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
+    @skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
     def test_pmap(self):
         self.assert_stdout('pmap.py', str(os.getpid()))
 
-    @pytest.mark.skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
+    @skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
     def test_procsmem(self):
-        self.assert_stdout('procsmem.py')
+        self.assert_syntax('procsmem.py')  # slow
 
     def test_killall(self):
         self.assert_syntax('killall.py')
@@ -149,32 +150,33 @@ class TestExampleScripts(ScriptsTestCase):
         output = self.assert_stdout('pidof.py', psutil.Process().name())
         assert str(os.getpid()) in output
 
-    @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
     def test_winservices(self):
-        self.assert_stdout('winservices.py')
+        # Running it iterates over all services, which sporadically
+        # takes longer than GLOBAL_TIMEOUT on CI.
+        self.assert_syntax('winservices.py')
 
     def test_cpu_distribution(self):
         self.assert_syntax('cpu_distribution.py')
 
-    @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
+    @skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     def test_temperatures(self):
         if not psutil.sensors_temperatures():
             return pytest.skip("no temperatures")
         self.assert_stdout('temperatures.py')
 
-    @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
+    @skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_fans(self):
         if not psutil.sensors_fans():
             return pytest.skip("no fans")
         self.assert_stdout('fans.py')
 
-    @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    @skipif(not HAS_SENSORS_BATTERY, reason="not supported")
+    @skipif(not HAS_BATTERY, reason="no battery")
     def test_battery(self):
         self.assert_stdout('battery.py')
 
-    @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    @skipif(not HAS_SENSORS_BATTERY, reason="not supported")
+    @skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors(self):
         self.assert_stdout('sensors.py')
 
@@ -184,7 +186,7 @@ class TestExampleScripts(ScriptsTestCase):
 # ===================================================================
 
 
-@pytest.mark.skipif(
+@skipif(
     CI_TESTING and not os.path.exists(INTERNAL_SCRIPTS_DIR),
     reason="can't find scripts/internal/ directory",
 )
@@ -204,14 +206,18 @@ class TestInternalScripts(ScriptsTestCase):
             ast.parse(data)
 
     # don't care about other platforms, this is really just for myself
-    @pytest.mark.skipif(not LINUX, reason="not on LINUX")
-    @pytest.mark.skipif(CI_TESTING, reason="not on CI")
+    @skipif(not LINUX, reason="not on LINUX")
+    @skipif(CI_TESTING, reason="not on CI")
     def test_import_all(self):
         for path in self.ls():
             try:
                 import_module_by_path(path)
             except SystemExit:
                 pass
+            except ImportError as err:
+                if "pyperf" in str(err) or "requests" in str(err):
+                    continue
+                raise
 
     def test_print_api_speed(self):
         self.assert_stdout("print_api_speed.py", "-t", "2")

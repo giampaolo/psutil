@@ -6,25 +6,25 @@
 
 from __future__ import annotations
 
+import ast
+import enum
 import functools
-import sys
 import types
 
 import pytest
 
 import psutil
+import psutil._enums
 
 from . import PsutilTestCase
 from . import check_fun_type_hints
 from . import check_ntuple_type_hints
 from . import is_namedtuple
 from . import process_namespace
+from . import skipif
 from . import system_namespace
 
 
-@pytest.mark.skipif(
-    sys.version_info[:2] <= (3, 7), reason="not supported on Python <= 3.7"
-)
 class TypeHintTestCase(PsutilTestCase):
     pass
 
@@ -106,6 +106,53 @@ class TestTypeHintsReturned(TypeHintTestCase):
                 self.check(fun, name)
 
 
+# ===================================================================
+# --- enum constants type hints
+# ===================================================================
+
+
+class TestEnumDeclarations(TypeHintTestCase):
+    """psutil/__init__.py injects the enum members into the module
+    namespace at run time. Type checkers can't see that, so they rely
+    on the declarations in the `if TYPE_CHECKING` block. Make sure
+    those don't fall behind.
+    """
+
+    @staticmethod
+    def get_declared_names():
+        with open(psutil.__file__, encoding="utf8") as f:
+            tree = ast.parse(f.read())
+        names = {}
+        for node in tree.body:
+            if not isinstance(node, ast.If):
+                continue
+            if getattr(node.test, "id", None) != "_TYPE_CHECKING":
+                continue
+            for child in node.body:
+                if isinstance(child, ast.AnnAssign):
+                    names[child.target.id] = child.annotation.id
+        return names
+
+    @staticmethod
+    def get_enum_classes():
+        return [
+            obj
+            for obj in vars(psutil._enums).values()
+            if isinstance(obj, type)
+            and issubclass(obj, enum.Enum)
+            and obj.__members__
+        ]
+
+    def test_members_are_declared(self):
+        declared = self.get_declared_names()
+        classes = self.get_enum_classes()
+        assert classes
+        for cls in classes:
+            for name in cls.__members__:
+                with self.subTest(name=name, cls=cls.__name__):
+                    assert declared.get(name) == cls.__name__
+
+
 # =====================================================================
 # --- Tests for check_ntuple_type_hints() test utility fun
 # =====================================================================
@@ -130,9 +177,7 @@ class TestCheckNtupleTypeHints(TypeHintTestCase):
         with pytest.raises(AssertionError):
             check_ntuple_type_hints(addr(127, 80))
 
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
+    @skipif(not hasattr(types, "UnionType"), reason="Python 3.10+ only")
     def test_union_with_none(self):
         # suser has terminal: str | None and host: str | None
         from psutil._ntuples import suser
@@ -157,9 +202,7 @@ class TestCheckNtupleTypeHints(TypeHintTestCase):
 
 class TestCheckFunTypeHints(TypeHintTestCase):
 
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
+    @skipif(not hasattr(types, "UnionType"), reason="Python 3.10+ only")
     def test_no_annotation(self):
         def foo():
             return 1
@@ -183,9 +226,7 @@ class TestCheckFunTypeHints(TypeHintTestCase):
         with pytest.raises(AssertionError):
             check_fun_type_hints(foo, "str")
 
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
+    @skipif(not hasattr(types, "UnionType"), reason="Python 3.10+ only")
     def test_list(self):
         def foo() -> list[int]:
             return [1]
@@ -194,9 +235,7 @@ class TestCheckFunTypeHints(TypeHintTestCase):
         with pytest.raises(AssertionError):
             check_fun_type_hints(foo, "str")
 
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
+    @skipif(not hasattr(types, "UnionType"), reason="Python 3.10+ only")
     def test_list_container(self):
         def foo() -> list[str]:
             pass
@@ -205,9 +244,7 @@ class TestCheckFunTypeHints(TypeHintTestCase):
         with pytest.raises(AssertionError):
             check_fun_type_hints(foo, ["a", 1])
 
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
+    @skipif(not hasattr(types, "UnionType"), reason="Python 3.10+ only")
     def test_dict(self):
         def foo() -> dict[str, int]:
             return {'a': 1}
@@ -216,9 +253,7 @@ class TestCheckFunTypeHints(TypeHintTestCase):
         with pytest.raises(AssertionError):
             check_fun_type_hints(foo, "str")
 
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
+    @skipif(not hasattr(types, "UnionType"), reason="Python 3.10+ only")
     def test_dict_container(self):
         def foo() -> dict[str, str]:
             pass
@@ -237,9 +272,7 @@ class TestCheckFunTypeHints(TypeHintTestCase):
         with pytest.raises(AssertionError):
             check_fun_type_hints(foo, "str")
 
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
+    @skipif(not hasattr(types, "UnionType"), reason="Python 3.10+ only")
     def test_union_with_none(self):
         def foo() -> int | None:
             return 1
@@ -249,9 +282,7 @@ class TestCheckFunTypeHints(TypeHintTestCase):
         with pytest.raises(AssertionError):
             check_fun_type_hints(foo, "str")
 
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
+    @skipif(not hasattr(types, "UnionType"), reason="Python 3.10+ only")
     def test_union_or_dict_or_none(self):
         def foo() -> int | dict[str, int] | None:
             return 1

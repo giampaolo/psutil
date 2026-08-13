@@ -31,6 +31,7 @@ except ImportError:
 
 
 PSUTIL_DEBUG = bool(os.getenv('PSUTIL_DEBUG'))
+PSUTIL_TESTING = bool(os.getenv('PSUTIL_TESTING'))
 _DEFAULT = object()
 
 # fmt: off
@@ -45,7 +46,7 @@ __all__ = [
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
     'open_text', 'open_binary', 'cat', 'bcat',
-    'conn_to_ntuple', 'debug',
+    'conn_to_ntuple', 'debug', 'warn',
     # shell utils
     'hilite', 'term_supports_colors', 'print_color',
 ]
@@ -121,8 +122,7 @@ class Error(Exception):
 
     def __str__(self):
         # invoked on `raise Error`
-        info = self._infodict(("pid", "ppid", "name"))
-        if info:
+        if info := self._infodict(("pid", "ppid", "name")):
             details = "({})".format(
                 ", ".join([f"{k}={v!r}" for k, v in info.items()])
             )
@@ -408,29 +408,31 @@ def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
 
 def broadcast_addr(addr):
     """Given the address ntuple returned by ``net_if_addrs()``
-    calculates the broadcast address.
+    calculates the broadcast address. Returns None for a single-host
+    network (/32 or /128), which has no broadcast address.
     """
     import ipaddress
 
     if not addr.address or not addr.netmask:
         return None
     if addr.family == socket.AF_INET:
-        return str(
-            ipaddress.IPv4Network(
-                f"{addr.address}/{addr.netmask}", strict=False
-            ).broadcast_address
+        net = ipaddress.IPv4Network(
+            f"{addr.address}/{addr.netmask}", strict=False
         )
-    if addr.family == socket.AF_INET6:
-        return str(
-            ipaddress.IPv6Network(
-                f"{addr.address}/{addr.netmask}", strict=False
-            ).broadcast_address
+    elif addr.family == socket.AF_INET6:
+        net = ipaddress.IPv6Network(
+            f"{addr.address}/{addr.netmask}", strict=False
         )
+    else:
+        return None
+    if net.prefixlen == net.max_prefixlen:
+        return None
+    return str(net.broadcast_address)
 
 
 def deprecated_method(replacement):
     """A decorator which can be used to mark a method as deprecated
-    'replcement' is the method name which will be called instead.
+    'replacement' is the method name which will be called instead.
     """
 
     def outer(fun):
@@ -449,31 +451,6 @@ def deprecated_method(replacement):
         return inner
 
     return outer
-
-
-class deprecated_property:
-    """A descriptor which can be used to mark a property as deprecated.
-    'replacement' is the attribute name to use instead. Usage::
-
-        class Foo:
-            bar = deprecated_property("baz")
-    """
-
-    def __init__(self, replacement):
-        self.replacement = replacement
-        self._msg = None
-
-    def __set_name__(self, owner, name):
-        self._msg = (
-            f"{name} is deprecated and will be removed; use"
-            f" {self.replacement} instead"
-        )
-
-    def __get__(self, obj, objtype=None):
-        if obj is None:
-            return self
-        warnings.warn(self._msg, category=DeprecationWarning, stacklevel=2)
-        return getattr(obj, self.replacement)
 
 
 class _WrapNumbers:
@@ -736,3 +713,22 @@ def debug(msg):
         print(  # noqa: T201
             f"psutil-debug [{fname}:{lineno}]> {msg}", file=sys.stderr
         )
+
+
+def warn(msg):
+    """Emit a RuntimeWarning. Use it for events which are never
+    supposed to happen, and imply a psutil bug.
+    """
+    import inspect
+
+    fname, lineno, _, _lines, _index = inspect.getframeinfo(
+        inspect.currentframe().f_back
+    )
+    msg = f"{msg} (originated from {fname}:{lineno})"
+    if PSUTIL_TESTING:
+        msg = f"CRITICAL: {msg}"
+        raise RuntimeError(msg)
+    try:
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
+    except RuntimeWarning:
+        pass  # -W error: we never want to fail because of a warning

@@ -1,18 +1,16 @@
-.. currentmodule:: psutil
-
 Funding
 =======
 
 psutil is free and open source software, maintained by a single developer in
 his spare time. It is among the
-`top 100 most-downloaded Python packages <https://pypistats.org/top>`_,
-used by millions of developers and hundreds of thousands of projects worldwide,
+`top 100 most-downloaded Python packages <https://pypistats.org/top>`_, used by
+millions of developers and hundreds of thousands of projects worldwide,
 including TensorFlow, PyTorch, Home Assistant, Ansible, and Celery.
 
 Keeping up with bug reports, platform compatibility, user support, and ongoing
-maintenance has become increasingly difficult to sustain as a one-person effort.
-Financial support helps dedicate more time to the project and ensures its
-long-term health.
+maintenance has become increasingly difficult to sustain as a one-person
+effort. Financial support helps dedicate more time to the project and ensures
+its long-term health.
 
 How to fund
 -----------
@@ -36,8 +34,8 @@ For companies
 If your company relies on psutil in production, consider becoming a sponsor.
 Benefits include:
 
-- Your logo displayed on the `psutil homepage <https://psutil.readthedocs.io>`_
-  and the `GitHub repository <https://github.com/giampaolo/psutil>`_.
+- Your logo displayed on the `psutil homepage <https://psutil.io>`_ and the
+  `GitHub repository <https://github.com/giampaolo/psutil>`_.
 - Priority response to bug reports and feature requests.
 - The assurance that the library you depend on is actively maintained.
 

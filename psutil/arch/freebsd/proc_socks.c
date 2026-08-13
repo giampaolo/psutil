@@ -205,6 +205,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     pid_t pid;
     int i;
     int cnt;
+    psutil_conn_filters filters;
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
     char *tcplist = NULL;
@@ -219,8 +220,6 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     PyObject *py_raddr = NULL;
     PyObject *py_af_filter = NULL;
     PyObject *py_type_filter = NULL;
-    PyObject *py_family = NULL;
-    PyObject *py_type = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -230,10 +229,8 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     {
         goto error;
     }
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+    if (psutil_parse_conn_filters(py_af_filter, py_type_filter, &filters) != 0)
         goto error;
-    }
 
     errno = 0;
     freep = kinfo_getfile(pid, &cnt);
@@ -252,23 +249,23 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
         int lport, rport, state;
         char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
         char path[PATH_MAX];
-        int inseq;
         py_laddr = NULL;
         py_raddr = NULL;
 
         kif = &freep[i];
         if (kif->kf_type == KF_TYPE_SOCKET) {
             // apply filters
-            py_family = PyLong_FromLong((long)kif->kf_sock_domain);
-            inseq = PySequence_Contains(py_af_filter, py_family);
-            Py_DECREF(py_family);
-            if (inseq == 0)
+            if (!((kif->kf_sock_domain == AF_INET && filters.v4)
+                  || (kif->kf_sock_domain == AF_INET6 && filters.v6)
+                  || (kif->kf_sock_domain == AF_UNIX && filters.unix_)))
+            {
                 continue;
-            py_type = PyLong_FromLong((long)kif->kf_sock_type);
-            inseq = PySequence_Contains(py_type_filter, py_type);
-            Py_DECREF(py_type);
-            if (inseq == 0)
+            }
+            if (!((kif->kf_sock_type == SOCK_STREAM && filters.tcp)
+                  || (kif->kf_sock_type == SOCK_DGRAM && filters.udp)))
+            {
                 continue;
+            }
             // IPv4 / IPv6 socket
             if ((kif->kf_sock_domain == AF_INET)
                 || (kif->kf_sock_domain == AF_INET6))

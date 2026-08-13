@@ -18,10 +18,6 @@
 #include <windows.h>
 #include <Psapi.h>  // memory_info(), memory_maps()
 #include <signal.h>
-#include <tlhelp32.h>  // threads(), PROCESSENTRY32
-
-// Link with Iphlpapi.lib
-#pragma comment(lib, "IPHLPAPI.lib")
 
 #include "../../arch/all/init.h"
 
@@ -47,6 +43,96 @@ psutil_pid_exists(PyObject *self, PyObject *args) {
 }
 
 
+// Get various process info by using NtQuerySystemInformation. We use
+// this as a fallback when faster functions fail with access denied.
+// This is slower because it iterates over all processes.
+PyObject *
+psutil_proc_oneshot(PyObject *self, PyObject *args) {
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION proc;
+    PVOID buffer = NULL;
+    ULONG i;
+    ULONG ctx_switches = 0;
+    int suspended = 1;  // a process with no threads counts as suspended
+    double user_time;
+    double kernel_time;
+    double create_time;
+    PyObject *dict = PyDict_New();
+
+    if (!dict)
+        return NULL;
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        goto error;
+    if (psutil_proc_table_entry(pid, &proc, &buffer) != 0)
+        goto error;
+
+    for (i = 0; i < proc->NumberOfThreads; i++) {
+        ctx_switches += proc->Threads[i].ContextSwitches;
+        if (proc->Threads[i].ThreadState != Waiting
+            || proc->Threads[i].WaitReason != Suspended)
+        {
+            suspended = 0;
+        }
+    }
+
+    user_time = (double)proc->UserTime.HighPart * HI_T
+                + (double)proc->UserTime.LowPart * LO_T;
+    kernel_time = (double)proc->KernelTime.HighPart * HI_T
+                  + (double)proc->KernelTime.LowPart * LO_T;
+
+    // Convert the LARGE_INTEGER union to a Unix time.
+    // It's the best I could find by googling and borrowing code here
+    // and there. The time returned has a precision of 1 second.
+    if (0 == pid || 4 == pid) {
+        // the python module will translate this into BOOT_TIME later
+        create_time = 0;
+    }
+    else {
+        create_time = psutil_LargeIntegerToUnixTime(proc->CreateTime);
+    }
+
+    // clang-format off
+    if (!pydict_add(dict, "num_handles", "k", proc->HandleCount)) goto error;
+    if (!pydict_add(dict, "ctx_switches", "k", ctx_switches)) goto error;
+    if (!pydict_add(dict, "is_suspended", "i", suspended)) goto error;
+    if (!pydict_add(dict, "user_time", "d", user_time)) goto error;
+    if (!pydict_add(dict, "kernel_time", "d", kernel_time)) goto error;
+    if (!pydict_add(dict, "create_time", "d", create_time)) goto error;
+    if (!pydict_add(dict, "num_threads", "k", proc->NumberOfThreads)) goto error;
+    // I/O
+    if (!pydict_add(dict, "io_rcount", "K", proc->ReadOperationCount.QuadPart)) goto error;
+    if (!pydict_add(dict, "io_wcount", "K", proc->WriteOperationCount.QuadPart)) goto error;
+    if (!pydict_add(dict, "io_rbytes", "K", proc->ReadTransferCount.QuadPart)) goto error;
+    if (!pydict_add(dict, "io_wbytes", "K", proc->WriteTransferCount.QuadPart)) goto error;
+    if (!pydict_add(dict, "io_count_others", "K", proc->OtherOperationCount.QuadPart)) goto error;
+    if (!pydict_add(dict, "io_bytes_others", "K", proc->OtherTransferCount.QuadPart)) goto error;
+    // proc memory
+    if (!pydict_add(dict, "PageFaultCount", "K", (ULONGLONG)proc->PageFaultCount)) goto error;
+    if (!pydict_add(dict, "HardFaultCount", "K", (ULONGLONG)proc->HardFaultCount)) goto error;
+    if (!pydict_add(dict, "PeakWorkingSetSize", "K", (ULONGLONG)proc->PeakWorkingSetSize)) goto error;
+    if (!pydict_add(dict, "WorkingSetSize", "K", (ULONGLONG)proc->WorkingSetSize)) goto error;
+    if (!pydict_add(dict, "QuotaPeakPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPeakPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "QuotaPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "QuotaPeakNonPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPeakNonPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "QuotaNonPagedPoolUsage", "K", (ULONGLONG)proc->QuotaNonPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "PagefileUsage", "K", (ULONGLONG)proc->PagefileUsage)) goto error;
+    if (!pydict_add(dict, "PeakPagefileUsage", "K", (ULONGLONG)proc->PeakPagefileUsage)) goto error;
+    if (!pydict_add(dict, "PrivatePageCount", "K", (ULONGLONG)proc->PrivatePageCount)) goto error;
+    if (!pydict_add(dict, "VirtualSize", "K", (ULONGLONG)proc->VirtualSize)) goto error;
+    if (!pydict_add(dict, "PeakVirtualSize", "K", (ULONGLONG)proc->PeakVirtualSize)) goto error;
+    // clang-format on
+
+    free(buffer);
+    return dict;
+
+error:
+    if (buffer != NULL)
+        free(buffer);
+    Py_DECREF(dict);
+    return NULL;
+}
+
+
 PyObject *
 psutil_proc_kill(PyObject *self, PyObject *args) {
     HANDLE hProcess;
@@ -69,6 +155,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
         // http://bugs.python.org/issue14252
         if (GetLastError() != ERROR_ACCESS_DENIED) {
             psutil_oserror_wsyscall("TerminateProcess");
+            CloseHandle(hProcess);
             return NULL;
         }
     }
@@ -85,6 +172,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     DWORD retVal;
     DWORD pid;
     long timeout;
+    int running;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID "l", &pid, &timeout))
         return NULL;
@@ -100,10 +188,20 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
             // return None instead.
             Py_RETURN_NONE;
         }
-        else {
-            psutil_oserror_wsyscall("OpenProcess");
+        if (GetLastError() == ERROR_SUCCESS) {
+            // Yeah, it's this bad, see:
+            // https://github.com/giampaolo/psutil/issues/1877
+            running = psutil_pid_is_running(pid);
+            if (running == 0) {
+                psutil_debug("OpenProcess -> ERROR_SUCCESS turned into None");
+                Py_RETURN_NONE;
+            }
+            if (running == 1)
+                return psutil_oserror_ad("OpenProcess -> ERROR_SUCCESS");
             return NULL;
         }
+        psutil_oserror_wsyscall("OpenProcess");
+        return NULL;
     }
 
     // wait until the process has terminated
@@ -217,8 +315,8 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     // ...because NtQuerySystemInformation can succeed for terminated
     // processes.
-    if (psutil_pid_is_running(pid) == 0)
-        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
+    if (psutil_check_pid_running(pid) != 0)
+        return NULL;
 
     buffer = MALLOC_ZERO(bufferSize);
     if (!buffer) {
@@ -244,8 +342,11 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         // Required length was NOT stored in MaximumLength (WOW64 issue).
         ULONG maxBufferSize = 0x7FFF * 2;  // NTFS_MAX_PATH * sizeof(wchar_t)
         do {
-            // Iteratively double the size of the buffer up to maxBufferSize
+            // Iteratively double the size of the buffer up to maxBufferSize.
+            // Cap it, or the USHORT MaximumLength would overflow.
             bufferSize *= 2;
+            if (bufferSize > maxBufferSize)
+                bufferSize = maxBufferSize;
             FREE(buffer);
             buffer = MALLOC_ZERO(bufferSize);
             if (!buffer) {
@@ -263,7 +364,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
                 NULL
             );
         } while ((status == STATUS_INFO_LENGTH_MISMATCH)
-                 && (bufferSize <= maxBufferSize));
+                 && (bufferSize < maxBufferSize));
     }
     else if (status == STATUS_INFO_LENGTH_MISMATCH) {
         // Required length is stored in MaximumLength.
@@ -286,11 +387,9 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     if (!NT_SUCCESS(status)) {
         FREE(buffer);
-        if (psutil_pid_is_running(pid) == 0)
-            psutil_oserror_nsp("psutil_pid_is_running -> 0");
-        else
-            psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
-        return NULL;
+        return psutil_raise_for_nt_status(
+            pid, status, "NtQuerySystemInformation(SystemProcessIdInformation)"
+        );
     }
 
     if (processIdInfo.ImageName.Buffer == NULL) {
@@ -396,16 +495,14 @@ psutil_GetProcWsetInformation(
         if (status == STATUS_ACCESS_DENIED) {
             psutil_oserror_ad("NtQueryVirtualMemory -> STATUS_ACCESS_DENIED");
         }
-        else if (psutil_pid_is_running(pid) == 0) {
-            psutil_oserror_nsp("psutil_pid_is_running -> 0");
-        }
         else {
-            PyErr_Clear();
-            psutil_SetFromNTStatusErr(
-                status, "NtQueryVirtualMemory(MemoryWorkingSetInformation)"
+            psutil_raise_for_nt_status(
+                pid,
+                status,
+                "NtQueryVirtualMemory(MemoryWorkingSetInformation)"
             );
         }
-        HeapFree(GetProcessHeap(), 0, buffer);
+        FREE(buffer);
         return -1;
     }
 
@@ -458,7 +555,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, wsInfo);
+    FREE(wsInfo);
     CloseHandle(hProcess);
 
     return Py_BuildValue("I", wsCounters.NumberOfPrivatePages);
@@ -472,16 +569,16 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
     NTSTATUS status;
     HANDLE hProcess;
     DWORD access = PROCESS_SUSPEND_RESUME | PROCESS_QUERY_LIMITED_INFORMATION;
-    PyObject *suspend;
+    int suspend;
 
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &suspend))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "p", &pid, &suspend))
         return NULL;
 
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
         return NULL;
 
-    if (PyObject_IsTrue(suspend))
+    if (suspend)
         status = NtSuspendProcess(hProcess);
     else
         status = NtResumeProcess(hProcess);
@@ -498,104 +595,43 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
-    HANDLE hThread = NULL;
-    THREADENTRY32 te32 = {0};
     DWORD pid;
-    int pid_return;
-    int rc;
-    FILETIME ftDummy, ftKernel, ftUser;
-    HANDLE hThreadSnap = NULL;
+    ULONG i;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
-    if (pid == 0) {
-        // raise AD instead of returning 0 as procexp is able to
-        // retrieve useful information somehow
-        psutil_oserror_ad("forced for PID 0");
-        goto error;
-    }
-
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0) {
-        psutil_oserror_nsp("psutil_pid_is_running -> 0");
-        goto error;
-    }
-    if (pid_return == -1)
+    if (psutil_proc_table_entry(pid, &process, &buffer) != 0)
         goto error;
 
-    hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-    if (hThreadSnap == INVALID_HANDLE_VALUE) {
-        psutil_oserror_wsyscall("CreateToolhelp32Snapshot");
-        goto error;
-    }
+    for (i = 0; i < process->NumberOfThreads; i++) {
+        SYSTEM_THREAD_INFORMATION *thread = &process->Threads[i];
 
-    // Fill in the size of the structure before using it
-    te32.dwSize = sizeof(THREADENTRY32);
-
-    if (!Thread32First(hThreadSnap, &te32)) {
-        psutil_oserror_wsyscall("Thread32First");
-        goto error;
-    }
-
-    // Walk the thread snapshot to find all threads of the process.
-    // If the thread belongs to the process, increase the counter.
-    do {
-        if (te32.th32OwnerProcessID == pid) {
-            hThread = NULL;
-            hThread = OpenThread(
-                THREAD_QUERY_INFORMATION, FALSE, te32.th32ThreadID
-            );
-            if (hThread == NULL) {
-                // thread has disappeared on us
-                continue;
-            }
-
-            rc = GetThreadTimes(
-                hThread, &ftDummy, &ftDummy, &ftKernel, &ftUser
-            );
-            if (rc == 0) {
-                psutil_oserror_wsyscall("GetThreadTimes");
-                goto error;
-            }
-
-            /*
-             * User and kernel times are represented as a FILETIME structure
-             * which contains a 64-bit value representing the number of
-             * 100-nanosecond intervals since January 1, 1601 (UTC):
-             * http://msdn.microsoft.com/en-us/library/ms724284(VS.85).aspx
-             * To convert it into a float representing the seconds that the
-             * process has executed in user/kernel mode I borrowed the code
-             * below from Python's Modules/posixmodule.c
-             */
-            if (!pylist_append_fmt(
-                    py_retlist,
-                    "kdd",
-                    te32.th32ThreadID,
-                    (double)(ftUser.dwHighDateTime * HI_T
-                             + ftUser.dwLowDateTime * LO_T),
-                    (double)(ftKernel.dwHighDateTime * HI_T
-                             + ftKernel.dwLowDateTime * LO_T)
-                ))
-            {
-                goto error;
-            }
-
-            CloseHandle(hThread);
+        // Times count 100-nanosecond intervals, turn them into secs.
+        if (!pylist_append_fmt(
+                py_retlist,
+                "kdd",
+                (DWORD)(ULONG_PTR)thread->ClientId.UniqueThread,
+                (double)thread->UserTime.HighPart * HI_T
+                    + (double)thread->UserTime.LowPart * LO_T,
+                (double)thread->KernelTime.HighPart * HI_T
+                    + (double)thread->KernelTime.LowPart * LO_T
+            ))
+        {
+            free(buffer);
+            goto error;
         }
-    } while (Thread32Next(hThreadSnap, &te32));
+    }
 
-    CloseHandle(hThreadSnap);
+    free(buffer);
     return py_retlist;
 
 error:
     Py_DECREF(py_retlist);
-    if (hThread != NULL)
-        CloseHandle(hThread);
-    if (hThreadSnap != NULL)
-        CloseHandle(hThreadSnap);
     return NULL;
 }
 
@@ -614,14 +650,14 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (processHandle == NULL)
         return NULL;
 
-    py_retlist = psutil_get_open_files(pid, processHandle);
+    py_retlist = psutil_get_open_files(processHandle);
     CloseHandle(processHandle);
     return py_retlist;
 }
 
 
 static PTOKEN_USER
-_psutil_user_token_from_pid(DWORD pid) {
+user_token_from_pid(DWORD pid) {
     HANDLE hProcess = NULL;
     HANDLE hToken = NULL;
     PTOKEN_USER userToken = NULL;
@@ -685,13 +721,14 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     ULONG nameSize = 0x100;
     ULONG domainNameSize = 0x100;
     SID_NAME_USE nameUse;
+    BOOL ok;
     PyObject *py_username = NULL;
     PyObject *py_domain = NULL;
     PyObject *py_tuple = NULL;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    userToken = _psutil_user_token_from_pid(pid);
+    userToken = user_token_from_pid(pid);
     if (userToken == NULL)
         return NULL;
 
@@ -707,25 +744,33 @@ psutil_proc_username(PyObject *self, PyObject *args) {
             PyErr_NoMemory();
             goto error;
         }
-        if (!LookupAccountSidW(
-                NULL,
-                userToken->User.Sid,
-                userName,
-                &nameSize,
-                domainName,
-                &domainNameSize,
-                &nameUse
-            ))
-        {
+        // On a domain member this may go over the wire to a domain
+        // controller, so do it without the GIL.
+        Py_BEGIN_ALLOW_THREADS
+        ok = LookupAccountSidW(
+            NULL,
+            userToken->User.Sid,
+            userName,
+            &nameSize,
+            domainName,
+            &domainNameSize,
+            &nameUse
+        );
+        Py_END_ALLOW_THREADS
+
+        if (!ok) {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
                 free(userName);
                 free(domainName);
+                // otherwise a failed malloc() on the next iteration
+                // would goto error and free() them again
+                userName = NULL;
+                domainName = NULL;
                 continue;
             }
             else if (GetLastError() == ERROR_NONE_MAPPED) {
                 // From MS doc:
-                // https://docs.microsoft.com/en-us/windows/win32/api/winbase/
-                //     nf-winbase-lookupaccountsida
+                // https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-lookupaccountsida
                 // If the function cannot find an account name for the SID,
                 // GetLastError returns ERROR_NONE_MAPPED. This can occur if
                 // a network time-out prevents the function from finding the
@@ -877,6 +922,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 }
 
 
+PyObject *
 psutil_proc_io_counters(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess;
@@ -956,58 +1002,6 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 }
 
 
-// Return process page faults as a (minor, major) tuple. Uses
-// NtQuerySystemInformation(SystemProcessInformation) which returns
-// SYSTEM_PROCESS_INFORMATION. PageFaultCount is the total (soft +
-// hard), while HardFaultCount (available since Win7) tracks hard
-// (major) faults only. Minor faults are derived by subtracting the
-// two.
-PyObject *
-psutil_proc_page_faults(PyObject *self, PyObject *args) {
-    DWORD pid;
-    PSYSTEM_PROCESS_INFORMATION process;
-    PVOID buffer;
-    ULONG minor;
-    ULONG major;
-    PyObject *ret;
-
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
-        return NULL;
-    major = process->HardFaultCount;
-    minor = process->PageFaultCount - major;
-    ret = Py_BuildValue("(kk)", (unsigned long)minor, (unsigned long)major);
-    free(buffer);
-    return ret;
-}
-
-
-// Return True if all process threads are in waiting/suspended state.
-PyObject *
-psutil_proc_is_suspended(PyObject *self, PyObject *args) {
-    DWORD pid;
-    ULONG i;
-    PSYSTEM_PROCESS_INFORMATION process;
-    PVOID buffer;
-
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
-        return NULL;
-    for (i = 0; i < process->NumberOfThreads; i++) {
-        if (process->Threads[i].ThreadState != Waiting
-            || process->Threads[i].WaitReason != Suspended)
-        {
-            free(buffer);
-            Py_RETURN_FALSE;
-        }
-    }
-    free(buffer);
-    Py_RETURN_TRUE;
-}
-
-
 PyObject *
 psutil_proc_num_handles(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -1060,7 +1054,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess = NULL;
     PVOID baseAddress;
-    WCHAR mappedFileName[MAX_PATH];
+    ULONG mappedFileNameSize = 0x7FFF + 1;  // NTFS_MAX_PATH + NUL
+    WCHAR *mappedFileName = NULL;
     LPVOID maxAddr;
     // required by GetMappedFileNameW
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
@@ -1075,6 +1070,12 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     if (NULL == hProcess)
         goto error;
 
+    mappedFileName = malloc(mappedFileNameSize * sizeof(WCHAR));
+    if (mappedFileName == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
     maxAddr = PSUTIL_SYSTEM_INFO.lpMaximumApplicationAddress;
     baseAddress = NULL;
 
@@ -1084,8 +1085,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     {
         if (baseAddress > maxAddr)
             break;
+        // nSize is in characters, not bytes.
         if (GetMappedFileNameW(
-                hProcess, baseAddress, mappedFileName, sizeof(mappedFileName)
+                hProcess, baseAddress, mappedFileName, mappedFileNameSize
             ))
         {
             py_str = PyUnicode_FromWideChar(
@@ -1109,6 +1111,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         baseAddress = (PCHAR)baseAddress + basicInfo.RegionSize;
     }
 
+    free(mappedFileName);
     CloseHandle(hProcess);
     return py_retlist;
 
@@ -1117,7 +1120,39 @@ error:
     Py_DECREF(py_retlist);
     if (hProcess != NULL)
         CloseHandle(hProcess);
+    if (mappedFileName != NULL)
+        free(mappedFileName);
     return NULL;
+}
+
+
+// Return the parent PID. Needs a handle, so it can fail with
+// AccessDenied; the Python layer falls back to ppid_map() then.
+PyObject *
+psutil_proc_ppid(PyObject *self, PyObject *args) {
+    DWORD pid;
+    HANDLE hProcess;
+    NTSTATUS status;
+    PROCESS_BASIC_INFORMATION pbi;
+
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+    hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+    if (hProcess == NULL)
+        return NULL;
+
+    status = NtQueryInformationProcess(
+        hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), NULL
+    );
+    CloseHandle(hProcess);
+    if (!NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "NtQueryInformationProcess(ProcessBasicInformation)"
+        );
+        return NULL;
+    }
+
+    return PyLong_FromPid((DWORD)pbi.InheritedFromUniqueProcessId);
 }
 
 
@@ -1127,41 +1162,40 @@ psutil_ppid_map(PyObject *self, PyObject *args) {
     PyObject *py_pid = NULL;
     PyObject *py_ppid = NULL;
     PyObject *py_retdict = PyDict_New();
-    HANDLE handle = NULL;
-    PROCESSENTRY32 pe = {0};
-    pe.dwSize = sizeof(PROCESSENTRY32);
+    PVOID buffer;
+    PSYSTEM_PROCESS_INFORMATION process;
 
     if (py_retdict == NULL)
         return NULL;
-    handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (handle == INVALID_HANDLE_VALUE) {
-        psutil_oserror();
+    if (psutil_proc_table(&buffer) != 0) {
         Py_DECREF(py_retdict);
         return NULL;
     }
 
-    if (Process32First(handle, &pe)) {
-        do {
-            py_pid = PyLong_FromPid(pe.th32ProcessID);
-            if (py_pid == NULL)
-                goto error;
-            py_ppid = PyLong_FromPid(pe.th32ParentProcessID);
-            if (py_ppid == NULL)
-                goto error;
-            if (PyDict_SetItem(py_retdict, py_pid, py_ppid))
-                goto error;
-            Py_CLEAR(py_pid);
-            Py_CLEAR(py_ppid);
-        } while (Process32Next(handle, &pe));
-    }
+    process = PSUTIL_FIRST_PROCESS(buffer);
+    do {
+        DWORD pid = (DWORD)(ULONG_PTR)process->UniqueProcessId;
+        DWORD ppid = (DWORD)(ULONG_PTR)process->InheritedFromUniqueProcessId;
 
-    CloseHandle(handle);
+        py_pid = PyLong_FromPid(pid);
+        if (py_pid == NULL)
+            goto error;
+        py_ppid = PyLong_FromPid(ppid);
+        if (py_ppid == NULL)
+            goto error;
+        if (PyDict_SetItem(py_retdict, py_pid, py_ppid))
+            goto error;
+        Py_CLEAR(py_pid);
+        Py_CLEAR(py_ppid);
+    } while ((process = PSUTIL_NEXT_PROCESS(process)));
+
+    free(buffer);
     return py_retdict;
 
 error:
     Py_XDECREF(py_pid);
     Py_XDECREF(py_ppid);
     Py_DECREF(py_retdict);
-    CloseHandle(handle);
+    free(buffer);
     return NULL;
 }

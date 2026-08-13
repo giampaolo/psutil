@@ -1,0 +1,68 @@
+{#-
+  Override of ablog/collection.html. Renders blog.html (all posts),
+  tag pages, year archives. Card-style listing inspired by
+  blog.python.org.
+-#}
+{%- extends "page.html" %}
+
+{%- macro postlink(post) -%}
+  {%- if post.external_link -%}{{ post.external_link }}
+  {%- else -%}{{ pathto(post.docname) }}{{ anchor(post) }}
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- set month_abbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] -%}
+
+{% block body %}
+<div class="blog-listing">
+  <div class="blog-listing-header">
+    <h1 class="blog-listing-title">
+      {%- if pagename == ablog.blog_path -%}
+      <span class="blog-listing-title-value">{{ _('All posts') }}</span>
+      {%- else -%}
+      {%- set is_tag = '/tag/' in pagename -%}
+      {%- set lq = '“' if is_tag else '' -%}
+      {%- set rq = '”' if is_tag else '' -%}
+      {{ header }} {{ lq }}{% if collection.href %}<a class="blog-listing-title-value" href="{{ collection.href }}">{{ collection }}</a>{% else %}<span class="blog-listing-title-value">{{ collection }}</span>{% endif %}{{ rq }}
+      {%- endif -%}
+    </h1>
+  </div>
+
+  <ol class="blog-cards">
+  {% for post in collection %}
+    {% set ns = namespace(featured=false) %}
+    {% for tag in post.tags or [] %}{% if tag|string == 'featured' %}{% set ns.featured = true %}{% endif %}{% endfor %}
+    {% set featured = ns.featured %}
+    <li class="blog-card">
+      <div class="blog-card-head">
+        <span class="blog-card-meta">
+          {% if post.published %}
+            <time datetime="{{ post.date.strftime('%Y-%m-%d') }}">{{ month_abbr[post.date.month - 1] }} {{ post.date.day }}, {{ post.date.year }}</time>
+          {% else %}
+            <span class="blog-card-draft">{{ _('Draft') }}</span>
+          {% endif %}
+        </span>
+        <div class="blog-card-titlerow">
+          <h2 class="blog-card-title">
+            <a href="{{ postlink(post) }}">{{ post.title }}</a>
+          </h2>
+          {% if featured %}<span class="post-meta-featured-wrap"><a class="post-meta-featured" href="{{ pathto(ablog.blog_path ~ '/tag/featured') }}">{{ _('Featured') }}</a></span>{% endif %}
+        </div>
+      </div>
+      {% if post.excerpt %}
+      <div class="blog-card-summary">{{ post.to_html(pagename) | safe }}</div>
+      {% endif %}
+      {% if post.tags %}
+      <ul class="blog-card-tags">
+        {% for tag in post.tags|sort %}
+          {% if tag|string != 'featured' %}
+          <li><a href="{{ pathto(tag.docname) }}">{{ tag }}</a></li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </li>
+  {% endfor %}
+  </ol>
+</div>
+{% endblock body %}

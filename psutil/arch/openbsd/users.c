@@ -23,6 +23,7 @@ psutil_users(PyObject *self, PyObject *args) {
 
     struct utmp ut;
     FILE *fp;
+    size_t nread;
 
     Py_BEGIN_ALLOW_THREADS
     fp = fopen(_PATH_UTMP, "r");
@@ -32,7 +33,12 @@ psutil_users(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    while (fread(&ut, sizeof(ut), 1, fp) == 1) {
+    while (1) {
+        Py_BEGIN_ALLOW_THREADS
+        nread = fread(&ut, sizeof(ut), 1, fp);
+        Py_END_ALLOW_THREADS
+        if (nread != 1)
+            break;
         if (*ut.ut_name == '\0')
             continue;
         py_username = PyUnicode_DecodeFSDefault(ut.ut_name);

@@ -8,70 +8,25 @@
 #include <windows.h>
 
 #include "../../arch/all/init.h"
-#include "ntextapi.h"
 
 
 // Needed to make these globally visible.
-int PSUTIL_WINVER;
 SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 
-
-// ====================================================================
-// --- Backward compatibility with missing Python.h APIs
-// ====================================================================
-
-// PyPy on Windows. Missing APIs added in PyPy 7.3.14.
-#if defined(PYPY_VERSION)
-#if !defined(PyErr_SetFromWindowsErrWithFilename)
-PyObject *
-PyErr_SetFromWindowsErrWithFilename(int winerr, const char *filename) {
-    PyObject *py_exc = NULL;
-    PyObject *py_winerr = NULL;
-
-    if (winerr == 0)
-        winerr = GetLastError();
-    if (filename == NULL) {
-        py_exc = PyObject_CallFunction(
-            PyExc_OSError, "(is)", winerr, strerror(winerr)
-        );
-    }
-    else {
-        py_exc = PyObject_CallFunction(
-            PyExc_OSError, "(iss)", winerr, strerror(winerr), filename
-        );
-    }
-    if (py_exc == NULL)
-        return NULL;
-
-    py_winerr = Py_BuildValue("i", winerr);
-    if (py_winerr == NULL)
-        goto error;
-    if (PyObject_SetAttrString(py_exc, "winerror", py_winerr) != 0)
-        goto error;
-    PyErr_SetObject(PyExc_OSError, py_exc);
-    Py_XDECREF(py_exc);
-    return NULL;
-
-error:
-    Py_XDECREF(py_exc);
-    Py_XDECREF(py_winerr);
-    return NULL;
-}
-#endif  // !defined(PyErr_SetFromWindowsErrWithFilename)
-
-
-#if !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
-PyObject *
-PyErr_SetExcFromWindowsErrWithFilenameObject(
-    PyObject *type, int ierr, PyObject *filename
-) {
-    // Original function is too complex. Just raise OSError without
-    // filename.
-    return PyErr_SetFromWindowsErrWithFilename(ierr, NULL);
-}
-#endif  // !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
-#endif  // defined(PYPY_VERSION)
+// Declared extern in ntextapi.h, assigned by psutil_loadlibs() below.
+_NtQueryInformationProcess NtQueryInformationProcess = NULL;
+_NtQueryObject NtQueryObject = NULL;
+_NtQuerySystemInformation NtQuerySystemInformation = NULL;
+_NtQueryVirtualMemory NtQueryVirtualMemory = NULL;
+_NtResumeProcess NtResumeProcess = NULL;
+_NtSetInformationProcess NtSetInformationProcess = NULL;
+_NtSuspendProcess NtSuspendProcess = NULL;
+_RtlGetVersion RtlGetVersion = NULL;
+_RtlNtStatusToDosErrorNoTeb RtlNtStatusToDosErrorNoTeb = NULL;
+_WTSEnumerateSessionsW WTSEnumerateSessionsW = NULL;
+_WTSFreeMemory WTSFreeMemory = NULL;
+_WTSQuerySessionInformationW WTSQuerySessionInformationW = NULL;
 
 
 // ====================================================================
@@ -89,8 +44,6 @@ psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall) {
         err = WIN32_FROM_NTSTATUS(status);
     else
         err = RtlNtStatusToDosErrorNoTeb(status);
-    // if (GetLastError() != 0)
-    //     err = GetLastError();
     str_format(fullmsg, sizeof(fullmsg), "(originated from %s)", syscall);
     return PyErr_SetFromWindowsErrWithFilename(err, fullmsg);
 }
@@ -185,8 +138,9 @@ psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
 
 static int
 psutil_loadlibs() {
-    // --- Mandatory
-    NtQuerySystemInformation = psutil_GetProcAddressFromLib(
+    // --- Mandatory. ntdll is loaded in every process, so
+    // GetModuleHandle is enough.
+    NtQuerySystemInformation = psutil_GetProcAddress(
         "ntdll.dll", "NtQuerySystemInformation"
     );
     if (!NtQuerySystemInformation)
@@ -201,68 +155,31 @@ psutil_loadlibs() {
     );
     if (!NtSetInformationProcess)
         return -1;
-    NtQueryObject = psutil_GetProcAddressFromLib("ntdll.dll", "NtQueryObject");
+    NtQueryObject = psutil_GetProcAddress("ntdll.dll", "NtQueryObject");
     if (!NtQueryObject)
         return -1;
-    RtlIpv4AddressToStringA = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "RtlIpv4AddressToStringA"
-    );
-    if (!RtlIpv4AddressToStringA)
-        return -1;
-    GetExtendedTcpTable = psutil_GetProcAddressFromLib(
-        "iphlpapi.dll", "GetExtendedTcpTable"
-    );
-    if (!GetExtendedTcpTable)
-        return -1;
-    GetExtendedUdpTable = psutil_GetProcAddressFromLib(
-        "iphlpapi.dll", "GetExtendedUdpTable"
-    );
-    if (!GetExtendedUdpTable)
-        return -1;
-    RtlGetVersion = psutil_GetProcAddressFromLib("ntdll.dll", "RtlGetVersion");
+    RtlGetVersion = psutil_GetProcAddress("ntdll.dll", "RtlGetVersion");
     if (!RtlGetVersion)
         return -1;
-    NtSuspendProcess = psutil_GetProcAddressFromLib(
-        "ntdll", "NtSuspendProcess"
-    );
+    NtSuspendProcess = psutil_GetProcAddress("ntdll.dll", "NtSuspendProcess");
     if (!NtSuspendProcess)
         return -1;
-    NtResumeProcess = psutil_GetProcAddressFromLib("ntdll", "NtResumeProcess");
+    NtResumeProcess = psutil_GetProcAddress("ntdll.dll", "NtResumeProcess");
     if (!NtResumeProcess)
         return -1;
-    NtQueryVirtualMemory = psutil_GetProcAddressFromLib(
-        "ntdll", "NtQueryVirtualMemory"
+    NtQueryVirtualMemory = psutil_GetProcAddress(
+        "ntdll.dll", "NtQueryVirtualMemory"
     );
     if (!NtQueryVirtualMemory)
         return -1;
-    RtlNtStatusToDosErrorNoTeb = psutil_GetProcAddressFromLib(
-        "ntdll", "RtlNtStatusToDosErrorNoTeb"
+    RtlNtStatusToDosErrorNoTeb = psutil_GetProcAddress(
+        "ntdll.dll", "RtlNtStatusToDosErrorNoTeb"
     );
     if (!RtlNtStatusToDosErrorNoTeb)
-        return -1;
-    GetTickCount64 = psutil_GetProcAddress("kernel32", "GetTickCount64");
-    if (!GetTickCount64)
-        return -1;
-    RtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "RtlIpv6AddressToStringA"
-    );
-    if (!RtlIpv6AddressToStringA)
         return -1;
 
     // --- Optional
 
-    // minimum requirement: Win 7
-    QueryInterruptTime = psutil_GetProcAddressFromLib(
-        "kernelbase.dll", "QueryInterruptTime"
-    );
-    // minimum requirement: Win 7
-    GetActiveProcessorCount = psutil_GetProcAddress(
-        "kernel32", "GetActiveProcessorCount"
-    );
-    // minimum requirement: Win 7
-    GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
-        "kernel32", "GetLogicalProcessorInformationEx"
-    );
     // minimum requirements: Windows Server Core
     WTSEnumerateSessionsW = psutil_GetProcAddressFromLib(
         "wtsapi32.dll", "WTSEnumerateSessionsW"
@@ -280,28 +197,31 @@ psutil_loadlibs() {
 
 
 static int
-psutil_set_winver() {
+psutil_check_winver() {
     RTL_OSVERSIONINFOEXW versionInfo;
+    NTSTATUS status;
     ULONG maj;
     ULONG min;
 
-    versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
     memset(&versionInfo, 0, sizeof(RTL_OSVERSIONINFOEXW));
-    RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
+    versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
+    status = RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
+    if (!NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(status, "RtlGetVersion");
+        return -1;
+    }
     maj = versionInfo.dwMajorVersion;
     min = versionInfo.dwMinorVersion;
-    if (maj == 6 && min == 0)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_VISTA;  // or Server 2008
-    else if (maj == 6 && min == 1)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_7;
-    else if (maj == 6 && min == 2)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_8;
-    else if (maj == 6 && min == 3)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_8_1;
-    else if (maj == 10 && min == 0)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_10;
-    else
-        PSUTIL_WINVER = PSUTIL_WINDOWS_NEW;
+    if (maj < 10) {
+        psutil_runtime_error(
+            "this Windows version is too old (%lu.%lu); psutil 7.2.x is "
+            "the latest version supporting Windows Vista, 7, 8, 8.1 and "
+            "their server counterparts",
+            maj,
+            min
+        );
+        return -1;
+    }
     return 0;
 }
 
@@ -311,7 +231,7 @@ int
 psutil_setup_windows(void) {
     if (psutil_loadlibs() != 0)
         return -1;
-    if (psutil_set_winver() != 0)
+    if (psutil_check_winver() != 0)
         return -1;
     GetSystemInfo(&PSUTIL_SYSTEM_INFO);
     InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);

@@ -7,10 +7,6 @@ adapted to real-world code. The examples are intentionally short and avoid
 unnecessary abstractions so that the underlying psutil APIs are easy to
 understand. Most of them are not meant to be used in production.
 
-.. contents::
-   :local:
-   :depth: 3
-
 Processes
 ---------
 
@@ -160,7 +156,7 @@ Processes consuming more than 500M of memory:
 
 -------------------------------------------------------------------------------
 
-Top N processes by cumulative CPU time:
+Top N processes by :term:`cumulative <cumulative counter>` CPU time:
 
 .. code-block:: python
 
@@ -175,7 +171,8 @@ Top N processes by cumulative CPU time:
 
 -------------------------------------------------------------------------------
 
-Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
+Top N processes by :term:`cumulative <cumulative counter>` disk read + write
+bytes (similar to ``iotop``):
 
 .. code-block:: python
 
@@ -254,6 +251,11 @@ Kill a process tree (including grandchildren):
       assert pid != os.getpid(), "I won't kill myself!"
       parent = psutil.Process(pid)
       children = parent.children(recursive=True)
+      # Reverse the list so that descendants are killed before
+      # their ancestors (bottom-up order). ``children()`` returns
+      # processes in top-down order; reversing ensures a grandchild
+      # is terminated before its parent.
+      children.reverse()
       if include_parent:
           children.append(parent)
       for p in children:
@@ -266,10 +268,28 @@ Kill a process tree (including grandchildren):
       )
       return (gone, alive)
 
+On Unix, if you started the subprocess with ``subprocess.Popen`` you can often
+use the stdlib ``os.killpg()`` instead of this recipe. Create the process with
+``process_group=0`` so that it gets its own process group, then call
+``os.killpg(pgid, sig)``. This is simpler, does not require psutil, and still
+cleans up all descendants even when an intermediate process has exited::
+
+    import os
+    import signal
+    import subprocess
+
+    proc = subprocess.Popen(["cmd", "arg1"], process_group=0)
+    # ... later:
+    os.killpg(proc.pid, signal.SIGTERM)
+
+This approach does not work on Windows (``os.killpg`` is not available) and it
+only works for PIDs that you started yourself as a new process group. For
+arbitrary PIDs, use the psutil recipe above.
+
 -------------------------------------------------------------------------------
 
-Terminate a process gracefully, falling back to ``SIGKILL`` if it does not
-exit within the timeout:
+Terminate a process gracefully, falling back to ``SIGKILL`` if it does not exit
+within the timeout:
 
 .. code-block:: python
 
@@ -306,8 +326,8 @@ Temporarily pause and resume a process using a context manager:
 
 -------------------------------------------------------------------------------
 
-CPU throttle: limit a process's CPU usage to a target percentage by
-alternating :meth:`Process.suspend` and :meth:`Process.resume`:
+CPU throttle: limit a process's CPU usage to a target percentage by alternating
+:meth:`Process.suspend` and :meth:`Process.resume`:
 
 .. code-block:: python
 
@@ -361,7 +381,6 @@ Restart a process automatically if it dies:
   if __name__ == "__main__":
       watchdog(["python3", "script.py"])
 
-
 System
 ------
 
@@ -391,8 +410,8 @@ Memory
 Show real-time swap activity *(Linux, BSD)*. ``sout`` (:term:`swap-out`) is the
 key metric: a non-zero and growing rate means the OS is moving memory from RAM
 to disk because RAM is full. ``sin`` (:term:`swap-in`) alone is not alarming;
-it just means the system is moving previously evicted pages back into RAM.
-High ``sin`` and ``sout`` together may indicate heavy swapping (:term:`thrashing`).
+it just means the system is moving previously evicted pages back into RAM. High
+``sin`` and ``sout`` together may indicate heavy swapping (:term:`thrashing`).
 
 .. code-block:: python
 

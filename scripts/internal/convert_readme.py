@@ -16,11 +16,11 @@ Quick links
 ===========
 
 - `Home page <https://github.com/giampaolo/psutil>`_
-- `Documentation <https://psutil.readthedocs.io>`_
-- `Who uses psutil <https://psutil.readthedocs.io/latest/adoption.html>`_
+- `Documentation <https://psutil.io>`_
+- `Who uses psutil <https://psutil.io/adoption/>`_
 - `Download <https://pypi.org/project/psutil/#files>`_
-- `Blog <https://gmpy.dev/tags/psutil>`_
-- `What's new <https://psutil.readthedocs.io//latest/changelog.html>`_
+- `Blog <https://psutil.io/blog/>`_
+- `What's new <https://psutil.io/changelog/>`_
 """
 
 

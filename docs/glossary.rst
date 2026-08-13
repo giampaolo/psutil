@@ -1,5 +1,3 @@
-.. currentmodule:: psutil
-
 Glossary
 ========
 
@@ -12,27 +10,37 @@ Glossary
       :term:`page cache`), such as the :term:`heap`, the stack, and other
       memory allocated directly by the program (e.g. via ``malloc()``).
       Anonymous pages have no on-disk counterpart and must be written to
-      :term:`swap memory` if evicted. Exposed by psutil via the ``rss_anon`` field of
-      :meth:`Process.memory_info_ex` (total resident anonymous pages) and the
-      ``anonymous`` field of :meth:`Process.memory_maps` (per mapping).
-      Anonymous regions are also visible in the ``path`` column of
-      :meth:`Process.memory_maps` as ``"[heap]"``, ``"[stack]"``, or an empty
-      string.
+      :term:`swap memory` if evicted. Exposed by psutil via the :field:`rss_anon`
+      field of :meth:`Process.memory_info_ex` (total resident anonymous pages)
+      and the :field:`anonymous` field of :meth:`Process.memory_maps` (per
+      mapping). Anonymous regions are also visible in the :field:`path` column
+      of :meth:`Process.memory_maps` as ``"[heap]"``, ``"[stack]"``, or an
+      empty string.
 
    available memory
 
       The amount of RAM that can be given to processes without the system going
       into :term:`swap <swap memory>`. This is the right field to watch for
-      memory pressure, not ``free``. ``free`` is often deceptively low because
-      the OS keeps recently freed pages as reclaimable cache; those pages are
-      counted in ``available`` but not in ``free``. A monitoring alert should
-      fire on ``available`` (or ``percent``) falling below a threshold, not on
-      ``free``. See :func:`virtual_memory`.
+      memory pressure, not :field:`free`. :field:`free` is often deceptively low
+      because the OS keeps recently freed pages as reclaimable cache; those pages
+      are counted in :field:`available` but not in :field:`free`.
+      A monitoring alert should fire on :field:`available` (or :field:`percent`)
+      falling below a threshold, not on :field:`free`. See :func:`virtual_memory`.
+
+   buffers
+
+      Kernel memory used to cache filesystem metadata such as
+      superblocks, inodes, and directory entries. Distinct from the
+      :term:`page cache`, which caches file *contents*.
+      Like the page cache, buffer memory is reclaimable: the OS can
+      free it under memory pressure.
+      Reported as the :field:`buffers` field of :func:`virtual_memory`
+      (Linux, BSD).
 
    busy_time
 
       A :term:`cumulative counter` (milliseconds) tracking the time a disk
-      device spent actually performing I/O, as reported in the ``busy_time``
+      device spent actually performing I/O, as reported in the :field:`busy_time`
       field of :func:`disk_io_counters` (Linux and FreeBSD only). To use it,
       sample twice and divide the delta by elapsed time to get a utilization
       percentage (analogous to CPU percent but for disks). A value close to
@@ -50,20 +58,18 @@ Glossary
 
    context switch
 
-      Occurs whenever the CPU stops executing one process or thread and starts
-      executing another. Frequent context switching can indicate high system
-      load or excessive thread contention. See :meth:`Process.num_ctx_switches`
-      and :func:`cpu_stats`.
-
-      A **voluntary** context switch occurs when the process yields the CPU
-      itself (for example, waiting for I/O or a lock). A high rate of voluntary
-      switches is normal for I/O-bound processes.
-
-      An **involuntary** context switch occurs when the OS forcibly takes the
-      CPU from the process. A high rate indicates the process wants to run but
-      keeps getting interrupted. If involuntary switches dominate, reducing
-      other load will directly speed up the process. If voluntary switches
-      dominate, the bottleneck is usually I/O or locking, not the CPU.
+      Occurs when the CPU stops executing one process or thread for another.
+      Frequent switching can indicate high system
+      load or thread contention. See :meth:`Process.num_ctx_switches`
+      and :func:`cpu_stats` (:field:`ctx_switches` field).
+      A :field:`voluntary` context switch occurs when a process gives up the
+      CPU, usually because it's waiting for something (I/O, a sleep, a mutex
+      lock). High rates are normal for I/O-bound workloads (e.g. a web server)
+      and usually point to I/O or locking as the bottleneck.
+      An :field:`involuntary` context switch occurs when the OS forcibly takes
+      the CPU from the process. High rates mean the process has more work to do
+      but is being kicked off the core. This usually indicates too many active
+      threads/processes competing for too few CPU cores.
 
    cumulative counter
 
@@ -96,8 +102,8 @@ Glossary
 
       A signal sent by a hardware device (disk controller, :term:`NIC`, keyboard)
       to the CPU to request attention. Each interrupt briefly preempts
-      whatever the CPU was doing. Reported as the ``interrupts`` field of
-      :func:`cpu_stats` and ``irq`` field of :func:`cpu_times`.
+      whatever the CPU was doing. Reported as the :field:`interrupts` field of
+      :func:`cpu_stats` and :field:`irq` field of :func:`cpu_times`.
       A very high rate may indicate a misbehaving device driver or a heavily
       loaded :term:`NIC`. Also see :term:`soft interrupt`.
 
@@ -107,8 +113,8 @@ Glossary
       (e.g. glibc's ``malloc`` on Linux, ``jemalloc`` on FreeBSD,
       ``HeapAlloc`` on Windows). When a C extension calls ``malloc()``
       and never calls ``free()``, the leaked bytes show up here but
-      are not always visible to Python's memory tracking tools (:mod:`tracemalloc`,
-      :func:`sys.getsizeof`) or :term:`RSS` / :term:`VMS` .
+      are not always visible to Python's memory tracking tools
+      (:mod:`tracemalloc`, :func:`sys.getsizeof`) or :term:`RSS` / :term:`VMS`.
       :func:`heap_info` exposes the current state of the heap, and
       :func:`heap_trim` asks the allocator to release unused portions
       of it. Together they provide a way to detect memory leaks in C
@@ -133,8 +139,8 @@ Glossary
 
       An I/O scheduling priority that controls how much disk bandwidth a
       process receives. On Linux three scheduling classes are supported:
-      ``IOPRIO_CLASS_RT`` (real-time), ``IOPRIO_CLASS_BE`` (best-effort,
-      the default), and ``IOPRIO_CLASS_IDLE``. See
+      :data:`IOPRIO_CLASS_RT` (real-time), :data:`IOPRIO_CLASS_BE`
+      (best-effort, the default), and :data:`IOPRIO_CLASS_IDLE`. See
       :meth:`Process.ionice`.
 
    logical CPU
@@ -146,13 +152,14 @@ Glossary
       entries returned by ``cpu_percent(percpu=True)``. See also
       :term:`physical CPU`.
 
-   load average
+   mapped memory
 
-      Three floating-point values representing the average number of
-      processes in a *runnable* or *uninterruptible* state over the last
-      1, 5, and 15 minutes. A load average equal to the number of
-      :term:`logical CPUs <logical CPU>` means the system is fully saturated.
-      See :func:`getloadavg`.
+      A region of a process's virtual address space typically created via
+      ``mmap()``. Mappings can be file-backed (e.g. shared libraries,
+      memory-mapped files) or :term:`anonymous <anonymous memory>`.
+      Each mapping has its own permissions and memory accounting fields
+      (:term:`RSS`, :term:`PSS`, private / shared pages).
+      See :meth:`Process.memory_maps`.
 
    NIC
 
@@ -163,9 +170,9 @@ Glossary
    nice
 
       A process priority value that influences how much CPU time the OS
-      scheduler gives to a process. Lower nice values mean higher priority.
-      The range is −20 (highest priority) to 19 (lowest) on UNIX; on
-      Windows the concept maps to priority classes. See
+      scheduler gives to a process. Lower nice values mean higher priority. The
+      range is −20 (highest priority) to 19 (lowest) on UNIX; on Windows the
+      concept maps to :ref:`priority constants <const-proc-prio>`. See
       :meth:`Process.nice`.
 
    page cache
@@ -175,8 +182,19 @@ Glossary
       it writes, the data is first stored in the cache before being written to
       disk. Subsequent reads or writes can be served from RAM without disk I/O,
       making access fast. The OS reclaims page cache automatically under memory
-      pressure, so a large cache is healthy. Shown as the ``cached`` field of
-      :func:`virtual_memory` on Linux/BSD.
+      pressure, so a large cache is healthy. Shown as the :field:`cached` field
+      of :func:`virtual_memory` on Linux/BSD.
+
+   page fault
+
+      An event that occurs when a process accesses a virtual memory page that
+      is not currently mapped in physical RAM. A :field:`minor` fault occurs
+      when a page is already in physical RAM (e.g., in the :term:`page cache`
+      or other :term:`shared memory`), but it's not yet mapped into the
+      process's virtual address space, so no disk I/O is required (fast). A
+      :field:`major` fault requires reading the page from disk, and is
+      significantly more expensive. Many major faults may indicate memory
+      pressure or excessive swapping. See :meth:`Process.page_faults`.
 
    peak_rss
 
@@ -184,7 +202,7 @@ Glossary
       started (memory high-water mark). Available via
       :meth:`Process.memory_info` (BSD, Windows) and
       :meth:`Process.memory_info_ex` (Linux, macOS). Useful for capacity
-      planning and leak detection: if ``peak_rss`` keeps growing across
+      planning and leak detection: if :field:`peak_rss` keeps growing across
       successive runs or over time, the process is likely leaking memory.
       See also :term:`peak_vms`.
 
@@ -193,19 +211,8 @@ Glossary
       The highest :term:`VMS` value a process has ever reached since it
       started. Available via :meth:`Process.memory_info_ex` (Linux) and
       :meth:`Process.memory_info` (Windows). On Windows this maps to
-      ``PeakPagefileUsage`` (peak private committed memory), which is not
-      the same as UNIX VMS. See also :term:`peak_rss`.
-
-   page fault
-
-      An event that occurs when a process accesses a virtual memory page
-      that is not currently mapped in physical RAM. A **minor** fault is
-      resolved without disk I/O (e.g. the page is already in RAM but not
-      yet mapped, or it is copy-on-write). A **major** fault requires
-      reading the page from disk (e.g. from a memory-mapped file or the
-      :term:`swap memory` area) and is significantly more expensive. Many
-      major faults may indicate memory pressure or excessive swapping. See
-      :meth:`Process.page_faults`.
+      ``PeakPagefileUsage`` (peak :term:`private <private memory>` committed
+      memory), which is not the same as UNIX VMS. See also :term:`peak_rss`.
 
    physical CPU
 
@@ -222,8 +229,8 @@ Glossary
       :term:`USS`, returned by :meth:`Process.memory_footprint`, measures
       exactly the private memory of a process, that is the bytes that would be
       freed if the process exited. At a per-mapping level, the
-      ``private_clean`` and ``private_dirty`` fields of
-      :meth:`Process.memory_maps` (Linux) and the ``private`` field (FreeBSD)
+      :field:`private_clean` and :field:`private_dirty` fields of
+      :meth:`Process.memory_maps` (Linux) and the :field:`private` field (FreeBSD)
       break it down further.
 
    PSS
@@ -234,13 +241,25 @@ Glossary
       than :term:`RSS` when shared libraries are involved. Available on Linux
       via :meth:`Process.memory_footprint`.
 
+   resource limit
+
+      A per-process cap on a system resource enforced by the kernel (POSIX
+      :data:`RLIMIT_* <psutil.RLIM_INFINITY>` constants).
+      Each limit has a *soft* value (the current enforcement threshold, which
+      the process may raise up to the hard limit) and a *hard* value
+      (the ceiling, settable only by root).
+      Common limits include :data:`RLIM_INFINITY` (open file descriptors),
+      :data:`RLIMIT_AS` (virtual address space), and :data:`RLIMIT_CPU`
+      (CPU time in seconds). See :meth:`Process.rlimit`.
+
    RSS
 
-      *Resident Set Size*, the amount of physical RAM currently occupied
-      by a process, including :term:`shared memory` pages. It is the most
-      commonly reported memory metric (shown as ``RES`` in ``top``), but
-      it can be misleading because shared pages are counted in full for
-      every process that maps them. See :meth:`Process.memory_info`.
+      *Resident Set Size*, the amount of physical RAM currently used by a
+      process. This includes :term:`shared memory` pages. It is the most
+      commonly reported memory metric (shown as ``RES`` in ``top``), but can be
+      misleading because :term:`shared memory` is counted in full for each
+      process that maps it.
+      See :meth:`Process.memory_info`.
 
    soft interrupt
 
@@ -248,7 +267,7 @@ Glossary
       run later in a less time-critical context (e.g. network packet
       processing, block I/O completion). Using soft interrupts lets the
       hardware interrupt return quickly while the heavier processing
-      happens shortly after. Reported as the ``soft_interrupts`` field of
+      happens shortly after. Reported as the :field:`soft_interrupts` field of
       :func:`cpu_stats`. A high rate usually points to heavy network or
       disk I/O throughput rather than a hardware problem.
 
@@ -258,28 +277,28 @@ Glossary
       common example is shared libraries (e.g. ``libc.so``): the OS loads them
       once and lets every process that needs them map the same physical pages,
       saving RAM. Shared pages are counted in full in :term:`RSS` for every
-      process that maps them; :term:`PSS` corrects for this by splitting each
+      process that maps them. :term:`PSS` corrects for this by splitting each
       shared page proportionally among the processes that use it.
       See also :term:`private memory`.
 
-      Exposed by psutil as the ``shared`` field of :func:`virtual_memory` and
-      :meth:`Process.memory_info` (Linux), the ``rss_shmem`` field of
-      :meth:`Process.memory_info_ex` (Linux), and the ``shared_clean`` /
-      ``shared_dirty`` fields of :meth:`Process.memory_maps` (Linux).
+      Exposed by psutil as the :field:`shared` field of :func:`virtual_memory` and
+      :meth:`Process.memory_info` (Linux), the :field:`rss_shmem` field of
+      :meth:`Process.memory_info_ex` (Linux), and the :field:`shared_clean` /
+      :field:`shared_dirty` fields of :meth:`Process.memory_maps` (Linux).
 
    swap-in
 
       Memory moved from disk (:term:`swap <swap memory>`) back into RAM.
-      Reported as the ``sin`` :term:`cumulative counter` of
-      :func:`swap_memory`. A non-zero ``sin`` rate usually means the system
+      Reported as the :field:`sin` :term:`cumulative counter` of
+      :func:`swap_memory`. A non-zero :field:`sin` rate usually means the system
       is bringing memory back into RAM for processes to use. See also
       :term:`swap-out`.
 
    swap-out
 
       Memory moved from RAM to disk (:term:`swap <swap memory>`).
-      Reported as the ``sout`` :term:`cumulative counter` of
-      :func:`swap_memory`.  A non-zero ``sout`` rate indicates memory
+      Reported as the :field:`sout` :term:`cumulative counter` of
+      :func:`swap_memory`.  A non-zero :field:`sout` rate indicates memory
       pressure: the system is running low on RAM and must move data to disk,
       which can slow performance. See also :term:`swap-in`.
 
@@ -297,33 +316,22 @@ Glossary
       significantly degrade performance. See :func:`swap_memory` and
       :ref:`swap activity recipe <recipe_swap_activity>`.
 
-   resource limit
-
-      A per-process cap on a system resource enforced by the kernel (POSIX
-      :data:`RLIMIT_* <psutil.RLIM_INFINITY>` constants).
-      Each limit has a *soft* value (the current enforcement threshold, which
-      the process may raise up to the hard limit) and a *hard* value
-      (the ceiling, settable only by root).
-      Common limits include :data:`RLIM_INFINITY` (open file descriptors),
-      :data:`RLIMIT_AS` (virtual address space), and :data:`RLIMIT_CPU`
-      (CPU time in seconds). See :meth:`Process.rlimit`.
-
    thrashing
 
       A condition where the system spends more time moving memory between RAM
       and disk (:term:`swap <swap memory>`) than doing actual work, because memory
       demand exceeds available RAM. The symptom is high and sustained rates on
-      both ``sin`` and ``sout`` from :func:`swap_memory`. As a result, the
-      system becomes very slow or unresponsive. CPU utilization may look low
-      while everything is waiting on disk I/O.
+      both :field:`sin` and :field:`sout` from :func:`swap_memory`.
+      As a result, the system becomes very slow or unresponsive. CPU utilization
+      may look low while everything is waiting on disk I/O.
 
    USS
 
-      *Unique Set Size*, the :term:`private memory` of a process — the RAM
-      that belongs exclusively to it and would be freed if it exited. It
-      excludes :term:`shared memory` pages entirely, making it the most
-      accurate single-process memory metric. Available on Linux, macOS, and
-      Windows via :meth:`Process.memory_footprint`.
+      *Unique Set Size*, the :term:`private memory` of a process, that belongs
+      exclusively to it, and which would be freed if it exited. It excludes
+      :term:`shared memory` pages entirely, making it the most accurate
+      single-process memory metric. Available on Linux, macOS, and Windows via
+      :meth:`Process.memory_footprint`.
 
    voluntary context switch
 

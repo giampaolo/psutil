@@ -17,12 +17,17 @@ static int
 psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     int fd;
     ssize_t nbytes;
+
+    Py_BEGIN_ALLOW_THREADS
     fd = open(path, O_RDONLY);
+    Py_END_ALLOW_THREADS
     if (fd == -1) {
         PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
         return 0;
     }
+    Py_BEGIN_ALLOW_THREADS
     nbytes = read(fd, fstruct, size);
+    Py_END_ALLOW_THREADS
     if (nbytes == -1) {
         close(fd);
         psutil_oserror();
@@ -57,7 +62,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
         info.pr_rssize,  // rss
         info.pr_size,  // vms
         PSUTIL_TV2DOUBLE(info.pr_start),  // create time
-        info.pr_lwp.pr_nice,  // nice
+        info.pr_lwp.pr_nice - NZERO,  // nice
         info.pr_nlwp,  // no. of threads
         info.pr_lwp.pr_state,  // status code
         info.pr_ttydev,  // tty nr
@@ -176,13 +181,14 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     int i = 0;
     PyObject *py_envname = NULL;
     PyObject *py_envval = NULL;
-    PyObject *py_retdict = PyDict_New();
-
-    if (!py_retdict)
-        return PyErr_NoMemory();
+    PyObject *py_retdict;
 
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
+
+    py_retdict = PyDict_New();
+    if (!py_retdict)
+        return PyErr_NoMemory();
 
     str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
@@ -212,7 +218,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
             goto error;
 
         py_envval = PyUnicode_DecodeFSDefault(dm + 1);
-        if (!py_envname)
+        if (!py_envval)
             goto error;
 
         if (PyDict_SetItem(py_retdict, py_envname, py_envval) < 0)
@@ -277,14 +283,18 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
         return NULL;
 
     str_format(path, sizeof(path), "%s/%i/lpsinfo", procfs_path, pid);
+    Py_BEGIN_ALLOW_THREADS
     fd = open(path, O_RDONLY);
+    Py_END_ALLOW_THREADS
     if (fd == -1) {
         PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
         return NULL;
     }
 
     // read header
+    Py_BEGIN_ALLOW_THREADS
     nbytes = pread(fd, &header, sizeof(header), 0);
+    Py_END_ALLOW_THREADS
     if (nbytes == -1) {
         psutil_oserror();
         goto error;
@@ -304,7 +314,9 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     }
 
     // read the rest
+    Py_BEGIN_ALLOW_THREADS
     nbytes = pread(fd, lwp, size, sizeof(header));
+    Py_END_ALLOW_THREADS
     if (nbytes == -1) {
         psutil_oserror();
         goto error;
@@ -482,7 +494,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     size = st.st_size;
 
+    Py_BEGIN_ALLOW_THREADS
     fd = open(path, O_RDONLY);
+    Py_END_ALLOW_THREADS
     if (fd == -1) {
         psutil_oserror();
         goto error;
@@ -494,7 +508,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     nread = pread(fd, xmap, size, 0);
+    Py_END_ALLOW_THREADS
     nmap = nread / sizeof(prxmap_t);
     p = xmap;
 

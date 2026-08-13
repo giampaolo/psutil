@@ -74,11 +74,15 @@ kinfo_getfile(pid_t pid, int *cnt) {
     struct kinfo_file *kf = NULL;
 
     mib[0] = CTL_KERN;
+#ifdef PSUTIL_NETBSD
+    mib[1] = KERN_FILE2;
+#else
     mib[1] = KERN_FILE;
+#endif
     mib[2] = KERN_FILE_BYPID;
     mib[3] = pid;
     mib[4] = sizeof(struct kinfo_file);
-    mib[5] = 0;
+    mib[5] = INT_MAX;
 
     if (psutil_sysctl_malloc(mib, 6, (char **)&kf, &len) != 0) {
         return NULL;
@@ -111,14 +115,5 @@ is_zombie(size_t pid) {
         return 0;
     }
 
-#if defined(PSUTIL_FREEBSD)
-    return kp.ki_stat == SZOMB;
-#elif defined(PSUTIL_OPENBSD)
-    // According to /usr/include/sys/proc.h SZOMB is unused.
-    // test_zombie_process() shows that SDEAD is the right
-    // equivalent.
-    return ((kp.p_stat == SZOMB) || (kp.p_stat == SDEAD));
-#else
-    return kp.p_stat == SZOMB;
-#endif
+    return PSUTIL_KINFO_ZOMBIE(kp);
 }

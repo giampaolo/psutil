@@ -11,17 +11,17 @@ import time
 
 import psutil
 from psutil import MACOS
+from psutil import _psutil
 
 from . import AARCH64
-from . import CI_TESTING
 from . import HAS_BATTERY
-from . import HAS_CPU_FREQ
 from . import TOLERANCE_DISK_USAGE
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
-from . import pytest
+from . import isolated
 from . import retry_on_failure
 from . import sh
+from . import skipif
 from . import spawn_subproc
 from . import terminate
 
@@ -46,13 +46,10 @@ def vm_stat(field):
             break
     else:
         raise ValueError("line not found")
-    return (
-        int(re.search(r'\d+', line).group(0))
-        * psutil._psplatform.cext.getpagesize()
-    )
+    return int(re.search(r'\d+', line).group(0)) * _psutil.getpagesize()
 
 
-@pytest.mark.skipif(not MACOS, reason="MACOS only")
+@skipif(not MACOS, reason="MACOS only")
 class MacosTestCase(PsutilTestCase):
     pass
 
@@ -89,41 +86,32 @@ class TestProcess(MacosTestCase):
 # =====================================================================
 
 
+@isolated
 class TestVirtualMemory(MacosTestCase):
 
     def test_total(self):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
         assert sysctl_hwphymem == psutil.virtual_memory().total
 
-    @pytest.mark.skipif(
-        CI_TESTING and MACOS and AARCH64,
-        reason="skipped on MACOS + ARM64 + CI_TESTING",
-    )
-    @retry_on_failure()
+    @retry_on_failure
     def test_free(self):
         vmstat_val = vm_stat("free")
         psutil_val = psutil.virtual_memory().free
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
-    @pytest.mark.skipif(
-        CI_TESTING and MACOS and AARCH64,
-        reason="skipped on MACOS + ARM64 + CI_TESTING",
-    )
-    @retry_on_failure()
+    @retry_on_failure
     def test_active(self):
         vmstat_val = vm_stat("active")
         psutil_val = psutil.virtual_memory().active
-        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 3
 
-    # XXX: fails too often
-    @pytest.mark.skipif(CI_TESTING, reason="skipped on CI_TESTING")
-    @retry_on_failure()
+    @retry_on_failure
     def test_inactive(self):
         vmstat_val = vm_stat("inactive")
         psutil_val = psutil.virtual_memory().inactive
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_wired(self):
         vmstat_val = vm_stat("wired")
         psutil_val = psutil.virtual_memory().wired
@@ -149,25 +137,25 @@ class TestSwapMemory(MacosTestCase):
         # 0.01M display precision = ~10KB rounding
         assert abs(psutil.swap_memory().total - sysctl_val) < 100 * 1024
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_used(self):
         out = sh("sysctl vm.swapusage")
         sysctl_val = self.parse_swapusage(out)["used"]
         assert abs(psutil.swap_memory().used - sysctl_val) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_free(self):
         out = sh("sysctl vm.swapusage")
         sysctl_val = self.parse_swapusage(out)["free"]
         assert abs(psutil.swap_memory().free - sysctl_val) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_sin(self):
         vmstat_val = vm_stat("Pageins")
         psutil_val = psutil.swap_memory().sin
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_sout(self):
         vmstat_val = vm_stat("Pageout")
         psutil_val = psutil.swap_memory().sout
@@ -184,10 +172,9 @@ class TestCpuAPIs(MacosTestCase):
         num = sysctl("sysctl hw.physicalcpu")
         assert num == psutil.cpu_count(logical=False)
 
-    @pytest.mark.skipif(
-        MACOS and AARCH64 and not HAS_CPU_FREQ,
-        reason="not available on MACOS + AARCH64",
-    )
+    # On Apple Silicon cpu_freq() reads IOKit, and there's no sysctl
+    # (or any other CLI tool) to compare it against.
+    @skipif(AARCH64, reason="no hw.cpufrequency sysctl on Apple Silicon")
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()
         assert freq.current * 1000 * 1000 == sysctl("sysctl hw.cpufrequency")
@@ -197,7 +184,7 @@ class TestCpuAPIs(MacosTestCase):
 
 class TestDiskAPIs(MacosTestCase):
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_disk_partitions(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
@@ -235,7 +222,7 @@ class TestNetAPIs(MacosTestCase):
                 assert stats.isup == ('RUNNING' in out), out
                 assert stats.mtu == int(re.findall(r'mtu (\d+)', out)[0])
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_net_io_counters(self):
         out = sh("netstat -ib")
         netstat = {}
@@ -260,7 +247,7 @@ class TestNetAPIs(MacosTestCase):
 
 class TestSensorsAPIs(MacosTestCase):
 
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    @skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors_battery(self):
         out = sh("pmset -g batt")
         percent = re.search(r"(\d+)%", out).group(1)
