@@ -38,25 +38,24 @@ You are triaging a psutil issue or pull request. psutil is a Python
 library that reads process and system information, with a Python layer
 per platform (_pslinux.py, _pswindows.py, ...) backed by C extensions.
 
-Type is always exactly one label. Platform, component and severity are
-lists and may name more than one, though most items need a type and a
-platform and nothing else. On the three lists, leave it empty rather
-than reaching for a label that only half fits: a wrong label is worse
-than no label.
+Type is bug or null. Platform, component and severity are lists and
+may name more than one, though most items need a platform and little
+else. On the three lists, leave it empty rather than reaching for a
+label that only half fits: a wrong label is worse than no label.
 
 TYPE
 
 - bug: something is broken, wrong, or crashes.
-- enhancement: something new, faster, or improved.
 
-Every item gets one of the two, no exceptions. The changelog is split
-into those same two sections, so an item with neither has nowhere to
-go. Questions, discussions and tracking issues included: if nothing is
-broken, it's an enhancement.
+That is the only type. There is no label for the rest: a new feature,
+a speedup, a refactor or a question simply isn't a bug, so answer
+null, and let the component list say which kind of not-a-bug it is. A
+confident null is also what clears a bug label that shouldn't be
+there.
 
 The template's "Bug fix: yes/no" line is a hint, not the answer. Read
 what the change does. Adding support for something that never worked
-is an enhancement even when the author ticked yes.
+is not a bug even when the author ticked yes.
 
 PLATFORM
 
@@ -72,7 +71,7 @@ bug on Linux is ["linux", "vm"].
 
 On a PR, the changed files outrank that line. People fill the template
 in loosely and it is often stale or plain wrong: a PR whose only file
-is .github/workflows/build.yml has no platform, whatever its "OS:"
+is .github/workflows/tests.yml has no platform, whatever its "OS:"
 line claims. Believe the diff.
 
 Going wide is the opposite of specific, so leave it empty. A sweep
@@ -125,8 +124,8 @@ COMPONENT
 
 Usually empty. Roughly half of all items are just a platform bug with
 no component at all. Two is common enough: a cibuildwheel change in a
-workflow file is ["wheels", "ci"]. Three is rarer but real, and a CI
-change to the wheel build that is also a speedup earns all three.
+workflow file is ["packaging", "ci"]. Three is rarer but real, and a
+CI change to the wheel build that is also a speedup earns all three.
 Four is almost certainly wrong.
 
 The rule for all of them: the item has to be *specific* to the
@@ -161,18 +160,18 @@ in doubt, leave the list empty.
   Not the reporter's script. People often paste one to show a bug;
   that bug is about whatever it exercises.
 
-- wheels: building or publishing psutil's wheels. The release matrix,
-  manylinux, a wheel missing from PyPI. cibuildwheel settles it on its
-  own: an item that touches it is about wheels, even when the change
-  is to the workflow around it, in which case it is ci as well. A
-  compile error on the reporter's own machine is build-fail instead.
+- internals: psutil's own machinery, with no effect on the public
+  API. Debug output, internal helpers and refactorings, the Makefile,
+  linters and formatters. ci, tests and scripts are its more specific
+  siblings, so reach for internals only when none of them fits.
 
-- build-fail: psutil doesn't compile or link. A missing header, an
-  undeclared constant, an undefined symbol, a compiler that chokes on
-  the source. The reporter's own toolchain counts: no Python.h, no C
-  compiler installed, the wrong MSVC. So does an extension that built
-  but won't load for an undefined symbol. A test that fails, a compile
-  warning and a wheel missing from PyPI are not this.
+- packaging: what psutil ships and how it's built. Wheels, the sdist,
+  the build backend, what gets installed. The release matrix,
+  manylinux, a wheel missing from PyPI. cibuildwheel settles it on
+  its own: an item that touches it is about packaging, even when the
+  change is to the workflow around it, in which case it is ci as
+  well. A compile error on the reporter's own machine is the
+  build-fail severity instead.
 
 - new-api: the public API grows. A brand new function or method, but
   equally a new argument on one that already exists, a new field in a
@@ -180,18 +179,19 @@ in doubt, leave the list empty.
   that hands callers something they couldn't reach before. Making an
   existing call work on one more platform is not this.
 
-- performance: speed or resource usage is the point. Slow is
-  performance, wrong is a bug, and an optimisation is usually
-  enhancement and performance at once. psutil's own build and CI count
-  too: making the suite, the wheel build or a workflow faster is
-  performance, on top of ci or wheels. A timing table, or a benchmark
-  showing timings before and after, is the giveaway. So is releasing
-  and reacquiring the GIL around a blocking syscall, numbers or no
-  numbers: the whole point is letting other threads run.
+- api-change: an existing public API changed, was deprecated or was
+  removed. A rename, a changed field, a different return type, a new
+  deprecation warning. The counterpart of new-api, which is for
+  growth. When working code has to change, add compatibility too.
 
-- memleak: memory is leaked. Growth without bound, but also a single
-  allocation or refcount never released, error paths included. If the
-  text says leak and points at what leaks, that's this.
+- performance: speed or resource usage is the point. Slow is
+  performance, wrong is a bug. psutil's own build and CI count too:
+  making the suite, the wheel build or a workflow faster is
+  performance, on top of ci or packaging. A timing table, or a
+  benchmark showing timings before and after, is the giveaway. So is
+  releasing and reacquiring the GIL around a blocking syscall,
+  numbers or no numbers: the whole point is letting other threads
+  run.
 
 - compatibility: psutil's support matrix moves, or what callers can
   rely on does. Dropping an old Python or OS version, or restoring
@@ -203,18 +203,40 @@ in doubt, leave the list empty.
   this, it's the bug fix, and a one-off build error on a platform
   psutil already supports is a plain bug, not a change of support.
 
+- dropped-support: a platform, OS version or Python version is no
+  longer supported. Nearly always compatibility as well, since
+  installs that worked have to change.
+
 - new-platform: support for an operating system psutil does not target
   yet.
 
 SEVERITY
 
-Two ways a bug can be worse than a wrong answer. Usually neither
-applies. Both at once is rare, but allowed.
+Ways a bug can be worse than a wrong answer. Usually none applies.
+More than one at once is rare, but allowed. These become colored
+badges in the changelog, so a wrong one is very visible.
 
 - critical: the process doesn't survive, or its memory is no longer
   trustworthy. A segfault, a use-after-free, a double free, a buffer
   overflow, an abort. A deadlock or a hang counts too: the process is
-  still there but it's never coming back.
+  still there but it's never coming back. So does blowing up at
+  import time: whatever the exception, ``import psutil`` took the
+  program down before it started. A DLL or extension that won't load
+  is build-fail instead, since that build never worked.
+
+- build-fail: psutil doesn't compile or link. A missing header, an
+  undeclared constant, an undefined symbol, a compiler that chokes on
+  the source. The reporter's own toolchain counts: no Python.h, no C
+  compiler installed, the wrong MSVC. So does an extension that built
+  but won't load for an undefined symbol. A test that fails, a
+  compile warning and a wheel missing from PyPI are not this. It
+  never pairs with critical: nothing ever ran, so no runtime failure
+  applies.
+
+- memleak: memory is leaked. Growth without bound, but also a single
+  allocation, handle or refcount never released, error paths
+  included. If the text says leak and points at what leaks, that's
+  this.
 
 - badexc: psutil raises something it isn't allowed to. The public API
   may raise NoSuchProcess, AccessDenied, ZombieProcess and
@@ -260,7 +282,7 @@ type=bug, platform=["windows"], component=[]. A plain platform bug,
 which is the most common shape. No component label applies.
 
 Title: "add Process.num_threads() to the AIX implementation"
-type=enhancement, platform=["aix"], component=["new-api"].
+type=null, platform=["aix"], component=["new-api"].
 
 Title: "test_disk_partitions fails on the macOS runner since the image
 bump"
@@ -277,11 +299,15 @@ surfaced, but net_connections() really is missing a kind on SunOS.
 Fix the code and the test goes green, so the bug is the item.
 
 Title: "cpu_times() is 3x slower than it needs to be"
-type=enhancement, component=["performance"].
+type=null, component=["performance"]. Slow, not wrong.
 
 Title: "[OpenBSD, NetBSD] build failed"
-type=bug, platform=["openbsd", "netbsd"]. Both named, so both go in.
-Not bsd.
+type=bug, platform=["openbsd", "netbsd"], severity=["build-fail"].
+Both named, so both go in. Not bsd.
+
+Title: "IOError on import when /proc/stat is inaccessible"
+type=bug, platform=["linux"], severity=["critical"]. The build is
+fine; ``import psutil`` itself blows up, taking the program with it.
 
 Title: "macOS: fix SystemError in Process.cmdline() and environ()"
 type=bug, platform=["macos"], severity=["badexc"]. SystemError isn't
@@ -304,22 +330,27 @@ plain bug. Nothing got out and nothing died.
 
 Title: "Fix refcount leaks on parse failure (Linux disk_partitions,
 SunOS proc)"
-type=bug, platform=["linux", "sunos"], component=["memleak"]. Both
+type=bug, platform=["linux", "sunos"], severity=["memleak"]. Both
 named, and a leak down an error path is still a leak.
 
+Title: "Rename Process.connections() to Process.net_connections()"
+type=null, component=["api-change", "compatibility"]. An existing API
+moved, and code that wants to stay warning-free has to follow.
+
 Title: "Drop Python 3.6 and 3.7"
-type=enhancement, component=["compatibility"]. Installs that worked
-have to change. No platform: this isn't about where psutil runs.
+type=null, component=["dropped-support", "compatibility"]. Installs
+that worked have to change. No platform: this isn't about where
+psutil runs.
 
 Title: "Upgrade cibuildwheel to 4.1.1, drop cp313t wheels"
-type=enhancement, component=["wheels", "ci", "compatibility"].
-cibuildwheel means wheels, it lands in a workflow so ci, and dropping
-a build target narrows what we ship. Three is unusual and here it's
-right.
+type=null, component=["packaging", "ci", "compatibility"].
+cibuildwheel means packaging, it lands in a workflow so ci, and
+dropping a build target narrows what we ship. Three is unusual and
+here it's right.
 
 Title: "docs: add explanatory comments to the README examples"
-type=enhancement, component=["doc"]. Prose and nothing else, so doc is
-what the item is for rather than something it touched on the way past.
+type=null, component=["doc"]. Prose and nothing else, so doc is what
+the item is for rather than something it touched on the way past.
 
 Answer with the submit tool."""
 
@@ -338,16 +369,16 @@ Body:
 #
 # The axis names come from the label descriptions on GitHub.
 
-TYPE_LABELS = ["bug", "enhancement"]
+TYPE_LABELS = ["bug"]
 PLATFORM_LABELS = [
     "linux", "windows", "macos", "freebsd", "openbsd", "netbsd", "bsd",
     "sunos", "aix", "unix", "vm", "pypy",
 ]  # fmt: skip
-SEVERITY_LABELS = ["critical", "badexc"]
+SEVERITY_LABELS = ["critical", "badexc", "build-fail", "memleak"]
 COMPONENT_LABELS = [
-    "doc", "tests", "ci", "scripts", "wheels", "new-api",
-    "performance", "memleak", "compatibility", "new-platform",
-    "build-fail",
+    "doc", "tests", "ci", "scripts", "internals", "packaging",
+    "new-api", "api-change", "performance", "compatibility",
+    "dropped-support", "new-platform",
 ]  # fmt: skip
 
 # The model never sees these, and they're stripped before comparing.
@@ -415,9 +446,11 @@ CONFIDENCE = {"type": "string", "enum": ["high", "medium", "low"]}
 
 DECISION_PROPS = {
     "type": {
-        "type": "string",
-        "enum": TYPE_LABELS,
-        "description": "bug or enhancement. Always one of the two.",
+        "anyOf": [
+            {"type": "string", "enum": ["bug"]},
+            {"type": "null"},
+        ],
+        "description": "bug when something is broken, else null.",
     },
     "type_confidence": CONFIDENCE,
     "platform": enum_list(
@@ -433,8 +466,10 @@ DECISION_PROPS = {
     "component_confidence": CONFIDENCE,
     "severity": enum_list(
         SEVERITY_LABELS,
-        "critical when the process dies, badexc when psutil raises"
-        " something it shouldn't. Usually empty.",
+        "critical when the process dies or memory is corrupt,"
+        " build-fail when psutil won't compile, memleak when memory is"
+        " leaked, badexc when psutil raises something it shouldn't."
+        " Usually empty.",
     ),
     "severity_confidence": CONFIDENCE,
 }
@@ -514,7 +549,8 @@ def closed_issues(item):
 
 
 def inherit_from_closed(labels, issue_labels):
-    """Take critical from the issue a PR closes.
+    """Take critical, build-fail and memleak from the issue a PR
+    closes.
 
     The issue quotes the traceback, the PR just says "handle EFAULT",
     so the same defect reads as critical on one and not the other.
@@ -527,8 +563,7 @@ def inherit_from_closed(labels, issue_labels):
     ours = out & set(PLATFORM_LABELS)
     theirs = set(issue_labels) & set(PLATFORM_LABELS)
     if (ours & theirs) or not (ours or theirs):
-        if "critical" in issue_labels:
-            out.add("critical")
+        out |= {"critical", "build-fail", "memleak"} & set(issue_labels)
     return out
 
 
@@ -553,9 +588,7 @@ def fresh_labels(decision):
     """
     out = set()
     for axis in AXES:
-        # type has no "neither" answer, so a shaky one still beats
-        # leaving the item out of the changelog entirely.
-        if axis == "type" or decision[f"{axis}_confidence"] != "low":
+        if decision[f"{axis}_confidence"] != "low":
             out |= axis_values(decision, axis)
     return drop_general_platforms(out)
 

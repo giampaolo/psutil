@@ -10,7 +10,9 @@ build = [
     "setuptools>=75.3.4",  # latest version supporting Python 3.8
 ]
 test = [
-    "psleak @ https://github.com/giampaolo/psleak/archive/refs/heads/master.tar.gz",
+    # BSD VMs have no git
+    "psleak @ git+https://github.com/giampaolo/psleak@master ; platform_system not in 'FreeBSD OpenBSD NetBSD'",
+    "psleak @ https://github.com/giampaolo/psleak/archive/refs/heads/master.tar.gz ; platform_system in 'FreeBSD OpenBSD NetBSD'",
     "pytest ; python_version < '3.10'",
     "pytest-instafail",
     "pytest-xdist",
@@ -309,36 +311,3 @@ markers = [
 
 [tool.rstwrap]
 width = 79
-
-# Wheels (what we build and where)
-# =============================================================================
-#
-# platform    builds              3.9 import check   full test suite
-# ----------  ------------------  -----------------  ---------------
-# Linux       3.9, 3.14, 3.14t    yes                3.14
-# Linux MUSL  3.9, 3.14           yes                no
-# Windows     3.9, 3.14, 3.14t    yes                3.14
-# macOS       3.14, 3.14t         no                 3.14
-[tool.cibuildwheel]
-skip = [
-    "cp3*t-musllinux*",
-    "cp39-macosx*",
-    "cp3{10,11,12,13}-*",
-]
-build-frontend = "build[uv]"
-test-command = "python -c \"import psutil; print(psutil.__version__)\""
-
-# Pin it, else it follows whichever Python builds the wheel. arm64
-# has its own 11.0 floor and ignores this.
-[tool.cibuildwheel.macos]
-environment = {MACOSX_DEPLOYMENT_TARGET = "10.15"}
-
-# We only link Windows system DLLs, so there's nothing for delvewheel
-# (the default since cibuildwheel 4) to bundle.
-[tool.cibuildwheel.windows]
-repair-wheel-command = ""
-
-[[tool.cibuildwheel.overrides]]
-select = "cp314-{manylinux,macosx,win}*"
-test-groups = ["test"]  # same as doing `pip install --group test`
-test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"

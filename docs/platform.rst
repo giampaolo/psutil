@@ -114,11 +114,15 @@ Architectures
      - Linux, Windows, macOS
      - Linux, Windows, macOS
      -
-   * - i686
-     -
-     -
-     - Debian 13
    * - ppc64le
+     -
+     - Linux
+     - Debian 13
+   * - s390x
+     -
+     - Linux
+     -
+   * - i686
      -
      -
      - Debian 13
@@ -146,7 +150,8 @@ On architectures without prebuilt wheels, psutil can be installed from source
 
    pip install psutil --no-binary psutil
 
-Linux wheels are published for both glibc (manylinux) and musl.
+Linux wheels are published for both glibc (manylinux) and musl. The musl ones
+cover x86_64 and aarch64 only.
 
 Support history
 ^^^^^^^^^^^^^^^
@@ -158,6 +163,9 @@ Support history
    * - Version
      - Date
      - Change
+   * - :pypi:`8.0.0`
+     -
+     - add wheels for Linux ppc64le and s390x architectures
    * - :pypi:`8.0.0`
      -
      - drop Python 3.6 and 3.7
