@@ -553,13 +553,6 @@ class TestBytes2Human(PsutilTestCase):
         assert psutil.bytes2human(100001221) == "95.4M"
         assert psutil.bytes2human(1099511627776) == "1.0T"
 
-    def test_format(self):
-        assert (
-            psutil.bytes2human(10000, format="%(value).1f %(symbol)s")
-            == "9.8 K"
-        )
-        assert psutil.bytes2human(10000, format="%(value)d%(symbol)s") == "9K"
-
 
 # ===================================================================
 # --- Tests for wrap_numbers() function.

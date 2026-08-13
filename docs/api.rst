@@ -2868,7 +2868,7 @@ Other constants
 Utilities
 ---------
 
-.. function:: bytes2human(n, format="%(value).1f%(symbol)s")
+.. function:: bytes2human(n)
 
   Convert *n* bytes to a human-readable string.
 
@@ -2879,8 +2879,6 @@ Utilities
      '9.8K'
      >>> psutil.bytes2human(100001221)
      '95.4M'
-     >>> psutil.bytes2human(10000, format="%(value).1f %(symbol)s")
-     '9.8 K'
 
   .. versionadded:: 7.0.0
 
