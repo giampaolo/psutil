@@ -130,7 +130,6 @@ include psutil/arch/windows/services.c
 include psutil/arch/windows/socks.c
 include psutil/arch/windows/sys.c
 include psutil/arch/windows/wmi.c
-include psutil/helpers.py
 include pyproject.toml
 include scripts/battery.py
 include scripts/cpu_distribution.py

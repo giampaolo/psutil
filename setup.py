@@ -415,7 +415,7 @@ def main():
         url='https://github.com/giampaolo/psutil',
         platforms='Platform Independent',
         license='BSD-3-Clause',
-        packages=['psutil', 'psutil.helpers'],
+        packages=['psutil'],
         ext_modules=[ext],
         cmdclass={'build_ext': BuildExt if num_cpus() > 1 else build_ext},
         options=options,

@@ -18,7 +18,7 @@ import subprocess
 import sys
 
 import psutil
-from psutil.helpers import bytes2human
+from psutil import bytes2human
 
 try:
     import pip

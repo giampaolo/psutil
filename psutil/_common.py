@@ -46,7 +46,7 @@ __all__ = [
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
     'open_text', 'open_binary', 'cat', 'bcat',
-    'conn_to_ntuple', 'debug', 'warn',
+    'bytes2human', 'conn_to_ntuple', 'debug', 'warn',
     # shell utils
     'hilite', 'term_supports_colors', 'print_color',
 ]
@@ -619,15 +619,25 @@ def bcat(fname, fallback=_DEFAULT):
     return cat(fname, fallback=fallback, _open=open_binary)
 
 
-def bytes2human(*args, **kwargs):
-    from psutil.helpers import bytes2human as b2h
+def bytes2human(n, format="%(value).1f%(symbol)s"):
+    """Convert n bytes to a human-readable string.
 
-    msg = (
-        "psutil._common.bytes2human is deprecated; use"
-        " psutil.helpers.bytes2human"
-    )
-    warnings.warn(msg, DeprecationWarning, stacklevel=2)
-    return b2h(*args, **kwargs)
+    >>> bytes2human(10000)
+    '9.8K'
+    >>> bytes2human(100001221)
+    '95.4M'
+    >>> bytes2human(10000, format="%(value).1f %(symbol)s")
+    '9.8 K'
+    """
+    symbols = ('B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+    prefix = {}
+    for i, s in enumerate(symbols[1:]):
+        prefix[s] = 1 << (i + 1) * 10
+    for symbol in reversed(symbols[1:]):
+        if abs(n) >= prefix[symbol]:
+            value = float(n) / prefix[symbol]
+            return format % locals()
+    return format % dict(symbol=symbols[0], value=n)
 
 
 def get_procfs_path():

@@ -384,6 +384,10 @@ Restart a process automatically if it dies:
 System
 ------
 
+All APIs returning amounts (memory, disk, network I/O) express them in bytes.
+The examples below use :func:`psutil.bytes2human` to convert them to a
+human-readable string.
+
 CPU
 ^^^
 
@@ -416,7 +420,6 @@ it just means the system is moving previously evicted pages back into RAM. High
 .. code-block:: python
 
   import psutil, time
-  from psutil.helpers import bytes2human
 
   def swap_activity(interval=1):
       before = psutil.swap_memory()
@@ -426,7 +429,7 @@ it just means the system is moving previously evicted pages back into RAM. High
           sin  = after.sin  - before.sin
           sout = after.sout - before.sout
           print("swap-in={}/s  swap-out={}/s  used={}%".format(
-              bytes2human(sin), bytes2human(sout), after.percent))
+              psutil.bytes2human(sin), psutil.bytes2human(sout), after.percent))
           before = after
 
 .. code-block:: none
@@ -444,7 +447,6 @@ Show real-time disk I/O:
 .. code-block:: python
 
   import psutil, time
-  from psutil.helpers import bytes2human
 
   def disk_io():
       while True:
@@ -453,7 +455,10 @@ Show real-time disk I/O:
           after = psutil.disk_io_counters()
           r = after.read_bytes - before.read_bytes
           w = after.write_bytes - before.write_bytes
-          print("Read: {}/s, Write: {}/s".format(bytes2human(r), bytes2human(w)))
+          print("Read: {}/s, Write: {}/s".format(
+              psutil.bytes2human(r),
+              psutil.bytes2human(w))
+          )
 
 .. code-block:: none
 
@@ -492,7 +497,6 @@ Show real-time network I/O per interface:
 .. code-block:: python
 
   import psutil, time
-  from psutil.helpers import bytes2human
 
   def net_io():
       while True:
@@ -504,7 +508,9 @@ Show real-time network I/O per interface:
               r = after[iface].bytes_recv - before[iface].bytes_recv
               print(
                   "{:<10} sent={:<10} recv={}".format(
-                      iface, bytes2human(s) + "/s", bytes2human(r) + "/s"
+                      iface,
+                      psutil.bytes2human(s) + "/s",
+                      psutil.bytes2human(r) + "/s"
                   )
               )
           print()

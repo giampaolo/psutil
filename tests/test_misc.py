@@ -34,7 +34,6 @@ from psutil._common import supports_ipv6
 from psutil._common import warn
 from psutil._common import wrap_numbers
 from psutil._ntuples import snicaddr
-from psutil.helpers import bytes2human
 
 from . import HAS_NET_IO_COUNTERS
 from . import ROOT_DIR
@@ -201,7 +200,6 @@ class TestMisc(PsutilTestCase):
             if name in {
                 'debug',
                 'warn',
-                'helpers',
                 'tests',
                 'test',
                 'PermissionError',
@@ -549,15 +547,18 @@ class TestCommonModule(PsutilTestCase):
 class TestBytes2Human(PsutilTestCase):
 
     def test_basic(self):
-        assert bytes2human(0) == "0.0B"
-        assert bytes2human(1000) == "1000.0B"
-        assert bytes2human(10000) == "9.8K"
-        assert bytes2human(100001221) == "95.4M"
-        assert bytes2human(1099511627776) == "1.0T"
+        assert psutil.bytes2human(0) == "0.0B"
+        assert psutil.bytes2human(1000) == "1000.0B"
+        assert psutil.bytes2human(10000) == "9.8K"
+        assert psutil.bytes2human(100001221) == "95.4M"
+        assert psutil.bytes2human(1099511627776) == "1.0T"
 
     def test_format(self):
-        assert bytes2human(10000, format="%(value).1f %(symbol)s") == "9.8 K"
-        assert bytes2human(10000, format="%(value)d%(symbol)s") == "9K"
+        assert (
+            psutil.bytes2human(10000, format="%(value).1f %(symbol)s")
+            == "9.8 K"
+        )
+        assert psutil.bytes2human(10000, format="%(value)d%(symbol)s") == "9K"
 
 
 # ===================================================================

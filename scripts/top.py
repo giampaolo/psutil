@@ -42,7 +42,7 @@ except ImportError:
     sys.exit('platform not supported')
 
 import psutil
-from psutil.helpers import bytes2human
+from psutil import bytes2human
 
 win = curses.initscr()
 lineno = 0
