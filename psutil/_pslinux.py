@@ -493,6 +493,29 @@ def per_cpu_times():
         return cpus
 
 
+def _parse_cpulist(cpulist):
+    """Parse Linux CPU list string (e.g "0-3,8,10-11")"""
+    cpulist = cpulist.strip()
+    if not cpulist:
+        return []
+    cpus = []
+    for chunk in cpulist.split(','):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        if '-' in chunk:
+            start, _, end = chunk.partition('-')
+            start = int(start)
+            end = int(end)
+            if start > end:
+                msg = f"invalid CPU range {chunk!r}"
+                raise ValueError(msg)
+            cpus.extend(range(start, end + 1))
+        else:
+            cpus.append(int(chunk))
+    return cpus
+
+
 def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
     try:
@@ -2117,14 +2140,21 @@ class Process:
             return _psutil.proc_cpu_affinity_get(self.pid)
 
         def _get_eligible_cpus(
-            self, _re=re.compile(br"Cpus_allowed_list:\t(\d+)-(\d+)")
+            self,
+            _re=re.compile(
+                br"^Cpus_allowed_list:[ \t]*([^\r\n]*)", re.MULTILINE
+            ),
         ):
             # See: https://github.com/giampaolo/psutil/issues/956
             data = self._read_status_file()
-            if match := _re.findall(data):
-                return list(range(int(match[0][0]), int(match[0][1]) + 1))
-            else:
-                return list(range(len(per_cpu_times())))
+            if match := _re.search(data):
+                try:
+                    return _parse_cpulist(decode(match.group(1)))
+                except ValueError as err:
+                    debug(
+                        f"can't parse Cpus_allowed_list ({err}); falling back"
+                    )
+            return list(range(len(per_cpu_times())))
 
         @wrap_exceptions
         def cpu_affinity_set(self, cpus):
