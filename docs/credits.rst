@@ -109,7 +109,7 @@ Code contributors by year
 2026
 ~~~~
 
-* :user:`Alex Chen <l46983284-cpu>` - :gh:`2859`
+* :user:`Alex Chen <l46983284-cpu>` - :gh:`2859`, :gh:`1959`
 * :user:`Amaan Qureshi <amaanq>` - :gh:`2770`
 * :user:`Anshul Nautiyal <ANSHUL-REAL>` - :gh:`2858`
 * :user:`Arman Luthra <Arman-Luthra>` - :gh:`2695`
