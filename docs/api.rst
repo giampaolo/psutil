@@ -2880,7 +2880,7 @@ Utilities
      >>> psutil.bytes2human(100001221)
      '95.4M'
 
-  .. versionadded:: 7.0.0
+  .. versionadded:: 8.0.0
 
 .. _const-version-info:
 
