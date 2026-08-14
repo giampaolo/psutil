@@ -353,15 +353,15 @@ Timeline
      - :ref:`what's new <500>`
      - `diff <https://github.com/giampaolo/psutil/compare/release-4.4.2...release-5.0.0#files_bucket>`__
    * - :pypi:`4.4.2`
-     - 2016-10-25
+     - 2016-10-26
      - :ref:`what's new <442>`
      - `diff <https://github.com/giampaolo/psutil/compare/release-4.4.1...release-4.4.2#files_bucket>`__
    * - :pypi:`4.4.1`
-     - 2016-10-23
+     - 2016-10-25
      - :ref:`what's new <441>`
      - `diff <https://github.com/giampaolo/psutil/compare/release-4.4.0...release-4.4.1#files_bucket>`__
    * - :pypi:`4.4.0`
-     - 2016-10-05
+     - 2016-10-23
      - :ref:`what's new <440>`
      - `diff <https://github.com/giampaolo/psutil/compare/release-4.3.1...release-4.4.0#files_bucket>`__
    * - :pypi:`4.3.1`
@@ -495,7 +495,11 @@ Timeline
    * - :pypi:`1.2.0`
      - 2013-11-20
      - :ref:`what's new <120>`
-     - `diff <https://github.com/giampaolo/psutil/compare/release-1.1.2...release-1.2.0#files_bucket>`__
+     - `diff <https://github.com/giampaolo/psutil/compare/2f69cb22...release-1.2.0#files_bucket>`__
+   * - :pypi:`1.1.3`
+     - 2013-11-07
+     - :ref:`what's new <113>`
+     - `diff <https://github.com/giampaolo/psutil/compare/release-1.1.2...2f69cb22#files_bucket>`__
    * - :pypi:`1.1.2`
      - 2013-10-22
      - :ref:`what's new <112>`

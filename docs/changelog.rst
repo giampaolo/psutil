@@ -1199,7 +1199,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   :exc:`NoSuchProcess` depending on whether the PID is alive.
 - :gh:`1891`, [macOS]: get rid of deprecated ``getpagesize()``.
 
-5.7.3 — 2020-10-23
+5.7.3 — 2020-10-24
 ^^^^^^^^^^^^^^^^^^
 
 **New APIs**
@@ -1696,7 +1696,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
 - :gh:`1274`, [Linux]: there was a small chance :meth:`Process.children` may
   swallow :exc:`AccessDenied` exceptions.
 
-5.4.5 — 2018-04-14
+5.4.5 — 2018-04-13
 ^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**

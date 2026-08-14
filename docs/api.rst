@@ -80,10 +80,6 @@ CPU
     this might not be the case (at least on Windows and Linux), see
     `#1210 <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
 
-  .. versionchanged:: 4.1.0
-     Windows: added :field:`irq` and :field:`dpc` fields (:field:`irq` was
-     called :field:`interrupt` before 8.0.0).
-
   .. versionchanged:: 8.0.0
      Windows: :field:`interrupt` field was renamed to :field:`irq`;
      :field:`interrupt` still works but raises :exc:`DeprecationWarning`.
@@ -141,10 +137,6 @@ CPU
 
   .. seealso:: :ref:`faq_cpu_percent`
 
-  .. versionchanged:: 4.1.0
-     Windows: added :field:`irq` and :field:`dpc` fields (:field:`irq` was
-     called :field:`interrupt` before 8.0.0).
-
   .. versionchanged:: 5.9.6
      function is now thread safe.
 
@@ -200,8 +192,6 @@ CPU
      >>> psutil.cpu_stats()
      scpustats(ctx_switches=20455687, interrupts=6598984, soft_interrupts=2134212, syscalls=0)
 
-  .. versionadded:: 4.1.0
-
 .. function:: cpu_freq(percpu=False)
 
   Return :field:`current`, :field:`min` and :field:`max` CPU frequencies
@@ -234,8 +224,6 @@ CPU
 
   .. availability:: Linux, macOS, Windows, FreeBSD, OpenBSD.
 
-  .. versionadded:: 5.1.0
-
   .. versionchanged:: 5.5.1
      added FreeBSD support.
 
@@ -265,8 +253,6 @@ CPU
      >>> # percentage representation
      >>> [x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]
      [31.4, 38.9, 46.7]
-
-  .. versionadded:: 5.6.2
 
 Memory
 ^^^^^^
@@ -421,12 +407,6 @@ Memory
     - :ref:`faq_virtual_memory_available`
     - :ref:`faq_used_plus_free`
 
-  .. versionchanged:: 4.2.0
-     Linux: added :field:`shared` field.
-
-  .. versionchanged:: 5.4.4
-     Linux: added :field:`slab` field.
-
   .. versionchanged:: 8.0.0
      Windows: added :field:`cached` and :field:`wired` fields.
 
@@ -461,10 +441,6 @@ Memory
   .. seealso::
     - :src:`scripts/meminfo.py`
     - :ref:`Swap activity recipe <recipe_swap_activity>`
-
-  .. versionchanged:: 5.2.3
-     Linux: use /proc instead of :manpage:`sysinfo(2)` syscall to support
-     :data:`PROCFS_PATH` usage (e.g. useful for Docker containers ...).
 
   .. versionchanged:: 8.0.0
      OpenBSD: :field:`sin` / :field:`sout` are no longer set to ``0``.
@@ -531,9 +507,6 @@ Disks
 
   .. seealso:: :src:`scripts/disk_usage.py`.
 
-  .. versionchanged:: 4.3.0
-     :field:`percent` value takes root reserved space into account.
-
 .. function:: disk_io_counters(perdisk=False, nowrap=True)
 
   Return system-wide disk I/O statistics. All fields are
@@ -588,17 +561,6 @@ Disks
      - :ref:`Real-time disk I/O recipe <recipe_disk_io>`
      - :ref:`Real-time disk I/O percent recipe <recipe_disk_io_percent>`
 
-  .. versionchanged:: 5.3.0
-     numbers no longer wrap (restart from zero) across calls thanks to new
-     *nowrap* argument.
-
-  .. versionchanged:: 4.0.0
-     added :field:`busy_time` (Linux, FreeBSD), :field:`read_merged_count` and
-     :field:`write_merged_count` (Linux) fields.
-
-  .. versionchanged:: 4.0.0
-     NetBSD: removed :field:`read_time` and :field:`write_time` fields.
-
 Network
 ^^^^^^^
 
@@ -642,10 +604,6 @@ Network
       'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
 
   .. seealso:: :src:`scripts/nettop.py` and :src:`scripts/ifconfig.py`.
-
-  .. versionchanged:: 5.3.0
-     numbers no longer wrap (restart from zero) across calls thanks to new
-     *nowrap* argument.
 
 .. function:: net_connections(kind="inet")
 
@@ -727,14 +685,6 @@ Network
     - :meth:`Process.net_connections` to get per-process connections
     - :src:`scripts/netstat.py`
 
-  .. versionadded:: 2.1.0
-
-  .. versionchanged:: 5.3.0
-     socket :field:`fd` is now set for real instead of being ``-1``.
-
-  .. versionchanged:: 5.3.0
-    :field:`laddr` and :field:`raddr` are named tuples.
-
   .. versionchanged:: 5.9.5
      OpenBSD: retrieve :field:`laddr` path for :data:`socket.AF_UNIX` sockets
      (before it was an empty string).
@@ -772,15 +722,6 @@ Network
 
   .. seealso:: :src:`scripts/nettop.py` and :src:`scripts/ifconfig.py`.
 
-  .. versionadded:: 3.0.0
-
-  .. versionchanged:: 3.2.0
-     added :field:`ptp` field.
-
-  .. versionchanged:: 4.4.0
-     Windows: added support for :field:`netmask` field, which is no longer
-     ``None``.
-
   .. versionchanged:: 7.0.0
      Windows: added support for :field:`broadcast` field, which is no longer
      ``None``.
@@ -805,8 +746,6 @@ Network
       'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536, flags='up,loopback,running')}
 
   .. seealso:: :src:`scripts/nettop.py` and :src:`scripts/ifconfig.py`.
-
-  .. versionadded:: 3.0.0
 
   .. versionchanged:: 5.7.3
      UNIX: :field:`isup` also reflects whether the :term:`NIC` is running.
@@ -849,8 +788,6 @@ Sensors
 
   .. availability:: Linux, FreeBSD
 
-  .. versionadded:: 5.1.0
-
   .. versionchanged:: 5.5.0
      added FreeBSD support.
 
@@ -868,8 +805,6 @@ Sensors
   .. seealso:: :src:`scripts/fans.py` and :src:`scripts/sensors.py`.
 
   .. availability:: Linux
-
-  .. versionadded:: 5.2.0
 
 .. function:: sensors_battery()
 
@@ -902,11 +837,6 @@ Sensors
   .. seealso:: :src:`scripts/battery.py` and :src:`scripts/sensors.py`.
 
   .. availability:: Linux, Windows, macOS, FreeBSD
-
-  .. versionadded:: 5.1.0
-
-  .. versionchanged:: 5.4.2
-     added macOS support.
 
 -------------------------------------------------------------------------------
 
@@ -954,9 +884,6 @@ Other system info
     On UNIX this reads the ``utmp`` database, and returns an empty list if
     nothing maintains it, e.g. on musl libc (Alpine Linux), which doesn't
     implement it. ``who`` is empty too in that case.
-
-  .. versionchanged:: 5.3.0
-     added :field:`pid` field.
 
 -------------------------------------------------------------------------------
 
@@ -1034,9 +961,6 @@ Functions
     pre-fetched values. Do not rely on cached values from a prior iteration.
 
   .. seealso:: :ref:`perf-process-iter`
-
-  .. versionchanged:: 5.3.0
-     added *attrs* and *ad_value* arguments.
 
   .. versionchanged:: 6.0.0
 
@@ -1121,8 +1045,6 @@ Exceptions
   catch :exc:`NoSuchProcess`.
 
   .. seealso:: :ref:`faq_zombie_process`
-
-  .. versionadded:: 3.0.0
 
 .. exception:: AccessDenied(pid=None, name=None, msg=None)
 
@@ -1238,8 +1160,6 @@ Process class
       - :doc:`performance`
       - :doc:`/blog/2016/500-is-twice-as-fast`
 
-    .. versionadded:: 5.0.0
-
   .. method:: name()
 
     The process name. On Windows the return value is cached after first call.
@@ -1286,11 +1206,6 @@ Process class
       on macOS Big Sur this function returns something meaningful only for the
       current process or in
       `other specific circumstances <https://github.com/apple/darwin-xnu/blob/2ff845c2e033bd0ff64b5b6aa6063a1f8f65aa32/bsd/kern/kern_sysctl.c#L1315-L1321>`_.
-
-    .. versionadded:: 4.0.0
-
-    .. versionchanged:: 5.3.0
-       added SunOS support.
 
     .. versionchanged:: 5.6.3
        added AIX support.
@@ -1344,14 +1259,6 @@ Process class
        {'username': 'giampaolo', 'pid': 12366, 'name': 'python', ...}
        >>>
 
-    .. versionchanged:: 3.0.0
-       *ad_value* is used also when incurring into :exc:`ZombieProcess`
-       exception, not only :exc:`AccessDenied`.
-
-    .. versionchanged:: 4.5.0
-       :meth:`as_dict` is considerably faster thanks to :meth:`oneshot` context
-       manager.
-
   .. method:: ppid()
 
     The process parent PID. On Windows the return value is cached after the
@@ -1371,8 +1278,6 @@ Process class
     Utility method which returns the parents of this process as a list of
     :class:`Process` instances. If no parents are known return an empty list.
     See also :meth:`ppid` and :meth:`parent` methods.
-
-    .. versionadded:: 5.6.0
 
   .. method:: status()
 
@@ -1546,12 +1451,6 @@ Process class
 
     .. availability:: Linux, Windows, BSD, AIX
 
-    .. versionchanged:: 5.2.0
-       Linux: added :field:`read_chars` and :field:`write_chars` fields.
-
-    .. versionchanged:: 5.2.0
-       Windows: added :field:`other_count` and :field:`other_bytes` fields.
-
   .. method:: num_ctx_switches()
 
     The number of :term:`context switches <context switch>` performed by this
@@ -1562,9 +1461,6 @@ Process class
       (Windows, macOS) :field:`involuntary` value is always set to 0, while
       :field:`voluntary` value reflects the total number of context switches
       (voluntary + involuntary). This is a limitation of the OS.
-
-    .. versionchanged:: 5.4.1
-       added AIX support.
 
   .. method:: num_fds()
 
@@ -1620,9 +1516,6 @@ Process class
        pcputimes(user=0.03, system=0.67, children_user=0.0, children_system=0.0, iowait=0.08)
        >>> sum(p.cpu_times()[:2])  # cumulative, excluding children and iowait
        0.70
-
-    .. versionchanged:: 4.1.0
-       added :field:`children_user` and :field:`children_system` fields.
 
     .. versionchanged:: 5.6.4
        Linux: added :field:`iowait` field.
@@ -1684,12 +1577,6 @@ Process class
 
     .. availability:: Linux, Windows, FreeBSD
 
-    .. versionchanged:: 2.2.0
-       added support for FreeBSD.
-
-    .. versionchanged:: 5.1.0
-       an empty list can be passed to set affinity against all eligible CPUs.
-
   .. method:: cpu_num()
 
     Return what CPU this process is currently running on. The returned number
@@ -1701,8 +1588,6 @@ Process class
     .. seealso:: :src:`scripts/cpu_distribution.py`.
 
     .. availability:: Linux, FreeBSD, SunOS
-
-    .. versionadded:: 5.1.0
 
   .. method:: memory_info()
 
@@ -1775,9 +1660,6 @@ Process class
     .. seealso::
       - :ref:`faq_memory_rss_vs_vms`
       - :ref:`faq_memory_footprint`
-
-    .. versionchanged:: 4.0.0
-       multiple fields are returned, not only :field:`rss` and :field:`vms`.
 
     .. versionchanged:: 8.0.0 (see :ref:`migration guide <migration-8.0>`)
 
@@ -1905,8 +1787,6 @@ Process class
     This deprecated method returns the same information as :meth:`memory_info`
     plus :meth:`memory_footprint` in a single named tuple.
 
-    .. versionadded:: 4.0.0
-
     .. deprecated:: 8.0.0
        use :meth:`memory_footprint` instead. See
        :ref:`migration guide <migration-8.0>`.
@@ -1923,9 +1803,6 @@ Process class
     *memtype* selects which memory field to use and can be any attribute from
     :meth:`memory_info`, :meth:`memory_info_ex`, or :meth:`memory_footprint`
     (default is ``"rss"``).
-
-    .. versionchanged:: 4.0.0
-       added *memtype* parameter.
 
   .. method:: memory_maps(grouped=True)
 
@@ -2083,12 +1960,6 @@ Process class
         doesn't expose it (there's no path field in ``struct kinfo_file``).
       - FreeBSD: :field:`path` can be an empty string (:gh:`595`).
 
-    .. versionchanged:: 3.1.0
-       no longer hangs on Windows.
-
-    .. versionchanged:: 4.1.0
-       Linux: added :field:`position`, :field:`mode` and :field:`flags` fields.
-
   .. method:: net_connections(kind="inet")
 
     Same as :func:`psutil.net_connections` but for this process only (the
@@ -2143,9 +2014,6 @@ Process class
     an alias for :meth:`kill`.
 
     .. seealso:: how to :ref:`kill a process tree <recipe_kill_proc_tree>`
-
-    .. versionchanged:: 3.2.0
-       Windows: add support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals.
 
   .. method:: suspend()
 
@@ -2275,9 +2143,6 @@ Popen class
      0
      >>>
 
-  .. versionchanged:: 4.4.0
-     added context manager support.
-
 -------------------------------------------------------------------------------
 
 C heap introspection
@@ -2377,16 +2242,12 @@ Windows services
   Return an iterator yielding :class:`WindowsService` instances for all
   installed Windows services.
 
-  .. versionadded:: 4.2.0
-
   .. availability:: Windows
 
 .. function:: win_service_get(name)
 
   Get a Windows service by name, returning a :class:`WindowsService` instance.
   Raise :exc:`NoSuchProcess` if no service with such name exists.
-
-  .. versionadded:: 4.2.0
 
   .. availability:: Windows
 
@@ -2462,8 +2323,6 @@ Windows services
 
   .. availability:: Windows
 
-  .. versionadded:: 4.2.0
-
 -------------------------------------------------------------------------------
 
 Constants
@@ -2528,15 +2387,11 @@ via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
   :data:`NIC_DUPLEX_* <psutil.NIC_DUPLEX_FULL>` constants. Returned in the
   *duplex* field of :func:`psutil.net_if_stats`.
 
-  .. versionadded:: 3.0.0
-
 .. class:: BatteryTime
 
   :class:`enum.IntEnum` collection of
   :data:`POWER_TIME_* <psutil.POWER_TIME_UNKNOWN>` constants. May appear in the
   *secsleft* field of :func:`psutil.sensors_battery`.
-
-  .. versionadded:: 5.1.0
 
 .. _const-oses:
 
@@ -2627,34 +2482,24 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
    These threads are "parked" when a CPU core is taken offline and will remain
    inactive until the core is re-enabled.
 
-   .. versionadded:: 5.4.7
-
 .. data:: STATUS_IDLE
 
    (Linux, macOS, FreeBSD) A sleep for kernel threads waiting for work.
-
-   .. versionadded:: 3.4.1
 
 .. data:: STATUS_LOCKED
 
    (FreeBSD only) The process is blocked specifically waiting for a
    kernel-level synchronization primitive (e.g. a mutex).
 
-   .. versionadded:: 3.4.1
-
 .. data:: STATUS_WAITING
 
    (FreeBSD only) The process is waiting in a kernel sleep queue for a specific
    system event to occur.
 
-   .. versionadded:: 3.4.1
-
 .. data:: STATUS_SUSPENDED
 
    (NetBSD only) The process has been explicitly paused, similar to the stopped
    state but managed by the NetBSD scheduler.
-
-   .. versionadded:: 3.4.1
 
 .. _const-proc-prio:
 
@@ -2714,8 +2559,6 @@ can be used in conjunction with :meth:`Process.ionice` (*ioclass* argument).
   .. data:: IOPRIO_LOW
   .. data:: IOPRIO_NORMAL
   .. data:: IOPRIO_HIGH
-
-.. versionadded:: 5.6.2
 
 .. versionchanged:: 8.0.0
    constants are now :class:`ProcessIOPriority` enum members. See
@@ -2813,8 +2656,6 @@ Hardware constants
   Identifies a MAC address associated with a network interface. Returned by
   :func:`psutil.net_if_addrs` (:field:`family` field).
 
-  .. versionadded:: 3.0.0
-
 .. _const-duplex:
 
 .. data:: NIC_DUPLEX_FULL
@@ -2825,8 +2666,6 @@ Hardware constants
   mode. FULL allows simultaneous send/receive, HALF allows only one at a time.
   Returned by :func:`psutil.net_if_stats` (:field:`duplex` field).
 
-  .. versionadded:: 3.0.0
-
 .. _const-power:
 
 .. data:: POWER_TIME_UNKNOWN
@@ -2834,8 +2673,6 @@ Hardware constants
 
   Whether the remaining time of a battery cannot be determined or is unlimited.
   May be assigned to :func:`psutil.sensors_battery`'s :field:`secsleft` field.
-
-  .. versionadded:: 5.1.0
 
 Other constants
 ^^^^^^^^^^^^^^^
@@ -2856,14 +2693,6 @@ Other constants
   class methods).
 
   .. availability:: Linux, SunOS, AIX
-
-  .. versionadded:: 3.2.3
-
-  .. versionchanged:: 3.4.2
-     also available on Solaris.
-
-  .. versionchanged:: 5.4.0
-     also available on AIX.
 
 Utilities
 ---------
@@ -2908,8 +2737,6 @@ Environment variables
   .. code-block:: bash
 
      $ PSUTIL_DEBUG=1 python3 script.py
-
-  .. versionadded:: 5.4.2
 
 .. envvar:: PSUTIL_BUILD_JOBS
 
