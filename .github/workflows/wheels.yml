@@ -31,7 +31,7 @@ jobs:
     # Skip same-repo PR runs: the push event already covers them.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: ${{ matrix.timeout || 10 }}
     strategy:
       fail-fast: false
       # We produce an abi3 wheel which works from Python 3.8 onwards. We
@@ -55,6 +55,11 @@ jobs:
           - { os: windows-2025, osname: win, arch: AMD64, build: "cp314t-*", tag: cp314t }
           - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp314-*", tag: abi3 }
           - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp314t-*", tag: cp314t }
+          # Android. cibuildwheel runs the tests on a Gradle-managed emulator,
+          # but only for the arch matching the runner, so arm64_v8a is
+          # build-only. Needs KVM, which GitHub grants on Linux x86_64.
+          - { os: ubuntu-latest, osname: android, arch: x86_64, build: "cp314-android_*", platform: android, timeout: 40 }
+          - { os: ubuntu-latest, osname: android, arch: arm64_v8a, build: "cp314-android_*", platform: android, timeout: 40 }
     steps:
       - uses: actions/checkout@v7
 
@@ -93,6 +98,7 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "${{ matrix.build }}"
+          CIBW_PLATFORM: "${{ matrix.platform || 'auto' }}"
           CIBW_CACHE_PATH: ${{ runner.temp }}/cibw-cache
           CIBW_BUILD_FRONTEND: "build[uv]"
           CIBW_TEST_COMMAND: 'python -W error::RuntimeWarning -c "import psutil; print(psutil.__version__)"'
@@ -103,6 +109,12 @@ jobs:
           # We only link Windows system DLLs, so there's nothing for delvewheel
           # to bundle.
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
+          # Android runs the real test suite instead of the import smoke test.
+          # The test env can't run a shell, so the command must start with
+          # "python" and use "-m".
+          CIBW_TEST_SOURCES_ANDROID: "tests pyproject.toml"
+          CIBW_TEST_REQUIRES_ANDROID: "pytest pytest-instafail pytest-xdist"
+          CIBW_TEST_COMMAND_ANDROID: "python -m pytest ./tests"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v7
