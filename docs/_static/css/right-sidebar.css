@@ -162,17 +162,23 @@
 
 .right-sidebar ul.blog-tags a {
     display: flex;
-    align-items: baseline;
-    gap: 0.4em;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6em;
     font-size: 0.9rem;
     padding: 0.15rem 0 0.15rem 8px;
 }
 
 .right-sidebar .blog-tag-count {
+    flex: none;
+    min-width: 1.6em;
+    padding: 0.05em 0.5em;
+    border-radius: 999px;
+    background: var(--surface-raised);
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-variant-numeric: tabular-nums;
-    opacity: 0.7;
+    text-align: center;
 }
 
 /* ---- Active state (driven by js/right-toc.js) ---------------------- */

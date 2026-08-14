@@ -28,12 +28,12 @@
     </h1>
   </div>
 
-  <ol class="blog-cards">
+  <ol class="blog-cards"{% if giscus_repo %} data-comments-repo="{{ giscus_repo|e }}"{% endif %}>
   {% for post in collection %}
     {% set ns = namespace(featured=false) %}
     {% for tag in post.tags or [] %}{% if tag|string == 'featured' %}{% set ns.featured = true %}{% endif %}{% endfor %}
     {% set featured = ns.featured %}
-    <li class="blog-card">
+    <li class="blog-card" data-docname="{{ post.docname|e }}">
       <div class="blog-card-head">
         <span class="blog-card-meta">
           {% if post.published %}
@@ -65,4 +65,7 @@
   {% endfor %}
   </ol>
 </div>
+{% if giscus_repo %}
+<script defer src="{{ pathto('_static/js/blog-comment-counts.js', 1)|e }}"></script>
+{% endif %}
 {% endblock body %}

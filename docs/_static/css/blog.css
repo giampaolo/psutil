@@ -146,6 +146,10 @@ ol.blog-cards > li.blog-card {
     margin: 0;
 }
 
+ol.blog-cards > li.blog-card + li.blog-card {
+    border-top: 1px solid var(--border);
+}
+
 .blog-card {
     display: grid;
     grid-template-columns: 1fr;
@@ -177,6 +181,16 @@ ol.blog-cards > li.blog-card {
     letter-spacing: 0.08em;
     font-variant-numeric: tabular-nums;
     margin: 0 0 0.05em 0;
+}
+
+.blog-card-comments {
+    letter-spacing: normal;
+}
+
+.blog-card-comments::before {
+    content: "\00b7";
+    margin: 0 0.72em 0 0.6em;
+    letter-spacing: 0.08em;
 }
 
 .blog-card-draft {

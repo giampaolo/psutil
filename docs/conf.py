@@ -186,7 +186,13 @@ html_css_files = _css_files()
 
 def _js_files():
     js_dir = _HERE / "_static" / "js"
-    files = sorted(p.name for p in js_dir.glob("*.js"))
+    # blog-comment-counts.js is pulled in by the blog listing template
+    # only (_templates/ablog/collection.html).
+    files = sorted(
+        p.name
+        for p in js_dir.glob("*.js")
+        if p.name != "blog-comment-counts.js"
+    )
     return [(f"js/{name}", {"defer": "defer"}) for name in files]
 
 
