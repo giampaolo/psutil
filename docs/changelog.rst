@@ -126,6 +126,11 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   enabling debug mode via the :envvar:`PSUTIL_DEBUG` environment variable, so
   in practice they went unnoticed.
 
+**New platforms**
+
+- :gh:`2611`: add support for Android, including a working
+  :func:`disk_partitions`.
+
 **Performance**
 
 - :gh:`2695`, [Windows]: :func:`net_io_counters` is **~5x faster**.
