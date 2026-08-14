@@ -126,11 +126,6 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   enabling debug mode via the :envvar:`PSUTIL_DEBUG` environment variable, so
   in practice they went unnoticed.
 
-**New platforms**
-
-- :gh:`2611`: add support for Android, including a working
-  :func:`disk_partitions`.
-
 **Performance**
 
 - :gh:`2695`, [Windows]: :func:`net_io_counters` is **~5x faster**.
@@ -325,6 +320,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   shared by several CPUs (POWER9, Apple M1, RISC-V) it reported fewer entries
   than :func:`cpu_count`. Each policy is now asked which CPUs it affects.
   (patch by Julien Stephan)
+- :gh:`2611`: re-enable support for Android, which got broken on Python 3.13.
+  Also include a working :func:`disk_partitions` which no longer raises
+  ``PermissionError``.
 
 **Bug fixes: Windows**
 
