@@ -126,6 +126,7 @@ Code contributors by year
 * :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`
 * :user:`Marcel Telka <mtelka>` - :gh:`2687`
 * :user:`Omprakash Chauhan <omprakash2929>` - :gh:`2655`
+* :user:`Robert Kirkman <robertkirkman>` - :gh:`2611`
 * :user:`Santhosh Raju <fraggerfox>` - :gh:`2805`
 * :user:`Sebastian Cao <cycsmail>` - :gh:`2628`
 * :user:`Sergey Fedorov <barracuda156>` - :gh:`2701`
