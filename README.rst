@@ -21,7 +21,7 @@
     </div>
 
     <div align="center">
-      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml.svg?label=Linux%2C%20macOS%2C%20Win" alt="Linux, macOS, Windows"></a>
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Atests"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/tests.yml.svg?label=Linux%2C%20macOS%2C%20Win" alt="Linux, macOS, Windows"></a>
 
       <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Absd"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=BSD" alt="FreeBSD, NetBSD, OpenBSD"></a>
 
@@ -53,7 +53,7 @@ Adoption
 
 psutil is among the
 `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__ most-downloaded
-packages on PyPI, with **370+ million** downloads per month and **780,000+**
+packages on PyPI, with **390+ million** downloads per month and **780,000+**
 `GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__
 using it. See also `adoptions <https://psutil.io/adoption/>`__ and
 `alternatives <https://psutil.io/alternatives/>`__.

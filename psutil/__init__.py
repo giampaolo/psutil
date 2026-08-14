@@ -57,8 +57,10 @@ from ._common import Error
 from ._common import NoSuchProcess
 from ._common import TimeoutExpired
 from ._common import ZombieProcess
+from ._common import bytes2human
 from ._common import debug
 from ._common import memoize_when_activated
+from ._common import warn
 from ._common import wrap_numbers as _wrap_numbers
 from ._enums import BatteryTime
 from ._enums import ConnectionStatus
@@ -254,6 +256,7 @@ __all__ = [
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     # "sensors_temperatures", "sensors_battery", "sensors_fans"     # sensors
     "users", "boot_time",                                           # others
+    "bytes2human",
 ]
 # fmt: on
 
@@ -480,7 +483,12 @@ class Process:
         practically it should be good enough.
 
         NOTE: unreliable on FreeBSD and OpenBSD as ctime is subject to
-        system clock updates.
+        system clock updates, so the PID-reuse check there is disabled.
+        Same goes for SunOS and AIX, where we don't know whether ctime
+        is stable across clock updates.
+
+        NOTE 2: it is also disabled on Windows in case `create_time()`
+        can't be fetched due to `AccessDenied`.
         """
 
         if WINDOWS:
@@ -497,7 +505,10 @@ class Process:
             # time.
             return (self.pid, self._proc.create_time(monotonic=True))
         else:
-            return (self.pid, self.create_time())
+            # Still call create_time() to check PID existence (raise
+            # NSP at construction time), but don't use it for identity.
+            self.create_time()
+            return (self.pid, None)
 
     def __str__(self):
         info = {}
@@ -529,33 +540,37 @@ class Process:
 
     __repr__ = __str__
 
+    @staticmethod
+    def _cmp_idents(ident1, ident2):
+        """Compare two `(pid, ctime)` identity tuples and return
+        "same", "different" or "unknown". "unknown" means ctime is
+        missing on either side (`AccessDenied` on Windows, zombies
+        resulting in ctime 0), which is not proof of a different
+        process.
+        """
+        pid1, ctime1 = ident1
+        pid2, ctime2 = ident2
+        if pid1 != pid2:
+            return "different"
+        if not ctime1 or not ctime2:
+            return "unknown"
+        return "same" if ctime1 == ctime2 else "different"
+
     def __eq__(self, other):
         # Test for equality with another Process object based
         # on PID and creation time.
         if not isinstance(other, Process):
             return NotImplemented
-        if OPENBSD or NETBSD or SUNOS:  # pragma: no cover
-            # Zombie processes on Open/NetBSD/illumos/Solaris have a
-            # creation time of 0.0.  This covers the case when a process
-            # started normally (so it has a ctime), then it turned into a
-            # zombie. It's important to do this because is_running()
-            # depends on __eq__.
-            pid1, ident1 = self._ident
-            pid2, ident2 = other._ident
-            if pid1 == pid2:
-                if ident1 and not ident2:
-                    try:
-                        return self.status() == ProcessStatus.STATUS_ZOMBIE
-                    except Error:
-                        pass
-        return self._ident == other._ident
+        return self._cmp_idents(self._ident, other._ident) != "different"
 
     def __ne__(self, other):
         return not self == other
 
     def __hash__(self):
+        # PID only: __eq__ can match idents with different ctimes, and
+        # equal objects must hash the same.
         if self._hash is None:
-            self._hash = hash(self._ident)
+            self._hash = hash(self._ident[0])
         return self._hash
 
     def _raise_if_pid_reused(self):
@@ -757,13 +772,19 @@ class Process:
             return False
         try:
             # Checking if PID is alive is not enough as the PID might
-            # have been reused by another process. Process identity /
-            # uniqueness over time is guaranteed by (PID + creation
-            # time) and that is verified in __eq__.
-            self._pid_reused = self != Process(self.pid)
+            # have been reused by another process. Process identity is
+            # guaranteed by (PID + creation time), see __eq__.
+            other = Process(self.pid)
+            self._pid_reused = self != other
             if self._pid_reused:
+                debug(f"PID reuse detected: {self._ident} vs. {other._ident}")
                 _pids_reused.add(self.pid)
                 raise NoSuchProcess(self.pid)
+            if self._cmp_idents(self._ident, other._ident) == "unknown":
+                debug(
+                    "null create time, PID reuse check inconclusive:"
+                    f" {self._ident} vs. {other._ident}"
+                )
             return True
         except ZombieProcess:
             # We should never get here as it's already handled in
@@ -785,9 +806,6 @@ class Process:
         # change to 1 (init) in case this process turns into a zombie:
         # https://github.com/giampaolo/psutil/issues/321
         # http://stackoverflow.com/questions/356722/
-
-        # XXX should we check creation time here rather than in
-        # Process.parent()?
         self._raise_if_pid_reused()
         if POSIX:
             return self._proc.ppid()
@@ -2550,15 +2568,20 @@ def net_if_addrs() -> dict[str, list[snicaddr]]:
         nt = _ntp.snicaddr(fam, addr, mask, broadcast, ptp)
 
         # On Windows broadcast is None, so we determine it via
-        # ipaddress module.
-        if WINDOWS and fam in {socket.AF_INET, socket.AF_INET6}:
+        # ipaddress module. On POSIX a /32 has no broadcast address,
+        # but getifaddrs() hands back the local address.
+        if nt.netmask and (
+            fam == socket.AF_INET or (WINDOWS and fam == socket.AF_INET6)
+        ):
             try:
-                broadcast = _common.broadcast_addr(nt)
+                calculated = _common.broadcast_addr(nt)
             except Exception as err:  # noqa: BLE001
-                debug(err)
+                warn(f"broadcast_addr() failed: {err!r}")
             else:
-                if broadcast is not None:
-                    nt = nt._replace(broadcast=broadcast)
+                if calculated is None:
+                    nt = nt._replace(broadcast=None)
+                elif WINDOWS:
+                    nt = nt._replace(broadcast=calculated)
 
         ret[name].append(nt)
 

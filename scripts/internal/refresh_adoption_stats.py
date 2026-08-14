@@ -18,6 +18,7 @@ import sys
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+TIMEOUT = 5
 TARGETS = [
     ROOT / "docs/adoption.rst",
     ROOT / "docs/index.rst",
@@ -41,7 +42,7 @@ def fetch(url, accept="text/html"):
             "Accept": accept,
         },
     )
-    with urllib.request.urlopen(req, timeout=15) as resp:
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
         return resp.read().decode("utf-8", errors="replace")
 
 

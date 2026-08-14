@@ -16,7 +16,6 @@
 #include <Python.h>
 #include <windows.h>
 
-#include "ntextapi.h"
 #include "../../arch/all/init.h"
 
 
@@ -53,31 +52,6 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 }
 
 
-// Commented out in favor of psutil_boot_time() above.
-
-/*
-// The number of seconds passed since boot. This is a monotonic timer,
-// not affected by system clock updates. On Windows 7+ it also includes
-// the time spent during suspend / hibernate.
-PyObject *
-psutil_uptime(PyObject *self, PyObject *args) {
-    double uptimeSeconds;
-    ULONGLONG interruptTime100ns = 0;
-
-    if (QueryInterruptTime) {  // Windows 7+
-        QueryInterruptTime(&interruptTime100ns);
-        // Convert from 100-nanosecond to seconds.
-        uptimeSeconds = interruptTime100ns / 10000000.0;
-    }
-    else {
-        // Convert from milliseconds to seconds.
-        uptimeSeconds = (double)GetTickCount64() / 1000.0;
-    }
-    return Py_BuildValue("d", uptimeSeconds);
-}
-*/
-
-
 PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;
@@ -85,6 +59,7 @@ psutil_users(PyObject *self, PyObject *args) {
     LPWSTR buffer_addr = NULL;
     LPWSTR buffer_info = NULL;
     PWTS_SESSION_INFOW sessions = NULL;
+    BOOL ok;
     DWORD count;
     DWORD i;
     DWORD sessionId;
@@ -105,13 +80,23 @@ psutil_users(PyObject *self, PyObject *args) {
         // If we don't run in an environment that is a Remote Desktop Services
         // environment the Wtsapi32 proc might not be present.
         // https://docs.microsoft.com/en-us/windows/win32/termserv/run-time-linking-to-wtsapi32-dll
+        psutil_debug("WTS procs not available; return empty list");
         return py_retlist;
     }
 
-    if (WTSEnumerateSessionsW(hServer, 0, 1, &sessions, &count) == 0) {
+    // WTS calls are RPC to the Terminal Services service, they may be
+    // slow.
+    Py_BEGIN_ALLOW_THREADS
+    ok = WTSEnumerateSessionsW(hServer, 0, 1, &sessions, &count);
+    Py_END_ALLOW_THREADS
+    if (ok == 0) {
         if (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) {
             // On Windows Nano server, the Wtsapi32 API can be present, but
             // return WinError 120.
+            psutil_debug(
+                "WTSEnumerateSessionsW -> ERROR_CALL_NOT_IMPLEMENTED; "
+                "return empty list"
+            );
             return py_retlist;
         }
         psutil_oserror_wsyscall("WTSEnumerateSessionsW");
@@ -134,11 +119,12 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // username
         bytes = 0;
-        if (WTSQuerySessionInformationW(
-                hServer, sessionId, WTSUserName, &buffer_user, &bytes
-            )
-            == 0)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ok = WTSQuerySessionInformationW(
+            hServer, sessionId, WTSUserName, &buffer_user, &bytes
+        );
+        Py_END_ALLOW_THREADS
+        if (ok == 0) {
             psutil_oserror_wsyscall("WTSQuerySessionInformationW");
             goto error;
         }
@@ -147,17 +133,18 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // address
         bytes = 0;
-        if (WTSQuerySessionInformationW(
-                hServer, sessionId, WTSClientAddress, &buffer_addr, &bytes
-            )
-            == 0)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ok = WTSQuerySessionInformationW(
+            hServer, sessionId, WTSClientAddress, &buffer_addr, &bytes
+        );
+        Py_END_ALLOW_THREADS
+        if (ok == 0) {
             psutil_oserror_wsyscall("WTSQuerySessionInformationW");
             goto error;
         }
 
         address = (PWTS_CLIENT_ADDRESS)buffer_addr;
-        if (address->AddressFamily == 2) {  // AF_INET == 2
+        if (address->AddressFamily == AF_INET) {
             str_format(
                 address_str,
                 sizeof(address_str),
@@ -180,11 +167,12 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // login time
         bytes = 0;
-        if (WTSQuerySessionInformationW(
-                hServer, sessionId, WTSSessionInfo, &buffer_info, &bytes
-            )
-            == 0)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ok = WTSQuerySessionInformationW(
+            hServer, sessionId, WTSSessionInfo, &buffer_info, &bytes
+        );
+        Py_END_ALLOW_THREADS
+        if (ok == 0) {
             psutil_oserror_wsyscall("WTSQuerySessionInformationW");
             goto error;
         }
@@ -209,9 +197,12 @@ psutil_users(PyObject *self, PyObject *args) {
     }
 
     WTSFreeMemory(sessions);
-    WTSFreeMemory(buffer_user);
-    WTSFreeMemory(buffer_addr);
-    WTSFreeMemory(buffer_info);
+    if (buffer_user != NULL)
+        WTSFreeMemory(buffer_user);
+    if (buffer_addr != NULL)
+        WTSFreeMemory(buffer_addr);
+    if (buffer_info != NULL)
+        WTSFreeMemory(buffer_info);
     return py_retlist;
 
 error:

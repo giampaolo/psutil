@@ -22,21 +22,11 @@ PyMutex utxent_lock = {0};
 // Enable or disable PSUTIL_DEBUG messages.
 PyObject *
 psutil_set_debug(PyObject *self, PyObject *args) {
-    PyObject *value;
-    int x;
+    int value;
 
-    if (!PyArg_ParseTuple(args, "O", &value))
+    if (!PyArg_ParseTuple(args, "p", &value))
         return NULL;
-    x = PyObject_IsTrue(value);
-    if (x < 0) {
-        return NULL;
-    }
-    else if (x == 0) {
-        PSUTIL_DEBUG = 0;
-    }
-    else {
-        PSUTIL_DEBUG = 1;
-    }
+    PSUTIL_DEBUG = value;
     Py_RETURN_NONE;
 }
 

@@ -91,7 +91,7 @@ import socket
 import sys
 
 import psutil
-from psutil._common import bytes2human
+from psutil import bytes2human
 
 ACCESS_DENIED = ''
 NON_VERBOSE_ITERATIONS = 4

@@ -493,6 +493,29 @@ def per_cpu_times():
         return cpus
 
 
+def _parse_cpulist(cpulist):
+    """Parse Linux CPU list string (e.g "0-3,8,10-11")"""
+    cpulist = cpulist.strip()
+    if not cpulist:
+        return []
+    cpus = []
+    for chunk in cpulist.split(','):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        if '-' in chunk:
+            start, _, end = chunk.partition('-')
+            start = int(start)
+            end = int(end)
+            if start > end:
+                msg = f"invalid CPU range {chunk!r}"
+                raise ValueError(msg)
+            cpus.extend(range(start, end + 1))
+        else:
+            cpus.append(int(chunk))
+    return cpus
+
+
 def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
     try:
@@ -589,12 +612,21 @@ def cpu_stats():
 
 def _cpu_get_cpuinfo_freq():
     """Return current CPU frequency from cpuinfo if available."""
+    ret = []
     with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
-        return [
-            float(line.split(b':', 1)[1])
-            for line in f
-            if line.lower().startswith(b'cpu mhz')
-        ]
+        for line in f:
+            key, _, value = line.partition(b':')
+            key = key.strip().lower()
+            # x86 says "cpu MHz", ppc "clock" (with a MHz suffix),
+            # s390x "cpu MHz dynamic" plus a "static" one we skip.
+            # https://github.com/torvalds/linux/blob/master/arch/powerpc/kernel/setup-common.c
+            # https://github.com/torvalds/linux/blob/master/arch/s390/kernel/processor.c
+            if key in {b'cpu mhz', b'clock', b'cpu mhz dynamic'}:
+                value = value.strip()
+                if value.endswith(b"MHz"):
+                    value = value[:-3]
+                ret.append(float(value))
+    return ret
 
 
 if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
@@ -606,15 +638,29 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
         Contrarily to other OSes, Linux updates these values in
         real-time.
         """
+        pjoin = os.path.join
         cpuinfo_freqs = _cpu_get_cpuinfo_freq()
         paths = glob.glob(
             "/sys/devices/system/cpu/cpufreq/policy[0-9]*"
         ) or glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq")
-        paths.sort(key=lambda x: int(re.search(r"[0-9]+", x).group()))
+
+        # One policy may govern more than one CPU, so ask each policy
+        # which CPUs it affects instead of assuming one per CPU. Offline
+        # CPUs are listed by no policy, and are therefore left out.
+        # https://github.com/giampaolo/psutil/issues/2512
+        cpu_to_path = {}
+        for path in paths:
+            affected = bcat(pjoin(path, "affected_cpus"), fallback=None)
+            if affected is None:
+                cpu_to_path[int(re.search(r"[0-9]+", path).group())] = path
+            else:
+                for cpu in affected.split():
+                    cpu_to_path[int(cpu)] = path
+
         ret = []
-        pjoin = os.path.join
-        for i, path in enumerate(paths):
-            if len(paths) == len(cpuinfo_freqs):
+        for i, cpu in enumerate(sorted(cpu_to_path)):
+            path = cpu_to_path[cpu]
+            if len(cpu_to_path) == len(cpuinfo_freqs):
                 # take cached value from cpuinfo if available, see:
                 # https://github.com/giampaolo/psutil/issues/1851
                 curr = cpuinfo_freqs[i] * 1000
@@ -625,7 +671,7 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                 # https://github.com/giampaolo/psutil/issues/1071
                 curr = bcat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
                 if curr is None:
-                    online_path = f"/sys/devices/system/cpu/cpu{i}/online"
+                    online_path = f"/sys/devices/system/cpu/cpu{cpu}/online"
                     # If the CPU core is offline skip it instead of
                     # reporting it as all zeroes, otherwise it drags
                     # down the average frequency. See:
@@ -1760,11 +1806,9 @@ class Process:
     @wrap_exceptions
     def terminal(self):
         tty_nr = int(self._parse_stat_file()['ttynr'])
-        tmap = _psposix.get_terminal_map()
-        try:
-            return tmap[tty_nr]
-        except KeyError:
+        if tty_nr == 0:
             return None
+        return _psposix.get_terminal(tty_nr)
 
     # May not be available on old kernels.
     if os.path.exists(f"/proc/{os.getpid()}/io"):
@@ -2114,14 +2158,21 @@ class Process:
             return _psutil.proc_cpu_affinity_get(self.pid)
 
         def _get_eligible_cpus(
-            self, _re=re.compile(br"Cpus_allowed_list:\t(\d+)-(\d+)")
+            self,
+            _re=re.compile(
+                br"^Cpus_allowed_list:[ \t]*([^\r\n]*)", re.MULTILINE
+            ),
         ):
             # See: https://github.com/giampaolo/psutil/issues/956
             data = self._read_status_file()
-            if match := _re.findall(data):
-                return list(range(int(match[0][0]), int(match[0][1]) + 1))
-            else:
-                return list(range(len(per_cpu_times())))
+            if match := _re.search(data):
+                try:
+                    return _parse_cpulist(decode(match.group(1)))
+                except ValueError as err:
+                    debug(
+                        f"can't parse Cpus_allowed_list ({err}); falling back"
+                    )
+            return list(range(len(per_cpu_times())))
 
         @wrap_exceptions
         def cpu_affinity_set(self, cpus):

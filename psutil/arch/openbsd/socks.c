@@ -27,7 +27,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     int rport;
     char lip[INET6_ADDRSTRLEN];
     char rip[INET6_ADDRSTRLEN];
-    int inseq;
+    psutil_conn_filters filters;
 
     char errbuf[_POSIX2_LINE_MAX];
     kvm_t *kd = NULL;
@@ -42,8 +42,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *py_lpath = NULL;
     PyObject *py_af_filter = NULL;
     PyObject *py_type_filter = NULL;
-    PyObject *py_family = NULL;
-    PyObject *_type = NULL;
 
 
     if (py_retlist == NULL)
@@ -54,18 +52,21 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     {
         goto error;
     }
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+    if (psutil_parse_conn_filters(py_af_filter, py_type_filter, &filters) != 0)
         goto error;
-    }
 
+    Py_BEGIN_ALLOW_THREADS
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
+    Py_END_ALLOW_THREADS
     if (!kd) {
         convert_kvm_err("kvm_openfiles", errbuf);
         goto error;
     }
 
+    // Walks the whole kernel file table, may take a while.
+    Py_BEGIN_ALLOW_THREADS
     ikf = kvm_getfiles(kd, KERN_FILE_BYPID, -1, sizeof(*ikf), &cnt);
+    Py_END_ALLOW_THREADS
     if (!ikf) {
         psutil_oserror_wsyscall("kvm_getfiles");
         goto error;
@@ -82,16 +83,17 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             continue;
         if (pid != -1 && kif->p_pid != (uint32_t)pid)
             continue;
-        py_family = PyLong_FromLong((long)kif->so_family);
-        inseq = PySequence_Contains(py_af_filter, py_family);
-        Py_DECREF(py_family);
-        if (inseq == 0)
+        if (!((kif->so_family == AF_INET && filters.v4)
+              || (kif->so_family == AF_INET6 && filters.v6)
+              || (kif->so_family == AF_UNIX && filters.unix_)))
+        {
             continue;
-        _type = PyLong_FromLong((long)kif->so_type);
-        inseq = PySequence_Contains(py_type_filter, _type);
-        Py_DECREF(_type);
-        if (inseq == 0)
+        }
+        if (!((kif->so_type == SOCK_STREAM && filters.tcp)
+              || (kif->so_type == SOCK_DGRAM && filters.udp)))
+        {
             continue;
+        }
 
         // IPv4 / IPv6 socket
         if ((kif->so_family == AF_INET) || (kif->so_family == AF_INET6)) {

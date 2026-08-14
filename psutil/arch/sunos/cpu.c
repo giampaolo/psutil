@@ -23,7 +23,10 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    // Opens /dev/kstat and snapshots the whole kstat chain.
+    Py_BEGIN_ALLOW_THREADS
     kc = kstat_open();
+    Py_END_ALLOW_THREADS
     if (kc == NULL) {
         psutil_oserror();
         goto error;
@@ -67,7 +70,10 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     kstat_t *ksp;
     int ncpus = 0;
 
+    // Opens /dev/kstat and snapshots the whole kstat chain.
+    Py_BEGIN_ALLOW_THREADS
     kc = kstat_open();
+    Py_END_ALLOW_THREADS
     if (kc == NULL)
         goto error;
     ksp = kstat_lookup(kc, "cpu_info", -1, NULL);
@@ -107,7 +113,10 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     unsigned int traps = 0;
     unsigned int syscalls = 0;
 
+    // Opens /dev/kstat and snapshots the whole kstat chain.
+    Py_BEGIN_ALLOW_THREADS
     kc = kstat_open();
+    Py_END_ALLOW_THREADS
     if (kc == NULL) {
         psutil_oserror();
         goto error;

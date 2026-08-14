@@ -10,17 +10,19 @@ on:
     # only run this job if the following files are modified
     paths: &bsd_paths
       - ".github/workflows/bsd.yml"
+      - "Makefile"
       - "psutil/__init__.py"
       - "psutil/_common.py"
       - "psutil/_ntuples.py"
       - "psutil/_psbsd.py"
       - "psutil/_psposix.py"
       - "psutil/_psutil_bsd.c"
-      - "psutil/arch/bsd/**"
-      - "psutil/arch/freebsd/**"
-      - "psutil/arch/netbsd/**"
-      - "psutil/arch/openbsd/**"
-      - "psutil/arch/posix/**"
+      - "psutil/arch/*bsd*/**"
+      - "psutil/arch/*posix*/**"
+      - "psutil/arch/all/**"
+      - "pyproject.toml"
+      - "scripts/internal/install-pydeps.sh"
+      - "scripts/internal/install-sysdeps.sh"
       - "setup.py"
       - "tests/**"
   pull_request:
@@ -32,7 +34,10 @@ concurrency:
 jobs:
   freebsd:
     # if: false
+    # Skip same-repo PR runs: the push event already covers them.
+    if: &skip_same_repo_pr github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - name: Run tests
@@ -42,10 +47,13 @@ jobs:
           usesh: true
           run: |
             make ci-test
+            make test-memleaks-parallel
 
   openbsd:
     # if: false
+    if: *skip_same_repo_pr
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - name: Run tests
@@ -54,10 +62,13 @@ jobs:
           usesh: true
           run: |
             make ci-test
+            make test-memleaks-parallel
 
   netbsd:
     # if: false
+    if: *skip_same_repo_pr
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - name: Run tests
@@ -66,3 +77,4 @@ jobs:
           usesh: true
           run: |
             make ci-test
+            make test-memleaks-parallel

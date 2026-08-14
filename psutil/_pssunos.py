@@ -455,7 +455,7 @@ class Process:
             real = self._oneshot()[proc_info_map['gid']]
             effective = self._oneshot()[proc_info_map['egid']]
             saved = None
-        return ntp.puids(real, effective, saved)
+        return ntp.pgids(real, effective, saved)
 
     @wrap_exceptions
     def cpu_times(self):
@@ -592,23 +592,37 @@ class Process:
                 raise AccessDenied(self.pid, self._name)
             if 'no such process' in stderr.lower():
                 raise NoSuchProcess(self.pid, self._name)
+            if self.status() == ProcessStatus.STATUS_ZOMBIE:
+                # pfiles can't examine zombies
+                raise ZombieProcess(self.pid, self._name, self._ppid)
             msg = f"{cmd!r} command error\n{stderr}"
             raise RuntimeError(msg)
 
-        lines = stdout.split('\n')[2:]
-        for i, line in enumerate(lines):
-            line = line.lstrip()
-            if line.startswith('sockname: AF_UNIX'):
-                path = line.split(' ', 2)[2]
-                type = lines[i - 2].strip()
-                if type == 'SOCK_STREAM':
+        blocks = []
+        cur = None
+        for line in stdout.split('\n'):
+            line = line.strip()
+            first, _, rest = line.partition(':')
+            if first.isdigit() and rest.lstrip().startswith('S_IF'):
+                cur = None
+                if 'S_IFSOCK' in rest:
+                    cur = (int(first), [])
+                    blocks.append(cur)
+            elif cur is not None:
+                cur[1].append(line)
+        for fd, block in blocks:
+            path = None
+            type = -1
+            for line in block:
+                if line.startswith('sockname: AF_UNIX'):
+                    path = line[len('sockname: AF_UNIX') :].strip()
+                elif line.startswith('SOCK_STREAM'):
                     type = socket.SOCK_STREAM
-                elif type == 'SOCK_DGRAM':
+                elif line.startswith('SOCK_DGRAM'):
                     type = socket.SOCK_DGRAM
-                else:
-                    type = -1
+            if path is not None:
                 yield (
-                    -1,
+                    fd,
                     socket.AF_UNIX,
                     type,
                     path,

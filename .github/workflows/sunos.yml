@@ -8,11 +8,19 @@ on:
     # only run this job if the following files are modified
     paths: &sunos_paths
       - ".github/workflows/sunos.yml"
+      - "Makefile"
+      - "psutil/__init__.py"
+      - "psutil/_common.py"
+      - "psutil/_ntuples.py"
+      - "psutil/_psposix.py"
       - "psutil/_pssunos.py"
       - "psutil/_psutil_sunos.c"
       - "psutil/arch/all/**"
       - "psutil/arch/posix/**"
       - "psutil/arch/sunos/**"
+      - "pyproject.toml"
+      - "scripts/internal/install-pydeps.sh"
+      - "scripts/internal/install-sysdeps.sh"
       - "setup.py"
   pull_request:
     paths: *sunos_paths
@@ -21,7 +29,10 @@ concurrency:
   cancel-in-progress: true
 jobs:
   test:
+    # Skip same-repo PR runs: the push event already covers them.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - name: Run tests
@@ -32,8 +43,7 @@ jobs:
           usesh: true
           run: |
             set -x
-            python3 setup.py build_ext -i --parallel 4
-            python3 -c "import psutil"
-            python3 scripts/internal/install_pip.py
-            python3 -m pip install --break-system-packages --user .[test]
-            PYTHONMALLOC=malloc PYTHONUNBUFFERED=1 python3 -m pytest tests/test_memleaks.py
+            pkg install --accept developer/build/gnu-make || true
+            gmake build
+            gmake install-pydeps-test
+            gmake test-memleaks-parallel

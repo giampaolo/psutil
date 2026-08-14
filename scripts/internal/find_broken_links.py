@@ -59,22 +59,6 @@ REQUEST_TIMEOUT = 15
 RETRY_STATUSES = [503, 401, 403]
 
 
-def memoize(fun):
-    """A memoize decorator."""
-
-    @functools.wraps(fun)
-    def wrapper(*args, **kwargs):
-        key = (args, frozenset(sorted(kwargs.items())))
-        try:
-            return cache[key]
-        except KeyError:
-            ret = cache[key] = fun(*args, **kwargs)
-            return ret
-
-    cache = {}
-    return wrapper
-
-
 def sanitize_url(url):
     url = url.rstrip(',')
     url = url.rstrip('.')

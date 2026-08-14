@@ -20,6 +20,8 @@
 
 #include "../../arch/all/init.h"
 
+#define MAX_DISK_NAME_SIZE 64
+
 
 PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
@@ -216,31 +218,41 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     io_registry_entry_t parent = IO_OBJECT_NULL;
     io_registry_entry_t disk = IO_OBJECT_NULL;
     io_iterator_t disk_list = IO_OBJECT_NULL;
+    kern_return_t ret;
     PyObject *py_disk_info = NULL;
     PyObject *py_retdict = PyDict_New();
 
     if (py_retdict == NULL)
         return NULL;
 
-    if (IOServiceGetMatchingServices(
-            kIOMasterPortDefault, IOServiceMatching(kIOMediaClass), &disk_list
-        )
-        != kIOReturnSuccess)
-    {
+    // IOKit queries are mach IPC round trips into the kernel's
+    // registry, so run them without the GIL.
+    Py_BEGIN_ALLOW_THREADS
+    ret = IOServiceGetMatchingServices(
+        kIOMasterPortDefault, IOServiceMatching(kIOMediaClass), &disk_list
+    );
+    Py_END_ALLOW_THREADS
+    if (ret != kIOReturnSuccess) {
         psutil_runtime_error("unable to get the list of disks");
         goto error;
     }
 
-    while ((disk = IOIteratorNext(disk_list)) != 0) {
+    while (1) {
+        Py_BEGIN_ALLOW_THREADS
+        disk = IOIteratorNext(disk_list);
+        Py_END_ALLOW_THREADS
+        if (disk == 0)
+            break;
         py_disk_info = NULL;
         parent_dict = NULL;
         props_dict = NULL;
         stats_dict = NULL;
         parent = IO_OBJECT_NULL;
 
-        if (IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent)
-            != kIOReturnSuccess)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ret = IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent);
+        Py_END_ALLOW_THREADS
+        if (ret != kIOReturnSuccess) {
             psutil_runtime_error("unable to get the disk's parent");
             goto error;
         }
@@ -251,26 +263,28 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             continue;
         }
 
-        if (IORegistryEntryCreateCFProperties(
-                disk,
-                (CFMutableDictionaryRef *)&parent_dict,
-                kCFAllocatorDefault,
-                kNilOptions
-            )
-            != kIOReturnSuccess)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ret = IORegistryEntryCreateCFProperties(
+            disk,
+            (CFMutableDictionaryRef *)&parent_dict,
+            kCFAllocatorDefault,
+            kNilOptions
+        );
+        Py_END_ALLOW_THREADS
+        if (ret != kIOReturnSuccess) {
             psutil_runtime_error("unable to get the parent's properties");
             goto error;
         }
 
-        if (IORegistryEntryCreateCFProperties(
-                parent,
-                (CFMutableDictionaryRef *)&props_dict,
-                kCFAllocatorDefault,
-                kNilOptions
-            )
-            != kIOReturnSuccess)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ret = IORegistryEntryCreateCFProperties(
+            parent,
+            (CFMutableDictionaryRef *)&props_dict,
+            kCFAllocatorDefault,
+            kNilOptions
+        );
+        Py_END_ALLOW_THREADS
+        if (ret != kIOReturnSuccess) {
             psutil_runtime_error("unable to get the disk properties");
             goto error;
         }
@@ -282,12 +296,11 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             goto error;
         }
 
-        const int kMaxDiskNameSize = 64;
-        char disk_name[kMaxDiskNameSize];
+        char disk_name[MAX_DISK_NAME_SIZE];
         if (!CFStringGetCString(
                 disk_name_ref,
                 disk_name,
-                kMaxDiskNameSize,
+                sizeof(disk_name),
                 CFStringGetSystemEncoding()
             ))
         {

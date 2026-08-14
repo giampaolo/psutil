@@ -16,6 +16,7 @@
 
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
 #define STATUS_UNSUCCESSFUL 0xC0000001
+#define MAX_TRIES 3
 
 
 // Note about GetExtended[Tcp|Udp]Table syscalls: due to other processes
@@ -30,30 +31,58 @@ static PVOID
 __GetExtendedTcpTable(ULONG family) {
     DWORD err;
     PVOID table;
-    ULONG size = 0;
+    ULONG size;
+    int attempt;
     TCP_TABLE_CLASS class = TCP_TABLE_OWNER_PID_ALL;
 
-    GetExtendedTcpTable(NULL, &size, FALSE, family, class, 0);
-    // reserve 25% more space to be sure
-    size = size + (size / 2 / 2);
+    // The table can grow between the call asking for its size and the
+    // one reading it, hence the retry.
+    for (attempt = 0; attempt < MAX_TRIES; attempt++) {
+        size = 0;
+        // Snapshots the whole TCP table from the network stack.
+        Py_BEGIN_ALLOW_THREADS
+        err = GetExtendedTcpTable(NULL, &size, FALSE, family, class, 0);
+        Py_END_ALLOW_THREADS
+        if (err != ERROR_INSUFFICIENT_BUFFER) {
+            psutil_runtime_error(
+                "GetExtendedTcpTable() failed to determine the buffer size "
+                "(err=%lu)",
+                (unsigned long)err
+            );
+            return NULL;
+        }
+        // reserve 25% more space to be sure
+        size = size + (size / 2 / 2);
 
-    table = malloc(size);
-    if (table == NULL) {
-        PyErr_NoMemory();
-        return NULL;
+        table = malloc(size);
+        if (table == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
+        Py_BEGIN_ALLOW_THREADS
+        err = GetExtendedTcpTable(table, &size, FALSE, family, class, 0);
+        Py_END_ALLOW_THREADS
+        if (err == NO_ERROR)
+            return table;
+
+        free(table);
+        if (err != ERROR_INSUFFICIENT_BUFFER && err != STATUS_UNSUCCESSFUL) {
+            psutil_runtime_error(
+                "GetExtendedTcpTable() failed (err=%lu)", (unsigned long)err
+            );
+            return NULL;
+        }
+        psutil_debug(
+            "GetExtendedTcpTable: retry (err=%lu)", (unsigned long)err
+        );
     }
 
-    err = GetExtendedTcpTable(table, &size, FALSE, family, class, 0);
-    if (err == NO_ERROR)
-        return table;
-
-    free(table);
-    if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
-        psutil_debug("GetExtendedTcpTable: retry with different bufsize");
-        return __GetExtendedTcpTable(family);
-    }
-
-    psutil_runtime_error("GetExtendedTcpTable failed");
+    psutil_runtime_error(
+        "GetExtendedTcpTable() failed %d times in a row (last err=%lu)",
+        MAX_TRIES,
+        (unsigned long)err
+    );
     return NULL;
 }
 
@@ -62,39 +91,60 @@ static PVOID
 __GetExtendedUdpTable(ULONG family) {
     DWORD err;
     PVOID table;
-    ULONG size = 0;
+    ULONG size;
+    int attempt;
     UDP_TABLE_CLASS class = UDP_TABLE_OWNER_PID;
 
-    GetExtendedUdpTable(NULL, &size, FALSE, family, class, 0);
-    // reserve 25% more space
-    size = size + (size / 2 / 2);
+    // The table can grow between the call asking for its size and the
+    // one reading it, hence the retry.
+    for (attempt = 0; attempt < MAX_TRIES; attempt++) {
+        size = 0;
+        // Snapshots the whole UDP table from the network stack.
+        Py_BEGIN_ALLOW_THREADS
+        err = GetExtendedUdpTable(NULL, &size, FALSE, family, class, 0);
+        Py_END_ALLOW_THREADS
+        if (err != ERROR_INSUFFICIENT_BUFFER) {
+            psutil_runtime_error(
+                "GetExtendedUdpTable() failed to determine the buffer size "
+                "(err=%lu)",
+                (unsigned long)err
+            );
+            return NULL;
+        }
+        // reserve 25% more space to be sure
+        size = size + (size / 2 / 2);
 
-    table = malloc(size);
-    if (table == NULL) {
-        PyErr_NoMemory();
-        return NULL;
+        table = malloc(size);
+        if (table == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
+        Py_BEGIN_ALLOW_THREADS
+        err = GetExtendedUdpTable(table, &size, FALSE, family, class, 0);
+        Py_END_ALLOW_THREADS
+        if (err == NO_ERROR)
+            return table;
+
+        free(table);
+        if (err != ERROR_INSUFFICIENT_BUFFER && err != STATUS_UNSUCCESSFUL) {
+            psutil_runtime_error(
+                "GetExtendedUdpTable() failed (err=%lu)", (unsigned long)err
+            );
+            return NULL;
+        }
+        psutil_debug(
+            "GetExtendedUdpTable: retry (err=%lu)", (unsigned long)err
+        );
     }
 
-    err = GetExtendedUdpTable(table, &size, FALSE, family, class, 0);
-    if (err == NO_ERROR)
-        return table;
-
-    free(table);
-    if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
-        psutil_debug("GetExtendedUdpTable: retry with different bufsize");
-        return __GetExtendedUdpTable(family);
-    }
-
-    psutil_runtime_error("GetExtendedUdpTable failed");
+    psutil_runtime_error(
+        "GetExtendedUdpTable() failed %d times in a row (last err=%lu)",
+        MAX_TRIES,
+        (unsigned long)err
+    );
     return NULL;
 }
-
-
-#define psutil_conn_decref_objs() \
-    Py_XDECREF(_AF_INET);         \
-    Py_XDECREF(_AF_INET6);        \
-    Py_XDECREF(_SOCK_STREAM);     \
-    Py_XDECREF(_SOCK_DGRAM);
 
 
 /*
@@ -104,13 +154,14 @@ PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     static long null_address[4] = {0, 0, 0, 0};
     DWORD pid;
-    int pid_return;
     PVOID table = NULL;
     PMIB_TCPTABLE_OWNER_PID tcp4Table;
     PMIB_UDPTABLE_OWNER_PID udp4Table;
     PMIB_TCP6TABLE_OWNER_PID tcp6Table;
     PMIB_UDP6TABLE_OWNER_PID udp6Table;
     ULONG i;
+    int ok;
+    psutil_conn_filters filters;
     CHAR addressBufferLocal[65];
     CHAR addressBufferRemote[65];
 
@@ -119,47 +170,29 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *py_type_filter = NULL;
     PyObject *py_addr_tuple_local = NULL;
     PyObject *py_addr_tuple_remote = NULL;
-    PyObject *_AF_INET = PyLong_FromLong((long)AF_INET);
-    PyObject *_AF_INET6 = PyLong_FromLong((long)AF_INET6);
-    PyObject *_SOCK_STREAM = PyLong_FromLong((long)SOCK_STREAM);
-    PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
 
     if (!PyArg_ParseTuple(
             args, _Py_PARSE_PID "OO", &pid, &py_af_filter, &py_type_filter
         ))
     {
-        goto error;
-    }
-
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        psutil_conn_decref_objs();
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         return NULL;
     }
 
+    if (psutil_parse_conn_filters(py_af_filter, py_type_filter, &filters) != 0)
+        return NULL;
+
     if (pid != -1) {
-        pid_return = psutil_pid_is_running(pid);
-        if (pid_return == 0) {
-            psutil_conn_decref_objs();
-            return psutil_oserror_nsp("psutil_pid_is_running");
-        }
-        else if (pid_return == -1) {
-            psutil_conn_decref_objs();
+        if (psutil_check_pid_running(pid) != 0)
             return NULL;
-        }
     }
 
     py_retlist = PyList_New(0);
-    if (py_retlist == NULL) {
-        psutil_conn_decref_objs();
+    if (py_retlist == NULL)
         return NULL;
-    }
 
     // TCP IPv4
 
-    if ((PySequence_Contains(py_af_filter, _AF_INET) == 1)
-        && (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1))
-    {
+    if (filters.tcp && filters.v4) {
         table = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
@@ -218,22 +251,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_remote == NULL)
                 goto error;
 
-            if (!pylist_append_fmt(
-                    py_retlist,
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET,
-                    SOCK_STREAM,
-                    py_addr_tuple_local,
-                    py_addr_tuple_remote,
-                    tcp4Table->table[i].dwState,
-                    tcp4Table->table[i].dwOwningPid
-                ))
-            {
-                goto error;
-            }
+            ok = pylist_append_fmt(
+                py_retlist,
+                "(iiiNNiI)",
+                -1,
+                AF_INET,
+                SOCK_STREAM,
+                py_addr_tuple_local,
+                py_addr_tuple_remote,
+                tcp4Table->table[i].dwState,
+                tcp4Table->table[i].dwOwningPid
+            );
+            // "N" consumes the references, whether it succeeds or not.
             py_addr_tuple_local = NULL;
             py_addr_tuple_remote = NULL;
+            if (!ok)
+                goto error;
         }
 
         free(table);
@@ -241,10 +274,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     }
 
     // TCP IPv6
-    if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1)
-        && (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1)
-        && (RtlIpv6AddressToStringA != NULL))
-    {
+    if (filters.tcp && filters.v6) {
         table = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
@@ -304,22 +334,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_remote == NULL)
                 goto error;
 
-            if (!pylist_append_fmt(
-                    py_retlist,
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET6,
-                    SOCK_STREAM,
-                    py_addr_tuple_local,
-                    py_addr_tuple_remote,
-                    tcp6Table->table[i].dwState,
-                    tcp6Table->table[i].dwOwningPid
-                ))
-            {
-                goto error;
-            }
+            ok = pylist_append_fmt(
+                py_retlist,
+                "(iiiNNiI)",
+                -1,
+                AF_INET6,
+                SOCK_STREAM,
+                py_addr_tuple_local,
+                py_addr_tuple_remote,
+                tcp6Table->table[i].dwState,
+                tcp6Table->table[i].dwOwningPid
+            );
+            // "N" consumes the references, whether it succeeds or not.
             py_addr_tuple_local = NULL;
             py_addr_tuple_remote = NULL;
+            if (!ok)
+                goto error;
         }
 
         free(table);
@@ -328,9 +358,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     // UDP IPv4
 
-    if ((PySequence_Contains(py_af_filter, _AF_INET) == 1)
-        && (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1))
-    {
+    if (filters.udp && filters.v4) {
         table = NULL;
         py_addr_tuple_local = NULL;
         table = __GetExtendedUdpTable(AF_INET);
@@ -364,21 +392,21 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_local == NULL)
                 goto error;
 
-            if (!pylist_append_fmt(
-                    py_retlist,
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET,
-                    SOCK_DGRAM,
-                    py_addr_tuple_local,
-                    PyTuple_New(0),
-                    PSUTIL_CONN_NONE,
-                    udp4Table->table[i].dwOwningPid
-                ))
-            {
-                goto error;
-            }
+            ok = pylist_append_fmt(
+                py_retlist,
+                "(iiiNNiI)",
+                -1,
+                AF_INET,
+                SOCK_DGRAM,
+                py_addr_tuple_local,
+                PyTuple_New(0),
+                PSUTIL_CONN_NONE,
+                udp4Table->table[i].dwOwningPid
+            );
+            // "N" consumes the references, whether it succeeds or not.
             py_addr_tuple_local = NULL;
+            if (!ok)
+                goto error;
         }
 
         free(table);
@@ -387,10 +415,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     // UDP IPv6
 
-    if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1)
-        && (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1)
-        && (RtlIpv6AddressToStringA != NULL))
-    {
+    if (filters.udp && filters.v6) {
         table = NULL;
         py_addr_tuple_local = NULL;
         table = __GetExtendedUdpTable(AF_INET6);
@@ -424,32 +449,30 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_local == NULL)
                 goto error;
 
-            if (!pylist_append_fmt(
-                    py_retlist,
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET6,
-                    SOCK_DGRAM,
-                    py_addr_tuple_local,
-                    PyTuple_New(0),
-                    PSUTIL_CONN_NONE,
-                    udp6Table->table[i].dwOwningPid
-                ))
-            {
-                goto error;
-            }
+            ok = pylist_append_fmt(
+                py_retlist,
+                "(iiiNNiI)",
+                -1,
+                AF_INET6,
+                SOCK_DGRAM,
+                py_addr_tuple_local,
+                PyTuple_New(0),
+                PSUTIL_CONN_NONE,
+                udp6Table->table[i].dwOwningPid
+            );
+            // "N" consumes the references, whether it succeeds or not.
             py_addr_tuple_local = NULL;
+            if (!ok)
+                goto error;
         }
 
         free(table);
         table = NULL;
     }
 
-    psutil_conn_decref_objs();
     return py_retlist;
 
 error:
-    psutil_conn_decref_objs();
     Py_XDECREF(py_addr_tuple_local);
     Py_XDECREF(py_addr_tuple_remote);
     Py_XDECREF(py_retlist);

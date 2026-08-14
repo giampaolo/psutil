@@ -109,8 +109,10 @@ Code contributors by year
 2026
 ~~~~
 
-* :user:`Alex Chen <l46983284-cpu>` - :gh:`2859`
+* :user:`Alex Chen <l46983284-cpu>` - :gh:`2859`, :gh:`1959`
 * :user:`Amaan Qureshi <amaanq>` - :gh:`2770`
+* :user:`Anshul Nautiyal <ANSHUL-REAL>` - :gh:`2858`
+* :user:`Arman Luthra <Arman-Luthra>` - :gh:`2695`
 * :user:`Bert Pluymers <bertpl>` - :gh:`2642`
 * :user:`Data-hYg <Data-hYg>` - :gh:`2789`
 * :user:`Ding Qiuran <dynapx>` - :gh:`2860`
@@ -119,13 +121,15 @@ Code contributors by year
 * :user:`Gabriel Changamire <gabrielchangamire-arch>` - :gh:`2809`
 * :user:`Hanson Wang <hansonw>` - :gh:`2810`
 * :user:`Jinhyuk Hong <jinh-labs>` - :gh:`2855`
+* :user:`Julien Stephan <justeph>` - :gh:`2512`
 * :user:`Karl Hill <karlhillx>` - :gh:`2857`
 * :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`
+* :user:`Marcel Telka <mtelka>` - :gh:`2687`
+* :user:`Omprakash Chauhan <omprakash2929>` - :gh:`2655`
 * :user:`Santhosh Raju <fraggerfox>` - :gh:`2805`
 * :user:`Sebastian Cao <cycsmail>` - :gh:`2628`
 * :user:`Sergey Fedorov <barracuda156>` - :gh:`2701`
 * :user:`Tobias Klauser <tklauser>` - :gh:`2711`
-* :user:`Marcel Telka <mtelka>` - :gh:`2687`
 
 2025
 ~~~~
@@ -248,7 +252,7 @@ Code contributors by year
 * :user:`EccoTheFlintstone <EccoTheFlintstone>` - :gh:`1368`, :gh:`1348`
 * :user:`Erwan Le Pape <erwan-le-pape>` - :gh:`1570`
 * :user:`Ghislain Le Meur <gigi206>` - :gh:`1379`
-* :user:`Kamil Rytarowski <krytarowski>` - :gh:`1526`, :gh:`1530`
+* :user:`Kamil Rytarowski <krytarowski>` - :gh:`1526`, :gh:`1530`, :gh:`1534`
   (:meth:`Process.cwd` for NetBSD)
 * :user:`Nathan Houghton <n1000>` - :gh:`1619`
 * :user:`Samer Masterson <samertm>` - :gh:`1480`

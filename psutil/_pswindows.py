@@ -23,7 +23,6 @@ from ._common import TimeoutExpired
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import debug
-from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
@@ -694,18 +693,15 @@ class Process:
     @wrap_exceptions
     @retry_error_partial_copy
     def cmdline(self):
-        if _psutil.WINVER >= _psutil.WINDOWS_8_1:
-            # PEB method detects cmdline changes but requires more
-            # privileges: https://github.com/giampaolo/psutil/pull/1398
-            try:
-                return _psutil.proc_cmdline(self.pid, use_peb=True)
-            except OSError as err:
-                if is_permission_err(err):
-                    return _psutil.proc_cmdline(self.pid, use_peb=False)
-                else:
-                    raise
-        else:
+        # PEB method detects cmdline changes but requires more
+        # privileges: https://github.com/giampaolo/psutil/pull/1398
+        try:
             return _psutil.proc_cmdline(self.pid, use_peb=True)
+        except OSError as err:
+            if is_permission_err(err):
+                return _psutil.proc_cmdline(self.pid, use_peb=False)
+            else:
+                raise
 
     @wrap_exceptions
     @retry_error_partial_copy
@@ -713,11 +709,18 @@ class Process:
         s = _psutil.proc_environ(self.pid)
         return parse_environ_block(s)
 
+    @wrap_exceptions
     def ppid(self):
         try:
-            return ppid_map()[self.pid]
-        except KeyError:
-            raise NoSuchProcess(self.pid, self._name) from None
+            return _psutil.proc_ppid(self.pid)
+        except OSError as err:
+            if is_permission_err(err):
+                debug("attempting ppid() fallback (slower)")
+                try:
+                    return ppid_map()[self.pid]
+                except KeyError:
+                    raise NoSuchProcess(self.pid, self._name) from None
+            raise
 
     def _get_raw_meminfo(self):
         try:
@@ -792,8 +795,13 @@ class Process:
 
     @wrap_exceptions
     def page_faults(self):
-        t = _psutil.proc_page_faults(self.pid)
-        return ntp.ppagefaults(*t)
+        # PageFaultCount is the total (soft + hard), while
+        # HardFaultCount tracks hard (major) faults only. Minor faults
+        # are derived by subtracting the two.
+        info = self._oneshot()
+        major = info["HardFaultCount"]
+        minor = info["PageFaultCount"] - major
+        return ntp.ppagefaults(minor, major)
 
     def memory_maps(self):
         try:
@@ -937,17 +945,16 @@ class Process:
     def open_files(self):
         if self.pid in {0, 4}:
             return []
-        ret = set()
         # Filenames come in in native format like:
         # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
         # Convert the first part in the corresponding drive letter
-        # (e.g. "C:\") by using Windows's QueryDosDevice()
+        # (e.g. "C:\") by using Windows's QueryDosDevice(). Directories
+        # are already filtered out by the C extension.
         raw_file_names = _psutil.proc_open_files(self.pid)
-        for file in raw_file_names:
-            file = convert_dos_path(file)
-            if isfile_strict(file):
-                ntuple = ntp.popenfile(file, -1)
-                ret.add(ntuple)
+        ret = {
+            ntp.popenfile(convert_dos_path(file), -1)
+            for file in raw_file_names
+        }
         return list(ret)
 
     @wrap_exceptions
@@ -975,7 +982,7 @@ class Process:
         if value:
             msg = "value argument not accepted on Windows"
             raise TypeError(msg)
-        if ioclass not in ProcessIOPriority:
+        if ioclass not in tuple(ProcessIOPriority):
             msg = f"{ioclass} is not a valid priority"
             raise ValueError(msg)
         _psutil.proc_io_priority_set(self.pid, ioclass)
@@ -1001,8 +1008,7 @@ class Process:
 
     @wrap_exceptions
     def status(self):
-        suspended = _psutil.proc_is_suspended(self.pid)
-        if suspended:
+        if self._oneshot()["is_suspended"]:
             return ProcessStatus.STATUS_STOPPED
         else:
             return ProcessStatus.STATUS_RUNNING

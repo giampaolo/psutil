@@ -112,6 +112,20 @@
     --table-row-even: #ffffff;
     --table-border: var(--border);
 
+    /* Changelog labels. */
+    --label-critical-bg: #fdeaea;
+    --label-critical-text: #a3161a;
+    --label-critical-border: #f3c6c7;
+    --label-build-fail-bg: #fdf2ea;
+    --label-build-fail-text: #933e06;
+    --label-build-fail-border: #f4d3bd;
+    --label-memleak-bg: #fdf5d8;
+    --label-memleak-text: #7d5e00;
+    --label-memleak-border: #f2dc9c;
+    --label-breaking-bg: #f4eefe;
+    --label-breaking-text: #5c3fa3;
+    --label-breaking-border: #e0d4fa;
+
     /* ================================================================== */
     /* Fonts                                                              */
     /* ================================================================== */
@@ -233,6 +247,20 @@
     --table-row-odd: #222222;
     --table-row-even: #272727;
     --table-border: #424242;
+
+    /* Changelog labels. */
+    --label-critical-bg: rgba(225, 29, 33, 0.16);
+    --label-critical-text: #ff8a8c;
+    --label-critical-border: rgba(225, 29, 33, 0.45);
+    --label-build-fail-bg: rgba(245, 104, 10, 0.14);
+    --label-build-fail-text: #f79f64;
+    --label-build-fail-border: rgba(245, 104, 10, 0.4);
+    --label-memleak-bg: rgba(251, 202, 4, 0.14);
+    --label-memleak-text: #e5b833;
+    --label-memleak-border: rgba(251, 202, 4, 0.4);
+    --label-breaking-bg: rgba(212, 197, 249, 0.14);
+    --label-breaking-text: #cbb9f7;
+    --label-breaking-border: rgba(212, 197, 249, 0.4);
 }
 
 /* ====================================================================== */

@@ -33,8 +33,10 @@ ERROR_FILE = None
 
 CHANGELOG_FILE = "docs/changelog.rst"
 CREDITS_FILE = "docs/credits.rst"
+MODEL = "claude-sonnet-5"
 MAX_DIFF_CHARS = 20_000
-MAX_TOKENS = 2048
+COMPARE_MAX_FILES = 300
+MAX_TOKENS = 4096  # thinking tokens count against this too
 HTTP_TIMEOUT = 30
 
 PROMPT = """\
@@ -74,9 +76,9 @@ DECIDING THE ACTION
 - skip: the block already fully describes this PR. Provide
   "skip_reason".
 
-The script places the text and handles ordering, blank lines and the
-credits file. It rejects an insert whose issue already has an entry,
-so pick amend in that case.
+The script places the text and handles ordering, blank lines, badge
+labels and the credits file. It rejects an insert whose issue already
+has an entry, so pick amend in that case.
 
 ISSUE NUMBER SELECTION
 
@@ -101,13 +103,21 @@ STYLE
 
 CLASSIFICATION
 
-Choose the section for an insert:
+Choose the section for an insert, from the vocabulary the changelog
+uses (listed in the order sections appear in a release):
 
-Bug fixes: crashes, incorrect behavior, race conditions, compilation
-failures, incorrect return values, memory leaks, platform regressions.
-
-Enhancements: new features, performance improvements, better detection,
-improved error handling, new platform support, packaging improvements.
+- New APIs: a new function, argument or field, or an existing one now
+  working where it didn't.
+- New platforms: support for a new OS, architecture or interpreter.
+- API changes: an existing API changed, was deprecated or was removed.
+- Performance: something got faster.
+- Build and packaging: wheels, the sdist, what gets installed.
+- Documentation: docs/ only.
+- Internals: psutil's own machinery: CI, tests, scripts, debug output.
+  Nothing user-facing.
+- Dropped support: a platform, OS or Python version is no longer
+  supported.
+- Bug fixes: crashes, wrong results, leaks, build failures.
 
 PLATFORM TAGS
 
@@ -117,7 +127,19 @@ issue reference, e.g.:
 :gh:`1234`, [Linux]:
 :gh:`1234`, [macOS], [BSD]:
 
+Known tags: [Linux], [Windows], [macOS], [FreeBSD], [NetBSD],
+[OpenBSD], [SunOS], [AIX], [BSD], [UNIX], [PyPy]. Use the specific OS
+when one is named; [BSD] only when the change is about the BSDs as a
+family, [UNIX] for shared POSIX behavior where no single OS fits.
 Only add platform tags if the change clearly affects specific OSes.
+The script checks every tag against the issue's labels on the bug
+tracker and rejects the entry when a tag isn't backed by one.
+
+BADGE LABELS
+
+Do not write :label:`...` badges (critical, build-fail, memleak,
+breaking). The script derives them from the issue's labels on the
+tracker and adds them to the entry itself.
 
 RST FORMATTING
 
@@ -166,7 +188,18 @@ SUBMIT_TOOL = {
             },
             "section": {
                 "type": ["string", "null"],
-                "enum": ["Bug fixes", "Enhancements", None],
+                "enum": [
+                    "New APIs",
+                    "New platforms",
+                    "API changes",
+                    "Performance",
+                    "Build and packaging",
+                    "Documentation",
+                    "Internals",
+                    "Dropped support",
+                    "Bug fixes",
+                    None,
+                ],
                 "description": "Required for insert.",
             },
             "entry_text": {
@@ -231,6 +264,7 @@ def fetch_pr_metadata():
         "body": pr.get("body") or "",
         "author": author,
         "author_name": author_name,
+        "head_sha": pr["head"]["sha"],
     }
 
 
@@ -239,6 +273,21 @@ def fetch_pr_diff():
         f"/repos/{REPO}/pulls/{PR_NUMBER}",
         accept="application/vnd.github.v3.diff",
     ).decode("utf-8", errors="replace")
+
+
+def stale_reason(head_sha):
+    """Why the branch is too old to receive an entry, if it is.
+    We commit on top of the PR head, so an entry written against a
+    stale copy of the docs makes the PR unmergeable.
+    """
+    data = json.loads(gh_request(f"/repos/{REPO}/compare/{head_sha}...master"))
+    files = [f["filename"] for f in data.get("files", [])]
+    stale = [f for f in (CHANGELOG_FILE, CREDITS_FILE) if f in files]
+    if stale:
+        return f"master has moved on: {' and '.join(stale)} changed"
+    if len(files) >= COMPARE_MAX_FILES:
+        return "master's diff is too big to tell whether the docs changed"
+    return None
 
 
 def ask_claude(pr, diff, block):
@@ -258,8 +307,10 @@ def ask_claude(pr, diff, block):
         sys.exit("ANTHROPIC_API_KEY is not set")
     client = anthropic.Anthropic(api_key=api_key)
     message = client.messages.create(
-        model="claude-sonnet-4-6",
+        model=MODEL,
         max_tokens=MAX_TOKENS,
+        thinking={"type": "adaptive"},
+        output_config={"effort": "low"},
         tools=[SUBMIT_TOOL],
         tool_choice={"type": "tool", "name": "submit"},
         messages=[{"role": "user", "content": prompt}],
@@ -275,7 +326,51 @@ def ask_claude(pr, diff, block):
 
 
 VERSION_RE = re.compile(r"^(\d+\.\d+\.\d+|X\.X\.X)\b")
-SECTIONS = ("Enhancements", "Bug fixes")
+
+# The section vocabulary, in the order sections appear in a release.
+SECTIONS = (
+    "New APIs",
+    "New platforms",
+    "API changes",
+    "Performance",
+    "Build and packaging",
+    "Documentation",
+    "Internals",
+    "Dropped support",
+    "Bug fixes",
+)
+
+# Badge labels: (tracker label, badge name), in the order badges
+# appear in an entry and entries sort within a section.
+BADGES = (
+    ("critical", "critical"),
+    ("build-fail", "build-fail"),
+    ("memleak", "memleak"),
+    ("compatibility", "breaking"),
+)
+
+# Platform tags accepted in an entry, with the tracker label that must
+# back each one.
+TAG2LABEL = {
+    "Linux": "linux",
+    "Windows": "windows",
+    "macOS": "macos",
+    "FreeBSD": "freebsd",
+    "NetBSD": "netbsd",
+    "OpenBSD": "openbsd",
+    "SunOS": "sunos",
+    "AIX": "aix",
+    "BSD": "bsd",
+    "UNIX": "unix",
+    "POSIX": "unix",
+    "PyPy": "pypy",
+}
+NAMED_BSD = {"freebsd", "netbsd", "openbsd"}
+POSIXY = NAMED_BSD | {"linux", "macos", "sunos", "aix", "bsd", "unix"}
+
+ENTRY_PREFIX_RE = re.compile(
+    r"^- (?::gh:`\d+`, )*:gh:`\d+`((?:,? \[[^\]]+\])*)"
+)
 
 
 class ValidationError(Exception):
@@ -333,34 +428,131 @@ def next_header_idx(block, from_idx):
     )
 
 
-def create_section(block, section):
-    """Insert an empty ``**section**`` header keeping section order.
+def section_rank(header_name):
+    """Canonical position of a section header, or None.
 
-    Enhancements goes at the top of the block (after the header /
-    underline / note preamble); Bug fixes goes after everything else.
+    Per-platform variants ("Bug fixes: Linux") rank as their base.
     """
+    base = header_name.split(":")[0].strip()
+    return SECTIONS.index(base) if base in SECTIONS else None
+
+
+def create_section(block, section):
+    """Insert an empty ``**section**`` header keeping the canonical
+    section order.
+    """
+    rank = SECTIONS.index(section)
     new = [f"**{section}**", ""]
-    if section == "Bug fixes":
-        insert_at = len(block)
-        while insert_at > 0 and not block[insert_at - 1].strip():
-            insert_at -= 1
-        return block[:insert_at] + ["", *new] + block[insert_at:]
-    # Enhancements: before the first existing header, else after the
-    # version header + underline + blank preamble.
-    insert_at = next(
-        (i for i, ln in enumerate(block) if ln.startswith("**")), None
-    )
-    if insert_at is None:
-        insert_at = 3
-        while insert_at < len(block) and block[insert_at].strip():
-            insert_at += 1
-        insert_at += 1
-    return block[:insert_at] + [*new, ""] + block[insert_at:]
+    for i, ln in enumerate(block):
+        if ln.startswith("**") and ln.rstrip().endswith("**"):
+            got = section_rank(ln.strip().strip("*"))
+            if got is not None and got > rank:
+                return block[:i] + [*new, ""] + block[i:]
+    insert_at = len(block)
+    while insert_at > 0 and not block[insert_at - 1].strip():
+        insert_at -= 1
+    return block[:insert_at] + ["", *new] + block[insert_at:]
 
 
 def entry_number(line):
     m = re.match(r"- :gh:`(\d+)`", line)
     return int(m.group(1)) if m else None
+
+
+def entry_tier(line):
+    """Sort tier of an entry: badge-labelled ones first, in badge
+    order, plain ones last.
+    """
+    for i, (_, name) in enumerate(BADGES):
+        if f":label:`{name}`" in line:
+            return i
+    return len(BADGES)
+
+
+def entry_tags(entry_text):
+    """The [Platform] tags in an entry's prefix (not its prose)."""
+    m = ENTRY_PREFIX_RE.match(entry_text)
+    if not m:
+        return []
+    return re.findall(r"\[([^\]]+)\]", m.group(1))
+
+
+def check_platform_tags(entry_text, issue_labels):
+    """Every [Tag] must be backed by a label on the issue, so the
+    changelog never asserts a platform the tracker doesn't know
+    about. The family tags are backed by any label of the family.
+    """
+    have = set(issue_labels)
+    for tag in entry_tags(entry_text):
+        label = TAG2LABEL.get(tag)
+        if label is None:
+            raise ValidationError(f"unknown platform tag [{tag}]")
+        if label in have:
+            continue
+        if label == "bsd" and have & NAMED_BSD:
+            continue
+        if label == "unix" and have & POSIXY:
+            continue
+        raise ValidationError(
+            f"[{tag}] is not backed by a {label!r} label on the issue"
+            f" (it has: {sorted(have) or 'none'})"
+        )
+
+
+def rst_words(text):
+    """Split on spaces, except inside a `...` or ``...`` span."""
+    words, cur, span = [], "", 0
+    i = 0
+    while i < len(text):
+        if text[i] == "`":
+            run = 1
+            while i + run < len(text) and text[i + run] == "`":
+                run += 1
+            cur += "`" * run
+            i += run
+            if span == 0:
+                span = run
+            elif run >= span:
+                span = 0
+            continue
+        if text[i] == " " and span == 0:
+            if cur:
+                words.append(cur)
+            cur = ""
+        else:
+            cur += text[i]
+        i += 1
+    if cur:
+        words.append(cur)
+    return words
+
+
+def wrap_entry(flat, width=79):
+    """Wrap a one-line entry into '- ' + two-space continuations."""
+    out, cur = [], ""
+    for word in rst_words(flat):
+        trial = f"{cur} {word}" if cur else ("  " + word if out else word)
+        if len(trial) > width and cur:
+            out.append(cur)
+            cur = "  " + word
+        else:
+            cur = trial
+    if cur:
+        out.append(cur)
+    return "\n".join(out)
+
+
+def inject_labels(entry_text, issue_labels):
+    """Add the :label:`...` badges the issue's labels call for, then
+    rewrap. The model never writes badges itself.
+    """
+    flat = " ".join(ln.strip() for ln in entry_text.splitlines())
+    badges = [name for lab, name in BADGES if lab in issue_labels]
+    if badges:
+        m = ENTRY_PREFIX_RE.match(flat)
+        roles = ", ".join(f":label:`{b}`" for b in badges)
+        flat = f"{flat[: m.end()]}, {roles}{flat[m.end():]}"
+    return wrap_entry(flat)
 
 
 def insert_in_section(block, section, entry_lines):
@@ -381,10 +573,12 @@ def insert_in_section(block, section, entry_lines):
         if not block[run_start - 1].startswith(("- ", "  ")):
             break
         run_start -= 1
-    # Insert after the last entry in the run whose number is < ours, so
-    # #123 comes before #124. Robust to a leading out-of-order entry
-    # (we compare numbers, not positions).
+    # Insert after the last entry that sorts before ours: labelled
+    # entries lead (critical, build-fail, memleak, breaking), plain
+    # ones follow, numerically within each tier. Robust to a leading
+    # out-of-order entry (we compare keys, not positions).
     gh = entry_number(entry_lines[0])
+    tier = entry_tier(entry_lines[0])
     insert_at = run_start
     i = run_start
     while i < end:
@@ -392,17 +586,21 @@ def insert_in_section(block, section, entry_lines):
         j = i + 1
         while j < end and block[j].startswith("  "):  # skip continuations
             j += 1
-        if num is not None and gh is not None and num < gh:
-            insert_at = j
+        if block[i].startswith("- "):
+            t = entry_tier(block[i])
+            if t < tier or (
+                t == tier and num is not None and gh is not None and num < gh
+            ):
+                insert_at = j
         i = j
     return block[:insert_at] + list(entry_lines) + block[insert_at:]
 
 
 def check_entry_ordered(text, gh):
-    """Verify the new :gh:`gh` entry sits between a lower and a higher
-    numbered entry in its run. Raises ValidationError otherwise. A
-    blank line or a pseudo-header (e.g. "New APIs:") ends a run, so an
-    earlier group's numbers don't count.
+    """Verify the new :gh:`gh` entry respects its run's ordering:
+    labelled entries first in badge order, then plain ones, numeric
+    within each tier. Raises ValidationError otherwise. A blank line
+    or a pseudo-header ends a run, so an earlier group doesn't count.
     """
     block = changelog_context(text).splitlines()
     idx = next(
@@ -411,26 +609,33 @@ def check_entry_ordered(text, gh):
     )
     if idx is None:
         return
+    mine = (entry_tier(block[idx]), gh)
 
     def run_neighbor(indices):
         for i in indices:
             ln = block[i]
-            num = entry_number(ln)
-            if num is not None:
-                return num
-            if not ln.startswith(("- ", "  ")):  # blank / pseudo-header
+            if ln.startswith("- "):
+                return (entry_tier(ln), entry_number(ln))
+            if not ln.startswith("  "):  # blank / pseudo-header
                 return None
         return None
 
+    def sorts_after(a, b):
+        if a[0] != b[0]:
+            return a[0] > b[0]
+        if a[1] is None or b[1] is None:
+            return False
+        return a[1] > b[1]
+
     prev = run_neighbor(range(idx - 1, -1, -1))
     nxt = run_neighbor(range(idx + 1, len(block)))
-    if prev is not None and prev > gh:
+    if prev is not None and sorts_after(prev, mine):
         raise ValidationError(
-            f"changelog: :gh:`{gh}` is out of order (after :gh:`{prev}`)"
+            f"changelog: :gh:`{gh}` is out of order (after {prev})"
         )
-    if nxt is not None and nxt < gh:
+    if nxt is not None and sorts_after(mine, nxt):
         raise ValidationError(
-            f"changelog: :gh:`{gh}` is out of order (before :gh:`{nxt}`)"
+            f"changelog: :gh:`{gh}` is out of order (before {nxt})"
         )
 
 
@@ -495,7 +700,9 @@ def amend_entry(text, gh, entry_text):
     return "\n".join(lines) + "\n"
 
 
-ENTRY_RE = re.compile(r"^- :gh:`(\d+)`(?:,? \[[^\]]+\])*:\s")
+ENTRY_RE = re.compile(
+    r"^- :gh:`(\d+)`(?:,? \[[^\]]+\])*(?:, :label:`[a-z-]+`)*:\s"
+)
 
 
 def referenced_issues(title, body, pr_number):
@@ -527,6 +734,41 @@ def validate_entry_text(entry_text):
     return int(m.group(1))
 
 
+BUGFIX_FAMILY = {
+    "linux": "Linux",
+    "windows": "Windows",
+    "macos": "macOS",
+    "freebsd": "BSD",
+    "netbsd": "BSD",
+    "openbsd": "BSD",
+    "bsd": "BSD",
+    "sunos": "UNIX",
+    "aix": "UNIX",
+    "unix": "UNIX",
+}
+
+
+def bugfix_section(text, entry_text):
+    """When the dev block splits Bug fixes per platform (8.0.0 does),
+    route the entry by its platform tags. Otherwise plain "Bug fixes".
+    """
+    block = changelog_context(text).splitlines()
+    subs = {
+        ln.strip().strip("*")
+        for ln in block
+        if ln.strip().startswith("**Bug fixes:")
+    }
+    if not subs:
+        return "Bug fixes"
+    labels = {TAG2LABEL[t] for t in entry_tags(entry_text)}
+    names = {BUGFIX_FAMILY.get(lab) for lab in labels} - {None}
+    name = names.pop() if len(names) == 1 else "cross-platform"
+    for candidate in (f"Bug fixes: {name}", "Bug fixes: cross-platform"):
+        if candidate in subs:
+            return candidate
+    return "Bug fixes"
+
+
 def apply_changelog_decision(text, decision, allowed_issues):
     """Validate and apply the LLM decision to the changelog text.
 
@@ -554,10 +796,11 @@ def apply_changelog_decision(text, decision, allowed_issues):
                 f":gh:`{gh}` is not referenced by this PR"
                 f" (allowed: {sorted(allowed_issues)})"
             )
-        if decision.get("section") not in SECTIONS:
-            raise ValidationError(
-                f"invalid section {decision.get('section')!r}"
-            )
+        section = decision.get("section")
+        if section not in SECTIONS:
+            raise ValidationError(f"invalid section {section!r}")
+        if section == "Bug fixes":
+            section = bugfix_section(text, entry_text)
         # Only dedup against a real in-development block; after a
         # release the top block is history, and a new entry belongs in
         # a fresh dev block regardless of what shipped.
@@ -567,7 +810,7 @@ def apply_changelog_decision(text, decision, allowed_issues):
                 raise ValidationError(
                     f"an entry for :gh:`{gh}` already exists; amend it instead"
                 )
-        new_text = insert_entry(text, decision["section"], entry_text)
+        new_text = insert_entry(text, section, entry_text)
         check_entry_ordered(new_text, gh)
         return new_text, "inserted", gh
 
@@ -858,9 +1101,25 @@ def build_comment(cl_status, cr_status, decision, gh, author):
     return "\n\n".join(parts)
 
 
-def run_decision(pr, decision, year=None):
+def fetch_issue_labels(number):
+    raw = json.loads(gh_request(f"/repos/{REPO}/issues/{number}"))
+    return sorted(x["name"] for x in raw["labels"])
+
+
+def run_decision(pr, decision, year=None, get_labels=fetch_issue_labels):
     """Apply the decision to both files; return (cl_status, cr_status, gh)."""
     allowed = referenced_issues(pr["title"], pr["body"], pr["number"])
+    entry = decision.get("entry_text")
+    if decision.get("action") != "skip" and entry:
+        if ":label:`" in entry:
+            raise ValidationError(
+                "entry must not contain :label: badges; they are"
+                " derived from the issue's labels"
+            )
+        labels = get_labels(validate_entry_text(entry))
+        check_platform_tags(entry, labels)
+        # In place, so the PR comment shows what was really written.
+        decision["entry_text"] = inject_labels(entry, labels)
     with open(CHANGELOG_FILE) as f:
         changelog = f.read()
     new_changelog, cl_status, gh = apply_changelog_decision(
@@ -894,6 +1153,15 @@ def main():
     parse_cli()
     print(f"Fetching PR #{PR_NUMBER} from {REPO}...")
     pr = fetch_pr_metadata()
+    stale = stale_reason(pr["head_sha"])
+    if stale:
+        write_file(
+            ERROR_FILE,
+            f"⚠️ The /changelog bot did nothing: {stale}. Committing an"
+            " entry now would make this PR unmergeable. Click **Update"
+            " branch**, then comment `/changelog` again.",
+        )
+        sys.exit(f"stale branch: {stale}")
     diff = fetch_pr_diff()
     with open(CHANGELOG_FILE) as f:
         block = changelog_context(f.read())

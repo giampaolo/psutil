@@ -37,11 +37,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    while ((entry = getmntent(file))) {
-        if (entry == NULL) {
-            psutil_runtime_error("getmntent() syscall failed");
-            goto error;
-        }
+    // NOTE: getmntent() is MT-Unsafe (it returns a pointer to a static
+    // buffer), so we can't release the GIL around it.
+    while ((entry = getmntent(file)) != NULL) {
         py_dev = PyUnicode_DecodeFSDefault(entry->mnt_fsname);
         if (!py_dev)
             goto error;

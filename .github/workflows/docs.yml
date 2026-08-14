@@ -25,13 +25,12 @@
 on:
   push:
     branches: [master]
-    paths:
+    paths: &docs_paths
       - "docs/**"
       - ".github/workflows/docs.yml"
+      - "pyproject.toml"
   pull_request:
-    paths:
-      - "docs/**"
-      - ".github/workflows/docs.yml"
+    paths: *docs_paths
   workflow_dispatch:
 
 name: docs
@@ -48,15 +47,15 @@ jobs:
         with:
           fetch-depth: 0 # full history for sphinx-last-updated-by-git
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.x
 
       - name: Install dependencies
         run: |
-          make install-pydeps-test
+          make install-pydeps-docs
           make install-pydeps-lint
-          pip install -r docs/requirements.txt
+          make install-pydeps-test
           pip install .                   # codeautolink imports psutil
 
       - name: Lint rst
@@ -64,6 +63,11 @@ jobs:
 
       - name: Doc sanity tests
         run: make -C docs test
+
+      - name: Refresh adoption stats
+        # Change is not committed to GIT, but ends up on the live site.
+        continue-on-error: true
+        run: python3 scripts/internal/refresh_adoption_stats.py
 
       - name: Build HTML
         run: make -C docs html
@@ -95,13 +99,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.x
       - name: Install dependencies
         run: |
           make install-pydeps-test
-          pip install -r docs/requirements.txt
+          make install-pydeps-docs
 
       - name: Wait for the live site to serve this commit
         # deploy-pages reports "live" before the CDN edge catches up,

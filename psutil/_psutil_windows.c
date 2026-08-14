@@ -34,14 +34,13 @@ static PyMethodDef PsutilMethods[] = {
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS},
     {"proc_io_priority_get", psutil_proc_io_priority_get, METH_VARARGS},
     {"proc_io_priority_set", psutil_proc_io_priority_set, METH_VARARGS},
-    {"proc_is_suspended", psutil_proc_is_suspended, METH_VARARGS},
     {"proc_kill", psutil_proc_kill, METH_VARARGS},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS},
     {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS},
     {"proc_num_handles", psutil_proc_num_handles, METH_VARARGS},
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS},
-    {"proc_page_faults", psutil_proc_page_faults, METH_VARARGS},
+    {"proc_ppid", psutil_proc_ppid, METH_VARARGS},
     {"proc_priority_get", psutil_proc_priority_get, METH_VARARGS},
     {"proc_priority_set", psutil_proc_priority_set, METH_VARARGS},
     {"proc_suspend_or_resume", psutil_proc_suspend_or_resume, METH_VARARGS},
@@ -65,10 +64,10 @@ static PyMethodDef PsutilMethods[] = {
     {"disk_usage", psutil_disk_usage, METH_VARARGS},
     {"getloadavg", (PyCFunction)psutil_get_loadavg, METH_VARARGS},
     {"getpagesize", psutil_getpagesize, METH_VARARGS},
-    {"swap_percent", psutil_swap_percent, METH_VARARGS},
+    {"swap_percent", psutil_swap_percent, METH_NOARGS},
     {"init_loadavg_counter",
      (PyCFunction)psutil_init_loadavg_counter,
-     METH_VARARGS},
+     METH_NOARGS},
     {"heap_info", psutil_heap_info, METH_VARARGS},
     {"heap_trim", psutil_heap_trim, METH_VARARGS},
     {"net_connections", psutil_net_connections, METH_VARARGS},
@@ -147,12 +146,6 @@ psutil_add_constants(PyObject *mod) {
         mod, "ERROR_SERVICE_DOES_NOT_EXIST", ERROR_SERVICE_DOES_NOT_EXIST
     );
     PSUTIL_ADD_INT(mod, "ERROR_PRIVILEGE_NOT_HELD", ERROR_PRIVILEGE_NOT_HELD);
-    PSUTIL_ADD_INT(mod, "WINVER", PSUTIL_WINVER);
-    PSUTIL_ADD_INT(mod, "WINDOWS_VISTA", PSUTIL_WINDOWS_VISTA);
-    PSUTIL_ADD_INT(mod, "WINDOWS_7", PSUTIL_WINDOWS_7);
-    PSUTIL_ADD_INT(mod, "WINDOWS_8", PSUTIL_WINDOWS_8);
-    PSUTIL_ADD_INT(mod, "WINDOWS_8_1", PSUTIL_WINDOWS_8_1);
-    PSUTIL_ADD_INT(mod, "WINDOWS_10", PSUTIL_WINDOWS_10);
 
     return 0;
 }

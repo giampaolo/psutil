@@ -50,10 +50,15 @@ VALID_BLOG_TAGS = frozenset({
 
 sys.path.insert(0, str(HERE))  # so that "import conf" wins
 import conf  # noqa: E402
+import label_role  # noqa: E402
 import substitutions  # noqa: E402
 from testutil import feed_urls  # noqa: E402
 from testutil import find_canonical  # noqa: E402
 from testutil import og_value  # noqa: E402
+
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32", reason="docs are built on Linux only"
+)
 
 HTML_DIR = None
 
@@ -246,6 +251,13 @@ class TestHtmlBuild:
         html = read_html("changelog.html")
         assert 'href="https://github.com/giampaolo/psutil/issues/' in html
 
+    def test_label_role_resolves(self):
+        source = (DOCS / "changelog.rst").read_text()
+        html = read_html("changelog.html")
+        for label in label_role.LABELS:
+            badge = f'class="cl-label cl-label-{label}">{label}<'
+            assert source.count(f":label:`{label}`") == html.count(badge)
+
     def test_intersphinx_resolves(self):
         # Check intersphinx_mapping["python"] in conf.py. If it does
         # not work, :mod:`func` refs to the stdlib silently render as
@@ -254,6 +266,16 @@ class TestHtmlBuild:
         assert 'href="https://docs.python.org/3/' in html
 
     def test_footer_last_updated_matches_git(self, subtests):
+        def is_merge_checkout():
+            ret = subprocess.run(
+                ["git", "rev-parse", "-q", "--verify", "HEAD^2"],
+                capture_output=True,
+                check=False,
+            )
+            return ret.returncode == 0
+
+        if is_merge_checkout():
+            pytest.skip("merge commit")
         # Skip pages that pull in external files via `.. include::`
         # or `.. raw:: <fmt> :file:`. sphinx-last-updated-by-git
         # walks those deps and picks the latest commit timestamp,
@@ -267,7 +289,15 @@ class TestHtmlBuild:
             m = date_pat.search(html.read_text())
             if m is None:
                 continue  # page doesn't render the footer date
-            cmd = ["git", "log", "-1", "--format=%ct", "--", str(src)]
+            cmd = [
+                "git",
+                "log",
+                "-1",
+                "--author-date-order",
+                "--format=%at",
+                "--",
+                str(src),
+            ]
             ts = subprocess.check_output(cmd).strip()
             if not ts:
                 continue  # untracked source file

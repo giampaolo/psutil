@@ -1,0 +1,134 @@
+# Generates wheels for all platforms, architectures and free-threaded builds,
+# then checks the resulting distribution. Tests are run by tests.yml.
+#
+# Useful URLs:
+# * https://github.com/pypa/cibuildwheel
+# * https://github.com/astral-sh/setup-uv
+# * https://github.com/docker/setup-qemu-action
+# * https://github.com/actions/cache
+# * https://github.com/actions/checkout
+# * https://github.com/actions/download-artifact
+# * https://github.com/actions/setup-python
+# * https://github.com/actions/upload-artifact
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - "docs/**"
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+name: wheels
+concurrency:
+  # Cancel run if a new one starts, but don't interrupt all jobs on the first
+  # failure.
+  group: wheels-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  wheels:
+    name: "${{ matrix.osname }} ${{ matrix.archname || matrix.arch }}${{ matrix.tag && format(' ({0})', matrix.tag) || '' }}"
+    # Skip same-repo PR runs: the push event already covers them.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      # We produce an abi3 wheel which works from Python 3.8 onwards. We
+      # generate it on Python 3.14, which is faster.
+      matrix:
+        include:
+          # manylinux and musllinux share a runner, so give them a lane each
+          # instead of building one set after the other.
+          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp314{,t}-manylinux*", tag: manylinux }
+          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp314-musllinux*", tag: musllinux }
+          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp314{,t}-manylinux*", tag: manylinux }
+          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp314-musllinux*", tag: musllinux }
+          - { os: ubuntu-latest, osname: linux, arch: ppc64le, build: "cp314-manylinux*", tag: abi3, qemu: ppc64le }
+          - { os: ubuntu-latest, osname: linux, arch: s390x, build: "cp314-manylinux*", tag: abi3, qemu: s390x }
+          # Cross-builds x86_64 under Rosetta, so one runner covers both arches
+          # (faster).
+          - { os: macos-15, osname: macos, arch: "arm64 x86_64", archname: both, build: "cp314-*", tag: abi3 }
+          - { os: macos-15, osname: macos, arch: "arm64 x86_64", archname: both, build: "cp314t-*", tag: cp314t }
+          # Same idea for Windows.
+          - { os: windows-2025, osname: win, arch: AMD64, build: "cp314-*", tag: abi3 }
+          - { os: windows-2025, osname: win, arch: AMD64, build: "cp314t-*", tag: cp314t }
+          - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp314-*", tag: abi3 }
+          - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp314t-*", tag: cp314t }
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up QEMU
+        if: matrix.qemu
+        uses: docker/setup-qemu-action@v4
+        with:
+          platforms: ${{ matrix.qemu }}
+
+      # Cache the CPython interpreters cibuildwheel downloads, so later pushes
+      # reuse them. Windows only: Linux takes them from the container, and
+      # macOS installs a .pkg into /Library/Frameworks, leaving nothing behind
+      # to cache. Worth ~90 secs on Windows, measured by removing it (see
+      # #2931).
+      - name: Cache cibuildwheel interpreters
+        if: runner.os == 'Windows'
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/cibw-cache
+          # Refresh the cache every time wheels.yml or pyproject.toml change.
+          # restore-keys falls back to the previous entry meanwhile, so an
+          # unrelated edit doesn't mean re-downloading everything.
+          key: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-${{ hashFiles('.github/workflows/wheels.yml', 'pyproject.toml') }}
+          restore-keys: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v9.0.0
+        with:
+          version: "0.12.3"
+
+      # Not pypa/cibuildwheel: that action pip-installs itself from an sdist on
+      # every lane, which takes ~18 secs instead of ~5.
+      - name: Build wheels
+        shell: bash
+        run: uvx --from 'cibuildwheel==4.1.1' cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_BUILD: "${{ matrix.build }}"
+          CIBW_CACHE_PATH: ${{ runner.temp }}/cibw-cache
+          CIBW_BUILD_FRONTEND: "build[uv]"
+          CIBW_TEST_COMMAND: 'python -W error::RuntimeWarning -c "import psutil; print(psutil.__version__)"'
+          # Disabled, "make ci-check-dist" does it already.
+          CIBW_AUDIT_COMMAND: ""
+          # Pin it, else it follows whichever Python builds the wheel.
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=10.15
+          # We only link Windows system DLLs, so there's nothing for delvewheel
+          # to bundle.
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v7
+        with:
+          name: wheels-${{ matrix.os }}-${{ matrix.archname || matrix.arch }}-${{ matrix.tag || 'all' }}
+          path: wheelhouse
+          compression-level: 0
+
+  # Merge wheels and check sanity of the package distribution.
+  check-dist:
+    needs: [wheels]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: 3.x
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: wheels-*
+          path: wheelhouse
+          merge-multiple: true
+      - run: |
+          make ci-check-dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels
+          path: dist/*.whl
+          compression-level: 0

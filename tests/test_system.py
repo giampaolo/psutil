@@ -36,6 +36,7 @@ from psutil._common import broadcast_addr
 from . import AARCH64
 from . import ASCII_FS
 from . import CI_TESTING
+from . import FREE_THREADED
 from . import GITHUB_ACTIONS
 from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
@@ -46,12 +47,12 @@ from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import MACOS_12PLUS
-from . import PYPY
 from . import UNICODE_SUFFIX
 from . import PsutilTestCase
 from . import check_net_address
 from . import pytest
 from . import retry_on_failure
+from . import skipif
 
 # ===================================================================
 # --- System-related API tests
@@ -149,7 +150,7 @@ class TestProcessIter(PsutilTestCase):
                 assert p.memory_percent() is None
                 assert p.memory_info_ex() is None
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @skipif(not POSIX, reason="POSIX only")
     def test_prefetch_derived_username(self):
         # username() derives from uids(), which is POSIX only.
         with mock.patch(
@@ -218,7 +219,8 @@ class TestProcessIter(PsutilTestCase):
     def test_deprecated_prefetch_empty_attrs(self):
         # attrs=[] should prefetch all methods.
         with pytest.warns(DeprecationWarning):
-            p = next(psutil.process_iter(attrs=[]))
+            for p in psutil.process_iter(attrs=[]):
+                break
         assert p._prefetch.keys() == psutil.Process.attrs
 
     def test_prefetch_with_non_prefetched(self):
@@ -249,10 +251,6 @@ class TestProcessIter(PsutilTestCase):
 
 
 class TestProcessAPIs(PsutilTestCase):
-    @pytest.mark.skipif(
-        PYPY and WINDOWS,
-        reason="spawn_subproc() unreliable on PYPY + WINDOWS",
-    )
     def test_wait_procs(self):
         def callback(p):
             pids.append(p.pid)
@@ -266,10 +264,10 @@ class TestProcessAPIs(PsutilTestCase):
             psutil.wait_procs(procs, timeout=-1)
         with pytest.raises(TypeError):
             psutil.wait_procs(procs, callback=1)
-        t = time.time()
+        t = time.monotonic()
         gone, alive = psutil.wait_procs(procs, timeout=0.01, callback=callback)
 
-        assert time.time() - t < 0.5
+        assert time.monotonic() - t < 0.5
         assert not gone
         assert len(alive) == 3
         assert not pids
@@ -312,10 +310,6 @@ class TestProcessAPIs(PsutilTestCase):
         for p in gone:
             assert hasattr(p, 'returncode')
 
-    @pytest.mark.skipif(
-        PYPY and WINDOWS,
-        reason="spawn_subproc() unreliable on PYPY + WINDOWS",
-    )
     def test_wait_procs_no_timeout(self):
         sproc1 = self.spawn_subproc()
         sproc2 = self.spawn_subproc()
@@ -357,10 +351,9 @@ class TestMiscAPIs(PsutilTestCase):
         assert bt > 0
         assert bt < time.time()
 
-    @pytest.mark.skipif(
-        CI_TESTING and not psutil.users(), reason="unreliable on CI"
-    )
     def test_users(self):
+        if not psutil.users():
+            return pytest.skip("no users logged in")
         users = psutil.users()
         assert users
         for user in users:
@@ -379,18 +372,20 @@ class TestMiscAPIs(PsutilTestCase):
                 else:
                     psutil.Process(user.pid)
 
-    @pytest.mark.skipif(not HAS_HEAP_INFO, reason="not supported")
+    @skipif(not HAS_HEAP_INFO, reason="not supported")
     def test_heap_info(self):
         m = psutil.heap_info()
         assert m.heap_used > 0
-        if MACOS:
-            assert m.mmap_used == 0  # not supported
+        if MACOS or FREE_THREADED:
+            # macOS doesn't support it. Free-threaded builds allocate via
+            # mimalloc, so glibc's malloc arena stays mostly unused.
+            assert m.mmap_used == 0
         else:
             assert m.mmap_used > 0
         if WINDOWS:
             assert m.heap_count >= 0
 
-    @pytest.mark.skipif(not HAS_HEAP_INFO, reason="not supported")
+    @skipif(not HAS_HEAP_INFO, reason="not supported")
     def test_heap_trim(self):
         psutil.heap_trim()
 
@@ -514,9 +509,10 @@ class TestMemoryAPIs(PsutilTestCase):
         assert mem.total >= 0, mem
         assert mem.used >= 0, mem
         if mem.total > 0:
-            # likely a system with no swap partition
-            assert mem.free > 0, mem
+            # free can be 0 if swap is entirely in use
+            assert mem.free >= 0, mem
         else:
+            # likely a system with no swap partition
             assert mem.free == 0, mem
         assert 0 <= mem.percent <= 100, mem
         assert mem.sin >= 0, mem
@@ -592,8 +588,8 @@ class TestCpuAPIs(PsutilTestCase):
     def test_cpu_times_time_increases(self):
         # Make sure time increases between calls.
         t1 = sum(psutil.cpu_times())
-        stop_at = time.time() + GLOBAL_TIMEOUT
-        while time.time() < stop_at:
+        stop_at = time.monotonic() + GLOBAL_TIMEOUT
+        while time.monotonic() < stop_at:
             t2 = sum(psutil.cpu_times())
             if t2 > t1:
                 return None
@@ -636,9 +632,9 @@ class TestCpuAPIs(PsutilTestCase):
         # Simulate some work load then make sure time have increased
         # between calls.
         tot1 = psutil.cpu_times(percpu=True)
-        giveup_at = time.time() + GLOBAL_TIMEOUT
+        giveup_at = time.monotonic() + GLOBAL_TIMEOUT
         while True:
-            if time.time() >= giveup_at:
+            if time.monotonic() >= giveup_at:
                 return pytest.fail("timeout")
             tot2 = psutil.cpu_times(percpu=True)
             for t1, t2 in zip(tot1, tot2):
@@ -647,26 +643,20 @@ class TestCpuAPIs(PsutilTestCase):
                 if difference >= 0.05:
                     return None
 
-    @pytest.mark.skipif(
-        (CI_TESTING and OPENBSD) or MACOS or SUNOS,
-        reason="unreliable on OPENBSD + CI",
-    )
+    @skipif(SUNOS, reason="unreliable on SUNOS")
     @retry_on_failure(30)
     def test_cpu_times_comparison(self):
         # Make sure the sum of all per cpu times is almost equal to
-        # base "one cpu" times. On OpenBSD the sum of per-CPUs is
-        # higher for some reason.
+        # base "one cpu" times.
         base = psutil.cpu_times()
         per_cpu = psutil.cpu_times(percpu=True)
         summed_values = base._make([sum(num) for num in zip(*per_cpu)])
-        for field in base._fields:
-            with self.subTest(
-                field=field, base=str(base), per_cpu=str(per_cpu)
-            ):
-                assert (
-                    abs(getattr(base, field) - getattr(summed_values, field))
-                    < 2
-                )
+        mismatches = {
+            field: (getattr(base, field), getattr(summed_values, field))
+            for field in base._fields
+            if abs(getattr(base, field) - getattr(summed_values, field)) >= 2
+        }
+        assert mismatches == {}
 
     def _test_cpu_percent(self, percent, last_ret, new_ret):
         try:
@@ -750,7 +740,7 @@ class TestCpuAPIs(PsutilTestCase):
             if not AIX and name in {'ctx_switches', 'interrupts'}:
                 assert value > 0
 
-    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
         def check_ls(ls):
             for nt in ls:
@@ -772,7 +762,7 @@ class TestCpuAPIs(PsutilTestCase):
         if LINUX:
             assert len(ls) == psutil.cpu_count()
 
-    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq_none_minmax(self):
         # min / max are None on FreeBSD when the sysctl is unparsable.
         # Averaging them across CPUs used to raise TypeError.
@@ -823,7 +813,7 @@ class TestDiskAPIs(PsutilTestCase):
         # we should also be able to use a file path
         psutil.disk_usage(__file__)
 
-    @pytest.mark.skipif(not ASCII_FS, reason="not an ASCII fs")
+    @skipif(not ASCII_FS, reason="not an ASCII fs")
     def test_disk_usage_unicode(self):
         # See: https://github.com/giampaolo/psutil/issues/416
         with pytest.raises(UnicodeEncodeError):
@@ -889,11 +879,11 @@ class TestDiskAPIs(PsutilTestCase):
         ]
         assert mount in mounts
 
-    @pytest.mark.skipif(
+    @skipif(
         LINUX and not os.path.exists('/proc/diskstats'),
         reason="/proc/diskstats not available on this linux version",
     )
-    @pytest.mark.skipif(
+    @skipif(
         CI_TESTING and not psutil.disk_io_counters(), reason="unreliable on CI"
     )  # no visible disks
     def test_disk_io_counters(self):
@@ -936,7 +926,7 @@ class TestDiskAPIs(PsutilTestCase):
 
 
 class TestNetAPIs(PsutilTestCase):
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_net_io_counters(self):
         def check_ntuple(nt):
             assert nt[0] == nt.bytes_sent
@@ -965,7 +955,7 @@ class TestNetAPIs(PsutilTestCase):
             assert isinstance(key, str)
             check_ntuple(ret[key])
 
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_net_io_counters_no_nics(self):
         # Emulate a case where no NICs are installed, see:
         # https://github.com/giampaolo/psutil/issues/1062
@@ -1094,7 +1084,7 @@ class TestNetAPIs(PsutilTestCase):
             assert mtu >= 0
             assert isinstance(flags, str)
 
-    @pytest.mark.skipif(
+    @skipif(
         not (LINUX or BSD or MACOS), reason="LINUX or BSD or MACOS specific"
     )
     def test_net_if_stats_enodev(self):
@@ -1108,7 +1098,7 @@ class TestNetAPIs(PsutilTestCase):
             assert ret == {}
             assert m.called
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @skipif(not POSIX, reason="POSIX only")
     def test_nic_names(self):
         stdlib_names = {name for _, name in socket.if_nameindex()}
         assert stdlib_names == set(psutil.net_io_counters(pernic=True).keys())
@@ -1117,7 +1107,7 @@ class TestNetAPIs(PsutilTestCase):
 
 
 class TestSensorsAPIs(PsutilTestCase):
-    @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
+    @skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     def test_sensors_temperatures(self):
         temps = psutil.sensors_temperatures()
         for name, entries in temps.items():
@@ -1131,7 +1121,7 @@ class TestSensorsAPIs(PsutilTestCase):
                 if entry.critical is not None:
                     assert entry.critical >= 0
 
-    @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
+    @skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     def test_sensors_temperatures_fahreneit(self):
         d = {'coretemp': [('label', 50.0, 60.0, 70.0)]}
         with mock.patch(
@@ -1143,8 +1133,8 @@ class TestSensorsAPIs(PsutilTestCase):
             assert temps.high == 140.0
             assert temps.critical == 158.0
 
-    @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    @skipif(not HAS_SENSORS_BATTERY, reason="not supported")
+    @skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors_battery(self):
         ret = psutil.sensors_battery()
         assert ret.percent >= 0
@@ -1158,7 +1148,7 @@ class TestSensorsAPIs(PsutilTestCase):
             assert ret.power_plugged
         assert isinstance(ret.power_plugged, bool)
 
-    @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
+    @skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_sensors_fans(self):
         fans = psutil.sensors_fans()
         for name, entries in fans.items():

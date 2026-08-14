@@ -78,9 +78,9 @@ Why do I get NoSuchProcess?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :exc:`NoSuchProcess` is raised when a process no longer exists. The most common
-cause is a TOCTOU (time-of-check / time-of-use) race condition: a process can
-die between the moment its PID is obtained and the moment it is queried. The
-following two naive patterns are racy:
+cause is a race condition: a process can die between the moment its PID is
+obtained and the moment it is queried. The following two naive patterns are
+racy:
 
 .. code-block:: python
 
@@ -122,8 +122,8 @@ try/except:
   except (psutil.NoSuchProcess, psutil.AccessDenied):
       pass
 
-An even simpler pattern is to catch :exc:`Error`, which implies both
-:exc:`AccessDenied` and :exc:`NoSuchProcess`:
+You can also catch :exc:`Error`, which implies both :exc:`AccessDenied` and
+:exc:`NoSuchProcess`:
 
 .. code-block:: python
 
@@ -168,6 +168,14 @@ was assigned the same PID.
 creation time, and returns ``False`` if the PID was reused. Prefer it over
 :func:`pid_exists`.
 
+.. note::
+
+  On FreeBSD, OpenBSD, SunOS and AIX the PID reuse check is disabled, and
+  process identity is based on the PID alone. That's because on these platforms
+  the process creation time is not stable across system clock updates (e.g.
+  NTP), which previously caused false :exc:`NoSuchProcess` exceptions for
+  processes which were still alive (:gh:`2888`).
+
 .. _faq_zombie_process:
 
 What is a zombie process?
@@ -178,7 +186,7 @@ entry remains in the process table until the parent calls ``wait()``. When
 psutil encounters a :term:`zombie process` it raises :exc:`ZombieProcess`, a
 subclass of :exc:`NoSuchProcess`.
 
-**What you can and cannot do with a zombie:**
+**Behavior:**
 
 - A zombie process can be instantiated via :class:`Process` (pid) without
   error.
@@ -350,12 +358,12 @@ What is the difference between RSS and VMS?
   :term:`swapped out <swap-out>`, shared libraries, and
   :term:`memory-mapped files <mapped memory>`.
 
-:field:`rss` is the go-to metric for answering "how much RAM is this process
-using?". Note that it includes :term:`shared memory`, so it may overestimate
-actual usage when compared across processes. :field:`vms` is generally larger
-and can be misleadingly high, as it includes memory that is not resident in
-physical RAM. Both values are portable across platforms and are returned by
-:meth:`Process.memory_info`.
+:field:`rss` is generally the most useful metric for answering "how much RAM is
+this process using?". Note that it includes :term:`shared memory`, so it may
+overestimate actual usage when compared across processes. :field:`vms` is
+generally larger and can be misleadingly high, as it includes memory that is
+not resident in physical RAM. Both values are portable across platforms and are
+returned by :meth:`Process.memory_info`.
 
 .. _faq_memory_footprint:
 
@@ -392,4 +400,3 @@ reclaimable and accounted separately:
 
 The :field:`available` field already includes this reclaimable memory and is
 the best indicator of memory pressure. See :ref:`faq_virtual_memory_available`.
-

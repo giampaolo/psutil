@@ -36,7 +36,7 @@ import shutil
 import time
 
 import psutil
-from psutil._common import bytes2human
+from psutil import bytes2human
 
 
 def main():

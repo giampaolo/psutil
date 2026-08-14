@@ -21,8 +21,10 @@
 static int
 psutil_sys_vminfo(vm_statistics64_t vmstat) {
     kern_return_t ret;
-    mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+    integer_t buf[HOST_INFO_MAX];
+    mach_msg_type_number_t count = HOST_INFO_MAX;
     mach_port_t mport;
+    size_t nbytes;
 
     mport = mach_host_self();
     if (mport == MACH_PORT_NULL) {
@@ -30,9 +32,7 @@ psutil_sys_vminfo(vm_statistics64_t vmstat) {
         return -1;
     }
 
-    ret = host_statistics64(
-        mport, HOST_VM_INFO64, (host_info64_t)vmstat, &count
-    );
+    ret = host_statistics64(mport, HOST_VM_INFO64, (host_info64_t)buf, &count);
     mach_port_deallocate(mach_task_self(), mport);
     if (ret != KERN_SUCCESS) {
         psutil_runtime_error(
@@ -41,6 +41,12 @@ psutil_sys_vminfo(vm_statistics64_t vmstat) {
         );
         return -1;
     }
+
+    nbytes = (size_t)count * sizeof(integer_t);
+    if (nbytes > sizeof(*vmstat))
+        nbytes = sizeof(*vmstat);
+    memset(vmstat, 0, sizeof(*vmstat));
+    memcpy(vmstat, buf, nbytes);
     return 0;
 }
 

@@ -21,31 +21,28 @@ _common = load_module(ROOT_DIR / "psutil" / "_common.py")
 bytes2human = _common.bytes2human
 print_color = _common.print_color
 
-# Full set of wheels "make ci-check-dist" should find once all platform
-# builds are merged, as filename globs (* swallows the volatile
-# manylinux / macOS version numbers). cibuildwheel can silently stop
-# emitting a variant (e.g. the free-threaded wheels); --check asserts
-# this so CI goes red instead of shipping an incomplete release. Update
-# when adding/dropping a Python version or platform.
+# Tags are spelled out because they change silently when a different
+# Python builds the wheel. Trailing manylinux ones follow the image.
 EXPECTED_WHEELS = [
-    "*-cp38-abi3-manylinux*_x86_64.whl",
-    "*-cp38-abi3-manylinux*_aarch64.whl",
-    "*-cp38-abi3-musllinux*_x86_64.whl",
-    "*-cp38-abi3-musllinux*_aarch64.whl",
-    "*-cp38-abi3-macosx*_x86_64.whl",
-    "*-cp38-abi3-macosx*_arm64.whl",
+    # Linux
+    "*-cp38-abi3-manylinux2010_x86_64.*.whl",
+    "*-cp38-abi3-manylinux2014_aarch64.*.whl",
+    "*-cp38-abi3-manylinux2014_ppc64le.*.whl",
+    "*-cp38-abi3-manylinux2014_s390x.*.whl",
+    # Linux musl
+    "*-cp38-abi3-musllinux_1_2_x86_64.whl",
+    "*-cp38-abi3-musllinux_1_2_aarch64.whl",
+    # macOS
+    "*-cp38-abi3-macosx_10_15_x86_64.whl",
+    "*-cp38-abi3-macosx_11_0_arm64.whl",
+    # Windows
     "*-cp38-abi3-win_amd64.whl",
     "*-cp38-abi3-win_arm64.whl",
-    "*-cp313-cp313t-manylinux*_x86_64.whl",
-    "*-cp313-cp313t-manylinux*_aarch64.whl",
-    "*-cp313-cp313t-macosx*_x86_64.whl",
-    "*-cp313-cp313t-macosx*_arm64.whl",
-    "*-cp313-cp313t-win_amd64.whl",
-    "*-cp313-cp313t-win_arm64.whl",
-    "*-cp314-cp314t-manylinux*_x86_64.whl",
-    "*-cp314-cp314t-manylinux*_aarch64.whl",
-    "*-cp314-cp314t-macosx*_x86_64.whl",
-    "*-cp314-cp314t-macosx*_arm64.whl",
+    # Free-threading
+    "*-cp314-cp314t-manylinux2010_x86_64.*.whl",
+    "*-cp314-cp314t-manylinux2014_aarch64.*.whl",
+    "*-cp314-cp314t-macosx_10_15_x86_64.whl",
+    "*-cp314-cp314t-macosx_11_0_arm64.whl",
     "*-cp314-cp314t-win_amd64.whl",
     "*-cp314-cp314t-win_arm64.whl",
 ]
@@ -102,6 +99,10 @@ class Wheel:
             return 'arm64'
         if self.name.endswith("aarch64.whl"):
             return 'aarch64'
+        if self.name.endswith("ppc64le.whl"):
+            return 'ppc64le'
+        if self.name.endswith("s390x.whl"):
+            return 's390x'
         return '?'
 
     def pyver(self):

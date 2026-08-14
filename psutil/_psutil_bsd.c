@@ -7,6 +7,7 @@
  */
 
 #include <Python.h>
+#include <sys/types.h>  // NODEV
 #include <sys/proc.h>
 #include <sys/param.h>  // BSD version
 #include <netinet/tcp_fsm.h>  // for TCP connection states
@@ -35,12 +36,12 @@ static PyMethodDef mod_methods[] = {
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS},
     {"proc_threads", psutil_proc_threads, METH_VARARGS},
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
+    {"proc_exe", psutil_proc_exe, METH_VARARGS},
     {"proc_num_threads", psutil_proc_num_threads, METH_VARARGS},
 #endif
 #if defined(PSUTIL_FREEBSD)
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS},
-    {"proc_exe", psutil_proc_exe, METH_VARARGS},
     {"proc_getrlimit", psutil_proc_getrlimit, METH_VARARGS},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS},
     {"proc_net_connections", psutil_proc_net_connections, METH_VARARGS},
@@ -86,6 +87,7 @@ static PyMethodDef mod_methods[] = {
 static int
 psutil_add_constants(PyObject *mod) {
     PSUTIL_ADD_INT(mod, "version", PSUTIL_VERSION);
+    PSUTIL_ADD_INT(mod, "NODEV", -1);
 
     // process status constants
 #ifdef PSUTIL_FREEBSD

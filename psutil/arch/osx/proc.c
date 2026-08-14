@@ -328,6 +328,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     uint64_t next_addr;
     int ret;
     int nregions = 0;
+    char *errmsg = NULL;
     struct proc_regioninfo ri;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
@@ -342,6 +343,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     // Sum up process private (unique) resident pages by walking its VM
     // regions. Roughly based on libtop_update_vm_regions in:
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
+    // The walk can take a long time (or hang) on a process we don't own,
+    // see https://github.com/giampaolo/psutil/issues/2885, so run it
+    // without the GIL. Exceptions are raised further below.
+    Py_BEGIN_ALLOW_THREADS
     while (1) {
         errno = 0;
         ret = proc_pidinfo(pid, PROC_PIDREGIONINFO, addr, &ri, sizeof(ri));
@@ -350,17 +355,13 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
             // A failure on the first region means the process is gone or
             // not accessible; past that it just means we reached the end
             // of the address space.
-            if (nregions == 0) {
-                psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDREGIONINFO)");
-                return NULL;
-            }
+            if (nregions == 0)
+                errmsg = "proc_pidinfo(PROC_PIDREGIONINFO)";
             break;
         }
         if (ret != sizeof(ri)) {
-            psutil_raise_for_pid(
-                pid, "proc_pidinfo(PROC_PIDREGIONINFO) truncated"
-            );
-            return NULL;
+            errmsg = "proc_pidinfo(PROC_PIDREGIONINFO) truncated";
+            break;
         }
         nregions += 1;
 
@@ -392,11 +393,15 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 
         next_addr = ri.pri_address + ri.pri_size;
         if (ri.pri_size == 0 || next_addr <= addr) {
-            psutil_debug("prevent infinite loop");
+            psutil_warn("VM region walk not advancing; stopped early");
             break;
         }
         addr = next_addr;
     }
+    Py_END_ALLOW_THREADS
+
+    if (errmsg != NULL)
+        return psutil_raise_for_pid(pid, errmsg);
 
     return Py_BuildValue("K", (unsigned long long)private_pages * pagesize);
 }
@@ -569,6 +574,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     pid_t pid;
     int num_fds;
     int i;
+    psutil_conn_filters filters;
     unsigned long nb;
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
@@ -594,10 +600,8 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     if (pid == 0)
         return py_retlist;
 
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+    if (psutil_parse_conn_filters(py_af_filter, py_type_filter, &filters) != 0)
         goto error;
-    }
 
     fds_pointer = psutil_proc_list_fds(pid, &num_fds);
     if (fds_pointer == NULL)
@@ -648,30 +652,23 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
             //
             int fd, family, type, lport, rport, state;
             char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
-            int inseq;
-            PyObject *py_family;
-            PyObject *py_type;
 
             fd = (int)fdp_pointer->proc_fd;
             family = si.psi.soi_family;
             type = si.psi.soi_type;
 
             // apply filters
-            py_family = PyLong_FromLong((long)family);
-            inseq = PySequence_Contains(py_af_filter, py_family);
-            Py_DECREF(py_family);
-            if (inseq == -1)
-                goto error;
-            if (inseq == 0)
+            if (!((family == AF_INET && filters.v4)
+                  || (family == AF_INET6 && filters.v6)
+                  || (family == AF_UNIX && filters.unix_)))
+            {
                 continue;
-
-            py_type = PyLong_FromLong((long)type);
-            inseq = PySequence_Contains(py_type_filter, py_type);
-            Py_DECREF(py_type);
-            if (inseq == -1)
-                goto error;
-            if (inseq == 0)
+            }
+            if (!((type == SOCK_STREAM && filters.tcp)
+                  || (type == SOCK_DGRAM && filters.udp)))
+            {
                 continue;
+            }
 
             if ((family == AF_INET) || (family == AF_INET6)) {
                 if (family == AF_INET) {

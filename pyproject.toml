@@ -1,3 +1,68 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=75.3.4"]  # latest version supporting Python 3.8
+
+[dependency-groups]
+# Dev-only deps (PEP 735), not part of the published package
+# metadata. Install with `pip install --group <name>` or the
+# `make install-pydeps-*` targets.
+build = [
+    "setuptools>=75.3.4",  # latest version supporting Python 3.8
+]
+test = [
+    # BSD VMs have no git
+    "psleak @ git+https://github.com/giampaolo/psleak@master ; platform_system not in 'FreeBSD OpenBSD NetBSD'",
+    "psleak @ https://github.com/giampaolo/psleak/archive/refs/heads/master.tar.gz ; platform_system in 'FreeBSD OpenBSD NetBSD'",
+    "pytest ; python_version < '3.10'",
+    "pytest-instafail",
+    "pytest-xdist",
+    "pytest>=9 ; python_version >= '3.10'",
+    "pywin32 ; os_name == 'nt' and implementation_name != 'pypy'",
+    "wmi ; os_name == 'nt' and implementation_name != 'pypy'",
+    {include-group = "build"},
+]
+lint = [
+    "black",
+    "rstwrap",
+    "ruff",
+    "sphinx-lint",
+    "toml-sort",
+]
+dev = [
+    "abi3audit",
+    "check-manifest",
+    "colorama ; os_name == 'nt'",
+    "coverage",
+    "packaging",
+    "pylint",  # not enforced
+    "pyperf",
+    "pypinfo",
+    "pyreadline3 ; os_name == 'nt'",
+    "pytest-cov",
+    "requests",
+    "twine",
+    "validate-pyproject[all]",
+    "virtualenv",
+    "vulture",
+    "wheel",
+    {include-group = "build"},
+    {include-group = "lint"},
+    {include-group = "test"},
+]
+docs = [
+    "ablog==0.11.13",
+    "matplotlib==3.10.8",
+    "sphinx-autobuild",
+    "sphinx-codeautolink==0.18.1",
+    "sphinx-last-updated-by-git==0.3.8",
+    "sphinx-notfound-page==1.1.0",
+    "sphinx-sitemap==2.9.0",
+    "sphinx==9.1.0",
+    "sphinx_copybutton==0.5.2",
+    "sphinx_design==0.7.0",
+    "sphinxext-opengraph==0.13.0",
+]
+
 [tool.black]
 target-version = ["py38"]
 line-length = 79
@@ -12,6 +77,7 @@ ignore = ["docs", "docs/**"]
 # https://beta.ruff.rs/docs/settings/
 target-version = "py38"
 line-length = 79
+output-prefer-rule-codes = true
 
 [tool.ruff.lint]
 preview = true
@@ -90,6 +156,7 @@ ignore = [
     "RUF028",  # This suppression comment is invalid
     "RUF031",  # [*] Avoid parentheses for tuples in subscripts
     "RUF067",  # `__init__` module should only contain docstrings and re-exports
+    "RUF105",  # `noqa` comment used instead of `ruff: ignore`
     "S",  # flake8-bandit
     "SIM102",  # Use a single `if` statement instead of nested `if` statements
     "SIM105",  # Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`
@@ -217,27 +284,12 @@ spaces_before_inline_comment = 2
 spaces_indent_inline_array = 4
 trailing_comma_inline_array = true
 
-[tool.cibuildwheel]
-skip = [
-    "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x} cp3*t-musllinux*",
-]
-test-extras = ["test"]  # same as doing `pip install .[test]`
-test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
-
-# Run tests on Python 3.14. On all other Python versions do a lightweight
-# import test.
-[[tool.cibuildwheel.overrides]]
-select = "cp3{8,9,10,11,12,13,13t,14t}-* *-musllinux*"
-test-extras = []
-test-command = "python -c \"import psutil; print(psutil.__version__)\""
-
-[tool.pytest]
+# Avoid recent [tool.pytest] to stay compatible with pytest < 9.
+[tool.pytest.ini_options]
 addopts = [
     "--capture=no",
     "--instafail",
     "--no-header",
-    "--strict-config",
-    "--strict-markers",
     "--tb=short",
     "--verbose",
     "-p instafail",
@@ -247,13 +299,15 @@ addopts = [
     "-p no:pastebin",
     "-p xdist",
 ]
+strict_config = true
+strict_markers = true
 verbosity_subtests = "0"
+verbosity_assertions = "2"
 testpaths = ["tests/"]
 python_files = ["test_*.py"]
+markers = [
+    "isolated: run in a separate serial pytest phase, not under -n auto",
+]
 
 [tool.rstwrap]
 width = 79
-
-[build-system]
-build-backend = "setuptools.build_meta"
-requires = ["setuptools>=43"]
