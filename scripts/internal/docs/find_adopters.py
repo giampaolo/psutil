@@ -24,7 +24,7 @@ At least one filter must be specified.
 Output is RsT formatted, ready to paste into docs/adoption.rst.
 
 Usage:
-    python3 scripts/internal/find_adopters.py \
+    python3 scripts/internal/docs/find_adopters.py \
         --project=psutil \
         --token=~/.github.api.key \
         --skip-file-urls=docs/adoption.rst \

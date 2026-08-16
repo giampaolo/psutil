@@ -17,7 +17,7 @@ import re
 import sys
 import urllib.request
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
+ROOT = pathlib.Path(__file__).resolve().parents[3]
 TIMEOUT = 5
 TARGETS = [
     ROOT / "docs/adoption.rst",

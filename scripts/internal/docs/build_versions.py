@@ -14,7 +14,7 @@ import venv
 SITE_DIR = None
 ONLY = None
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
+ROOT = pathlib.Path(__file__).resolve().parents[3]
 VERSIONS_JSON = ROOT / "docs" / "versions.json"
 FONT_DIRS = ("_static/fonts", "_static/css/fonts")
 LEGACY_FONTS = ("*.ttf", "*.eot", "*.svg", "*.woff")

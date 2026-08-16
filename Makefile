@@ -212,7 +212,7 @@ dprint:  ## Run linter for .md / .json / .yml / .js / .css files.
 	@$(DPRINT) check
 
 lint-rst:  ## Run linter for .rst files.
-	@$(call _ls,'*.rst') | xargs $(PYTHON) scripts/internal/rst_unused_targets.py
+	@$(call _ls,'*.rst') | xargs $(PYTHON) scripts/internal/docs/rst_unused_targets.py
 	@$(call _ls,'*.rst') | xargs sphinx-lint --enable all --disable line-too-long
 	@$(call _ls,'*.rst') | xargs rstwrap --check
 
