@@ -2,23 +2,19 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Fills in star count and latest version from the GitHub API. Results
-// are cached in sessionStorage for an hour to avoid hitting the rate
-// limit on every page navigation.
+// Fills in the star count from the GitHub API. Result is cached in
+// sessionStorage for an hour to avoid hitting the rate limit on every
+// page navigation.
 
 (function () {
     const REPO = "giampaolo/psutil";
     const CACHE_KEY = "psutil-gh-meta";
     const CACHE_TTL_MS = 60 * 60 * 1000;
 
-    function applyValues(stars, version) {
+    function applyValues(stars) {
         const s = document.querySelector(".topbar-stars");
-        const v = document.querySelector(".topbar-version");
         if (s && stars) {
             s.textContent = stars;
-        }
-        if (v && version) {
-            v.textContent = version;
         }
     }
 
@@ -40,47 +36,29 @@
         cached = null;
     }
     if (cached && Date.now() - cached.t < CACHE_TTL_MS) {
-        applyValues(cached.stars, cached.version);
+        applyValues(cached.stars);
         return;
     }
 
-    Promise.all([
-        fetch("https://api.github.com/repos/" + REPO).then((
-            r,
-        ) => (r.ok ? r.json() : null)),
-        // /releases/latest only works if a release is explicitly
-        // marked as latest. /tags is more reliable.
-        fetch("https://api.github.com/repos/" + REPO + "/tags").then((
-            r,
-        ) => (r.ok ? r.json() : null)),
-    ])
-        .then((results) => {
-            const repo = results[0];
-            const tags = results[1];
+    fetch("https://api.github.com/repos/" + REPO)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((repo) => {
             // Skip caching on a rate-limit / error response so the next
             // page load retries instead of showing empty for an hour.
-            if (!repo || !Array.isArray(tags)) {
+            if (!repo) {
                 return;
             }
             const stars = formatStars(repo.stargazers_count);
-            const rawTag = (tags[0] && tags[0].name) || "";
-            // GitHub returns tags like "v7.2.2"; drop the leading "v"
-            // so the topbar shows the bare version number.
-            const version = rawTag.replace(/^v/, "");
             try {
                 sessionStorage.setItem(
                     CACHE_KEY,
-                    JSON.stringify({
-                        t: Date.now(),
-                        stars: stars,
-                        version: version,
-                    }),
+                    JSON.stringify({ t: Date.now(), stars: stars }),
                 );
             }
             catch (e) {
                 // private mode / storage disabled: skip caching
             }
-            applyValues(stars, version);
+            applyValues(stars);
         })
         .catch(() => {
             // offline / network error: leave the topbar placeholders

@@ -199,6 +199,38 @@ def _js_files():
 html_js_files = _js_files()
 
 # =====================================================================
+# Version selector
+# =====================================================================
+
+# Drives the topbar dropdown (_templates/topbar.html). Hand-picked:
+# nothing here is derived from git tags. A release only shows up once
+# its docs are published and it is listed below.
+VERSIONS_CURRENT = {"name": "dev"}
+VERSIONS = [
+    {
+        "title": "Development",
+        "entries": [
+            {"name": "dev", "url": "/", "note": "docs from main"},
+        ],
+    },
+    {
+        "title": "Past releases",
+        "entries": [
+            {
+                "name": "7.2.2",
+                "url": "https://psutil.readthedocs.io/stable/",
+                "note": "latest",
+            },
+        ],
+    },
+]
+
+html_context = {
+    "versions": VERSIONS,
+    "versions_current": VERSIONS_CURRENT,
+}
+
+# =====================================================================
 # Blog (ablog package)
 # =====================================================================
 

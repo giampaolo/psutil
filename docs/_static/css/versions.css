@@ -1,0 +1,128 @@
+/* Version selector in the topbar. A native <details> so keyboard and
+   focus behaviour come for free. */
+
+.topbar-versions {
+    position: relative;
+}
+
+.topbar-versions > summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 6px;
+    color: var(--sidebar-fg);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    list-style: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+.topbar-versions > summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Same FontAwesome tag as the old PyPI pill. */
+.topbar-versions > summary::before {
+    content: "\f02b";
+    font-family: "Font Awesome 7 Free";
+    font-weight: 900;
+    font-size: 0.95em;
+    opacity: 0.85;
+}
+
+.topbar-versions > summary:hover,
+.topbar-versions[open] > summary {
+    background: var(--bg-hover-on-dark);
+    color: #ffffff;
+}
+
+/* The subsetted font has chevron-up (\f077) but no chevron-down, so the
+   arrow is the up glyph flipped. Flipping back to 0deg on open doubles
+   as the open/closed indicator. */
+.topbar-versions > summary::after {
+    content: "\f077";
+    font-family: "Font Awesome 7 Free";
+    font-weight: 900;
+    font-size: 0.8em;
+    opacity: 1;
+    transform: rotate(180deg);
+    transition: transform 0.15s;
+}
+
+.topbar-versions[open] > summary::after {
+    transform: rotate(0deg);
+}
+
+.topbar-versions-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 200;
+    min-width: 208px;
+    padding: 6px 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+.topbar-versions-group {
+    margin: 0;
+    padding: 7px 14px 4px;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.topbar-versions-group:not(:first-child) {
+    margin-top: 4px;
+    border-top: 1px solid var(--border);
+}
+
+.topbar-versions-item,
+.topbar-versions-item:visited {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 5px 14px;
+    color: var(--text);
+    font-size: 0.84rem;
+    text-decoration: none;
+}
+
+.topbar-versions-item:hover {
+    background: var(--bg-hover);
+    text-decoration: none;
+}
+
+.topbar-versions-note {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+}
+
+.topbar-versions-badge {
+    margin-left: auto;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.topbar-versions-item.is-current .topbar-versions-name {
+    font-weight: 600;
+}
+
+@media (max-width: 1024px) {
+    .topbar-versions {
+        display: none;
+    }
+}
