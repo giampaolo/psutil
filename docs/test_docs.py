@@ -62,6 +62,17 @@ pytestmark = pytest.mark.skipif(
 
 HTML_DIR = None
 
+PAST_RELEASE_DIRS = frozenset(
+    entry["url"].strip("/")
+    for group in conf.VERSIONS["groups"]
+    for entry in group["entries"]
+    if entry.get("ref")
+)
+
+
+def _under(path):
+    return HTML_DIR in path.parents or path == HTML_DIR
+
 
 @pytest.fixture(scope="module")
 def build_html():
@@ -877,8 +888,13 @@ class TestUrlScheme:
         if not url or url.startswith(self.SKIP):
             return None
         if url.startswith("/"):
-            return HTML_DIR / url.lstrip("/")
-        return (page.parent / url).resolve()
+            target = HTML_DIR / url.lstrip("/")
+        else:
+            target = (page.parent / url).resolve()
+        rel = target.relative_to(HTML_DIR) if _under(target) else None
+        if rel is not None and rel.parts and rel.parts[0] in PAST_RELEASE_DIRS:
+            return None
+        return target
 
     def test_no_broken_internal_links(self):
         # Offline link checker over every built page. This is the net

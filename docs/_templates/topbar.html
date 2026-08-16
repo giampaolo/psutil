@@ -39,17 +39,24 @@
       <details class="topbar-versions" id="version-selector">
         <summary title="{{ _('Switch documentation version') }}"
                  aria-label="{{ _('Switch documentation version') }}">
-          <span class="topbar-versions-current">{{ versions_current.name }}</span>
+          <span class="topbar-versions-current">{{ versions_current }}</span>
         </summary>
         <div class="topbar-versions-menu" role="menu">
           {%- for group in versions %}
           <p class="topbar-versions-group">{{ group.title }}</p>
           {%- for v in group.entries %}
-          <a class="topbar-versions-item{% if v.name == versions_current.name %} is-current{% endif %}"
-             href="{{ v.url }}" role="menuitem">
+          {%- if v.url.startswith('http') or pagename == '404' -%}
+            {%- set href = v.url -%}
+          {%- elif v.url == '/' -%}
+            {%- set href = './' if pagename == master_doc else pathto(master_doc) -%}
+          {%- else -%}
+            {%- set href = pathto(v.url.strip('/') ~ '/index.html', 1) -%}
+          {%- endif -%}
+          <a class="topbar-versions-item{% if v.name == versions_current %} is-current{% endif %}"
+             href="{{ href }}" role="menuitem">
             <span class="topbar-versions-name">{{ v.name }}</span>
             {%- if v.note %}<span class="topbar-versions-note">{{ v.note }}</span>{% endif %}
-            {%- if v.name == versions_current.name %}<span class="topbar-versions-badge">{{ _('current') }}</span>{% endif %}
+            {%- if v.name == versions_current %}<span class="topbar-versions-badge">{{ _('current') }}</span>{% endif %}
           </a>
           {%- endfor %}
           {%- endfor %}

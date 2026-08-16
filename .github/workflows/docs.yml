@@ -72,6 +72,9 @@ jobs:
       - name: Build HTML
         run: make -C docs html
 
+      - name: Build past doc releases
+        run: make -C docs versions
+
       - name: Add deploy marker
         run: echo "${{ github.sha }}" > docs/_build/html/build-sha.txt
 

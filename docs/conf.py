@@ -10,6 +10,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import datetime
 import importlib.util
+import json
 import locale
 import os
 import pathlib
@@ -172,9 +173,8 @@ def _css_files():
     # giscus.css is loaded inside the giscus iframe (see
     # _templates/comments.html), never by our own pages. Linking it
     # here would make every page fetch its @import from giscus.app.
-    files = sorted(
-        p.name for p in css_dir.glob("*.css") if p.name != "giscus.css"
-    )
+    skip = {"giscus.css", "archived.css"}
+    files = sorted(p.name for p in css_dir.glob("*.css") if p.name not in skip)
     head = ["base.css", "fonts.css", "fontawesome.css", "typography.css"]
     tail = ["home.css"]
     middle = [f for f in files if f not in head + tail]
@@ -202,32 +202,11 @@ html_js_files = _js_files()
 # Version selector
 # =====================================================================
 
-# Drives the topbar dropdown (_templates/topbar.html). Hand-picked:
-# nothing here is derived from git tags. A release only shows up once
-# its docs are published and it is listed below.
-VERSIONS_CURRENT = {"name": "dev"}
-VERSIONS = [
-    {
-        "title": "Development",
-        "entries": [
-            {"name": "dev", "url": "/", "note": "docs from main"},
-        ],
-    },
-    {
-        "title": "Past releases",
-        "entries": [
-            {
-                "name": "7.2.2",
-                "url": "https://psutil.readthedocs.io/stable/",
-                "note": "latest",
-            },
-        ],
-    },
-]
+VERSIONS = json.loads((_HERE / "versions.json").read_text(encoding="utf-8"))
 
 html_context = {
-    "versions": VERSIONS,
-    "versions_current": VERSIONS_CURRENT,
+    "versions": VERSIONS["groups"],
+    "versions_current": VERSIONS["current"],
 }
 
 # =====================================================================

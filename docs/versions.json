@@ -1,0 +1,22 @@
+{
+    "current": "dev",
+    "groups": [
+        {
+            "title": "Development",
+            "entries": [
+                { "name": "dev", "url": "/", "note": "docs from main" }
+            ]
+        },
+        {
+            "title": "Past releases",
+            "entries": [
+                {
+                    "name": "7.2",
+                    "url": "/7.2/",
+                    "note": "latest",
+                    "ref": "v7.2.2"
+                }
+            ]
+        }
+    ]
+}
