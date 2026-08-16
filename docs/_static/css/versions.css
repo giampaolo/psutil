@@ -13,10 +13,9 @@
     padding: 0 8px;
     border-radius: 6px;
     color: var(--sidebar-fg);
-    font-size: 0.78rem;
+    font-size: 0.95rem;
     font-weight: 600;
     line-height: 1;
-    font-variant-numeric: tabular-nums;
     cursor: pointer;
     list-style: none;
     transition: background 0.15s, color 0.15s;
@@ -31,7 +30,7 @@
     content: "\f02b";
     font-family: "Font Awesome 7 Free";
     font-weight: 900;
-    font-size: 0.95em;
+    font-size: 0.9em;
     opacity: 0.85;
 }
 
@@ -48,8 +47,8 @@
     content: "\f077";
     font-family: "Font Awesome 7 Free";
     font-weight: 900;
-    font-size: 0.8em;
-    opacity: 1;
+    font-size: 0.7em;
+    opacity: 0.9;
     transform: rotate(180deg);
     transition: transform 0.15s;
 }

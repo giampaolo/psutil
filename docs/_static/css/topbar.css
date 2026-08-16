@@ -104,7 +104,7 @@
     background: transparent;
     cursor: pointer;
     color: var(--sidebar-fg);
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     text-decoration: none;
     transition: background 0.15s, color 0.15s;
 }
@@ -147,7 +147,7 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    font-size: 0.78rem;
+    font-size: 0.9rem;
     font-weight: 600;
     line-height: 1;
     font-variant-numeric: tabular-nums;
