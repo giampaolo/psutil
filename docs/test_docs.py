@@ -4,6 +4,7 @@
 
 """Sanity checks for the Sphinx docs and blog posts."""
 
+import importlib.util
 import pathlib
 import re
 import shutil
@@ -778,6 +779,29 @@ class TestNoIndex:
         for name in ("index.html", "api.html", "install.html"):
             with subtests.test(page=name):
                 assert not self.NOINDEX_RE.search(read_html(name))
+
+    def test_past_releases_noindex(self):
+        # Past releases must never compete with the current docs in
+        # search results.
+        path = ROOT / "scripts" / "internal" / "docs" / "build_versions.py"
+        spec = importlib.util.spec_from_file_location("build_versions", path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        tmp = tempfile.mkdtemp()
+        try:
+            page = pathlib.Path(tmp) / "sub" / "page.html"
+            page.parent.mkdir()
+            page.write_text("<html><head></head><body>x</body></html>")
+            entry = {"name": "7.2", "url": "/7.2/"}
+            assert mod.inject(pathlib.Path(tmp), entry, "dev") == 1
+            html = page.read_text()
+            assert self.NOINDEX_RE.search(html)
+            assert "psutil-archived" in html
+            # Relative, so a file:// preview and a subdirectory both work.
+            assert '"../../_static/css/archived.css"' in html
+        finally:
+            shutil.rmtree(tmp)
 
 
 @pytest.mark.usefixtures("build_html")

@@ -36,6 +36,7 @@ def load_versions():
 
 def banner(entry, current, root):
     return (
+        '<meta name="robots" content="noindex">'
         f'<link rel="stylesheet" href="{root}_static/css/archived.css">'
         '<div class="psutil-archived">You are reading the documentation '
         f'for psutil <b>{entry["name"]}</b>. '
