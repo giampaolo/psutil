@@ -34,6 +34,9 @@ autoreload-hard:  ## Same as above but re-writes all files on every refresh
 	rm -rf $(LIVEDIR)
 	$(SPHINXAUTOBUILD) $(SPHINXOPTS) -a $(LIVE_DIRHTML)
 
+versions:  ## Build past doc releases into the current build (needs `html` first)
+	$(PYTHON) ../scripts/internal/docs/build_versions.py $(OUTDIR) $(if $(ONLY),--only "$(ONLY)")
+
 # --- checkers
 
 check-links:  ## Check links. Prints only broken URLs / warnings.

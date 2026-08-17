@@ -25,16 +25,28 @@ so this file is the map.
 - `_static/css/`, `_static/js/`: styles and vanilla JS (no framework).
 - `_ext/`: small local Sphinx extensions.
 - `_extra/robots.txt`: copied verbatim to the site root.
+- `versions.json`: the version selector's menu (see below).
 
 ## Notable choices
 
-- Single version, served at the site root (no `/en/`, no `/latest/`).
+- master is served at the site root (no `/en/`, no `/latest/`); frozen past
+  releases live under `/<version>/`, listed in `versions.json`.
 - Built with the `dirhtml` builder, so URLs are extensionless directories
   (`psutil.io/faq/`, no `.html`).
 - Self-hosted on GitHub Pages under the custom domain psutil.io.
 - Fonts, CSS and JS are all self-hosted; no external assets.
 - Social cards, sitemap and Atom feed are generated at build time and rooted at
   `html_baseurl`.
+
+## Freezing a doc version
+
+Add an entry to `versions.json`:
+
+    { "name": "8.0", "url": "/8.0/", "note": "release", "ref": "v8.0.0" }
+
+Entries with a `ref` are rebuilt from it on every deploy and get an "old
+version" banner. Nothing is stored, and tags publish nothing on their own.
+Deleting the entry unpublishes it.
 
 ## Tests
 
@@ -47,6 +59,6 @@ so this file is the map.
 ## Deploy
 
 `.github/workflows/docs.yml` runs on pushes / PRs that touch `docs/`: lint
-(`make lint-rst`) -> offline tests -> build -> deploy to GitHub Pages ->
-live-site tests. Deploy and the live tests run only on push to master, never on
-PRs.
+(`make lint-rst`) -> offline tests -> build -> build past versions -> deploy to
+GitHub Pages -> live-site tests. Deploy and the live tests run only on push to
+master, never on PRs.

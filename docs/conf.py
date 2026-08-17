@@ -10,6 +10,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import datetime
 import importlib.util
+import json
 import locale
 import os
 import pathlib
@@ -172,9 +173,8 @@ def _css_files():
     # giscus.css is loaded inside the giscus iframe (see
     # _templates/comments.html), never by our own pages. Linking it
     # here would make every page fetch its @import from giscus.app.
-    files = sorted(
-        p.name for p in css_dir.glob("*.css") if p.name != "giscus.css"
-    )
+    skip = {"giscus.css", "archived.css"}
+    files = sorted(p.name for p in css_dir.glob("*.css") if p.name not in skip)
     head = ["base.css", "fonts.css", "fontawesome.css", "typography.css"]
     tail = ["home.css"]
     middle = [f for f in files if f not in head + tail]
@@ -197,6 +197,17 @@ def _js_files():
 
 
 html_js_files = _js_files()
+
+# =====================================================================
+# Version selector
+# =====================================================================
+
+VERSIONS = json.loads((_HERE / "versions.json").read_text(encoding="utf-8"))
+
+html_context = {
+    "versions": VERSIONS["versions"],
+    "versions_current": VERSIONS["current"],
+}
 
 # =====================================================================
 # Blog (ablog package)

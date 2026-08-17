@@ -104,7 +104,7 @@
     background: transparent;
     cursor: pointer;
     color: var(--sidebar-fg);
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     text-decoration: none;
     transition: background 0.15s, color 0.15s;
 }
@@ -127,8 +127,7 @@
 .topbar-hamburger:hover,
 .topbar-link:hover,
 .topbar-btn:hover,
-.topbar-text:hover,
-.topbar-version:hover {
+.topbar-text:hover {
     background: var(--bg-hover-on-dark);
     color: #ffffff;
 }
@@ -148,7 +147,7 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    font-size: 0.78rem;
+    font-size: 0.9rem;
     font-weight: 600;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -168,36 +167,6 @@
     display: none;
 }
 
-/* PyPI version: tag icon + version number. */
-.topbar-version {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 0 8px;
-    height: 32px;
-    border-radius: 6px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-    color: var(--sidebar-fg);
-    text-decoration: none;
-    transition: background 0.15s, color 0.15s;
-}
-
-/* FontAwesome tag, matching the old site exactly. */
-.topbar-version::before {
-    content: "\f02b";
-    font-family: "Font Awesome 7 Free";
-    font-weight: 900;
-    font-size: 0.95em;
-    opacity: 0.85;
-}
-
-.topbar-version:empty {
-    display: none;
-}
-
 /* ---- Mobile responsive ---------------------------------------------- */
 
 @media (max-width: 1024px) {
@@ -208,21 +177,29 @@
     }
 
     .topbar-inner {
-        padding: 0 12px;
+        padding: 0 8px;
         justify-content: flex-start;
     }
 
+    .topbar-hamburger {
+        margin-right: 0;
+    }
+
     .topbar-actions {
-        gap: 6px;
+        gap: 0;
         margin-left: auto;
     }
 
-    /* Drop the stars count + version pill once the hamburger is in
-       play; the icon-only GitHub link stays. */
-    .topbar-version {
-        display: none;
+    .topbar-btn + .topbar-link {
+        margin-left: 0;
     }
 
+    .topbar-text {
+        padding: 0 8px;
+    }
+
+    /* Drop the stars count once the hamburger is in play; the
+       icon-only GitHub link stays. */
     .topbar-stars {
         display: none;
     }
@@ -234,7 +211,6 @@
 
 @media (max-width: 600px) {
     .topbar-text {
-        padding: 0 6px;
         font-size: 0.95rem;
     }
 }
@@ -248,8 +224,15 @@
         height: 44px;
     }
 
-    .topbar-text,
-    .topbar-version {
+    .topbar-text {
         height: 44px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .topbar-link,
+    .topbar-btn,
+    .topbar-hamburger {
+        width: 38px;
     }
 }

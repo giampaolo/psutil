@@ -1,7 +1,9 @@
 {#-
   Top bar: logo on the left, action cluster (Blog, theme toggle,
-  GitHub stars, PyPI version) on the right. Fixed at the top of the
-  viewport. Styled by static/css/topbar.css.
+  GitHub stars, version selector) on the right. Fixed at the top of
+  the viewport. Styled by static/css/topbar.css.
+
+  The version list comes from html_context in conf.py.
 -#}
 <header class="topbar no-visited" role="banner">
   <div class="topbar-inner">
@@ -33,9 +35,34 @@
         <i class="fa-brands fa-github" aria-hidden="true"></i>
         <span class="topbar-stars" data-repo="giampaolo/psutil"></span>
       </a>
-      <a class="topbar-version" data-repo="giampaolo/psutil"
-         href="https://pypi.org/project/psutil"
-         target="_blank" rel="noopener" title="{{ _('PyPI') }}" aria-label="{{ _('PyPI release') }}"></a>
+      {%- if versions %}
+      <details class="topbar-versions" id="version-selector"
+               data-version-page="{% if pagename != master_doc and pagename != '404' %}{{ pagename }}{% endif %}">
+        <summary title="{{ _('Switch documentation version') }}"
+                 aria-label="{{ _('Switch documentation version') }}">
+          <span class="topbar-versions-current">{{ versions_current }}</span>
+        </summary>
+        <div class="topbar-versions-menu" role="menu">
+          {%- for v in versions %}
+          {%- if v.ref and not (loop.previtem and loop.previtem.ref) %}
+          <hr class="topbar-versions-sep">
+          {%- endif %}
+          {%- if v.url.startswith('http') or pagename == '404' -%}
+            {%- set href = v.url -%}
+          {%- elif v.url == '/' -%}
+            {%- set href = './' if pagename == master_doc else pathto(master_doc) -%}
+          {%- else -%}
+            {%- set href = pathto(v.url.strip('/') ~ '/index.html', 1) -%}
+          {%- endif -%}
+          <a class="topbar-versions-item{% if v.name == versions_current %} is-current{% endif %}"
+             href="{{ href }}" role="menuitem">
+            <span class="topbar-versions-name">{{ v.name }}</span>
+            {%- if v.note %}<span class="topbar-versions-note">{{ v.note }}</span>{% endif %}
+          </a>
+          {%- endfor %}
+        </div>
+      </details>
+      {%- endif %}
     </nav>
   </div>
 </header>
