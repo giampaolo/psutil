@@ -229,6 +229,12 @@ class TestHtmlBuild:
         assert (HTML_DIR / "index.html").exists()
         assert (HTML_DIR / "blog" / "index.html").exists()
 
+    def test_page_sources_are_published(self, subtests):
+        for name in ("api", "faq", "install", "blog/2025/drop-py27"):
+            with subtests.test(page=name):
+                src = HTML_DIR / "_sources" / (name + ".rst.txt")
+                assert src.is_file() is True
+
     def test_github_pages_control_files(self):
         # sphinx.ext.githubpages writes these: .nojekyll stops Jekyll
         # from dropping _static/, CNAME is derived from html_baseurl.
