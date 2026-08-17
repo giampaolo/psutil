@@ -1,0 +1,92 @@
+/* "Copy page" button appended to the h1 by js/copy-page.js. */
+
+.article h1:has(button.copy-page) {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.article h1 button.copy-page {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.34em;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.article h1 button.copy-page:hover {
+    background: var(--bg-hover);
+    border-color: var(--text-muted);
+    color: var(--text);
+}
+
+.copy-page-icons {
+    display: inline-grid;
+    place-items: center;
+}
+
+.copy-page-icon-copy,
+.copy-page-icon-check {
+    grid-area: 1 / 1;
+}
+
+.copy-page-icon-check {
+    visibility: hidden;
+    color: #2e9e4f;
+}
+
+.copy-page.copied .copy-page-icon-copy {
+    visibility: hidden;
+}
+
+.copy-page.copied .copy-page-icon-check {
+    visibility: visible;
+}
+
+.copy-page.failed .copy-page-icon-copy {
+    color: #c0392b;
+}
+
+.copy-page-labels {
+    display: inline-grid;
+    place-items: center start;
+}
+
+.copy-page-label-copy,
+.copy-page-label-done {
+    grid-area: 1 / 1;
+}
+
+.copy-page-label-done {
+    visibility: hidden;
+}
+
+.copy-page.copied .copy-page-label-copy {
+    visibility: hidden;
+}
+
+.copy-page.copied .copy-page-label-done {
+    visibility: visible;
+}
+
+@media (max-width: 600px) {
+    .article h1 button.copy-page .copy-page-labels {
+        display: none;
+    }
+
+    .article h1 button.copy-page {
+        padding: 3px 6px;
+    }
+}
