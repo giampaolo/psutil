@@ -2,6 +2,7 @@
 
 .topbar-versions {
     position: relative;
+    user-select: none;
 }
 
 .topbar-versions > summary {

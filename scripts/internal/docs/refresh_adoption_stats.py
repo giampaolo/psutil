@@ -6,9 +6,6 @@
 
 """Refresh the dynamic numbers in docs/adoption.rst and README.rst
 (monthly downloads and GitHub repository dependents).
-
-Intended to run locally before tagging a release. The docs build does
-NOT call this.
 """
 
 import argparse
@@ -16,10 +13,14 @@ import json
 import pathlib
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 TIMEOUT = 5
+RETRIES = 3
+BACKOFF = 5
 TARGETS = [
     ROOT / "docs/adoption.rst",
     ROOT / "docs/index.rst",
@@ -30,8 +31,6 @@ DOWNLOADS_URL = "https://pypistats.org/api/packages/psutil/recent"
 
 
 def fetch(url, accept="text/html"):
-    # GitHub serves a stripped page (without the dependent-counts
-    # markup) to non-browser User-Agents, so we pretend to be one.
     req = urllib.request.Request(
         url,
         headers={
@@ -43,8 +42,18 @@ def fetch(url, accept="text/html"):
             "Accept": accept,
         },
     )
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-        return resp.read().decode("utf-8", errors="replace")
+    for attempt in range(1, RETRIES + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+                return resp.read().decode("utf-8", errors="replace")
+        except urllib.error.HTTPError as err:
+            if err.code != 429 or attempt == RETRIES:
+                sys.exit(
+                    f"error: {url} returned HTTP {err.code} ({err.reason})"
+                )
+            wait = int(err.headers.get("Retry-After") or BACKOFF * attempt)
+            print(f"  rate limited, retrying in {wait}s ...", file=sys.stderr)
+            time.sleep(wait)
 
 
 def round_millions(n):
@@ -68,10 +77,6 @@ def fetch_github_dependents():
     graph.
     """
     html = fetch(DEPENDENTS_URL)
-    # The page renders the count as:
-    #   <number>
-    #     Repositories
-    # ...with the number on one line and the label on the next.
     repos_re = re.search(r"([\d,]+)\s+Repositories", html)
     if not repos_re:
         sys.exit("could not parse GitHub dependents page")
@@ -80,10 +85,7 @@ def fetch_github_dependents():
 
 def parse_cli():
     parser = argparse.ArgumentParser(
-        description=(
-            "Refresh the dynamic numbers in docs/adoption.rst, "
-            "docs/index.rst and README.rst."
-        )
+        description="Refresh adoptions dynamic numbers"
     )
     parser.parse_args()
 
@@ -98,15 +100,9 @@ def main():
     repos = fetch_github_dependents()
     print(f"  repos:    {repos:,}")
 
-    # Repos are at the 100k+ scale. Floor to a bucket size that hides
-    # week-to-week noise but still moves visibly between releases.
     new_downloads = round_millions(monthly)  # "330+ million"
     new_repos = f"{floor_to(repos, 10_000):,}+"  # "760,000+"
 
-    # In adoption.rst and README.rst the numbers are wrapped in
-    # **bold**; in index.rst they live inside a <span class=
-    # "home-stat-num">. Patterns match both forms so re-runs preserve
-    # the markup.
     subs = [
         # adoption.rst / README.rst: **330+ million** downloads ...
         (
@@ -133,10 +129,6 @@ def main():
         ),
     ]
 
-    # Apply each sub to each file and count global matches per pattern.
-    # Each pattern is file-specific (some only match the **bold**
-    # prose form, some only match the index.rst HTML form), so we
-    # only require >= 1 match across all files combined.
     totals = [0] * len(subs)
     for path in TARGETS:
         text = path.read_text()
