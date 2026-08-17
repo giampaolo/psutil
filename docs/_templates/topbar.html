@@ -43,9 +43,10 @@
           <span class="topbar-versions-current">{{ versions_current }}</span>
         </summary>
         <div class="topbar-versions-menu" role="menu">
-          {%- for group in versions %}
-          <p class="topbar-versions-group">{{ group.title }}</p>
-          {%- for v in group.entries %}
+          {%- for v in versions %}
+          {%- if v.ref and not (loop.previtem and loop.previtem.ref) %}
+          <hr class="topbar-versions-sep">
+          {%- endif %}
           {%- if v.url.startswith('http') or pagename == '404' -%}
             {%- set href = v.url -%}
           {%- elif v.url == '/' -%}
@@ -57,9 +58,7 @@
              href="{{ href }}" role="menuitem">
             <span class="topbar-versions-name">{{ v.name }}</span>
             {%- if v.note %}<span class="topbar-versions-note">{{ v.note }}</span>{% endif %}
-            {%- if v.name == versions_current %}<span class="topbar-versions-badge">{{ _('current') }}</span>{% endif %}
           </a>
-          {%- endfor %}
           {%- endfor %}
         </div>
       </details>

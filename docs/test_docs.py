@@ -64,8 +64,7 @@ HTML_DIR = None
 
 PAST_RELEASE_DIRS = frozenset(
     entry["url"].strip("/")
-    for group in conf.VERSIONS["groups"]
-    for entry in group["entries"]
+    for entry in conf.VERSIONS["versions"]
     if entry.get("ref")
 )
 

@@ -30,12 +30,7 @@ def run(cmd, cwd=None):
 
 def load_versions():
     data = json.loads(VERSIONS_JSON.read_text(encoding="utf-8"))
-    entries = [
-        entry
-        for group in data["groups"]
-        for entry in group["entries"]
-        if entry.get("ref")
-    ]
+    entries = [e for e in data["versions"] if e.get("ref")]
     return data["current"], entries
 
 

@@ -205,7 +205,7 @@ html_js_files = _js_files()
 VERSIONS = json.loads((_HERE / "versions.json").read_text(encoding="utf-8"))
 
 html_context = {
-    "versions": VERSIONS["groups"],
+    "versions": VERSIONS["versions"],
     "versions_current": VERSIONS["current"],
 }
 

@@ -177,13 +177,25 @@
     }
 
     .topbar-inner {
-        padding: 0 12px;
+        padding: 0 8px;
         justify-content: flex-start;
     }
 
+    .topbar-hamburger {
+        margin-right: 0;
+    }
+
     .topbar-actions {
-        gap: 6px;
+        gap: 0;
         margin-left: auto;
+    }
+
+    .topbar-btn + .topbar-link {
+        margin-left: 0;
+    }
+
+    .topbar-text {
+        padding: 0 8px;
     }
 
     /* Drop the stars count once the hamburger is in play; the
@@ -199,7 +211,6 @@
 
 @media (max-width: 600px) {
     .topbar-text {
-        padding: 0 6px;
         font-size: 0.95rem;
     }
 }
@@ -215,5 +226,13 @@
 
     .topbar-text {
         height: 44px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .topbar-link,
+    .topbar-btn,
+    .topbar-hamburger {
+        width: 38px;
     }
 }
