@@ -223,7 +223,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   updated" stamp in the footer and an icon marking external URLs.
 
 - Usability: right TOC sidebar (:gh:`2828`), a COPY button on code snippets
-  (:gh:`2761`), a "back to top" button, the ``psutil.`` prefix shown for all
+  (:gh:`2761`), a "copy page" button copying the page's RsT source
+  (:gh:`2981`), a "back to top" button, the ``psutil.`` prefix shown for all
   APIs, and search results styled as cards. Identifiers in code blocks (e.g.
   ``psutil.Process()``, ``p.cpu_percent()``) are now clickable and link to
   their API reference entry, via
@@ -243,7 +244,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   GitHub Pages under a new domain, https://psutil.io, and URLs no longer carry
   the ``/en`` language and version prefixes, e.g. https://psutil.io/faq/
   (:gh:`2790`). It's rebuilt and deployed automatically on every push to
-  ``master`` (:gh:`2739`).
+  ``master`` (:gh:`2739`). Past releases are also served, e.g.
+  https://psutil.io/7.2/, with a version selector in the top bar (:gh:`2980`).
 
 - Misc: doc is built as part of CI (fails on error), all ``.rst`` files are
   wrapped to 79 characters via https://github.com/giampaolo/rstwrap
