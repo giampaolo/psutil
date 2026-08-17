@@ -412,8 +412,8 @@ bench-oneshot:  ## Benchmarks for oneshot() ctx manager (see #799).
 bench-oneshot-2:  ## Same as above but using perf module (more precise).
 	$(PYTHON) scripts/internal/bench_oneshot_2.py
 
-find-broken-links:  ## Look for broken links in source files.
-	git ls-files | xargs $(PYTHON) -Wa scripts/internal/find_broken_links.py
+find-broken-links:  ## Look for broken links in source files (except docs/).
+	git ls-files | grep -v '^docs/' | xargs $(PYTHON) -Wa scripts/internal/find_broken_links.py
 
 _CI_JOBS = $(patsubst .github/workflows/%.yml,%,$(shell grep -l workflow_dispatch .github/workflows/*.yml))
 
