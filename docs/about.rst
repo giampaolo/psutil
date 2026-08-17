@@ -61,10 +61,7 @@ Documentation versions
    <i class="fa-solid fa-tag" aria-hidden="true"></i>
 
 The |tag| menu in the top-right corner switches between this development
-version of the docs, built from the master branch, and past releases. Where the
-page you're reading also exists in the other version you land on it directly,
-otherwise on that version's home page. Past releases show a banner saying so,
-and are kept out of search engines.
+version of the docs, built from the master branch, and past releases.
 
 .. image:: /_static/images/about/versions.png
    :alt: Version selector
@@ -98,7 +95,7 @@ Copy page
 
 Next to the title of every documentation page there's a *Copy page* button,
 which copies the page's reStructuredText source to your clipboard. Handy for
-quoting a section, or for pasting a whole page into an LLM.
+for pasting a whole page into an LLM.
 
 .. image:: /_static/images/about/copypage.png
    :alt: Copy page button
