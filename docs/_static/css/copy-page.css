@@ -26,6 +26,15 @@
     transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
+.article h1 button.copy-page:focus {
+    outline: none;
+}
+
+.article h1 button.copy-page:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
 .article h1 button.copy-page:hover {
     background: var(--bg-hover);
     border-color: var(--text-muted);
