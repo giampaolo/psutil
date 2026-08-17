@@ -650,7 +650,6 @@ class Process:
                 yield
             else:
                 try:
-                    # cached in case cpu_percent() is used
                     self.cpu_times.cache_activate(self)
                     # cached in case memory_percent() is used
                     self.memory_info.cache_activate(self)

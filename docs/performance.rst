@@ -97,7 +97,7 @@ Here's a list of method groups for each platform which can benefit from
 :meth:`Process.oneshot`. Methods in each group (in the same comma-separated
 list) share the same underlying system call.
 
-The *Speedup* represents the estimated gain when all listed methods are called
+The *speedup* represents the estimated gain when all listed methods are called
 together (best case), as measured by :src:`scripts/internal/bench_oneshot.py`.
 
 Linux
@@ -272,4 +272,3 @@ Linux:
   environ                          300      0.01013
   memory_footprint                 300      0.02241
   memory_maps                      300      0.30282
-

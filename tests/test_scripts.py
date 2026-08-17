@@ -195,9 +195,10 @@ class TestInternalScripts(ScriptsTestCase):
 
     @staticmethod
     def ls():
-        for name in os.listdir(INTERNAL_SCRIPTS_DIR):
-            if name.endswith(".py"):
-                yield os.path.join(INTERNAL_SCRIPTS_DIR, name)
+        for root, dirs, files in os.walk(INTERNAL_SCRIPTS_DIR):
+            for file in files:
+                if file.endswith(".py"):
+                    yield os.path.join(root, file)
 
     def test_syntax_all(self):
         for path in self.ls():

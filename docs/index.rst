@@ -221,7 +221,7 @@
 
 .. ============================================================================
 .. Adoption stats. Numbers kept in sync with adoption.rst and README.rst
-.. by scripts/internal/refresh_adoption_stats.py.
+.. by scripts/internal/docs/refresh_adoption_stats.py.
 .. ============================================================================
 
 .. raw:: html

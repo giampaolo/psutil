@@ -2136,10 +2136,6 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
 5.0.0 — 2016-11-06
 ^^^^^^^^^^^^^^^^^^
 
-.. note::
-   psutil 5.0 introduces breaking API changes. See the
-   :ref:`migration guide <migration-5.0>` if upgrading from 4.x.
-
 **New APIs**
 
 - :gh:`799`: new :meth:`Process.oneshot` context manager (**+2x faster** in

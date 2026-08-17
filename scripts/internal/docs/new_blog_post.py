@@ -14,7 +14,7 @@ import pathlib
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
-REPO_ROOT = HERE.parent.parent
+REPO_ROOT = HERE.parent.parent.parent
 AUTHOR = "Giampaolo Rodola"
 
 SLUG = ""

@@ -11,13 +11,14 @@ Intended to run locally before tagging a release. The docs build does
 NOT call this.
 """
 
+import argparse
 import json
 import pathlib
 import re
 import sys
 import urllib.request
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
+ROOT = pathlib.Path(__file__).resolve().parents[3]
 TIMEOUT = 5
 TARGETS = [
     ROOT / "docs/adoption.rst",
@@ -77,7 +78,18 @@ def fetch_github_dependents():
     return int(repos_re.group(1).replace(",", ""))
 
 
+def parse_cli():
+    parser = argparse.ArgumentParser(
+        description=(
+            "Refresh the dynamic numbers in docs/adoption.rst, "
+            "docs/index.rst and README.rst."
+        )
+    )
+    parser.parse_args()
+
+
 def main():
+    parse_cli()
     print(f"fetching {DOWNLOADS_URL} ...")
     monthly = fetch_monthly_downloads()
     print(f"  monthly downloads: {monthly:,}")

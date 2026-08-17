@@ -59,10 +59,10 @@ test-online-doc:  ## Smoke tests against the live docs site.
 
 blog-post:  ## Create a new blog post skeleton
 	@test -n "$(SLUG)" || { echo "Usage: make blog-post SLUG=<slug> [TITLE=<text>] [TAGS=<csv>]"; exit 1; }
-	$(PYTHON) ../scripts/internal/new_blog_post.py "$(SLUG)"$(if $(TITLE), --title "$(TITLE)")$(if $(TAGS), --tags "$(TAGS)")
+	$(PYTHON) ../scripts/internal/docs/new_blog_post.py "$(SLUG)"$(if $(TITLE), --title "$(TITLE)")$(if $(TAGS), --tags "$(TAGS)")
 
 refresh-adoption-stats:  ## Refresh PyPI/GitHub stats in adoption.rst and README.rst
-	$(PYTHON) ../scripts/internal/refresh_adoption_stats.py
+	$(PYTHON) ../scripts/internal/docs/refresh_adoption_stats.py
 	$(MAKE) -C .. fix-rst
 
 help: ## Display callable targets.
