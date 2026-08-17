@@ -36,7 +36,8 @@
         <span class="topbar-stars" data-repo="giampaolo/psutil"></span>
       </a>
       {%- if versions %}
-      <details class="topbar-versions" id="version-selector">
+      <details class="topbar-versions" id="version-selector"
+               data-version-page="{% if pagename != master_doc and pagename != '404' %}{{ pagename }}{% endif %}">
         <summary title="{{ _('Switch documentation version') }}"
                  aria-label="{{ _('Switch documentation version') }}">
           <span class="topbar-versions-current">{{ versions_current }}</span>

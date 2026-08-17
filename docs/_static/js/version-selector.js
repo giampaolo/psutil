@@ -22,4 +22,30 @@
             details.querySelector("summary").focus();
         }
     });
+
+    // Land on the same page in the other version when it exists, else follow
+    // the link to that version's home page.
+    const page = details.dataset.versionPage;
+    if (!page) {
+        return;
+    }
+    for (const link of details.querySelectorAll(".topbar-versions-item")) {
+        if (link.classList.contains("is-current")) {
+            continue;
+        }
+        link.addEventListener("click", function (event) {
+            if (event.metaKey || event.ctrlKey || event.shiftKey) {
+                return;
+            }
+            const same = new URL(page + "/", link.href).href;
+            event.preventDefault();
+            fetch(same, { method: "HEAD" })
+                .then((resp) => {
+                    window.location.href = resp.ok ? same : link.href;
+                })
+                .catch(() => {
+                    window.location.href = link.href;
+                });
+        });
+    }
 })();
