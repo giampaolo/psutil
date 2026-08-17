@@ -52,7 +52,7 @@
           {%- elif v.url == '/' -%}
             {%- set href = './' if pagename == master_doc else pathto(master_doc) -%}
           {%- else -%}
-            {%- set href = pathto(v.url.strip('/') ~ '/index.html', 1) -%}
+            {%- set href = pathto(v.url.strip('/') ~ '/', 1) -%}
           {%- endif -%}
           <a class="topbar-versions-item{% if v.name == versions_current %} is-current{% endif %}"
              href="{{ href }}" role="menuitem">
