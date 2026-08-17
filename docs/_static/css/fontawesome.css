@@ -72,6 +72,10 @@
     content: "\f077";
 }
 
+.fa-tag::before {
+    content: "\f02b";
+}
+
 .fa-magnifying-glass::before {
     content: "\f002";
 }
