@@ -15,7 +15,9 @@
 PyObject *
 psutil_check_pid_range(PyObject *self, PyObject *args) {
 #ifdef PSUTIL_WINDOWS
-    DWORD pid;
+    // Not DWORD: it's unsigned, which would make the < 0 check below
+    // always false. _Py_PARSE_PID is "i" on Windows anyway.
+    int pid;
 #else
     pid_t pid;
 #endif
@@ -41,7 +43,6 @@ psutil_pids(PyObject *self, PyObject *args) {
     int pids_count = 0;
     int i;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_pid = NULL;
 
     if (!py_retlist)
         return NULL;
@@ -55,19 +56,14 @@ psutil_pids(PyObject *self, PyObject *args) {
     }
 
     for (i = 0; i < pids_count; i++) {
-        py_pid = PyLong_FromPid(pids_array[i]);
-        if (!py_pid)
+        if (!pylist_append_obj(py_retlist, PyLong_FromPid(pids_array[i])))
             goto error;
-        if (PyList_Append(py_retlist, py_pid))
-            goto error;
-        Py_CLEAR(py_pid);
     }
 
     free(pids_array);
     return py_retlist;
 
 error:
-    Py_XDECREF(py_pid);
     Py_DECREF(py_retlist);
     free(pids_array);
     return NULL;

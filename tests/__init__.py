@@ -10,9 +10,10 @@ import ctypes
 import enum
 import errno
 import functools
-import importlib
+import importlib.util
 import ipaddress
 import os
+import pathlib
 import platform
 import random
 import re
@@ -24,24 +25,26 @@ import socket
 import stat
 import subprocess
 import sys
+import sysconfig
 import tempfile
 import textwrap
 import threading
 import time
 import traceback
+import types
+import typing
 import unittest
 import warnings
 from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_STREAM
 
-try:
-    import pytest
-except ImportError:
-    pytest = None
+import pytest
 
 import psutil
+import psutil._ntuples as ntuples
 from psutil import AIX
+from psutil import BSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
@@ -49,8 +52,10 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil import _enums
+from psutil._common import ENCODING
+from psutil._common import ENCODING_ERRS
 from psutil._common import debug
-from psutil._common import memoize
 from psutil._common import supports_ipv6
 
 if POSIX:
@@ -61,30 +66,35 @@ if POSIX:
 __all__ = [
     # constants
     'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
-    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR', 'SCRIPTS_DIR',
+    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR',
     'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
-    'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
-    "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
-    "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
-    "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
-    "HAS_SENSORS_TEMPERATURES", "HAS_NET_CONNECTIONS_UNIX", "MACOS_11PLUS",
-    "MACOS_12PLUS", "COVERAGE", 'AARCH64', "PYTEST_PARALLEL",
+    'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE',
+    "HAS_PROC_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_PROC_ENVIRON",
+    "HAS_PROC_IO_COUNTERS", "HAS_PROC_IONICE",
+    "HAS_PROC_MEMORY_FOOTPRINT", "HAS_PROC_MEMORY_MAPS",
+    "HAS_PROC_CPU_NUM", "HAS_PROC_RLIMIT", "HAS_SENSORS_BATTERY",
+    "HAS_BATTERY", "HAS_SENSORS_FANS", "HAS_SENSORS_TEMPERATURES",
+    "HAS_NET_CONNECTIONS_UNIX", "HAS_PROC_OPEN_FILES_PATH",
+    "MACOS_11PLUS", "MACOS_12PLUS", "COVERAGE",
+    "AARCH64", "PYTEST_PARALLEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_subproc', 'spawn_zombie',
-    'spawn_children_pair',
+    'spawn_children_pair', 'filter_alien_children',
     # threads
     'ThreadTask',
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
-    'system_namespace',
-    'is_win_secure_system_proc',
+    'system_namespace', 'is_win_secure_system_proc', 'serial', 'isolated',
+    'skipif', 'requires_cli',
+    # type hints
+    'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
-    'get_winver', 'kernel_version',
+    'get_winver', 'kernel_version', 'is_busybox',
     # sync primitives
-    'call_until', 'wait_for_pid', 'wait_for_file',
+    'call_until', 'wait_for_pid', 'wait_for_file', 'wait_for_file_subproc',
     # network
     'check_net_address', 'filter_proc_net_connections',
     'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
@@ -104,19 +114,18 @@ __all__ = [
 # --- platforms
 
 PYPY = '__pypy__' in sys.builtin_module_names
+FREE_THREADED = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 # whether we're running this test suite on a Continuous Integration service
 GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
 CI_TESTING = GITHUB_ACTIONS
 COVERAGE = 'COVERAGE_RUN' in os.environ
 PYTEST_PARALLEL = "PYTEST_XDIST_WORKER" in os.environ  # `make test-parallel`
-# are we a 64 bit process?
-IS_64BIT = sys.maxsize > 2**32
 # apparently they're the same
 AARCH64 = platform.machine().lower() in {"aarch64", "arm64"}
 RISCV64 = platform.machine() == "riscv64"
 
 
-@memoize
+@functools.lru_cache
 def macos_version():
     version_str = platform.mac_ver()[0]
     version = tuple(map(int, version_str.split(".")[:2]))
@@ -172,29 +181,30 @@ ASCII_FS = sys.getfilesystemencoding().lower() in {"ascii", "us-ascii"}
 
 # --- paths
 
-ROOT_DIR = os.environ.get("PSUTIL_ROOT_DIR") or os.path.realpath(
-    os.path.join(os.path.dirname(__file__), "..")
+ROOT_DIR = os.environ.get("PSUTIL_ROOT_DIR") or str(
+    pathlib.Path(__file__).resolve().parent.parent
 )
-SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
-HERE = os.path.realpath(os.path.dirname(__file__))
 
 # --- support
 
-HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
-HAS_ENVIRON = hasattr(psutil.Process, "environ")
-HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
-HAS_IONICE = hasattr(psutil.Process, "ionice")
 HAS_HEAP_INFO = hasattr(psutil, "heap_info")
-HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_NET_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_NET_IO_COUNTERS = hasattr(psutil, "net_io_counters")
-HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
-HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
-HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
 HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
-HAS_THREADS = hasattr(psutil.Process, "threads")
+
+HAS_PROC_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
+HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
+HAS_PROC_ENVIRON = hasattr(psutil.Process, "environ")
+HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
+HAS_PROC_IONICE = hasattr(psutil.Process, "ionice")
+HAS_PROC_MEMORY_FOOTPRINT = hasattr(psutil.Process, "memory_footprint")
+HAS_PROC_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
+HAS_PROC_RLIMIT = hasattr(psutil.Process, "rlimit")
+HAS_PROC_THREADS = hasattr(psutil.Process, "threads")
+HAS_PROC_OPEN_FILES_PATH = not (NETBSD or OPENBSD)
+
 SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 
 try:
@@ -225,13 +235,33 @@ def _get_py_exe():
 
     env = os.environ.copy()
 
-    # On Windows, starting with python 3.7, virtual environments use a
-    # venv launcher startup process. This does not play well when
-    # counting spawned processes, or when relying on the PID of the
-    # spawned process to do some checks, e.g. connections check per PID.
-    # Let's use the base python in this case.
+    # Subprocesses (scripts, pyrun(), ...) get sys.path[0] set to the
+    # script's directory, so by default they import whatever psutil is
+    # installed instead of the one we're testing. Point them at ours.
+    # Derived from psutil.__file__ and not from ROOT_DIR because when
+    # testing wheels the source tree next to us has no C extension.
+    psutil_path = str(pathlib.Path(psutil.__file__).resolve().parent.parent)
+    paths = [psutil_path]
+    # Handle venvs.
+    if sys.prefix != sys.base_prefix:
+        paths.append(sysconfig.get_paths()["purelib"])
+    env["PYTHONPATH"] = os.pathsep.join(
+        filter(None, [*paths, env.get("PYTHONPATH")])
+    )
+
+    if PYPY and POSIX:
+        libdir = os.path.dirname(os.path.realpath(sys.executable))
+        env["LD_LIBRARY_PATH"] = os.pathsep.join(
+            filter(None, [libdir, env.get("LD_LIBRARY_PATH")])
+        )
+
+    # On Windows virtual environments use a venv launcher startup
+    # process. This does not play well when counting spawned processes,
+    # or when relying on the PID of the spawned process to do some
+    # checks, e.g. connections check per PID. Let's use the base python
+    # in this case.
     base = getattr(sys, "_base_executable", None)
-    if WINDOWS and sys.version_info >= (3, 7) and base is not None:
+    if WINDOWS and base is not None:
         # We need to set __PYVENV_LAUNCHER__ to sys.executable for the
         # base python executable to know about the environment.
         env["__PYVENV_LAUNCHER__"] = sys.executable
@@ -372,15 +402,17 @@ def spawn_subproc(cmd=None, **kwds):
                 "[time.sleep(0.1) for x in range(100)];"  # 10 secs
             )
             cmd = [PYTHON_EXE, "-c", pyline]
+            kwds.setdefault("stderr", subprocess.PIPE)
             sproc = subprocess.Popen(cmd, **kwds)
             _subprocesses_started.add(sproc)
-            wait_for_file(testfn, delete=True, empty=True)
+            wait_for_file_subproc(testfn, sproc, delete=True, empty=True)
         finally:
             safe_rmpath(testfn)
     else:
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
         wait_for_pid(sproc.pid)
+        _wait_for_cmdline(sproc.pid)
     return sproc
 
 
@@ -409,11 +441,13 @@ def spawn_children_pair():
         # set (which is the default) a "conhost.exe" extra process will be
         # spawned as a child. We don't want that.
         if WINDOWS:
-            subp, tfile = pyrun(s, creationflags=0)
+            subp, tfile = pyrun(s, creationflags=0, stderr=subprocess.PIPE)
         else:
-            subp, tfile = pyrun(s)
+            subp, tfile = pyrun(s, stderr=subprocess.PIPE)
         child = psutil.Process(subp.pid)
-        grandchild_pid = int(wait_for_file(testfn, delete=True, empty=False))
+        grandchild_pid = int(
+            wait_for_file_subproc(testfn, subp, delete=True, empty=False)
+        )
         _pids_started.add(grandchild_pid)
         grandchild = psutil.Process(grandchild_pid)
         return (child, grandchild)
@@ -431,16 +465,15 @@ def spawn_zombie():
     assert psutil.POSIX
     unix_file = get_testfn()
     src = textwrap.dedent(f"""\
-        import os, sys, time, socket, contextlib
+        import os, socket, time
         child_pid = os.fork()
-        if child_pid > 0:
-            time.sleep(3000)
+        if child_pid == 0:
+            os._exit(0)
         else:
-            # this is the zombie process
             with socket.socket(socket.AF_UNIX) as s:
                 s.connect('{unix_file}')
-                pid = bytes(str(os.getpid()), 'ascii')
-                s.sendall(pid)
+                s.sendall(bytes(str(child_pid), 'ascii'))
+            time.sleep(3000)
         """)
     tfile = None
     sock = bind_unix_socket(unix_file)
@@ -494,6 +527,8 @@ def sh(cmd, **kwds):
     kwds.setdefault("stdout", subprocess.PIPE)
     kwds.setdefault("stderr", subprocess.PIPE)
     kwds.setdefault("universal_newlines", True)
+    kwds.setdefault("encoding", ENCODING)
+    kwds.setdefault("errors", ENCODING_ERRS)
     kwds.setdefault("creationflags", flags)
     if isinstance(cmd, str):
         cmd = shlex.split(cmd)
@@ -593,6 +628,23 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         assert not psutil.pid_exists(pid), pid
 
 
+def filter_alien_children(procs):
+    """On Windows CI the runner agent (provjobd.exe) sporadically
+    spawns wsl.exe, conhost.exe, etc. When their parent dies the PPID
+    is left dangling (Windows never clears it), and if that PID gets
+    reused by us they show up as our children.
+    """
+    if not (WINDOWS and CI_TESTING):
+        return procs
+    names = {"wsl.exe", "conhost.exe"}
+    aliens = {
+        x.pid
+        for x in psutil.process_iter(["name"])
+        if (x.name() or "").lower() in names
+    }
+    return [x for x in procs if x.pid not in aliens]
+
+
 def reap_children(recursive=False):
     """Terminate and wait() any subprocess started by this test suite
     and any children currently running, ensuring that no processes stick
@@ -604,6 +656,9 @@ def reap_children(recursive=False):
     # recursive=True we don't want to lose the intermediate reference
     # pointing to the grandchildren.
     children = psutil.Process().children(recursive=recursive)
+    # children() lists them top-down; reverse so descendants die before
+    # their parents (avoids orphaning grandchildren).
+    children.reverse()
 
     # Terminate subprocess.Popen.
     while _subprocesses_started:
@@ -617,8 +672,12 @@ def reap_children(recursive=False):
 
     # Terminate children.
     if children:
+        timeout = 3
         for p in children:
-            terminate(p, wait_timeout=None)
+            try:
+                terminate(p, wait_timeout=timeout)
+            except psutil.TimeoutExpired:
+                warn(f"{p!r} didn't terminate within {timeout} secs")
         _, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn(f"couldn't terminate process {p!r}; attempting kill()")
@@ -662,6 +721,15 @@ def get_winver():
     return (wv[0], wv[1], sp)
 
 
+@functools.lru_cache
+def is_busybox(cmd):
+    """Whether cmd is provided by busybox / Alpine Linux."""
+    path = shutil.which(cmd)
+    if path is None:
+        return False
+    return os.path.basename(os.path.realpath(path)) == "busybox"
+
+
 # ===================================================================
 # --- sync primitives
 # ===================================================================
@@ -688,8 +756,10 @@ class retry:
 
     def __iter__(self):
         if self.timeout:
-            stop_at = time.time() + self.timeout
-            while time.time() < stop_at:
+            # time.monotonic(): the BSD CI VMs step the system clock
+            # (NTP), which would expire a time.time() deadline early.
+            stop_at = time.monotonic() + self.timeout
+            while time.monotonic() < stop_at:
                 yield
         elif self.retries:
             for _ in range(self.retries):
@@ -756,6 +826,39 @@ def wait_for_file(fname, delete=True, empty=False):
     return data
 
 
+def wait_for_file_subproc(fname, sproc, delete=True, empty=False):
+    """Wait for a file to be written on disk, which is supposed to be
+    written by a subprocess.
+    """
+    try:
+        return wait_for_file(fname, delete=delete, empty=empty)
+    except FileNotFoundError as err:
+        ret = sproc.poll()
+        if ret is None:
+            raise
+        stderr = sproc.stderr.read() if sproc.stderr else b""
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode(errors="replace")
+        msg = f"subprocess died (exit {ret}):\n{stderr}"
+        raise RuntimeError(msg) from err
+
+
+@retry(
+    exception=(AssertionError, psutil.AccessDenied),
+    logfun=None,
+    timeout=GLOBAL_TIMEOUT,
+    interval=0.001,
+)
+def _wait_for_cmdline(pid):
+    # Popen() returns before the kernel publishes argv, so for a moment
+    # cmdline reads back empty on Linux, and raises AccessDenied on
+    # macOS, where sysctl(KERN_PROCARGS2) fails with EINVAL.
+    try:
+        assert psutil.Process(pid).cmdline()
+    except (psutil.NoSuchProcess, psutil.ZombieProcess):
+        return
+
+
 @retry(
     exception=(AssertionError, pytest.fail.Exception),
     logfun=None,
@@ -782,8 +885,8 @@ def safe_rmpath(path):
         # open handles or references preventing the delete operation
         # to succeed immediately, so we retry for a while. See:
         # https://bugs.python.org/issue33240
-        stop_at = time.time() + GLOBAL_TIMEOUT
-        while time.time() < stop_at:
+        stop_at = time.monotonic() + GLOBAL_TIMEOUT
+        while time.monotonic() < stop_at:
             try:
                 return fun()
             except FileNotFoundError:
@@ -870,17 +973,52 @@ def get_testfn(suffix="", dir=None):
     deletion at interpreter exit. It's technically racy but probably
     not really due to the time variant.
     """
-    while True:
-        name = tempfile.mktemp(prefix=TESTFN_PREFIX, suffix=suffix, dir=dir)
-        if not os.path.exists(name):  # also include dirs
-            path = os.path.realpath(name)  # needed for OSX
-            atexit.register(safe_rmpath, path)
-            return path
+    name = tempfile.mktemp(prefix=TESTFN_PREFIX, suffix=suffix, dir=dir)
+    path = os.path.realpath(name)  # needed for OSX
+    atexit.register(safe_rmpath, path)
+    return path
 
 
 # ===================================================================
 # --- testing
 # ===================================================================
+
+# `@serial` decorator: put all marked tests on the same xdist worker,
+# so they don't run concurrently in the same process. Needed by tests
+# that share the same system-wide resource (e.g. a socket) and must not
+# overlap.
+# - net_connections() / Process.net_connections() that compare vs
+#   `ss`, `netstat`, etc.
+# - the socket-opening helpers: create_sockets(), bind_socket(),
+#   tcp_socketpair(), unix_socketpair(), bind_unix_socket()
+serial = pytest.mark.xdist_group(name="serial")
+
+# `@isolated` decorator: these tests are skipped under xdist and run in
+# a second, separate pytest run (`-m isolated`) that uses a single
+# process. They need a quiet, non-xdist environment, because
+# they measure noisy per-process or system counters.
+# - CPU counters compared vs getrusage / vmstat / WMI: cpu_stats(),
+#   Process.num_ctx_switches(), Process.page_faults()
+# - per-process counts other tests can move: Process.num_threads(),
+#   Process.num_fds(), Process.threads(), heap_info()
+isolated = pytest.mark.isolated
+
+skipif = pytest.mark.skipif
+
+
+def requires_cli(cmd):
+    """Skip test if CLI command is not available."""
+
+    def outer(fun):
+        @functools.wraps(fun)
+        def inner(*args, **kwargs):
+            if not shutil.which(cmd):
+                pytest.skip(f"{cmd} cmd not available")
+            return fun(*args, **kwargs)
+
+        return inner
+
+    return outer
 
 
 class PsutilTestCase(unittest.TestCase):
@@ -1032,11 +1170,13 @@ class PsutilTestCase(unittest.TestCase):
             with pytest.raises(psutil.ZombieProcess) as cm:
                 proc.memory_maps()
             self._check_proc_exc(proc, cm.value)
-        # Zombie cannot be signaled or terminated.
-        proc.suspend()
-        proc.resume()
-        proc.terminate()
-        proc.kill()
+        # Zombie cannot be signaled or terminated. Another user's zombie
+        # can't be signaled at all, so only try on our own.
+        if not POSIX or proc.uids().real == os.getuid():
+            proc.suspend()
+            proc.resume()
+            proc.terminate()
+            proc.kill()
         assert proc.is_running()
         assert psutil.pid_exists(proc.pid)
         assert_in_pids(proc)
@@ -1055,10 +1195,26 @@ class PsutilTestCase(unittest.TestCase):
         # rid of a zombie is to kill its parent.
         # assert proc == ppid(), os.getpid()
 
+    def check_proc_memory(self, nt):
+        # Check the ntuple returned by Process.memory_*() methods.
+        check_ntuple_type_hints(nt)
+        for value in nt:
+            assert isinstance(value, int)
+            assert value >= 0
+        if hasattr(nt, "peak_rss"):
+            if BSD and nt.peak_rss == 0:
+                pass  # kernel threads don't have rusage tracking
+            else:
+                # VmHWM (from /proc/pid/status) and ru_maxrss both
+                # track peak RSS but are synced independently. Allow 5%
+                # tolerance.
+                diff = nt.rss - nt.peak_rss
+                assert diff <= nt.rss * 0.05
+
 
 def is_win_secure_system_proc(pid):
     # see: https://github.com/giampaolo/psutil/issues/2338
-    @memoize
+    @functools.lru_cache
     def get_procs():
         ret = {}
         out = sh("tasklist.exe /NH /FO csv")
@@ -1097,9 +1253,12 @@ class process_namespace:
 
     ignored = [
         ('as_dict', (), {}),
+        ('attrs', (), {}),
         ('children', (), {'recursive': True}),
         ('connections', (), {}),  # deprecated
+        ('info', (), {}),
         ('is_running', (), {}),
+        ('memory_full_info', (), {}),  # deprecated
         ('oneshot', (), {}),
         ('parent', (), {}),
         ('parents', (), {}),
@@ -1113,14 +1272,15 @@ class process_namespace:
         ('create_time', (), {}),
         ('cwd', (), {}),
         ('exe', (), {}),
-        ('memory_full_info', (), {}),
         ('memory_info', (), {}),
+        ('memory_info_ex', (), {}),
         ('name', (), {}),
         ('net_connections', (), {'kind': 'all'}),
         ('nice', (), {}),
         ('num_ctx_switches', (), {}),
         ('num_threads', (), {}),
         ('open_files', (), {}),
+        ('page_faults', (), {}),
         ('ppid', (), {}),
         ('status', (), {}),
         ('threads', (), {}),
@@ -1133,19 +1293,22 @@ class process_namespace:
         getters += [('num_fds', (), {})]
     if HAS_PROC_IO_COUNTERS:
         getters += [('io_counters', (), {})]
-    if HAS_IONICE:
+    if HAS_PROC_IONICE:
         getters += [('ionice', (), {})]
-    if HAS_RLIMIT:
+    if HAS_PROC_RLIMIT:
         getters += [('rlimit', (psutil.RLIMIT_NOFILE,), {})]
-    if HAS_CPU_AFFINITY:
+    if HAS_PROC_CPU_AFFINITY:
         getters += [('cpu_affinity', (), {})]
     if HAS_PROC_CPU_NUM:
         getters += [('cpu_num', (), {})]
-    if HAS_ENVIRON:
+    if HAS_PROC_ENVIRON:
         getters += [('environ', (), {})]
     if WINDOWS:
         getters += [('num_handles', (), {})]
-    if HAS_MEMORY_MAPS:
+    if HAS_PROC_MEMORY_FOOTPRINT:
+        getters += [('memory_footprint', (), {})]
+    if HAS_PROC_MEMORY_MAPS:
+        getters += [('memory_maps', (), {'grouped': True})]
         getters += [('memory_maps', (), {'grouped': False})]
 
     setters = []
@@ -1153,14 +1316,14 @@ class process_namespace:
         setters += [('nice', (0,), {})]
     else:
         setters += [('nice', (psutil.NORMAL_PRIORITY_CLASS,), {})]
-    if HAS_RLIMIT:
+    if HAS_PROC_RLIMIT:
         setters += [('rlimit', (psutil.RLIMIT_NOFILE, (1024, 4096)), {})]
-    if HAS_IONICE:
+    if HAS_PROC_IONICE:
         if LINUX:
             setters += [('ionice', (psutil.IOPRIO_CLASS_NONE, 0), {})]
         else:
             setters += [('ionice', (psutil.IOPRIO_NORMAL,), {})]
-    if HAS_CPU_AFFINITY:
+    if HAS_PROC_CPU_AFFINITY:
         setters += [('cpu_affinity', ([_get_eligible_cpu()],), {})]
 
     killers = [
@@ -1236,12 +1399,16 @@ class system_namespace:
         ('cpu_stats', (), {}),
         ('cpu_times', (), {'percpu': False}),
         ('cpu_times', (), {'percpu': True}),
+        ('disk_io_counters', (), {'perdisk': False}),
         ('disk_io_counters', (), {'perdisk': True}),
+        ('disk_partitions', (), {'all': False}),
         ('disk_partitions', (), {'all': True}),
         ('disk_usage', (os.getcwd(),), {}),
+        ('getloadavg', (), {}),
         ('net_connections', (), {'kind': 'all'}),
         ('net_if_addrs', (), {}),
         ('net_if_stats', (), {}),
+        ('net_io_counters', (), {'pernic': False}),
         ('net_io_counters', (), {'pernic': True}),
         ('pid_exists', (os.getpid(),), {}),
         ('pids', (), {}),
@@ -1251,12 +1418,8 @@ class system_namespace:
     ]
 
     if HAS_CPU_FREQ:
-        if MACOS and AARCH64:  # skipped due to #1892
-            pass
-        else:
-            getters += [('cpu_freq', (), {'percpu': True})]
-    if HAS_GETLOADAVG:
-        getters += [('getloadavg', (), {})]
+        getters += [('cpu_freq', (), {'percpu': False})]
+        getters += [('cpu_freq', (), {'percpu': True})]
     if HAS_SENSORS_TEMPERATURES:
         getters += [('sensors_temperatures', (), {})]
     if HAS_SENSORS_FANS:
@@ -1295,7 +1458,7 @@ class system_namespace:
     test_class_coverage = process_namespace.test_class_coverage
 
 
-def retry_on_failure(retries=NO_RETRIES):
+def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
     """Decorator which runs a test function and retries N times before
     giving up and failing.
     """
@@ -1329,11 +1492,14 @@ def retry_on_failure(retries=NO_RETRIES):
 
         return wrapper
 
+    # allow bare `@retry_on_failure`
+    if callable(retries):
+        return retry_on_failure()(retries)
     assert retries > 1, retries
     return decorator
 
 
-def skip_on_access_denied(only_if=None):
+def skip_on_access_denied(only_if: "bool | typing.Callable | None" = None):
     """Decorator to Ignore AccessDenied exceptions."""
 
     def decorator(fun):
@@ -1349,10 +1515,12 @@ def skip_on_access_denied(only_if=None):
 
         return wrapper
 
+    if callable(only_if):
+        return skip_on_access_denied()(only_if)
     return decorator
 
 
-def skip_on_not_implemented(only_if=None):
+def skip_on_not_implemented(only_if: "bool | typing.Callable | None" = None):
     """Decorator to Ignore NotImplementedError exceptions."""
 
     def decorator(fun):
@@ -1372,6 +1540,8 @@ def skip_on_not_implemented(only_if=None):
 
         return wrapper
 
+    if callable(only_if):
+        return skip_on_not_implemented()(only_if)
     return decorator
 
 
@@ -1424,9 +1594,8 @@ def tcp_socketpair(family, addr=("", 0)):
     """Build a pair of TCP sockets connected to each other.
     Return a (server, client) tuple.
     """
-    with socket.socket(family, SOCK_STREAM) as ll:
-        ll.bind(addr)
-        ll.listen(5)
+    with socket.create_server(addr, family=family, backlog=5) as ll:
+        ll.settimeout(GLOBAL_TIMEOUT)
         addr = ll.getsockname()
         c = socket.socket(family, SOCK_STREAM)
         try:
@@ -1518,7 +1687,7 @@ def check_net_address(addr, family):
 
 
 def check_connection_ntuple(conn):
-    """Check validity of a connection namedtuple."""
+    """Check validity of a connection named tuple."""
 
     def check_ntuple(conn):
         has_pid = len(conn) == 7
@@ -1585,6 +1754,7 @@ def check_connection_ntuple(conn):
         else:
             assert conn.status == psutil.CONN_NONE, conn.status
 
+    check_ntuple_type_hints(conn)
     check_ntuple(conn)
     check_family(conn)
     check_type(conn)
@@ -1604,6 +1774,162 @@ def filter_proc_net_connections(cons):
                 continue
         new.append(conn)
     return new
+
+
+# =====================================================================
+# --- type hints
+# =====================================================================
+
+
+class TypeHintsChecker:
+    try:
+        UNION_TYPES = (typing.Union, types.UnionType)
+    except AttributeError:  # Python < 3.10
+        UNION_TYPES = (typing.Union,)
+
+    @staticmethod
+    @functools.lru_cache(maxsize=None)
+    def _get_ntuple_hints(nt):
+        cls = type(nt)
+        try:
+            localns = {
+                name: obj
+                for name, obj in vars(_enums).items()
+                if isinstance(obj, type) and issubclass(obj, enum.Enum)
+            }
+            localns['socket'] = socket
+            return typing.get_type_hints(
+                cls,
+                globalns=vars(ntuples),
+                localns=localns,
+            )
+        except TypeError:
+            # Python < 3.10 can't evaluate "X | Y" union syntax.
+            return {}
+
+    @staticmethod
+    def _hint_to_types(hint):
+        """Flatten a type hint into a tuple of concrete types suitable
+        for isinstance(). Returns None if the hint cannot be checked.
+        """
+        origin = typing.get_origin(hint)
+        if origin in TypeHintsChecker.UNION_TYPES:
+            result = []
+            for arg in typing.get_args(hint):
+                inner = typing.get_origin(arg)
+                if inner is not None:
+                    result.append(inner)
+                elif isinstance(arg, type):
+                    result.append(arg)
+            return tuple(result) if result else None
+        if origin is not None:
+            return (origin,)
+        if isinstance(hint, type):
+            return (hint,)
+        return None
+
+    @staticmethod
+    def check_ntuple_type_hints(nt):
+        """Uses type hints from _ntuples.py to verify field types. `nt`
+        is a named tuple returned by one of psutil APIs.
+        """
+        assert is_namedtuple(nt)
+        hints = TypeHintsChecker._get_ntuple_hints(nt)
+        if not hints:
+            return
+        for field in nt._fields:
+            if field not in hints:
+                # field is not annotated
+                continue
+            value = getattr(nt, field)
+            types_ = TypeHintsChecker._hint_to_types(hints[field])
+            if types_ is None:
+                continue
+            # For IntEnum hints (e.g. socket.AddressFamily), psutil may
+            # return a platform-specific IntEnum subclass rather than
+            # the annotated one, so we broaden the check to int.
+            types_ = tuple(
+                (
+                    int
+                    if isinstance(t, type) and issubclass(t, enum.IntEnum)
+                    else t
+                )
+                for t in types_
+            )
+            assert isinstance(value, types_), (field, value, types_)
+
+    @staticmethod
+    @functools.lru_cache(maxsize=None)
+    def _get_return_hint(fun):
+        """Get the 'return' type hint for a psutil API function or
+        method. Resolves annotation strings using a combined namespace
+        of psutil globals (Any, Generator, Process, ...) and ntuple
+        types (scputimes, svmem, pmem, ...). Returns None if hints
+        cannot be resolved or there is no return annotation.
+        """
+        while hasattr(fun, 'func'):
+            fun = fun.func
+        # Build a namespace that can resolve all annotations.
+        psp = vars(psutil).get('_psplatform')
+        psp_ns = vars(psp) if psp is not None else {}
+        ns = {
+            **psp_ns,
+            **vars(psutil),
+            **vars(ntuples),
+            **vars(typing),
+        }
+        underlying = getattr(fun, '__func__', fun)
+        try:
+            hints = typing.get_type_hints(underlying, globalns=ns)
+        except TypeError:
+            # X | Y union syntax in annotations requires Python 3.10+
+            # to evaluate. On older versions skip the check entirely.
+            if sys.version_info < (3, 10):
+                msg = f"skip X|Y type check on old python for {fun.__name__!r}"
+                warn(msg)
+                return None
+            else:
+                raise
+        return hints.get('return')
+
+    @staticmethod
+    def _check_container_items(hint, value):
+        """For list[T] and dict[K, V] hints, verify element types."""
+        origin = typing.get_origin(hint)
+        args = typing.get_args(hint)
+        if origin is list and args:
+            elem_types = TypeHintsChecker._hint_to_types(args[0])
+            if elem_types:
+                for item in value:
+                    assert isinstance(item, elem_types), (item, elem_types)
+        elif origin is dict and len(args) == 2:
+            key_types = TypeHintsChecker._hint_to_types(args[0])
+            val_types = TypeHintsChecker._hint_to_types(args[1])
+            for k, v in value.items():
+                if key_types:
+                    assert isinstance(k, key_types), (k, key_types)
+                if val_types:
+                    assert isinstance(v, val_types), (v, val_types)
+
+    @staticmethod
+    def check_fun_type_hints(fun, retval):
+        """Use the 'return' type hint of *fun* from psutil/__init__.py
+        to verify that *retval* is an instance of the annotated type.
+        """
+        hint = TypeHintsChecker._get_return_hint(fun)
+        if hint is None:
+            if not hasattr(types, "UnionType"):
+                # added in python 3.10
+                return
+            raise ValueError(f"no type hints defined for {fun}")
+        types_ = TypeHintsChecker._hint_to_types(hint)
+        assert types_, hint
+        assert isinstance(retval, types_), (fun, retval, types_)
+        TypeHintsChecker._check_container_items(hint, retval)
+
+
+check_ntuple_type_hints = TypeHintsChecker.check_ntuple_type_hints
+check_fun_type_hints = TypeHintsChecker.check_fun_type_hints
 
 
 # ===================================================================
@@ -1634,10 +1960,9 @@ def warn(msg):
 
 
 def is_namedtuple(x):
-    """Check if object is an instance of namedtuple."""
+    """Check if object is an instance of named tuple."""
     t = type(x)
-    b = t.__bases__
-    if len(b) != 1 or b[0] is not tuple:
+    if tuple not in t.__mro__:
         return False
     f = getattr(t, '_fields', None)
     if not isinstance(f, tuple):
@@ -1688,7 +2013,6 @@ else:
             for x in psutil.Process().memory_maps()
             if x.path.lower().endswith(ext)
             and 'python' in os.path.basename(x.path).lower()
-            and 'wow64' not in x.path.lower()
         ]
         if PYPY and not libs:
             libs = [

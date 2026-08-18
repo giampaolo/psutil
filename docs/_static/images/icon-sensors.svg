@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#2980b9">
+  <!-- FontAwesome 4.7.0 thermometer-half (\f2c9), path scaled and
+       centered into a 24x24 box to match the other home icons. -->
+  <g transform="translate(5.713 1) scale(0.01228) translate(0 1536) scale(1 -1)">
+    <path d="M640 192q0 -80 -56 -136t-136 -56t-136 56t-56 136q0 60 35 110t93 71v395h128v-395q58 -21 93 -71t35 -110zM768 192q0 77 -34 144t-94 112v768q0 80 -56 136t-136 56t-136 -56t-56 -136v-768q-60 -45 -94 -112t-34 -144q0 -133 93.5 -226.5t226.5 -93.5t226.5 93.5t93.5 226.5zM896 192q0 -185 -131.5 -316.5t-316.5 -131.5t-316.5 131.5t-131.5 316.5q0 182 128 313v711q0 133 93.5 226.5t226.5 93.5t226.5 -93.5t93.5 -226.5v-711q128 -131 128 -313zM1024 768v-128h-192v128h192zM1024 1024v-128h-192v128h192zM1024 1280v-128h-192v128h192z"/>
+  </g>
+</svg>

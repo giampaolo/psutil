@@ -2,27 +2,32 @@
  * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Security related functions for Windows platform (Set privileges such as
- * SE DEBUG).
  */
 
-#include <windows.h>
+// Security related functions for Windows platform (Set privileges such
+// as SE DEBUG).
+
 #include <Python.h>
+#include <windows.h>
 
 #include "../../arch/all/init.h"
 
 
-static BOOL
+// Enable or disable `Privilege` on `hToken`. Return 0 on success, else
+// the Win32 error code.
+static DWORD
 psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
     TOKEN_PRIVILEGES tp;
     LUID luid;
-    TOKEN_PRIVILEGES tpPrevious;
+    // Zeroed because AdjustTokenPrivileges() leaves Privileges[0]
+    // untouched when the token doesn't hold the privilege, and we OR
+    // into its Attributes below.
+    TOKEN_PRIVILEGES tpPrevious = {0};
     DWORD cbPrevious = sizeof(TOKEN_PRIVILEGES);
 
     if (!LookupPrivilegeValue(NULL, Privilege, &luid)) {
-        psutil_oserror_wsyscall("LookupPrivilegeValue");
-        return -1;
+        psutil_debug("LookupPrivilegeValue() failed");
+        return GetLastError();
     }
 
     // first pass.  get current privilege setting
@@ -39,8 +44,8 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
             &cbPrevious
         ))
     {
-        psutil_oserror_wsyscall("AdjustTokenPrivileges");
-        return -1;
+        psutil_debug("AdjustTokenPrivileges() failed (1/2)");
+        return GetLastError();
     }
 
     // Second pass. Set privilege based on previous setting.
@@ -57,36 +62,45 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
             hToken, FALSE, &tpPrevious, cbPrevious, NULL, NULL
         ))
     {
-        psutil_oserror_wsyscall("AdjustTokenPrivileges");
-        return -1;
+        psutil_debug("AdjustTokenPrivileges() failed (2/2)");
+        return GetLastError();
     }
 
     return 0;
 }
 
 
+// Return the token of the current process, or NULL, in which case
+// `err` is set to the Win32 error code.
 static HANDLE
-psutil_get_thisproc_token() {
+psutil_get_thisproc_token(DWORD *err) {
     HANDLE hToken = NULL;
     HANDLE me = GetCurrentProcess();
 
     if (!OpenProcessToken(me, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
     {
+        // ERROR_NO_TOKEN means "the thread is not impersonating", which
+        // is an OpenThreadToken condition. A process always has a
+        // primary token, so this branch is likely unreachable.
         if (GetLastError() == ERROR_NO_TOKEN) {
             if (!ImpersonateSelf(SecurityImpersonation)) {
-                psutil_oserror_wsyscall("ImpersonateSelf");
+                psutil_debug("ImpersonateSelf() failed");
+                *err = GetLastError();
                 return NULL;
             }
             if (!OpenProcessToken(
                     me, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken
                 ))
             {
-                psutil_oserror_wsyscall("OpenProcessToken");
+                psutil_debug("OpenProcessToken() failed");
+                *err = GetLastError();
+                RevertToSelf();
                 return NULL;
             }
         }
         else {
-            psutil_oserror_wsyscall("OpenProcessToken");
+            psutil_debug("OpenProcessToken() failed");
+            *err = GetLastError();
             return NULL;
         }
     }
@@ -96,40 +110,38 @@ psutil_get_thisproc_token() {
 
 
 static void
-psutil_print_err() {
+sedebug_warn(DWORD err) {
     char *msg =
         "psutil module couldn't set SE DEBUG mode for this process; "
         "please file an issue against psutil bug tracker";
-    psutil_debug(msg);
-    if (GetLastError() != ERROR_ACCESS_DENIED)
-        PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1);
-    PyErr_Clear();
+
+    if (err != ERROR_ACCESS_DENIED)
+        psutil_warn("%s (err=%lu)", msg, (unsigned long)err);
+    else
+        psutil_debug("%s (err=%lu)", msg, (unsigned long)err);
 }
 
 
-/*
- * Set this process in SE DEBUG mode so that we have more chances of
- * querying processes owned by other users, including many owned by
- * Administrator and Local System.
- * https://docs.microsoft.com/windows-hardware/drivers/debugger/debug-privilege
- * This is executed on module import and we don't crash on error.
- */
+// Set this process in SE DEBUG mode so that we have more chances of
+// querying processes owned by other users, including many owned by
+// Administrator and Local System.
+// https://docs.microsoft.com/windows-hardware/drivers/debugger/debug-privilege
+// This is executed on module import and we don't crash on error.
 int
 psutil_set_se_debug() {
     HANDLE hToken;
+    DWORD err = 0;
 
-    if ((hToken = psutil_get_thisproc_token()) == NULL) {
-        // "return -1;" to get an exception
-        psutil_print_err();
+    if ((hToken = psutil_get_thisproc_token(&err)) == NULL) {
+        sedebug_warn(err);
         return 0;
     }
 
-    if (psutil_set_privilege(hToken, SE_DEBUG_NAME, TRUE) != 0) {
-        // "return -1;" to get an exception
-        psutil_print_err();
-    }
+    err = psutil_set_privilege(hToken, SE_DEBUG_NAME, TRUE);
+    if (err != 0)
+        sedebug_warn(err);
 
-    RevertToSelf();
+    RevertToSelf();  // in case psutil_get_thisproc_token() impersonated
     CloseHandle(hToken);
     return 0;
 }

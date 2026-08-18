@@ -1,0 +1,141 @@
+/* Version selector in the topbar. */
+
+.topbar-versions {
+    position: relative;
+    user-select: none;
+}
+
+.topbar-versions > summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 6px;
+    color: var(--sidebar-fg);
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    list-style: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+.topbar-versions > summary::-webkit-details-marker {
+    display: none;
+}
+
+.topbar-versions > summary::before {
+    content: "\f02b";
+    font-family: "Font Awesome 7 Free";
+    font-weight: 900;
+    font-size: 0.9em;
+    opacity: 0.85;
+}
+
+.topbar-versions > summary:hover,
+.topbar-versions[open] > summary {
+    background: var(--bg-hover-on-dark);
+    color: #ffffff;
+}
+
+.topbar-versions > summary::after {
+    content: "\f077";
+    font-family: "Font Awesome 7 Free";
+    font-weight: 900;
+    font-size: 0.7em;
+    opacity: 0.9;
+    transform: rotate(180deg);
+    transition: transform 0.15s;
+}
+
+.topbar-versions[open] > summary::after {
+    transform: rotate(0deg);
+}
+
+.topbar-versions-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 200;
+    min-width: 168px;
+    padding: 6px 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    box-shadow:
+        0 0 6px rgba(0, 0, 0, 0.06),
+        0 2px 8px rgba(0, 0, 0, 0.1),
+        0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+[data-theme="dark"] .topbar-versions-menu {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: var(--surface-raised);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), 0 10px 28px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .topbar-versions-sep {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.topbar-versions-sep {
+    height: 0;
+    margin: 5px 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+}
+
+.topbar-versions-menu .topbar-versions-item,
+.topbar-versions-menu .topbar-versions-item:visited {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    padding: 5px 14px;
+    color: var(--text);
+    font-size: 0.88rem;
+    text-decoration: none;
+}
+
+.topbar-versions-name {
+    font-weight: 600;
+}
+
+.topbar-versions-item:hover {
+    background: var(--bg-hover);
+    text-decoration: none;
+}
+
+.topbar-versions-note {
+    margin-left: auto;
+    padding-left: 18px;
+    color: var(--text-muted);
+    font-size: 0.76rem;
+}
+
+.topbar-versions-menu {
+    max-width: calc(100vw - 24px);
+}
+
+@media (max-width: 1024px) {
+    .topbar-versions > summary {
+        padding: 0 8px;
+    }
+}
+
+@media (max-width: 600px) {
+    .topbar-versions > summary::before {
+        display: none;
+    }
+}
+
+@media (pointer: coarse) {
+    .topbar-versions > summary {
+        height: 44px;
+    }
+
+    .topbar-versions-menu .topbar-versions-item {
+        padding-top: 9px;
+        padding-bottom: 9px;
+    }
+}

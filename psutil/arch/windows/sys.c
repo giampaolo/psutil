@@ -4,42 +4,51 @@
  * found in the LICENSE file.
  */
 
-/*
-System related functions. Original code moved in here from
-psutil/_psutil_windows.c in 2023. For reference, here's the GIT blame
-history before the move:
-
-- boot_time():
-  https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_windows.c#L51-L60
-- users():
-  https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_windows.c#L1103-L1244
-*/
+// System related functions. Original code moved in here from
+// psutil/_psutil_windows.c in 2023. For reference, here's the GIT
+// blame history before the move:
+//
+// - boot_time():
+//   https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_windows.c#L51-L60
+// - users():
+//   https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_windows.c#L1103-L1244
 
 #include <Python.h>
 #include <windows.h>
 
-#include "ntextapi.h"
 #include "../../arch/all/init.h"
 
 
-// The number of seconds passed since boot. This is a monotonic timer,
-// not affected by system clock updates. On Windows 7+ it also includes
-// the time spent during suspend / hybernate.
+// System boot time expressed in seconds since the UNIX epoch.
+//
+// Read boot time atomically from the kernel via
+// NtQuerySystemInformation(SystemTimeOfDayInformation), so the value
+// is identical across processes and has zero differences between calls
+// (fixes issue #1007 for the second time, which was caused by sampling
+// `time.time()` and `cext.uptime()` as two separate Python calls).
+//
+// This function is subject to system clock updates / NTP (it's by
+// contract and documented). It also takes into account the time spent
+// in suspend / hibernate mode, so that it returns the same result
+// on wakeup.
 PyObject *
-psutil_uptime(PyObject *self, PyObject *args) {
-    double uptimeSeconds;
-    ULONGLONG interruptTime100ns = 0;
+psutil_boot_time(PyObject *self, PyObject *args) {
+    SYSTEM_TIMEOFDAY_INFORMATION info;
+    NTSTATUS status;
+    LARGE_INTEGER boot;
 
-    if (QueryInterruptTime) {  // Windows 7+
-        QueryInterruptTime(&interruptTime100ns);
-        // Convert from 100-nanosecond to seconds.
-        uptimeSeconds = interruptTime100ns / 10000000.0;
+    status = NtQuerySystemInformation(
+        SystemTimeOfDayInformation, &info, sizeof(info), NULL
+    );
+    if (!NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "NtQuerySystemInformation(SystemTimeOfDayInformation)"
+        );
+        return NULL;
     }
-    else {
-        // Convert from milliseconds to seconds.
-        uptimeSeconds = (double)GetTickCount64() / 1000.0;
-    }
-    return Py_BuildValue("d", uptimeSeconds);
+    // Both BootTime and SleepTimeBias are in 100-ns units.
+    boot.QuadPart = info.BootTime.QuadPart - (LONGLONG)info.SleepTimeBias;
+    return Py_BuildValue("d", psutil_LargeIntegerToUnixTime(boot));
 }
 
 
@@ -50,6 +59,7 @@ psutil_users(PyObject *self, PyObject *args) {
     LPWSTR buffer_addr = NULL;
     LPWSTR buffer_info = NULL;
     PWTS_SESSION_INFOW sessions = NULL;
+    BOOL ok;
     DWORD count;
     DWORD i;
     DWORD sessionId;
@@ -57,7 +67,6 @@ psutil_users(PyObject *self, PyObject *args) {
     PWTS_CLIENT_ADDRESS address;
     char address_str[50];
     PWTSINFOW wts_info;
-    PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_username = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -71,13 +80,23 @@ psutil_users(PyObject *self, PyObject *args) {
         // If we don't run in an environment that is a Remote Desktop Services
         // environment the Wtsapi32 proc might not be present.
         // https://docs.microsoft.com/en-us/windows/win32/termserv/run-time-linking-to-wtsapi32-dll
+        psutil_debug("WTS procs not available; return empty list");
         return py_retlist;
     }
 
-    if (WTSEnumerateSessionsW(hServer, 0, 1, &sessions, &count) == 0) {
+    // WTS calls are RPC to the Terminal Services service, they may be
+    // slow.
+    Py_BEGIN_ALLOW_THREADS
+    ok = WTSEnumerateSessionsW(hServer, 0, 1, &sessions, &count);
+    Py_END_ALLOW_THREADS
+    if (ok == 0) {
         if (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) {
             // On Windows Nano server, the Wtsapi32 API can be present, but
             // return WinError 120.
+            psutil_debug(
+                "WTSEnumerateSessionsW -> ERROR_CALL_NOT_IMPLEMENTED; "
+                "return empty list"
+            );
             return py_retlist;
         }
         psutil_oserror_wsyscall("WTSEnumerateSessionsW");
@@ -86,7 +105,6 @@ psutil_users(PyObject *self, PyObject *args) {
 
     for (i = 0; i < count; i++) {
         py_address = NULL;
-        py_tuple = NULL;
         sessionId = sessions[i].SessionId;
         if (buffer_user != NULL)
             WTSFreeMemory(buffer_user);
@@ -101,11 +119,12 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // username
         bytes = 0;
-        if (WTSQuerySessionInformationW(
-                hServer, sessionId, WTSUserName, &buffer_user, &bytes
-            )
-            == 0)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ok = WTSQuerySessionInformationW(
+            hServer, sessionId, WTSUserName, &buffer_user, &bytes
+        );
+        Py_END_ALLOW_THREADS
+        if (ok == 0) {
             psutil_oserror_wsyscall("WTSQuerySessionInformationW");
             goto error;
         }
@@ -114,17 +133,18 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // address
         bytes = 0;
-        if (WTSQuerySessionInformationW(
-                hServer, sessionId, WTSClientAddress, &buffer_addr, &bytes
-            )
-            == 0)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ok = WTSQuerySessionInformationW(
+            hServer, sessionId, WTSClientAddress, &buffer_addr, &bytes
+        );
+        Py_END_ALLOW_THREADS
+        if (ok == 0) {
             psutil_oserror_wsyscall("WTSQuerySessionInformationW");
             goto error;
         }
 
         address = (PWTS_CLIENT_ADDRESS)buffer_addr;
-        if (address->AddressFamily == 2) {  // AF_INET == 2
+        if (address->AddressFamily == AF_INET) {
             str_format(
                 address_str,
                 sizeof(address_str),
@@ -136,7 +156,7 @@ psutil_users(PyObject *self, PyObject *args) {
                 address->Address[4],
                 address->Address[5]
             );
-            py_address = Py_BuildValue("s", address_str);
+            py_address = PyUnicode_FromString(address_str);
             if (!py_address)
                 goto error;
         }
@@ -147,11 +167,12 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // login time
         bytes = 0;
-        if (WTSQuerySessionInformationW(
-                hServer, sessionId, WTSSessionInfo, &buffer_info, &bytes
-            )
-            == 0)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ok = WTSQuerySessionInformationW(
+            hServer, sessionId, WTSSessionInfo, &buffer_info, &bytes
+        );
+        Py_END_ALLOW_THREADS
+        if (ok == 0) {
             psutil_oserror_wsyscall("WTSQuerySessionInformationW");
             goto error;
         }
@@ -161,30 +182,31 @@ psutil_users(PyObject *self, PyObject *args) {
         if (py_username == NULL)
             goto error;
 
-        py_tuple = Py_BuildValue(
-            "OOd",
-            py_username,
-            py_address,
-            psutil_LargeIntegerToUnixTime(wts_info->ConnectTime)
-        );
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "OOd",
+                py_username,
+                py_address,
+                psutil_LargeIntegerToUnixTime(wts_info->ConnectTime)
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_CLEAR(py_username);
         Py_CLEAR(py_address);
-        Py_CLEAR(py_tuple);
     }
 
     WTSFreeMemory(sessions);
-    WTSFreeMemory(buffer_user);
-    WTSFreeMemory(buffer_addr);
-    WTSFreeMemory(buffer_info);
+    if (buffer_user != NULL)
+        WTSFreeMemory(buffer_user);
+    if (buffer_addr != NULL)
+        WTSFreeMemory(buffer_addr);
+    if (buffer_info != NULL)
+        WTSFreeMemory(buffer_info);
     return py_retlist;
 
 error:
     Py_XDECREF(py_username);
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_DECREF(py_retlist);
 

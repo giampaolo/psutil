@@ -4,17 +4,14 @@
  * found in the LICENSE file.
  */
 
-/*
-System-wide CPU related functions.
-Original code was refactored and moved from psutil/arch/freebsd/specific.c
-in 2020 (and was moved in there previously already) from cset.
-a4c0a0eb0d2a872ab7a45e47fcf37ef1fde5b012
-For reference, here's the git history with original(ish) implementations:
-- CPU stats: fb0154ef164d0e5942ac85102ab660b8d2938fbb
-- CPU freq: 459556dd1e2979cdee22177339ced0761caf4c83
-- CPU cores: e0d6d7865df84dc9a1d123ae452fd311f79b1dde
-*/
-
+// System-wide CPU related functions.
+// Original code was refactored and moved from psutil/arch/freebsd/specific.c
+// in 2020 (and was moved in there previously already) from cset
+// a4c0a0eb0d2a872ab7a45e47fcf37ef1fde5b012.
+// For reference, here's the git history with original(ish) implementations:
+// - CPU stats: fb0154ef164d0e5942ac85102ab660b8d2938fbb
+// - CPU freq: 459556dd1e2979cdee22177339ced0761caf4c83
+// - CPU cores: e0d6d7865df84dc9a1d123ae452fd311f79b1dde
 
 #include <Python.h>
 #include <sys/sysctl.h>
@@ -30,7 +27,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int ncpu;
     size_t size;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_cputime = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -57,54 +53,37 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     for (int i = 0; i < ncpu; i++) {
-        py_cputime = Py_BuildValue(
-            "(ddddd)",
-            (double)cpu_time[i][CP_USER] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_NICE] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_SYS] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_IDLE] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_INTR] / CLOCKS_PER_SEC
-        );
-        if (!py_cputime) {
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(ddddd)",
+                (double)cpu_time[i][CP_USER] / CLOCKS_PER_SEC,
+                (double)cpu_time[i][CP_NICE] / CLOCKS_PER_SEC,
+                (double)cpu_time[i][CP_SYS] / CLOCKS_PER_SEC,
+                (double)cpu_time[i][CP_IDLE] / CLOCKS_PER_SEC,
+                (double)cpu_time[i][CP_INTR] / CLOCKS_PER_SEC
+            ))
+        {
             free(cpu_time);
             goto error;
         }
-        if (PyList_Append(py_retlist, py_cputime)) {
-            Py_DECREF(py_cputime);
-            free(cpu_time);
-            goto error;
-        }
-        Py_DECREF(py_cputime);
     }
 
     free(cpu_time);
     return py_retlist;
 
 error:
-    Py_XDECREF(py_cputime);
     Py_DECREF(py_retlist);
     return NULL;
 }
 
 
 PyObject *
-psutil_cpu_topology(PyObject *self, PyObject *args) {
-    char *topology = NULL;
-    size_t size = 0;
-    PyObject *py_str;
+psutil_cpu_count_cores(PyObject *self, PyObject *args) {
+    int num;
 
-    if (psutil_sysctlbyname_malloc(
-            "kern.sched.topology_spec", &topology, &size
-        )
-        != 0)
-    {
-        psutil_debug("ignore sysctlbyname('kern.sched.topology_spec') error");
+    if (psutil_sysctlbyname("kern.smp.cores", &num, sizeof(num)) != 0)
         Py_RETURN_NONE;
-    }
-
-    py_str = Py_BuildValue("s", topology);
-    free(topology);
-    return py_str;
+    return Py_BuildValue("i", num);
 }
 
 
@@ -139,18 +118,18 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return frequency information of a given CPU.
- * As of Dec 2018 only CPU 0 appears to be supported and all other
- * cores match the frequency of CPU 0.
- */
+// Return frequency information of a given CPU. As of Dec 2018 only CPU
+// 0 appears to be supported and all other cores match the frequency of
+// CPU 0.
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
     int current;
     int core;
     char sensor[26];
-    char available_freq_levels[1000];
+    char available_freq_levels[1000] = {0};
     size_t size;
+    PyObject *py_freq_levels;
+    PyObject *py_retlist;
 
     if (!PyArg_ParseTuple(args, "i", &core))
         return NULL;
@@ -167,7 +146,12 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     if (psutil_sysctlbyname(sensor, &available_freq_levels, size) != 0)
         psutil_debug("cpu freq levels failed (ignored)");
 
-    return Py_BuildValue("is", current, available_freq_levels);
+    py_freq_levels = PyUnicode_DecodeFSDefault(available_freq_levels);
+    if (py_freq_levels == NULL)
+        return NULL;
+    py_retlist = Py_BuildValue("iO", current, py_freq_levels);
+    Py_DECREF(py_freq_levels);
+    return py_retlist;
 
 error:
     if (errno == ENOENT)

@@ -6,6 +6,7 @@
 
 #include <Python.h>
 #include <kvm.h>
+#include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
@@ -19,19 +20,34 @@
 #include "../../arch/all/init.h"
 
 
-/*
- * Collect different info about a process in one shot and return
- * them as a big Python tuple.
- */
+#ifdef PSUTIL_FREEBSD
+#define KP(field) kp.ki_##field
+#define KP_RU(field) kp.ki_rusage.ru_##field
+#else
+#define KP(field) kp.p_##field
+#define KP_RU(field) kp.p_uru_##field
+#endif
+
+
+// Collect different info about a process in one shot and return them
+// as a Python dict.
 PyObject *
-psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
+psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     pid_t pid;
     long rss;
     long vms;
     long memtext;
     long memdata;
     long memstack;
+    long peak_rss;
+    long ttynr;
     int oncpu;
+    int status;
+    double create_time;
+    double user_time;
+    double sys_time;
+    double ch_user_time;
+    double ch_sys_time;
 #ifdef PSUTIL_NETBSD
     struct kinfo_proc2 kp;
 #else
@@ -40,15 +56,16 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long pagesize = psutil_getpagesize();
     char name_buf[256];  // buffer for process name
     PyObject *py_name = NULL;
-    PyObject *py_ppid = NULL;
-    PyObject *py_retlist = NULL;
+    PyObject *dict = PyDict_New();
 
+    if (!dict)
+        return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
+        goto error;
     if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
+        goto error;
 
-        // Process
+        // Process name
 #ifdef PSUTIL_FREEBSD
     str_format(name_buf, sizeof(name_buf), "%s", kp.ki_comm);
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
@@ -69,8 +86,10 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     memtext = (long)kp.ki_tsize * pagesize;
     memdata = (long)kp.ki_dsize * pagesize;
     memstack = (long)kp.ki_ssize * pagesize;
+    peak_rss = kp.ki_rusage.ru_maxrss * 1024;  // expressed in KB
 #else
     rss = (long)kp.p_vm_rssize * pagesize;
+    peak_rss = kp.p_uru_maxrss * 1024;  // expressed in KB
 #ifdef PSUTIL_OPENBSD
     // VMS, this is how ps determines it on OpenBSD:
     // https://github.com/openbsd/src/blob/
@@ -85,6 +104,37 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     memtext = (long)kp.p_vm_tsize * pagesize;
     memdata = (long)kp.p_vm_dsize * pagesize;
     memstack = (long)kp.p_vm_ssize * pagesize;
+#endif
+
+    // kernel doesn't always update peak_rss atomically, so rss can
+    // briefly exceed it. Difference is almost always 16KB. peak_rss is
+    // 0 for kernel/root PIDs: we leave it as-is so the caller knows it
+    // can't be relied upon.
+    if ((peak_rss < rss && peak_rss != 0)) {
+        psutil_debug(
+            "pid: %ld, ru_maxrss (%ld KB) < rss (%ld KB); using rss as "
+            "peak_rss",
+            (long)pid,
+            peak_rss / 1024,
+            rss / 1024
+        );
+        peak_rss = rss;  // use rss as peak_rss
+    }
+
+#ifdef PSUTIL_FREEBSD
+    create_time = PSUTIL_TV2DOUBLE(kp.ki_start);
+    user_time = PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_utime);
+    sys_time = PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_stime);
+    ch_user_time = PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_utime);
+    ch_sys_time = PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime);
+#else
+    create_time = PSUTIL_KPT2DOUBLE(kp.p_ustart);
+    user_time = PSUTIL_KPT2DOUBLE(kp.p_uutime);
+    sys_time = PSUTIL_KPT2DOUBLE(kp.p_ustime);
+    // OpenBSD and NetBSD provide children user + system times summed
+    // together (no distinction).
+    ch_user_time = PSUTIL_KPT2DOUBLE(kp.p_uctime);
+    ch_sys_time = ch_user_time;
 #endif
 
 #ifdef PSUTIL_FREEBSD
@@ -104,98 +154,62 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     oncpu = -1;
 #endif
 
-#ifdef PSUTIL_FREEBSD
-    py_ppid = PyLong_FromPid(kp.ki_ppid);
-#elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-    py_ppid = PyLong_FromPid(kp.p_ppid);
+#ifdef PSUTIL_NETBSD
+    // p_stat is the LWP status, except for a dying process, where it
+    // holds the process status instead. The 2 sets of values overlap
+    // (e.g. SDYING == LSSLEEP), so a process which is exiting would
+    // look like it's sleeping. Report all such states as zombie.
+    status = PSUTIL_KINFO_ZOMBIE(kp) ? LSZOMB : kp.p_stat;
 #else
-    py_ppid = Py_BuildValue("i", -1);
+    status = KP(stat);
 #endif
-    if (!py_ppid)
-        return NULL;
 
-    // Return a single big tuple with all process info.
-    py_retlist = Py_BuildValue(
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 1200031
-        "(OillllllLdllllddddlllllbO)",
-#else
-        "(OillllllidllllddddlllllbO)",
-#endif
+    // Controlling terminal, normalized to -1 when there's none.
 #ifdef PSUTIL_FREEBSD
-        py_ppid,  // (pid_t) ppid
-        (int)kp.ki_stat,  // (int) status
-        // UIDs
-        (long)kp.ki_ruid,  // (long) real uid
-        (long)kp.ki_uid,  // (long) effective uid
-        (long)kp.ki_svuid,  // (long) saved uid
-        // GIDs
-        (long)kp.ki_rgid,  // (long) real gid
-        (long)kp.ki_groups[0],  // (long) effective gid
-        (long)kp.ki_svuid,  // (long) saved gid
-        //
-        kp.ki_tdev,  // (int or long long) tty nr
-        PSUTIL_TV2DOUBLE(kp.ki_start),  // (double) create time
-        // ctx switches
-        kp.ki_rusage.ru_nvcsw,  // (long) ctx switches (voluntary)
-        kp.ki_rusage.ru_nivcsw,  // (long) ctx switches (unvoluntary)
-        // IO count
-        kp.ki_rusage.ru_inblock,  // (long) read io count
-        kp.ki_rusage.ru_oublock,  // (long) write io count
-        // CPU times: convert from micro seconds to seconds.
-        PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_utime),  // (double) user time
-        PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_stime),  // (double) sys time
-        PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_utime),  // (double) children utime
-        PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime),  // (double) children stime
-        // memory
-        rss,  // (long) rss
-        vms,  // (long) vms
-        memtext,  // (long) mem text
-        memdata,  // (long) mem data
-        memstack,  // (long) mem stack
-        // others
-        oncpu,  // (int) the CPU we are on
-#elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-        py_ppid,  // (pid_t) ppid
-        (int)kp.p_stat,  // (int) status
-        // UIDs
-        (long)kp.p_ruid,  // (long) real uid
-        (long)kp.p_uid,  // (long) effective uid
-        (long)kp.p_svuid,  // (long) saved uid
-        // GIDs
-        (long)kp.p_rgid,  // (long) real gid
-        (long)kp.p_groups[0],  // (long) effective gid
-        (long)kp.p_svuid,  // (long) saved gid
-        //
-        kp.p_tdev,  // (int) tty nr
-        PSUTIL_KPT2DOUBLE(kp.p_ustart),  // (double) create time
-        // ctx switches
-        kp.p_uru_nvcsw,  // (long) ctx switches (voluntary)
-        kp.p_uru_nivcsw,  // (long) ctx switches (unvoluntary)
-        // IO count
-        kp.p_uru_inblock,  // (long) read io count
-        kp.p_uru_oublock,  // (long) write io count
-        // CPU times: convert from micro seconds to seconds.
-        PSUTIL_KPT2DOUBLE(kp.p_uutime),  // (double) user time
-        PSUTIL_KPT2DOUBLE(kp.p_ustime),  // (double) sys time
-        // OpenBSD and NetBSD provide children user + system times summed
-        // together (no distinction).
-        kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0,  // (double) ch utime
-        kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0,  // (double) ch stime
-        // memory
-        rss,  // (long) rss
-        vms,  // (long) vms
-        memtext,  // (long) mem text
-        memdata,  // (long) mem data
-        memstack,  // (long) mem stack
-        // others
-        oncpu,  // (int) the CPU we are on
+    ttynr = kp.ki_tdev == NODEV ? -1 : (long)kp.ki_tdev;
+#else
+    ttynr = kp.p_tdev == (uint32_t)NODEV ? -1 : (long)kp.p_tdev;
 #endif
-        py_name  // (pystr) name
-    );
+
+    // clang-format off
+    if (!pydict_add(dict, "ppid", _Py_PARSE_PID, KP(ppid))) goto error;
+    if (!pydict_add(dict, "status", "i", status)) goto error;
+    if (!pydict_add(dict, "real_uid", "l", (long)KP(ruid))) goto error;
+    if (!pydict_add(dict, "effective_uid", "l", (long)KP(uid))) goto error;
+    if (!pydict_add(dict, "saved_uid", "l", (long)KP(svuid))) goto error;
+    if (!pydict_add(dict, "real_gid", "l", (long)KP(rgid))) goto error;
+    if (!pydict_add(dict, "effective_gid", "l", (long)KP(groups)[0])) goto error;
+    if (!pydict_add(dict, "saved_gid", "l", (long)KP(svgid))) goto error;
+    if (!pydict_add(dict, "ttynr", "l", ttynr)) goto error;
+    if (!pydict_add(dict, "create_time", "d", create_time)) goto error;
+    if (!pydict_add(dict, "ctx_switches_vol", "l", (long)KP_RU(nvcsw))) goto error;
+    if (!pydict_add(dict, "ctx_switches_unvol", "l", (long)KP_RU(nivcsw))) goto error;
+    if (!pydict_add(dict, "read_io_count", "l", (long)KP_RU(inblock))) goto error;
+    if (!pydict_add(dict, "write_io_count", "l", (long)KP_RU(oublock))) goto error;
+    if (!pydict_add(dict, "user_time", "d", user_time)) goto error;
+    if (!pydict_add(dict, "sys_time", "d", sys_time)) goto error;
+    if (!pydict_add(dict, "ch_user_time", "d", ch_user_time)) goto error;
+    if (!pydict_add(dict, "ch_sys_time", "d", ch_sys_time)) goto error;
+    if (!pydict_add(dict, "min_faults", "l", (long)KP_RU(minflt))) goto error;
+    if (!pydict_add(dict, "maj_faults", "l", (long)KP_RU(majflt))) goto error;
+    if (!pydict_add(dict, "nice", "i", KP(nice) - NZERO)) goto error;
+    if (!pydict_add(dict, "rss", "l", rss)) goto error;
+    if (!pydict_add(dict, "vms", "l", vms)) goto error;
+    if (!pydict_add(dict, "memtext", "l", memtext)) goto error;
+    if (!pydict_add(dict, "memdata", "l", memdata)) goto error;
+    if (!pydict_add(dict, "memstack", "l", memstack)) goto error;
+    if (!pydict_add(dict, "peak_rss", "l", peak_rss)) goto error;
+    if (!pydict_add(dict, "cpunum", "i", oncpu)) goto error;
+    if (!pydict_add(dict, "name", "O", py_name)) goto error;
+    // clang-format on
 
     Py_DECREF(py_name);
-    Py_DECREF(py_ppid);
-    return py_retlist;
+    return dict;
+
+error:
+    Py_XDECREF(py_name);
+    Py_DECREF(dict);
+    return NULL;
 }
 
 
@@ -232,8 +246,12 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     kvm_t *kd;
 #ifdef PSUTIL_NETBSD
     struct kinfo_proc2 *p;
+    struct kinfo_proc2 kp;
 #else
     struct kinfo_proc *p;
+#endif
+#ifdef PSUTIL_OPENBSD
+    struct kinfo_proc kp;
 #endif
 
     if (!PyArg_ParseTuple(args, "l", &pid))
@@ -269,24 +287,30 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    // A zombie has no environment.
+    if (PSUTIL_KINFO_ZOMBIE(*p)) {
+        PyErr_SetString(ZombieProcessError, "kvm_getprocs -> zombie");
+        goto error;
+    }
+
     // On *BSD kernels there are a few kernel-only system processes without an
     // environment (See e.g. "procstat -e 0 | 1 | 2 ..." on FreeBSD.)
     // Some system process have no stats attached at all
     // (they are marked with P_SYSTEM.)
     // On FreeBSD, it's possible that the process is swapped or paged out,
     // then there no access to the environ stored in the process' user area.
-    // On NetBSD, we cannot call kvm_getenvv2() for a zombie process.
     // To make unittest suite happy, return an empty environment.
 #if defined(PSUTIL_FREEBSD)
     if (!((p)->ki_flag & P_INMEM) || ((p)->ki_flag & P_SYSTEM)) {
-#elif defined(PSUTIL_NETBSD)
-    if ((p)->p_stat == SZOMB) {
-#elif defined(PSUTIL_OPENBSD)
-    if ((p)->p_flag & P_SYSTEM) {
-#endif
         kvm_close(kd);
         return py_retdict;
     }
+#elif defined(PSUTIL_OPENBSD)
+    if ((p)->p_flag & P_SYSTEM) {
+        kvm_close(kd);
+        return py_retdict;
+    }
+#endif
 
 #if defined(PSUTIL_NETBSD)
     envs = kvm_getenvv2(kd, p, 0);
@@ -306,7 +330,29 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
             case ESRCH:
                 psutil_oserror_nsp("kvm_getenvv -> ESRCH");
                 break;
-#if defined(PSUTIL_FREEBSD)
+#if defined(PSUTIL_NETBSD) || defined(PSUTIL_OPENBSD)
+            case EBUSY:
+                // An exec is in progress (NetBSD: p_reflock is write
+                // held; OpenBSD: PS_INEXEC is set).
+                psutil_debug(
+                    "proc %ld environ(): return empty dict due to EBUSY", pid
+                );
+                kvm_close(kd);
+                return py_retdict;
+            case EINVAL:
+            case EFAULT:
+                // The check above races. EINVAL: zombie, exiting or
+                // system proc. EFAULT: started exiting.
+                if (psutil_kinfo_proc(pid, &kp) == -1)
+                    goto error;  // reaped in the meantime, raises NSP
+                if (PSUTIL_KINFO_ZOMBIE(kp))
+                    PyErr_SetString(
+                        ZombieProcessError, "kvm_getenvv -> zombie"
+                    );
+                else
+                    psutil_oserror_wsyscall("kvm_getenvv");
+                break;
+#elif defined(PSUTIL_FREEBSD)
             case ENOMEM:
                 // Unfortunately, under FreeBSD kvm_getenvv() returns
                 // failure for certain processes ( e.g. try
@@ -357,12 +403,10 @@ error:
 }
 
 
-/*
- * Return files opened by process as a list of (path, fd) tuples.
- * TODO: this is broken as it may report empty paths. 'procstat'
- * utility has the same problem see:
- * https://github.com/giampaolo/psutil/issues/595
- */
+// Return files opened by process as a list of (path, fd) tuples.
+// TODO: this is broken as it may report empty paths. 'procstat'
+// utility has the same problem see:
+// https://github.com/giampaolo/psutil/issues/595
 PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -378,7 +422,6 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 #else
     struct kinfo_proc kipp;
 #endif
-    PyObject *py_tuple = NULL;
     PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
@@ -418,32 +461,28 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 #elif PSUTIL_OPENBSD
         regular = (kif->f_type == DTYPE_VNODE) && (kif->v_type == VREG);
         fd = kif->fd_fd;
-        // XXX - it appears path is not exposed in the kinfo_file struct.
+        // struct kinfo_file has no path field (FreeBSD has kf_path).
         path = "";
 #elif PSUTIL_NETBSD
         regular = (kif->ki_ftype == DTYPE_VNODE) && (kif->ki_vtype == VREG);
         fd = kif->ki_fd;
-        // XXX - it appears path is not exposed in the kinfo_file struct.
+        // struct kinfo_file has no path field (FreeBSD has kf_path).
         path = "";
 #endif
         if (regular == 1) {
             py_path = PyUnicode_DecodeFSDefault(path);
             if (!py_path)
                 goto error;
-            py_tuple = Py_BuildValue("(Oi)", py_path, fd);
-            if (py_tuple == NULL)
-                goto error;
-            if (PyList_Append(py_retlist, py_tuple))
+            if (!pylist_append_fmt(py_retlist, "(Oi)", py_path, fd))
                 goto error;
             Py_CLEAR(py_path);
-            Py_CLEAR(py_tuple);
         }
     }
     free(freep);
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
     if (freep != NULL)
         free(freep);

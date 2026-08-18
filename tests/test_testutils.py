@@ -38,14 +38,19 @@ from . import is_namedtuple
 from . import process_namespace
 from . import pytest
 from . import reap_children
+from . import requires_cli
 from . import retry
 from . import safe_mkdir
 from . import safe_rmpath
+from . import serial
+from . import sh
+from . import skipif
 from . import system_namespace
 from . import tcp_socketpair
 from . import terminate
 from . import unix_socketpair
 from . import wait_for_file
+from . import wait_for_file_subproc
 from . import wait_for_pid
 
 # ===================================================================
@@ -157,6 +162,31 @@ class TestSyncTestUtils(PsutilTestCase):
         wait_for_file(testfn, delete=False)
         assert os.path.exists(testfn)
 
+    def test_wait_for_file_subproc(self):
+        testfn = self.get_testfn()
+        with open(testfn, 'w') as f:
+            f.write('foo')
+        sproc = self.spawn_subproc()
+        assert wait_for_file_subproc(testfn, sproc) == b"foo"
+
+    def test_wait_for_file_subproc_dead(self):
+        testfn = self.get_testfn()
+        sproc = subprocess.Popen(
+            [
+                PYTHON_EXE,
+                "-c",
+                "import sys; sys.exit(sys.stderr.write('foo'))",
+            ],
+            stderr=subprocess.PIPE,
+        )
+        self.addCleanup(terminate, sproc)
+        sproc.wait()
+        with mock.patch('tests.retry.__iter__', return_value=iter([0])):
+            with pytest.raises(
+                RuntimeError, match=r"(?s)died \(exit 3\).*foo"
+            ):
+                wait_for_file_subproc(testfn, sproc)
+
     def test_call_until(self):
         call_until(lambda: 1)
         # TODO: test for timeout
@@ -207,6 +237,30 @@ class TestFSTestUtils(PsutilTestCase):
         assert os.getcwd() == base
 
 
+class TestPythonExeEnv(PsutilTestCase):
+    def test_subprocess_imports_our_psutil(self):
+        # A psutil installed elsewhere (typically site-packages) must
+        # not win over the one we're testing. Reproduce the sys.path
+        # order of that situation: the decoy comes after PYTHONPATH,
+        # and the cwd has no psutil of its own.
+        cwd = self.get_testfn()
+        decoy = os.path.join(cwd, "decoy")
+        os.makedirs(os.path.join(decoy, "psutil"))
+        with open(os.path.join(decoy, "psutil", "__init__.py"), "w"):
+            pass
+
+        env = PYTHON_EXE_ENV.copy()
+        env["PYTHONPATH"] = os.pathsep.join(
+            filter(None, [env.get("PYTHONPATH"), decoy])
+        )
+        cmd = [PYTHON_EXE, "-c", "import psutil; print(psutil.__file__)"]
+        out = sh(cmd, env=env, cwd=cwd)
+
+        got = os.path.normcase(os.path.realpath(out))
+        expected = os.path.normcase(os.path.realpath(psutil.__file__))
+        assert got == expected
+
+
 class TestProcessUtils(PsutilTestCase):
     def test_reap_children(self):
         subp = self.spawn_subproc()
@@ -238,7 +292,7 @@ class TestProcessUtils(PsutilTestCase):
         terminate(grandchild)
         assert not grandchild.is_running()
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @skipif(not POSIX, reason="POSIX only")
     def test_spawn_zombie(self):
         _parent, zombie = self.spawn_zombie()
         assert zombie.status() == psutil.STATUS_ZOMBIE
@@ -283,13 +337,14 @@ class TestProcessUtils(PsutilTestCase):
             self.assert_pid_gone(zombie.pid)
 
 
+@serial
 class TestNetUtils(PsutilTestCase):
     def bind_socket(self):
         port = get_free_port()
         with bind_socket(addr=('', port)) as s:
             assert s.getsockname()[1] == port
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @skipif(not POSIX, reason="POSIX only")
     def test_bind_unix_socket(self):
         name = self.get_testfn()
         with bind_unix_socket(name) as sock:
@@ -312,13 +367,11 @@ class TestNetUtils(PsutilTestCase):
             assert client.getpeername() == addr
             assert client.getsockname() != addr
 
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    @pytest.mark.skipif(
+    @skipif(not POSIX, reason="POSIX only")
+    @skipif(
         NETBSD or FREEBSD, reason="/var/run/log UNIX socket opened by default"
     )
-    @pytest.mark.skipif(
-        not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets"
-    )
+    @skipif(not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets")
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()
@@ -370,6 +423,23 @@ class TestTestingUtils(PsutilTestCase):
         ns = system_namespace()
         fun = next(x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs')[0]
         assert fun() == psutil.net_if_addrs()
+
+    def test_requires_cli(self):
+        @requires_cli(os.path.basename(PYTHON_EXE))
+        def fun1():
+            return 42
+
+        path = os.path.dirname(PYTHON_EXE)
+        with mock.patch.dict(os.environ, {"PATH": path}):
+            assert fun1() == 42
+
+        # not available
+        @requires_cli("does-not-exist")
+        def fun2():
+            1 / 0  # noqa: B018
+
+        with pytest.raises(pytest.skip.Exception):
+            fun2()
 
 
 class TestOtherUtils(PsutilTestCase):

@@ -5,9 +5,8 @@
  * found in the LICENSE file.
  */
 
-/*! Based on code from
-    https://lists.samba.org/archive/samba-technical/2009-February/063079.html
-!*/
+// Based on code from:
+// https://lists.samba.org/archive/samba-technical/2009-February/063079.html
 
 #include <string.h>
 #include <stdlib.h>
@@ -56,8 +55,8 @@ getifaddrs(struct ifaddrs **ifap) {
     char *ccp, *ecp;
     struct ifconf ifc;
     struct ifreq *ifr;
-    struct ifaddrs *cifa = NULL; /* current */
-    struct ifaddrs *pifa = NULL; /* previous */
+    struct ifaddrs *cifa = NULL;  // current
+    struct ifaddrs *pifa = NULL;  // previous
     const size_t IFREQSZ = sizeof(struct ifreq);
     int fam;
 
@@ -67,7 +66,7 @@ getifaddrs(struct ifaddrs **ifap) {
     if (sd == -1)
         goto error;
 
-    /* find how much memory to allocate for the SIOCGIFCONF call */
+    // find how much memory to allocate for the SIOCGIFCONF call
     if (ioctl(sd, SIOCGSIZIFCONF, (caddr_t)&ifsize) < 0)
         goto error;
 
@@ -116,7 +115,7 @@ getifaddrs(struct ifaddrs **ifap) {
                     goto error;
             }
 
-            if (0 == ioctl(sd, SIOCGIFFLAGS, ifr)) /* optional */
+            if (0 == ioctl(sd, SIOCGIFFLAGS, ifr))  // optional
                 cifa->ifa_flags = ifr->ifr_flags;
 
             if (fam == AF_INET) {

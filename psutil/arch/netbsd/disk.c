@@ -5,13 +5,11 @@
  * found in the LICENSE file.
  */
 
-/*
-Disk related functions. Original code was refactored and moved from
-psutil/arch/netbsd/specific.c in 2023 (and was moved in there previously
-already) from cset 84219ad. For reference, here's the git history with
-original(ish) implementations:
-- disk IO counters: 312442ad2a5b5d0c608476c5ab3e267735c3bc59 (Jan 2016)
-*/
+// Disk related functions. Original code was refactored and moved from
+// psutil/arch/netbsd/specific.c in 2023 (and was moved in there previously
+// already) from cset 84219ad. For reference, here's the git history with
+// original(ish) implementations:
+// - disk IO counters: 312442ad2a5b5d0c608476c5ab3e267735c3bc59 (Jan 2016)
 
 #include <Python.h>
 #include <sys/sysctl.h>

@@ -23,6 +23,7 @@ from psutil import WINDOWS
 
 from . import CI_TESTING
 from . import PsutilTestCase
+from . import isolated
 
 
 def get_systime():
@@ -61,6 +62,7 @@ def set_systime(secs):  # secs since the epoch
         raise unittest.SkipTest("setting systime not supported")
 
 
+@isolated
 class TestUpdatedSystemTime(PsutilTestCase):
     """Tests which update the system clock."""
 

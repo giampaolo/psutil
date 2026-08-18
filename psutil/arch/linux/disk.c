@@ -19,13 +19,13 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     char *mtab_path;
     PyObject *py_dev = NULL;
     PyObject *py_mountp = NULL;
-    PyObject *py_tuple = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
+    PyObject *py_retlist;
 
     if (!PyArg_ParseTuple(args, "s", &mtab_path))
+        return NULL;
+
+    py_retlist = PyList_New(0);
+    if (py_retlist == NULL)
         return NULL;
 
     Py_BEGIN_ALLOW_THREADS
@@ -37,31 +37,28 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    while ((entry = getmntent(file))) {
-        if (entry == NULL) {
-            psutil_runtime_error("getmntent() syscall failed");
-            goto error;
-        }
+    // NOTE: getmntent() is MT-Unsafe (it returns a pointer to a static
+    // buffer), so we can't release the GIL around it.
+    while ((entry = getmntent(file)) != NULL) {
         py_dev = PyUnicode_DecodeFSDefault(entry->mnt_fsname);
         if (!py_dev)
             goto error;
         py_mountp = PyUnicode_DecodeFSDefault(entry->mnt_dir);
         if (!py_mountp)
             goto error;
-        py_tuple = Py_BuildValue(
-            "(OOss)",
-            py_dev,  // device
-            py_mountp,  // mount point
-            entry->mnt_type,  // fs type
-            entry->mnt_opts  // options
-        );
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(OOss)",
+                py_dev,  // device
+                py_mountp,  // mount point
+                entry->mnt_type,  // fs type
+                entry->mnt_opts  // options
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_CLEAR(py_dev);
         Py_CLEAR(py_mountp);
-        Py_CLEAR(py_tuple);
     }
     endmntent(file);
     return py_retlist;
@@ -71,7 +68,6 @@ error:
         endmntent(file);
     Py_XDECREF(py_dev);
     Py_XDECREF(py_mountp);
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;
 }

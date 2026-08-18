@@ -26,7 +26,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     char **argv = NULL;
     char **p;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_arg = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -44,12 +43,8 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     argv = (char **)argv_buf;
 
     for (p = argv; *p != NULL; p++) {
-        py_arg = PyUnicode_DecodeFSDefault(*p);
-        if (!py_arg)
+        if (!pylist_append_obj(py_retlist, PyUnicode_DecodeFSDefault(*p)))
             goto error;
-        if (PyList_Append(py_retlist, py_arg))
-            goto error;
-        Py_DECREF(py_arg);
     }
 
     free(argv_buf);
@@ -58,7 +53,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 error:
     if (argv_buf != NULL)
         free(argv_buf);
-    Py_XDECREF(py_arg);
     Py_DECREF(py_retlist);
     return NULL;
 }
@@ -76,26 +70,32 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     char errbuf[4096];
     struct kinfo_proc *kp;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
+    // This opens /dev/mem, /dev/kmem and reads the kernel symbol table
+    // off disk, so do it without the GIL.
+    Py_BEGIN_ALLOW_THREADS
     kd = kvm_openfiles(0, 0, 0, O_RDONLY, errbuf);
+    Py_END_ALLOW_THREADS
     if (!kd) {
         // Usually fails due to EPERM against /dev/mem. We retry with
         // KVM_NO_FILES which apparently has the same effect.
         // https://stackoverflow.com/questions/22369736/
         psutil_debug("kvm_openfiles(O_RDONLY) failed");
+        Py_BEGIN_ALLOW_THREADS
         kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
+        Py_END_ALLOW_THREADS
         if (!kd) {
             convert_kvm_err("kvm_openfiles()", errbuf);
             goto error;
         }
     }
 
+    Py_BEGIN_ALLOW_THREADS
     kp = kvm_getprocs(
         kd,
         KERN_PROC_PID | KERN_PROC_SHOW_THREADS | KERN_PROC_KTHREAD,
@@ -103,6 +103,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         sizeof(*kp),
         &nentries
     );
+    Py_END_ALLOW_THREADS
     if (!kp) {
         if (strstr(errbuf, "Permission denied") != NULL)
             psutil_oserror_ad("kvm_getprocs");
@@ -115,17 +116,16 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (kp[i].p_tid < 0)
             continue;
         if (kp[i].p_pid == pid) {
-            py_tuple = Py_BuildValue(
-                _Py_PARSE_PID "dd",
-                kp[i].p_tid,
-                PSUTIL_KPT2DOUBLE(kp[i].p_uutime),
-                PSUTIL_KPT2DOUBLE(kp[i].p_ustime)
-            );
-            if (py_tuple == NULL)
+            if (!pylist_append_fmt(
+                    py_retlist,
+                    _Py_PARSE_PID "dd",
+                    kp[i].p_tid,
+                    PSUTIL_KPT2DOUBLE(kp[i].p_uutime),
+                    PSUTIL_KPT2DOUBLE(kp[i].p_ustime)
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
-            Py_DECREF(py_tuple);
+            }
         }
     }
 
@@ -133,7 +133,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (kd != NULL)
         kvm_close(kd);
@@ -178,8 +177,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     // Reference:
-    // https://github.com/openbsd/src/blob/
-    //     588f7f8c69786211f2d16865c552afb91b1c7cba/bin/ps/print.c#L191
+    // https://github.com/openbsd/src/blob/588f7f8c69786211f2d16865c552afb91b1c7cba/bin/ps/print.c#L191
     pid_t pid;
     struct kinfo_proc kp;
     char path[MAXPATHLEN];
@@ -194,7 +192,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     if (sysctl(name, 3, path, &pathlen, NULL, 0) != 0) {
         if (errno == ENOENT) {
             psutil_debug("sysctl(KERN_PROC_CWD) -> ENOENT converted to ''");
-            return Py_BuildValue("s", "");
+            return PyUnicode_FromString("");
         }
         else {
             psutil_oserror();

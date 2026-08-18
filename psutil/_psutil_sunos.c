@@ -4,16 +4,14 @@
  * found in the LICENSE file.
  */
 
-/*
- * Functions specific to Sun OS Solaris platforms.
- *
- * Thanks to Justin Venus who originally wrote a consistent part of
- * this in Cython which I later on translated in C.
- *
- * Fix compilation issue on SunOS 5.10, see:
- * https://github.com/giampaolo/psutil/issues/421
- * https://github.com/giampaolo/psutil/issues/1077
- */
+// Functions specific to Sun OS Solaris platforms.
+//
+// Thanks to Justin Venus who originally wrote a consistent part of
+// this in Cython which I later on translated in C.
+//
+// Fix compilation issue on SunOS 5.10, see:
+// https://github.com/giampaolo/psutil/issues/421
+// https://github.com/giampaolo/psutil/issues/1077
 
 #define _STRUCTURED_PROC 1
 #define NEW_MIB_COMPLIANT 1
@@ -33,7 +31,6 @@
 
 static PyMethodDef mod_methods[] = {
     // --- process-related functions
-    {"proc_basic_info", psutil_proc_basic_info, METH_VARARGS},
     {"proc_cpu_num", psutil_proc_cpu_num, METH_VARARGS},
     {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS},
     {"proc_cred", psutil_proc_cred, METH_VARARGS},
@@ -41,6 +38,8 @@ static PyMethodDef mod_methods[] = {
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS},
     {"proc_name_and_args", psutil_proc_name_and_args, METH_VARARGS},
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS},
+    {"proc_oneshot", psutil_proc_oneshot, METH_VARARGS},
+    {"proc_page_faults", psutil_proc_page_faults, METH_VARARGS},
     {"query_process_thread", psutil_proc_query_thread, METH_VARARGS},
 
     // --- system-related functions
@@ -63,99 +62,61 @@ static PyMethodDef mod_methods[] = {
 };
 
 
-struct module_state {
-    PyObject *error;
-};
-
-
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "psutil_sunos",
-    NULL,
-    -1,
-    mod_methods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
-
-
-PyObject *
-PyInit__psutil_sunos(void) {
-    PyObject *mod = PyModule_Create(&moduledef);
-    if (mod == NULL)
-        return NULL;
-
-#ifdef Py_GIL_DISABLED
-    if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
-        return NULL;
-#endif
-
-    if (psutil_setup() != 0)
-        return NULL;
-    if (psutil_posix_add_constants(mod) != 0)
-        return NULL;
-    if (psutil_posix_add_methods(mod) != 0)
-        return NULL;
-
-    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "SSLEEP", SSLEEP))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "SRUN", SRUN))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "SZOMB", SZOMB))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "SSTOP", SSTOP))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "SIDL", SIDL))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "SONPROC", SONPROC))
-        return NULL;
+static int
+psutil_add_constants(PyObject *mod) {
+    PSUTIL_ADD_INT(mod, "version", PSUTIL_VERSION);
+    PSUTIL_ADD_INT(mod, "SSLEEP", SSLEEP);
+    PSUTIL_ADD_INT(mod, "SRUN", SRUN);
+    PSUTIL_ADD_INT(mod, "SZOMB", SZOMB);
+    PSUTIL_ADD_INT(mod, "SSTOP", SSTOP);
+    PSUTIL_ADD_INT(mod, "SIDL", SIDL);
+    PSUTIL_ADD_INT(mod, "SONPROC", SONPROC);
 #ifdef SWAIT
-    if (PyModule_AddIntConstant(mod, "SWAIT", SWAIT))
-        return NULL;
+    PSUTIL_ADD_INT(mod, "SWAIT", SWAIT);
 #else
-    /* sys/proc.h started defining SWAIT somewhere
-     * after Update 3 and prior to Update 5 included.
-     */
-    if (PyModule_AddIntConstant(mod, "SWAIT", 0))
-        return NULL;
+    // sys/proc.h started defining SWAIT somewhere
+    // after Update 3 and prior to Update 5 included.
+    PSUTIL_ADD_INT(mod, "SWAIT", 0);
 #endif
     // for process tty
-    if (PyModule_AddIntConstant(mod, "PRNODEV", PRNODEV))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "TCPS_SYN_RCVD", TCPS_SYN_RCVD))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT))
-        return NULL;
+    PSUTIL_ADD_INT(mod, "PRNODEV", PRNODEV);
+    PSUTIL_ADD_INT(mod, "TCPS_CLOSED", TCPS_CLOSED);
+    PSUTIL_ADD_INT(mod, "TCPS_CLOSING", TCPS_CLOSING);
+    PSUTIL_ADD_INT(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT);
+    PSUTIL_ADD_INT(mod, "TCPS_LISTEN", TCPS_LISTEN);
+    PSUTIL_ADD_INT(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED);
+    PSUTIL_ADD_INT(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT);
+    PSUTIL_ADD_INT(mod, "TCPS_SYN_RCVD", TCPS_SYN_RCVD);
+    PSUTIL_ADD_INT(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1);
+    PSUTIL_ADD_INT(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
+    PSUTIL_ADD_INT(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK);
+    PSUTIL_ADD_INT(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
     // sunos specific
-    if (PyModule_AddIntConstant(mod, "TCPS_IDLE", TCPS_IDLE))
-        return NULL;
+    PSUTIL_ADD_INT(mod, "TCPS_IDLE", TCPS_IDLE);
     // sunos specific
-    if (PyModule_AddIntConstant(mod, "TCPS_BOUND", TCPS_BOUND))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE))
-        return NULL;
+    PSUTIL_ADD_INT(mod, "TCPS_BOUND", TCPS_BOUND);
+    PSUTIL_ADD_INT(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
-    return mod;
+    return 0;
+}
+
+
+static int
+psutil_exec(PyObject *mod) {
+    if (psutil_setup() != 0)
+        return -1;
+    if (psutil_posix_add_constants(mod) != 0)
+        return -1;
+    if (psutil_posix_add_methods(mod) != 0)
+        return -1;
+    if (psutil_add_exceptions(mod) != 0)
+        return -1;
+    if (psutil_add_constants(mod) != 0)
+        return -1;
+    return 0;
+}
+
+PyMODINIT_FUNC
+PyInit__psutil(void) {
+    return psutil_mod_init("_psutil", mod_methods, psutil_exec);
 }

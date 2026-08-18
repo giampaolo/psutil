@@ -1,0 +1,7 @@
+{
+    "current": "dev",
+    "versions": [
+        { "name": "dev", "url": "/", "note": "main site" },
+        { "name": "7.2", "url": "/7.2/", "note": "release", "ref": "v7.2.2" }
+    ]
+}

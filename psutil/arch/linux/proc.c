@@ -17,7 +17,6 @@
 // ====================================================================
 
 
-#ifdef PSUTIL_HAS_IOPRIO
 enum {
     IOPRIO_WHO_PROCESS = 1,
 };
@@ -74,7 +73,6 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
         return psutil_oserror();
     Py_RETURN_NONE;
 }
-#endif  // PSUTIL_HAS_IOPRIO
 
 
 // ====================================================================
@@ -127,14 +125,8 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     cpucount_s = CPU_COUNT_S(setsize, mask);
     for (cpu = 0, count = cpucount_s; count; cpu++) {
         if (CPU_ISSET_S(cpu, setsize, mask)) {
-            PyObject *cpu_num = PyLong_FromLong(cpu);
-            if (cpu_num == NULL)
+            if (!pylist_append_obj(py_list, PyLong_FromLong(cpu)))
                 goto error;
-            if (PyList_Append(py_list, cpu_num)) {
-                Py_DECREF(cpu_num);
-                goto error;
-            }
-            Py_DECREF(cpu_num);
             --count;
         }
     }

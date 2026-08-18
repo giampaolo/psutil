@@ -20,11 +20,9 @@
 
 #include "../../arch/all/init.h"
 
+#define MAX_DISK_NAME_SIZE 64
 
-/*
- * Return a list of tuples including device, mount point and fs type
- * for all partitions mounted on the system.
- */
+
 PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     int num;
@@ -35,7 +33,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     struct statfs *fs = NULL;
     PyObject *py_dev = NULL;
     PyObject *py_mountp = NULL;
-    PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -133,20 +130,19 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         py_mountp = PyUnicode_DecodeFSDefault(fs[i].f_mntonname);
         if (!py_mountp)
             goto error;
-        py_tuple = Py_BuildValue(
-            "(OOss)",
-            py_dev,  // device
-            py_mountp,  // mount point
-            fs[i].f_fstypename,  // fs type
-            opts  // options
-        );
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(OOss)",
+                py_dev,  // device
+                py_mountp,  // mount point
+                fs[i].f_fstypename,  // fs type
+                opts  // options
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_CLEAR(py_dev);
         Py_CLEAR(py_mountp);
-        Py_CLEAR(py_tuple);
     }
 
     free(fs);
@@ -155,7 +151,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 error:
     Py_XDECREF(py_dev);
     Py_XDECREF(py_mountp);
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (fs != NULL)
         free(fs);
@@ -186,7 +181,7 @@ psutil_disk_usage_used(PyObject *self, PyObject *args) {
     }
 
 #ifdef ATTR_VOL_SPACEUSED
-    /* Call getattrlist(ATTR_VOL_SPACEUSED) to get used space info. */
+    // Call getattrlist(ATTR_VOL_SPACEUSED) to get used space info.
     int ret;
     struct {
         uint32_t size;
@@ -215,9 +210,6 @@ psutil_disk_usage_used(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return a Python dict of tuples for disk I/O information
- */
 PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
     CFDictionaryRef parent_dict = NULL;
@@ -226,31 +218,41 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     io_registry_entry_t parent = IO_OBJECT_NULL;
     io_registry_entry_t disk = IO_OBJECT_NULL;
     io_iterator_t disk_list = IO_OBJECT_NULL;
+    kern_return_t ret;
     PyObject *py_disk_info = NULL;
     PyObject *py_retdict = PyDict_New();
 
     if (py_retdict == NULL)
         return NULL;
 
-    if (IOServiceGetMatchingServices(
-            kIOMasterPortDefault, IOServiceMatching(kIOMediaClass), &disk_list
-        )
-        != kIOReturnSuccess)
-    {
+    // IOKit queries are mach IPC round trips into the kernel's
+    // registry, so run them without the GIL.
+    Py_BEGIN_ALLOW_THREADS
+    ret = IOServiceGetMatchingServices(
+        kIOMasterPortDefault, IOServiceMatching(kIOMediaClass), &disk_list
+    );
+    Py_END_ALLOW_THREADS
+    if (ret != kIOReturnSuccess) {
         psutil_runtime_error("unable to get the list of disks");
         goto error;
     }
 
-    while ((disk = IOIteratorNext(disk_list)) != 0) {
+    while (1) {
+        Py_BEGIN_ALLOW_THREADS
+        disk = IOIteratorNext(disk_list);
+        Py_END_ALLOW_THREADS
+        if (disk == 0)
+            break;
         py_disk_info = NULL;
         parent_dict = NULL;
         props_dict = NULL;
         stats_dict = NULL;
         parent = IO_OBJECT_NULL;
 
-        if (IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent)
-            != kIOReturnSuccess)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ret = IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent);
+        Py_END_ALLOW_THREADS
+        if (ret != kIOReturnSuccess) {
             psutil_runtime_error("unable to get the disk's parent");
             goto error;
         }
@@ -261,26 +263,28 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             continue;
         }
 
-        if (IORegistryEntryCreateCFProperties(
-                disk,
-                (CFMutableDictionaryRef *)&parent_dict,
-                kCFAllocatorDefault,
-                kNilOptions
-            )
-            != kIOReturnSuccess)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ret = IORegistryEntryCreateCFProperties(
+            disk,
+            (CFMutableDictionaryRef *)&parent_dict,
+            kCFAllocatorDefault,
+            kNilOptions
+        );
+        Py_END_ALLOW_THREADS
+        if (ret != kIOReturnSuccess) {
             psutil_runtime_error("unable to get the parent's properties");
             goto error;
         }
 
-        if (IORegistryEntryCreateCFProperties(
-                parent,
-                (CFMutableDictionaryRef *)&props_dict,
-                kCFAllocatorDefault,
-                kNilOptions
-            )
-            != kIOReturnSuccess)
-        {
+        Py_BEGIN_ALLOW_THREADS
+        ret = IORegistryEntryCreateCFProperties(
+            parent,
+            (CFMutableDictionaryRef *)&props_dict,
+            kCFAllocatorDefault,
+            kNilOptions
+        );
+        Py_END_ALLOW_THREADS
+        if (ret != kIOReturnSuccess) {
             psutil_runtime_error("unable to get the disk properties");
             goto error;
         }
@@ -292,12 +296,11 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             goto error;
         }
 
-        const int kMaxDiskNameSize = 64;
-        char disk_name[kMaxDiskNameSize];
+        char disk_name[MAX_DISK_NAME_SIZE];
         if (!CFStringGetCString(
                 disk_name_ref,
                 disk_name,
-                kMaxDiskNameSize,
+                sizeof(disk_name),
                 CFStringGetSystemEncoding()
             ))
         {

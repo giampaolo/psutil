@@ -2,9 +2,9 @@
  * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Functions related to the Windows Management Instrumentation API.
  */
+
+// Functions related to the Windows Management Instrumentation API.
 
 #include <Python.h>
 #include <windows.h>
@@ -123,12 +123,9 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Gets the emulated 1 minute, 5 minute and 15 minute load averages
- * (processor queue length) for the system.
- * `init_loadavg_counter` must be called before this function to engage the
- * mechanism that records load values.
- */
+// Emulated 1, 5, 15 minutes getloadavg() (processor queue length).
+// `init_loadavg_counter()` must be called first to engage the
+// mechanism that records load values.
 PyObject *
 psutil_get_loadavg(PyObject *self, PyObject *args) {
     MUTEX_LOCK(&mutex);

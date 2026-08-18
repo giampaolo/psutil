@@ -6,6 +6,7 @@
 
 import enum
 import errno
+import functools
 import glob
 import os
 import select
@@ -16,14 +17,13 @@ from . import _ntuples as ntp
 from ._common import MACOS
 from ._common import TimeoutExpired
 from ._common import debug
-from ._common import memoize
 from ._common import usage_percent
 
 if MACOS:
-    from . import _psutil_osx
+    from . import _psutil
 
 
-__all__ = ['pid_exists', 'wait_pid', 'disk_usage', 'get_terminal_map']
+__all__ = ['pid_exists', 'wait_pid', 'disk_usage', 'get_terminal']
 
 
 def pid_exists(pid):
@@ -48,15 +48,15 @@ def pid_exists(pid):
         return True
 
 
-Negsignal = enum.IntEnum(
-    'Negsignal', {x.name: -x.value for x in signal.Signals}
+NegSignal = enum.IntEnum(
+    'NegSignal', {x.name: -x.value for x in signal.Signals}
 )
 
 
 def negsig_to_enum(num):
     """Convert a negative signal value to an enum."""
     try:
-        return Negsignal(num)
+        return NegSignal(num)
     except ValueError:
         return num
 
@@ -181,16 +181,10 @@ def wait_pid_pidfd_open(pid, timeout=None):
     try:
         pidfd = os.pidfd_open(pid, 0)
     except OSError as err:
-        if err.errno == errno.ESRCH:
-            # No such process. os.waitpid() may still be able to return
-            # the status code.
-            return wait_pid_posix(pid, timeout)
-        if err.errno in {errno.EMFILE, errno.ENFILE, errno.ENODEV}:
-            # EMFILE, ENFILE: too many open files
-            # ENODEV: anonymous inode filesystem not supported
-            debug(f"pidfd_open() failed ({err!r}); use fallback")
-            return wait_pid_posix(pid, timeout)
-        raise
+        # ESRCH = no such process, EMFILE / ENFILE = too many open files
+        if err.errno not in {errno.ESRCH, errno.EMFILE, errno.ENFILE}:
+            debug(f"pidfd_open() failed unexpectedly ({err!r}); use fallback")
+        return wait_pid_posix(pid, timeout)
 
     try:
         # poll() / select() have the advantage of not requiring any
@@ -214,10 +208,9 @@ def wait_pid_kqueue(pid, timeout=None):
     try:
         kq = select.kqueue()
     except OSError as err:
-        if err.errno in {errno.EMFILE, errno.ENFILE}:  # too many open files
-            debug(f"kqueue() failed ({err!r}); use fallback")
-            return wait_pid_posix(pid, timeout)
-        raise
+        if err.errno not in {errno.EMFILE, errno.ENFILE}:
+            debug(f"kqueue() failed unexpectedly ({err!r}); use fallback")
+        return wait_pid_posix(pid, timeout)
 
     try:
         kev = select.kevent(
@@ -241,7 +234,7 @@ def wait_pid_kqueue(pid, timeout=None):
         kq.close()
 
 
-@memoize
+@functools.lru_cache
 def can_use_pidfd_open():
     # Availability: Linux >= 5.3, Python >= 3.9
     if not hasattr(os, "pidfd_open"):
@@ -260,7 +253,7 @@ def can_use_pidfd_open():
         return True
 
 
-@memoize
+@functools.lru_cache
 def can_use_kqueue():
     # Availability: macOS, BSD
     names = (
@@ -330,7 +323,7 @@ def disk_usage(path):
     used = total - avail_to_root
     if MACOS:
         # see: https://github.com/giampaolo/psutil/pull/2152
-        used = _psutil_osx.disk_usage_used(path, used)
+        used = _psutil.disk_usage_used(path, used)
     # Total space which is available to user (same as 'total' but
     # for the user).
     total_user = used + avail_to_user
@@ -347,8 +340,8 @@ def disk_usage(path):
     )
 
 
-@memoize
-def get_terminal_map():
+@functools.lru_cache
+def _get_terminal_map():
     """Get a map of device-id -> path as a dict.
     Used by Process.terminal().
     """
@@ -361,3 +354,16 @@ def get_terminal_map():
         except FileNotFoundError:
             pass
     return ret
+
+
+def get_terminal(tty_nr):
+    """Path that terminal *tty_nr* refers to, or None.
+
+    Caller must first exclude process has no terminal. A cache miss may
+    be caused by a recently created device, so refresh the map once.
+    """
+    tmap = _get_terminal_map()
+    if tty_nr in tmap:
+        return tmap[tty_nr]
+    _get_terminal_map.cache_clear()
+    return _get_terminal_map().get(tty_nr)

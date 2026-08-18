@@ -13,15 +13,15 @@ import sys
 from collections import namedtuple
 from socket import AF_INET
 
-from . import _common
 from . import _ntuples as ntp
 from . import _psposix
-from . import _psutil_sunos as cext
+from . import _psutil
 from ._common import AF_INET6
 from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
+from ._common import conn_tmap
 from ._common import debug
 from ._common import get_procfs_path
 from ._common import isfile_strict
@@ -29,8 +29,11 @@ from ._common import memoize_when_activated
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
+from ._enums import ConnectionStatus
+from ._enums import NicDuplex
+from ._enums import ProcessStatus
 
-__extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
+__extra__all__ = ["PROCFS_PATH"]
 
 
 # =====================================================================
@@ -38,38 +41,36 @@ __extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
 # =====================================================================
 
 
-PAGE_SIZE = cext.getpagesize()
-AF_LINK = cext.AF_LINK
+PAGE_SIZE = _psutil.getpagesize()
+AF_LINK = _psutil.AF_LINK
 IS_64_BIT = sys.maxsize > 2**32
 
-CONN_IDLE = "IDLE"
-CONN_BOUND = "BOUND"
 
 PROC_STATUSES = {
-    cext.SSLEEP: _common.STATUS_SLEEPING,
-    cext.SRUN: _common.STATUS_RUNNING,
-    cext.SZOMB: _common.STATUS_ZOMBIE,
-    cext.SSTOP: _common.STATUS_STOPPED,
-    cext.SIDL: _common.STATUS_IDLE,
-    cext.SONPROC: _common.STATUS_RUNNING,  # same as run
-    cext.SWAIT: _common.STATUS_WAITING,
+    _psutil.SSLEEP: ProcessStatus.STATUS_SLEEPING,
+    _psutil.SRUN: ProcessStatus.STATUS_RUNNING,
+    _psutil.SZOMB: ProcessStatus.STATUS_ZOMBIE,
+    _psutil.SSTOP: ProcessStatus.STATUS_STOPPED,
+    _psutil.SIDL: ProcessStatus.STATUS_IDLE,
+    _psutil.SONPROC: ProcessStatus.STATUS_RUNNING,  # same as run
+    _psutil.SWAIT: ProcessStatus.STATUS_WAITING,
 }
 
 TCP_STATUSES = {
-    cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
-    cext.TCPS_SYN_SENT: _common.CONN_SYN_SENT,
-    cext.TCPS_SYN_RCVD: _common.CONN_SYN_RECV,
-    cext.TCPS_FIN_WAIT_1: _common.CONN_FIN_WAIT1,
-    cext.TCPS_FIN_WAIT_2: _common.CONN_FIN_WAIT2,
-    cext.TCPS_TIME_WAIT: _common.CONN_TIME_WAIT,
-    cext.TCPS_CLOSED: _common.CONN_CLOSE,
-    cext.TCPS_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
-    cext.TCPS_LAST_ACK: _common.CONN_LAST_ACK,
-    cext.TCPS_LISTEN: _common.CONN_LISTEN,
-    cext.TCPS_CLOSING: _common.CONN_CLOSING,
-    cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
-    cext.TCPS_IDLE: CONN_IDLE,  # sunos specific
-    cext.TCPS_BOUND: CONN_BOUND,  # sunos specific
+    _psutil.TCPS_ESTABLISHED: ConnectionStatus.CONN_ESTABLISHED,
+    _psutil.TCPS_SYN_SENT: ConnectionStatus.CONN_SYN_SENT,
+    _psutil.TCPS_SYN_RCVD: ConnectionStatus.CONN_SYN_RECV,
+    _psutil.TCPS_FIN_WAIT_1: ConnectionStatus.CONN_FIN_WAIT1,
+    _psutil.TCPS_FIN_WAIT_2: ConnectionStatus.CONN_FIN_WAIT2,
+    _psutil.TCPS_TIME_WAIT: ConnectionStatus.CONN_TIME_WAIT,
+    _psutil.TCPS_CLOSED: ConnectionStatus.CONN_CLOSE,
+    _psutil.TCPS_CLOSE_WAIT: ConnectionStatus.CONN_CLOSE_WAIT,
+    _psutil.TCPS_LAST_ACK: ConnectionStatus.CONN_LAST_ACK,
+    _psutil.TCPS_LISTEN: ConnectionStatus.CONN_LISTEN,
+    _psutil.TCPS_CLOSING: ConnectionStatus.CONN_CLOSING,
+    _psutil.PSUTIL_CONN_NONE: ConnectionStatus.CONN_NONE,
+    _psutil.TCPS_IDLE: ConnectionStatus.CONN_IDLE,  # sunos specific
+    _psutil.TCPS_BOUND: ConnectionStatus.CONN_BOUND,  # sunos specific
 }
 
 proc_info_map = dict(
@@ -106,11 +107,10 @@ def virtual_memory():
 
 def swap_memory():
     """Report swap memory metrics."""
-    sin, sout = cext.swap_mem()
+    sin, sout = _psutil.swap_mem()
     # XXX
     # we are supposed to get total/free by doing so:
-    # http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/
-    #     usr/src/cmd/swap/swap.c
+    # http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/cmd/swap/swap.c
     # ...nevertheless I can't manage to obtain the same numbers as 'swap'
     # cmdline utility, so let's parse its output (sigh!)
     p = subprocess.Popen(
@@ -152,13 +152,13 @@ def swap_memory():
 
 def cpu_times():
     """Return system-wide CPU times as a named tuple."""
-    ret = cext.per_cpu_times()
+    ret = _psutil.per_cpu_times()
     return ntp.scputimes(*[sum(x) for x in zip(*ret)])
 
 
 def per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
-    ret = cext.per_cpu_times()
+    ret = _psutil.per_cpu_times()
     return [ntp.scputimes(*x) for x in ret]
 
 
@@ -173,12 +173,12 @@ def cpu_count_logical():
 
 def cpu_count_cores():
     """Return the number of CPU cores in the system."""
-    return cext.cpu_count_cores()
+    return _psutil.cpu_count_cores()
 
 
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
-    ctx_switches, interrupts, syscalls, _traps = cext.cpu_stats()
+    ctx_switches, interrupts, syscalls, _traps = _psutil.cpu_stats()
     soft_interrupts = 0
     return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
 
@@ -188,7 +188,7 @@ def cpu_stats():
 # =====================================================================
 
 
-disk_io_counters = cext.disk_io_counters
+disk_io_counters = _psutil.disk_io_counters
 disk_usage = _psposix.disk_usage
 
 
@@ -197,7 +197,7 @@ def disk_partitions(all=False):
     # TODO - the filtering logic should be better checked so that
     # it tries to reflect 'df' as much as possible
     retlist = []
-    partitions = cext.disk_partitions()
+    partitions = _psutil.disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
@@ -223,8 +223,8 @@ def disk_partitions(all=False):
 # =====================================================================
 
 
-net_io_counters = cext.net_io_counters
-net_if_addrs = cext.net_if_addrs
+net_io_counters = _psutil.net_io_counters
+net_if_addrs = _psutil.net_if_addrs
 
 
 def net_connections(kind, _pid=-1):
@@ -232,8 +232,8 @@ def net_connections(kind, _pid=-1):
     connections (as opposed to connections opened by one process only).
     Only INET sockets are returned (UNIX are not).
     """
-    families, types = _common.conn_tmap[kind]
-    rawlist = cext.net_connections(_pid)
+    families, types = conn_tmap[kind]
+    rawlist = _psutil.net_connections(_pid)
     ret = set()
     for item in rawlist:
         fd, fam, type_, laddr, raddr, status, pid = item
@@ -260,11 +260,10 @@ def net_connections(kind, _pid=-1):
 
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
-    ret = cext.net_if_stats()
+    ret = _psutil.net_if_stats()
     for name, items in ret.items():
         isup, duplex, speed, mtu = items
-        if hasattr(_common, 'NicDuplex'):
-            duplex = _common.NicDuplex(duplex)
+        duplex = NicDuplex(duplex)
         ret[name] = ntp.snicstats(isup, duplex, speed, mtu, '')
     return ret
 
@@ -276,23 +275,15 @@ def net_if_stats():
 
 def boot_time():
     """The system boot time expressed in seconds since the epoch."""
-    return cext.boot_time()
+    return _psutil.boot_time()
 
 
 def users():
-    """Return currently connected users as a list of namedtuples."""
+    """Return currently connected users as a list of named tuples."""
     retlist = []
-    rawlist = cext.users()
-    localhost = (':0.0', ':0')
+    rawlist = _psutil.users()
     for item in rawlist:
-        user, tty, hostname, tstamp, user_process, pid = item
-        # note: the underlying C function includes entries about
-        # system boot, run level and others.  We might want
-        # to use them in the future.
-        if not user_process:
-            continue
-        if hostname in localhost:
-            hostname = 'localhost'
+        user, tty, hostname, tstamp, pid = item
         nt = ntp.suser(user, tty, hostname, tstamp, pid)
         retlist.append(nt)
     return retlist
@@ -361,35 +352,35 @@ class Process:
         os.stat(f"{self._procfs_path}/{self.pid}")
 
     def oneshot_enter(self):
+        self._oneshot.cache_activate(self)
         self._proc_name_and_args.cache_activate(self)
-        self._proc_basic_info.cache_activate(self)
         self._proc_cred.cache_activate(self)
 
     def oneshot_exit(self):
+        self._oneshot.cache_deactivate(self)
         self._proc_name_and_args.cache_deactivate(self)
-        self._proc_basic_info.cache_deactivate(self)
         self._proc_cred.cache_deactivate(self)
 
     @wrap_exceptions
     @memoize_when_activated
     def _proc_name_and_args(self):
-        return cext.proc_name_and_args(self.pid, self._procfs_path)
+        return _psutil.proc_name_and_args(self.pid, self._procfs_path)
 
     @wrap_exceptions
     @memoize_when_activated
-    def _proc_basic_info(self):
+    def _oneshot(self):
         if self.pid == 0 and not os.path.exists(
             f"{self._procfs_path}/{self.pid}/psinfo"
         ):
             raise AccessDenied(self.pid)
-        ret = cext.proc_basic_info(self.pid, self._procfs_path)
+        ret = _psutil.proc_oneshot(self.pid, self._procfs_path)
         assert len(ret) == len(proc_info_map)
         return ret
 
     @wrap_exceptions
     @memoize_when_activated
     def _proc_cred(self):
-        return cext.proc_cred(self.pid, self._procfs_path)
+        return _psutil.proc_cred(self.pid, self._procfs_path)
 
     @wrap_exceptions
     def name(self):
@@ -414,22 +405,22 @@ class Process:
 
     @wrap_exceptions
     def environ(self):
-        return cext.proc_environ(self.pid, self._procfs_path)
+        return _psutil.proc_environ(self.pid, self._procfs_path)
 
     @wrap_exceptions
     def create_time(self):
-        return self._proc_basic_info()[proc_info_map['create_time']]
+        return self._oneshot()[proc_info_map['create_time']]
 
     @wrap_exceptions
     def num_threads(self):
-        return self._proc_basic_info()[proc_info_map['num_threads']]
+        return self._oneshot()[proc_info_map['num_threads']]
 
     @wrap_exceptions
     def nice_get(self):
         # Note #1: getpriority(3) doesn't work for realtime processes.
         # Psinfo is what ps uses, see:
         # https://github.com/giampaolo/psutil/issues/1194
-        return self._proc_basic_info()[proc_info_map['nice']]
+        return self._oneshot()[proc_info_map['nice']]
 
     @wrap_exceptions
     def nice_set(self, value):
@@ -439,11 +430,11 @@ class Process:
             # The process actually exists though, as it has a name,
             # creation time, etc.
             raise AccessDenied(self.pid, self._name)
-        return cext.proc_priority_set(self.pid, value)
+        return _psutil.proc_priority_set(self.pid, value)
 
     @wrap_exceptions
     def ppid(self):
-        self._ppid = self._proc_basic_info()[proc_info_map['ppid']]
+        self._ppid = self._oneshot()[proc_info_map['ppid']]
         return self._ppid
 
     @wrap_exceptions
@@ -451,8 +442,8 @@ class Process:
         try:
             real, effective, saved, _, _, _ = self._proc_cred()
         except AccessDenied:
-            real = self._proc_basic_info()[proc_info_map['uid']]
-            effective = self._proc_basic_info()[proc_info_map['euid']]
+            real = self._oneshot()[proc_info_map['uid']]
+            effective = self._oneshot()[proc_info_map['euid']]
             saved = None
         return ntp.puids(real, effective, saved)
 
@@ -461,15 +452,15 @@ class Process:
         try:
             _, _, _, real, effective, saved = self._proc_cred()
         except AccessDenied:
-            real = self._proc_basic_info()[proc_info_map['gid']]
-            effective = self._proc_basic_info()[proc_info_map['egid']]
+            real = self._oneshot()[proc_info_map['gid']]
+            effective = self._oneshot()[proc_info_map['egid']]
             saved = None
-        return ntp.puids(real, effective, saved)
+        return ntp.pgids(real, effective, saved)
 
     @wrap_exceptions
     def cpu_times(self):
         try:
-            times = cext.proc_cpu_times(self.pid, self._procfs_path)
+            times = _psutil.proc_cpu_times(self.pid, self._procfs_path)
         except OSError as err:
             if err.errno == errno.EOVERFLOW and not IS_64_BIT:
                 # We may get here if we attempt to query a 64bit process
@@ -486,14 +477,14 @@ class Process:
 
     @wrap_exceptions
     def cpu_num(self):
-        return cext.proc_cpu_num(self.pid, self._procfs_path)
+        return _psutil.proc_cpu_num(self.pid, self._procfs_path)
 
     @wrap_exceptions
     def terminal(self):
         procfs_path = self._procfs_path
         hit_enoent = False
-        tty = wrap_exceptions(self._proc_basic_info()[proc_info_map['ttynr']])
-        if tty != cext.PRNODEV:
+        tty = wrap_exceptions(self._oneshot()[proc_info_map['ttynr']])
+        if tty != _psutil.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
                     return os.readlink(f"{procfs_path}/{self.pid}/path/{x}")
@@ -518,16 +509,14 @@ class Process:
 
     @wrap_exceptions
     def memory_info(self):
-        ret = self._proc_basic_info()
+        ret = self._oneshot()
         rss = ret[proc_info_map['rss']] * 1024
         vms = ret[proc_info_map['vms']] * 1024
         return ntp.pmem(rss, vms)
 
-    memory_full_info = memory_info
-
     @wrap_exceptions
     def status(self):
-        code = self._proc_basic_info()[proc_info_map['status']]
+        code = self._oneshot()[proc_info_map['status']]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
@@ -540,7 +529,7 @@ class Process:
         for tid in tids:
             tid = int(tid)
             try:
-                utime, stime = cext.query_process_thread(
+                utime, stime = _psutil.query_process_thread(
                     self.pid, tid, procfs_path
                 )
             except OSError as err:
@@ -603,22 +592,43 @@ class Process:
                 raise AccessDenied(self.pid, self._name)
             if 'no such process' in stderr.lower():
                 raise NoSuchProcess(self.pid, self._name)
+            if self.status() == ProcessStatus.STATUS_ZOMBIE:
+                # pfiles can't examine zombies
+                raise ZombieProcess(self.pid, self._name, self._ppid)
             msg = f"{cmd!r} command error\n{stderr}"
             raise RuntimeError(msg)
 
-        lines = stdout.split('\n')[2:]
-        for i, line in enumerate(lines):
-            line = line.lstrip()
-            if line.startswith('sockname: AF_UNIX'):
-                path = line.split(' ', 2)[2]
-                type = lines[i - 2].strip()
-                if type == 'SOCK_STREAM':
+        blocks = []
+        cur = None
+        for line in stdout.split('\n'):
+            line = line.strip()
+            first, _, rest = line.partition(':')
+            if first.isdigit() and rest.lstrip().startswith('S_IF'):
+                cur = None
+                if 'S_IFSOCK' in rest:
+                    cur = (int(first), [])
+                    blocks.append(cur)
+            elif cur is not None:
+                cur[1].append(line)
+        for fd, block in blocks:
+            path = None
+            type = -1
+            for line in block:
+                if line.startswith('sockname: AF_UNIX'):
+                    path = line[len('sockname: AF_UNIX') :].strip()
+                elif line.startswith('SOCK_STREAM'):
                     type = socket.SOCK_STREAM
-                elif type == 'SOCK_DGRAM':
+                elif line.startswith('SOCK_DGRAM'):
                     type = socket.SOCK_DGRAM
-                else:
-                    type = -1
-                yield (-1, socket.AF_UNIX, type, path, "", _common.CONN_NONE)
+            if path is not None:
+                yield (
+                    fd,
+                    socket.AF_UNIX,
+                    type,
+                    path,
+                    "",
+                    ConnectionStatus.CONN_NONE,
+                )
 
     @wrap_exceptions
     def net_connections(self, kind='inet'):
@@ -645,14 +655,12 @@ class Process:
     @wrap_exceptions
     def memory_maps(self):
         def toaddr(start, end):
-            return "{}-{}".format(
-                hex(start)[2:].strip('L'), hex(end)[2:].strip('L')
-            )
+            return f"{hex(start)[2:].strip('L')}-{hex(end)[2:].strip('L')}"
 
         procfs_path = self._procfs_path
         retlist = []
         try:
-            rawlist = cext.proc_memory_maps(self.pid, procfs_path)
+            rawlist = _psutil.proc_memory_maps(self.pid, procfs_path)
         except OSError as err:
             if err.errno == errno.EOVERFLOW and not IS_64_BIT:
                 # We may get here if we attempt to query a 64bit process
@@ -696,8 +704,13 @@ class Process:
     @wrap_exceptions
     def num_ctx_switches(self):
         return ntp.pctxsw(
-            *cext.proc_num_ctx_switches(self.pid, self._procfs_path)
+            *_psutil.proc_num_ctx_switches(self.pid, self._procfs_path)
         )
+
+    @wrap_exceptions
+    def page_faults(self):
+        ret = _psutil.proc_page_faults(self.pid, self._procfs_path)
+        return ntp.ppagefaults(*ret)
 
     @wrap_exceptions
     def wait(self, timeout=None):

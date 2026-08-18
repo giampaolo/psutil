@@ -6,7 +6,6 @@
 
 #include <Python.h>
 #include <windows.h>
-#include <tchar.h>
 
 #include "../../arch/all/init.h"
 
@@ -38,7 +37,6 @@ psutil_get_drive_type(int type) {
 }
 
 
-// Return path's disk total, used, and free space.
 PyObject *
 psutil_disk_usage(PyObject *self, PyObject *args) {
     PyObject *py_path;
@@ -73,19 +71,14 @@ psutil_disk_usage(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return a Python dict of tuples for disk I/O information. This may
- * require running "diskperf -y" command first.
- */
 PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
-    DISK_PERFORMANCE diskPerformance;
+    DISK_PERFORMANCE *diskPerformance = NULL;
     DWORD dwSize;
     HANDLE hDevice = NULL;
     char szDevice[MAX_PATH];
     char szDeviceDisplay[MAX_PATH];
     int devNum;
-    int i;
     DWORD ioctrlSize;
     BOOL ret;
     PyObject *py_retdict = PyDict_New();
@@ -93,6 +86,16 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
+
+    // Drivers may return a bigger struct than the one we know about,
+    // in which case the ioctl below asks for a bigger buffer.
+    ioctrlSize = sizeof(DISK_PERFORMANCE);
+    diskPerformance = malloc(ioctrlSize);
+    if (diskPerformance == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
     // Apparently there's no way to figure out how many times we have
     // to iterate in order to find valid drives.
     // Let's assume 32, which is higher than 26, the number of letters
@@ -100,6 +103,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     for (devNum = 0; devNum <= 32; ++devNum) {
         py_tuple = NULL;
         str_format(szDevice, MAX_PATH, "\\\\.\\PhysicalDrive%d", devNum);
+        // Opening a disk device may block, so do it without the GIL.
+        Py_BEGIN_ALLOW_THREADS
         hDevice = CreateFile(
             szDevice,
             0,
@@ -109,37 +114,44 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             0,
             NULL
         );
+        Py_END_ALLOW_THREADS
         if (hDevice == INVALID_HANDLE_VALUE)
             continue;
 
         // DeviceIoControl() sucks!
-        i = 0;
-        ioctrlSize = sizeof(diskPerformance);
         while (1) {
-            i += 1;
+            Py_BEGIN_ALLOW_THREADS
             ret = DeviceIoControl(
                 hDevice,
                 IOCTL_DISK_PERFORMANCE,
                 NULL,
                 0,
-                &diskPerformance,
+                diskPerformance,
                 ioctrlSize,
                 &dwSize,
                 NULL
             );
+            Py_END_ALLOW_THREADS
             if (ret != 0)
                 break;  // OK!
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                // Retry with a bigger buffer (+ limit for retries).
-                if (i <= 1024) {
+                // Grow the buffer for real, up to a sane limit.
+                if (ioctrlSize < 1024 * 1024) {
+                    void *tmp;
+
                     ioctrlSize *= 2;
+                    tmp = realloc(diskPerformance, ioctrlSize);
+                    if (tmp == NULL) {
+                        PyErr_NoMemory();
+                        goto error;
+                    }
+                    diskPerformance = tmp;
                     continue;
                 }
             }
             else if (GetLastError() == ERROR_INVALID_FUNCTION) {
                 // This happens on AppVeyor:
-                // https://ci.appveyor.com/project/giampaolo/psutil/build/
-                //      1364/job/ascpdi271b06jle3
+                // https://ci.appveyor.com/project/giampaolo/psutil/build/1364/job/ascpdi271b06jle3
                 // Assume it means we're dealing with some exotic disk
                 // and go on.
                 psutil_debug(
@@ -159,9 +171,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 goto next;
             }
             // XXX: it seems we should also catch ERROR_INVALID_PARAMETER:
-            // https://sites.ualberta.ca/dept/aict/uts/software/openbsd/
-            //     ports/4.1/i386/openafs/w-openafs-1.4.14-transarc/
-            //     openafs-1.4.14/src/usd/usd_nt.c
+            // https://sites.ualberta.ca/dept/aict/uts/software/openbsd/ports/4.1/i386/openafs/w-openafs-1.4.14-transarc/openafs-1.4.14/src/usd/usd_nt.c
 
             // XXX: we can also bump into ERROR_MORE_DATA in which case
             // (quoting doc) we're supposed to retry with a bigger buffer
@@ -173,14 +183,16 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         str_format(szDeviceDisplay, MAX_PATH, "PhysicalDrive%i", devNum);
         py_tuple = Py_BuildValue(
             "(IILLKK)",
-            diskPerformance.ReadCount,
-            diskPerformance.WriteCount,
-            diskPerformance.BytesRead,
-            diskPerformance.BytesWritten,
+            diskPerformance->ReadCount,
+            diskPerformance->WriteCount,
+            diskPerformance->BytesRead,
+            diskPerformance->BytesWritten,
             // convert to ms:
             // https://github.com/giampaolo/psutil/issues/1012
-            (unsigned long long)(diskPerformance.ReadTime.QuadPart) / 10000000,
-            (unsigned long long)(diskPerformance.WriteTime.QuadPart) / 10000000
+            (unsigned long long)(diskPerformance->ReadTime.QuadPart)
+                / 10000000,
+            (unsigned long long)(diskPerformance->WriteTime.QuadPart)
+                / 10000000
         );
         if (!py_tuple)
             goto error;
@@ -192,41 +204,42 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         CloseHandle(hDevice);
     }
 
+    free(diskPerformance);
     return py_retdict;
 
 error:
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retdict);
-    if (hDevice != NULL)
+    if (hDevice != NULL && hDevice != INVALID_HANDLE_VALUE)
         CloseHandle(hDevice);
+    if (diskPerformance != NULL)
+        free(diskPerformance);
     return NULL;
 }
 
 
-/*
- * Return disk partitions as a list of tuples such as
- * (drive_letter, drive_letter, type, "")
- */
 PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
-    DWORD num_bytes;
-    char drive_strings[255];
-    char *drive_letter = drive_strings;
-    char mp_buf[MAX_PATH];
-    char mp_path[MAX_PATH];
-    int all;
+    DWORD num_chars;
+    wchar_t drive_strings[255];
+    wchar_t *drive_letter = drive_strings;
+    wchar_t mp_buf[MAX_PATH];
+    wchar_t mp_path[MAX_PATH];
+    int all = 0;
     int type;
     int ret;
     unsigned int old_mode = 0;
     char opts[50];
     HANDLE mp_h;
     BOOL mp_flag = TRUE;
-    LPTSTR fs_type[MAX_PATH + 1] = {0};
+    wchar_t fs_type[MAX_PATH + 1] = {0};
     DWORD pflags = 0;
     DWORD lpMaximumComponentLength = 0;  // max file name
-    PyObject *py_all;
+    PyObject *py_drive = NULL;
+    PyObject *py_mount = NULL;
+    PyObject *py_fs = NULL;
+    PyObject *py_opts = NULL;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL) {
         return NULL;
@@ -236,26 +249,24 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     // see https://github.com/giampaolo/psutil/issues/264
     old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    if (!PyArg_ParseTuple(args, "O", &py_all))
+    if (!PyArg_ParseTuple(args, "p", &all))
         goto error;
-    all = PyObject_IsTrue(py_all);
 
     Py_BEGIN_ALLOW_THREADS
-    num_bytes = GetLogicalDriveStrings(254, drive_letter);
+    num_chars = GetLogicalDriveStringsW(254, drive_letter);
     Py_END_ALLOW_THREADS
 
-    if (num_bytes == 0) {
-        psutil_oserror();
+    if (num_chars == 0) {
+        psutil_oserror_wsyscall("GetLogicalDriveStringsW");
         goto error;
     }
 
     while (*drive_letter != 0) {
-        py_tuple = NULL;
         opts[0] = 0;
         fs_type[0] = 0;
 
         Py_BEGIN_ALLOW_THREADS
-        type = GetDriveType(drive_letter);
+        type = GetDriveTypeW(drive_letter);
         Py_END_ALLOW_THREADS
 
         // by default we only show hard drives and cd-roms
@@ -268,28 +279,33 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             // floppy disk: skip it by default as it introduces a
             // considerable slowdown.
             if ((type == DRIVE_REMOVABLE)
-                && (strcmp(drive_letter, "A:\\") == 0))
+                && (wcscmp(drive_letter, L"A:\\") == 0))
             {
                 goto next;
             }
         }
 
-        ret = GetVolumeInformation(
-            (LPCTSTR)drive_letter,
-            NULL,
-            _ARRAYSIZE(drive_letter),
+        // May spin up a removable drive or go over the wire for a
+        // network one, so do it without the GIL.
+        Py_BEGIN_ALLOW_THREADS
+        ret = GetVolumeInformationW(
+            drive_letter,
+            NULL,  // we don't want the volume name
+            0,
             NULL,
             &lpMaximumComponentLength,
             &pflags,
-            (LPTSTR)fs_type,
+            fs_type,
             _ARRAYSIZE(fs_type)
         );
+        Py_END_ALLOW_THREADS
+
         if (ret == 0) {
             // We might get here in case of a floppy hard drive, in
             // which case the error is (21, "device not ready").
             // Let's pretend it didn't happen as we already have
-            // the drive name and type ('removable').
-            str_append(opts, sizeof(opts), "");
+            // the drive name and type ('removable'). opts is left
+            // empty.
             SetLastError(0);
         }
         else {
@@ -301,108 +317,142 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                 str_append(opts, sizeof(opts), ",compressed");
             if (pflags & FILE_READ_ONLY_VOLUME)
                 str_append(opts, sizeof(opts), ",readonly");
-
-            // Check for mount points on this volume and add/get info
-            // (checks first to know if we can even have mount points)
-            if (pflags & FILE_SUPPORTS_REPARSE_POINTS) {
-                mp_h = FindFirstVolumeMountPoint(
-                    drive_letter, mp_buf, MAX_PATH
-                );
-                if (mp_h != INVALID_HANDLE_VALUE) {
-                    mp_flag = TRUE;
-                    while (mp_flag) {
-                        // Append full mount path with drive letter
-                        str_copy(
-                            mp_path, sizeof(mp_path), drive_letter
-                        );  // initialize
-                        str_append(
-                            mp_path, sizeof(mp_path), mp_buf
-                        );  // append mount point
-
-                        py_tuple = Py_BuildValue(
-                            "(ssss)",
-                            drive_letter,
-                            mp_path,
-                            fs_type,  // typically "NTFS"
-                            opts
-                        );
-
-                        if (!py_tuple
-                            || PyList_Append(py_retlist, py_tuple) == -1)
-                        {
-                            FindVolumeMountPointClose(mp_h);
-                            goto error;
-                        }
-
-                        Py_CLEAR(py_tuple);
-
-                        // Continue looking for more mount points
-                        mp_flag = FindNextVolumeMountPoint(
-                            mp_h, mp_buf, MAX_PATH
-                        );
-                    }
-                    FindVolumeMountPointClose(mp_h);
-                }
-            }
         }
 
         if (strlen(opts) > 0)
             str_append(opts, sizeof(opts), ",");
         str_append(opts, sizeof(opts), psutil_get_drive_type(type));
 
-        py_tuple = Py_BuildValue(
-            "(ssss)",
-            drive_letter,
-            drive_letter,
-            fs_type,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
-            opts
-        );
-        if (!py_tuple)
+        // Convert the strings which will go into the result tuples.
+        py_drive = PyUnicode_FromWideChar(drive_letter, wcslen(drive_letter));
+        if (py_drive == NULL)
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
+        py_fs = PyUnicode_FromWideChar(fs_type, wcslen(fs_type));
+        if (py_fs == NULL)
             goto error;
-        Py_CLEAR(py_tuple);
+        // opts holds pure ASCII, so plain UTF-8 decoding is safe.
+        py_opts = PyUnicode_FromString(opts);
+        if (py_opts == NULL)
+            goto error;
+
+        // Check for mount points on this volume and add/get info
+        // (checks first to know if we can even have mount points)
+        if ((ret != 0) && (pflags & FILE_SUPPORTS_REPARSE_POINTS)) {
+            Py_BEGIN_ALLOW_THREADS
+            mp_h = FindFirstVolumeMountPointW(drive_letter, mp_buf, MAX_PATH);
+            Py_END_ALLOW_THREADS
+
+            if (mp_h != INVALID_HANDLE_VALUE) {
+                mp_flag = TRUE;
+                while (mp_flag) {
+                    // Append full mount path with drive letter.
+                    mp_path[0] = L'\0';
+                    wcsncat(mp_path, drive_letter, _ARRAYSIZE(mp_path) - 1);
+                    wcsncat(
+                        mp_path,
+                        mp_buf,
+                        _ARRAYSIZE(mp_path) - wcslen(mp_path) - 1
+                    );
+
+                    py_mount = PyUnicode_FromWideChar(
+                        mp_path, wcslen(mp_path)
+                    );
+                    if (py_mount == NULL) {
+                        FindVolumeMountPointClose(mp_h);
+                        goto error;
+                    }
+
+                    if (!pylist_append_fmt(
+                            py_retlist,
+                            "(OOOO)",
+                            py_drive,
+                            py_mount,
+                            py_fs,  // typically "NTFS"
+                            py_opts
+                        ))
+                    {
+                        FindVolumeMountPointClose(mp_h);
+                        goto error;
+                    }
+                    Py_CLEAR(py_mount);
+
+                    // Continue looking for more mount points
+                    Py_BEGIN_ALLOW_THREADS
+                    mp_flag = FindNextVolumeMountPointW(
+                        mp_h, mp_buf, MAX_PATH
+                    );
+                    Py_END_ALLOW_THREADS
+                }
+                FindVolumeMountPointClose(mp_h);
+            }
+        }
+
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(OOOO)",
+                py_drive,
+                py_drive,
+                py_fs,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
+                py_opts
+            ))
+        {
+            goto error;
+        }
         goto next;
 
     next:
-        drive_letter = strchr(drive_letter, 0) + 1;
+        Py_CLEAR(py_opts);
+        Py_CLEAR(py_fs);
+        Py_CLEAR(py_mount);
+        Py_CLEAR(py_drive);
+        drive_letter = wcschr(drive_letter, 0) + 1;
     }
 
     SetErrorMode(old_mode);
     return py_retlist;
 
 error:
+    Py_XDECREF(py_opts);
+    Py_XDECREF(py_fs);
+    Py_XDECREF(py_mount);
+    Py_XDECREF(py_drive);
     SetErrorMode(old_mode);
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;
 }
 
 
-/*
- Accept a filename's drive in native  format like "\Device\HarddiskVolume1\"
- and return the corresponding drive letter (e.g. "C:\\").
- If no match is found return an empty string.
-*/
+// Accept a filename's drive in native  format like "\Device\HarddiskVolume1\"
+// and return the corresponding drive letter (e.g. "C:\\").
+// If no match is found return an empty string.
 PyObject *
 psutil_QueryDosDevice(PyObject *self, PyObject *args) {
-    LPCTSTR lpDevicePath;
-    TCHAR d = TEXT('A');
-    TCHAR szBuff[5];
+    PyObject *py_device_path;
+    PyObject *py_ret = NULL;
+    wchar_t *device_path;
+    wchar_t d = L'A';
 
-    if (!PyArg_ParseTuple(args, "s", &lpDevicePath))
+    if (!PyArg_ParseTuple(args, "U", &py_device_path))
         return NULL;
 
-    while (d <= TEXT('Z')) {
-        TCHAR szDeviceName[3] = {d, TEXT(':'), TEXT('\0')};
-        TCHAR szTarget[512] = {0};
-        if (QueryDosDevice(szDeviceName, szTarget, 511) != 0) {
-            if (_tcscmp(lpDevicePath, szTarget) == 0) {
-                _stprintf_s(szBuff, _countof(szBuff), TEXT("%c:"), d);
-                return Py_BuildValue("s", szBuff);
+    device_path = PyUnicode_AsWideCharString(py_device_path, NULL);
+    if (device_path == NULL)
+        return NULL;
+
+    while (d <= L'Z') {
+        wchar_t szDeviceName[3] = {d, L':', L'\0'};
+        wchar_t szTarget[512] = {0};
+        if (QueryDosDeviceW(szDeviceName, szTarget, 511) != 0) {
+            if (wcscmp(device_path, szTarget) == 0) {
+                py_ret = PyUnicode_FromWideChar(
+                    szDeviceName, wcslen(szDeviceName)
+                );
+                PyMem_Free(device_path);
+                return py_ret;
             }
         }
         d++;
     }
-    return Py_BuildValue("s", "");
+    PyMem_Free(device_path);
+    return PyUnicode_FromString("");
 }

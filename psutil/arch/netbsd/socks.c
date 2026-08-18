@@ -88,6 +88,7 @@ psutil_get_files(void) {
     int mib[6];
     char *buf = NULL;
     off_t offset;
+    int ret;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_FILE2;
@@ -96,7 +97,11 @@ psutil_get_files(void) {
     mib[4] = sizeof(struct kinfo_file);
     mib[5] = 0;
 
-    if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1) {
+    // Walks the whole kernel file table, may take a while.
+    Py_BEGIN_ALLOW_THREADS
+    ret = sysctl(mib, 6, NULL, &len, NULL, 0);
+    Py_END_ALLOW_THREADS
+    if (ret == -1) {
         psutil_oserror();
         goto error;
     }
@@ -109,7 +114,10 @@ psutil_get_files(void) {
         goto error;
     }
 
-    if (sysctl(mib, 6, buf + offset, &len, NULL, 0) == -1) {
+    Py_BEGIN_ALLOW_THREADS
+    ret = sysctl(mib, 6, buf + offset, &len, NULL, 0);
+    Py_END_ALLOW_THREADS
+    if (ret == -1) {
         psutil_oserror();
         goto error;
     }
@@ -157,6 +165,7 @@ psutil_get_sockets(const char *name) {
     struct kinfo_pcb *pcb = NULL;
     size_t len;
     size_t j;
+    int ret;
 
     memset(mib, 0, sizeof(mib));
 
@@ -165,7 +174,10 @@ psutil_get_sockets(const char *name) {
         goto error;
     }
 
-    if (sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0) == -1) {
+    Py_BEGIN_ALLOW_THREADS
+    ret = sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0);
+    Py_END_ALLOW_THREADS
+    if (ret == -1) {
         psutil_oserror();
         goto error;
     }
@@ -179,7 +191,10 @@ psutil_get_sockets(const char *name) {
     mib[6] = sizeof(*pcb);
     mib[7] = len / sizeof(*pcb);
 
-    if (sysctl(mib, __arraycount(mib), pcb, &len, NULL, 0) == -1) {
+    Py_BEGIN_ALLOW_THREADS
+    ret = sysctl(mib, __arraycount(mib), pcb, &len, NULL, 0);
+    Py_END_ALLOW_THREADS
+    if (ret == -1) {
         psutil_oserror();
         goto error;
     }
@@ -316,7 +331,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     int32_t rport;
     int32_t status;
     pid_t pid;
-    PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -422,23 +436,24 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             }
 
             // append tuple to list
-            py_tuple = Py_BuildValue(
-                "(iiiOOii)",
-                k->kif->ki_fd,
-                kp->kpcb->ki_family,
-                kp->kpcb->ki_type,
-                py_laddr,
-                py_raddr,
-                status,
-                k->kif->ki_pid
-            );
-            if (!py_tuple)
+            if (!pylist_append_fmt(
+                    py_retlist,
+                    "(iiiOOii)",
+                    k->kif->ki_fd,
+                    kp->kpcb->ki_family,
+                    kp->kpcb->ki_type,
+                    py_laddr,
+                    py_raddr,
+                    status,
+                    k->kif->ki_pid
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
+            }
             Py_DECREF(py_laddr);
+            py_laddr = NULL;
             Py_DECREF(py_raddr);
-            Py_DECREF(py_tuple);
+            py_raddr = NULL;
         }
     }
 
@@ -450,7 +465,6 @@ error:
     psutil_kiflist_clear();
     psutil_kpcblist_clear();
     Py_DECREF(py_retlist);
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
     return NULL;

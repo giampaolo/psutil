@@ -32,7 +32,7 @@ name                 0        0.0%   SUCCESS
 threads              0        0.0%   SUCCESS
 cpu_affinity         0        0.0%   SUCCESS
 memory_maps          71      21.3%   ACCESS DENIED
-memory_full_info     71      21.3%   ACCESS DENIED
+memory_footprint     71      21.3%   ACCESS DENIED
 exe                  174     52.1%   ACCESS DENIED
 environ              238     71.3%   ACCESS DENIED
 num_fds              238     71.3%   ACCESS DENIED
@@ -82,8 +82,8 @@ def main():
     tot_perc = round((tot_ads / tot_calls) * 100, 1)
     print("-" * 50)
     print(
-        "Totals: access-denied={} ({}%%), calls={}, processes={}, elapsed={}s"
-        .format(tot_ads, tot_perc, tot_calls, tot_procs, round(elapsed, 2))
+        f"Totals: access-denied={tot_ads} ({tot_perc}%%), calls={tot_calls},"
+        f" processes={tot_procs}, elapsed={round(elapsed, 2)}s"
     )
 
 

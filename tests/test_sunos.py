@@ -12,11 +12,11 @@ import psutil
 from psutil import SUNOS
 
 from . import PsutilTestCase
-from . import pytest
 from . import sh
+from . import skipif
 
 
-@pytest.mark.skipif(not SUNOS, reason="SUNOS only")
+@skipif(not SUNOS, reason="SUNOS only")
 class SunOSSpecificTestCase(PsutilTestCase):
     def test_swap_memory(self):
         out = sh(f"env PATH=/usr/sbin:/sbin:{os.environ['PATH']} swap -l")

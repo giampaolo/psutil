@@ -21,11 +21,9 @@
 #endif
 
 static PyMethodDef mod_methods[] = {
-// --- per-process functions
-#ifdef PSUTIL_HAS_IOPRIO
+    // --- per-process functions
     {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS},
     {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS},
-#endif
 #ifdef PSUTIL_HAS_CPU_AFFINITY
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS},
@@ -49,45 +47,32 @@ static PyMethodDef mod_methods[] = {
 };
 
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_psutil_linux",
-    NULL,
-    -1,
-    mod_methods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
+static int
+psutil_add_constants(PyObject *mod) {
+    PSUTIL_ADD_INT(mod, "version", PSUTIL_VERSION);
+    PSUTIL_ADD_INT(mod, "DUPLEX_HALF", DUPLEX_HALF);
+    PSUTIL_ADD_INT(mod, "DUPLEX_FULL", DUPLEX_FULL);
+    PSUTIL_ADD_INT(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN);
+    return 0;
+}
 
 
-PyObject *
-PyInit__psutil_linux(void) {
-    PyObject *mod = PyModule_Create(&moduledef);
-    if (mod == NULL)
-        return NULL;
-
-#ifdef Py_GIL_DISABLED
-    if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
-        return NULL;
-#endif
-
+static int
+psutil_exec(PyObject *mod) {
     if (psutil_setup() != 0)
-        return NULL;
+        return -1;
     if (psutil_posix_add_constants(mod) != 0)
-        return NULL;
+        return -1;
     if (psutil_posix_add_methods(mod) != 0)
-        return NULL;
+        return -1;
+    if (psutil_add_exceptions(mod) != 0)
+        return -1;
+    if (psutil_add_constants(mod) != 0)
+        return -1;
+    return 0;
+}
 
-    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN))
-        return NULL;
-
-    return mod;
+PyMODINIT_FUNC
+PyInit__psutil(void) {
+    return psutil_mod_init("_psutil", mod_methods, psutil_exec);
 }

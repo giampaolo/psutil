@@ -10,9 +10,9 @@
 
 int _psutil_pids(pid_t **pids_array, int *pids_count);
 
+PyObject *psutil_cpu_count_cores(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_freq(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_stats(PyObject *self, PyObject *args);
-PyObject *psutil_cpu_topology(PyObject *self, PyObject *args);
 PyObject *psutil_disk_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_net_connections(PyObject *self, PyObject *args);
 PyObject *psutil_per_cpu_times(PyObject *self, PyObject *args);

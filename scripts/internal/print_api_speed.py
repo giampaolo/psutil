@@ -45,6 +45,7 @@ cwd                              300      0.00151
 num_fds                          300      0.00391
 memory_info                      300      0.00597
 memory_percent                   300      0.00648
+memory_info_ex                   300      0.00701
 io_counters                      300      0.00707
 name                             300      0.00894
 status                           300      0.00900
@@ -64,7 +65,7 @@ cpu_percent                      300      0.01463
 open_files                       300      0.01630
 username                         300      0.01655
 environ                          300      0.02250
-memory_full_info                 300      0.07066
+memory_foorprint                 300      0.07066
 memory_maps                      300      0.74281
 """
 
@@ -78,6 +79,7 @@ import psutil
 from psutil._common import print_color
 
 TIMES = 300
+PID = os.getpid()
 timings = []
 templ = "{:<25} {:>10}   {:>10}"
 
@@ -101,15 +103,19 @@ def print_timings():
 
 
 def timecall(title, fun, *args, **kw):
-    print("{:<50}".format(title), end="")
+    print(f"{title:<50}", end="")
     sys.stdout.flush()
     t = timer()
     for n in range(TIMES):
-        fun(*args, **kw)
-        elapsed = timer() - t
-        if elapsed > 2:
-            break
-    print("\r", end="")
+        try:
+            fun(*args, **kw)
+        except psutil.AccessDenied:
+            return
+        else:
+            elapsed = timer() - t
+            if elapsed > 2:
+                break
+    print("\033[2K\r", end="")
     sys.stdout.flush()
     timings.append((title, n + 1, elapsed))
 
@@ -128,16 +134,21 @@ def set_highest_priority():
         p.ionice(psutil.IOPRIO_HIGH)
 
 
-def main():
-    global TIMES
-
+def parse_cli():
+    global TIMES, PID
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument('-t', '--times', type=int, default=TIMES)
+    parser.add_argument('-p', '--pid', type=int, default=PID)
     args = parser.parse_args()
     TIMES = args.times
+    PID = args.pid
     assert TIMES > 1, TIMES
+
+
+def main():
+    parse_cli()
 
     try:
         set_highest_priority()
@@ -150,6 +161,7 @@ def main():
 
     public_apis = []
     ignore = [
+        'bytes2human',
         'wait_procs',
         'process_iter',
         'win_service_get',
@@ -168,7 +180,7 @@ def main():
         fun = getattr(psutil, name)
         args = ()
         if name == 'pid_exists':
-            args = (os.getpid(),)
+            args = (PID,)
         elif name == 'disk_usage':
             args = (os.getcwd(),)
         timecall(name, fun, *args)
@@ -179,28 +191,12 @@ def main():
     # --- process
     print()
     print_header("PROCESS APIS")
-    ignore = [
-        'send_signal',
-        'suspend',
-        'resume',
-        'terminate',
-        'kill',
-        'wait',
-        'as_dict',
-        'parent',
-        'parents',
-        'oneshot',
-        'pid',
-        'rlimit',
-        'children',
-    ]
-    if psutil.MACOS:
-        ignore.append('memory_maps')  # XXX
-    p = psutil.Process()
-    for name in sorted(dir(p)):
-        if not name.startswith('_') and name not in ignore:
-            fun = getattr(p, name)
+    p = psutil.Process(PID)
+    for name in sorted(p.attrs):
+        fun = getattr(p, name)
+        if callable(fun):
             timecall(name, fun)
+
     print_timings()
 
     if not prio_set:

@@ -3,8 +3,6 @@
  * All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Platform-specific module methods for NetBSD.
  */
 
 #include <Python.h>
@@ -50,14 +48,8 @@ error:
 }
 
 
-// XXX: This is no longer used as per
-// https://github.com/giampaolo/psutil/pull/557#issuecomment-171912820
-// Current implementation uses /proc instead.
-// Left here just in case.
-/*
 PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
-#if __NetBSD_Version__ >= 799000000
     pid_t pid;
     char pathname[MAXPATHLEN];
     int error;
@@ -65,11 +57,11 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     int ret;
     size_t size;
 
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (pid == 0) {
         // else returns ENOENT
-        return Py_BuildValue("s", "");
+        return PyUnicode_FromString("");
     }
 
     mib[0] = CTL_KERN;
@@ -78,21 +70,17 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     mib[3] = KERN_PROC_PATHNAME;
 
     size = sizeof(pathname);
-    error = sysctl(mib, 4, NULL, &size, NULL, 0);
-    if (error == -1) {
-        psutil_oserror();
-        return NULL;
-    }
-
     error = sysctl(mib, 4, pathname, &size, NULL, 0);
     if (error == -1) {
-        psutil_oserror();
-        return NULL;
+        return psutil_oserror_wsyscall("sysctl(KERN_PROC_PATHNAME)");
     }
+
     if (size == 0 || strlen(pathname) == 0) {
         ret = psutil_pid_exists(pid);
-        if (ret == -1)
+        if (ret == -1) {
+            psutil_oserror();
             return NULL;
+        }
         else if (ret == 0)
             return psutil_oserror_nsp("psutil_pid_exists -> 0");
         else
@@ -100,11 +88,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     }
 
     return PyUnicode_DecodeFSDefault(pathname);
-#else
-    return Py_BuildValue("s", "");
-#endif
 }
-*/
 
 
 PyObject *
@@ -129,7 +113,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     size_t size;
     struct kinfo_lwp *kl = NULL;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -170,24 +153,22 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (kl[i].l_stat == LSIDL || kl[i].l_stat == LSZOMB)
             continue;
         // XXX: return 2 "user" times, no "system" time available
-        py_tuple = Py_BuildValue(
-            "idd",
-            kl[i].l_lid,
-            PSUTIL_KPT2DOUBLE(kl[i].l_rtime),
-            PSUTIL_KPT2DOUBLE(kl[i].l_rtime)
-        );
-        if (py_tuple == NULL)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "idd",
+                kl[i].l_lid,
+                PSUTIL_KPT2DOUBLE(kl[i].l_rtime),
+                PSUTIL_KPT2DOUBLE(kl[i].l_rtime)
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_DECREF(py_tuple);
+        }
     }
 
     free(kl);
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (kl != NULL)
         free(kl);
@@ -206,7 +187,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     size_t pos = 0;
     char *procargs = NULL;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_arg = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -227,6 +207,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
             if (errno == EBUSY) {
                 // Usually happens with TestProcess.test_long_cmdline. See:
                 // https://github.com/giampaolo/psutil/issues/2250
+                // psutil_sysctl_malloc() sets a Python exception before
+                // returning -1; clear it before retrying or returning so we
+                // don't leave a pending exception on a non-NULL return value.
+                PyErr_Clear();
                 attempt += 1;
                 if (attempt < max_attempts) {
                     psutil_debug("proc %zu cmdline(): retry on EBUSY", pid);
@@ -236,6 +220,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
                     psutil_debug(
                         "proc %zu cmdline(): return [] due to EBUSY", pid
                     );
+                    PyErr_Clear();
                     return py_retlist;
                 }
             }
@@ -246,21 +231,19 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
     if (len > 0) {
         while (pos < len) {
-            py_arg = PyUnicode_DecodeFSDefault(&procargs[pos]);
-            if (!py_arg)
+            if (!pylist_append_obj(
+                    py_retlist, PyUnicode_DecodeFSDefault(&procargs[pos])
+                ))
                 goto error;
-            if (PyList_Append(py_retlist, py_arg))
-                goto error;
-            Py_DECREF(py_arg);
             pos = pos + strlen(&procargs[pos]) + 1;
         }
     }
 
     free(procargs);
+    PyErr_Clear();
     return py_retlist;
 
 error:
-    Py_XDECREF(py_arg);
     Py_DECREF(py_retlist);
     if (procargs != NULL)
         free(procargs);

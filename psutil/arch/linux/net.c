@@ -78,7 +78,11 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
     memset(&ethcmd, 0, sizeof ethcmd);
     ethcmd.cmd = ETHTOOL_GSET;
     ifr.ifr_data = (void *)&ethcmd;
+    // The driver may read the PHY / EEPROM to answer this, and it
+    // takes rtnl_lock() meanwhile.
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sock, SIOCETHTOOL, &ifr);
+    Py_END_ALLOW_THREADS
 
     if (ret != -1) {
         duplex = ethcmd.duplex;
@@ -93,11 +97,12 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
         }
     }
     else {
-        if ((errno == EOPNOTSUPP) || (errno == EINVAL)) {
+        if ((errno == EOPNOTSUPP) || (errno == EINVAL) || (errno == EBUSY)) {
             // EOPNOTSUPP may occur in case of wi-fi cards.
             // For EINVAL see:
             // https://github.com/giampaolo/psutil/issues/797
             //     #issuecomment-202999532
+            // EBUSY may occur with broken drivers or busy devices.
             duplex = DUPLEX_UNKNOWN;
             speed = 0;
         }

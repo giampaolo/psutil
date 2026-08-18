@@ -18,16 +18,11 @@ import struct
 import sys
 import warnings
 from collections import defaultdict
-from collections import namedtuple
 
-from . import _common
 from . import _ntuples as ntp
 from . import _psposix
-from . import _psutil_linux as cext
+from . import _psutil
 from ._common import ENCODING
-from ._common import NIC_DUPLEX_FULL
-from ._common import NIC_DUPLEX_HALF
-from ._common import NIC_DUPLEX_UNKNOWN
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
@@ -37,27 +32,21 @@ from ._common import debug
 from ._common import decode
 from ._common import get_procfs_path
 from ._common import isfile_strict
-from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import open_binary
 from ._common import open_text
 from ._common import parse_environ_block
 from ._common import path_exists_strict
+from ._common import socktype_to_enum
 from ._common import supports_ipv6
 from ._common import usage_percent
+from ._enums import BatteryTime
+from ._enums import ConnectionStatus
+from ._enums import NicDuplex
+from ._enums import ProcessIOPriority
+from ._enums import ProcessStatus
 
-# fmt: off
-__extra__all__ = [
-    'PROCFS_PATH',
-    # io prio constants
-    "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE",
-    "IOPRIO_CLASS_IDLE",
-    # connection status constants
-    "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
-    "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
-    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
-]
-# fmt: on
+__extra__all__ = ['PROCFS_PATH']
 
 
 # =====================================================================
@@ -68,14 +57,18 @@ __extra__all__ = [
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_PROC_SMAPS = os.path.exists(f"/proc/{os.getpid()}/smaps")
 HAS_PROC_SMAPS_ROLLUP = os.path.exists(f"/proc/{os.getpid()}/smaps_rollup")
-HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
-HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
+HAS_PROC_IO_PRIORITY = hasattr(_psutil, "proc_ioprio_get")
+HAS_CPU_AFFINITY = hasattr(_psutil, "proc_cpu_affinity_get")
 
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
-PAGESIZE = cext.getpagesize()
+PAGESIZE = _psutil.getpagesize()
 LITTLE_ENDIAN = sys.byteorder == 'little'
 UNSET = object()
+
+# Python 3.15 changed resource.prlimit() to return RLIM_INFINITY as the
+# unsigned 2**64-1 instead of -1; used to map it back to -1.
+RLIM_INFINITY_UNSIGNED = _psutil.RLIM_INFINITY & 0xFFFFFFFFFFFFFFFF
 
 # "man iostat" states that sectors are equivalent with blocks and have
 # a size of 512 bytes. Despite this value can be queried at runtime
@@ -96,48 +89,38 @@ AddressFamily = enum.IntEnum(
 AF_LINK = AddressFamily.AF_LINK
 
 
-# ioprio_* constants http://linux.die.net/man/2/ioprio_get
-class IOPriority(enum.IntEnum):
-    IOPRIO_CLASS_NONE = 0
-    IOPRIO_CLASS_RT = 1
-    IOPRIO_CLASS_BE = 2
-    IOPRIO_CLASS_IDLE = 3
-
-
-globals().update(IOPriority.__members__)
-
 # See:
 # https://github.com/torvalds/linux/blame/master/fs/proc/array.c
 # ...and (TASK_* constants):
 # https://github.com/torvalds/linux/blob/master/include/linux/sched.h
 PROC_STATUSES = {
-    "R": _common.STATUS_RUNNING,
-    "S": _common.STATUS_SLEEPING,
-    "D": _common.STATUS_DISK_SLEEP,
-    "T": _common.STATUS_STOPPED,
-    "t": _common.STATUS_TRACING_STOP,
-    "Z": _common.STATUS_ZOMBIE,
-    "X": _common.STATUS_DEAD,
-    "x": _common.STATUS_DEAD,
-    "K": _common.STATUS_WAKE_KILL,
-    "W": _common.STATUS_WAKING,
-    "I": _common.STATUS_IDLE,
-    "P": _common.STATUS_PARKED,
+    "R": ProcessStatus.STATUS_RUNNING,
+    "S": ProcessStatus.STATUS_SLEEPING,
+    "D": ProcessStatus.STATUS_DISK_SLEEP,
+    "T": ProcessStatus.STATUS_STOPPED,
+    "t": ProcessStatus.STATUS_TRACING_STOP,
+    "Z": ProcessStatus.STATUS_ZOMBIE,
+    "X": ProcessStatus.STATUS_DEAD,
+    "x": ProcessStatus.STATUS_DEAD,
+    "K": ProcessStatus.STATUS_WAKE_KILL,
+    "W": ProcessStatus.STATUS_WAKING,
+    "I": ProcessStatus.STATUS_IDLE,
+    "P": ProcessStatus.STATUS_PARKED,
 }
 
 # https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h
 TCP_STATUSES = {
-    "01": _common.CONN_ESTABLISHED,
-    "02": _common.CONN_SYN_SENT,
-    "03": _common.CONN_SYN_RECV,
-    "04": _common.CONN_FIN_WAIT1,
-    "05": _common.CONN_FIN_WAIT2,
-    "06": _common.CONN_TIME_WAIT,
-    "07": _common.CONN_CLOSE,
-    "08": _common.CONN_CLOSE_WAIT,
-    "09": _common.CONN_LAST_ACK,
-    "0A": _common.CONN_LISTEN,
-    "0B": _common.CONN_CLOSING,
+    "01": ConnectionStatus.CONN_ESTABLISHED,
+    "02": ConnectionStatus.CONN_SYN_SENT,
+    "03": ConnectionStatus.CONN_SYN_RECV,
+    "04": ConnectionStatus.CONN_FIN_WAIT1,
+    "05": ConnectionStatus.CONN_FIN_WAIT2,
+    "06": ConnectionStatus.CONN_TIME_WAIT,
+    "07": ConnectionStatus.CONN_CLOSE,
+    "08": ConnectionStatus.CONN_CLOSE_WAIT,
+    "09": ConnectionStatus.CONN_LAST_ACK,
+    "0A": ConnectionStatus.CONN_LISTEN,
+    "0B": ConnectionStatus.CONN_CLOSING,
 }
 
 
@@ -186,8 +169,7 @@ def is_storage_device(name):
     return True.
     """
     # Re-adapted from iostat source code, see:
-    # https://github.com/sysstat/sysstat/blob/
-    #     97912938cd476645b267280069e83b1c8dc0e1c7/common.c#L208
+    # https://github.com/sysstat/sysstat/blob/97912938cd476/common.c#L208
     # Some devices may have a slash in their name (e.g. cciss/c0d0...).
     name = name.replace('/', '!')
     including_virtual = True
@@ -196,43 +178,6 @@ def is_storage_device(name):
     else:
         path = f"/sys/block/{name}/device"
     return os.access(path, os.F_OK)
-
-
-@memoize
-def _scputimes_ntuple(procfs_path):
-    """Return a namedtuple of variable fields depending on the CPU times
-    available on this Linux kernel version which may be:
-    (user, nice, system, idle, iowait, irq, softirq, [steal, [guest,
-     [guest_nice]]])
-    Used by cpu_times() function.
-    """
-    with open_binary(f"{procfs_path}/stat") as f:
-        values = f.readline().split()[1:]
-    fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
-    vlen = len(values)
-    if vlen >= 8:
-        # Linux >= 2.6.11
-        fields.append('steal')
-    if vlen >= 9:
-        # Linux >= 2.6.24
-        fields.append('guest')
-    if vlen >= 10:
-        # Linux >= 3.2.0
-        fields.append('guest_nice')
-    return namedtuple('scputimes', fields)
-
-
-# Set it into _ntuples.py namespace.
-try:
-    ntp.scputimes = _scputimes_ntuple("/proc")
-except Exception as err:  # noqa: BLE001
-    # Don't want to crash at import time.
-    debug(f"ignoring exception on import: {err!r}")
-    ntp.scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
-
-# XXX: must be available also at this module level in order to be
-# serialized (tests/test_misc.py::TestMisc::test_serialization).
-scputimes = ntp.scputimes
 
 
 # =====================================================================
@@ -262,8 +207,7 @@ def calculate_avail_vmem(mems):
     * https://github.com/famzah/linux-memavailable-procfs/issues/2
     """
     # Note about "fallback" value. According to:
-    # https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/
-    #     commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0ae398
     # ...long ago "available" memory was calculated as (free + cached),
     # We use fallback when one of these is missing from /proc/meminfo:
     # "Active(file)": introduced in 2.6.28 / Dec 2008
@@ -315,8 +259,8 @@ def virtual_memory():
     mems = {}
     with open_binary(f"{get_procfs_path()}/meminfo") as f:
         for line in f:
-            fields = line.split()
-            mems[fields[0]] = int(fields[1]) * 1024
+            key, value = line.split(b':', 1)
+            mems[key + b':'] = int(value.split()[0]) * 1024
 
     # /proc doc states that the available fields in /proc/meminfo vary
     # by architecture and compile options, but these 3 values are also
@@ -338,8 +282,7 @@ def virtual_memory():
         # "free" cmdline utility sums reclaimable to cached.
         # Older versions of procps used to add slab memory instead.
         # This got changed in:
-        # https://gitlab.com/procps-ng/procps/commit/
-        #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+        # https://gitlab.com/procps-ng/procps/-/commit/05d751c4f
         cached += mems.get(b"SReclaimable:", 0)  # since kernel 2.6.19
 
     try:
@@ -401,8 +344,7 @@ def virtual_memory():
         # If avail is greater than total or our calculation overflows,
         # that's symptomatic of running within a LCX container where such
         # values will be dramatically distorted over those of the host.
-        # https://gitlab.com/procps-ng/procps/blob/
-        #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L764
+        # https://gitlab.com/procps-ng/procps/blob/24fd2605c51fcc/proc/sysinfo.c#L764
         avail = free
 
     used = total - avail
@@ -437,8 +379,11 @@ def swap_memory():
     mems = {}
     with open_binary(f"{get_procfs_path()}/meminfo") as f:
         for line in f:
-            fields = line.split()
-            mems[fields[0]] = int(fields[1]) * 1024
+            # Note: some fields (e.g. "ShadowCallStack:10373888 kB")
+            # may not have a space after the colon, see:
+            # https://github.com/giampaolo/psutil/issues/2809
+            key, value = line.split(b':', 1)
+            mems[key + b':'] = int(value.split()[0]) * 1024
     # We prefer /proc/meminfo over sysinfo() syscall so that
     # psutil.PROCFS_PATH can be used in order to allow retrieval
     # for linux containers, see:
@@ -447,7 +392,7 @@ def swap_memory():
         total = mems[b'SwapTotal:']
         free = mems[b'SwapFree:']
     except KeyError:
-        _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
+        _, _, _, _, total, free, unit_multiplier = _psutil.linux_sysinfo()
         total *= unit_multiplier
         free *= unit_multiplier
 
@@ -488,9 +433,9 @@ def swap_memory():
 
 
 # malloc / heap functions; require glibc
-if hasattr(cext, "heap_info"):
-    heap_info = cext.heap_info
-    heap_trim = cext.heap_trim
+if hasattr(_psutil, "heap_info"):
+    heap_info = _psutil.heap_info
+    heap_trim = _psutil.heap_trim
 
 
 # =====================================================================
@@ -499,37 +444,76 @@ if hasattr(cext, "heap_info"):
 
 
 def cpu_times():
-    """Return a named tuple representing the following system-wide
-    CPU times:
-    (user, nice, system, idle, iowait, irq, softirq [steal, [guest,
-     [guest_nice]]])
-    Last 3 fields may not be available on all Linux kernel versions.
-    """
+    """Return a named tuple representing system-wide CPU times."""
+
+    def lsget(lst, idx, field_name):
+        try:
+            return lst[idx]
+        except IndexError:
+            debug(f"can't get {field_name} CPU time; set it to 0")
+            return 0
+
     procfs_path = get_procfs_path()
     with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()
-    fields = values[1 : len(ntp.scputimes._fields) + 1]
-    fields = [float(x) / CLOCK_TICKS for x in fields]
-    return ntp.scputimes(*fields)
+    nfields = len(ntp.scputimes._fields)
+    raw = [float(x) / CLOCK_TICKS for x in values[1 : nfields + 1]]
+    user, nice, system, idle = raw[:4]
+    return ntp.scputimes(
+        user,
+        system,
+        idle,
+        nice,
+        lsget(raw, 4, "iowait"),  # Linux >= 2.5.41
+        lsget(raw, 5, "irq"),  # Linux >= 2.6.0
+        lsget(raw, 6, "softirq"),  # Linux >= 2.6.0
+        lsget(raw, 7, "steal"),  # Linux >= 2.6.11
+        lsget(raw, 8, "guest"),  # Linux >= 2.6.24
+        lsget(raw, 9, "guest_nice"),  # Linux >= 2.6.33
+    )
 
 
 def per_cpu_times():
-    """Return a list of namedtuple representing the CPU times
+    """Return a list of named tuples representing the CPU times
     for every CPU available on the system.
     """
     procfs_path = get_procfs_path()
     cpus = []
+    nfields = len(ntp.scputimes._fields)
     with open_binary(f"{procfs_path}/stat") as f:
         # get rid of the first line which refers to system wide CPU stats
         f.readline()
         for line in f:
             if line.startswith(b'cpu'):
                 values = line.split()
-                fields = values[1 : len(ntp.scputimes._fields) + 1]
-                fields = [float(x) / CLOCK_TICKS for x in fields]
-                entry = ntp.scputimes(*fields)
+                raw = [float(x) / CLOCK_TICKS for x in values[1 : nfields + 1]]
+                user, nice, system, idle = raw[0], raw[1], raw[2], raw[3]
+                entry = ntp.scputimes(user, system, idle, nice, *raw[4:])
                 cpus.append(entry)
         return cpus
+
+
+def _parse_cpulist(cpulist):
+    """Parse Linux CPU list string (e.g "0-3,8,10-11")"""
+    cpulist = cpulist.strip()
+    if not cpulist:
+        return []
+    cpus = []
+    for chunk in cpulist.split(','):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        if '-' in chunk:
+            start, _, end = chunk.partition('-')
+            start = int(start)
+            end = int(end)
+            if start > end:
+                msg = f"invalid CPU range {chunk!r}"
+                raise ValueError(msg)
+            cpus.extend(range(start, end + 1))
+        else:
+            cpus.append(int(chunk))
+    return cpus
 
 
 def cpu_count_logical():
@@ -596,8 +580,8 @@ def cpu_count_cores():
                 current_info = {}
             elif line.startswith((b'physical id', b'cpu cores')):
                 # ongoing section
-                key, value = line.split(b'\t:', 1)
-                current_info[key] = int(value)
+                key, value = line.split(b':', 1)
+                current_info[key.strip()] = int(value)
 
     result = sum(mapping.values())
     return result or None  # mimic os.cpu_count()
@@ -628,12 +612,21 @@ def cpu_stats():
 
 def _cpu_get_cpuinfo_freq():
     """Return current CPU frequency from cpuinfo if available."""
+    ret = []
     with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
-        return [
-            float(line.split(b':', 1)[1])
-            for line in f
-            if line.lower().startswith(b'cpu mhz')
-        ]
+        for line in f:
+            key, _, value = line.partition(b':')
+            key = key.strip().lower()
+            # x86 says "cpu MHz", ppc "clock" (with a MHz suffix),
+            # s390x "cpu MHz dynamic" plus a "static" one we skip.
+            # https://github.com/torvalds/linux/blob/master/arch/powerpc/kernel/setup-common.c
+            # https://github.com/torvalds/linux/blob/master/arch/s390/kernel/processor.c
+            if key in {b'cpu mhz', b'clock', b'cpu mhz dynamic'}:
+                value = value.strip()
+                if value.endswith(b"MHz"):
+                    value = value[:-3]
+                ret.append(float(value))
+    return ret
 
 
 if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
@@ -645,15 +638,29 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
         Contrarily to other OSes, Linux updates these values in
         real-time.
         """
+        pjoin = os.path.join
         cpuinfo_freqs = _cpu_get_cpuinfo_freq()
         paths = glob.glob(
             "/sys/devices/system/cpu/cpufreq/policy[0-9]*"
         ) or glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq")
-        paths.sort(key=lambda x: int(re.search(r"[0-9]+", x).group()))
+
+        # One policy may govern more than one CPU, so ask each policy
+        # which CPUs it affects instead of assuming one per CPU. Offline
+        # CPUs are listed by no policy, and are therefore left out.
+        # https://github.com/giampaolo/psutil/issues/2512
+        cpu_to_path = {}
+        for path in paths:
+            affected = bcat(pjoin(path, "affected_cpus"), fallback=None)
+            if affected is None:
+                cpu_to_path[int(re.search(r"[0-9]+", path).group())] = path
+            else:
+                for cpu in affected.split():
+                    cpu_to_path[int(cpu)] = path
+
         ret = []
-        pjoin = os.path.join
-        for i, path in enumerate(paths):
-            if len(paths) == len(cpuinfo_freqs):
+        for i, cpu in enumerate(sorted(cpu_to_path)):
+            path = cpu_to_path[cpu]
+            if len(cpu_to_path) == len(cpuinfo_freqs):
                 # take cached value from cpuinfo if available, see:
                 # https://github.com/giampaolo/psutil/issues/1851
                 curr = cpuinfo_freqs[i] * 1000
@@ -664,10 +671,12 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                 # https://github.com/giampaolo/psutil/issues/1071
                 curr = bcat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
                 if curr is None:
-                    online_path = f"/sys/devices/system/cpu/cpu{i}/online"
-                    # if cpu core is offline, set to all zeroes
+                    online_path = f"/sys/devices/system/cpu/cpu{cpu}/online"
+                    # If the CPU core is offline skip it instead of
+                    # reporting it as all zeroes, otherwise it drags
+                    # down the average frequency. See:
+                    # https://github.com/giampaolo/psutil/issues/2628
                     if cat(online_path, fallback=None) == "0\n":
-                        ret.append(ntp.scpufreq(0.0, 0.0, 0.0))
                         continue
                     msg = "can't find current frequency file"
                     raise NotImplementedError(msg)
@@ -681,7 +690,7 @@ else:
 
     def cpu_freq():
         """Alternate implementation using /proc/cpuinfo.
-        min and max frequencies are not available and are set to None.
+        min and max frequencies are not available and are set to 0.
         """
         return [ntp.scpufreq(x, 0.0, 0.0) for x in _cpu_get_cpuinfo_freq()]
 
@@ -691,7 +700,7 @@ else:
 # =====================================================================
 
 
-net_if_addrs = cext.net_if_addrs
+net_if_addrs = _psutil.net_if_addrs
 
 
 class _Ipv6UnsupportedError(Exception):
@@ -861,7 +870,7 @@ class NetConnections:
                     if type_ == socket.SOCK_STREAM:
                         status = TCP_STATUSES[status]
                     else:
-                        status = _common.CONN_NONE
+                        status = ConnectionStatus.CONN_NONE
                     try:
                         laddr = NetConnections.decode_address(laddr, family)
                         raddr = NetConnections.decode_address(raddr, family)
@@ -897,12 +906,12 @@ class NetConnections:
                         continue
                     else:
                         path = tokens[-1] if len(tokens) == 8 else ''
-                        type_ = _common.socktype_to_enum(int(type_))
+                        type_ = socktype_to_enum(int(type_))
                         # XXX: determining the remote endpoint of a
                         # UNIX socket on Linux is not possible, see:
                         # https://serverfault.com/questions/252723/
                         raddr = ""
-                        status = _common.CONN_NONE
+                        status = ConnectionStatus.CONN_NONE
                         yield (fd, family, type_, path, raddr, status, pid)
 
     def retrieve(self, kind, pid=None):
@@ -992,17 +1001,17 @@ def net_io_counters():
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
     duplex_map = {
-        cext.DUPLEX_FULL: NIC_DUPLEX_FULL,
-        cext.DUPLEX_HALF: NIC_DUPLEX_HALF,
-        cext.DUPLEX_UNKNOWN: NIC_DUPLEX_UNKNOWN,
+        _psutil.DUPLEX_FULL: NicDuplex.NIC_DUPLEX_FULL,
+        _psutil.DUPLEX_HALF: NicDuplex.NIC_DUPLEX_HALF,
+        _psutil.DUPLEX_UNKNOWN: NicDuplex.NIC_DUPLEX_UNKNOWN,
     }
     names = net_io_counters().keys()
     ret = {}
     for name in names:
         try:
-            mtu = cext.net_if_mtu(name)
-            flags = cext.net_if_flags(name)
-            duplex, speed = cext.net_if_duplex_speed(name)
+            mtu = _psutil.net_if_mtu(name)
+            flags = _psutil.net_if_flags(name)
+            duplex, speed = _psutil.net_if_duplex_speed(name)
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1279
             if err.errno != errno.ENODEV:
@@ -1163,8 +1172,8 @@ class RootFsDeviceFinder:
         with open_text(path) as f:
             for line in f:
                 if line.startswith("DEVNAME="):
-                    name = line.strip().rpartition("DEVNAME=")[2]
-                    if name:  # just for extra safety
+                    # just for extra safety
+                    if name := line.strip().rpartition("DEVNAME=")[2]:
                         return f"/dev/{name}"
 
     def ask_sys_class_block(self):
@@ -1206,10 +1215,11 @@ class RootFsDeviceFinder:
 
 
 def disk_partitions(all=False):
-    """Return mounted disk partitions as a list of namedtuples."""
+    """Return mounted disk partitions as a list of named tuples."""
     fstypes = set()
     procfs_path = get_procfs_path()
-    if not all:
+
+    def fstypes_from_filesystems():
         with open_text(f"{procfs_path}/filesystems") as f:
             for line in f:
                 line = line.strip()
@@ -1220,6 +1230,23 @@ def disk_partitions(all=False):
                     fstype = line.split("\t")[1]
                     if fstype == "zfs":
                         fstypes.add("zfs")
+        return fstypes
+
+    def fstypes_from_mountinfo():
+        with open_text(f"{procfs_path}/self/mountinfo") as f:
+            for line in f:
+                line = line.strip().split()
+                if len(line) > 1:
+                    for i in range(len(line) - 1):
+                        if line[i] == "-":
+                            fstypes.add(line[i + 1])
+        return fstypes
+
+    if not all:
+        try:
+            fstypes = fstypes_from_filesystems()
+        except PermissionError:
+            fstypes = fstypes_from_mountinfo()
 
     # See: https://github.com/giampaolo/psutil/issues/1307
     if procfs_path == "/proc" and os.path.isfile('/etc/mtab'):
@@ -1228,7 +1255,7 @@ def disk_partitions(all=False):
         mounts_path = os.path.realpath(f"{procfs_path}/self/mounts")
 
     retlist = []
-    partitions = cext.disk_partitions(mounts_path)
+    partitions = _psutil.disk_partitions(mounts_path)
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
@@ -1446,7 +1473,7 @@ def sensors_battery():
         except ZeroDivisionError:
             percent = 0.0
     else:
-        percent = int(cat(root + "/capacity", fallback=-1))
+        percent = float(cat(root + "/capacity", fallback=-1))
         if percent == -1:
             return None
 
@@ -1468,22 +1495,19 @@ def sensors_battery():
             power_plugged = True
 
     # Seconds left.
-    # Note to self: we may also calculate the charging ETA as per:
-    # https://github.com/thialfihar/dotfiles/blob/
-    #     013937745fd9050c30146290e8f963d65c0179e6/bin/battery.py#L55
     if power_plugged:
-        secsleft = _common.POWER_TIME_UNLIMITED
+        secsleft = BatteryTime.POWER_TIME_UNLIMITED
     elif energy_now is not None and power_now is not None:
         try:
             secsleft = int(energy_now / abs(power_now) * 3600)
         except ZeroDivisionError:
-            secsleft = _common.POWER_TIME_UNKNOWN
+            secsleft = BatteryTime.POWER_TIME_UNKNOWN
     elif time_to_empty is not None:
         secsleft = int(time_to_empty * 60)
         if secsleft < 0:
-            secsleft = _common.POWER_TIME_UNKNOWN
+            secsleft = BatteryTime.POWER_TIME_UNKNOWN
     else:
-        secsleft = _common.POWER_TIME_UNKNOWN
+        secsleft = BatteryTime.POWER_TIME_UNKNOWN
 
     return ntp.sbattery(percent, secsleft, power_plugged)
 
@@ -1494,9 +1518,9 @@ def sensors_battery():
 
 
 def users():
-    """Return currently connected users as a list of namedtuples."""
+    """Return currently connected users as a list of named tuples."""
     retlist = []
-    rawlist = cext.users()
+    rawlist = _psutil.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         nt = ntp.suser(user, tty or None, hostname, tstamp, pid)
@@ -1693,6 +1717,8 @@ class Process:
         ret['status'] = fields[0]
         ret['ppid'] = fields[1]
         ret['ttynr'] = fields[4]
+        ret['minflt'] = fields[7]
+        ret['majflt'] = fields[9]
         ret['utime'] = fields[11]
         ret['stime'] = fields[12]
         ret['children_utime'] = fields[13]
@@ -1780,11 +1806,9 @@ class Process:
     @wrap_exceptions
     def terminal(self):
         tty_nr = int(self._parse_stat_file()['ttynr'])
-        tmap = _psposix.get_terminal_map()
-        try:
-            return tmap[tty_nr]
-        except KeyError:
+        if tty_nr == 0:
             return None
+        return _psposix.get_terminal(tty_nr)
 
     # May not be available on old kernels.
     if os.path.exists(f"/proc/{os.getpid()}/io"):
@@ -1876,10 +1900,41 @@ class Process:
         # | dirty  | dirty pages (unused in Linux 2.6)   | dt   |      |
         #  ============================================================
         with open_binary(f"{self._procfs_path}/{self.pid}/statm") as f:
-            vms, rss, shared, text, lib, data, dirty = (
+            vms, rss, shared, text, _lib, data, _dirty = (
                 int(x) * PAGESIZE for x in f.readline().split()[:7]
             )
-        return ntp.pmem(rss, vms, shared, text, lib, data, dirty)
+        return ntp.pmem(rss, vms, shared, text, data)
+
+    @wrap_exceptions
+    def memory_info_ex(
+        self,
+        _vmpeak_re=re.compile(br"VmPeak:\s+(\d+)"),
+        _vmhwm_re=re.compile(br"VmHWM:\s+(\d+)"),
+        _rssanon_re=re.compile(br"RssAnon:\s+(\d+)"),
+        _rssfile_re=re.compile(br"RssFile:\s+(\d+)"),
+        _rssshmem_re=re.compile(br"RssShmem:\s+(\d+)"),
+        _vmswap_re=re.compile(br"VmSwap:\s+(\d+)"),
+        _hugetlb_re=re.compile(br"HugetlbPages:\s+(\d+)"),
+    ):
+        # Read /proc/{pid}/status which provides peak RSS/VMS and a
+        # cheaper way to get swap (no smaps parsing needed).
+        # RssAnon/RssFile/RssShmem were added in Linux 4.5;
+        # VmSwap in 2.6.34; HugetlbPages in 4.4.
+        data = self._read_status_file()
+
+        def parse(regex):
+            m = regex.search(data)
+            return int(m.group(1)) * 1024 if m else 0
+
+        return {
+            "peak_rss": parse(_vmhwm_re),
+            "peak_vms": parse(_vmpeak_re),
+            "rss_anon": parse(_rssanon_re),
+            "rss_file": parse(_rssfile_re),
+            "rss_shmem": parse(_rssshmem_re),
+            "swap": parse(_vmswap_re),
+            "hugetlb": parse(_hugetlb_re),
+        }
 
     if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
 
@@ -1936,19 +1991,17 @@ class Process:
             return (uss, pss, swap)
 
         @wrap_exceptions
-        def memory_full_info(self):
-            if HAS_PROC_SMAPS_ROLLUP:  # faster
-                try:
-                    uss, pss, swap = self._parse_smaps_rollup()
-                except (ProcessLookupError, FileNotFoundError):
-                    uss, pss, swap = self._parse_smaps()
-            else:
-                uss, pss, swap = self._parse_smaps()
-            basic_mem = self.memory_info()
-            return ntp.pfullmem(*basic_mem + (uss, pss, swap))
+        def memory_footprint(self):
+            def fetch():
+                if HAS_PROC_SMAPS_ROLLUP:  # faster
+                    try:
+                        return self._parse_smaps_rollup()
+                    except (ProcessLookupError, FileNotFoundError):
+                        pass
+                return self._parse_smaps()
 
-    else:
-        memory_full_info = memory_info
+            uss, pss, swap = fetch()
+            return ntp.pfootprint(uss, pss, swap)
 
     if HAS_PROC_SMAPS:
 
@@ -2025,6 +2078,11 @@ class Process:
             return ls
 
     @wrap_exceptions
+    def page_faults(self):
+        values = self._parse_stat_file()
+        return ntp.ppagefaults(int(values['minflt']), int(values['majflt']))
+
+    @wrap_exceptions
     def cwd(self):
         return self._readlink(
             f"{self._procfs_path}/{self.pid}/cwd", fallback=""
@@ -2086,34 +2144,40 @@ class Process:
         #   return int(data.split()[18])
 
         # Use C implementation
-        return cext.proc_priority_get(self.pid)
+        return _psutil.proc_priority_get(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
-        return cext.proc_priority_set(self.pid, value)
+        return _psutil.proc_priority_set(self.pid, value)
 
     # starting from CentOS 6.
     if HAS_CPU_AFFINITY:
 
         @wrap_exceptions
         def cpu_affinity_get(self):
-            return cext.proc_cpu_affinity_get(self.pid)
+            return _psutil.proc_cpu_affinity_get(self.pid)
 
         def _get_eligible_cpus(
-            self, _re=re.compile(br"Cpus_allowed_list:\t(\d+)-(\d+)")
+            self,
+            _re=re.compile(
+                br"^Cpus_allowed_list:[ \t]*([^\r\n]*)", re.MULTILINE
+            ),
         ):
             # See: https://github.com/giampaolo/psutil/issues/956
             data = self._read_status_file()
-            match = _re.findall(data)
-            if match:
-                return list(range(int(match[0][0]), int(match[0][1]) + 1))
-            else:
-                return list(range(len(per_cpu_times())))
+            if match := _re.search(data):
+                try:
+                    return _parse_cpulist(decode(match.group(1)))
+                except ValueError as err:
+                    debug(
+                        f"can't parse Cpus_allowed_list ({err}); falling back"
+                    )
+            return list(range(len(per_cpu_times())))
 
         @wrap_exceptions
         def cpu_affinity_set(self, cpus):
             try:
-                cext.proc_cpu_affinity_set(self.pid, cpus)
+                _psutil.proc_cpu_affinity_set(self.pid, cpus)
             except (OSError, ValueError) as err:
                 if isinstance(err, ValueError) or err.errno == errno.EINVAL:
                     eligible_cpus = self._get_eligible_cpus()
@@ -2138,8 +2202,8 @@ class Process:
 
         @wrap_exceptions
         def ionice_get(self):
-            ioclass, value = cext.proc_ioprio_get(self.pid)
-            ioclass = IOPriority(ioclass)
+            ioclass, value = _psutil.proc_ioprio_get(self.pid)
+            ioclass = ProcessIOPriority(ioclass)
             return ntp.pionice(ioclass, value)
 
         @wrap_exceptions
@@ -2147,15 +2211,15 @@ class Process:
             if value is None:
                 value = 0
             if value and ioclass in {
-                IOPriority.IOPRIO_CLASS_IDLE,
-                IOPriority.IOPRIO_CLASS_NONE,
+                ProcessIOPriority.IOPRIO_CLASS_IDLE,
+                ProcessIOPriority.IOPRIO_CLASS_NONE,
             }:
                 msg = f"{ioclass!r} ioclass accepts no value"
                 raise ValueError(msg)
             if value < 0 or value > 7:
                 msg = "value not in 0-7 range"
                 raise ValueError(msg)
-            return cext.proc_ioprio_set(self.pid, ioclass, value)
+            return _psutil.proc_ioprio_set(self.pid, ioclass, value)
 
     if hasattr(resource, "prlimit"):
 
@@ -2170,7 +2234,14 @@ class Process:
             try:
                 if limits is None:
                     # get
-                    return resource.prlimit(self.pid, resource_)
+                    soft, hard = resource.prlimit(self.pid, resource_)
+                    # Python 3.15 returns RLIM_INFINITY as the unsigned
+                    # 2**64-1 instead of -1; map it back for consistency.
+                    if soft == RLIM_INFINITY_UNSIGNED:
+                        soft = _psutil.RLIM_INFINITY
+                    if hard == RLIM_INFINITY_UNSIGNED:
+                        hard = _psutil.RLIM_INFINITY
+                    return soft, hard
                 else:
                     # set
                     if len(limits) != 2:

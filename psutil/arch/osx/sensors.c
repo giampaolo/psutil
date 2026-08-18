@@ -32,13 +32,18 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     int time_to_empty;  // units are minutes
     int is_power_plugged;
 
+    // Queries the power management stack (IPC + SMC).
+    Py_BEGIN_ALLOW_THREADS
     power_info = IOPSCopyPowerSourcesInfo();
+    Py_END_ALLOW_THREADS
     if (!power_info) {
         psutil_runtime_error("IOPSCopyPowerSourcesInfo() syscall failed");
         goto error;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     power_sources_list = IOPSCopyPowerSourcesList(power_info);
+    Py_END_ALLOW_THREADS
     if (!power_sources_list) {
         psutil_runtime_error("IOPSCopyPowerSourcesList() syscall failed");
         goto error;
@@ -89,20 +94,22 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
             time_to_empty_ref, kCFNumberIntType, &time_to_empty
         ))
     {
-        /* This value is recommended for non-Apple power sources, so it's not
-         * an error if it doesn't exist. We'll return -1 for "unknown" */
-        /* A value of -1 indicates "Still Calculating the Time" also for
-         * apple power source */
+        // This value is recommended for non-Apple power sources, so
+        // it's not an error if it doesn't exist. We'll return -1 for
+        // "unknown" A value of -1 indicates "Still Calculating the
+        // Time" also for apple power source.
         time_to_empty = -1;
     }
 
-    py_tuple = Py_BuildValue("Iii", capacity, time_to_empty, is_power_plugged);
+    py_tuple = Py_BuildValue(
+        "dii", (double)capacity, time_to_empty, is_power_plugged
+    );
     if (!py_tuple)
         goto error;
 
     CFRelease(power_info);
     CFRelease(power_sources_list);
-    /* Caller should NOT release power_sources_information */
+    // Caller should NOT release power_sources_information
     return py_tuple;
 
 error:

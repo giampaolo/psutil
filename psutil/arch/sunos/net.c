@@ -39,7 +39,10 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
+    // Opens /dev/kstat and snapshots the whole kstat chain.
+    Py_BEGIN_ALLOW_THREADS
     kc = kstat_open();
+    Py_END_ALLOW_THREADS
     if (kc == NULL)
         goto error;
 
@@ -62,7 +65,9 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
         // check if this is a network interface by sending a ioctl
         str_copy(ifr.lifr_name, sizeof(ifr.lifr_name), ksp->ks_name);
+        Py_BEGIN_ALLOW_THREADS
         ret = ioctl(sock, SIOCGLIFFLAGS, &ifr);
+        Py_END_ALLOW_THREADS
         if (ret == -1)
             goto next;
 
@@ -157,7 +162,10 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
+    // Opens /dev/kstat and snapshots the whole kstat chain.
+    Py_BEGIN_ALLOW_THREADS
     kc = kstat_open();
+    Py_END_ALLOW_THREADS
     if (kc == NULL)
         goto error;
     sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -177,7 +185,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
                 continue;
 
             str_copy(ifr.lifr_name, sizeof(ifr.lifr_name), ksp->ks_name);
+            Py_BEGIN_ALLOW_THREADS
             ret = ioctl(sock, SIOCGLIFFLAGS, &ifr);
+            Py_END_ALLOW_THREADS
             if (ret == -1)
                 continue;  // not a network interface
 
@@ -215,7 +225,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
                 speed = 0;
 
             // mtu
+            Py_BEGIN_ALLOW_THREADS
             ret = ioctl(sock, SIOCGLIFMTU, &ifr);
+            Py_END_ALLOW_THREADS
             if (ret == -1)
                 goto error;
 
@@ -247,17 +259,10 @@ error:
 }
 
 
-/*
- * Return TCP and UDP connections opened by process.
- * UNIX sockets are excluded.
- *
- * Thanks to:
- * https://github.com/DavidGriffith/finx/blob/master/
- *     nxsensor-3.5.0-1/src/sysdeps/solaris.c
- * ...and:
- * https://hg.java.net/hg/solaris~on-src/file/tip/usr/src/cmd/
- *     cmd-inet/usr.bin/netstat/netstat.c
- */
+// Return TCP and UDP connections opened by process. UNIX sockets are excluded.
+// Thanks to:
+// https://github.com/DavidGriffith/finx/blob/master/nxsensor-3.5.0-1/src/sysdeps/solaris.c
+// https://hg.java.net/hg/solaris~on-src/file/tip/usr/src/cmd/cmd-inet/usr.bin/netstat/netstat.c
 PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     long pid;
@@ -281,7 +286,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     struct opthdr mibhdr = {0};
 
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
 
@@ -290,18 +294,25 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
+    Py_BEGIN_ALLOW_THREADS
     sd = open("/dev/arp", O_RDWR);
+    Py_END_ALLOW_THREADS
     if (sd == -1) {
         PyErr_SetFromErrnoWithFilename(PyExc_OSError, "/dev/arp");
         goto error;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sd, I_PUSH, "tcp");
+    Py_END_ALLOW_THREADS
     if (ret == -1) {
         psutil_oserror();
         goto error;
     }
+
+    Py_BEGIN_ALLOW_THREADS
     ret = ioctl(sd, I_PUSH, "udp");
+    Py_END_ALLOW_THREADS
     if (ret == -1) {
         psutil_oserror();
         goto error;
@@ -326,7 +337,10 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     ctlbuf.len = tor.OPT_offset + tor.OPT_length;
     flags = 0;  // request to be sent in non-priority
 
-    if (putmsg(sd, &ctlbuf, (struct strbuf *)0, flags) == -1) {
+    Py_BEGIN_ALLOW_THREADS
+    ret = putmsg(sd, &ctlbuf, (struct strbuf *)0, flags);
+    Py_END_ALLOW_THREADS
+    if (ret == -1) {
         psutil_oserror();
         goto error;
     }
@@ -334,7 +348,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     ctlbuf.maxlen = sizeof(buf);
     for (;;) {
         flags = 0;
+        Py_BEGIN_ALLOW_THREADS
         getcode = getmsg(sd, &ctlbuf, (struct strbuf *)0, &flags);
+        Py_END_ALLOW_THREADS
         memcpy(&toa, buf, sizeof toa);
         memcpy(&tea, buf, sizeof tea);
 
@@ -370,7 +386,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         databuf_init = 1;
 
         flags = 0;
+        Py_BEGIN_ALLOW_THREADS
         getcode = getmsg(sd, (struct strbuf *)0, &databuf, &flags);
+        Py_END_ALLOW_THREADS
         if (getcode < 0) {
             psutil_oserror();
             goto error;
@@ -404,21 +422,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 state = tp.tcpConnEntryInfo.ce_state;
 
                 // add item
-                py_tuple = Py_BuildValue(
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET,
-                    SOCK_STREAM,
-                    py_laddr,
-                    py_raddr,
-                    state,
-                    processed_pid
-                );
-                if (!py_tuple)
+                if (!pylist_append_fmt(
+                        py_retlist,
+                        "(iiiNNiI)",
+                        -1,
+                        AF_INET,
+                        SOCK_STREAM,
+                        py_laddr,
+                        py_raddr,
+                        state,
+                        processed_pid
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_CLEAR(py_tuple);
+                }
+                py_laddr = NULL;
+                py_raddr = NULL;
             }
         }
 #if defined(AF_INET6)
@@ -452,21 +471,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 state = tp6.tcp6ConnEntryInfo.ce_state;
 
                 // add item
-                py_tuple = Py_BuildValue(
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET6,
-                    SOCK_STREAM,
-                    py_laddr,
-                    py_raddr,
-                    state,
-                    processed_pid
-                );
-                if (!py_tuple)
+                if (!pylist_append_fmt(
+                        py_retlist,
+                        "(iiiNNiI)",
+                        -1,
+                        AF_INET6,
+                        SOCK_STREAM,
+                        py_laddr,
+                        py_raddr,
+                        state,
+                        processed_pid
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_CLEAR(py_tuple);
+                }
+                py_laddr = NULL;
+                py_raddr = NULL;
             }
         }
 #endif
@@ -494,21 +514,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                py_tuple = Py_BuildValue(
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET,
-                    SOCK_DGRAM,
-                    py_laddr,
-                    py_raddr,
-                    PSUTIL_CONN_NONE,
-                    processed_pid
-                );
-                if (!py_tuple)
+                if (!pylist_append_fmt(
+                        py_retlist,
+                        "(iiiNNiI)",
+                        -1,
+                        AF_INET,
+                        SOCK_DGRAM,
+                        py_laddr,
+                        py_raddr,
+                        PSUTIL_CONN_NONE,
+                        processed_pid
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_CLEAR(py_tuple);
+                }
+                py_laddr = NULL;
+                py_raddr = NULL;
             }
         }
 #if defined(AF_INET6)
@@ -529,21 +550,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                py_tuple = Py_BuildValue(
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET6,
-                    SOCK_DGRAM,
-                    py_laddr,
-                    py_raddr,
-                    PSUTIL_CONN_NONE,
-                    processed_pid
-                );
-                if (!py_tuple)
+                if (!pylist_append_fmt(
+                        py_retlist,
+                        "(iiiNNiI)",
+                        -1,
+                        AF_INET6,
+                        SOCK_DGRAM,
+                        py_laddr,
+                        py_raddr,
+                        PSUTIL_CONN_NONE,
+                        processed_pid
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_CLEAR(py_tuple);
+                }
+                py_laddr = NULL;
+                py_raddr = NULL;
             }
         }
 #endif
@@ -554,7 +576,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
     Py_DECREF(py_retlist);

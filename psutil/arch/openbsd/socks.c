@@ -27,7 +27,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     int rport;
     char lip[INET6_ADDRSTRLEN];
     char rip[INET6_ADDRSTRLEN];
-    int inseq;
+    psutil_conn_filters filters;
 
     char errbuf[_POSIX2_LINE_MAX];
     kvm_t *kd = NULL;
@@ -37,14 +37,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     struct in6_addr laddr6;
 
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
     PyObject *py_lpath = NULL;
     PyObject *py_af_filter = NULL;
     PyObject *py_type_filter = NULL;
-    PyObject *py_family = NULL;
-    PyObject *_type = NULL;
 
 
     if (py_retlist == NULL)
@@ -55,18 +52,21 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     {
         goto error;
     }
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+    if (psutil_parse_conn_filters(py_af_filter, py_type_filter, &filters) != 0)
         goto error;
-    }
 
+    Py_BEGIN_ALLOW_THREADS
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
+    Py_END_ALLOW_THREADS
     if (!kd) {
         convert_kvm_err("kvm_openfiles", errbuf);
         goto error;
     }
 
+    // Walks the whole kernel file table, may take a while.
+    Py_BEGIN_ALLOW_THREADS
     ikf = kvm_getfiles(kd, KERN_FILE_BYPID, -1, sizeof(*ikf), &cnt);
+    Py_END_ALLOW_THREADS
     if (!ikf) {
         psutil_oserror_wsyscall("kvm_getfiles");
         goto error;
@@ -74,7 +74,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     for (int i = 0; i < cnt; i++) {
         const struct kinfo_file *kif = ikf + i;
-        py_tuple = NULL;
         py_laddr = NULL;
         py_raddr = NULL;
         py_lpath = NULL;
@@ -84,16 +83,17 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             continue;
         if (pid != -1 && kif->p_pid != (uint32_t)pid)
             continue;
-        py_family = PyLong_FromLong((long)kif->so_family);
-        inseq = PySequence_Contains(py_af_filter, py_family);
-        Py_DECREF(py_family);
-        if (inseq == 0)
+        if (!((kif->so_family == AF_INET && filters.v4)
+              || (kif->so_family == AF_INET6 && filters.v6)
+              || (kif->so_family == AF_UNIX && filters.unix_)))
+        {
             continue;
-        _type = PyLong_FromLong((long)kif->so_type);
-        inseq = PySequence_Contains(py_type_filter, _type);
-        Py_DECREF(_type);
-        if (inseq == 0)
+        }
+        if (!((kif->so_type == SOCK_STREAM && filters.tcp)
+              || (kif->so_type == SOCK_DGRAM && filters.udp)))
+        {
             continue;
+        }
 
         // IPv4 / IPv6 socket
         if ((kif->so_family == AF_INET) || (kif->so_family == AF_INET6)) {
@@ -125,21 +125,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 goto error;
 
             // populate tuple and list
-            py_tuple = Py_BuildValue(
-                "(iiiNNil)",
-                kif->fd_fd,
-                kif->so_family,
-                kif->so_type,
-                py_laddr,
-                py_raddr,
-                state,
-                kif->p_pid
-            );
-            if (!py_tuple)
+            if (!pylist_append_fmt(
+                    py_retlist,
+                    "(iiiNNil)",
+                    kif->fd_fd,
+                    kif->so_family,
+                    kif->so_type,
+                    py_laddr,
+                    py_raddr,
+                    state,
+                    kif->p_pid
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
-            Py_DECREF(py_tuple);
+            }
+            py_laddr = NULL;
+            py_raddr = NULL;
         }
         // UNIX socket
         else if (kif->so_family == AF_UNIX) {
@@ -147,23 +148,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (!py_lpath)
                 goto error;
 
-            py_tuple = Py_BuildValue(
-                "(iiiOsil)",
-                kif->fd_fd,
-                kif->so_family,
-                kif->so_type,
-                py_lpath,
-                "",  // raddr
-                PSUTIL_CONN_NONE,
-                kif->p_pid
-            );
-            if (!py_tuple)
+            if (!pylist_append_fmt(
+                    py_retlist,
+                    "(iiiOsil)",
+                    kif->fd_fd,
+                    kif->so_family,
+                    kif->so_type,
+                    py_lpath,
+                    "",  // raddr
+                    PSUTIL_CONN_NONE,
+                    kif->p_pid
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
+            }
             Py_DECREF(py_lpath);
-            Py_DECREF(py_tuple);
-            Py_INCREF(Py_None);
+            py_lpath = NULL;
         }
     }
 
@@ -171,9 +171,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
+    Py_XDECREF(py_lpath);
     Py_DECREF(py_retlist);
     if (kd != NULL)
         kvm_close(kd);

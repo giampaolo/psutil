@@ -19,12 +19,14 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     kstat_t *ksp;
     cpu_stat_t cs;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_cputime = NULL;
 
     if (py_retlist == NULL)
         return NULL;
 
+    // Opens /dev/kstat and snapshots the whole kstat chain.
+    Py_BEGIN_ALLOW_THREADS
     kc = kstat_open();
+    Py_END_ALLOW_THREADS
     if (kc == NULL) {
         psutil_oserror();
         goto error;
@@ -36,18 +38,17 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
                 psutil_oserror();
                 goto error;
             }
-            py_cputime = Py_BuildValue(
-                "ffff",
-                (float)cs.cpu_sysinfo.cpu[CPU_USER],
-                (float)cs.cpu_sysinfo.cpu[CPU_KERNEL],
-                (float)cs.cpu_sysinfo.cpu[CPU_IDLE],
-                (float)cs.cpu_sysinfo.cpu[CPU_WAIT]
-            );
-            if (py_cputime == NULL)
+            if (!pylist_append_fmt(
+                    py_retlist,
+                    "ffff",
+                    (float)cs.cpu_sysinfo.cpu[CPU_USER],
+                    (float)cs.cpu_sysinfo.cpu[CPU_KERNEL],
+                    (float)cs.cpu_sysinfo.cpu[CPU_IDLE],
+                    (float)cs.cpu_sysinfo.cpu[CPU_WAIT]
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_cputime))
-                goto error;
-            Py_CLEAR(py_cputime);
+            }
         }
     }
 
@@ -55,7 +56,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_cputime);
     Py_DECREF(py_retlist);
     if (kc != NULL)
         kstat_close(kc);
@@ -70,7 +70,10 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     kstat_t *ksp;
     int ncpus = 0;
 
+    // Opens /dev/kstat and snapshots the whole kstat chain.
+    Py_BEGIN_ALLOW_THREADS
     kc = kstat_open();
+    Py_END_ALLOW_THREADS
     if (kc == NULL)
         goto error;
     ksp = kstat_lookup(kc, "cpu_info", -1, NULL);
@@ -110,7 +113,10 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     unsigned int traps = 0;
     unsigned int syscalls = 0;
 
+    // Opens /dev/kstat and snapshots the whole kstat chain.
+    Py_BEGIN_ALLOW_THREADS
     kc = kstat_open();
+    Py_END_ALLOW_THREADS
     if (kc == NULL) {
         psutil_oserror();
         goto error;

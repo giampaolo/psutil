@@ -10,6 +10,7 @@ Some of these are duplicates of tests test_system.py and test_process.py.
 """
 
 import platform
+import socket
 
 import psutil
 from psutil import AIX
@@ -22,9 +23,11 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil import BatteryTime
+from psutil import ConnectionStatus
+from psutil import NicDuplex
+from psutil import ProcessStatus
 
-from . import AARCH64
-from . import GITHUB_ACTIONS
 from . import HAS_CPU_FREQ
 from . import HAS_NET_IO_COUNTERS
 from . import HAS_SENSORS_FANS
@@ -36,6 +39,8 @@ from . import enum
 from . import is_namedtuple
 from . import kernel_version
 from . import pytest
+from . import serial
+from . import skipif
 
 # ===================================================================
 # --- APIs availability
@@ -46,62 +51,198 @@ from . import pytest
 
 
 class TestAvailConstantsAPIs(PsutilTestCase):
+
+    def check_constants(self, names, are_avail):
+        for name in names:
+            with self.subTest(name=name):
+                # assert CONSTANT is/isn't in psutil namespace
+                assert hasattr(psutil, name) == are_avail
+                # assert CONSTANT is/isn't in psutil.__all__
+                if are_avail:
+                    assert name in psutil.__all__
+                else:
+                    assert name not in psutil.__all__
+
     def test_PROCFS_PATH(self):
-        assert hasattr(psutil, "PROCFS_PATH") == (LINUX or SUNOS or AIX)
+        self.check_constants(("PROCFS_PATH",), LINUX or SUNOS or AIX)
 
-    def test_win_priority(self):
-        assert hasattr(psutil, "ABOVE_NORMAL_PRIORITY_CLASS") == WINDOWS
-        assert hasattr(psutil, "BELOW_NORMAL_PRIORITY_CLASS") == WINDOWS
-        assert hasattr(psutil, "HIGH_PRIORITY_CLASS") == WINDOWS
-        assert hasattr(psutil, "IDLE_PRIORITY_CLASS") == WINDOWS
-        assert hasattr(psutil, "NORMAL_PRIORITY_CLASS") == WINDOWS
-        assert hasattr(psutil, "REALTIME_PRIORITY_CLASS") == WINDOWS
+    def test_proc_status(self):
+        names = (
+            "STATUS_RUNNING",
+            "STATUS_SLEEPING",
+            "STATUS_DISK_SLEEP",
+            "STATUS_STOPPED",
+            "STATUS_TRACING_STOP",
+            "STATUS_ZOMBIE",
+            "STATUS_DEAD",
+            "STATUS_WAKE_KILL",
+            "STATUS_WAKING",
+            "STATUS_IDLE",
+            "STATUS_LOCKED",
+            "STATUS_WAITING",
+            "STATUS_SUSPENDED",
+            "STATUS_PARKED",
+        )
+        self.check_constants(names, True)
+        assert sorted(ProcessStatus.__members__.keys()) == sorted(names)
 
-    def test_linux_ioprio_linux(self):
-        assert hasattr(psutil, "IOPRIO_CLASS_NONE") == LINUX
-        assert hasattr(psutil, "IOPRIO_CLASS_RT") == LINUX
-        assert hasattr(psutil, "IOPRIO_CLASS_BE") == LINUX
-        assert hasattr(psutil, "IOPRIO_CLASS_IDLE") == LINUX
+    def test_proc_status_strenum(self):
+        mapping = (
+            (psutil.STATUS_RUNNING, "running"),
+            (psutil.STATUS_SLEEPING, "sleeping"),
+            (psutil.STATUS_DISK_SLEEP, "disk-sleep"),
+            (psutil.STATUS_STOPPED, "stopped"),
+            (psutil.STATUS_TRACING_STOP, "tracing-stop"),
+            (psutil.STATUS_ZOMBIE, "zombie"),
+            (psutil.STATUS_DEAD, "dead"),
+            (psutil.STATUS_WAKE_KILL, "wake-kill"),
+            (psutil.STATUS_WAKING, "waking"),
+            (psutil.STATUS_IDLE, "idle"),
+            (psutil.STATUS_LOCKED, "locked"),
+            (psutil.STATUS_WAITING, "waiting"),
+            (psutil.STATUS_SUSPENDED, "suspended"),
+            (psutil.STATUS_PARKED, "parked"),
+        )
+        for en, str_ in mapping:
+            assert en == str_
+            assert str(en) == str_
+            assert repr(en) != str_
 
-    def test_linux_ioprio_windows(self):
-        assert hasattr(psutil, "IOPRIO_HIGH") == WINDOWS
-        assert hasattr(psutil, "IOPRIO_NORMAL") == WINDOWS
-        assert hasattr(psutil, "IOPRIO_LOW") == WINDOWS
-        assert hasattr(psutil, "IOPRIO_VERYLOW") == WINDOWS
+    def test_conn_status(self):
+        names = [
+            "CONN_ESTABLISHED",
+            "CONN_SYN_SENT",
+            "CONN_SYN_RECV",
+            "CONN_FIN_WAIT1",
+            "CONN_FIN_WAIT2",
+            "CONN_TIME_WAIT",
+            "CONN_CLOSE",
+            "CONN_CLOSE_WAIT",
+            "CONN_LAST_ACK",
+            "CONN_LISTEN",
+            "CONN_CLOSING",
+            "CONN_NONE",
+        ]
+        if WINDOWS:
+            names.append("CONN_DELETE_TCB")
+        if SUNOS:
+            names.extend(["CONN_IDLE", "CONN_BOUND"])
 
-    @pytest.mark.skipif(
-        GITHUB_ACTIONS and LINUX,
-        reason="unsupported on GITHUB_ACTIONS + LINUX",
-    )
+        self.check_constants(names, True)
+        assert sorted(ConnectionStatus.__members__.keys()) == sorted(names)
+
+    def test_conn_status_strenum(self):
+        mapping = (
+            (psutil.CONN_ESTABLISHED, "ESTABLISHED"),
+            (psutil.CONN_SYN_SENT, "SYN_SENT"),
+            (psutil.CONN_SYN_RECV, "SYN_RECV"),
+            (psutil.CONN_FIN_WAIT1, "FIN_WAIT1"),
+            (psutil.CONN_FIN_WAIT2, "FIN_WAIT2"),
+            (psutil.CONN_TIME_WAIT, "TIME_WAIT"),
+            (psutil.CONN_CLOSE, "CLOSE"),
+            (psutil.CONN_CLOSE_WAIT, "CLOSE_WAIT"),
+            (psutil.CONN_LAST_ACK, "LAST_ACK"),
+            (psutil.CONN_LISTEN, "LISTEN"),
+            (psutil.CONN_CLOSING, "CLOSING"),
+            (psutil.CONN_NONE, "NONE"),
+        )
+        for en, str_ in mapping:
+            assert en == str_
+            assert str(en) == str_
+            assert repr(en) != str_
+
+    def test_nic_duplex(self):
+        names = ("NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN")
+        self.check_constants(names, True)
+        assert sorted(NicDuplex.__members__.keys()) == sorted(names)
+
+    def test_battery_time(self):
+        names = ("POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED")
+        self.check_constants(names, True)
+        assert sorted(BatteryTime.__members__.keys()) == sorted(names)
+
+    def test_proc_ioprio_class_linux(self):
+        names = (
+            "IOPRIO_CLASS_NONE",
+            "IOPRIO_CLASS_RT",
+            "IOPRIO_CLASS_BE",
+            "IOPRIO_CLASS_IDLE",
+        )
+        self.check_constants(names, LINUX)
+        if LINUX:
+            assert sorted(
+                psutil.ProcessIOPriority.__members__.keys()
+            ) == sorted(names)
+        else:
+            not hasattr(psutil, "ProcessIOPriority")
+
+    def test_proc_ioprio_value_windows(self):
+        names = (
+            "IOPRIO_HIGH",
+            "IOPRIO_NORMAL",
+            "IOPRIO_LOW",
+            "IOPRIO_VERYLOW",
+        )
+        self.check_constants(names, WINDOWS)
+        if WINDOWS:
+            assert sorted(
+                psutil.ProcessIOPriority.__members__.keys()
+            ) == sorted(names)
+
+    def test_proc_priority_windows(self):
+        names = (
+            "ABOVE_NORMAL_PRIORITY_CLASS",
+            "BELOW_NORMAL_PRIORITY_CLASS",
+            "HIGH_PRIORITY_CLASS",
+            "IDLE_PRIORITY_CLASS",
+            "NORMAL_PRIORITY_CLASS",
+            "REALTIME_PRIORITY_CLASS",
+        )
+        self.check_constants(names, WINDOWS)
+        if WINDOWS:
+            assert sorted(psutil.ProcessPriority.__members__.keys()) == sorted(
+                names
+            )
+        else:
+            not hasattr(psutil, "ProcessPriority")
+
     def test_rlimit(self):
-        assert hasattr(psutil, "RLIM_INFINITY") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_AS") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_CORE") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_CPU") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_DATA") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_FSIZE") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_MEMLOCK") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_NOFILE") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_NPROC") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_RSS") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_STACK") == LINUX or FREEBSD
+        names = (
+            "RLIM_INFINITY",
+            "RLIMIT_AS",
+            "RLIMIT_CORE",
+            "RLIMIT_CPU",
+            "RLIMIT_DATA",
+            "RLIMIT_FSIZE",
+            "RLIMIT_MEMLOCK",
+            "RLIMIT_NOFILE",
+            "RLIMIT_NPROC",
+            "RLIMIT_RSS",
+            "RLIMIT_STACK",
+        )
+        self.check_constants(names, LINUX or FREEBSD)
+        self.check_constants(("RLIMIT_LOCKS",), LINUX)
+        self.check_constants(
+            ("RLIMIT_SWAP", "RLIMIT_SBSIZE", "RLIMIT_NPTS"), FREEBSD
+        )
 
-        assert hasattr(psutil, "RLIMIT_LOCKS") == LINUX
         if POSIX:
             if kernel_version() >= (2, 6, 8):
-                assert hasattr(psutil, "RLIMIT_MSGQUEUE") == LINUX
+                self.check_constants(("RLIMIT_MSGQUEUE",), LINUX)
             if kernel_version() >= (2, 6, 12):
-                assert hasattr(psutil, "RLIMIT_NICE") == LINUX
-            if kernel_version() >= (2, 6, 12):
-                assert hasattr(psutil, "RLIMIT_RTPRIO") == LINUX
+                self.check_constants(("RLIMIT_NICE", "RLIMIT_RTPRIO"), LINUX)
             if kernel_version() >= (2, 6, 25):
-                assert hasattr(psutil, "RLIMIT_RTTIME") == LINUX
+                self.check_constants(("RLIMIT_RTTIME",), LINUX)
             if kernel_version() >= (2, 6, 8):
-                assert hasattr(psutil, "RLIMIT_SIGPENDING") == LINUX
+                self.check_constants(("RLIMIT_SIGPENDING",), LINUX)
 
-        assert hasattr(psutil, "RLIMIT_SWAP") == FREEBSD
-        assert hasattr(psutil, "RLIMIT_SBSIZE") == FREEBSD
-        assert hasattr(psutil, "RLIMIT_NPTS") == FREEBSD
+    def test_enum_containers(self):
+        self.check_constants(("ProcessStatus",), True)
+        self.check_constants(("ProcessPriority",), WINDOWS)
+        self.check_constants(("ProcessIOPriority",), LINUX or WINDOWS)
+        self.check_constants(("ConnectionStatus",), True)
+        self.check_constants(("NicDuplex",), True)
+        self.check_constants(("BatteryTime",), True)
 
 
 class TestAvailSystemAPIs(PsutilTestCase):
@@ -111,7 +252,6 @@ class TestAvailSystemAPIs(PsutilTestCase):
     def test_win_service_get(self):
         assert hasattr(psutil, "win_service_get") == WINDOWS
 
-    @pytest.mark.skipif(MACOS and AARCH64, reason="skipped due to #1892")
     def test_cpu_freq(self):
         assert hasattr(psutil, "cpu_freq") == (
             LINUX or MACOS or WINDOWS or FREEBSD or OPENBSD
@@ -131,14 +271,14 @@ class TestAvailSystemAPIs(PsutilTestCase):
     def test_heap_info(self):
         hasit = hasattr(psutil, "heap_info")
         if LINUX:
-            assert hasit == bool(platform.libc_ver() != ("", ""))
+            assert hasit == (platform.libc_ver()[0] == "glibc")
         else:
             assert hasit == MACOS or WINDOWS or BSD
 
     def test_heap_trim(self):
         hasit = hasattr(psutil, "heap_trim")
         if LINUX:
-            assert hasit == bool(platform.libc_ver() != ("", ""))
+            assert hasit == (platform.libc_ver()[0] == "glibc")
         else:
             assert hasit == MACOS or WINDOWS or BSD
 
@@ -168,10 +308,6 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_ionice(self):
         assert hasattr(psutil.Process, "ionice") == (LINUX or WINDOWS)
 
-    @pytest.mark.skipif(
-        GITHUB_ACTIONS and LINUX,
-        reason="unsupported on GITHUB_ACTIONS + LINUX",
-    )
     def test_rlimit(self):
         assert hasattr(psutil.Process, "rlimit") == (LINUX or FREEBSD)
 
@@ -198,6 +334,10 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_memory_maps(self):
         hasit = hasattr(psutil.Process, "memory_maps")
         assert hasit == (not (OPENBSD or NETBSD or AIX or MACOS))
+
+    def test_memory_footprint(self):
+        hasit = hasattr(psutil.Process, "memory_footprint")
+        assert hasit == (LINUX or MACOS or WINDOWS)
 
 
 # ===================================================================
@@ -237,9 +377,7 @@ class TestSystemAPITypes(PsutilTestCase):
     def test_cpu_count(self):
         assert isinstance(psutil.cpu_count(), int)
 
-    # TODO: remove this once 1892 is fixed
-    @pytest.mark.skipif(MACOS and AARCH64, reason="skipped due to #1892")
-    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
             return pytest.skip("cpu_freq() returns None")
@@ -259,7 +397,8 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(disk.fstype, str)
             assert isinstance(disk.opts, str)
 
-    @pytest.mark.skipif(SKIP_SYSCONS, reason="requires root")
+    @serial
+    @skipif(SKIP_SYSCONS, reason="requires root")
     def test_net_connections(self):
         with create_sockets():
             ret = psutil.net_connections('all')
@@ -273,7 +412,9 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(ifname, str)
             for addr in addrs:
                 assert isinstance(addr.family, enum.IntEnum)
-                assert isinstance(addr.address, str)
+                assert isinstance(addr.address, (str, type(None)))
+                if addr.address is None:  # virtual NIC
+                    assert addr.family == socket.AF_UNSPEC
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
 
@@ -286,13 +427,13 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(info.speed, int)
             assert isinstance(info.mtu, int)
 
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_net_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname in psutil.net_io_counters(pernic=True):
             assert isinstance(ifname, str)
 
-    @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
+    @skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_sensors_fans(self):
         # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_fans().items():
@@ -301,7 +442,7 @@ class TestSystemAPITypes(PsutilTestCase):
                 assert isinstance(unit.label, str)
                 assert isinstance(unit.current, (float, int, type(None)))
 
-    @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
+    @skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     def test_sensors_temperatures(self):
         # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_temperatures().items():

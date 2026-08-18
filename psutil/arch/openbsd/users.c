@@ -17,13 +17,13 @@ psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_username = NULL;
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
-    PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
 
     struct utmp ut;
     FILE *fp;
+    size_t nread;
 
     Py_BEGIN_ALLOW_THREADS
     fp = fopen(_PATH_UTMP, "r");
@@ -33,7 +33,12 @@ psutil_users(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    while (fread(&ut, sizeof(ut), 1, fp) == 1) {
+    while (1) {
+        Py_BEGIN_ALLOW_THREADS
+        nread = fread(&ut, sizeof(ut), 1, fp);
+        Py_END_ALLOW_THREADS
+        if (nread != 1)
+            break;
         if (*ut.ut_name == '\0')
             continue;
         py_username = PyUnicode_DecodeFSDefault(ut.ut_name);
@@ -45,22 +50,21 @@ psutil_users(PyObject *self, PyObject *args) {
         py_hostname = PyUnicode_DecodeFSDefault(ut.ut_host);
         if (!py_hostname)
             goto error;
-        py_tuple = Py_BuildValue(
-            "(OOOdO)",
-            py_username,  // username
-            py_tty,  // tty
-            py_hostname,  // hostname
-            (double)ut.ut_time,  // start time
-            Py_None  // pid
-        );
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(OOOdO)",
+                py_username,  // username
+                py_tty,  // tty
+                py_hostname,  // hostname
+                (double)ut.ut_time,  // start time
+                Py_None  // pid
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_CLEAR(py_username);
         Py_CLEAR(py_tty);
         Py_CLEAR(py_hostname);
-        Py_CLEAR(py_tuple);
     }
 
     fclose(fp);
@@ -71,7 +75,6 @@ error:
     Py_XDECREF(py_username);
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;
 }

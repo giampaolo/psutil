@@ -10,7 +10,6 @@ import datetime
 import errno
 import os
 import re
-import shutil
 import subprocess
 import time
 from unittest import mock
@@ -23,27 +22,38 @@ from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
+from psutil import _psposix
+from psutil import _psutil
 
 from . import AARCH64
 from . import HAS_NET_IO_COUNTERS
 from . import PYTHON_EXE
 from . import PsutilTestCase
+from . import is_busybox
+from . import isolated
 from . import pytest
+from . import requires_cli
 from . import retry_on_failure
 from . import sh
 from . import skip_on_access_denied
+from . import skipif
 from . import spawn_subproc
 from . import terminate
 
 if POSIX:
     import mmap
+    import pty
     import resource
+
+NO_UTMP = LINUX and not os.path.exists("/var/run/utmp")
 
 
 def ps(fmt, pid=None):
     """Wrapper for calling the ps command with a little bit of cross-platform
     support for a narrow range of features.
     """
+    if is_busybox("ps"):
+        return pytest.skip("busybox ps lacks the needed options")
 
     cmd = ['ps']
 
@@ -143,8 +153,12 @@ def df(device):
     return (sys_total, sys_used, sys_free, sys_percent)
 
 
-@pytest.mark.skipif(not POSIX, reason="POSIX only")
-class TestProcess(PsutilTestCase):
+@skipif(not POSIX, reason="POSIX only")
+class PosixTestCase(PsutilTestCase):
+    pass
+
+
+class TestProcess(PosixTestCase):
     """Compare psutil results against 'ps' command line utility (mainly)."""
 
     @classmethod
@@ -186,8 +200,8 @@ class TestProcess(PsutilTestCase):
             assert p.username() == str(p.uids().real)
             assert fun.called
 
-    @skip_on_access_denied()
-    @retry_on_failure()
+    @skip_on_access_denied
+    @retry_on_failure
     def test_rss_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -196,8 +210,8 @@ class TestProcess(PsutilTestCase):
         rss_psutil = psutil.Process(self.pid).memory_info()[0] / 1024
         assert rss_ps == rss_psutil
 
-    @skip_on_access_denied()
-    @retry_on_failure()
+    @skip_on_access_denied
+    @retry_on_failure
     def test_vsz_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -259,7 +273,7 @@ class TestProcess(PsutilTestCase):
                 with pytest.raises(psutil.NoSuchProcess):
                     p.name()
 
-    @pytest.mark.skipif(MACOS or BSD, reason="ps -o start not available")
+    @skipif(MACOS or BSD, reason="ps -o start not available")
     def test_create_time(self):
         time_ps = ps('start', self.pid)
         time_psutil = psutil.Process(self.pid).create_time()
@@ -294,7 +308,7 @@ class TestProcess(PsutilTestCase):
     # the Python framework.
     # There's a race condition between the ps call & the psutil call below
     # depending on the completion of the execve call so let's retry on failure
-    @retry_on_failure()
+    @retry_on_failure
     def test_cmdline(self):
         ps_cmdline = ps_args(self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
@@ -308,19 +322,97 @@ class TestProcess(PsutilTestCase):
     # returns 0; psutil relies on it, see:
     # https://github.com/giampaolo/psutil/issues/1082
     # AIX has the same issue
-    @pytest.mark.skipif(SUNOS, reason="not reliable on SUNOS")
-    @pytest.mark.skipif(AIX, reason="not reliable on AIX")
+    @skipif(SUNOS, reason="not reliable on SUNOS")
+    @skipif(AIX, reason="not reliable on AIX")
     def test_nice(self):
         ps_nice = ps('nice', self.pid)
         psutil_nice = psutil.Process().nice()
         assert ps_nice == psutil_nice
 
+    @isolated
+    @retry_on_failure
+    def test_num_ctx_switches(self):
+        # getrusage() keeps counting threads which already exited, and
+        # /proc/pid/status only sees the live ones, so the totals drift
+        # apart for good. Compare how much each grows instead.
+        p = psutil.Process()
+        ru1 = resource.getrusage(resource.RUSAGE_SELF)
+        cws1 = p.num_ctx_switches()
+        for _ in range(100):
+            time.sleep(0.001)  # each sleep blocks, hence a switch
+        ru2 = resource.getrusage(resource.RUSAGE_SELF)
+        cws2 = p.num_ctx_switches()
 
-@pytest.mark.skipif(not POSIX, reason="POSIX only")
-class TestSystemAPIs(PsutilTestCase):
+        tol = 50
+        if MACOS:
+            psutil_delta = (cws2.voluntary + cws2.involuntary) - (
+                cws1.voluntary + cws1.involuntary
+            )
+            ru_delta = (ru2.ru_nvcsw + ru2.ru_nivcsw) - (
+                ru1.ru_nvcsw + ru1.ru_nivcsw
+            )
+            assert psutil_delta == pytest.approx(ru_delta, abs=tol * 2)
+        else:
+            assert cws2.voluntary - cws1.voluntary == pytest.approx(
+                ru2.ru_nvcsw - ru1.ru_nvcsw, abs=tol
+            )
+            assert cws2.involuntary - cws1.involuntary == pytest.approx(
+                ru2.ru_nivcsw - ru1.ru_nivcsw, abs=tol
+            )
+
+    @retry_on_failure
+    def test_cpu_times(self):
+        ru = resource.getrusage(resource.RUSAGE_SELF)
+        cws = psutil.Process().cpu_times()
+        assert cws.user == pytest.approx(ru.ru_utime, abs=0.3)
+        assert cws.system == pytest.approx(ru.ru_stime, abs=0.3)
+
+    @retry_on_failure
+    @isolated
+    def test_page_faults(self):
+        ru = resource.getrusage(resource.RUSAGE_SELF)
+        pf = psutil.Process().page_faults()
+        # Minor faults may change between reads, and the kernel
+        # counters are not updated atomically, so allow some slack.
+        # Seen ~50 apart on OpenBSD.
+        assert pf.minor == pytest.approx(ru.ru_minflt, abs=100)
+        assert pf.major == pytest.approx(ru.ru_majflt, abs=5)
+
+    @skipif(not LINUX and not MACOS, reason="Linux, macOS only")
+    def test_page_faults_minor_increase(self):
+        # Access 200 new anonymous pages; each first access triggers a
+        # minor fault.
+        p = psutil.Process()
+        pf_before = p.page_faults()
+        with mmap.mmap(-1, 200 * mmap.PAGESIZE) as m:
+            for i in range(0, 200 * mmap.PAGESIZE, mmap.PAGESIZE):
+                m[i : i + 1] = b'\x00'
+        pf_after = p.page_faults()
+        assert pf_after.minor > pf_before.minor
+
+    def test_memory_peak_rss(self):
+        mem = psutil.Process().memory_info_ex()
+        if not hasattr(mem, "peak_rss"):
+            return pytest.skip("not supported")
+        assert mem.peak_rss >= mem.rss
+        ru = resource.getrusage(resource.RUSAGE_SELF)
+        if LINUX:
+            # ru_maxrss is computed from the per-CPU RSS counters, which
+            # lag behind the exact value exposed as VmHWM. The gap is
+            # absolute (tens of MBs) and grows with the number of CPUs,
+            # so only compare the order of magnitude.
+            assert mem.peak_rss == pytest.approx(ru.ru_maxrss * 1024, rel=1)
+        else:
+            # ru_maxrss is in bytes on macOS, in KB everywhere else.
+            maxrss = ru.ru_maxrss if MACOS else ru.ru_maxrss * 1024
+            rss_diff = abs(mem.peak_rss - maxrss)
+            assert rss_diff <= mem.peak_rss * 0.05
+
+
+class TestSystemAPIs(PosixTestCase):
     """Test some system APIs."""
 
-    @retry_on_failure()
+    @retry_on_failure
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
@@ -340,9 +432,9 @@ class TestSystemAPIs(PsutilTestCase):
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
-    @pytest.mark.skipif(SUNOS, reason="unreliable on SUNOS")
-    @pytest.mark.skipif(not shutil.which("ifconfig"), reason="no ifconfig cmd")
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    @skipif(SUNOS, reason="unreliable on SUNOS")
+    @requires_cli("ifconfig")
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_nic_names(self):
         output = sh("ifconfig -a")
         for nic in psutil.net_io_counters(pernic=True):
@@ -355,7 +447,9 @@ class TestSystemAPIs(PsutilTestCase):
                     f" output\n{output}"
                 )
 
-    @retry_on_failure()
+    @skipif(is_busybox("who"), reason="busybox who has no -u option")
+    @skipif(NO_UTMP, reason="no /var/run/utmp file")
+    @retry_on_failure
     def test_users(self):
         out = sh("who -u")
         if not out.strip():
@@ -366,10 +460,9 @@ class TestSystemAPIs(PsutilTestCase):
             user = line.split()[0]
             terminal = line.split()[1]
             if LINUX or MACOS:
-                try:
-                    pid = int(line.split()[-2])
-                except ValueError:
-                    pid = int(line.split()[-1])
+                pid = next(
+                    int(x) for x in reversed(line.split()) if x.isdigit()
+                )
                 susers.append((user, terminal, pid))
             else:
                 susers.append((user, terminal))
@@ -386,7 +479,8 @@ class TestSystemAPIs(PsutilTestCase):
             if user.pid is not None:
                 assert user.pid > 0
 
-    @retry_on_failure()
+    @skipif(is_busybox("who"), reason="busybox who has no -u option")
+    @retry_on_failure
     def test_users_started(self):
         out = sh("who -u")
         if not out.strip():
@@ -416,12 +510,11 @@ class TestSystemAPIs(PsutilTestCase):
         if not tstamp:
             return pytest.skip(f"cannot interpret tstamp in who output\n{out}")
 
-        with self.subTest(psutil=str(psutil.users()), who=out):
-            for idx, u in enumerate(psutil.users()):
-                psutil_value = datetime.datetime.fromtimestamp(
-                    u.started
-                ).strftime(tstamp)
-                assert psutil_value == started[idx]
+        for idx, u in enumerate(psutil.users()):
+            psutil_value = datetime.datetime.fromtimestamp(u.started).strftime(
+                tstamp
+            )
+            assert psutil_value == started[idx]
 
     def test_pid_exists_let_raise(self):
         # According to "man 2 kill" possible error values for kill
@@ -435,14 +528,16 @@ class TestSystemAPIs(PsutilTestCase):
             assert m.called
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
-    @pytest.mark.skipif(AIX, reason="unreliable on AIX")
-    @retry_on_failure()
+    @skipif(AIX, reason="unreliable on AIX")
+    @retry_on_failure
     def test_disk_usage(self):
         tolerance = 4 * 1024 * 1024  # 4MB
         for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
             try:
-                sys_total, sys_used, sys_free, sys_percent = df(part.device)
+                sys_total, sys_used, sys_free, sys_percent = df(
+                    part.mountpoint
+                )
             except RuntimeError as err:
                 # see:
                 # https://travis-ci.org/giampaolo/psutil/jobs/138338464
@@ -461,11 +556,29 @@ class TestSystemAPIs(PsutilTestCase):
                 assert abs(usage.free - sys_free) < tolerance
                 assert abs(usage.percent - sys_percent) <= 1
 
+    def test_terminal_pty_opened_later(self):
+        # A PTY opened after the map was cached must still resolve.
+        # See: https://github.com/giampaolo/psutil/issues/2830
+        _psposix._get_terminal_map()  # prime the cache
+        master, slave = pty.openpty()
+        self.addCleanup(os.close, master)
+        self.addCleanup(os.close, slave)
+        path = os.ttyname(slave)
+        assert _psposix.get_terminal(os.stat(path).st_rdev) == path
 
-@pytest.mark.skipif(not POSIX, reason="POSIX only")
-class TestMisc(PsutilTestCase):
+    def test_terminal_skip_map(self):
+        # setsid() leaves the child without a controlling terminal.
+        # Such a process must not reach get_terminal().
+        p = self.spawn_psproc(start_new_session=True)
+        assert p.terminal() is None
+        with mock.patch.object(_psposix, "get_terminal") as m:
+            p.terminal()
+            assert not m.called
+
+
+class TestMisc(PosixTestCase):
     def test_getpagesize(self):
-        pagesize = psutil._psplatform.cext.getpagesize()
+        pagesize = _psutil.getpagesize()
         assert pagesize > 0
         assert pagesize == resource.getpagesize()
         assert pagesize == mmap.PAGESIZE

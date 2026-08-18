@@ -17,12 +17,17 @@ static int
 psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     int fd;
     ssize_t nbytes;
+
+    Py_BEGIN_ALLOW_THREADS
     fd = open(path, O_RDONLY);
+    Py_END_ALLOW_THREADS
     if (fd == -1) {
         PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
         return 0;
     }
+    Py_BEGIN_ALLOW_THREADS
     nbytes = read(fd, fstruct, size);
+    Py_END_ALLOW_THREADS
     if (nbytes == -1) {
         close(fd);
         psutil_oserror();
@@ -38,12 +43,8 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
 }
 
 
-/*
- * Return process ppid, rss, vms, ctime, nice, nthreads, status and tty
- * as a Python tuple.
- */
 PyObject *
-psutil_proc_basic_info(PyObject *self, PyObject *args) {
+psutil_proc_oneshot(PyObject *self, PyObject *args) {
     int pid;
     char path[1000];
     psinfo_t info;
@@ -61,7 +62,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         info.pr_rssize,  // rss
         info.pr_size,  // vms
         PSUTIL_TV2DOUBLE(info.pr_start),  // create time
-        info.pr_lwp.pr_nice,  // nice
+        info.pr_lwp.pr_nice - NZERO,  // nice
         info.pr_nlwp,  // no. of threads
         info.pr_lwp.pr_state,  // status code
         info.pr_ttydev,  // tty nr
@@ -73,9 +74,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process name and args as a Python tuple.
- */
+// Return process name and args as a Python tuple.
 PyObject *
 psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     int pid;
@@ -129,8 +128,8 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
         psutil_free_cstrings_array(argv, argc);
     }
 
-    /* If we can't read process memory or can't decode the result
-     * then return args from /proc. */
+    // If we can't read process memory or can't decode the result
+    // then return args from /proc.
     if (!py_args_list) {
         PyErr_Clear();
         py_args_str = PyUnicode_DecodeFSDefault(info.pr_psargs);
@@ -170,9 +169,6 @@ error:
 }
 
 
-/*
- * Return process environ block.
- */
 PyObject *
 psutil_proc_environ(PyObject *self, PyObject *args) {
     int pid;
@@ -185,13 +181,14 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     int i = 0;
     PyObject *py_envname = NULL;
     PyObject *py_envval = NULL;
-    PyObject *py_retdict = PyDict_New();
-
-    if (!py_retdict)
-        return PyErr_NoMemory();
+    PyObject *py_retdict;
 
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
+
+    py_retdict = PyDict_New();
+    if (!py_retdict)
+        return PyErr_NoMemory();
 
     str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
@@ -221,7 +218,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
             goto error;
 
         py_envval = PyUnicode_DecodeFSDefault(dm + 1);
-        if (!py_envname)
+        if (!py_envval)
             goto error;
 
         if (PyDict_SetItem(py_retdict, py_envname, py_envval) < 0)
@@ -245,9 +242,6 @@ error:
 }
 
 
-/*
- * Return process user and system CPU times as a Python tuple.
- */
 PyObject *
 psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     int pid;
@@ -271,9 +265,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return what CPU the process is running on.
- */
+// Return what CPU the process is running on.
 PyObject *
 psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     int fd = -1;
@@ -291,14 +283,18 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
         return NULL;
 
     str_format(path, sizeof(path), "%s/%i/lpsinfo", procfs_path, pid);
+    Py_BEGIN_ALLOW_THREADS
     fd = open(path, O_RDONLY);
+    Py_END_ALLOW_THREADS
     if (fd == -1) {
         PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
         return NULL;
     }
 
     // read header
+    Py_BEGIN_ALLOW_THREADS
     nbytes = pread(fd, &header, sizeof(header), 0);
+    Py_END_ALLOW_THREADS
     if (nbytes == -1) {
         psutil_oserror();
         goto error;
@@ -318,7 +314,9 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     }
 
     // read the rest
+    Py_BEGIN_ALLOW_THREADS
     nbytes = pread(fd, lwp, size, sizeof(header));
+    Py_END_ALLOW_THREADS
     if (nbytes == -1) {
         psutil_oserror();
         goto error;
@@ -342,9 +340,7 @@ error:
 }
 
 
-/*
- * Return process uids/gids as a Python tuple.
- */
+// Return process uids/gids as a Python tuple.
 PyObject *
 psutil_proc_cred(PyObject *self, PyObject *args) {
     int pid;
@@ -369,9 +365,6 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process voluntary and involuntary context switches as a Python tuple.
- */
 PyObject *
 psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     int pid;
@@ -385,6 +378,22 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("kk", info.pr_vctx, info.pr_ictx);
+}
+
+
+PyObject *
+psutil_proc_page_faults(PyObject *self, PyObject *args) {
+    int pid;
+    char path[1000];
+    prusage_t info;
+    const char *procfs_path;
+
+    if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+        return NULL;
+    str_format(path, sizeof(path), "%s/%i/usage", procfs_path, pid);
+    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+        return NULL;
+    return Py_BuildValue("(kk)", info.pr_minf, info.pr_majf);
 }
 
 
@@ -426,9 +435,7 @@ proc_io_counters(PyObject* self, PyObject* args) {
 */
 
 
-/*
- * Return information about a given process thread.
- */
+// Return information about a given process thread.
 PyObject *
 psutil_proc_query_thread(PyObject *self, PyObject *args) {
     int pid, tid;
@@ -449,9 +456,6 @@ psutil_proc_query_thread(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process memory mappings.
- */
 PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     int pid;
@@ -470,7 +474,6 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     uintptr_t stk_base_sz, brk_base_sz;
     const char *procfs_path;
 
-    PyObject *py_tuple = NULL;
     PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
@@ -491,7 +494,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     size = st.st_size;
 
+    Py_BEGIN_ALLOW_THREADS
     fd = open(path, O_RDONLY);
+    Py_END_ALLOW_THREADS
     if (fd == -1) {
         psutil_oserror();
         goto error;
@@ -503,7 +508,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     nread = pread(fd, xmap, size, 0);
+    Py_END_ALLOW_THREADS
     nmap = nread / sizeof(prxmap_t);
     p = xmap;
 
@@ -560,22 +567,21 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         py_path = PyUnicode_DecodeFSDefault(name);
         if (!py_path)
             goto error;
-        py_tuple = Py_BuildValue(
-            "kksOkkk",
-            (unsigned long)p->pr_vaddr,
-            (unsigned long)pr_addr_sz,
-            perms,
-            py_path,
-            (unsigned long)p->pr_rss * p->pr_pagesize,
-            (unsigned long)p->pr_anon * p->pr_pagesize,
-            (unsigned long)p->pr_locked * p->pr_pagesize
-        );
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "kksOkkk",
+                (unsigned long)p->pr_vaddr,
+                (unsigned long)pr_addr_sz,
+                perms,
+                py_path,
+                (unsigned long)p->pr_rss * p->pr_pagesize,
+                (unsigned long)p->pr_anon * p->pr_pagesize,
+                (unsigned long)p->pr_locked * p->pr_pagesize
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_CLEAR(py_path);
-        Py_CLEAR(py_tuple);
 
         // increment pointer
         p += 1;
@@ -588,7 +594,6 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 error:
     if (fd != -1)
         close(fd);
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
     if (xmap != NULL)
