@@ -71,7 +71,9 @@ __all__ = [
 
 POSIX = os.name == "posix"
 WINDOWS = os.name == "nt"
-LINUX = sys.platform.startswith("linux")
+# Android (e.g. Termux) reports sys.platform == "android" although it runs a
+# Linux kernel; psutil's Linux backend is the correct one to use there.
+LINUX = sys.platform.startswith("linux") or sys.platform == "android"
 MACOS = sys.platform.startswith("darwin")
 OSX = MACOS  # deprecated alias
 FREEBSD = sys.platform.startswith(("freebsd", "midnightbsd"))
