@@ -87,10 +87,13 @@
     --adm-note-accent-border: #2980b9;
     --adm-tip-bg: #f0faf0;
     --adm-tip-border: #8aba8a;
+    --adm-tip-icon: #4a8a4a;
     --adm-warning-bg: #fff0f0;
     --adm-warning-border: #e8a0a0;
+    --adm-warning-icon: #c0392b;
     --adm-important-bg: #fdf3dc;
     --adm-important-border: #d4a23e;
+    --adm-important-icon: #b07d17;
     --adm-seealso-bg: #f3f9fe;
     --adm-seealso-border: #b0cfe8;
     --adm-seealso-accent-border: #336699;
@@ -227,10 +230,13 @@
     --adm-note-accent-border: #6ab0de;
     --adm-tip-bg: #1a2a1a;
     --adm-tip-border: #3a6a3a;
+    --adm-tip-icon: #6aba6a;
     --adm-warning-bg: #472424;
     --adm-warning-border: #8a3030;
+    --adm-warning-icon: #e08a80;
     --adm-important-bg: #2a200d;
     --adm-important-border: #6e5328;
+    --adm-important-icon: #d4a23e;
     --adm-seealso-bg: #1d2e40;
     --adm-seealso-border: #2d5280;
     --adm-seealso-accent-border: #5599cc;

@@ -1,8 +1,9 @@
 /* ---- Shared structure (defaults to Note) ---------------------------- */
 
 div.admonition {
+    position: relative;
     margin: 10px 0;
-    padding: var(--adm-padding-y) 10px;
+    padding: var(--adm-padding-y) 10px var(--adm-padding-y) 36px;
     background-color: var(--adm-note-bg);
     border: 1px solid var(--adm-note-border);
     border-left: 4px solid var(--adm-note-accent-border);
@@ -79,4 +80,56 @@ p.admonition-title {
 
 p.admonition-title::after {
     content: ":";
+}
+
+p.admonition-title::before {
+    content: "\f129";
+    position: absolute;
+    left: 10px;
+    top: calc(var(--adm-padding-y) + 3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--adm-note-accent-border);
+    border-radius: 50%;
+    font-family: "Font Awesome 7 Free";
+    font-weight: 900;
+    font-size: 10px;
+    line-height: 1;
+    color: var(--adm-note-accent-border);
+}
+
+div.tip p.admonition-title::before,
+div.warning p.admonition-title::before,
+div.important p.admonition-title::before,
+div.seealso p.admonition-title::before {
+    top: var(--adm-padding-y);
+    width: auto;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    font-size: 15px;
+    line-height: inherit;
+}
+
+div.tip p.admonition-title::before {
+    content: "\f0eb";
+    color: var(--adm-tip-icon);
+}
+
+div.warning p.admonition-title::before {
+    content: "\f071";
+    color: var(--adm-warning-icon);
+}
+
+div.important p.admonition-title::before {
+    content: "\f06a";
+    color: var(--adm-important-icon);
+}
+
+div.seealso p.admonition-title::before {
+    content: "\f0c1";
+    color: var(--adm-seealso-accent-border);
 }
