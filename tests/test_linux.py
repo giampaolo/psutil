@@ -2117,6 +2117,71 @@ class TestSensorsTemperatures(LinuxTestCase):
                 assert temp.high == 50.0
                 assert temp.critical == 50.0
 
+    def test_emulate_hwmon_zero_kelvin_sentinel(self):
+        """Hwmon max/crit of -273150 mC (0 K) should be filtered out."""
+
+        def open_mock(name, *args, **kwargs):
+            if name.endswith('/name'):
+                return io.StringIO("name")
+            elif name.endswith('/temp1_label'):
+                return io.StringIO("label")
+            elif name.endswith('/temp1_input'):
+                return io.BytesIO(b"50000")
+            elif name.endswith(('/temp1_max', '/temp1_crit')):
+                return io.BytesIO(b"-273150")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        with mock.patch("builtins.open", side_effect=open_mock):
+            with mock.patch(
+                'glob.glob', return_value=['/sys/class/hwmon/hwmon0/temp1']
+            ):
+                temp = psutil.sensors_temperatures()['name'][0]
+                assert temp.label == 'label'
+                assert temp.current == 50.0
+                assert temp.high is None
+                assert temp.critical is None
+
+    def test_emulate_class_thermal_zero_kelvin_sentinel(self):
+        """Thermal zone trip point -273150 mC should be filtered out."""
+
+        def open_mock(name, *args, **kwargs):
+            if name.endswith('0_temp'):
+                return io.BytesIO(b"-273150")
+            elif name.endswith('temp'):
+                return io.BytesIO(b"30000")
+            elif name.endswith('0_type'):
+                return io.StringIO("high")
+            elif name.endswith('type'):
+                return io.StringIO("name")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        def glob_mock(path):
+            if path in {
+                '/sys/class/hwmon/hwmon*/temp*_*',
+                '/sys/class/hwmon/hwmon*/device/temp*_*',
+            }:
+                return []
+            elif path == '/sys/class/thermal/thermal_zone*':
+                return ['/sys/class/thermal/thermal_zone0']
+            elif path == '/sys/class/thermal/thermal_zone0/trip_point*':
+                return [
+                    '/sys/class/thermal/thermal_zone0/trip_point_0_type',
+                    '/sys/class/thermal/thermal_zone0/trip_point_0_temp',
+                ]
+            return []
+
+        orig_open = open
+        with mock.patch("builtins.open", side_effect=open_mock):
+            with mock.patch('glob.glob', create=True, side_effect=glob_mock):
+                temp = psutil.sensors_temperatures()['name'][0]
+                assert temp.label == ''
+                assert temp.current == 30.0
+                assert temp.high is None
+                assert temp.critical is None
+
 
 class TestSensorsFans(LinuxTestCase):
     def test_emulate_data(self):
