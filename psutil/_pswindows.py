@@ -588,6 +588,13 @@ def convert_oserror(exc, pid=None, name=None):
         return AccessDenied(pid=pid, name=name)
     if isinstance(exc, ProcessLookupError):
         return NoSuchProcess(pid=pid, name=name)
+    if getattr(exc, "winerror", None) == 87:
+        # os.kill(pid, CTRL_C_EVENT / CTRL_BREAK_EVENT) can raise this
+        # (WinError 87, "the parameter is incorrect") when the process
+        # terminates on its own right before the signal is sent.
+        # See: https://github.com/giampaolo/psutil/issues/2519
+        msg = f"process {pid} disappeared before the signal could be sent"
+        return NoSuchProcess(pid=pid, name=name, msg=msg)
     raise exc
 
 
