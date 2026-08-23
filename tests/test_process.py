@@ -1536,8 +1536,8 @@ class TestProcessPidReuse(PsutilTestCase):
         assert p.pid in psutil._pmap
         assert not p.is_running()
 
-        # make sure is_running() removed PID from process_iter()
-        # internal cache
+        # make sure process_iter() refreshed the cached Process
+        # instance for the reused PID
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
             with contextlib.redirect_stderr(io.StringIO()) as f:
                 list(psutil.process_iter())
@@ -1545,7 +1545,7 @@ class TestProcessPidReuse(PsutilTestCase):
             f"refreshing Process instance for reused PID {p.pid}"
             in f.getvalue()
         )
-        assert p.pid not in psutil._pmap
+        assert p.pid in psutil._pmap
 
         assert p != psutil.Process(subp.pid)
         msg = "process no longer exists and its PID has been reused"
@@ -1566,6 +1566,25 @@ class TestProcessPidReuse(PsutilTestCase):
             p.parents()
         with pytest.raises(psutil.NoSuchProcess, match=msg):
             p.children()
+
+    @skipif(
+        FREEBSD or OPENBSD or SUNOS or AIX,
+        reason="PID reuse detection disabled on this platform",
+    )
+    def test_reused_pid_is_yielded(self):
+        # process_iter() used to skip a reused PID for one full
+        # iteration, see: https://github.com/giampaolo/psutil/issues/2601.
+        subp = self.spawn_subproc()
+        p = psutil.Process(subp.pid)
+        p._ident = (p.pid, p.create_time() + 100)
+
+        list(psutil.process_iter())
+        original = psutil._pmap[p.pid]
+        assert not p.is_running()
+
+        procs = list(psutil.process_iter())
+        assert p.pid in [x.pid for x in procs]
+        assert psutil._pmap[p.pid] is not original
 
     def test_reused_pid_with_null_ctime(self):
         # A null create time on either side must not count as PID
