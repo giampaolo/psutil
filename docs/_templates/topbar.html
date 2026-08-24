@@ -15,10 +15,10 @@
         paths, so it needs the absolute root. -#}
     {%- if pagename == '404' -%}
     <a class="topbar-logo" href="/">
-    {%- elif pagename == master_doc -%}
+    {%- elif pagename == root_doc -%}
     <a class="topbar-logo" href="./">
     {%- else -%}
-    <a class="topbar-logo" href="{{ pathto(master_doc) }}">
+    <a class="topbar-logo" href="{{ pathto(root_doc) }}">
     {%- endif -%}
       <img src="{{ pathto('_static/images/logo-psutil.svg', 1) }}" alt="">
       <span>psutil</span>
@@ -37,7 +37,7 @@
       </a>
       {%- if versions %}
       <details class="topbar-versions" id="version-selector"
-               data-version-page="{% if pagename != master_doc and pagename != '404' %}{{ pagename }}{% endif %}">
+               data-version-page="{% if pagename != root_doc and pagename != '404' %}{{ pagename }}{% endif %}">
         <summary title="{{ _('Switch documentation version') }}"
                  aria-label="{{ _('Switch documentation version') }}">
           <span class="topbar-versions-current">{{ versions_current }}</span>
@@ -50,7 +50,7 @@
           {%- if v.url.startswith('http') or pagename == '404' -%}
             {%- set href = v.url -%}
           {%- elif v.url == '/' -%}
-            {%- set href = './' if pagename == master_doc else pathto(master_doc) -%}
+            {%- set href = './' if pagename == root_doc else pathto(root_doc) -%}
           {%- else -%}
             {%- set href = pathto(v.url.strip('/') ~ '/', 1) -%}
           {%- endif -%}

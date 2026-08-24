@@ -9,7 +9,7 @@
 {% extends "basic/layout.html" %}
 
 {% block htmltitle %}
-{%- if pagename == master_doc -%}
+{%- if pagename == root_doc -%}
 <title>{{ _('psutil: Process and System Utilities for Python') }}</title>
 {%- else -%}
 {{ super() }}
@@ -89,7 +89,7 @@
 {% block content %}
 <div class="page">
   {% include "sidebar.html" %}
-  <main class="main" id="main-content" role="main">
+  <main class="main" id="main-content">
     {# TEMPORARY: remove before release. See dev-banner.html. #}
     {% include "dev-banner.html" %}
     {% include "breadcrumbs.html" %}
