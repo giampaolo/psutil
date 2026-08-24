@@ -35,12 +35,24 @@ def load_versions():
 
 
 def banner(entry, current, root):
+    # Same component as docs/_templates/banner.html, loaded from the
+    # current site because these pages are built from an old tag.
+    name = entry["name"]
     return (
         '<meta name="robots" content="noindex">'
-        f'<link rel="stylesheet" href="{root}_static/css/archived.css">'
-        '<div class="psutil-archived">You are reading the documentation '
-        f'for psutil <b>{entry["name"]}</b>. '
-        f'The current version is <a href="{root}">{current}</a>.</div>'
+        f'<link rel="stylesheet" href="{root}_static/css/banner.css">'
+        f'<script defer src="{root}_static/js/banner.js"></script>'
+        "<script>try{if(localStorage.getItem('psutil-banner')==="
+        f"'{name}')"
+        "{document.documentElement.classList.add("
+        "'site-banner-dismissed')}}catch(e){}</script>"
+        f'<div class="site-banner" role="note" data-banner-id="{name}">'
+        '<span>You are reading the documentation for psutil '
+        f'<b>{name}</b>. '
+        f'The current version is <a href="{root}">{current}</a>.</span>'
+        '<button class="site-banner-close" type="button" title="Dismiss" '
+        'aria-label="Dismiss this notice"></button>'
+        "</div>"
     )
 
 

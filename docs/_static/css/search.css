@@ -13,7 +13,7 @@
 /* Dim the rest of the page while the search input is focused. */
 .search-overlay {
     position: fixed;
-    inset: var(--topbar-height) 0 0 0;
+    inset: var(--header-height) 0 0 0;
     background: rgba(0, 0, 0, 0.5);
     opacity: 0;
     pointer-events: none;

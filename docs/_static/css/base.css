@@ -15,6 +15,7 @@
     /* ================================================================== */
 
     --topbar-height: 44px;
+    --header-height: var(--topbar-height);
     --left-sidebar-width: 260px;
     --right-sidebar-width: 230px;
     --content-max-width: 1240px;

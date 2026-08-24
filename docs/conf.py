@@ -173,7 +173,7 @@ def _css_files():
     # giscus.css is loaded inside the giscus iframe (see
     # _templates/comments.html), never by our own pages. Linking it
     # here would make every page fetch its @import from giscus.app.
-    skip = {"giscus.css", "archived.css"}
+    skip = {"giscus.css"}
     files = sorted(p.name for p in css_dir.glob("*.css") if p.name not in skip)
     head = ["base.css", "fonts.css", "fontawesome.css", "typography.css"]
     tail = ["home.css"]

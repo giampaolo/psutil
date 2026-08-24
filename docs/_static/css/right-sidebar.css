@@ -21,12 +21,12 @@
     .right-sidebar {
         display: block;
         position: fixed;
-        top: var(--topbar-height);
+        top: var(--header-height);
         right: 0;
         z-index: 90;
         width: var(--left-sidebar-width);
         max-width: 85vw;
-        height: calc(100vh - var(--topbar-height));
+        height: calc(100vh - var(--header-height));
         overflow-y: auto;
         box-sizing: border-box;
         padding: 16px;
@@ -46,9 +46,9 @@
     .right-sidebar {
         display: block;
         position: sticky;
-        top: calc(var(--topbar-height) + 20px);
+        top: calc(var(--header-height) + 20px);
         align-self: start;
-        max-height: calc(100vh - var(--topbar-height) - 36px);
+        max-height: calc(100vh - var(--header-height) - 36px);
         overflow-y: auto;
         padding: 0 16px;
         margin-right: -24px;
@@ -114,6 +114,7 @@
 .right-sidebar a,
 .right-sidebar a:visited {
     display: block;
+    font-variant-numeric: tabular-nums;
     padding: 0.2rem 8px;
     margin: 0 6px 0 0;
     color: var(--text-muted);

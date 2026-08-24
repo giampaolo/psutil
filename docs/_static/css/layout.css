@@ -5,18 +5,24 @@ body {
 html {
     /* Extra room below the topbar height so anchored headings clear
        the topbar's drop shadow instead of landing inside it. */
-    scroll-padding-top: calc(var(--topbar-height) + 0.5rem);
+    scroll-padding-top: calc(var(--header-height) + 0.5rem);
 }
 
-/* ---- Topbar (fixed at the top of the viewport) ---------------------- */
+/* ---- Header (banner + topbar), fixed at the top of the viewport ----- */
 
-.topbar {
+/* Height varies with the banner, so js/dev-banner.js keeps
+   --header-height in sync; everything that sits below the header
+   offsets by it. */
+.header-stack {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: var(--topbar-height);
     z-index: 100;
+}
+
+.topbar {
+    height: var(--topbar-height);
 }
 
 /* ---- Page grid (sidebar + main column), centered -------------------- */
@@ -28,7 +34,7 @@ html {
         minmax(0, var(--content-max-width));
     max-width: var(--layout-width);
     margin: 0 auto;
-    padding-top: var(--topbar-height);
+    padding-top: var(--header-height);
     background: var(--bg);
 }
 
@@ -44,7 +50,7 @@ html {
     grid-template-columns: minmax(0, 1fr);
     gap: 32px;
     padding: 24px 0 24px 16px;
-    min-height: calc(100vh - var(--topbar-height));
+    min-height: calc(100vh - var(--header-height));
 }
 
 /* No-TOC pages don't get the extra left indent; index.html etc.
@@ -89,7 +95,7 @@ html {
 
     .sidebar-backdrop {
         position: fixed;
-        inset: var(--topbar-height) 0 0 0;
+        inset: var(--header-height) 0 0 0;
         background: rgba(0, 0, 0, 0.4);
         z-index: 80;
         opacity: 0;

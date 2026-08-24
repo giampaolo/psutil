@@ -825,9 +825,11 @@ class TestNoIndex:
             assert mod.inject(pathlib.Path(tmp), entry, "dev") == 1
             html = page.read_text()
             assert self.NOINDEX_RE.search(html)
-            assert "psutil-archived" in html
+            assert 'class="site-banner"' in html
+            assert 'data-banner-id="7.2"' in html
             # Relative, so a file:// preview and a subdirectory both work.
-            assert '"../../_static/css/archived.css"' in html
+            assert '"../../_static/css/banner.css"' in html
+            assert '"../../_static/js/banner.js"' in html
         finally:
             shutil.rmtree(tmp)
 

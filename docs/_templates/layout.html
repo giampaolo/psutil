@@ -8,6 +8,10 @@
 -#}
 {% extends "basic/layout.html" %}
 
+{#- Bumping this brings the banner back for anyone who dismissed the
+    previous message. -#}
+{% set banner_id = 'dev' %}
+
 {% block htmltitle %}
 {%- if pagename == root_doc -%}
 <title>{{ _('psutil: Process and System Utilities for Python') }}</title>
@@ -36,6 +40,10 @@
 (function() {
     const html = document.documentElement;
     html.classList.add('no-transition');
+    // Keeps an already-dismissed banner from flashing.
+    if (localStorage.getItem('psutil-banner') === '{{ banner_id }}') {
+        html.classList.add('site-banner-dismissed');
+    }
     const saved = localStorage.getItem('psutil-sphinx-theme');
     const theme = saved || (
         window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -70,7 +78,10 @@
 {% block body_tag %}<body data-page="{{ pagename }}">{% endblock %}
 
 {% block header %}
-{% include "topbar.html" %}
+<div class="header-stack">
+  {% include "banner.html" %}
+  {% include "topbar.html" %}
+</div>
 {% endblock %}
 
 {# Suppress basic's default top/bottom breadcrumb. #}
@@ -90,8 +101,6 @@
 <div class="page">
   {% include "sidebar.html" %}
   <main class="main" id="main-content">
-    {# TEMPORARY: remove before release. See dev-banner.html. #}
-    {% include "dev-banner.html" %}
     {% include "breadcrumbs.html" %}
     <div class="article-with-toc{% if not _has_toc %} no-toc{% endif %}">
       <div class="article-column">
