@@ -18,10 +18,14 @@
 {% block extrahead %}
 {{ super() }}
 
+{%- set _parts = pagename.split('/') %}
 {%- set _collections = ['blog/tag', 'blog/category', 'blog/author',
                         'blog/archive', 'blog/drafts'] %}
+{%- set _year = _parts | length == 2 and _parts[0] == 'blog'
+                and _parts[1].isdigit() %}
 {%- if pagename in ['genindex', 'py-modindex', '404']
-       or pagename.split('/')[:2] | join('/') in _collections %}
+       or _parts[:2] | join('/') in _collections
+       or _year %}
 <meta name="robots" content="noindex">
 {%- endif %}
 

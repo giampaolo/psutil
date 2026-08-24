@@ -279,6 +279,7 @@ sitemap_excludes = [
     "blog/category/*",
     "blog/author/",
     "blog/author/*",
+    "blog/????/",  # exclude years
 ]
 # Suppress sphinx-sitemap warning (turned into error by
 # --fail-on-warning) occurring on CI.

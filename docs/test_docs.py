@@ -401,6 +401,7 @@ class TestSitemap:
             "404",
             "blog/archive",
             "blog/drafts",
+            "blog/2026",
         ):
             with subtests.test(slug=slug):
                 assert conf.html_baseurl + slug + "/" not in urls
