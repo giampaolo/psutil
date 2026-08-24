@@ -23,8 +23,6 @@
     function open() {
         body.classList.add("sidebar-open");
         btn.setAttribute("aria-expanded", "true");
-        sidebar.setAttribute("role", "dialog");
-        sidebar.setAttribute("aria-modal", "true");
         const firstLink = sidebar.querySelector("a");
         if (firstLink) {
             firstLink.focus();
@@ -34,8 +32,6 @@
     function close() {
         body.classList.remove("sidebar-open");
         btn.setAttribute("aria-expanded", "false");
-        sidebar.removeAttribute("role");
-        sidebar.removeAttribute("aria-modal");
         // Restore focus to the hamburger only if it's still visible
         // (offsetParent is null when display:none, e.g. >1024px).
         if (btn.offsetParent !== null) {

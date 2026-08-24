@@ -93,6 +93,10 @@
             });
             activeIndex = index;
             results[index].classList.add("search-result-active");
+            const link = results[index].querySelector("a");
+            if (link) {
+                link.focus({ preventScroll: true });
+            }
             results[index].scrollIntoView({ block: "nearest" });
         }
 
@@ -128,7 +132,6 @@
                     return;
                 }
                 e.preventDefault();
-                document.activeElement.blur();
                 setActive(0);
                 return;
             }
@@ -140,13 +143,6 @@
                 e.preventDefault();
                 if (activeIndex > 0) {
                     setActive(activeIndex - 1);
-                }
-            }
-            else if (e.key === "Enter" && activeIndex >= 0) {
-                e.preventDefault();
-                const link = getResults()[activeIndex].querySelector("a");
-                if (link) {
-                    link.click();
                 }
             }
         });

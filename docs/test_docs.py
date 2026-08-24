@@ -774,12 +774,33 @@ class TestNoIndex:
     )
 
     def test_utility_pages_noindex(self, subtests):
-        for name in ("genindex", "py-modindex", "404"):
+        for name in ("genindex", "py-modindex", "404", "search"):
             path = HTML_DIR / name / "index.html"
             if not path.is_file():
                 continue
             with subtests.test(page=name):
                 assert self.NOINDEX_RE.search(path.read_text())
+
+    def test_blog_collections_noindex(self, subtests):
+        for name in (
+            "blog/tag",
+            "blog/tag/new-api",
+            "blog/category",
+            "blog/author",
+            "blog/archive",
+            "blog/drafts",
+        ):
+            path = HTML_DIR / name / "index.html"
+            if not path.is_file():
+                continue
+            with subtests.test(page=name):
+                assert self.NOINDEX_RE.search(path.read_text())
+
+    def test_blog_posts_indexable(self, subtests):
+        for name in ("blog", "blog/2026/event-driven-process-waiting"):
+            path = HTML_DIR / name / "index.html"
+            with subtests.test(page=name):
+                assert not self.NOINDEX_RE.search(path.read_text())
 
     def test_content_pages_indexable(self, subtests):
         for name in ("index.html", "api.html", "install.html"):

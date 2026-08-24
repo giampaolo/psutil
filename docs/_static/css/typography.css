@@ -77,8 +77,14 @@ body {
     opacity: 0.7;
 }
 
-.article a.headerlink:hover {
+.article a.headerlink:hover,
+.article a.headerlink:focus-visible {
     opacity: 1;
+}
+
+.article a.headerlink:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
 .article h2 {
@@ -180,6 +186,7 @@ code {
     padding: 0.1em 0.35em;
     border-radius: 4px;
     border: none;
+    overflow-wrap: break-word;
 }
 
 pre code {
@@ -188,6 +195,19 @@ pre code {
     border-radius: 0;
     font-size: inherit;
     color: inherit;
+}
+
+.article a.reference.external {
+    overflow-wrap: break-word;
+}
+
+.article code.docutils.literal span.pre,
+.article dl:not(.docutils) > dt span.pre {
+    white-space: normal;
+}
+
+.article dl:not(.docutils) > dt {
+    overflow-wrap: break-word;
 }
 
 /* ---- Blockquotes --------------------------------------------------- */

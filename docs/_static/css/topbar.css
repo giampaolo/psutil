@@ -207,6 +207,12 @@
     .topbar-github {
         padding: 0 6px;
     }
+
+    .topbar-link,
+    .topbar-btn,
+    .topbar-hamburger {
+        width: 38px;
+    }
 }
 
 @media (max-width: 600px) {
@@ -215,7 +221,18 @@
     }
 }
 
-/* Touch devices: meet the 44px minimum tap target (WCAG 2.5.5). */
+@media (max-width: 620px) {
+    .topbar-actions .topbar-text {
+        display: none;
+    }
+}
+
+@media (max-width: 360px) {
+    .topbar-logo span {
+        display: none;
+    }
+}
+
 @media (pointer: coarse) {
     .topbar-link,
     .topbar-btn,
@@ -229,10 +246,6 @@
     }
 }
 
-@media (max-width: 1024px) {
-    .topbar-link,
-    .topbar-btn,
-    .topbar-hamburger {
-        width: 38px;
-    }
+.topbar-toc-toggle {
+    display: none;
 }

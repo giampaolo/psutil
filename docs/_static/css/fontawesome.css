@@ -76,6 +76,10 @@
     content: "\f02b";
 }
 
+.fa-list-ul::before {
+    content: "\f0ca";
+}
+
 .fa-magnifying-glass::before {
     content: "\f002";
 }

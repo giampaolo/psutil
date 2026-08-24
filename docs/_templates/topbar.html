@@ -42,7 +42,7 @@
                  aria-label="{{ _('Switch documentation version') }}">
           <span class="topbar-versions-current">{{ versions_current }}</span>
         </summary>
-        <div class="topbar-versions-menu" role="menu">
+        <div class="topbar-versions-menu">
           {%- for v in versions %}
           {%- if v.ref and not (loop.previtem and loop.previtem.ref) %}
           <hr class="topbar-versions-sep">
@@ -55,7 +55,7 @@
             {%- set href = pathto(v.url.strip('/') ~ '/', 1) -%}
           {%- endif -%}
           <a class="topbar-versions-item{% if v.name == versions_current %} is-current{% endif %}"
-             href="{{ href }}" role="menuitem">
+             href="{{ href }}">
             <span class="topbar-versions-name">{{ v.name }}</span>
             {%- if v.note %}<span class="topbar-versions-note">{{ v.note }}</span>{% endif %}
           </a>
@@ -63,6 +63,11 @@
         </div>
       </details>
       {%- endif %}
+      <button class="topbar-btn topbar-toc-toggle" id="toc-toggle"
+              type="button" title="{{ _('On this page') }}"
+              aria-label="{{ _('On this page') }}" aria-expanded="false">
+        <i class="fa-solid fa-list-ul" aria-hidden="true"></i>
+      </button>
     </nav>
   </div>
 </header>

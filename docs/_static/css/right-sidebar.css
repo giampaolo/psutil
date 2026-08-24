@@ -9,6 +9,39 @@
     display: none;
 }
 
+@media (max-width: 1279px) {
+    .topbar-toc-toggle {
+        display: none;
+    }
+
+    body:has(.right-sidebar) .topbar-toc-toggle {
+        display: inline-flex;
+    }
+
+    .right-sidebar {
+        display: block;
+        position: fixed;
+        top: var(--topbar-height);
+        right: 0;
+        z-index: 90;
+        width: var(--left-sidebar-width);
+        max-width: 85vw;
+        height: calc(100vh - var(--topbar-height));
+        overflow-y: auto;
+        box-sizing: border-box;
+        padding: 16px;
+        background: var(--bg);
+        border-left: 1px solid var(--border);
+        transform: translateX(100%);
+        transition: transform 0.2s ease;
+    }
+
+    body.toc-open .right-sidebar {
+        transform: translateX(0);
+        box-shadow: -4px 0 16px rgba(0, 0, 0, 0.35);
+    }
+}
+
 @media (min-width: 1280px) {
     .right-sidebar {
         display: block;

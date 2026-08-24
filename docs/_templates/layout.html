@@ -18,8 +18,10 @@
 {% block extrahead %}
 {{ super() }}
 
-{# Keep the auto-generated index + 404 pages out of search results. #}
-{%- if pagename in ['genindex', 'py-modindex', '404'] %}
+{%- set _collections = ['blog/tag', 'blog/category', 'blog/author',
+                        'blog/archive', 'blog/drafts'] %}
+{%- if pagename in ['genindex', 'py-modindex', '404']
+       or pagename.split('/')[:2] | join('/') in _collections %}
 <meta name="robots" content="noindex">
 {%- endif %}
 
