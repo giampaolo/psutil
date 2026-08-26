@@ -11,6 +11,7 @@
 // https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/arch/osx/process_info.c
 
 #include <Python.h>
+#include <AvailabilityMacros.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -266,6 +267,14 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 
 PyObject *
 psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1090
+    // proc_pid_rusage() is weak-linked below 10.9: calling it would
+    // jump to NULL instead of failing.
+    PyErr_SetString(
+        PyExc_NotImplementedError, "proc_pid_rusage() requires macOS 10.9+"
+    );
+    return NULL;
+#else
     pid_t pid;
     struct rusage_info_v4 ri;
     PyObject *dict = PyDict_New();
@@ -298,6 +307,7 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
 error:
     Py_DECREF(dict);
     return NULL;
+#endif
 }
 
 

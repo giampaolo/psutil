@@ -262,6 +262,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   Server 2016. See :ref:`migration guide <migration-8.0-windows>`.
 - :gh:`2936`, [Windows], :label:`breaking`: dropped support for PyPy older than
   7.3.14 (December 2023).
+- [macOS], :label:`breaking`: dropped support for macOS 10.7 and 10.8. Minimum
+  version is now 10.9.
 
 **Bug fixes: cross-platform**
 

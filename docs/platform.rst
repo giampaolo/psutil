@@ -62,9 +62,9 @@ Operating systems
      - hard check at import and build time
      - yes
    * - macOS
-     - 10.7 (Lion)
-     - 2011
-     - ``MAC_OS_X_VERSION_MIN_REQUIRED`` in C
+     - 10.9 (Mavericks)
+     - 2013
+     - graceful fallbacks; no hard check
      - yes
    * - FreeBSD
      - 12.0
@@ -94,6 +94,9 @@ Operating systems
 
 Except where a hard minimum is enforced, older releases may also work but are
 not guaranteed to be supported.
+
+The minimum above is what the source builds against. Prebuilt macOS wheels
+target 10.15, so 10.9 to 10.14 need to build from source.
 
 Architectures
 ^^^^^^^^^^^^^
