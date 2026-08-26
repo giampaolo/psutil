@@ -1726,7 +1726,7 @@ Process class
       including compressed memory. This corresponds to the main memory usage
       reported by macOS Activity Monitor. Prefer it over :field:`rss`.
     - :field:`peak_footprint`: the highest :field:`phys_footprint` reached over
-      the process lifetime.
+      the process lifetime. Set to 0 on macOS < 10.13.
 
     Windows (see `PROCESS_MEMORY_COUNTERS_EX`_):
 

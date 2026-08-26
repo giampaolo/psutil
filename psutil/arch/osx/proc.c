@@ -276,30 +276,52 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
     return NULL;
 #else
     pid_t pid;
-    struct rusage_info_v4 ri;
-    PyObject *dict = PyDict_New();
+    uint64_t phys_footprint = 0;
+    uint64_t peak_footprint = 0;
+    int fetched = 0;
+    PyObject *dict = NULL;
 
-    if (!dict)
-        return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        goto error;
+        return NULL;
 
-    memset(&ri, 0, sizeof(ri));
-    if (proc_pid_rusage(pid, RUSAGE_INFO_V4, (rusage_info_t *)&ri) != 0) {
-        if (errno != EINVAL) {
-            psutil_raise_for_pid(pid, "proc_pid_rusage()");
-            goto error;
-        }
+        // ri_lifetime_max_phys_footprint needs RUSAGE_INFO_V4, which both
+        // the SDK (compile time) and the kernel (runtime) gained in macOS
+        // 10.13. Before that only phys_footprint is available and
+        // peak_footprint is left at 0.
+#ifdef RUSAGE_INFO_V4
+    struct rusage_info_v4 ri4;
+
+    if (proc_pid_rusage(pid, RUSAGE_INFO_V4, (rusage_info_t *)&ri4) == 0) {
+        phys_footprint = ri4.ri_phys_footprint;
+        peak_footprint = ri4.ri_lifetime_max_phys_footprint;
+        fetched = 1;
+    }
+    else if (errno != EINVAL) {
+        psutil_raise_for_pid(pid, "proc_pid_rusage()");
+        return NULL;
+    }
+    else {
         psutil_debug("proc_pid_rusage(V4) -> EINVAL; falling back to V0");
-        if (proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri) != 0) {
+    }
+#endif
+
+    if (!fetched) {
+        struct rusage_info_v0 ri0;
+
+        if (proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri0) != 0) {
             psutil_raise_for_pid(pid, "proc_pid_rusage()");
-            goto error;
+            return NULL;
         }
+        phys_footprint = ri0.ri_phys_footprint;
     }
 
+    dict = PyDict_New();
+    if (!dict)
+        return NULL;
+
     // clang-format off
-    if (!pydict_add(dict, "phys_footprint", "K", (unsigned long long)ri.ri_phys_footprint)) goto error;
-    if (!pydict_add(dict, "peak_footprint", "K", (unsigned long long)ri.ri_lifetime_max_phys_footprint)) goto error;
+    if (!pydict_add(dict, "phys_footprint", "K", (unsigned long long)phys_footprint)) goto error;
+    if (!pydict_add(dict, "peak_footprint", "K", (unsigned long long)peak_footprint)) goto error;
     // clang-format on
 
     return dict;
