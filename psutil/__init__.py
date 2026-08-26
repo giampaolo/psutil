@@ -1377,11 +1377,10 @@ class Process:
         calculate process memory utilization as a percentage.
 
         *memtype* argument is a string that dictates what type of
-        process memory you want to compare against (defaults to "rss").
-        The list of available strings can be obtained like this:
-
-        >>> psutil.Process().memory_info()._fields
-        ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
+        process memory you want to compare against (defaults to
+        "rss"). It can be any field of `memory_info()`,
+        `memory_extras()` or `memory_footprint()`. The divisor is
+        always total physical memory, regardless of *memtype*.
         """
         valid_types = list(_ntp.pmem._fields)
         if hasattr(_ntp, "pmem_extras"):
@@ -1398,14 +1397,19 @@ class Process:
                 f" {tuple(valid_types)!r}"
             )
             raise ValueError(msg)
+
+        # ordered cheapest first; Linux "swap" is in both extras
+        # and footprint
         if memtype in _ntp.pmem._fields:
             fun = self.memory_info
         elif (
-            hasattr(_ntp, "pfootprint") and memtype in _ntp.pfootprint._fields
+            hasattr(_ntp, "pmem_extras")
+            and memtype in _ntp.pmem_extras._fields
         ):
-            fun = self.memory_footprint
-        else:
             fun = self.memory_extras
+        else:
+            fun = self.memory_footprint
+
         metrics = fun()
         if self._is_ad_value(metrics):
             return metrics

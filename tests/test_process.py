@@ -605,6 +605,12 @@ class TestProcess(PsutilTestCase):
         if LINUX or MACOS or WINDOWS:
             p.memory_percent(memtype='uss')
 
+        if LINUX:
+            # "swap" must come from extras, not the expensive footprint
+            with mock.patch.object(psutil.Process, "memory_footprint") as m:
+                p.memory_percent(memtype="swap")
+            assert not m.called
+
     def test_page_faults(self):
         p = psutil.Process()
         pfaults = p.page_faults()
