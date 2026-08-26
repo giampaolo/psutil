@@ -500,14 +500,7 @@ class TestProcess(PsutilTestCase):
                 "hugetlb",
             )
         elif MACOS:
-            assert mem._fields[2:] == (
-                "peak_rss",
-                "rss_anon",
-                "rss_file",
-                "wired",
-                "compressed",
-                "phys_footprint",
-            )
+            assert mem._fields[2:] == ("wired", "phys_footprint")
         elif WINDOWS:
             assert mem._fields[2:] == (
                 "peak_rss",
