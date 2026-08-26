@@ -22,8 +22,8 @@ Key breaking changes in 8.0:
 - Some return types are now enums instead of strings.
 - :meth:`Process.memory_full_info` is deprecated: use
   :meth:`Process.memory_footprint`.
-- New :meth:`Process.memory_info_ex` method (unrelated to the old method
-  deprecated in 4.0 and removed in 7.0).
+- New :meth:`Process.memory_extras` method, returning extra platform-specific
+  memory metrics.
 - New :attr:`Process.attrs`: :class:`frozenset` of valid attribute names;
   ``process_iter(attrs=[])`` is deprecated.
 - Python 3.6 and 3.7 dropped.
@@ -115,7 +115,7 @@ Named tuple field order changed
     :field:`peak_vms`, :field:`num_page_faults` → :meth:`Process.page_faults`.
     The old names still work but raise :exc:`DeprecationWarning`.
     :field:`paged_pool`, :field:`nonpaged_pool`, :field:`peak_paged_pool`,
-    :field:`peak_nonpaged_pool` moved to :meth:`Process.memory_info_ex`.
+    :field:`peak_nonpaged_pool` moved to :meth:`Process.memory_extras`.
   - BSD: a new :field:`peak_rss` field was added.
 
 - :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired`
@@ -157,15 +157,13 @@ memory_full_info() is deprecated
 :meth:`Process.memory_footprint` instead; it returns the same fields
 (:field:`uss`, :field:`pss` and :field:`swap`).
 
-.. _migration-8.0-memory-info-ex:
+.. _migration-8.0-memory-extras:
 
-New memory_info_ex() method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+New memory_extras() method
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-8.0 introduces a new :meth:`Process.memory_info_ex` method that extends
-:meth:`Process.memory_info` with platform-specific metrics. It is **unrelated**
-to the old :meth:`Process.memory_info_ex`, deprecated in 4.0 and removed in
-7.0, which later became :meth:`Process.memory_full_info`.
+8.0 introduces a new :meth:`Process.memory_extras` method, returning extra
+platform-specific memory metrics which complement :meth:`Process.memory_info`:
 
 - Linux: :field:`peak_rss`, :field:`peak_vms`, :field:`rss_anon`,
   :field:`rss_file`, :field:`rss_shmem`, :field:`swap`, :field:`hugetlb`.
@@ -238,14 +236,8 @@ Migrating to 7.0
 Process.memory_info_ex() removed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`Process.memory_info_ex`, deprecated since 4.0.0 in 2016, was removed.
-Use :meth:`Process.memory_full_info` instead.
-
-.. note::
-
-  In 8.0, a new :meth:`Process.memory_info_ex` method was introduced with
-  different semantics. It extends :meth:`Process.memory_info` with
-  platform-specific metrics and is unrelated to the old method documented here.
+``Process.memory_info_ex()``, deprecated since 4.0.0 in 2016, was removed. Use
+:meth:`Process.memory_full_info` instead.
 
 .. code-block:: python
 

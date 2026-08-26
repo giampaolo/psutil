@@ -108,7 +108,7 @@ Linux
     :meth:`~Process.name`, :meth:`~Process.page_faults`, :meth:`~Process.ppid`,
     :meth:`~Process.status`, :meth:`~Process.terminal`
 
-*   :meth:`~Process.gids`, :meth:`~Process.memory_info_ex`,
+*   :meth:`~Process.gids`, :meth:`~Process.memory_extras`,
     :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_threads`,
     :meth:`~Process.uids`, :meth:`~Process.username`
 
@@ -121,7 +121,7 @@ Windows
 
 *  :meth:`~Process.cpu_percent`, :meth:`~Process.cpu_times`,
    :meth:`~Process.io_counters`, :meth:`~Process.memory_info`,
-   :meth:`~Process.memory_info_ex`, :meth:`~Process.memory_percent`,
+   :meth:`~Process.memory_extras`, :meth:`~Process.memory_percent`,
    :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_handles`,
    :meth:`~Process.num_threads`, :meth:`~Process.page_faults`,
    :meth:`~Process.status`
@@ -179,8 +179,8 @@ on Linux:
     cpu_percent
     cpu_times
     gids
+    memory_extras
     memory_info
-    memory_info_ex
     memory_percent
     name
     num_ctx_switches
@@ -268,7 +268,7 @@ Linux:
   open_files                       300      0.00453
   username                         300      0.00505
   ppid                             300      0.00554
-  memory_info_ex                   300      0.00651
+  memory_extras                    300      0.00651
   environ                          300      0.01013
   memory_footprint                 300      0.02241
   memory_maps                      300      0.30282

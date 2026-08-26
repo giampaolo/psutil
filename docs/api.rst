@@ -1619,7 +1619,7 @@ Process class
     - :field:`vms`: aka :term:`VMS`. On UNIX matches the ``top`` VIRT column.
       On Windows maps to ``PrivateUsage`` (private committed pages only), which
       differs from the UNIX definition; use :field:`virtual` from
-      :meth:`memory_info_ex` for the true virtual address space size.
+      :meth:`memory_extras` for the true virtual address space size.
 
     - :field:`shared` *(Linux)*: :term:`shared memory` that *could* be shared
       with other processes (shared libraries,
@@ -1674,15 +1674,14 @@ Process class
          :field:`peak_vms`, :field:`num_page_faults` → :meth:`page_faults`
          method. At the same time :field:`paged_pool`, :field:`nonpaged_pool`,
          :field:`peak_paged_pool`, :field:`peak_nonpaged_pool` were moved to
-         :meth:`memory_info_ex`. All these old names still work but raise
+         :meth:`memory_extras`. All these old names still work but raise
          :exc:`DeprecationWarning`.
        - *BSD*: added :field:`peak_rss` field.
 
-  .. method:: memory_info_ex()
+  .. method:: memory_extras()
 
-    Extends :meth:`memory_info` with additional platform-specific memory
-    metrics (all values in bytes). On platforms where extra fields are not
-    implemented this returns the same result as :meth:`memory_info`.
+    Return extra platform-specific memory metrics, complementing
+    :meth:`memory_info` (all values in bytes).
 
     +-------------+----------------+--------------------+
     | Linux       | macOS          | Windows            |
@@ -1743,6 +1742,8 @@ Process class
     - :field:`peak_paged_pool`: peak paged-pool usage.
     - :field:`peak_nonpaged_pool`: peak non-paged-pool usage.
 
+    .. availability:: Linux, macOS, Windows
+
     .. versionadded:: 8.0.0
 
   .. method:: memory_footprint()
@@ -1800,8 +1801,9 @@ Process class
        Process().memory_info().rss / virtual_memory().total * 100
 
     *memtype* selects which memory field to use and can be any attribute from
-    :meth:`memory_info`, :meth:`memory_info_ex`, or :meth:`memory_footprint`
-    (default is ``"rss"``).
+    :meth:`memory_info`, :meth:`memory_extras`, or :meth:`memory_footprint`
+    (default is ``"rss"``). The divisor is always total physical memory,
+    regardless of *memtype*.
 
   .. method:: memory_maps(grouped=True)
 

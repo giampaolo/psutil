@@ -11,7 +11,7 @@ Glossary
       memory allocated directly by the program (e.g. via ``malloc()``).
       Anonymous pages have no on-disk counterpart and must be written to
       :term:`swap memory` if evicted. Exposed by psutil via the :field:`rss_anon`
-      field of :meth:`Process.memory_info_ex` (total resident anonymous pages)
+      field of :meth:`Process.memory_extras` (total resident anonymous pages)
       and the :field:`anonymous` field of :meth:`Process.memory_maps` (per
       mapping). Anonymous regions are also visible in the :field:`path` column
       of :meth:`Process.memory_maps` as ``"[heap]"``, ``"[stack]"``, or an
@@ -201,7 +201,7 @@ Glossary
       The highest :term:`RSS` value a process has ever reached since it
       started (memory high-water mark). Available via
       :meth:`Process.memory_info` (BSD, Windows) and
-      :meth:`Process.memory_info_ex` (Linux, macOS). Useful for capacity
+      :meth:`Process.memory_extras` (Linux). Useful for capacity
       planning and leak detection: if :field:`peak_rss` keeps growing across
       successive runs or over time, the process is likely leaking memory.
       See also :term:`peak_vms`.
@@ -209,7 +209,7 @@ Glossary
    peak_vms
 
       The highest :term:`VMS` value a process has ever reached since it
-      started. Available via :meth:`Process.memory_info_ex` (Linux) and
+      started. Available via :meth:`Process.memory_extras` (Linux) and
       :meth:`Process.memory_info` (Windows). On Windows this maps to
       ``PeakPagefileUsage`` (peak :term:`private <private memory>` committed
       memory), which is not the same as UNIX VMS. See also :term:`peak_rss`.
@@ -283,7 +283,7 @@ Glossary
 
       Exposed by psutil as the :field:`shared` field of :func:`virtual_memory` and
       :meth:`Process.memory_info` (Linux), the :field:`rss_shmem` field of
-      :meth:`Process.memory_info_ex` (Linux), and the :field:`shared_clean` /
+      :meth:`Process.memory_extras` (Linux), and the :field:`shared_clean` /
       :field:`shared_dirty` fields of :meth:`Process.memory_maps` (Linux).
 
    swap-in

@@ -194,9 +194,9 @@ some APIs.
   :field:`vms`) namedtuple. It returns a variable-length namedtuple that varies
   by platform (:field:`rss` and :field:`vms` are always present, even on
   Windows). Essentially the same result as the old
-  :meth:`Process.memory_info_ex`. This shouldn't break your code unless you
-  were doing ``rss, vms = p.memory_info()``.
-* :meth:`Process.memory_info_ex` is deprecated. It still works as an alias for
+  ``Process.memory_info_ex()``. This shouldn't break your code unless you were
+  doing ``rss, vms = p.memory_info()``.
+* ``Process.memory_info_ex()`` is deprecated. It still works as an alias for
   :meth:`Process.memory_info`, issuing a :exc:`DeprecationWarning`.
 * :func:`psutil.disk_io_counters` on NetBSD and OpenBSD no longer returns
   :field:`write_count` and :field:`read_count` because the kernel doesn't
