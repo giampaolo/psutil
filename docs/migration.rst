@@ -28,6 +28,7 @@ Key breaking changes in 8.0:
   ``process_iter(attrs=[])`` is deprecated.
 - Python 3.6 and 3.7 dropped.
 - Windows < 10 dropped.
+- macOS 10.7 and 10.8 dropped.
 
 .. important::
 
