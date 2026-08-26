@@ -11,10 +11,12 @@
 // https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/arch/osx/process_info.c
 
 #include <Python.h>
+#include <AvailabilityMacros.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/sysctl.h>
 #include <libproc.h>
 #include <sys/proc_info.h>
@@ -265,47 +267,60 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 
 PyObject *
 psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1090
+    // proc_pid_rusage() is weak-linked below 10.9: calling it would
+    // jump to NULL instead of failing.
+    PyErr_SetString(
+        PyExc_NotImplementedError, "proc_pid_rusage() requires macOS 10.9+"
+    );
+    return NULL;
+#else
     pid_t pid;
-    mach_port_t task = MACH_PORT_NULL;
-    kern_return_t kr;
-    task_vm_info_data_t info;
-    mach_msg_type_number_t info_count = TASK_VM_INFO_COUNT;
-    PyObject *dict = PyDict_New();
+    uint64_t phys_footprint = 0;
+    uint64_t peak_footprint = 0;
+    int fetched = 0;
+    struct rusage_info_v0 ri0;
+#ifdef RUSAGE_INFO_V4
+    struct rusage_info_v4 ri4;
+#endif
+    PyObject *dict = NULL;
 
-    if (!dict)
-        return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        goto error;
-    if (psutil_task_for_pid(pid, &task) != 0)
-        goto error;
+        return NULL;
 
-    // Fetch multiple metrics. Fails with access denied for any PID not
-    // owned by us.
-    kr = task_info(task, TASK_VM_INFO, (task_info_t)&info, &info_count);
-    mach_port_deallocate(mach_task_self(), task);
-    task = MACH_PORT_NULL;
-    if (kr != KERN_SUCCESS) {
-        psutil_runtime_error("task_info(TASK_VM_INFO) syscall failed");
-        goto error;
+#ifdef RUSAGE_INFO_V4
+    // ri_lifetime_max_phys_footprint requires RUSAGE_INFO_V4 (macOS
+    // 10.13). Before that only phys_footprint is available and
+    // peak_footprint stays 0.
+    if (proc_pid_rusage(pid, RUSAGE_INFO_V4, (rusage_info_t *)&ri4) == 0) {
+        phys_footprint = ri4.ri_phys_footprint;
+        peak_footprint = ri4.ri_lifetime_max_phys_footprint;
+        fetched = 1;
+    }
+    else if (errno != EINVAL) {
+        psutil_raise_for_pid(pid, "proc_pid_rusage()");
+        return NULL;
+    }
+    else {
+        psutil_debug("proc_pid_rusage(V4) -> EINVAL; falling back to V0");
+    }
+#endif
+
+    if (!fetched) {
+        if (proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri0) != 0) {
+            psutil_raise_for_pid(pid, "proc_pid_rusage()");
+            return NULL;
+        }
+        phys_footprint = ri0.ri_phys_footprint;
     }
 
-    // Fetch wired memory.
-    uint64_t wired_size = 0;
-    struct rusage_info_v0 ri;
-    int rusage_ret;
-    rusage_ret = proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri);
-    if (rusage_ret == 0)
-        wired_size = ri.ri_wired_size;
-    else
-        psutil_debug("proc_pid_rusage() failed (pid=%i)", pid);
+    dict = PyDict_New();
+    if (!dict)
+        return NULL;
 
     // clang-format off
-    if (!pydict_add(dict, "peak_rss", "K", (unsigned long long)info.resident_size_peak)) goto error;
-    if (!pydict_add(dict, "rss_anon", "K", (unsigned long long)info.internal)) goto error;
-    if (!pydict_add(dict, "rss_file", "K", (unsigned long long)info.external)) goto error;
-    if (!pydict_add(dict, "wired", "K", (unsigned long long)wired_size)) goto error;
-    if (!pydict_add(dict, "compressed", "K", (unsigned long long)info.compressed)) goto error;
-    if (!pydict_add(dict, "phys_footprint", "K", (unsigned long long)info.phys_footprint)) goto error;
+    if (!pydict_add(dict, "phys_footprint", "K", (unsigned long long)phys_footprint)) goto error;
+    if (!pydict_add(dict, "peak_footprint", "K", (unsigned long long)peak_footprint)) goto error;
     // clang-format on
 
     return dict;
@@ -313,6 +328,7 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
 error:
     Py_DECREF(dict);
     return NULL;
+#endif
 }
 
 

@@ -478,9 +478,14 @@ class TestProcess(PsutilTestCase):
         self.check_proc_memory(mem)
         total = psutil.virtual_memory().total
         for name in mem._fields:
-            if name != "vms":
+            if name not in {"vms", "peak_footprint"}:
                 value = getattr(mem, name)
                 assert value <= total
+
+        if MACOS:
+            # peak_footprint is 0 on macOS < 10.13 (no RUSAGE_INFO_V4)
+            if mem.peak_footprint != 0:
+                assert mem.peak_footprint >= mem.phys_footprint
 
     def test_memory_info_ex_fields_order(self):
         mem = psutil.Process().memory_info_ex()
@@ -500,14 +505,7 @@ class TestProcess(PsutilTestCase):
                 "hugetlb",
             )
         elif MACOS:
-            assert mem._fields[2:] == (
-                "peak_rss",
-                "rss_anon",
-                "rss_file",
-                "wired",
-                "compressed",
-                "phys_footprint",
-            )
+            assert mem._fields[2:] == ("phys_footprint", "peak_footprint")
         elif WINDOWS:
             assert mem._fields[2:] == (
                 "peak_rss",

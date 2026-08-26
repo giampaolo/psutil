@@ -486,12 +486,8 @@ elif MACOS:
     class pmem_ex(NamedTuple):
         rss: int
         vms: int
-        peak_rss: int
-        rss_anon: int
-        rss_file: int
-        wired: int
-        compressed: int
         phys_footprint: int
+        peak_footprint: int
 
     # psutil.Process.memory_full_info()
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss",))
