@@ -599,16 +599,16 @@ class TestProcess(PsutilTestCase):
 
     def test_memory_percent(self):
         p = psutil.Process()
-        p.memory_percent()
+        assert p.memory_percent() >= 0
         with pytest.raises(ValueError):
             p.memory_percent(memtype="?!?")
-        if LINUX or MACOS or WINDOWS:
-            p.memory_percent(memtype='uss')
+        if HAS_PROC_MEMORY_FOOTPRINT:
+            assert p.memory_percent(memtype='uss') >= 0
 
         if LINUX:
             # "swap" must come from extras, not the expensive footprint
             with mock.patch.object(psutil.Process, "memory_footprint") as m:
-                p.memory_percent(memtype="swap")
+                assert p.memory_percent(memtype="swap") >= 0
             assert not m.called
 
     def test_page_faults(self):
