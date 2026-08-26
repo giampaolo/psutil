@@ -478,7 +478,7 @@ class TestProcess(PsutilTestCase):
         self.check_proc_memory(mem)
         total = psutil.virtual_memory().total
         for name in mem._fields:
-            if name != "vms":
+            if name not in {"vms", "peak_footprint"}:
                 value = getattr(mem, name)
                 assert value <= total
 

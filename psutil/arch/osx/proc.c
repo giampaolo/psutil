@@ -279,18 +279,19 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
     uint64_t phys_footprint = 0;
     uint64_t peak_footprint = 0;
     int fetched = 0;
+    struct rusage_info_v0 ri0;
+#ifdef RUSAGE_INFO_V4
+    struct rusage_info_v4 ri4;
+#endif
     PyObject *dict = NULL;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-        // ri_lifetime_max_phys_footprint needs RUSAGE_INFO_V4, which both
-        // the SDK (compile time) and the kernel (runtime) gained in macOS
-        // 10.13. Before that only phys_footprint is available and
-        // peak_footprint is left at 0.
 #ifdef RUSAGE_INFO_V4
-    struct rusage_info_v4 ri4;
-
+    // ri_lifetime_max_phys_footprint requires RUSAGE_INFO_V4 (macOS
+    // 10.13). Before that only phys_footprint is available and
+    // peak_footprint stays 0.
     if (proc_pid_rusage(pid, RUSAGE_INFO_V4, (rusage_info_t *)&ri4) == 0) {
         phys_footprint = ri4.ri_phys_footprint;
         peak_footprint = ri4.ri_lifetime_max_phys_footprint;
@@ -306,8 +307,6 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
 #endif
 
     if (!fetched) {
-        struct rusage_info_v0 ri0;
-
         if (proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri0) != 0) {
             psutil_raise_for_pid(pid, "proc_pid_rusage()");
             return NULL;
