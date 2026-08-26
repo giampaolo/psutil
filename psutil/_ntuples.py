@@ -487,6 +487,7 @@ elif MACOS:
         rss: int
         vms: int
         phys_footprint: int
+        peak_footprint: int
 
     # psutil.Process.memory_full_info()
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss",))

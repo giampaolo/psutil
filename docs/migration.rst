@@ -168,7 +168,7 @@ to the old :meth:`Process.memory_info_ex`, deprecated in 4.0 and removed in
 
 - Linux: :field:`peak_rss`, :field:`peak_vms`, :field:`rss_anon`,
   :field:`rss_file`, :field:`rss_shmem`, :field:`swap`, :field:`hugetlb`.
-- macOS: :field:`phys_footprint`.
+- macOS: :field:`phys_footprint`, :field:`peak_footprint`.
 - Windows: :field:`virtual`, :field:`peak_virtual`, :field:`paged_pool`,
   :field:`nonpaged_pool`, :field:`peak_paged_pool`,
   :field:`peak_nonpaged_pool`.

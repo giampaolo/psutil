@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/sysctl.h>
 #include <libproc.h>
 #include <sys/proc_info.h>
@@ -266,27 +267,31 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 PyObject *
 psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
     pid_t pid;
-    struct rusage_info_v0 ri;
+    struct rusage_info_v4 ri;
     PyObject *dict = PyDict_New();
 
     if (!dict)
         return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
-    if (proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri) != 0) {
-        psutil_raise_for_pid(pid, "proc_pid_rusage()");
-        goto error;
+
+    memset(&ri, 0, sizeof(ri));
+    if (proc_pid_rusage(pid, RUSAGE_INFO_V4, (rusage_info_t *)&ri) != 0) {
+        if (errno != EINVAL) {
+            psutil_raise_for_pid(pid, "proc_pid_rusage()");
+            goto error;
+        }
+        psutil_debug("proc_pid_rusage(V4) -> EINVAL; falling back to V0");
+        if (proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri) != 0) {
+            psutil_raise_for_pid(pid, "proc_pid_rusage()");
+            goto error;
+        }
     }
 
-    if (!pydict_add(
-            dict,
-            "phys_footprint",
-            "K",
-            (unsigned long long)ri.ri_phys_footprint
-        ))
-    {
-        goto error;
-    }
+    // clang-format off
+    if (!pydict_add(dict, "phys_footprint", "K", (unsigned long long)ri.ri_phys_footprint)) goto error;
+    if (!pydict_add(dict, "peak_footprint", "K", (unsigned long long)ri.ri_lifetime_max_phys_footprint)) goto error;
+    // clang-format on
 
     return dict;
 
