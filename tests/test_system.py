@@ -148,7 +148,6 @@ class TestProcessIter(PsutilTestCase):
         ):
             for p in psutil.process_iter(attrs=["memory_info"]):
                 assert p.memory_percent() is None
-                assert p.memory_info_ex() is None
 
     @skipif(not POSIX, reason="POSIX only")
     def test_prefetch_derived_username(self):

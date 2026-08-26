@@ -32,6 +32,7 @@ from . import HAS_PROC_CPU_NUM
 from . import HAS_PROC_ENVIRON
 from . import HAS_PROC_IO_COUNTERS
 from . import HAS_PROC_IONICE
+from . import HAS_PROC_MEMORY_EXTRAS
 from . import HAS_PROC_MEMORY_FOOTPRINT
 from . import HAS_PROC_MEMORY_MAPS
 from . import HAS_PROC_RLIMIT
@@ -161,8 +162,9 @@ class TestProcess(MemoryLeakTestCase):
     def test_memory_info(self):
         self.execute(self.proc.memory_info)
 
-    def test_memory_info_ex(self):
-        self.execute(self.proc.memory_info_ex)
+    @skipif(not HAS_PROC_MEMORY_EXTRAS, reason="not supported")
+    def test_memory_extras(self):
+        self.execute(self.proc.memory_extras)
 
     @skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
     def test_memory_footprint(self):

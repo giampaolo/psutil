@@ -45,7 +45,7 @@ cwd                              300      0.00151
 num_fds                          300      0.00391
 memory_info                      300      0.00597
 memory_percent                   300      0.00648
-memory_info_ex                   300      0.00701
+memory_extras                    300      0.00701
 io_counters                      300      0.00707
 name                             300      0.00894
 status                           300      0.00900

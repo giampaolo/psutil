@@ -41,7 +41,7 @@ if psutil.LINUX:
         'cpu_num',
         'cpu_times',
         'gids',
-        'memory_info_ex',
+        'memory_extras',
         'name',
         'num_ctx_switches',
         'num_threads',

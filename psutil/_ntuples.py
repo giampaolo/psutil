@@ -383,7 +383,7 @@ class pmmap_ext(NamedTuple):
 
 
 # ===================================================================
-# --- Process memory_info() / memory_info_ex() / memory_full_info()
+# --- Process memory_info() / memory_extras() / memory_full_info()
 # ===================================================================
 
 if LINUX:
@@ -410,20 +410,15 @@ if LINUX:
             warnings.warn(msg, DeprecationWarning, stacklevel=2)
             return 0
 
-    # psutil.Process().memory_info_ex()
-    pmem_ex = namedtuple(
-        "pmem_ex",
-        pmem._fields
-        + (
-            "peak_rss",
-            "peak_vms",
-            "rss_anon",
-            "rss_file",
-            "rss_shmem",
-            "swap",
-            "hugetlb",
-        ),
-    )
+    # psutil.Process().memory_extras()
+    class pmem_extras(NamedTuple):
+        peak_rss: int
+        peak_vms: int
+        rss_anon: int
+        rss_file: int
+        rss_shmem: int
+        swap: int
+        hugetlb: int
 
     # psutil.Process().memory_full_info()
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss", "pss", "swap"))
@@ -449,7 +444,7 @@ elif WINDOWS:
                     "peak_paged_pool",
                     "peak_nonpaged_pool",
                 }:
-                    msg += "; use memory_info_ex() instead"
+                    msg += "; use memory_extras() instead"
                 elif name == "num_page_faults":
                     msg += "; use page_faults() instead"
                 warnings.warn(msg, DeprecationWarning, stacklevel=2)
@@ -458,19 +453,14 @@ elif WINDOWS:
             msg = f"{self.__class__.__name__} object has no attribute {name!r}"
             raise AttributeError(msg)
 
-    # psutil.Process.memory_info_ex()
-    pmem_ex = namedtuple(
-        "pmem_ex",
-        pmem._fields
-        + (
-            "virtual",
-            "peak_virtual",
-            "paged_pool",
-            "nonpaged_pool",
-            "peak_paged_pool",
-            "peak_nonpaged_pool",
-        ),
-    )
+    # psutil.Process.memory_extras()
+    class pmem_extras(NamedTuple):
+        virtual: int
+        peak_virtual: int
+        paged_pool: int
+        nonpaged_pool: int
+        peak_paged_pool: int
+        peak_nonpaged_pool: int
 
     # psutil.Process.memory_full_info()
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss",))
@@ -482,10 +472,8 @@ elif MACOS:
         rss: int
         vms: int
 
-    # psutil.Process.memory_info_ex()
-    class pmem_ex(NamedTuple):
-        rss: int
-        vms: int
+    # psutil.Process.memory_extras()
+    class pmem_extras(NamedTuple):
         phys_footprint: int
         peak_footprint: int
 
@@ -503,9 +491,6 @@ elif BSD:
         stack: int
         peak_rss: int
 
-    # psutil.Process.memory_info_ex()
-    pmem_ex = pmem
-
     # psutil.Process.memory_full_info()
     pfullmem = pmem
 
@@ -515,9 +500,6 @@ elif SUNOS or AIX:
     class pmem(NamedTuple):
         rss: int
         vms: int
-
-    # psutil.Process.memory_info_ex()
-    pmem_ex = pmem
 
     # psutil.Process.memory_full_info()
     pfullmem = pmem

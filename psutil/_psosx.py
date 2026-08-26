@@ -407,8 +407,9 @@ class Process:
         return ntp.pmem(d["rss"], d["vms"])
 
     @wrap_exceptions
-    def memory_info_ex(self):
-        return _psutil.proc_memory_info_ex(self.pid)
+    def memory_extras(self):
+        d = _psutil.proc_memory_info_ex(self.pid)
+        return ntp.pmem_extras(d["phys_footprint"], d["peak_footprint"])
 
     @wrap_exceptions
     def memory_footprint(self):

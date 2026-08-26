@@ -2532,9 +2532,11 @@ class TestProcess(LinuxTestCase):
         assert p._proc.create_time() != p._proc.create_time(monotonic=True)
         assert p._get_ident()[1] == p._proc.create_time(monotonic=True)
 
-    def test_memory_info_ex(self):
-        mem = psutil.Process().memory_info_ex()
-        assert mem.rss == mem.rss_anon + mem.rss_file + mem.rss_shmem
+    def test_memory_extras(self):
+        p = psutil.Process()
+        mem = p.memory_extras()
+        rss = p.memory_info().rss
+        assert rss == mem.rss_anon + mem.rss_file + mem.rss_shmem
 
     def test_rlimit_infinity_normalized(self):
         # Python 3.15 changed resource.prlimit() to return RLIM_INFINITY

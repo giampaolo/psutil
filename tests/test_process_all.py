@@ -395,7 +395,7 @@ class TestFetchAllProcesses(PsutilTestCase):
     def memory_info(self, ret, info):
         self.check_proc_memory(ret)
 
-    def memory_info_ex(self, ret, info):
+    def memory_extras(self, ret, info):
         self.check_proc_memory(ret)
 
     def memory_footprint(self, ret, info):
