@@ -1687,62 +1687,59 @@ Process class
     +-------------+----------------+--------------------+
     | Linux       | macOS          | Windows            |
     +=============+================+====================+
-    | peak_rss    | peak_rss       | virtual            |
+    | peak_rss    | phys_footprint | virtual            |
     +-------------+----------------+--------------------+
     | peak_vms    |                | peak_virtual       |
     +-------------+----------------+--------------------+
-    | rss_anon    | rss_anon       | paged_pool         |
+    | rss_anon    |                | paged_pool         |
     +-------------+----------------+--------------------+
-    | rss_file    | rss_file       | nonpaged_pool      |
+    | rss_file    |                | nonpaged_pool      |
     +-------------+----------------+--------------------+
-    | rss_shmem   | wired          | peak_paged_pool    |
+    | rss_shmem   |                | peak_paged_pool    |
     +-------------+----------------+--------------------+
-    | swap        | compressed     | peak_nonpaged_pool |
+    | swap        |                | peak_nonpaged_pool |
     +-------------+----------------+--------------------+
-    | hugetlb     | phys_footprint |                    |
+    | hugetlb     |                |                    |
     +-------------+----------------+--------------------+
 
-    - :field:`peak_rss` *(Linux, macOS)*: see :term:`peak_rss`.
-    - :field:`peak_vms` *(Linux)*: see :term:`peak_vms`.
-    - :field:`rss_anon` *(Linux, macOS)*: resident :term:`anonymous memory`
-      (:term:`heap`, stack, private mappings) not backed by any file. Set to 0
-      on Linux < 4.5.
-    - :field:`rss_file` *(Linux, macOS)*: resident file-backed memory mapped
-      from files (:term:`shared libraries <shared memory>`,
+    Linux:
+
+    - :field:`peak_rss`: see :term:`peak_rss`.
+    - :field:`peak_vms`: see :term:`peak_vms`.
+    - :field:`rss_anon`: resident :term:`anonymous memory` (:term:`heap`,
+      stack, private mappings) not backed by any file. Set to 0 on Linux < 4.5.
+    - :field:`rss_file`: resident file-backed memory mapped from files
+      (:term:`shared libraries <shared memory>`,
       :term:`memory-mapped files <mapped memory>`). Set to 0 on Linux < 4.5.
-    - :field:`rss_shmem` *(Linux)*: resident :term:`shared memory` (``tmpfs``,
+    - :field:`rss_shmem`: resident :term:`shared memory` (``tmpfs``,
       ``shm_open``). ``rss_anon + rss_file + rss_shmem`` equals :field:`rss`.
       Set to 0 on Linux < 4.5.
-    - :field:`wired` *(macOS)*: memory pinned in RAM by the kernel on behalf of
-      this process; cannot be compressed or paged out.
-    - :field:`swap` *(Linux)*: process memory currently in
-      :term:`swap <swap memory>`. Equivalent to ``memory_footprint().swap`` but
-      cheaper, as it reads from :proc:`/proc/pid/status` instead of
-      :proc:`/proc/pid/smaps`.
-    - :field:`compressed` *(macOS)*: memory held in the in-RAM memory
-      compressor; not counted in :field:`rss`. A large value signals memory
-      pressure but has not yet triggered :term:`swapping <swap memory>`.
-    - :field:`hugetlb` *(Linux)*: resident memory backed by huge pages. Set to
-      0 on Linux < 4.4.
-    - :field:`phys_footprint` *(macOS)*: total physical memory impact including
+    - :field:`swap`: process memory currently in :term:`swap <swap memory>`.
+      Equivalent to ``memory_footprint().swap`` but cheaper, as it reads from
+      :proc:`/proc/pid/status` instead of :proc:`/proc/pid/smaps`.
+    - :field:`hugetlb`: resident memory backed by huge pages. Set to 0 on Linux
+      < 4.4.
+
+    macOS:
+
+    - :field:`phys_footprint`: total physical memory impact including
       compressed memory. What Xcode and ``footprint(1)`` report; prefer this
       over :field:`rss` macOS memory monitoring.
-    - :field:`virtual` *(Windows)*: true virtual address space size, including
+
+    Windows (see `PROCESS_MEMORY_COUNTERS_EX`_):
+
+    - :field:`virtual`: true virtual address space size, including
       reserved-but-uncommitted regions (unlike :field:`vms` in
       :meth:`memory_info`).
-    - :field:`peak_virtual` *(Windows)*: peak virtual address space size.
-    - :field:`paged_pool` *(Windows)*: kernel memory used for objects created
-      by this process (open file handles, registry keys, etc.) that the OS may
-      swap to disk under memory pressure.
-    - :field:`nonpaged_pool` *(Windows)*: kernel memory used for objects that
-      must stay in RAM at all times (I/O request packets, device driver
-      buffers, etc.). A large or growing value may indicate a driver memory
-      leak.
-    - :field:`peak_paged_pool` *(Windows)*: peak paged-pool usage.
-    - :field:`peak_nonpaged_pool` *(Windows)*: peak non-paged-pool usage.
-
-    For the full definitions of Windows fields see
-    `PROCESS_MEMORY_COUNTERS_EX`_.
+    - :field:`peak_virtual`: peak virtual address space size.
+    - :field:`paged_pool`: kernel memory used for objects created by this
+      process (open file handles, registry keys, etc.) that the OS may swap to
+      disk under memory pressure.
+    - :field:`nonpaged_pool`: kernel memory used for objects that must stay in
+      RAM at all times (I/O request packets, device driver buffers, etc.). A
+      large or growing value may indicate a driver memory leak.
+    - :field:`peak_paged_pool`: peak paged-pool usage.
+    - :field:`peak_nonpaged_pool`: peak non-paged-pool usage.
 
     .. versionadded:: 8.0.0
 

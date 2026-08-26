@@ -486,7 +486,6 @@ elif MACOS:
     class pmem_ex(NamedTuple):
         rss: int
         vms: int
-        wired: int
         phys_footprint: int
 
     # psutil.Process.memory_full_info()

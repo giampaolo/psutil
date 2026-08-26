@@ -278,10 +278,15 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // clang-format off
-    if (!pydict_add(dict, "wired", "K", (unsigned long long)ri.ri_wired_size)) goto error;
-    if (!pydict_add(dict, "phys_footprint", "K", (unsigned long long)ri.ri_phys_footprint)) goto error;
-    // clang-format on
+    if (!pydict_add(
+            dict,
+            "phys_footprint",
+            "K",
+            (unsigned long long)ri.ri_phys_footprint
+        ))
+    {
+        goto error;
+    }
 
     return dict;
 
