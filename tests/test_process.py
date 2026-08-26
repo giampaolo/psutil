@@ -148,6 +148,15 @@ class TestProcess(PsutilTestCase):
             psutil.Process().cpu_percent()
             assert m.called
 
+    @retry_on_failure
+    def test_cpu_percent_oneshot(self):
+        # oneshot() caches cpu_times(); cpu_percent still needs a fresh
+        # sample, see https://github.com/giampaolo/psutil/issues/2072
+        p = self.spawn_psproc([PYTHON_EXE, "-c", "while True: pass"])
+        with p.oneshot():
+            percent = p.cpu_percent(interval=0.2)
+        assert percent > 0.0
+
     def test_cpu_times(self):
         times = psutil.Process().cpu_times()
         assert times.user >= 0.0, times

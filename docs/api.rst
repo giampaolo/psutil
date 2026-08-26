@@ -1547,6 +1547,8 @@ Process class
       the returned value is *not* split evenly between all available CPUs
       (differently from :func:`psutil.cpu_percent`). To emulate Windows
       ``taskmgr.exe`` behavior: ``p.cpu_percent() / psutil.cpu_count()``.
+      :meth:`oneshot` does not cache these samples; each call still reads live
+      CPU times.
 
     .. seealso::
       - :ref:`faq_cpu_percent`
