@@ -56,7 +56,6 @@ elif psutil.BSD:
         'cpu_times',
         'gids',
         'io_counters',
-        'memory_footprint',
         'memory_info',
         'name',
         'num_ctx_switches',

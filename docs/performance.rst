@@ -150,7 +150,7 @@ macOS
    :meth:`~Process.ppid`, :meth:`~Process.status`, :meth:`~Process.terminal`,
    :meth:`~Process.uids`
 
-*Speedup: +1.9×*
+*Speedup: +1.6×*
 
 BSD
 """
@@ -163,7 +163,7 @@ BSD
    :meth:`~Process.ppid`, :meth:`~Process.status`, :meth:`~Process.terminal`,
    :meth:`~Process.uids`
 
-*Speedup: +2.0×*
+*Speedup: +2.7×*
 
 .. _perf-oneshot-bench:
 
