@@ -476,18 +476,20 @@ class TestProcess(PsutilTestCase):
     @skipif(not HAS_PROC_MEMORY_EXTRAS, reason="not supported")
     def test_memory_extras(self):
         p = psutil.Process()
+        info = p.memory_info()
         mem = p.memory_extras()
         self.check_proc_memory(mem)
-        total = psutil.virtual_memory().total
-        for name in mem._fields:
-            if name != "peak_footprint":
-                value = getattr(mem, name)
-                assert value <= total
-
-        if MACOS:
+        if LINUX:
+            assert mem.peak_rss >= info.rss
+            assert mem.peak_vms >= info.vms
+        elif MACOS:
             # peak_footprint is 0 on macOS < 10.13 (no RUSAGE_INFO_V4)
             if mem.peak_footprint != 0:
                 assert mem.peak_footprint >= mem.phys_footprint
+        elif WINDOWS:
+            assert mem.peak_virtual >= mem.virtual
+            assert mem.peak_paged_pool >= mem.paged_pool
+            assert mem.peak_nonpaged_pool >= mem.nonpaged_pool
 
     @skipif(not HAS_PROC_MEMORY_EXTRAS, reason="not supported")
     def test_memory_extras_fields_order(self):

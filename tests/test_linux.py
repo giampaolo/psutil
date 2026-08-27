@@ -2534,9 +2534,14 @@ class TestProcess(LinuxTestCase):
 
     def test_memory_extras(self):
         p = psutil.Process()
-        mem = p.memory_extras()
-        rss = p.memory_info().rss
-        assert rss == mem.rss_anon + mem.rss_file + mem.rss_shmem
+        with open(f"/proc/{p.pid}/status", "rb") as f:
+            data = f.read()
+        with mock.patch.object(
+            psutil._pslinux.Process, "_read_status_file", return_value=data
+        ):
+            mem = p.memory_extras()
+        vmrss = int(re.search(br"VmRSS:\s+(\d+)", data).group(1)) * 1024
+        assert mem.rss_anon + mem.rss_file + mem.rss_shmem == vmrss
 
     def test_rlimit_infinity_normalized(self):
         # Python 3.15 changed resource.prlimit() to return RLIM_INFINITY
