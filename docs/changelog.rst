@@ -51,7 +51,7 @@ Changelog
   bytes to a human-readable string (e.g. ``9.8K``).
 
 Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
-:gh:`2733`).
+:gh:`2733`, :gh:`2988`).
 
 - New :meth:`Process.memory_extras` method, returning extra platform-specific
   memory metrics on Linux, macOS and Windows. See
