@@ -1916,8 +1916,7 @@ class Process:
         _vmswap_re=re.compile(br"VmSwap:\s+(\d+)"),
         _hugetlb_re=re.compile(br"HugetlbPages:\s+(\d+)"),
     ):
-        # Read /proc/{pid}/status which provides peak RSS/VMS and a
-        # cheaper way to get swap (no smaps parsing needed).
+        # Read /proc/{pid}/status.
         # RssAnon/RssFile/RssShmem were added in Linux 4.5;
         # VmSwap in 2.6.34; HugetlbPages in 4.4.
         data = self._read_status_file()
@@ -1932,7 +1931,7 @@ class Process:
             rss_anon=parse(_rssanon_re),
             rss_file=parse(_rssfile_re),
             rss_shmem=parse(_rssshmem_re),
-            swap=parse(_vmswap_re),
+            swap_anon=parse(_vmswap_re),
             hugetlb=parse(_hugetlb_re),
         )
 

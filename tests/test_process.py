@@ -499,7 +499,7 @@ class TestProcess(PsutilTestCase):
                 "rss_anon",
                 "rss_file",
                 "rss_shmem",
-                "swap",
+                "swap_anon",
                 "hugetlb",
             )
         elif MACOS:
@@ -604,12 +604,6 @@ class TestProcess(PsutilTestCase):
             p.memory_percent(memtype="?!?")
         if HAS_PROC_MEMORY_FOOTPRINT:
             assert p.memory_percent(memtype='uss') >= 0
-
-        if LINUX:
-            # "swap" must come from extras, not the expensive footprint
-            with mock.patch.object(psutil.Process, "memory_footprint") as m:
-                assert p.memory_percent(memtype="swap") >= 0
-            assert not m.called
 
     def test_page_faults(self):
         p = psutil.Process()

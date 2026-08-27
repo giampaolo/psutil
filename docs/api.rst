@@ -1696,7 +1696,7 @@ Process class
     +-------------+----------------+--------------------+
     | rss_shmem   |                | peak_paged_pool    |
     +-------------+----------------+--------------------+
-    | swap        |                | peak_nonpaged_pool |
+    | swap_anon   |                | peak_nonpaged_pool |
     +-------------+----------------+--------------------+
     | hugetlb     |                |                    |
     +-------------+----------------+--------------------+
@@ -1713,9 +1713,10 @@ Process class
     - :field:`rss_shmem`: resident :term:`shared memory` (``tmpfs``,
       ``shm_open``). ``rss_anon + rss_file + rss_shmem`` equals :field:`rss`.
       Set to 0 on Linux < 4.5.
-    - :field:`swap`: process memory currently in :term:`swap <swap memory>`.
-      Equivalent to ``memory_footprint().swap`` but cheaper, as it reads from
-      :proc:`/proc/pid/status` instead of :proc:`/proc/pid/smaps`.
+    - :field:`swap_anon`: :term:`anonymous memory` currently in
+      :term:`swap <swap memory>`. Cheaper than :meth:`memory_footprint`'s
+      :field:`swap` (it reads :proc:`/proc/pid/status` instead of smaps) but
+      does not count shmem swap. Set to 0 on Linux < 2.6.34.
     - :field:`hugetlb`: resident memory backed by huge pages. Set to 0 on Linux
       < 4.4.
 

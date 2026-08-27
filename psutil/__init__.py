@@ -1398,8 +1398,6 @@ class Process:
             )
             raise ValueError(msg)
 
-        # ordered cheapest first; Linux "swap" is in both extras
-        # and footprint
         if memtype in _ntp.pmem._fields:
             fun = self.memory_info
         elif (
