@@ -9,64 +9,67 @@
 $ make print_api_speed
 SYSTEM APIS                NUM CALLS      SECONDS
 -------------------------------------------------
-disk_usage                       300      0.00157
-cpu_count                        300      0.00255
-pid_exists                       300      0.00792
-cpu_times                        300      0.01044
-boot_time                        300      0.01136
-cpu_percent                      300      0.01290
-cpu_times_percent                300      0.01515
-virtual_memory                   300      0.01594
-users                            300      0.01964
-net_io_counters                  300      0.02027
-cpu_stats                        300      0.02034
-net_if_addrs                     300      0.02962
-swap_memory                      300      0.03209
-sensors_battery                  300      0.05186
-pids                             300      0.07954
-net_if_stats                     300      0.09321
-disk_io_counters                 300      0.09406
-cpu_count (cores)                300      0.10293
-disk_partitions                  300      0.10345
-cpu_freq                         300      0.20817
-sensors_fans                     300      0.63476
-sensors_temperatures             231      2.00039
-process_iter (all)               171      2.01300
-net_connections                   97      2.00206
+getloadavg                       300      0.00013
+heap_info                        300      0.00028
+heap_trim                        300      0.00039
+cpu_count                        300      0.00061
+disk_usage                       300      0.00066
+pid_exists                       300      0.00235
+users                            300      0.00455
+net_io_counters                  300      0.00550
+cpu_times                        300      0.00667
+boot_time                        300      0.00700
+cpu_percent                      300      0.00766
+net_if_stats                     300      0.00783
+virtual_memory                   300      0.00834
+cpu_times_percent                300      0.00885
+net_if_addrs                     300      0.01157
+cpu_stats                        300      0.01208
+swap_memory                      300      0.01558
+disk_partitions                  300      0.01664
+disk_io_counters                 300      0.02204
+sensors_battery                  300      0.02995
+pids                             300      0.05295
+cpu_count (cores)                300      0.06943
+process_iter (all)               300      0.08486
+cpu_freq                         300      0.18987
+sensors_fans                     300      0.74027
+net_connections                  161      2.00690
+sensors_temperatures             100      2.00742
 
 PROCESS APIS               NUM CALLS      SECONDS
 -------------------------------------------------
-create_time                      300      0.00009
-exe                              300      0.00015
-nice                             300      0.00057
-ionice                           300      0.00091
-cpu_affinity                     300      0.00091
-cwd                              300      0.00151
-num_fds                          300      0.00391
-memory_info                      300      0.00597
-memory_percent                   300      0.00648
-memory_extras                    300      0.00701
-io_counters                      300      0.00707
-name                             300      0.00894
-status                           300      0.00900
-ppid                             300      0.00906
-num_threads                      300      0.00932
-cpu_num                          300      0.00933
-num_ctx_switches                 300      0.00943
-uids                             300      0.00979
-gids                             300      0.01002
-cpu_times                        300      0.01008
-cmdline                          300      0.01009
-terminal                         300      0.01059
-is_running                       300      0.01063
-threads                          300      0.01209
-connections                      300      0.01276
-cpu_percent                      300      0.01463
-open_files                       300      0.01630
-username                         300      0.01655
-environ                          300      0.02250
-memory_foorprint                 300      0.07066
-memory_maps                      300      0.74281
+exe                              300      0.00017
+create_time                      300      0.00020
+nice                             300      0.00025
+ionice                           300      0.00041
+cwd                              300      0.00052
+cpu_affinity                     300      0.00059
+num_fds                          300      0.00097
+memory_info                      300      0.00201
+cmdline                          300      0.00222
+io_counters                      300      0.00226
+cpu_num                          300      0.00242
+status                           300      0.00242
+terminal                         300      0.00243
+name                             300      0.00249
+page_faults                      300      0.00258
+memory_percent                   300      0.00259
+cpu_times                        300      0.00272
+threads                          300      0.00278
+num_threads                      300      0.00278
+gids                             300      0.00296
+num_ctx_switches                 300      0.00299
+uids                             300      0.00311
+cpu_percent                      300      0.00346
+net_connections                  300      0.00373
+open_files                       300      0.00378
+memory_extras                    300      0.00398
+username                         300      0.00500
+ppid                             300      0.00556
+environ                          300      0.01176
+memory_footprint                 300      0.02218
+memory_maps                      300      0.27158
 """
 
 import argparse
