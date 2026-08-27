@@ -48,6 +48,7 @@ from . import HAS_PROC_CPU_NUM
 from . import HAS_PROC_ENVIRON
 from . import HAS_PROC_IO_COUNTERS
 from . import HAS_PROC_IONICE
+from . import HAS_PROC_MEMORY_EXTRAS
 from . import HAS_PROC_MEMORY_FOOTPRINT
 from . import HAS_PROC_MEMORY_MAPS
 from . import HAS_PROC_OPEN_FILES_PATH
@@ -472,44 +473,41 @@ class TestProcess(PsutilTestCase):
         assert percent2 > percent1
         del memarr
 
-    def test_memory_info_ex(self):
+    @skipif(not HAS_PROC_MEMORY_EXTRAS, reason="not supported")
+    def test_memory_extras(self):
         p = psutil.Process()
-        mem = p.memory_info_ex()
+        info = p.memory_info()
+        mem = p.memory_extras()
         self.check_proc_memory(mem)
-        total = psutil.virtual_memory().total
-        for name in mem._fields:
-            if name not in {"vms", "peak_footprint"}:
-                value = getattr(mem, name)
-                assert value <= total
-
-        if MACOS:
+        if LINUX:
+            assert mem.peak_rss >= info.rss
+            assert mem.peak_vms >= info.vms
+        elif MACOS:
             # peak_footprint is 0 on macOS < 10.13 (no RUSAGE_INFO_V4)
             if mem.peak_footprint != 0:
                 assert mem.peak_footprint >= mem.phys_footprint
+        elif WINDOWS:
+            assert mem.peak_virtual >= mem.virtual
+            assert mem.peak_paged_pool >= mem.paged_pool
+            assert mem.peak_nonpaged_pool >= mem.nonpaged_pool
 
-    def test_memory_info_ex_fields_order(self):
-        mem = psutil.Process().memory_info_ex()
-        common = ("rss", "vms")
-        assert mem._fields[:2] == common
+    @skipif(not HAS_PROC_MEMORY_EXTRAS, reason="not supported")
+    def test_memory_extras_fields_order(self):
+        mem = psutil.Process().memory_extras()
         if LINUX:
-            assert mem._fields[2:] == (
-                "shared",
-                "text",
-                "data",
+            assert mem._fields == (
                 "peak_rss",
                 "peak_vms",
                 "rss_anon",
                 "rss_file",
                 "rss_shmem",
-                "swap",
+                "swap_anon",
                 "hugetlb",
             )
         elif MACOS:
-            assert mem._fields[2:] == ("phys_footprint", "peak_footprint")
+            assert mem._fields == ("phys_footprint", "peak_footprint")
         elif WINDOWS:
-            assert mem._fields[2:] == (
-                "peak_rss",
-                "peak_vms",
+            assert mem._fields == (
                 "virtual",
                 "peak_virtual",
                 "paged_pool",
@@ -517,8 +515,6 @@ class TestProcess(PsutilTestCase):
                 "peak_paged_pool",
                 "peak_nonpaged_pool",
             )
-        else:
-            assert mem._fields == psutil.Process().memory_info_ex()._fields
 
     @skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
     def test_memory_footprint(self):
@@ -605,11 +601,11 @@ class TestProcess(PsutilTestCase):
 
     def test_memory_percent(self):
         p = psutil.Process()
-        p.memory_percent()
+        assert p.memory_percent() >= 0
         with pytest.raises(ValueError):
             p.memory_percent(memtype="?!?")
-        if LINUX or MACOS or WINDOWS:
-            p.memory_percent(memtype='uss')
+        if HAS_PROC_MEMORY_FOOTPRINT:
+            assert p.memory_percent(memtype='uss') >= 0
 
     def test_page_faults(self):
         p = psutil.Process()

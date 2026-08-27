@@ -1906,7 +1906,7 @@ class Process:
         return ntp.pmem(rss, vms, shared, text, data)
 
     @wrap_exceptions
-    def memory_info_ex(
+    def memory_extras(
         self,
         _vmpeak_re=re.compile(br"VmPeak:\s+(\d+)"),
         _vmhwm_re=re.compile(br"VmHWM:\s+(\d+)"),
@@ -1916,8 +1916,7 @@ class Process:
         _vmswap_re=re.compile(br"VmSwap:\s+(\d+)"),
         _hugetlb_re=re.compile(br"HugetlbPages:\s+(\d+)"),
     ):
-        # Read /proc/{pid}/status which provides peak RSS/VMS and a
-        # cheaper way to get swap (no smaps parsing needed).
+        # Read /proc/{pid}/status.
         # RssAnon/RssFile/RssShmem were added in Linux 4.5;
         # VmSwap in 2.6.34; HugetlbPages in 4.4.
         data = self._read_status_file()
@@ -1926,15 +1925,15 @@ class Process:
             m = regex.search(data)
             return int(m.group(1)) * 1024 if m else 0
 
-        return {
-            "peak_rss": parse(_vmhwm_re),
-            "peak_vms": parse(_vmpeak_re),
-            "rss_anon": parse(_rssanon_re),
-            "rss_file": parse(_rssfile_re),
-            "rss_shmem": parse(_rssshmem_re),
-            "swap": parse(_vmswap_re),
-            "hugetlb": parse(_hugetlb_re),
-        }
+        return ntp.pmem_extras(
+            peak_rss=parse(_vmhwm_re),
+            peak_vms=parse(_vmpeak_re),
+            rss_anon=parse(_rssanon_re),
+            rss_file=parse(_rssfile_re),
+            rss_shmem=parse(_rssshmem_re),
+            swap_anon=parse(_vmswap_re),
+            hugetlb=parse(_hugetlb_re),
+        )
 
     if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
 

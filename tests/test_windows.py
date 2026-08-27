@@ -682,7 +682,7 @@ class TestProcess(WindowsTestCase):
         ):
             assert ps.peak_pagefile == ps.peak_vms
 
-        # fields moved to memory_info_ex()
+        # fields moved to memory_extras()
         with pytest.warns(
             DeprecationWarning, match="paged_pool is deprecated"
         ):
@@ -710,9 +710,9 @@ class TestProcess(WindowsTestCase):
         with pytest.raises(AttributeError, match="foo"):
             ps.foo  # noqa: B018
 
-    def test_memory_info_ex(self):
+    def test_memory_extras(self):
         win = win32process.GetProcessMemoryInfo(self.OpenProcess(self.pid))
-        ps = psutil.Process(self.pid).memory_info_ex()
+        ps = psutil.Process(self.pid).memory_extras()
         assert ps.paged_pool == win["QuotaPagedPoolUsage"]
         assert ps.nonpaged_pool == win["QuotaNonPagedPoolUsage"]
         assert ps.peak_paged_pool == win["QuotaPeakPagedPoolUsage"]

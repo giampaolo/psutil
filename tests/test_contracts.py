@@ -335,6 +335,10 @@ class TestAvailProcessAPIs(PsutilTestCase):
         hasit = hasattr(psutil.Process, "memory_maps")
         assert hasit == (not (OPENBSD or NETBSD or AIX or MACOS))
 
+    def test_memory_extras(self):
+        hasit = hasattr(psutil.Process, "memory_extras")
+        assert hasit == (LINUX or MACOS or WINDOWS)
+
     def test_memory_footprint(self):
         hasit = hasattr(psutil.Process, "memory_footprint")
         assert hasit == (LINUX or MACOS or WINDOWS)

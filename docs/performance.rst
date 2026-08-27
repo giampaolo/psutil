@@ -100,28 +100,34 @@ list) share the same underlying system call.
 The *speedup* represents the estimated gain when all listed methods are called
 together (best case), as measured by :src:`scripts/internal/bench_oneshot.py`.
 
+Additionally, some methods are computed from other methods, so on every
+platform :meth:`Process.oneshot` also speeds up :meth:`~Process.cpu_percent`
+(from :meth:`~Process.cpu_times`), :meth:`~Process.memory_percent` (from
+:meth:`~Process.memory_info`), :meth:`~Process.parent` and
+:meth:`~Process.parents` (from :meth:`~Process.ppid`) and, on POSIX,
+:meth:`~Process.username` (from :meth:`~Process.uids`).
+
 Linux
 """""
 
-*   :meth:`~Process.cpu_num`, :meth:`~Process.cpu_percent`,
-    :meth:`~Process.cpu_times`, :meth:`~Process.create_time`,
-    :meth:`~Process.name`, :meth:`~Process.page_faults`, :meth:`~Process.ppid`,
+*   :meth:`~Process.cpu_num`, :meth:`~Process.cpu_times`,
+    :meth:`~Process.create_time`, :meth:`~Process.name`,
+    :meth:`~Process.page_faults`, :meth:`~Process.ppid`,
     :meth:`~Process.status`, :meth:`~Process.terminal`
 
-*   :meth:`~Process.gids`, :meth:`~Process.memory_info_ex`,
+*   :meth:`~Process.gids`, :meth:`~Process.memory_extras`,
     :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_threads`,
-    :meth:`~Process.uids`, :meth:`~Process.username`
+    :meth:`~Process.uids`
 
 *   :meth:`~Process.memory_footprint`, :meth:`~Process.memory_maps`
 
-*Speedup: +2.6×*
+*Speedup: +1.7×*
 
 Windows
 """""""
 
-*  :meth:`~Process.cpu_percent`, :meth:`~Process.cpu_times`,
-   :meth:`~Process.io_counters`, :meth:`~Process.memory_info`,
-   :meth:`~Process.memory_info_ex`, :meth:`~Process.memory_percent`,
+*  :meth:`~Process.cpu_times`, :meth:`~Process.io_counters`,
+   :meth:`~Process.memory_info`, :meth:`~Process.memory_extras`,
    :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_handles`,
    :meth:`~Process.num_threads`, :meth:`~Process.page_faults`,
    :meth:`~Process.status`
@@ -136,30 +142,28 @@ it raises :exc:`AccessDenied`. The second figure is for such processes.
 macOS
 """""
 
-*  :meth:`~Process.cpu_percent`, :meth:`~Process.cpu_times`,
-   :meth:`~Process.memory_info`, :meth:`~Process.memory_percent`,
+*  :meth:`~Process.cpu_times`, :meth:`~Process.memory_info`,
    :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_threads`,
    :meth:`~Process.page_faults`
 
 *  :meth:`~Process.create_time`, :meth:`~Process.gids`, :meth:`~Process.name`,
    :meth:`~Process.ppid`, :meth:`~Process.status`, :meth:`~Process.terminal`,
-   :meth:`~Process.uids`, :meth:`~Process.username`
+   :meth:`~Process.uids`
 
-*Speedup: +1.9×*
+*Speedup: +1.6×*
 
 BSD
 """
 
-*  :meth:`~Process.cpu_num` , :meth:`~Process.cpu_percent`,
-   :meth:`~Process.cpu_times`, :meth:`~Process.create_time`,
-   :meth:`~Process.gids`, :meth:`~Process.io_counters`,
-   :meth:`~Process.memory_info`, :meth:`~Process.memory_percent`,
+*  :meth:`~Process.cpu_num`, :meth:`~Process.cpu_times`,
+   :meth:`~Process.create_time`, :meth:`~Process.gids`,
+   :meth:`~Process.io_counters`, :meth:`~Process.memory_info`,
    :meth:`~Process.name`, :meth:`~Process.nice`,
    :meth:`~Process.num_ctx_switches`, :meth:`~Process.page_faults`,
    :meth:`~Process.ppid`, :meth:`~Process.status`, :meth:`~Process.terminal`,
-   :meth:`~Process.uids`, :meth:`~Process.username`
+   :meth:`~Process.uids`
 
-*Speedup: +2.0×*
+*Speedup: +2.7×*
 
 .. _perf-oneshot-bench:
 
@@ -179,8 +183,8 @@ on Linux:
     cpu_percent
     cpu_times
     gids
+    memory_extras
     memory_info
-    memory_info_ex
     memory_percent
     name
     num_ctx_switches
@@ -193,9 +197,9 @@ on Linux:
     uids
     username
 
-  regular:  2.766 secs
-  oneshot:  1.537 secs
-  speedup:  +1.80x
+  regular:  2.600 secs
+  oneshot:  1.499 secs
+  speedup:  +1.73x
 
 .. _perf-api-speed:
 
@@ -212,63 +216,63 @@ Linux:
   SYSTEM APIS                NUM CALLS      SECONDS
   -------------------------------------------------
   getloadavg                       300      0.00013
-  heap_trim                        300      0.00027
   heap_info                        300      0.00028
-  cpu_count                        300      0.00066
-  disk_usage                       300      0.00071
-  pid_exists                       300      0.00249
-  users                            300      0.00394
-  cpu_times                        300      0.00647
-  virtual_memory                   300      0.00648
-  boot_time                        300      0.00727
-  cpu_percent                      300      0.00745
-  net_io_counters                  300      0.00754
-  cpu_times_percent                300      0.00870
-  net_if_addrs                     300      0.01156
-  cpu_stats                        300      0.01195
-  swap_memory                      300      0.01292
-  net_if_stats                     300      0.01360
-  disk_partitions                  300      0.01696
-  disk_io_counters                 300      0.02583
-  sensors_battery                  300      0.03103
-  pids                             300      0.04896
-  cpu_count (cores)                300      0.07208
-  process_iter (all)               300      0.07900
-  cpu_freq                         300      0.15635
-  sensors_fans                     300      0.75810
-  net_connections                  224      2.00111
-  sensors_temperatures              81      2.00266
+  heap_trim                        300      0.00039
+  cpu_count                        300      0.00061
+  disk_usage                       300      0.00066
+  pid_exists                       300      0.00235
+  users                            300      0.00455
+  net_io_counters                  300      0.00550
+  cpu_times                        300      0.00667
+  boot_time                        300      0.00700
+  cpu_percent                      300      0.00766
+  net_if_stats                     300      0.00783
+  virtual_memory                   300      0.00834
+  cpu_times_percent                300      0.00885
+  net_if_addrs                     300      0.01157
+  cpu_stats                        300      0.01208
+  swap_memory                      300      0.01558
+  disk_partitions                  300      0.01664
+  disk_io_counters                 300      0.02204
+  sensors_battery                  300      0.02995
+  pids                             300      0.05295
+  cpu_count (cores)                300      0.06943
+  process_iter (all)               300      0.08486
+  cpu_freq                         300      0.18987
+  sensors_fans                     300      0.74027
+  net_connections                  161      2.00690
+  sensors_temperatures             100      2.00742
 
   PROCESS APIS               NUM CALLS      SECONDS
   -------------------------------------------------
-  create_time                      300      0.00013
-  exe                              300      0.00016
-  nice                             300      0.00024
-  ionice                           300      0.00039
+  exe                              300      0.00017
+  create_time                      300      0.00020
+  nice                             300      0.00025
+  ionice                           300      0.00041
   cwd                              300      0.00052
-  cpu_affinity                     300      0.00057
-  num_fds                          300      0.00100
-  memory_info                      300      0.00208
-  io_counters                      300      0.00229
-  cmdline                          300      0.00232
-  cpu_num                          300      0.00254
-  terminal                         300      0.00255
-  status                           300      0.00258
-  page_faults                      300      0.00259
-  name                             300      0.00261
-  memory_percent                   300      0.00265
-  cpu_times                        300      0.00278
-  threads                          300      0.00300
-  gids                             300      0.00304
-  num_threads                      300      0.00305
-  num_ctx_switches                 300      0.00308
-  uids                             300      0.00321
-  cpu_percent                      300      0.00372
-  net_connections                  300      0.00376
-  open_files                       300      0.00453
-  username                         300      0.00505
-  ppid                             300      0.00554
-  memory_info_ex                   300      0.00651
-  environ                          300      0.01013
-  memory_footprint                 300      0.02241
-  memory_maps                      300      0.30282
+  cpu_affinity                     300      0.00059
+  num_fds                          300      0.00097
+  memory_info                      300      0.00201
+  cmdline                          300      0.00222
+  io_counters                      300      0.00226
+  cpu_num                          300      0.00242
+  status                           300      0.00242
+  terminal                         300      0.00243
+  name                             300      0.00249
+  page_faults                      300      0.00258
+  memory_percent                   300      0.00259
+  cpu_times                        300      0.00272
+  threads                          300      0.00278
+  num_threads                      300      0.00278
+  gids                             300      0.00296
+  num_ctx_switches                 300      0.00299
+  uids                             300      0.00311
+  cpu_percent                      300      0.00346
+  net_connections                  300      0.00373
+  open_files                       300      0.00378
+  memory_extras                    300      0.00398
+  username                         300      0.00500
+  ppid                             300      0.00556
+  environ                          300      0.01176
+  memory_footprint                 300      0.02218
+  memory_maps                      300      0.27158

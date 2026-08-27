@@ -266,7 +266,7 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 
 
 PyObject *
-psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
+psutil_proc_memory_extras(PyObject *self, PyObject *args) {
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 1090
     // proc_pid_rusage() is weak-linked below 10.9: calling it would
     // jump to NULL instead of failing.

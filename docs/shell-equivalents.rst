@@ -449,7 +449,7 @@ Memory
      - same
      - same
      -
-   * - :meth:`p.memory_info_ex() <Process.memory_info_ex>`
+   * - :meth:`p.memory_extras() <Process.memory_extras>`
      - ``cat /proc/pid/status``
      -
      -

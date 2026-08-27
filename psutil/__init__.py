@@ -84,7 +84,7 @@ if _TYPE_CHECKING:
     from ._ntuples import pio
     from ._ntuples import pionice
     from ._ntuples import pmem
-    from ._ntuples import pmem_ex
+    from ._ntuples import pmem_extras
     from ._ntuples import pmmap_ext
     from ._ntuples import pmmap_grouped
     from ._ntuples import popenfile
@@ -1317,21 +1317,17 @@ class Process:
         """
         return self._proc.memory_info()
 
-    @_use_prefetch
-    @memoize_when_activated
-    def memory_info_ex(self) -> pmem_ex:
-        """Return a named tuple extending `memory_info()` with extra
-        metrics.
+    # Linux, macOS, Windows
+    if hasattr(_psplatform.Process, "memory_extras"):
 
-        All numbers are expressed in bytes.
-        """
-        base = self.memory_info()
-        if self._is_ad_value(base):
-            return base
-        if hasattr(self._proc, "memory_info_ex"):
-            extras = self._proc.memory_info_ex()
-            return _ntp.pmem_ex(**base._asdict(), **extras)
-        return base
+        @_use_prefetch
+        def memory_extras(self) -> pmem_extras:
+            """Return a named tuple with extra platform-specific memory
+            metrics, complementing `memory_info()`.
+
+            All numbers are expressed in bytes.
+            """
+            return self._proc.memory_extras()
 
     # Linux, macOS, Windows
     if hasattr(_psplatform.Process, "memory_footprint"):
@@ -1349,7 +1345,7 @@ class Process:
 
             It does so by passing through the whole process address. As
             such it usually requires higher user privileges than
-            `memory_info()` or `memory_info_ex()` and is considerably
+            `memory_info()` or `memory_extras()` and is considerably
             slower.
             """
             return self._proc.memory_footprint()
@@ -1381,16 +1377,15 @@ class Process:
         calculate process memory utilization as a percentage.
 
         *memtype* argument is a string that dictates what type of
-        process memory you want to compare against (defaults to "rss").
-        The list of available strings can be obtained like this:
-
-        >>> psutil.Process().memory_info()._fields
-        ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
+        process memory you want to compare against (defaults to
+        "rss"). It can be any field of `memory_info()`,
+        `memory_extras()` or `memory_footprint()`. The divisor is
+        always total physical memory, regardless of *memtype*.
         """
         valid_types = list(_ntp.pmem._fields)
-        if hasattr(_ntp, "pmem_ex"):
+        if hasattr(_ntp, "pmem_extras"):
             valid_types += [
-                f for f in _ntp.pmem_ex._fields if f not in valid_types
+                f for f in _ntp.pmem_extras._fields if f not in valid_types
             ]
         if hasattr(_ntp, "pfootprint"):
             valid_types += [
@@ -1402,14 +1397,17 @@ class Process:
                 f" {tuple(valid_types)!r}"
             )
             raise ValueError(msg)
+
         if memtype in _ntp.pmem._fields:
             fun = self.memory_info
         elif (
-            hasattr(_ntp, "pfootprint") and memtype in _ntp.pfootprint._fields
+            hasattr(_ntp, "pmem_extras")
+            and memtype in _ntp.pmem_extras._fields
         ):
-            fun = self.memory_footprint
+            fun = self.memory_extras
         else:
-            fun = self.memory_info_ex
+            fun = self.memory_footprint
+
         metrics = fun()
         if self._is_ad_value(metrics):
             return metrics

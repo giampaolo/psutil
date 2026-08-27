@@ -51,12 +51,11 @@ Changelog
   bytes to a human-readable string (e.g. ``9.8K``).
 
 Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
-:gh:`2733`).
+:gh:`2733`, :gh:`2988`).
 
-- New :meth:`Process.memory_info_ex` method (not to be confused with the old
-  method with the same name, deprecated in 4.0 and removed in 7.0), which
-  extends :meth:`Process.memory_info` with platform-specific metrics on Linux,
-  macOS and Windows. See :ref:`migration guide <migration-8.0-memory-info-ex>`.
+- New :meth:`Process.memory_extras` method, returning extra platform-specific
+  memory metrics on Linux, macOS and Windows. See
+  :ref:`migration guide <migration-8.0-memory-extras>`.
 
 - New :meth:`Process.memory_footprint` method, which returns :field:`uss`,
   :field:`pss` and :field:`swap` metrics (what :meth:`Process.memory_full_info`
@@ -725,7 +724,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
 **API changes**
 
 - :gh:`2490`, :label:`breaking`: remove long deprecated
-  :meth:`Process.memory_info_ex` (deprecated since 4.0.0). Use
+  ``Process.memory_info_ex()`` (deprecated since 4.0.0). Use
   :meth:`Process.memory_full_info` instead.
 
 **Dropped support**
@@ -1557,7 +1556,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
 - :gh:`1429`, [Windows]: ``SE DEBUG`` was not properly set for current process.
   It is now, and it should result in less :exc:`AccessDenied` exceptions for
   low PID processes.
-- :gh:`1432`, [Windows]: :meth:`Process.memory_info_ex`'s USS memory is
+- :gh:`1432`, [Windows]: ``Process.memory_info_ex()``'s USS memory is
   miscalculated because we're not using the actual system ``PAGESIZE``.
 - :gh:`1439`, [NetBSD]: :meth:`Process.connections` may return incomplete
   results if using :meth:`Process.oneshot`.
@@ -1785,8 +1784,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
 
 **API changes**
 
-- :gh:`1188`: :meth:`Process.memory_info_ex` now warns with
-  :exc:`FutureWarning` instead of :exc:`DeprecationWarning`.
+- :gh:`1188`: ``Process.memory_info_ex()`` now warns with :exc:`FutureWarning`
+  instead of :exc:`DeprecationWarning`.
 
 **Performance**
 
@@ -2237,7 +2236,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   :exc:`RuntimeError` if attempting to query a 64bit process with a 32bit
   Python. "Null" values are returned as a fallback.
 - :gh:`858`: :meth:`Process.as_dict` should not call
-  :meth:`Process.memory_info_ex` because it's deprecated.
+  ``Process.memory_info_ex()`` because it's deprecated.
 - :gh:`863`, [Windows]: :meth:`Process.memory_maps` truncates addresses above
   32 bits.
 - :gh:`866`, [Windows]: :func:`win_service_iter` and services in general are
@@ -3148,7 +3147,7 @@ cases accessing the old names will work but it will cause a
 
 - :gh:`216`, [POSIX]: add :meth:`Process.connections` UNIX sockets support.
 - :gh:`222`, [macOS]: add support for :meth:`Process.cwd`.
-- :gh:`261`: add :meth:`Process.memory_info_ex`.
+- :gh:`261`: add ``Process.memory_info_ex()``.
 - :gh:`302`: add :meth:`Process.num_ctx_switches`.
 - :gh:`311`: add :func:`virtual_memory` and :func:`swap_memory`. Old
   memory-related functions are deprecated. New example scripts:

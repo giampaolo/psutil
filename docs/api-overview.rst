@@ -398,19 +398,14 @@ Memory
     >>> p.memory_info()
     pmem(rss=3164160, vms=4410163, shared=897433, text=302694, data=2422374)
     >>>
-    >>> p.memory_info_ex()
-    pmem_ex(rss=3164160,
-            vms=4410163,
-            shared=897433,
-            text=302694,
-            data=2422374,
-            peak_rss=4172190,
-            peak_vms=6399001,
-            rss_anon=2266726,
-            rss_file=897433,
-            rss_shmem=0,
-            swap=0,
-            hugetlb=0)
+    >>> p.memory_extras()
+    pmem_extras(peak_rss=4172190,
+                peak_vms=6399001,
+                rss_anon=2266726,
+                rss_file=897433,
+                rss_shmem=0,
+                swap_anon=0,
+                hugetlb=0)
     >>>
     >>> p.memory_percent()
     0.7823

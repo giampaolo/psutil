@@ -391,10 +391,16 @@ class TestProcess(PosixTestCase):
         assert pf_after.minor > pf_before.minor
 
     def test_memory_peak_rss(self):
-        mem = psutil.Process().memory_info_ex()
+        p = psutil.Process()
+        if LINUX:
+            rss = p.memory_info().rss
+            mem = p.memory_extras()
+        else:
+            mem = p.memory_info()
+            rss = mem.rss
         if not hasattr(mem, "peak_rss"):
             return pytest.skip("not supported")
-        assert mem.peak_rss >= mem.rss
+        assert mem.peak_rss >= rss
         ru = resource.getrusage(resource.RUSAGE_SELF)
         if LINUX:
             # ru_maxrss is computed from the per-CPU RSS counters, which
