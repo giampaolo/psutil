@@ -535,7 +535,9 @@ class TestProcess(PsutilTestCase):
         # fields should be memory_info() + memory_footprint() (if avail)
         expected = p.memory_info()._fields
         if HAS_PROC_MEMORY_FOOTPRINT:
-            expected += p.memory_footprint()._fields
+            expected += tuple(
+                x for x in p.memory_footprint()._fields if x not in expected
+            )
         assert mem._fields == expected
 
     @skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")

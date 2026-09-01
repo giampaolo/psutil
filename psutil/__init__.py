@@ -1335,7 +1335,7 @@ class Process:
         @_use_prefetch
         def memory_footprint(self) -> pfootprint:
             """Return a named tuple with USS memory, and on Linux also
-            PSS and swap.
+            PSS, swap and shared memory.
 
             These values provide a more accurate representation of
             actual process memory usage.
@@ -1353,7 +1353,8 @@ class Process:
     # DEPRECATED
     def memory_full_info(self) -> pfullmem:
         """Return the same information as `memory_info()` plus
-        `memory_footprint()` in a single named tuple.
+        `memory_footprint()`'s `uss`, `pss` and `swap` fields in a
+        single named tuple.
 
         DEPRECATED in 8.0.0. Use `memory_footprint()` instead.
         """
@@ -1368,7 +1369,8 @@ class Process:
             fp = self.memory_footprint()
             if self._is_ad_value(fp):
                 return fp
-            return _ntp.pfullmem(*basic_mem + fp)
+            names = _ntp.pfullmem._fields[len(basic_mem) :]
+            return _ntp.pfullmem(*basic_mem, *[getattr(fp, x) for x in names])
         return _ntp.pfullmem(*basic_mem)
 
     @_use_prefetch

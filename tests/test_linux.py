@@ -2149,7 +2149,9 @@ class TestProcess(LinuxTestCase):
     @retry_on_failure
     def test_parse_smaps_vs_memory_maps(self):
         sproc = self.spawn_subproc()
-        uss, pss, swap = psutil._pslinux.Process(sproc.pid)._parse_smaps()
+        uss, pss, swap, shared = psutil._pslinux.Process(
+            sproc.pid
+        )._parse_smaps()
         maps = psutil.Process(sproc.pid).memory_maps(grouped=False)
         assert (
             abs(uss - sum(x.private_dirty + x.private_clean for x in maps))
@@ -2157,6 +2159,10 @@ class TestProcess(LinuxTestCase):
         )
         assert abs(pss - sum(x.pss for x in maps)) < 4096
         assert abs(swap - sum(x.swap for x in maps)) < 4096
+        assert (
+            abs(shared - sum(x.shared_dirty + x.shared_clean for x in maps))
+            < 4096
+        )
 
     def test_parse_smaps_mocked(self):
         # See: https://github.com/giampaolo/psutil/issues/1222
@@ -2185,11 +2191,12 @@ class TestProcess(LinuxTestCase):
             """).encode()
         with mock_open_content({f"/proc/{os.getpid()}/smaps": content}) as m:
             p = psutil._pslinux.Process(os.getpid())
-            uss, pss, swap = p._parse_smaps()
+            uss, pss, swap, shared = p._parse_smaps()
             assert m.called
             assert uss == (6 + 7 + 14) * 1024
             assert pss == 3 * 1024
             assert swap == 15 * 1024
+            assert shared == (4 + 5 + 13) * 1024
 
     def test_open_files_mode(self):
         def get_test_file(fname):
@@ -2542,6 +2549,30 @@ class TestProcess(LinuxTestCase):
             mem = p.memory_extras()
         vmrss = int(re.search(br"VmRSS:\s+(\d+)", data).group(1)) * 1024
         assert mem.rss_anon + mem.rss_file + mem.rss_shmem == vmrss
+
+    def test_parse_smaps_rollup_mocked(self):
+        data = (
+            b"Rss:                 100 kB\n"
+            b"Pss:                  50 kB\n"
+            b"Shared_Clean:         30 kB\n"
+            b"Shared_Dirty:         40 kB\n"
+            b"Private_Clean:        20 kB\n"
+            b"Private_Dirty:        10 kB\n"
+            b"Swap:                  5 kB\n"
+            b"SwapPss:               3 kB\n"
+            b"Shared_Hugetlb:        2 kB\n"
+            b"Private_Hugetlb:       1 kB\n"
+        )
+        p = psutil.Process()
+        with mock.patch(
+            "psutil._pslinux.open_binary", return_value=io.BytesIO(data)
+        ):
+            assert p._proc._parse_smaps_rollup() == (
+                31 * 1024,
+                50 * 1024,
+                5 * 1024,
+                72 * 1024,
+            )
 
     def test_rlimit_infinity_normalized(self):
         # Python 3.15 changed resource.prlimit() to return RLIM_INFINITY

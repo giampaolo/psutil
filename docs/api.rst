@@ -1749,10 +1749,10 @@ Process class
 
   .. method:: memory_footprint()
 
-    Return :field:`uss`, :field:`pss` and :field:`swap` memory metrics. These
-    give a more accurate picture of actual memory consumption than
-    :meth:`memory_info`. It walks the full process address space, so it is
-    slower than :meth:`memory_info` and may require elevated privileges.
+    Return :field:`uss`, :field:`pss`, :field:`swap` and :field:`shared` memory
+    metrics. These give a more accurate picture of actual memory consumption
+    than :meth:`memory_info`. It walks the full process address space, so it is
+    slower than :meth:`memory_info` and requires higher privileges.
 
     - :field:`uss` *(Linux, macOS, Windows)*: aka :term:`USS`; the
       :term:`private memory` of the process, which would be freed if the
@@ -1765,6 +1765,11 @@ Process class
     - :field:`swap` *(Linux)*: process memory currently in
       :term:`swap <swap memory>`, counted per-mapping.
 
+    - :field:`shared` *(Linux)*: resident memory currently shared with other
+      processes (pages mapped by more than one process). Stricter than
+      :meth:`memory_info`'s :field:`shared`, which also counts shareable pages
+      mapped by this process alone.
+
     Example on Linux:
 
     .. code-block:: pycon
@@ -1772,7 +1777,7 @@ Process class
        >>> import psutil
        >>> p = psutil.Process()
        >>> p.memory_footprint()
-       pfootprint(uss=6545408, pss=6872064, swap=0)
+       pfootprint(uss=6545408, pss=6872064, swap=0, shared=4341760)
 
     .. seealso::
       - :src:`scripts/procsmem.py`.
@@ -1786,7 +1791,8 @@ Process class
   .. method:: memory_full_info()
 
     This deprecated method returns the same information as :meth:`memory_info`
-    plus :meth:`memory_footprint` in a single named tuple.
+    plus :meth:`memory_footprint`'s :field:`uss`, :field:`pss` and
+    :field:`swap` in a single named tuple.
 
     .. deprecated:: 8.0.0
        use :meth:`memory_footprint` instead. See

@@ -283,7 +283,8 @@ Glossary
 
       Exposed by psutil as the :field:`shared` field of :func:`virtual_memory` and
       :meth:`Process.memory_info` (Linux), the :field:`rss_shmem` field of
-      :meth:`Process.memory_extras` (Linux), and the :field:`shared_clean` /
+      :meth:`Process.memory_extras` (Linux), the :field:`shared` field of
+      :meth:`Process.memory_footprint` (Linux), and the :field:`shared_clean` /
       :field:`shared_dirty` fields of :meth:`Process.memory_maps` (Linux).
 
    swap-in
