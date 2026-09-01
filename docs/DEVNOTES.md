@@ -20,6 +20,13 @@ A collection of ideas and notes about stuff to implement in future versions.
 
 - #550: threads per core
 - #1667: `process_iter(new_only=True)`
+- `NoSuchProcess` inheriting `ProcessLookupError` and `AccessDenied` inheriting
+  `PermissionError` (PEP-3151):
+  - existing `except OSError` clauses would silently start catching psutil
+    exceptions; there is no way to deprecation-warn this
+  - `ZombieProcess` would become a `ProcessLookupError`, but a zombie process
+    exists
+  - `errno` would be `None`, or fabricated
 
 ## Features
 
@@ -80,12 +87,6 @@ A collection of ideas and notes about stuff to implement in future versions.
   those in psutil.
 
 - `os.times()` provides `elapsed` times (`Process.cpu_times()` might as well?).
-
-- Enrich exception classes hierarchy on Python >= 3.3 / post PEP-3151 so that:
-  - `NoSuchProcess` inherits from `ProcessLookupError`
-  - `AccessDenied` inherits from `PermissionError`
-  - `TimeoutExpired inherits` from TimeoutError (debatable) See:
-    http://docs.python.org/3/library/exceptions.html#os-exceptions
 
 - `Process.threads()` might grow an extra "id" parameter so that it can be used
   as:
