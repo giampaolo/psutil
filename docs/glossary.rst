@@ -281,11 +281,14 @@ Glossary
       shared page proportionally among the processes that use it.
       See also :term:`private memory`.
 
-      Exposed by psutil as the :field:`shared` field of :func:`virtual_memory` and
-      :meth:`Process.memory_info` (Linux), the :field:`rss_shmem` field of
-      :meth:`Process.memory_extras` (Linux), the :field:`shared` field of
-      :meth:`Process.memory_footprint` (Linux), and the :field:`shared_clean` /
+      Exposed by psutil as the :field:`shared` field of :func:`virtual_memory`
+      and :meth:`Process.memory_info` (Linux; shareable resident memory,
+      mapped by others or not), the :field:`shared` field of
+      :meth:`Process.memory_footprint` (Linux; pages mapped by more than one
+      process), the :field:`rss_shmem` field of
+      :meth:`Process.memory_extras` (Linux), and the :field:`shared_clean` /
       :field:`shared_dirty` fields of :meth:`Process.memory_maps` (Linux).
+      See :ref:`faq_memory_shared`.
 
    swap-in
 
@@ -315,7 +318,11 @@ Glossary
       full, the OS may first swap out other pages to make room. Swap prevents
       out-of-memory crashes, but is much slower than RAM, so heavy swapping can
       significantly degrade performance. See :func:`swap_memory` and
-      :ref:`swap activity recipe <recipe_swap_activity>`.
+      :ref:`swap activity recipe <recipe_swap_activity>`. Per-process swap
+      usage is exposed by :meth:`Process.memory_footprint` (:field:`swap`,
+      includes swapped shmem) and :meth:`Process.memory_extras`
+      (:field:`swap_anon`, :term:`anonymous memory` only). See
+      :ref:`faq_memory_swap`.
 
    thrashing
 

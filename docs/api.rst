@@ -1660,6 +1660,7 @@ Process class
     .. seealso::
       - :ref:`faq_memory_rss_vs_vms`
       - :ref:`faq_memory_footprint`
+      - :ref:`faq_memory_shared`
 
     .. versionchanged:: 8.0.0 (see :ref:`migration guide <migration-8.0>`)
 
@@ -1716,7 +1717,8 @@ Process class
     - :field:`swap_anon`: :term:`anonymous memory` currently in
       :term:`swap <swap memory>`. Cheaper than :meth:`memory_footprint`'s
       :field:`swap` (it reads :proc:`/proc/pid/status` instead of smaps) but
-      does not count shmem swap. Set to 0 on Linux < 2.6.34.
+      does not count shmem swap (see :ref:`faq_memory_swap`). Set to 0 on Linux
+      < 2.6.34.
     - :field:`hugetlb`: resident memory backed by huge pages. Set to 0 on Linux
       < 4.4.
 
@@ -1768,7 +1770,7 @@ Process class
     - :field:`shared` *(Linux)*: resident memory currently shared with other
       processes (pages mapped by more than one process). Stricter than
       :meth:`memory_info`'s :field:`shared`, which also counts shareable pages
-      mapped by this process alone.
+      mapped by this process alone. See :ref:`faq_memory_shared`.
 
     Example on Linux:
 

@@ -324,8 +324,8 @@ What is the difference between psutil, os, and multiprocessing cpu_count()?
 - :func:`psutil.cpu_count` with ``logical=False`` returns the number of
   :term:`physical cores <physical CPU>`, which has no stdlib equivalent.
 
-Memory
-------
+Process memory
+--------------
 
 .. _faq_virtual_memory_available:
 
@@ -382,6 +382,32 @@ represents the amount of memory that would be freed if the process were
 terminated right now. It is more accurate than :term:`RSS`, but substantially
 slower and requires higher privileges. On Linux it also returns :field:`pss`
 (:term:`Proportional Set Size <PSS>`) and :term:`swap <swap memory>`.
+
+.. _faq_memory_shared:
+
+Why do memory_info() and memory_footprint() report different shared values?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Because they measure different things. :meth:`Process.memory_info`'s
+:field:`shared` counts resident memory that *could* be shared, meaning
+file-backed pages and shmem, no matter if other processes map it or not. This
+is what ``top`` shows in the SHR column. :meth:`Process.memory_footprint`'s
+:field:`shared` only counts pages that are mapped by more than one process and
+is exact, since it walks the page tables instead of reading a counter (slower).
+
+.. _faq_memory_swap:
+
+Why do swap_anon and memory_footprint()'s swap differ?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:meth:`Process.memory_extras`'s :field:`swap_anon` counts swapped-out
+:term:`anonymous memory` only, so it misses swapped shmem / tmpfs memory.
+:meth:`Process.memory_footprint`'s :field:`swap` includes that too, but it has
+to walk the whole process address space, which is a lot slower and may require
+root. If you don't care about shmem, prefer :field:`swap_anon`.
+
+System memory
+-------------
 
 .. _faq_used_plus_free:
 
