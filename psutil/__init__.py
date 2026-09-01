@@ -1835,7 +1835,6 @@ def process_iter(
     pmap = _pmap.copy()
     a = set(pids())
     b = set(pmap)
-    new_pids = a - b
     gone_pids = b - a
     for pid in gone_pids:
         remove(pid)
@@ -1843,6 +1842,7 @@ def process_iter(
         pid = _pids_reused.pop()
         debug(f"refreshing Process instance for reused PID {pid}")
         remove(pid)
+    new_pids = a - set(pmap)
     try:
         ls = sorted(list(pmap.items()) + list(dict.fromkeys(new_pids).items()))
         for pid, proc in ls:
