@@ -106,8 +106,6 @@ A collection of ideas and notes about stuff to implement in future versions.
   `NoSuchProcess` and `AccessDenied`? Not that we need it, but currently we
   cannot raise a `TimeoutExpired` exception with a specific error string.
 
-- round `Process.memory_percent() result?
-
 ## Resources
 
 - zabbix: https://zabbix.org/wiki/Get_Zabbix

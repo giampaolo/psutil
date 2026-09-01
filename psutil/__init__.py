@@ -1422,7 +1422,7 @@ class Process:
                 f" system memory is not positive ({total_phymem!r})"
             )
             raise ValueError(msg)
-        return (value / float(total_phymem)) * 100
+        return round((value / float(total_phymem)) * 100, 2)
 
     if hasattr(_psplatform.Process, "memory_maps"):
 

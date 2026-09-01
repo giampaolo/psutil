@@ -602,6 +602,8 @@ class TestProcess(PsutilTestCase):
     def test_memory_percent(self):
         p = psutil.Process()
         assert p.memory_percent() >= 0
+        val = p.memory_percent()
+        assert val == round(val, 2)
         with pytest.raises(ValueError):
             p.memory_percent(memtype="?!?")
         if HAS_PROC_MEMORY_FOOTPRINT:
