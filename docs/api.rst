@@ -1804,7 +1804,9 @@ Process class
     *memtype* selects which memory field to use and can be any attribute from
     :meth:`memory_info`, :meth:`memory_extras`, or :meth:`memory_footprint`
     (default is ``"rss"``). The divisor is always total physical memory,
-    regardless of *memtype*.
+    regardless of *memtype*. The result is rounded to 2 decimal places.
+
+    .. versionchanged:: 8.0.0 the result is rounded to 2 decimal places.
 
   .. method:: memory_maps(grouped=True)
 

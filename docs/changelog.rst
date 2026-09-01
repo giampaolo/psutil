@@ -92,6 +92,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
 
 **Other API changes**
 
+- :gh:`2992`: :meth:`Process.memory_percent` result is now rounded to 2 decimal
+  places. It was the only ``*_percent`` API returning an unrounded float.
 - :gh:`2747`, :label:`breaking`: the field order of the named tuple returned by
   :func:`cpu_times` has been normalized on all platforms, and the first 3
   fields are now always :field:`user`, :field:`system`, :field:`idle`. See
