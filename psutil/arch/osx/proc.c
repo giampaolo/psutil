@@ -341,7 +341,7 @@ typedef struct {
     uint32_t proc_refs;
     uint32_t resident;
     unsigned char used;
-    unsigned char is_shared;
+    unsigned char is_sm_shared;
 } psutil_oinfo_slot;
 
 
@@ -351,7 +351,7 @@ psutil_oinfo_add(
     size_t *cap,
     size_t *len,
     uint32_t obj_id,
-    int is_shared,
+    int is_sm_shared,
     uint32_t ref_count,
     uint32_t resident
 ) {
@@ -359,11 +359,12 @@ psutil_oinfo_add(
     psutil_oinfo_slot *slot;
 
     if (*tab == NULL) {
+        psutil_oinfo_slot *new_tab = calloc(1024, sizeof(psutil_oinfo_slot));
+        if (new_tab == NULL)
+            return -1;
+        *tab = new_tab;
         *cap = 1024;
         *len = 0;
-        *tab = calloc(*cap, sizeof(psutil_oinfo_slot));
-        if (*tab == NULL)
-            return -1;
     }
     else if (*len * 10 >= *cap * 7) {
         size_t old_cap = *cap;
@@ -396,7 +397,7 @@ psutil_oinfo_add(
     else {
         slot->used = 1;
         slot->obj_id = obj_id;
-        slot->is_shared = (unsigned char)is_shared;
+        slot->is_sm_shared = (unsigned char)is_sm_shared;
         slot->ref_count = ref_count;
         slot->proc_refs = 1;
         slot->resident = resident;
@@ -532,7 +533,8 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
             // A shared object whose references all come from this
             // process is private in disguise ("aliased" in libtop
             // terms); leave it out.
-            if (oinfo[i].is_shared && oinfo[i].ref_count == oinfo[i].proc_refs)
+            if (oinfo[i].is_sm_shared
+                && oinfo[i].ref_count == oinfo[i].proc_refs)
             {
                 continue;
             }

@@ -1754,7 +1754,7 @@ Process class
     Return :field:`uss`, :field:`pss`, :field:`swap` and :field:`shared` memory
     metrics. These give a more accurate picture of actual memory consumption
     than :meth:`memory_info`. It walks the full process address space, so it is
-    slower than :meth:`memory_info` and requires higher privileges.
+    slower than :meth:`memory_info` and may require higher privileges.
 
     - :field:`uss` *(Linux, macOS, Windows)*: aka :term:`USS`; the
       :term:`private memory` of the process, which would be freed if the
@@ -1767,13 +1767,15 @@ Process class
     - :field:`swap` *(Linux)*: process memory currently in
       :term:`swap <swap memory>`, counted per-mapping.
 
-    - :field:`shared` *(Linux, macOS, Windows)*: resident memory currently
-      shared with other processes (pages mapped by more than one process). On
-      Linux it is stricter than :meth:`memory_info`'s :field:`shared`, which
-      also counts shareable pages mapped by this process alone (see
+    - :field:`shared` *(Linux, macOS, Windows)*: resident memory shared with
+      other processes. On Linux this counts pages mapped more than once,
+      usually by other processes, but multiple mappings by this same process
+      count too. It is stricter than :meth:`memory_info`'s :field:`shared`,
+      which also counts shareable pages mapped only once (see
       :ref:`faq_memory_shared`). On macOS the accounting is per VM object
       rather than per page, following what ``top`` historically reported as
-      RSHRD.
+      RSHRD. On Windows it counts working set pages shared with at least
+      another process.
 
     Example on Linux:
 

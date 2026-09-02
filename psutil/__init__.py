@@ -1334,8 +1334,8 @@ class Process:
 
         @_use_prefetch
         def memory_footprint(self) -> pfootprint:
-            """Return a named tuple with USS memory, and on Linux also
-            PSS, swap and shared memory.
+            """Return a named tuple with USS and shared memory, and
+            on Linux also PSS and swap.
 
             These values provide a more accurate representation of
             actual process memory usage.

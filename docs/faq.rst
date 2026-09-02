@@ -380,8 +380,9 @@ includes those 2 MB in its :field:`rss`.
 (:term:`Unique Set Size <USS>`), i.e. :term:`private memory` of the process. It
 represents the amount of memory that would be freed if the process were
 terminated right now. It is more accurate than :term:`RSS`, but substantially
-slower and requires higher privileges. On Linux it also returns :field:`pss`
-(:term:`Proportional Set Size <PSS>`) and :term:`swap <swap memory>`.
+slower and may require higher privileges. It also returns :field:`shared`, and
+on Linux :field:`pss` (:term:`Proportional Set Size <PSS>`) and
+:term:`swap <swap memory>`.
 
 .. _faq_memory_shared:
 
@@ -392,8 +393,10 @@ Because they measure different things. :meth:`Process.memory_info`'s
 :field:`shared` counts resident memory that *could* be shared, meaning
 file-backed pages and shmem, no matter if other processes map it or not. This
 is what ``top`` shows in the SHR column. :meth:`Process.memory_footprint`'s
-:field:`shared` only counts pages that are mapped by more than one process and
-is exact, since it walks the page tables instead of reading a counter (slower).
+:field:`shared` only counts pages that are mapped more than once. That usually
+means "mapped by another process", but multiple mappings by the same process
+also count. It reads the page tables instead of a counter, so it's exact in
+that regard, but slower.
 
 .. _faq_memory_swap:
 

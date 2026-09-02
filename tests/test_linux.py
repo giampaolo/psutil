@@ -11,6 +11,7 @@ import contextlib
 import errno
 import glob
 import io
+import mmap
 import os
 import platform
 import re
@@ -2549,6 +2550,25 @@ class TestProcess(LinuxTestCase):
             mem = p.memory_extras()
         vmrss = int(re.search(br"VmRSS:\s+(\d+)", data).group(1)) * 1024
         assert mem.rss_anon + mem.rss_file + mem.rss_shmem == vmrss
+
+    def test_memory_footprint_shared_self_mappings(self):
+        # A page mapped twice by the same process counts as shared,
+        # even with no other process involved.
+        size = 4 * 1024 * 1024
+        path = self.get_testfn()
+        with open(path, "wb") as f:
+            f.write(b"\x00" * size)
+        with open(path, "r+b") as f:
+            m1 = mmap.mmap(f.fileno(), size)
+            self.addCleanup(m1.close)
+            m2 = mmap.mmap(f.fileno(), size)
+            self.addCleanup(m2.close)
+            base = psutil.Process().memory_footprint().shared
+            for i in range(0, size, 4096):
+                m1[i]
+                m2[i]
+            after = psutil.Process().memory_footprint().shared
+        assert after - base >= size // 2
 
     def test_parse_smaps_rollup_mocked(self):
         data = (

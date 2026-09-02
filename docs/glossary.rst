@@ -284,8 +284,8 @@ Glossary
       Exposed by psutil as the :field:`shared` field of :func:`virtual_memory`
       and :meth:`Process.memory_info` (Linux; shareable resident memory,
       mapped by others or not), the :field:`shared` field of
-      :meth:`Process.memory_footprint` (Linux, Windows; pages mapped by more
-      than one process), the :field:`rss_shmem` field of
+      :meth:`Process.memory_footprint` (pages mapped more than once,
+      usually by other processes), the :field:`rss_shmem` field of
       :meth:`Process.memory_extras` (Linux), and the :field:`shared_clean` /
       :field:`shared_dirty` fields of :meth:`Process.memory_maps` (Linux).
       See :ref:`faq_memory_shared`.
