@@ -353,20 +353,13 @@ psutil_oinfo_add(
     uint32_t obj_id,
     int is_sm_shared,
     uint32_t ref_count,
-    uint32_t resident
+    uint32_t resident,
+    const psutil_oinfo_slot *stack_tab
 ) {
     size_t i;
     psutil_oinfo_slot *slot;
 
-    if (*tab == NULL) {
-        psutil_oinfo_slot *new_tab = calloc(1024, sizeof(psutil_oinfo_slot));
-        if (new_tab == NULL)
-            return -1;
-        *tab = new_tab;
-        *cap = 1024;
-        *len = 0;
-    }
-    else if (*len * 10 >= *cap * 7) {
+    if (*len * 10 >= *cap * 7) {
         size_t old_cap = *cap;
         psutil_oinfo_slot *old_tab = *tab;
         psutil_oinfo_slot *new_tab;
@@ -384,7 +377,8 @@ psutil_oinfo_add(
                 new_tab[j] = old_tab[i];
             }
         }
-        free(old_tab);
+        if (old_tab != stack_tab)
+            free(old_tab);
     }
 
     i = obj_id % *cap;
@@ -426,10 +420,13 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
     int no_mem = 0;
     char *errmsg = NULL;
     struct proc_regioninfo ri;
-    psutil_oinfo_slot *oinfo = NULL;
-    size_t oinfo_cap = 0;
+    psutil_oinfo_slot stack_oinfo[1024];
+    psutil_oinfo_slot *oinfo = stack_oinfo;
+    size_t oinfo_cap = 1024;
     size_t oinfo_len = 0;
     size_t i;
+
+    memset(stack_oinfo, 0, sizeof(stack_oinfo));
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
@@ -491,7 +488,8 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
                                  ri.pri_obj_id,
                                  0,
                                  ri.pri_ref_count,
-                                 ri.pri_shared_pages_resident
+                                 ri.pri_shared_pages_resident,
+                                 stack_oinfo
                              )
                              != 0)
                     {
@@ -506,7 +504,8 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
                             ri.pri_obj_id,
                             1,
                             ri.pri_ref_count,
-                            ri.pri_shared_pages_resident
+                            ri.pri_shared_pages_resident,
+                            stack_oinfo
                         )
                         != 0)
                     {
@@ -543,7 +542,8 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
     }
     Py_END_ALLOW_THREADS
 
-    free(oinfo);
+    if (oinfo != stack_oinfo)
+        free(oinfo);
     if (no_mem)
         return PyErr_NoMemory();
     if (errmsg != NULL)
