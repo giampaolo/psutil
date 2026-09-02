@@ -13,6 +13,7 @@ import errno
 import getpass
 import io
 import itertools
+import mmap
 import os
 import random
 import select
@@ -22,6 +23,7 @@ import stat
 import string
 import subprocess
 import sys
+import textwrap
 import time
 from unittest import mock
 
@@ -522,6 +524,36 @@ class TestProcess(PsutilTestCase):
         mem = p.memory_footprint()
         self.check_proc_memory(mem)
 
+    @skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
+    @retry_on_failure
+    def test_memory_footprint_shared(self):
+        # Map a file, then have a child process map it too: our
+        # shared memory must grow by about the file size.
+        size = 32 * 1024 * 1024
+        path = self.get_testfn()
+        flag = self.get_testfn()
+        with open(path, "wb") as f:
+            f.write(b"\x00" * size)
+        with open(path, "r+b") as f:
+            m = mmap.mmap(f.fileno(), size)
+            self.addCleanup(m.close)
+            for i in range(0, size, 4096):
+                m[i]
+            base = psutil.Process().memory_footprint().shared
+            code = textwrap.dedent(f"""
+                import mmap, time
+                f = open({path!r}, 'r+b')
+                m = mmap.mmap(f.fileno(), 0)
+                for i in range(0, len(m), 4096):
+                    m[i]
+                open({flag!r}, 'w').close()
+                time.sleep(60)
+                """)
+            self.spawn_subproc(cmd=[PYTHON_EXE, "-c", code])
+            wait_for_file(flag, empty=True)
+            after = psutil.Process().memory_footprint().shared
+        assert after - base >= size // 2
+
     def test_memory_full_info(self):
         p = psutil.Process()
         with pytest.warns(DeprecationWarning):
@@ -535,7 +567,11 @@ class TestProcess(PsutilTestCase):
         # fields should be memory_info() + memory_footprint() (if avail)
         expected = p.memory_info()._fields
         if HAS_PROC_MEMORY_FOOTPRINT:
-            expected += p.memory_footprint()._fields
+            expected += tuple(
+                x
+                for x in p.memory_footprint()._fields
+                if x not in expected and x != "shared"
+            )
         assert mem._fields == expected
 
     @skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")

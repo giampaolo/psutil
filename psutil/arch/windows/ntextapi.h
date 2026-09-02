@@ -489,7 +489,7 @@ typedef struct _WTSINFOW {
     LARGE_INTEGER CurrentTime;
 } WTSINFOW, *PWTSINFOW;
 
-// memory_uss()
+// memory_footprint()
 typedef struct _MEMORY_WORKING_SET_BLOCK {
     ULONG_PTR Protection: 5;
     ULONG_PTR ShareCount: 3;
@@ -502,13 +502,13 @@ typedef struct _MEMORY_WORKING_SET_BLOCK {
 #endif
 } MEMORY_WORKING_SET_BLOCK, *PMEMORY_WORKING_SET_BLOCK;
 
-// memory_uss()
+// memory_footprint()
 typedef struct _MEMORY_WORKING_SET_INFORMATION {
     ULONG_PTR NumberOfEntries;
     MEMORY_WORKING_SET_BLOCK WorkingSetInfo[1];
 } MEMORY_WORKING_SET_INFORMATION, *PMEMORY_WORKING_SET_INFORMATION;
 
-// memory_uss()
+// memory_footprint()
 typedef struct _PSUTIL_PROCESS_WS_COUNTERS {
     SIZE_T NumberOfPages;
     SIZE_T NumberOfPrivatePages;

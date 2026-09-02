@@ -413,8 +413,8 @@ class Process:
 
     @wrap_exceptions
     def memory_footprint(self):
-        uss = _psutil.proc_memory_uss(self.pid)
-        return ntp.pfootprint(uss)
+        d = _psutil.proc_memory_footprint(self.pid)
+        return ntp.pfootprint(d["uss"], d["shared"])
 
     @wrap_exceptions
     def page_faults(self):

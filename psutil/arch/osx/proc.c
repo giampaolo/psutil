@@ -332,20 +332,101 @@ error:
 }
 
 
-// Return process USS (unique set size) memory. Reference:
+// One-shot version of the VM object hash libtop uses for its RSHRD
+// accounting (see libtop_p_oinfo_insert):
+// https://github.com/apple-oss-distributions/top/blob/main/libtop.c
+typedef struct {
+    uint32_t obj_id;
+    uint32_t ref_count;
+    uint32_t proc_refs;
+    uint32_t resident;
+    unsigned char used;
+    unsigned char is_sm_shared;
+} psutil_oinfo_slot;
+
+
+static int
+psutil_oinfo_add(
+    psutil_oinfo_slot **tab,
+    size_t *cap,
+    size_t *len,
+    uint32_t obj_id,
+    int is_sm_shared,
+    uint32_t ref_count,
+    uint32_t resident,
+    const psutil_oinfo_slot *stack_tab
+) {
+    size_t i;
+    psutil_oinfo_slot *slot;
+
+    if (*len * 10 >= *cap * 7) {
+        size_t old_cap = *cap;
+        psutil_oinfo_slot *old_tab = *tab;
+        psutil_oinfo_slot *new_tab;
+
+        new_tab = calloc(old_cap * 2, sizeof(psutil_oinfo_slot));
+        if (new_tab == NULL)
+            return -1;
+        *tab = new_tab;
+        *cap = old_cap * 2;
+        for (i = 0; i < old_cap; i++) {
+            if (old_tab[i].used) {
+                size_t j = old_tab[i].obj_id % *cap;
+                while (new_tab[j].used)
+                    j = (j + 1) % *cap;
+                new_tab[j] = old_tab[i];
+            }
+        }
+        if (old_tab != stack_tab)
+            free(old_tab);
+    }
+
+    i = obj_id % *cap;
+    while ((*tab)[i].used && (*tab)[i].obj_id != obj_id)
+        i = (i + 1) % *cap;
+    slot = &(*tab)[i];
+    if (slot->used) {
+        slot->proc_refs += 1;
+    }
+    else {
+        slot->used = 1;
+        slot->obj_id = obj_id;
+        slot->is_sm_shared = (unsigned char)is_sm_shared;
+        slot->ref_count = ref_count;
+        slot->proc_refs = 1;
+        slot->resident = resident;
+        *len += 1;
+    }
+    return 0;
+}
+
+
+// Return process USS (unique set size) and shared memory. USS is
+// roughly based on Mozilla's:
 // https://dxr.mozilla.org/mozilla-central/source/xpcom/base/nsMemoryReporterManager.cpp
+// Shared memory follows the RSHRD accounting of libtop:
+// https://github.com/apple-oss-distributions/top/blob/main/libtop.c
 PyObject *
-psutil_proc_memory_uss(PyObject *self, PyObject *args) {
+psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
     pid_t pid;
     cpu_type_t cpu_type;
     size_t private_pages = 0;
+    size_t shared_pages = 0;
     long pagesize = psutil_getpagesize();
     uint64_t addr = 0;
     uint64_t next_addr;
     int ret;
     int nregions = 0;
+    int no_mem = 0;
     char *errmsg = NULL;
     struct proc_regioninfo ri;
+    psutil_oinfo_slot stack_oinfo[1024];
+    psutil_oinfo_slot *oinfo = stack_oinfo;
+    size_t oinfo_cap = 1024;
+    size_t oinfo_len = 0;
+    size_t i;
+
+    memset(stack_oinfo, 0, sizeof(stack_oinfo));
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
@@ -357,8 +438,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     }
 
     // Sum up process private (unique) resident pages by walking its VM
-    // regions. Roughly based on libtop_update_vm_regions in:
-    // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
+    // regions, and collect shared objects (deduplicated by object id,
+    // like libtop does) for the shared count.
     // The walk can take a long time (or hang) on a process we don't own,
     // see https://github.com/giampaolo/psutil/issues/2885, so run it
     // without the GIL. Exceptions are raised further below.
@@ -400,12 +481,43 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
                         // only have one reference.
                         private_pages += ri.pri_shared_pages_resident;
                     }
+                    else if (psutil_oinfo_add(
+                                 &oinfo,
+                                 &oinfo_cap,
+                                 &oinfo_len,
+                                 ri.pri_obj_id,
+                                 0,
+                                 ri.pri_ref_count,
+                                 ri.pri_shared_pages_resident,
+                                 stack_oinfo
+                             )
+                             != 0)
+                    {
+                        no_mem = 1;
+                    }
                     break;
                 case SM_SHARED:
+                    if (psutil_oinfo_add(
+                            &oinfo,
+                            &oinfo_cap,
+                            &oinfo_len,
+                            ri.pri_obj_id,
+                            1,
+                            ri.pri_ref_count,
+                            ri.pri_shared_pages_resident,
+                            stack_oinfo
+                        )
+                        != 0)
+                    {
+                        no_mem = 1;
+                    }
+                    break;
                 default:
                     break;
             }
         }
+        if (no_mem)
+            break;
 
         next_addr = ri.pri_address + ri.pri_size;
         if (ri.pri_size == 0 || next_addr <= addr) {
@@ -414,12 +526,36 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         }
         addr = next_addr;
     }
+
+    for (i = 0; i < oinfo_cap; i++) {
+        if (oinfo[i].used) {
+            // A shared object whose references all come from this
+            // process is private in disguise ("aliased" in libtop
+            // terms); leave it out.
+            if (oinfo[i].is_sm_shared
+                && oinfo[i].ref_count == oinfo[i].proc_refs)
+            {
+                continue;
+            }
+            shared_pages += oinfo[i].resident;
+        }
+    }
     Py_END_ALLOW_THREADS
 
+    if (oinfo != stack_oinfo)
+        free(oinfo);
+    if (no_mem)
+        return PyErr_NoMemory();
     if (errmsg != NULL)
         return psutil_raise_for_pid(pid, errmsg);
 
-    return Py_BuildValue("K", (unsigned long long)private_pages * pagesize);
+    return Py_BuildValue(
+        "{s:K, s:K}",
+        "uss",
+        (unsigned long long)private_pages * pagesize,
+        "shared",
+        (unsigned long long)shared_pages * pagesize
+    );
 }
 
 

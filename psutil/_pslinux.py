@@ -1946,7 +1946,7 @@ class Process:
             # (also as root). In that case we'll use /proc/pid/smaps as
             # fallback, which is slower but has a +50% success rate
             # compared to /proc/pid/smaps_rollup.
-            uss = pss = swap = 0
+            uss = pss = swap = shared = 0
             with open_binary(
                 f"{self._procfs_path}/{self.pid}/smaps_rollup"
             ) as f:
@@ -1954,17 +1954,21 @@ class Process:
                     if line.startswith(b"Private_"):
                         # Private_Clean, Private_Dirty, Private_Hugetlb
                         uss += int(line.split()[1]) * 1024
+                    elif line.startswith(b"Shared_"):
+                        # Shared_Clean, Shared_Dirty, Shared_Hugetlb
+                        shared += int(line.split()[1]) * 1024
                     elif line.startswith(b"Pss:"):
                         pss = int(line.split()[1]) * 1024
                     elif line.startswith(b"Swap:"):
                         swap = int(line.split()[1]) * 1024
-            return (uss, pss, swap)
+            return (uss, pss, swap, shared)
 
         @wrap_exceptions
         def _parse_smaps(
             self,
             # Gets Private_Clean, Private_Dirty, Private_Hugetlb.
             _private_re=re.compile(br"\nPrivate.*:\s+(\d+)"),
+            _shared_re=re.compile(br"\nShared.*:\s+(\d+)"),
             _pss_re=re.compile(br"\nPss\:\s+(\d+)"),
             _swap_re=re.compile(br"\nSwap\:\s+(\d+)"),
         ):
@@ -1987,7 +1991,8 @@ class Process:
             uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
             pss = sum(map(int, _pss_re.findall(smaps_data))) * 1024
             swap = sum(map(int, _swap_re.findall(smaps_data))) * 1024
-            return (uss, pss, swap)
+            shared = sum(map(int, _shared_re.findall(smaps_data))) * 1024
+            return (uss, pss, swap, shared)
 
         @wrap_exceptions
         def memory_footprint(self):
@@ -1999,8 +2004,8 @@ class Process:
                         pass
                 return self._parse_smaps()
 
-            uss, pss, swap = fetch()
-            return ntp.pfootprint(uss, pss, swap)
+            uss, pss, swap, shared = fetch()
+            return ntp.pfootprint(uss, pss, swap, shared)
 
     if HAS_PROC_SMAPS:
 

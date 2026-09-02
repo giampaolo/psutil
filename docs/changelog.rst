@@ -49,6 +49,8 @@ Changelog
   no longer set to ``0``.
 - :gh:`2977`: new :func:`bytes2human` utility function, converting a number of
   bytes to a human-readable string (e.g. ``9.8K``).
+- :gh:`1452`, [Linux, macOS, Windows]: :meth:`Process.memory_footprint` returns
+  a new :field:`shared` field: resident memory shared with other processes.
 
 Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
 :gh:`2733`, :gh:`2988`).

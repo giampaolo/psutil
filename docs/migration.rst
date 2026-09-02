@@ -155,7 +155,8 @@ memory_full_info() is deprecated
 
 :meth:`Process.memory_full_info` is deprecated. Use
 :meth:`Process.memory_footprint` instead; it returns the same fields
-(:field:`uss`, :field:`pss` and :field:`swap`).
+(:field:`uss`, :field:`pss` and :field:`swap`), plus a new :field:`shared`
+field.
 
 .. _migration-8.0-memory-extras:
 
