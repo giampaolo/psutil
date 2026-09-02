@@ -1767,10 +1767,13 @@ Process class
     - :field:`swap` *(Linux)*: process memory currently in
       :term:`swap <swap memory>`, counted per-mapping.
 
-    - :field:`shared` *(Linux, Windows)*: resident memory currently shared with
-      other processes (pages mapped by more than one process). Stricter than
-      :meth:`memory_info`'s :field:`shared`, which also counts shareable pages
-      mapped by this process alone. See :ref:`faq_memory_shared`.
+    - :field:`shared` *(Linux, macOS, Windows)*: resident memory currently
+      shared with other processes (pages mapped by more than one process). On
+      Linux it is stricter than :meth:`memory_info`'s :field:`shared`, which
+      also counts shareable pages mapped by this process alone (see
+      :ref:`faq_memory_shared`). On macOS the accounting is per VM object
+      rather than per page, following what ``top`` historically reported as
+      RSHRD.
 
     Example on Linux:
 
