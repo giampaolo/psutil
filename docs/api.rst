@@ -1767,8 +1767,8 @@ Process class
     - :field:`swap` *(Linux)*: process memory currently in
       :term:`swap <swap memory>`, counted per-mapping.
 
-    - :field:`shared` *(Linux)*: resident memory currently shared with other
-      processes (pages mapped by more than one process). Stricter than
+    - :field:`shared` *(Linux, Windows)*: resident memory currently shared with
+      other processes (pages mapped by more than one process). Stricter than
       :meth:`memory_info`'s :field:`shared`, which also counts shareable pages
       mapped by this process alone. See :ref:`faq_memory_shared`.
 

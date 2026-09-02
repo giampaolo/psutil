@@ -322,6 +322,7 @@ if LINUX or MACOS or WINDOWS:
         if LINUX:
             pss: int
             swap: int
+        if LINUX or WINDOWS:
             shared: int
 
 
