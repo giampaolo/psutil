@@ -1,4 +1,5 @@
-/* Left sidebar menu icons. Also shared with search results. */
+/* Left sidebar menu icons. Also shared with search results and
+   see-also links. */
 
 /* Documentation */
 a[href*="install/"],
@@ -127,4 +128,10 @@ a[href*="genindex/"],
 ul.search > li:has(> a[href*="genindex/"]),
 body[data-page="genindex"] .left-sidebar a.current {
     --doc-icon: "\f15d";
+}
+
+a.extlink-src[href*="/scripts/"] {
+    --doc-icon: ">_";
+    --doc-icon-font: var(--font-mono);
+    --doc-icon-weight: 600;
 }
