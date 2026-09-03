@@ -58,6 +58,24 @@ div.seealso a.reference:hover {
     color: var(--adm-seealso-hover);
 }
 
+/* Same page icon as the sidebar */
+div.seealso ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+div.seealso a.reference.internal::before,
+div.seealso a.extlink-src[href*="/scripts/"]::before {
+    font-family: var(--doc-icon-font, var(--fa-family-classic));
+    font-weight: var(--doc-icon-weight, 900);
+    display: inline-block;
+    width: 1.3em;
+    margin-right: 0.3em;
+    font-size: 0.85em;
+    text-align: center;
+    content: var(--doc-icon, "\f0f6");
+}
+
 div.admonition a {
     text-decoration: none;
 }

@@ -123,7 +123,8 @@ CPU
      [5.6, 1.0]
      >>>
 
-  .. seealso:: :ref:`faq_cpu_percent`
+  .. seealso::
+    - :ref:`faq_cpu_percent`
 
   .. versionchanged:: 5.9.6
      the function is now thread safe.
@@ -135,7 +136,8 @@ CPU
   in :func:`cpu_percent`. On Linux, :field:`guest` and :field:`guest_nice`
   percentages are not accounted in :field:`user` and :field:`user_nice`.
 
-  .. seealso:: :ref:`faq_cpu_percent`
+  .. seealso::
+    - :ref:`faq_cpu_percent`
 
   .. versionchanged:: 5.9.6
      function is now thread safe.
@@ -170,7 +172,8 @@ CPU
      >>> len(psutil.Process().cpu_affinity())
      1
 
-  .. seealso:: :ref:`faq_cpu_count`
+  .. seealso::
+    - :ref:`faq_cpu_count`
 
 .. function:: cpu_stats()
 
@@ -475,7 +478,8 @@ Disks
      [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro'),
       sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw')]
 
-  .. seealso:: :src:`scripts/disk_usage.py`.
+  .. seealso::
+    - :src:`scripts/disk_usage.py`
 
   .. versionchanged:: 5.7.4
      added :field:`maxfile` and :field:`maxpath` fields.
@@ -505,7 +509,8 @@ Disks
     :field:`percent` may appear ~5% higher than expected. All values match the
     ``df`` command line utility.
 
-  .. seealso:: :src:`scripts/disk_usage.py`.
+  .. seealso::
+    - :src:`scripts/disk_usage.py`
 
 .. function:: disk_io_counters(perdisk=False, nowrap=True)
 
@@ -603,7 +608,9 @@ Network
      {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
       'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
 
-  .. seealso:: :src:`scripts/nettop.py` and :src:`scripts/ifconfig.py`.
+  .. seealso::
+    - :src:`scripts/nettop.py`
+    - :src:`scripts/ifconfig.py`
 
 .. function:: net_connections(kind="inet")
 
@@ -720,7 +727,9 @@ Network
                 snicaddr(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
      >>>
 
-  .. seealso:: :src:`scripts/nettop.py` and :src:`scripts/ifconfig.py`.
+  .. seealso::
+    - :src:`scripts/nettop.py`
+    - :src:`scripts/ifconfig.py`
 
   .. versionchanged:: 7.0.0
      Windows: added support for :field:`broadcast` field, which is no longer
@@ -745,7 +754,9 @@ Network
      {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500, flags='up,broadcast,running,multicast'),
       'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536, flags='up,loopback,running')}
 
-  .. seealso:: :src:`scripts/nettop.py` and :src:`scripts/ifconfig.py`.
+  .. seealso::
+    - :src:`scripts/nettop.py`
+    - :src:`scripts/ifconfig.py`
 
   .. versionchanged:: 5.7.3
      UNIX: :field:`isup` also reflects whether the :term:`NIC` is running.
@@ -784,7 +795,9 @@ Sensors
                    shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
                    shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
 
-  .. seealso:: :src:`scripts/temperatures.py` and :src:`scripts/sensors.py`.
+  .. seealso::
+    - :src:`scripts/temperatures.py`
+    - :src:`scripts/sensors.py`
 
   .. availability:: Linux, FreeBSD
 
@@ -802,7 +815,9 @@ Sensors
      >>> psutil.sensors_fans()
      {'asus': [sfan(label='cpu_fan', current=3200)]}
 
-  .. seealso:: :src:`scripts/fans.py` and :src:`scripts/sensors.py`.
+  .. seealso::
+    - :src:`scripts/fans.py`
+    - :src:`scripts/sensors.py`
 
   .. availability:: Linux
 
@@ -834,7 +849,9 @@ Sensors
      >>> print("charge = %s%%, time left = %s" % (battery.percent, secs2hours(battery.secsleft)))
      charge = 93%, time left = 4:37:08
 
-  .. seealso:: :src:`scripts/battery.py` and :src:`scripts/sensors.py`.
+  .. seealso::
+    - :src:`scripts/battery.py`
+    - :src:`scripts/sensors.py`
 
   .. availability:: Linux, Windows, macOS, FreeBSD
 
@@ -960,7 +977,8 @@ Functions
     :func:`process_iter` call will overwrite or clear any previously
     pre-fetched values. Do not rely on cached values from a prior iteration.
 
-  .. seealso:: :ref:`perf-process-iter`
+  .. seealso::
+    - :ref:`perf-process-iter`
 
   .. versionchanged:: 6.0.0
 
@@ -982,7 +1000,8 @@ Functions
   Check whether the given PID exists in the current process list. This is
   faster than doing ``pid in psutil.pids()``, and should be preferred.
 
-  .. seealso:: :ref:`faq_pid_exists_vs_isrunning`
+  .. seealso::
+    - :ref:`faq_pid_exists_vs_isrunning`
 
 .. function:: wait_procs(procs, timeout=None, callback=None)
 
@@ -1032,7 +1051,8 @@ Exceptions
   attribute is set only if :meth:`Process.name` was called before the process
   disappeared.
 
-  .. seealso:: :ref:`faq_no_such_process`
+  .. seealso::
+    - :ref:`faq_no_such_process`
 
 .. exception:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
@@ -1044,7 +1064,8 @@ Exceptions
   If you do not need to detect zombies, you can ignore this exception and just
   catch :exc:`NoSuchProcess`.
 
-  .. seealso:: :ref:`faq_zombie_process`
+  .. seealso::
+    - :ref:`faq_zombie_process`
 
 .. exception:: AccessDenied(pid=None, name=None, msg=None)
 
@@ -1052,7 +1073,8 @@ Exceptions
   insufficient privileges. *name* is set if :meth:`Process.name` was called
   before the exception was raised.
 
-  .. seealso:: :ref:`faq_access_denied`
+  .. seealso::
+    - :ref:`faq_access_denied`
 
 .. exception:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
 
@@ -1127,7 +1149,8 @@ Process class
     ``p.name()`` instead of ``p.info['name']``) or :func:`process_iter` +
     :meth:`Process.as_dict` if you need a dict structure.
 
-    .. seealso:: :ref:`migration guide <migration-8.0>`.
+    .. seealso::
+      - :ref:`migration guide <migration-8.0>`
 
     .. deprecated:: 8.0.0
 
@@ -1165,7 +1188,8 @@ Process class
     The process name. On Windows the return value is cached after first call.
     Not on POSIX because the process name may change.
 
-    .. seealso:: how to :ref:`find a process by name <recipe_find_process_by_name>`.
+    .. seealso::
+      - :ref:`Find process by name recipe <recipe_find_process_by_name>`
 
   .. method:: exe()
 
@@ -1407,7 +1431,8 @@ Process class
        >>> p.rlimit(psutil.RLIMIT_FSIZE)                # get current limits of ...
        (1024, 1024)
 
-    .. seealso:: :src:`scripts/procinfo.py`.
+    .. seealso::
+      - :src:`scripts/procinfo.py`
 
     .. availability:: Linux, FreeBSD
 
@@ -1585,7 +1610,8 @@ Process class
     ``psutil.cpu_percent(percpu=True)`` to observe the system workload
     distributed across multiple CPUs.
 
-    .. seealso:: :src:`scripts/cpu_distribution.py`.
+    .. seealso::
+      - :src:`scripts/cpu_distribution.py`
 
     .. availability:: Linux, FreeBSD, SunOS
 
@@ -1787,7 +1813,7 @@ Process class
        pfootprint(uss=6545408, pss=6872064, swap=0, shared=4341760)
 
     .. seealso::
-      - :src:`scripts/procsmem.py`.
+      - :src:`scripts/procsmem.py`
       - :ref:`faq_memory_footprint`
       - :doc:`/blog/2016/real-process-memory-in-python`
 
@@ -1891,7 +1917,8 @@ Process class
         pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so', rss=3821568, size=3842048, pss=3821568, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=3821568, referenced=3575808, anonymous=3821568, swap=0),
         ...]
 
-    .. seealso:: :src:`scripts/pmap.py`.
+    .. seealso::
+      - :src:`scripts/pmap.py`
 
     .. availability:: Linux, Windows, FreeBSD, SunOS
 
@@ -1926,7 +1953,8 @@ Process class
     is well illustrated by this
     `unit test <https://github.com/giampaolo/psutil/blob/65a52341b55faaab41f68ebc4ed31f18f0929754/psutil/tests/test_process.py#L1064-L1075>`_.
 
-    .. seealso:: how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
+    .. seealso::
+      - :ref:`Kill process tree recipe <recipe_kill_proc_tree>`
 
   .. method:: page_faults()
 
@@ -2030,7 +2058,8 @@ Process class
     ``CTRL_BREAK_EVENT`` signals are supported, and ``SIGTERM`` is treated as
     an alias for :meth:`kill`.
 
-    .. seealso:: how to :ref:`kill a process tree <recipe_kill_proc_tree>`
+    .. seealso::
+      - :ref:`Kill process tree recipe <recipe_kill_proc_tree>`
 
   .. method:: suspend()
 
@@ -2053,7 +2082,8 @@ Process class
     ``os.kill(pid, signal.SIGTERM)``. On Windows this is an alias for
     :meth:`kill`.
 
-    .. seealso:: how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
+    .. seealso::
+      - :ref:`Kill process tree recipe <recipe_kill_proc_tree>`
 
   .. method:: kill()
 
@@ -2062,7 +2092,8 @@ Process class
     ``os.kill(pid, signal.SIGKILL)``. On Windows this is done by using
     `TerminateProcess`_.
 
-    .. seealso:: how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
+    .. seealso::
+      - :ref:`Kill process tree recipe <recipe_kill_proc_tree>`
 
   .. method:: wait(timeout=None)
 
@@ -2094,7 +2125,8 @@ Process class
        >>> p.wait()
        <NegSignal.SIGTERM: -15>
 
-    .. seealso:: :doc:`/blog/2026/event-driven-process-waiting`
+    .. seealso::
+      - :doc:`/blog/2026/event-driven-process-waiting`
 
     .. note::
 
@@ -2182,7 +2214,7 @@ that Python's memory tracking misses.
 
 .. seealso::
 
-  :doc:`/blog/2025/heap-introspection-apis`
+  - :doc:`/blog/2025/heap-introspection-apis`
 
 .. tip::
 
