@@ -420,6 +420,7 @@ if LINUX:
         rss_shmem: int
         swap_anon: int
         hugetlb: int
+        locked: int
 
     # psutil.Process().memory_full_info()
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss", "pss", "swap"))
