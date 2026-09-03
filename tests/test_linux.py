@@ -8,6 +8,7 @@
 
 import collections
 import contextlib
+import ctypes
 import errno
 import glob
 import io
@@ -2550,6 +2551,24 @@ class TestProcess(LinuxTestCase):
             mem = p.memory_extras()
         vmrss = int(re.search(br"VmRSS:\s+(\d+)", data).group(1)) * 1024
         assert mem.rss_anon + mem.rss_file + mem.rss_shmem == vmrss
+
+    def test_memory_extras_locked(self):
+        libc = ctypes.CDLL(None, use_errno=True)
+        size = mmap.PAGESIZE * 4
+        buf = mmap.mmap(-1, size)
+        self.addCleanup(buf.close)
+        view = ctypes.c_char.from_buffer(buf)
+        addr = ctypes.addressof(view)
+        del view
+        base = psutil.Process().memory_extras().locked
+        if libc.mlock(ctypes.c_void_p(addr), ctypes.c_size_t(size)) != 0:
+            err = ctypes.get_errno()
+            return pytest.skip(f"mlock() failed: {os.strerror(err)}")
+        self.addCleanup(
+            libc.munlock, ctypes.c_void_p(addr), ctypes.c_size_t(size)
+        )
+        after = psutil.Process().memory_extras().locked
+        assert after - base == size
 
     def test_memory_footprint_shared_self_mappings(self):
         # A page mapped twice by the same process counts as shared,

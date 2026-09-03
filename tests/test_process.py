@@ -505,6 +505,7 @@ class TestProcess(PsutilTestCase):
                 "rss_shmem",
                 "swap_anon",
                 "hugetlb",
+                "locked",
             )
         elif MACOS:
             assert mem._fields == ("phys_footprint", "peak_footprint")

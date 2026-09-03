@@ -1915,6 +1915,7 @@ class Process:
         _rssshmem_re=re.compile(br"RssShmem:\s+(\d+)"),
         _vmswap_re=re.compile(br"VmSwap:\s+(\d+)"),
         _hugetlb_re=re.compile(br"HugetlbPages:\s+(\d+)"),
+        _vmlck_re=re.compile(br"VmLck:\s+(\d+)"),
     ):
         # Read /proc/{pid}/status.
         # RssAnon/RssFile/RssShmem were added in Linux 4.5;
@@ -1933,6 +1934,7 @@ class Process:
             rss_shmem=parse(_rssshmem_re),
             swap_anon=parse(_vmswap_re),
             hugetlb=parse(_hugetlb_re),
+            locked=parse(_vmlck_re),
         )
 
     if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
