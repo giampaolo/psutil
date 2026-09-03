@@ -405,7 +405,7 @@ Memory
                 rss_file=897433,
                 rss_shmem=0,
                 swap_anon=0,
-                hugetlb=0)
+                locked=0)
     >>>
     >>> p.memory_percent()
     0.78

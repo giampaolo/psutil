@@ -1699,8 +1699,6 @@ Process class
     +-------------+----------------+--------------------+
     | swap_anon   |                | peak_nonpaged_pool |
     +-------------+----------------+--------------------+
-    | hugetlb     |                |                    |
-    +-------------+----------------+--------------------+
     | locked      |                |                    |
     +-------------+----------------+--------------------+
 
@@ -1721,8 +1719,6 @@ Process class
       :field:`swap` (it reads :proc:`/proc/pid/status` instead of smaps) but
       does not count shmem swap (see :ref:`faq_memory_swap`). Set to 0 on Linux
       < 2.6.34.
-    - :field:`hugetlb`: resident memory backed by huge pages. Set to 0 on Linux
-      < 4.4.
     - :field:`locked`: locked memory that cannot be
       :term:`swapped out <swap-out>`. Typically locked via :manpage:`mlock(2)`.
 

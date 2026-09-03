@@ -167,8 +167,7 @@ New memory_extras() method
 platform-specific memory metrics which complement :meth:`Process.memory_info`:
 
 - Linux: :field:`peak_rss`, :field:`peak_vms`, :field:`rss_anon`,
-  :field:`rss_file`, :field:`rss_shmem`, :field:`swap_anon`, :field:`hugetlb`,
-  :field:`locked`.
+  :field:`rss_file`, :field:`rss_shmem`, :field:`swap_anon`, :field:`locked`.
 - macOS: :field:`phys_footprint`, :field:`peak_footprint`.
 - Windows: :field:`virtual`, :field:`peak_virtual`, :field:`paged_pool`,
   :field:`nonpaged_pool`, :field:`peak_paged_pool`,

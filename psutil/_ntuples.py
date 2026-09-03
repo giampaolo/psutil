@@ -419,7 +419,6 @@ if LINUX:
         rss_file: int
         rss_shmem: int
         swap_anon: int
-        hugetlb: int
         locked: int
 
     # psutil.Process().memory_full_info()

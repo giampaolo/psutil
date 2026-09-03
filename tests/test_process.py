@@ -504,7 +504,6 @@ class TestProcess(PsutilTestCase):
                 "rss_file",
                 "rss_shmem",
                 "swap_anon",
-                "hugetlb",
                 "locked",
             )
         elif MACOS:

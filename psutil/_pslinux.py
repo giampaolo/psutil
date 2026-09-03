@@ -1914,12 +1914,11 @@ class Process:
         _rssfile_re=re.compile(br"RssFile:\s+(\d+)"),
         _rssshmem_re=re.compile(br"RssShmem:\s+(\d+)"),
         _vmswap_re=re.compile(br"VmSwap:\s+(\d+)"),
-        _hugetlb_re=re.compile(br"HugetlbPages:\s+(\d+)"),
         _vmlck_re=re.compile(br"VmLck:\s+(\d+)"),
     ):
         # Read /proc/{pid}/status.
         # RssAnon/RssFile/RssShmem were added in Linux 4.5;
-        # VmSwap in 2.6.34; HugetlbPages in 4.4.
+        # VmSwap in 2.6.34.
         data = self._read_status_file()
 
         def parse(regex):
@@ -1933,7 +1932,6 @@ class Process:
             rss_file=parse(_rssfile_re),
             rss_shmem=parse(_rssshmem_re),
             swap_anon=parse(_vmswap_re),
-            hugetlb=parse(_hugetlb_re),
             locked=parse(_vmlck_re),
         )
 

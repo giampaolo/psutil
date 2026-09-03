@@ -55,8 +55,8 @@ Changelog
   :meth:`Process.memory_footprint` returns a new :field:`shared` field:
   resident memory shared with other processes.
 
-Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
-:gh:`2733`, :gh:`2988`).
+Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
+:gh:`2988`).
 
 - New :meth:`Process.memory_extras` method, returning extra platform-specific
   memory metrics on Linux, macOS and Windows. See
