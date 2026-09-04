@@ -1,0 +1,94 @@
+/* Copyright (c) 2009 Giampaolo Rodola. All rights reserved.
+   Use of this source code is governed by a BSD-style license that can be
+   found in the LICENSE file. */
+
+.api-palette {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: none;
+}
+
+.api-palette.is-open {
+    display: block;
+}
+
+.api-palette-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.api-palette-panel {
+    position: absolute;
+    top: 14vh;
+    left: 50%;
+    transform: translateX(-50%);
+    box-sizing: border-box;
+    width: min(540px, 92vw);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+.api-palette-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.75em 1em;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    color: var(--text);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    outline: none;
+}
+
+.api-palette-results {
+    margin: 0;
+    padding: 0.3em 0;
+    list-style: none;
+    max-height: 50vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.api-palette-results li[role="option"] {
+    display: flex;
+    align-items: baseline;
+    gap: 1em;
+    padding: 0.35em 1em;
+    cursor: pointer;
+}
+
+.api-palette-results li.is-active,
+.api-palette-results li[role="option"]:hover {
+    background: var(--bg-hover);
+}
+
+.api-palette-name {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.api-palette-name b {
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.api-palette-type {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.api-palette-empty {
+    padding: 0.8em 1em;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}

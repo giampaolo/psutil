@@ -10,6 +10,7 @@
     const SHORTCUTS = [
         { keys: ["Shift", "D"], desc: "Toggle dark / light mode" },
         { keys: ["Ctrl", "K"], desc: "Focus search" },
+        { keys: ["@"], desc: "Jump to API symbol (API page)" },
         { keys: ["↑", "↓"], desc: "Navigate search results" },
         { keys: ["Enter"], desc: "Open highlighted search result" },
         { keys: ["Esc"], desc: "Close search / dialog" },

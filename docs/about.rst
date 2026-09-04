@@ -23,6 +23,8 @@ Keyboard shortcuts
      - Toggle dark / light mode
    * - :kbd:`Ctrl+K`
      - Open search
+   * - :kbd:`@`
+     - Jump to API symbol (:doc:`API reference <api>` page)
    * - :kbd:`↑` / :kbd:`↓`
      - Navigate search results
    * - :kbd:`Enter`
