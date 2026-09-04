@@ -241,6 +241,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   search box, ``Up``/``Down`` navigate the search results and ``Enter`` opens
   the selected one.
 
+- Go to API definition: pressing ``@`` on any page opens a menu that
+  fuzzy-matches psutil's function, class and method names and jumps to their
+  API definition, like in Sublime Text or VS Code (:gh:`2995`).
+
 - Testing: ``rstcheck`` was replaced by ``sphinx-lint``, plus a custom script
   detecting dead reference links in ``.rst`` files (:gh:`2767`). Python code
   snippets are syntax-checked at build time (:gh:`2761`). New
