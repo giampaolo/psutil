@@ -69,6 +69,18 @@ version of the docs, built from the master branch, and past releases.
    :alt: Version selector
    :class: about-shot
 
+Go to symbol
+------------
+
+On the :doc:`API reference <api>` page, press :kbd:`@` to open a go-to-symbol
+menu, similar to the one in Sublime Text or VS Code. Start typing to
+fuzzy-match function, class and method names, then use the :kbd:`↑` and
+:kbd:`↓` arrow keys and :kbd:`Enter` to jump to a definition.
+
+.. image:: /_static/images/about/gotosymbol.png
+   :alt: Go-to-symbol menu
+   :class: about-shot
+
 Clickable API references
 ------------------------
 
