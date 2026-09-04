@@ -1,12 +1,17 @@
-.. note::
-   psutil 8.0 introduces breaking API changes. See the
-   :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
 
 API reference
 =============
 
 Complete reference for all psutil classes and functions. Provided as a single
 HTML page for ease of searchability.
+
+.. note::
+   psutil 8.0 introduces breaking API changes. See the
+   :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
+
+.. tip::
+   Press :kbd:`@` to open a go-to-symbol menu with fuzzy-search function, to
+   jump between class and method definitions.
 
 .. contents::
    :local:

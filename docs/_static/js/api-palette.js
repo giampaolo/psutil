@@ -39,7 +39,7 @@
     palette.setAttribute("aria-hidden", "true");
     palette.setAttribute("role", "dialog");
     palette.setAttribute("aria-modal", "true");
-    palette.setAttribute("aria-label", "Jump to API symbol");
+    palette.setAttribute("aria-label", "Jump to API definition");
     palette.innerHTML = '<div class="api-palette-backdrop"></div>' +
         '<div class="api-palette-panel">' +
         '<input class="api-palette-input" type="text" ' +
@@ -199,21 +199,43 @@
         lastFocused = null;
     }
 
+    function smoothScrollTo(el) {
+        const pad = parseFloat(
+            getComputedStyle(document.documentElement).scrollPaddingTop,
+        ) || 0;
+        const dest = el.getBoundingClientRect().top + window.scrollY - pad;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            window.scrollTo(0, dest);
+            return;
+        }
+        const start = window.scrollY;
+        const t0 = performance.now();
+        function step(now) {
+            const t = Math.min((now - t0) / 300, 1);
+            const eased = 1 - Math.pow(1 - t, 3);
+            window.scrollTo(0, start + (dest - start) * eased);
+            if (t < 1) {
+                requestAnimationFrame(step);
+            }
+        }
+        requestAnimationFrame(step);
+    }
+
     function go(sym) {
         close();
         const root = new URL(contentRoot, location.href);
         const frag = sym.anchor ? "#" + sym.anchor : "";
         const target = new URL(sym.uri + frag, root);
-        if (target.pathname === location.pathname && sym.anchor) {
-            if (location.hash === "#" + sym.anchor) {
-                const el = document.getElementById(sym.anchor);
-                if (el) {
-                    el.scrollIntoView();
-                }
-            }
-            else {
+        const el = sym.anchor && target.pathname === location.pathname
+            ? document.getElementById(sym.anchor)
+            : null;
+        if (el) {
+            if (location.hash !== "#" + sym.anchor) {
+                const y = window.scrollY;
                 location.hash = sym.anchor;
+                window.scrollTo(0, y);
             }
+            smoothScrollTo(el);
         }
         else {
             location.href = target.href;
