@@ -20,7 +20,7 @@
     if (/Mac|iP(hone|ad|od)/.test(navigator.platform)) {
         const kbd = document.querySelector(".search-kbd kbd");
         if (kbd) {
-            kbd.textContent = "Cmd";
+            kbd.textContent = "⌘";
         }
     }
 

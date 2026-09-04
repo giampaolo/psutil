@@ -26,7 +26,7 @@ Keyboard shortcuts
    * - :kbd:`Ctrl+K` / :kbd:`Cmd+K`
      - Focus search
    * - :kbd:`↑` / :kbd:`↓`
-     - Navigate search / API results
+     - Navigate search or API results
    * - :kbd:`Enter`
      - Open the highlighted entry
    * - :kbd:`Escape`
