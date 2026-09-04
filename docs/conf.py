@@ -69,6 +69,7 @@ _third_party_exts = [
 
 _local_exts = [  # defined in the _ext/ folder
     "ablog_extras",
+    "api_symbols",
     "availability",
     "changelog_anchors",
     "check_python_syntax",

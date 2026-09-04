@@ -10,24 +10,28 @@
         return;
     }
 
-    const symbols = Array.from(
-        document.querySelectorAll("dt.sig-object.py[id]"),
-    ).map((dt) => {
-        const dl = dt.closest("dl");
-        let type = "";
-        if (dl) {
-            type = Array.from(dl.classList).find((c) => {
-                return c !== "py";
-            }) || "";
-        }
-        const name = dt.id.startsWith("psutil.")
-            ? dt.id.slice("psutil.".length)
-            : dt.id;
-        return { id: dt.id, name: name, type: type };
-    });
+    const contentRoot = document.documentElement.dataset.content_root || "";
+    let symbols = null;
+    let loadState = "idle";
 
-    if (!symbols.length) {
-        return;
+    function ensureSymbols() {
+        if (loadState !== "idle") {
+            return;
+        }
+        loadState = "loading";
+        const script = document.createElement("script");
+        script.src = contentRoot + "_static/api-symbols.js";
+        script.onload = () => {
+            symbols = window.PSUTIL_API_SYMBOLS || [];
+            loadState = "loaded";
+            update();
+        };
+        script.onerror = () => {
+            loadState = "error";
+            console.error("api-palette: failed to load api-symbols.js");
+            update();
+        };
+        document.head.appendChild(script);
     }
 
     const palette = document.createElement("div");
@@ -39,7 +43,7 @@
     palette.innerHTML = '<div class="api-palette-backdrop"></div>' +
         '<div class="api-palette-panel">' +
         '<input class="api-palette-input" type="text" ' +
-        'placeholder="Jump to symbol" aria-label="Jump to API symbol" ' +
+        'placeholder="Jump to API symbol" aria-label="Jump to API symbol" ' +
         'spellcheck="false" autocomplete="off">' +
         '<ul class="api-palette-results" role="listbox"></ul>' +
         "</div>";
@@ -55,6 +59,7 @@
     function fuzzy(query, text) {
         const q = query.toLowerCase();
         const t = text.toLowerCase();
+        const boundary = "._";
         const positions = [];
         let score = 0;
         let from = 0;
@@ -67,7 +72,7 @@
             if (idx === prev + 1) {
                 score += 8;
             }
-            if (idx === 0 || t[idx - 1] === "." || t[idx - 1] === "_") {
+            if (idx === 0 || boundary.includes(t[idx - 1])) {
                 score += 10;
             }
             score -= idx - from;
@@ -78,25 +83,37 @@
         return { score: score, positions: positions };
     }
 
+    function renderMessage(text) {
+        const li = document.createElement("li");
+        li.className = "api-palette-empty";
+        li.textContent = text;
+        list.appendChild(li);
+    }
+
     function render() {
         list.innerHTML = "";
-        if (!shown.length) {
-            const li = document.createElement("li");
-            li.className = "api-palette-empty";
-            li.textContent = "No matching symbols";
-            list.appendChild(li);
+        if (loadState === "loading") {
+            renderMessage("Loading…");
             return;
         }
-        shown.forEach((entry) => {
+        if (loadState === "error") {
+            renderMessage("Failed to load the symbol index");
+            return;
+        }
+        if (!shown.length) {
+            renderMessage("No matching symbols");
+            return;
+        }
+        shown.forEach((entry, i) => {
             const li = document.createElement("li");
             li.setAttribute("role", "option");
-            li.dataset.id = entry.sym.id;
+            li.dataset.index = i;
             const name = document.createElement("span");
             name.className = "api-palette-name";
             const hits = new Set(entry.positions);
-            for (let i = 0; i < entry.sym.name.length; i++) {
-                const ch = document.createTextNode(entry.sym.name[i]);
-                if (hits.has(i)) {
+            for (let j = 0; j < entry.sym.name.length; j++) {
+                const ch = document.createTextNode(entry.sym.name[j]);
+                if (hits.has(j)) {
                     const b = document.createElement("b");
                     b.appendChild(ch);
                     name.appendChild(b);
@@ -133,14 +150,15 @@
 
     function update() {
         const q = input.value.trim();
+        const all = symbols || [];
         if (!q) {
-            shown = symbols.map((s) => {
+            shown = all.map((s) => {
                 return { sym: s, positions: [], score: 0 };
             });
         }
         else {
             shown = [];
-            symbols.forEach((s) => {
+            all.forEach((s) => {
                 const m = fuzzy(q, s.name);
                 if (m) {
                     shown.push({
@@ -167,6 +185,7 @@
         palette.classList.add("is-open");
         palette.setAttribute("aria-hidden", "false");
         input.value = "";
+        ensureSymbols();
         update();
         input.focus();
     }
@@ -180,25 +199,33 @@
         lastFocused = null;
     }
 
-    function go(id) {
+    function go(sym) {
         close();
-        if (location.hash === "#" + id) {
-            const el = document.getElementById(id);
-            if (el) {
-                el.scrollIntoView();
+        const root = new URL(contentRoot, location.href);
+        const frag = sym.anchor ? "#" + sym.anchor : "";
+        const target = new URL(sym.uri + frag, root);
+        if (target.pathname === location.pathname && sym.anchor) {
+            if (location.hash === "#" + sym.anchor) {
+                const el = document.getElementById(sym.anchor);
+                if (el) {
+                    el.scrollIntoView();
+                }
+            }
+            else {
+                location.hash = sym.anchor;
             }
         }
         else {
-            location.hash = id;
+            location.href = target.href;
         }
     }
 
     backdrop.addEventListener("click", close);
 
     list.addEventListener("click", (e) => {
-        const li = e.target.closest("li[data-id]");
-        if (li) {
-            go(li.dataset.id);
+        const li = e.target.closest("li[data-index]");
+        if (li && shown[li.dataset.index]) {
+            go(shown[li.dataset.index].sym);
         }
     });
 
@@ -220,7 +247,7 @@
         else if (e.key === "Enter") {
             e.preventDefault();
             if (activeIndex !== -1 && shown[activeIndex]) {
-                go(shown[activeIndex].sym.id);
+                go(shown[activeIndex].sym);
             }
         }
         else if (e.key === "Tab") {

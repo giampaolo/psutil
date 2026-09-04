@@ -24,7 +24,7 @@ Keyboard shortcuts
    * - :kbd:`Ctrl+K`
      - Open search
    * - :kbd:`@`
-     - Jump to API symbol (:doc:`API reference <api>` page)
+     - Jump to API symbol
    * - :kbd:`↑` / :kbd:`↓`
      - Navigate search results
    * - :kbd:`Enter`
@@ -72,10 +72,10 @@ version of the docs, built from the master branch, and past releases.
 Go to symbol
 ------------
 
-On the :doc:`API reference <api>` page, press :kbd:`@` to open a go-to-symbol
-menu, similar to the one in Sublime Text or VS Code. Start typing to
-fuzzy-match function, class and method names, then use the :kbd:`↑` and
-:kbd:`↓` arrow keys and :kbd:`Enter` to jump to a definition.
+Press :kbd:`@` on any page to open a go-to-symbol menu, similar to the one in
+Sublime Text or VS Code. Start typing to fuzzy-match function, class and method
+names, then use the :kbd:`↑` and :kbd:`↓` arrow keys and :kbd:`Enter` to jump
+to a definition.
 
 .. image:: /_static/images/about/gotosymbol.png
    :alt: Go-to-symbol menu
