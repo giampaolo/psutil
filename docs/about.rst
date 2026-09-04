@@ -24,7 +24,7 @@ Keyboard shortcuts
    * - :kbd:`Ctrl+K`
      - Open search
    * - :kbd:`@`
-     - Jump to API definition
+     - Go to API symbol
    * - :kbd:`↑` / :kbd:`↓`
      - Navigate search results
    * - :kbd:`Enter`

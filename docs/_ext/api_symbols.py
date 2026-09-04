@@ -20,7 +20,11 @@ def dump_symbols(app, exception):
     env = app.env
     entries = []
     for fullname, obj in env.domaindata["py"]["objects"].items():
-        if obj.objtype == "module" or obj.aliased:
+        if (
+            not fullname.startswith("psutil.")
+            or obj.objtype == "module"
+            or obj.aliased
+        ):
             continue
         entries.append({
             "name": fullname.removeprefix("psutil."),

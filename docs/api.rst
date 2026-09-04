@@ -3,21 +3,19 @@ API reference
 =============
 
 Complete reference for all psutil classes and functions. Provided as a single
-HTML page for ease of searchability.
+HTML page for ease of searchability. For a high-level overview with short
+examples see :doc:`api-overview`.
 
 .. note::
    psutil 8.0 introduces breaking API changes. See the
    :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
 
 .. tip::
-   Press :kbd:`@` to open a go-to-symbol menu with fuzzy-search function, to
-   jump between class and method definitions.
+   Press :kbd:`@` to quickly jump to a function, class, or method definition.
 
 .. contents::
    :local:
    :depth: 1
-
-For a high-level overview with short examples see :doc:`api-overview`.
 
 System related functions
 ------------------------

@@ -73,8 +73,7 @@
     cursor: pointer;
 }
 
-.api-palette-results li.is-active,
-.api-palette-results li[role="option"]:hover {
+.api-palette-results li.is-active {
     background: var(--bg-hover);
 }
 

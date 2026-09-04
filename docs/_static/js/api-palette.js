@@ -44,8 +44,11 @@
         '<div class="api-palette-panel">' +
         '<input class="api-palette-input" type="text" ' +
         'placeholder="Jump to API symbol" aria-label="Jump to API symbol" ' +
+        'role="combobox" aria-autocomplete="list" aria-expanded="false" ' +
+        'aria-controls="api-palette-listbox" ' +
         'spellcheck="false" autocomplete="off">' +
-        '<ul class="api-palette-results" role="listbox"></ul>' +
+        '<ul class="api-palette-results" id="api-palette-listbox" ' +
+        'role="listbox"></ul>' +
         "</div>";
     document.body.appendChild(palette);
 
@@ -107,6 +110,7 @@
         shown.forEach((entry, i) => {
             const li = document.createElement("li");
             li.setAttribute("role", "option");
+            li.id = "api-palette-opt-" + i;
             li.dataset.index = i;
             const name = document.createElement("span");
             name.className = "api-palette-name";
@@ -135,6 +139,7 @@
         const rows = list.querySelectorAll("li[role=option]");
         if (!rows.length) {
             activeIndex = -1;
+            input.removeAttribute("aria-activedescendant");
             return;
         }
         index = Math.max(0, Math.min(index, rows.length - 1));
@@ -145,6 +150,7 @@
         activeIndex = index;
         rows[index].classList.add("is-active");
         rows[index].setAttribute("aria-selected", "true");
+        input.setAttribute("aria-activedescendant", rows[index].id);
         rows[index].scrollIntoView({ block: "nearest" });
     }
 
@@ -184,6 +190,7 @@
         lastFocused = document.activeElement;
         palette.classList.add("is-open");
         palette.setAttribute("aria-hidden", "false");
+        input.setAttribute("aria-expanded", "true");
         input.value = "";
         ensureSymbols();
         update();
@@ -193,6 +200,7 @@
     function close() {
         palette.classList.remove("is-open");
         palette.setAttribute("aria-hidden", "true");
+        input.setAttribute("aria-expanded", "false");
         if (lastFocused && typeof lastFocused.focus === "function") {
             lastFocused.focus();
         }
@@ -248,6 +256,20 @@
         const li = e.target.closest("li[data-index]");
         if (li && shown[li.dataset.index]) {
             go(shown[li.dataset.index].sym);
+        }
+    });
+
+    let lastMouseX = -1;
+    let lastMouseY = -1;
+    list.addEventListener("mousemove", (e) => {
+        if (e.clientX === lastMouseX && e.clientY === lastMouseY) {
+            return;
+        }
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        const li = e.target.closest("li[data-index]");
+        if (li) {
+            setActive(Number(li.dataset.index));
         }
     });
 
