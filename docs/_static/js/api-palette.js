@@ -274,18 +274,22 @@
     palette.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
             e.preventDefault();
+            e.stopPropagation();
             close();
         }
         else if (e.key === "ArrowDown") {
             e.preventDefault();
+            e.stopPropagation();
             setActive(activeIndex + 1);
         }
         else if (e.key === "ArrowUp") {
             e.preventDefault();
+            e.stopPropagation();
             setActive(activeIndex - 1);
         }
         else if (e.key === "Enter") {
             e.preventDefault();
+            e.stopPropagation();
             if (activeIndex !== -1 && shown[activeIndex]) {
                 go(shown[activeIndex].sym);
             }
@@ -297,6 +301,10 @@
     });
 
     document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && palette.classList.contains("is-open")) {
+            close();
+            return;
+        }
         if (e.key !== "@") {
             return;
         }

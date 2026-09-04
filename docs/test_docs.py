@@ -5,6 +5,7 @@
 """Sanity checks for the Sphinx docs and blog posts."""
 
 import importlib.util
+import json
 import pathlib
 import re
 import shutil
@@ -897,6 +898,43 @@ class TestNotFound:
         for target in ("/install/", "/api/", "/faq/", "/recipes/", "/blog/"):
             with subtests.test(target=target):
                 assert f'href="{target}"' in html
+
+
+@pytest.mark.usefixtures("build_html")
+class TestSearch:
+    def test_search_terms_extract_context(self, subtests):
+        raw = (HTML_DIR / "searchindex.js").read_text()
+        data = json.loads(raw[raw.index("(") + 1 : raw.rindex(")")])
+        for term in ("disk", "zombi"):
+            docidxs = data["terms"][term]
+            if isinstance(docidxs, int):
+                docidxs = [docidxs]
+            for i in docidxs:
+                docname = data["docnames"][i]
+                with subtests.test(term=term, page=docname):
+                    m = re.search(
+                        r'<main\b[^>]*\brole="main".*?</main>',
+                        read_html(docname + ".html"),
+                        re.DOTALL,
+                    )
+                    assert m
+                    text = re.sub(r"<[^>]+>", " ", m.group(0))
+                    assert term in text.lower()
+
+    def test_results_have_icon_selectors(self, subtests):
+        css = (HTML_DIR / "_static" / "css" / "doc-icons.css").read_text()
+        base_frags = set(
+            re.findall(r'^a\[href\*="([^"]+)"\]', css, re.MULTILINE)
+        )
+        search_frags = set(
+            re.findall(r'ul\.search > li:has\(> a\[href\*="([^"]+)"\]\)', css)
+        )
+        assert base_frags
+        assert base_frags <= search_frags
+        for frag in sorted(search_frags):
+            with subtests.test(frag=frag):
+                path = HTML_DIR / frag.lstrip("/") / "index.html"
+                assert path.is_file()
 
 
 @pytest.mark.usefixtures("build_html")
