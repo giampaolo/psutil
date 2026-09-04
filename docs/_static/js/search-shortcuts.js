@@ -17,6 +17,13 @@
         DOCUMENTATION_OPTIONS.ENABLE_SEARCH_SHORTCUTS = false;
     }
 
+    if (/Mac|iP(hone|ad|od)/.test(navigator.platform)) {
+        const kbd = document.querySelector(".search-kbd kbd");
+        if (kbd) {
+            kbd.textContent = "Cmd";
+        }
+    }
+
     if (window.matchMedia("(pointer: coarse)").matches) {
         return;
     }
