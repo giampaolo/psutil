@@ -21,16 +21,16 @@ Keyboard shortcuts
      - Action
    * - :kbd:`Shift+D`
      - Toggle dark / light mode
-   * - :kbd:`Ctrl+K`
-     - Open search
    * - :kbd:`@`
-     - Go to API symbol
+     - Go to API definition
+   * - :kbd:`Ctrl+K` / :kbd:`Cmd+K`
+     - Focus search
    * - :kbd:`↑` / :kbd:`↓`
-     - Navigate search results
+     - Navigate search / API results
    * - :kbd:`Enter`
-     - Open highlighted search result
+     - Open the highlighted entry
    * - :kbd:`Escape`
-     - Close search / dialog
+     - Close menus and dialogs
    * - :kbd:`?`
      - Show this help
 
@@ -69,16 +69,15 @@ version of the docs, built from the master branch, and past releases.
    :alt: Version selector
    :class: about-shot
 
-Go to symbol
-------------
+Go to API definition
+--------------------
 
-Press :kbd:`@` on any page to open a go-to-symbol menu, similar to the one in
-Sublime Text or VS Code. Start typing to fuzzy-match function, class and method
-names, then use the :kbd:`↑` and :kbd:`↓` arrow keys and :kbd:`Enter` to jump
-to a definition.
+Press :kbd:`@` on any page to quickly find and jump to an API definition, like
+in VS Code or Sublime Text. Use the :kbd:`↑` and :kbd:`↓` arrow keys to
+navigate and :kbd:`Enter` to open it.
 
 .. image:: /_static/images/about/gotosymbol.png
-   :alt: Go-to-symbol menu
+   :alt: Go-to-definition menu
    :class: about-shot
 
 Clickable API references

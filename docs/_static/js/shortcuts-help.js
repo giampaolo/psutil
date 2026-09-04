@@ -9,11 +9,11 @@
 (function () {
     const SHORTCUTS = [
         { keys: ["Shift", "D"], desc: "Toggle dark / light mode" },
+        { keys: ["@"], desc: "Go to API definition" },
         { keys: ["Ctrl", "K"], desc: "Focus search" },
-        { keys: ["@"], desc: "Go to API symbol" },
-        { keys: ["↑", "↓"], desc: "Navigate search results" },
-        { keys: ["Enter"], desc: "Open highlighted search result" },
-        { keys: ["Esc"], desc: "Close search / dialog" },
+        { keys: ["↑", "↓"], desc: "Navigate search / API results" },
+        { keys: ["Enter"], desc: "Open the highlighted entry" },
+        { keys: ["Esc"], desc: "Close menus and dialogs" },
         { keys: ["?"], desc: "Show this help" },
     ];
 

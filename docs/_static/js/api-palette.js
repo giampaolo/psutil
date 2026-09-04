@@ -2,14 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// On @ key press, show a go-to symbol menu, to jump to API symbols /
+// On @ key press, show a go-to symbol menu, to jump to API
 // definitions.
 
 (function () {
-    if (window.matchMedia("(pointer: coarse)").matches) {
-        return;
-    }
-
     const contentRoot = document.documentElement.dataset.content_root || "";
     let symbols = null;
     let loadState = "idle";
@@ -39,11 +35,11 @@
     palette.setAttribute("aria-hidden", "true");
     palette.setAttribute("role", "dialog");
     palette.setAttribute("aria-modal", "true");
-    palette.setAttribute("aria-label", "Jump to API definition");
+    palette.setAttribute("aria-label", "Go to API definition");
     palette.innerHTML = '<div class="api-palette-backdrop"></div>' +
         '<div class="api-palette-panel">' +
         '<input class="api-palette-input" type="text" ' +
-        'placeholder="Jump to API symbol" aria-label="Jump to API symbol" ' +
+        'placeholder="Go to API definition" aria-label="Go to API definition" ' +
         'role="combobox" aria-autocomplete="list" aria-expanded="false" ' +
         'aria-controls="api-palette-listbox" ' +
         'spellcheck="false" autocomplete="off">' +
@@ -104,7 +100,7 @@
             return;
         }
         if (!shown.length) {
-            renderMessage("No matching symbols");
+            renderMessage("No matching definitions");
             return;
         }
         shown.forEach((entry, i) => {
