@@ -2,14 +2,19 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// On @ key press, show a go-to symbol menu, to jump to API
-// definitions.
+// On @ key press, show a menu to jump to API definitions.
 
 (function () {
+    const SCROLL_MS = 150;
+    const CONSECUTIVE_BONUS = 8;
+    const WORD_START_BONUS = 10;
+
     const contentRoot = document.documentElement.dataset.content_root || "";
     let symbols = null;
     let loadState = "idle";
 
+    // Lazy-load the symbol index (written at build time by
+    // _ext/api_symbols.py) the first time the menu is opened.
     function ensureSymbols() {
         if (loadState !== "idle") {
             return;
@@ -54,7 +59,18 @@
     let lastFocused = null;
     let shown = [];
     let activeIndex = -1;
+    let startScrollY = 0;
+    let previewEnabled = false;
+    let previewed = false;
+    let settleY = null;
+    // Bumped on every new scroll so the animation still running for
+    // the previous target stops writing.
+    let scrollAnimId = 0;
 
+    // Query chars must appear in the name in order. Bonuses for
+    // consecutive runs and word starts, small penalty for gaps. A
+    // space matches the next "_" or ".", so "mem info" finds
+    // memory_info.
     function fuzzy(query, text) {
         const q = query.toLowerCase();
         const t = text.toLowerCase();
@@ -64,15 +80,28 @@
         let from = 0;
         let prev = -2;
         for (const ch of q) {
-            const idx = t.indexOf(ch, from);
+            let idx;
+            if (ch === " ") {
+                const dot = t.indexOf(".", from);
+                const under = t.indexOf("_", from);
+                if (dot === -1 || (under !== -1 && under < dot)) {
+                    idx = under;
+                }
+                else {
+                    idx = dot;
+                }
+            }
+            else {
+                idx = t.indexOf(ch, from);
+            }
             if (idx === -1) {
                 return null;
             }
             if (idx === prev + 1) {
-                score += 8;
+                score += CONSECUTIVE_BONUS;
             }
             if (idx === 0 || boundary.includes(t[idx - 1])) {
-                score += 10;
+                score += WORD_START_BONUS;
             }
             score -= idx - from;
             positions.push(idx);
@@ -96,7 +125,7 @@
             return;
         }
         if (loadState === "error") {
-            renderMessage("Failed to load the symbol index");
+            renderMessage("Failed to load API definitions");
             return;
         }
         if (!shown.length) {
@@ -139,6 +168,12 @@
             return;
         }
         index = Math.max(0, Math.min(index, rows.length - 1));
+        if (
+            index === activeIndex &&
+            rows[index].classList.contains("is-active")
+        ) {
+            return;
+        }
         rows.forEach((li) => {
             li.classList.remove("is-active");
             li.setAttribute("aria-selected", "false");
@@ -148,6 +183,7 @@
         rows[index].setAttribute("aria-selected", "true");
         input.setAttribute("aria-activedescendant", rows[index].id);
         rows[index].scrollIntoView({ block: "nearest" });
+        previewActive();
     }
 
     function update() {
@@ -178,12 +214,68 @@
             });
         }
         render();
-        setActive(0);
-        list.scrollTop = 0;
+        let start = 0;
+        if (!q) {
+            const idx = currentSymbolIndex(startScrollY);
+            if (idx !== -1) {
+                start = idx;
+            }
+        }
+        setActive(start);
+        if (!q && previewed) {
+            smoothScrollToY(startScrollY);
+        }
+        if (start > 0) {
+            centerActive();
+        }
+        else {
+            list.scrollTop = 0;
+        }
+    }
+
+    // The definition read at the given scroll position: the last one
+    // above the fold, using the same offset line the anchors scroll
+    // to. Measured against startScrollY, not the live viewport, which
+    // the previews move around.
+    function currentSymbolIndex(scrollY) {
+        const pad = parseFloat(
+            getComputedStyle(document.documentElement).scrollPaddingTop,
+        ) || 0;
+        let id = null;
+        for (const dt of document.querySelectorAll("dt.sig-object.py[id]")) {
+            const top = dt.getBoundingClientRect().top + window.scrollY;
+            if (top <= scrollY + pad + 1) {
+                id = dt.id;
+            }
+            else {
+                break;
+            }
+        }
+        if (id === null) {
+            return -1;
+        }
+        return shown.findIndex((entry) => entry.sym.anchor === id);
+    }
+
+    function centerActive() {
+        const row = list.querySelector("li.is-active");
+        if (row) {
+            list.scrollTop = row.offsetTop -
+                list.offsetTop -
+                (list.clientHeight - row.offsetHeight) / 2;
+        }
     }
 
     function open() {
+        scrollAnimId += 1;
         lastFocused = document.activeElement;
+        const resuming = settleY !== null;
+        startScrollY = resuming ? settleY : window.scrollY;
+        settleY = null;
+        previewEnabled = false;
+        // Reopened mid-animation: the page sits displaced, so let the
+        // empty-query path below finish the interrupted move.
+        previewed = resuming;
         palette.classList.add("is-open");
         palette.setAttribute("aria-hidden", "false");
         input.setAttribute("aria-expanded", "true");
@@ -193,40 +285,93 @@
         input.focus();
     }
 
-    function close() {
+    // Esc / backdrop click: scroll back to where the page was before
+    // the previews. Left alone if no preview moved it, so a manual
+    // scroll made while the menu is open survives.
+    function cancel() {
+        if (previewed) {
+            smoothScrollToY(startScrollY, true);
+        }
+        close(true);
+    }
+
+    // Scroll the page behind the menu to the selected definition, VS
+    // Code style. Only after the user navigated or typed, so opening
+    // the menu doesn't move the page by itself.
+    function previewActive() {
+        if (!previewEnabled || activeIndex === -1 || !shown[activeIndex]) {
+            return;
+        }
+        const sym = shown[activeIndex].sym;
+        const root = new URL(contentRoot, location.href);
+        if (new URL(sym.uri, root).pathname !== location.pathname) {
+            return;
+        }
+        const el = sym.anchor && document.getElementById(sym.anchor);
+        if (!el) {
+            return;
+        }
+        previewed = true;
+        smoothScrollTo(el);
+    }
+
+    function close(restoreFocus) {
+        input.blur();
         palette.classList.remove("is-open");
         palette.setAttribute("aria-hidden", "true");
         input.setAttribute("aria-expanded", "false");
-        if (lastFocused && typeof lastFocused.focus === "function") {
-            lastFocused.focus();
+        if (
+            restoreFocus &&
+            lastFocused &&
+            typeof lastFocused.focus === "function"
+        ) {
+            lastFocused.focus({ preventScroll: true });
         }
         lastFocused = null;
     }
 
-    function smoothScrollTo(el) {
+    function smoothScrollTo(el, isSettle) {
         const pad = parseFloat(
             getComputedStyle(document.documentElement).scrollPaddingTop,
         ) || 0;
-        const dest = el.getBoundingClientRect().top + window.scrollY - pad;
+        smoothScrollToY(
+            el.getBoundingClientRect().top + window.scrollY - pad,
+            isSettle,
+        );
+    }
+
+    function smoothScrollToY(dest, isSettle) {
+        scrollAnimId += 1;
+        const animId = scrollAnimId;
+        settleY = null;
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
             window.scrollTo(0, dest);
             return;
         }
+        if (isSettle) {
+            settleY = dest;
+        }
         const start = window.scrollY;
         const t0 = performance.now();
         function step(now) {
-            const t = Math.min((now - t0) / 300, 1);
+            if (animId !== scrollAnimId) {
+                return;
+            }
+            const t = Math.min((now - t0) / SCROLL_MS, 1);
             const eased = 1 - Math.pow(1 - t, 3);
             window.scrollTo(0, start + (dest - start) * eased);
             if (t < 1) {
                 requestAnimationFrame(step);
+            }
+            else {
+                settleY = null;
             }
         }
         requestAnimationFrame(step);
     }
 
     function go(sym) {
-        close();
+        close(false);
         const root = new URL(contentRoot, location.href);
         const frag = sym.anchor ? "#" + sym.anchor : "";
         const target = new URL(sym.uri + frag, root);
@@ -235,18 +380,24 @@
             : null;
         if (el) {
             if (location.hash !== "#" + sym.anchor) {
+                // Set the hash for the :target highlight, but undo
+                // the instant jump it causes so we can animate.
                 const y = window.scrollY;
                 location.hash = sym.anchor;
                 window.scrollTo(0, y);
             }
-            smoothScrollTo(el);
+            smoothScrollTo(el, true);
+            el.tabIndex = -1;
+            el.focus({ preventScroll: true });
         }
         else {
             location.href = target.href;
         }
     }
 
-    backdrop.addEventListener("click", close);
+    backdrop.addEventListener("click", () => {
+        cancel();
+    });
 
     list.addEventListener("click", (e) => {
         const li = e.target.closest("li[data-index]");
@@ -255,6 +406,10 @@
         }
     });
 
+    // React only to real mouse movement. Chrome fires a synthetic
+    // mousemove after scrollIntoView(), which would yank the
+    // selection back to whatever sits under the idle cursor while
+    // navigating with the arrow keys.
     let lastMouseX = -1;
     let lastMouseY = -1;
     list.addEventListener("mousemove", (e) => {
@@ -265,26 +420,35 @@
         lastMouseY = e.clientY;
         const li = e.target.closest("li[data-index]");
         if (li) {
+            previewEnabled = true;
             setActive(Number(li.dataset.index));
         }
     });
 
-    input.addEventListener("input", update);
+    input.addEventListener("input", () => {
+        previewEnabled = true;
+        update();
+    });
 
+    // stopPropagation: on the search page these same keys are handled
+    // by search-shortcuts.js, which would move the results behind the
+    // menu and steal the focus.
     palette.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
             e.preventDefault();
             e.stopPropagation();
-            close();
+            cancel();
         }
         else if (e.key === "ArrowDown") {
             e.preventDefault();
             e.stopPropagation();
+            previewEnabled = true;
             setActive(activeIndex + 1);
         }
         else if (e.key === "ArrowUp") {
             e.preventDefault();
             e.stopPropagation();
+            previewEnabled = true;
             setActive(activeIndex - 1);
         }
         else if (e.key === "Enter") {
@@ -301,8 +465,11 @@
     });
 
     document.addEventListener("keydown", (e) => {
+        // Fallback: close on Esc even if focus ended up outside the
+        // menu.
         if (e.key === "Escape" && palette.classList.contains("is-open")) {
-            close();
+            e.stopImmediatePropagation();
+            cancel();
             return;
         }
         if (e.key !== "@") {
@@ -322,5 +489,24 @@
         }
         e.preventDefault();
         open();
+    });
+
+    // Make the "@" key shown in the docs (e.g. the api.rst tip)
+    // clickable, as a way to discover the menu.
+    document.querySelectorAll("kbd").forEach((kbd) => {
+        if (kbd.textContent.trim() !== "@") {
+            return;
+        }
+        kbd.classList.add("api-palette-kbd");
+        kbd.title = "Open the go-to-definition menu";
+        kbd.setAttribute("role", "button");
+        kbd.tabIndex = 0;
+        kbd.addEventListener("click", open);
+        kbd.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                open();
+            }
+        });
     });
 })();

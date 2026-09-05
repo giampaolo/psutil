@@ -74,7 +74,15 @@
 }
 
 .api-palette-results li.is-active {
-    background: var(--bg-hover);
+    background: var(--surface-raised);
+}
+
+.api-palette-results li.is-active .api-palette-name {
+    font-weight: 700;
+}
+
+[data-theme="dark"] .api-palette-results li.is-active {
+    background: var(--bg-hover-on-dark);
 }
 
 .api-palette-name {
@@ -94,6 +102,19 @@
     flex-shrink: 0;
     font-size: 0.72rem;
     color: var(--text-muted);
+}
+
+kbd.api-palette-kbd {
+    cursor: pointer;
+}
+
+kbd.api-palette-kbd:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+dt.sig-object:focus {
+    outline: none;
 }
 
 .api-palette-empty {

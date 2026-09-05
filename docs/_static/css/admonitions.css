@@ -124,7 +124,7 @@ div.warning p.admonition-title::before,
 div.important p.admonition-title::before,
 div.seealso p.admonition-title::before {
     top: var(--adm-padding-y);
-    width: auto;
+    width: 16px;
     height: auto;
     border: 0;
     border-radius: 0;
