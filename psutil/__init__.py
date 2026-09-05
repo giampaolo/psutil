@@ -625,7 +625,7 @@ class Process:
         >>> with p.oneshot():
         ...     p.name()  # collect multiple info
         ...     p.cpu_times()  # return cached value
-        ...     p.cpu_percent()  # return cached value
+        ...     p.cpu_percent()  # still samples live times
         ...     p.create_time()  # return cached value
         ...
         >>>
@@ -1244,15 +1244,15 @@ class Process:
 
         if blocking:
             st1 = timer()
-            pt1 = self._proc.cpu_times()
+            pt1 = self._cpu_times_now()
             time.sleep(interval)
             st2 = timer()
-            pt2 = self._proc.cpu_times()
+            pt2 = self._cpu_times_now()
         else:
             st1 = self._last_sys_cpu_times
             pt1 = self._last_proc_cpu_times
             st2 = timer()
-            pt2 = self._proc.cpu_times()
+            pt2 = self._cpu_times_now()
             if st1 is None or pt1 is None:
                 self._last_sys_cpu_times = st2
                 self._last_proc_cpu_times = pt2
@@ -1290,6 +1290,29 @@ class Process:
             # https://github.com/giampaolo/psutil/issues/474
             single_cpu_percent = overall_cpus_percent * num_cpus
             return round(single_cpu_percent, 1)
+
+    def _cpu_times_now(self):
+        """Read cpu_times() ignoring the oneshot() cache.
+
+        cpu_percent compares two samples. oneshot() would otherwise
+        freeze /proc/stat (and the equivalent on other platforms) so
+        both samples are identical and the method always returns 0.0.
+        """
+        proc = self._proc
+        cache = getattr(proc, "_cache", None)
+        saved = dict(cache) if cache is not None else None
+        if cache is not None:
+            cache.clear()
+        try:
+            return proc.cpu_times()
+        finally:
+            if saved is not None:
+                restored = getattr(proc, "_cache", None)
+                if restored is None:
+                    proc._cache = saved
+                else:
+                    restored.clear()
+                    restored.update(saved)
 
     @_use_prefetch
     @memoize_when_activated
