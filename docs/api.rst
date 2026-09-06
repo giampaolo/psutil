@@ -97,12 +97,20 @@ CPU
 
   Return the current system-wide CPU utilization as a percentage.
 
-  If *interval* is > ``0.0``, measures CPU times before and after the interval
-  (blocking). If ``0.0`` or ``None``, returns the utilization since the last
-  call or module import, returning immediately. That means the first time this
-  is called it will return a meaningless ``0.0`` value which you are supposed
-  to ignore. In this case it is recommended for accuracy that this function be
-  called with at least ``0.1`` seconds between calls.
+  If *percpu* is ``False``, the result is based on aggregate CPU times across
+  all :term:`logical CPUs <logical CPU>`, normalized to a range of ``0.0`` to
+  ``100.0``. For example, on a system with 4 logical CPUs, one CPU fully busy
+  and the other three idle throughout the interval gives approximately ``25.0``
+  (``100 / 4``). All four fully busy gives ``100.0``. Unlike
+  :meth:`Process.cpu_percent`, this value cannot exceed ``100.0``.
+
+  *interval* is expressed in seconds. If > ``0.0``, measures CPU times before
+  and after the interval (blocking). If ``0.0`` or ``None``, returns the
+  utilization since the last call or module import, returning immediately. That
+  means the first time this is called it will return a meaningless ``0.0``
+  value which you are supposed to ignore. In this case it is recommended for
+  accuracy that this function be called with at least ``0.1`` seconds between
+  calls.
 
   If *percpu* is ``True``, returns a list of floats representing each
   :term:`logical CPU`. The list is ordered by CPU index and consistent across
@@ -128,6 +136,7 @@ CPU
 
   .. seealso::
     - :ref:`faq_cpu_percent`
+    - :ref:`faq_cpu_percent_gt_100`
 
   .. versionchanged:: 5.9.6
      the function is now thread safe.
