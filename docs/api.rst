@@ -945,8 +945,9 @@ Functions
   ``p.status()``) return the cached values instead of issuing new system calls.
   See :attr:`Process.attrs` for a list of valid *attrs* names.
 
-  If a method raises :exc:`AccessDenied` during pre-fetch, it will return
-  *ad_value* (default ``None``) instead of raising.
+  If a method raises :exc:`AccessDenied` or :exc:`ZombieProcess` during
+  pre-fetch, it will return *ad_value* (default ``None``) instead of
+  raising.
 
   Processes are returned sorted by PID.
 

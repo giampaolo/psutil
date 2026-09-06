@@ -1804,8 +1804,9 @@ def process_iter(
     `p.name()`) return cached values. Use `attrs=Process.attrs` to
     retrieve all process info (slow).
 
-    If a method raises `AccessDenied` during pre-fetch, it will return
-    *ad_value* (default None) instead of raising.
+    If a method raises `AccessDenied` or `ZombieProcess` during
+    pre-fetch, it will return *ad_value* (default None) instead of
+    raising.
     """
     global _pmap
 

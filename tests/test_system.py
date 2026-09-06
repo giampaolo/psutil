@@ -187,6 +187,17 @@ class TestProcessIter(PsutilTestCase):
             for p in psutil.process_iter(attrs=["cpu_times"]):
                 assert p.cpu_times() is None
 
+    def test_prefetch_ad_value_on_zombie(self):
+        # A ZombieProcess raised while pre-fetching an attr is swallowed
+        # into ad_value the same way AccessDenied is (see as_dict()),
+        # not just dropped or left to propagate out of process_iter().
+        with mock.patch(
+            "psutil._psplatform.Process.cpu_times",
+            side_effect=psutil.ZombieProcess(0, ""),
+        ):
+            for p in psutil.process_iter(attrs=["cpu_times"]):
+                assert p.cpu_times() is None
+
     def test_prefetch_cleared(self):
         # Prefetch cache is cleared when attrs is not specified.
         for p in psutil.process_iter(attrs=["name"]):
