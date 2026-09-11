@@ -436,7 +436,6 @@ def main():
             'Intended Audience :: Developers',
             'Intended Audience :: Information Technology',
             'Intended Audience :: System Administrators',
-            'License :: OSI Approved :: BSD License',
             'Operating System :: OS Independent',
             'Operating System :: MacOS :: MacOS X',
             'Operating System :: Microsoft :: Windows',
