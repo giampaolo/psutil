@@ -2034,3 +2034,19 @@ class TestPopen(PsutilTestCase):
             proc.wait()
             with pytest.raises(AttributeError):
                 proc.foo  # noqa: B018
+
+    def test__getattribute__failed_init(self):
+        # If __init__() raises (e.g. the executable does not exist) the
+        # instance has no _Popen__subproc attribute, and accessing any
+        # attribute used to recurse infinitely in __getattribute__().
+        # https://github.com/giampaolo/psutil/issues/1121
+        class Popen(psutil.Popen):
+            def __init__(self, *args, **kwargs):
+                try:
+                    psutil.Popen.__init__(self, *args, **kwargs)
+                except OSError:
+                    pass  # inspected later instead
+
+        proc = Popen(["nonexistent-executable-xyz"])
+        with pytest.raises(AttributeError):
+            proc.foo  # noqa: B018

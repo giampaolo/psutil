@@ -1734,7 +1734,14 @@ class Popen(Process):
             return object.__getattribute__(self, name)
         except AttributeError:
             try:
-                return object.__getattribute__(self.__subproc, name)
+                # Do not access `__subproc` via attribute syntax (e.g.
+                # `self.__subproc`): if `__init__()` failed before
+                # assigning it, the lookup would re-enter this method
+                # and recurse until the stack is exhausted. The mangled
+                # name must match the assignment in `__init__()`.
+                # See: https://github.com/giampaolo/psutil/issues/1121
+                subproc = object.__getattribute__(self, '_Popen__subproc')
+                return object.__getattribute__(subproc, name)
             except AttributeError:
                 msg = f"{self.__class__!r} has no attribute {name!r}"
                 raise AttributeError(msg) from None
