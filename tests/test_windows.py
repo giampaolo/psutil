@@ -392,6 +392,16 @@ class TestDiskApis(WindowsTestCase):
         assert abs(stats.write_bytes - int(w.DiskWriteBytesPersec)) < tolerance
         assert abs(stats.read_count - int(w.DiskReadsPersec)) < 1000
         assert abs(stats.write_count - int(w.DiskWritesPersec)) < 1000
+        # The raw value of "Avg. Disk sec/Read|Write" is the summed I/O
+        # time in ticks of Frequency_PerfTime, but only 32 bits wide: it
+        # wraps after 2**32 ticks (~7 minutes at 10 MHz). Compare modulo.
+        freq = int(w.Frequency_PerfTime)
+        for ms, raw in (
+            (stats.read_time, w.AvgDisksecPerRead),
+            (stats.write_time, w.AvgDisksecPerWrite),
+        ):
+            diff = (ms * freq // 1000 - int(raw)) % 2**32
+            assert min(diff, 2**32 - diff) < freq  # less than 1 second
 
 
 class TestOtherSystemAPIs(WindowsTestCase):

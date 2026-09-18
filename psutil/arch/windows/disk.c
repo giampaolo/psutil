@@ -187,12 +187,10 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             diskPerformance->WriteCount,
             diskPerformance->BytesRead,
             diskPerformance->BytesWritten,
-            // convert to ms:
-            // https://github.com/giampaolo/psutil/issues/1012
-            (unsigned long long)(diskPerformance->ReadTime.QuadPart)
-                / 10000000,
-            (unsigned long long)(diskPerformance->WriteTime.QuadPart)
-                / 10000000
+            // DISK_PERFORMANCE counts 100 ns units, convert to ms:
+            // https://github.com/giampaolo/psutil/issues/3002
+            (unsigned long long)(diskPerformance->ReadTime.QuadPart) / 10000,
+            (unsigned long long)(diskPerformance->WriteTime.QuadPart) / 10000
         );
         if (!py_tuple)
             goto error;
