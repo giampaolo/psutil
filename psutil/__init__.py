@@ -1237,21 +1237,16 @@ class Process:
         if interval is not None and interval < 0:
             msg = f"interval is not positive (got {interval!r})"
             raise ValueError(msg)
-        num_cpus = cpu_count() or 1
-
-        def timer():
-            return _timer() * num_cpus
-
         if blocking:
-            st1 = timer()
+            st1 = _timer()
             pt1 = self._proc.cpu_times()
             time.sleep(interval)
-            st2 = timer()
+            st2 = _timer()
             pt2 = self._proc.cpu_times()
         else:
             st1 = self._last_sys_cpu_times
             pt1 = self._last_proc_cpu_times
-            st2 = timer()
+            st2 = _timer()
             pt2 = self._proc.cpu_times()
             if st1 is None or pt1 is None:
                 self._last_sys_cpu_times = st2
@@ -1265,31 +1260,24 @@ class Process:
         self._last_proc_cpu_times = pt2
 
         try:
-            # This is the utilization split evenly between all CPUs.
-            # E.g. a busy loop process on a 2-CPU-cores system at this
-            # point is reported as 50% instead of 100%.
-            overall_cpus_percent = (delta_proc / delta_time) * 100
-        except ZeroDivisionError:
-            # interval was too low
-            return 0.0
-        else:
-            # Note 1:
-            # in order to emulate "top" we multiply the value for the num
-            # of CPU cores. This way the busy process will be reported as
+            # The value is deliberately not split evenly between logical
+            # CPUs, so that we emulate "top": a busy loop is reported as
             # having 100% (or more) usage.
             #
-            # Note 2:
+            # Note 1:
             # taskmgr.exe on Windows differs in that it will show 50%
             # instead.
             #
-            # Note 3:
+            # Note 2:
             # a percentage > 100 is legitimate as it can result from a
             # process with multiple threads running on different CPU
             # cores (top does the same), see:
             # http://stackoverflow.com/questions/1032357
             # https://github.com/giampaolo/psutil/issues/474
-            single_cpu_percent = overall_cpus_percent * num_cpus
-            return round(single_cpu_percent, 1)
+            return round((delta_proc / delta_time) * 100, 1)
+        except ZeroDivisionError:
+            # interval was too low
+            return 0.0
 
     @_use_prefetch
     @memoize_when_activated
