@@ -61,8 +61,15 @@ psutil_sensors_cpu_temperature(PyObject *self, PyObject *args) {
 
     // Return -273 in case of failure.
     str_format(sensor, sizeof(sensor), "dev.cpu.%d.coretemp.tjmax", core);
-    if (psutil_sysctlbyname(sensor, &tjmax, size) != 0)
+    if (psutil_sysctlbyname(sensor, &tjmax, size) != 0) {
+        // tjmax is optional (e.g. absent on AMD CPUs, which lack
+        // coretemp(4)); psutil_sysctlbyname() already set a Python
+        // exception on failure, so clear it before continuing, else
+        // we'd return a result with an exception set, which CPython
+        // reports as a SystemError.
+        PyErr_Clear();
         tjmax = 0;
+    }
 
     return Py_BuildValue(
         "dd", DECIKELVIN_2_CELSIUS(current), DECIKELVIN_2_CELSIUS(tjmax)
