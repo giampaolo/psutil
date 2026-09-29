@@ -7,12 +7,16 @@
 // closes it.
 
 (function () {
+    const MODKEY = /Mac|iP(hone|ad|od)/.test(navigator.platform)
+        ? "⌘"
+        : "Ctrl";
     const SHORTCUTS = [
         { keys: ["Shift", "D"], desc: "Toggle dark / light mode" },
-        { keys: ["Ctrl", "K"], desc: "Focus search" },
-        { keys: ["↑", "↓"], desc: "Navigate search results" },
-        { keys: ["Enter"], desc: "Open highlighted search result" },
-        { keys: ["Esc"], desc: "Close search / dialog" },
+        { keys: ["@"], desc: "Go to API definition" },
+        { keys: [MODKEY, "K"], desc: "Focus search" },
+        { keys: ["↑", "↓"], desc: "Navigate search or API results" },
+        { keys: ["Enter"], desc: "Open the highlighted entry" },
+        { keys: ["Esc"], desc: "Close menus and dialogs" },
         { keys: ["?"], desc: "Show this help" },
     ];
 

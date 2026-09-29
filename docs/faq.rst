@@ -263,8 +263,9 @@ Why does cpu_percent() return 0.0 on first call?
 
 :func:`cpu_percent` (and :meth:`Process.cpu_percent`) measures CPU usage
 *between two calls*. The very first call has no prior sample to compare
-against, so it always returns ``0.0``. The fix is to call it once to initialize
-the baseline, discard the result, then call it again after a short sleep:
+against, so it returns a meaningless ``0.0``. The fix is to call it once to
+initialize the baseline, discard the result, then call it again after a short
+sleep:
 
 .. code-block:: python
 
@@ -297,9 +298,9 @@ Can Process.cpu_percent() return a value higher than 100%?
 
 Yes. On a multi-core system a process can run threads on several CPUs at the
 same time. The maximum value is ``psutil.cpu_count() * 100``. For example, on a
-4-core machine a fully-loaded process can reach 400%. The system-wide
-:func:`cpu_percent` (without a :class:`Process`) always stays in the 0–100%
-range because it averages across all cores.
+machine with 4 :term:`logical CPUs <logical CPU>`, a fully-loaded process can
+reach 400%. The system-wide :func:`cpu_percent` (without a :class:`Process`)
+always stays in the 0-100% range because it averages across all cores.
 
 The returned value is explicitly *not* split evenly between all available CPUs.
 This is consistent with the ``top`` UNIX utility: a busy loop on a system with
@@ -324,8 +325,8 @@ What is the difference between psutil, os, and multiprocessing cpu_count()?
 - :func:`psutil.cpu_count` with ``logical=False`` returns the number of
   :term:`physical cores <physical CPU>`, which has no stdlib equivalent.
 
-Memory
-------
+Process memory
+--------------
 
 .. _faq_virtual_memory_available:
 
@@ -380,8 +381,37 @@ includes those 2 MB in its :field:`rss`.
 (:term:`Unique Set Size <USS>`), i.e. :term:`private memory` of the process. It
 represents the amount of memory that would be freed if the process were
 terminated right now. It is more accurate than :term:`RSS`, but substantially
-slower and requires higher privileges. On Linux it also returns :field:`pss`
-(:term:`Proportional Set Size <PSS>`) and :term:`swap <swap memory>`.
+slower and may require higher privileges. It also returns :field:`shared`, and
+on Linux :field:`pss` (:term:`Proportional Set Size <PSS>`) and
+:term:`swap <swap memory>`.
+
+.. _faq_memory_shared:
+
+Why do memory_info() and memory_footprint() report different shared values?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Because they measure different things. :meth:`Process.memory_info`'s
+:field:`shared` counts resident memory that *could* be shared, meaning
+file-backed pages and shmem, no matter if other processes map it or not. This
+is what ``top`` shows in the SHR column. :meth:`Process.memory_footprint`'s
+:field:`shared` only counts pages that are mapped more than once. That usually
+means "mapped by another process", but multiple mappings by the same process
+also count. It reads the page tables instead of a counter, so it's exact in
+that regard, but slower.
+
+.. _faq_memory_swap:
+
+Why do swap_anon and memory_footprint()'s swap differ?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:meth:`Process.memory_extras`'s :field:`swap_anon` counts swapped-out
+:term:`anonymous memory` only, so it misses swapped shmem / tmpfs memory.
+:meth:`Process.memory_footprint`'s :field:`swap` includes that too, but it has
+to walk the whole process address space, which is a lot slower and may require
+root. If you don't care about shmem, prefer :field:`swap_anon`.
+
+System memory
+-------------
 
 .. _faq_used_plus_free:
 

@@ -405,10 +405,10 @@ Memory
                 rss_file=897433,
                 rss_shmem=0,
                 swap_anon=0,
-                hugetlb=0)
+                locked=0)
     >>>
     >>> p.memory_percent()
-    0.7823
+    0.78
     >>>
     >>> p.memory_footprint()  # "real" USS memory usage
     pfootprint(uss=2355200, pss=2483712, swap=0)

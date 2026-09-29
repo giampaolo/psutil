@@ -194,7 +194,7 @@
     --kbd-bg: #3a3a3a;
     --kbd-text: #d4d4d4;
     --kbd-border: #5a5a5a;
-    --bg-search-highlight: rgba(225, 237, 245, 0.15);
+    --bg-search-highlight: rgba(106, 176, 222, 0.22);
     --bg-hover: rgba(255, 255, 255, 0.06);
     --sidebar-active-bg: #404040;
     --sidebar-active-fg: #fff;
@@ -408,7 +408,8 @@ dt:target {
 .home-platform-pill:focus-visible,
 .home-stat:focus-visible,
 .prev-next a:focus-visible,
-.blog-card-title a:focus-visible {
+.blog-card-title a:focus-visible,
+kbd.api-palette-kbd:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: var(--border-radius);

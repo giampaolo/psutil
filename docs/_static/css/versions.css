@@ -45,12 +45,12 @@
     font-weight: 900;
     font-size: 0.7em;
     opacity: 0.9;
-    transform: rotate(180deg);
+    transform: rotate(180deg) translateY(1px);
     transition: transform 0.15s;
 }
 
 .topbar-versions[open] > summary::after {
-    transform: rotate(0deg);
+    transform: rotate(0deg) translateY(1px);
 }
 
 .topbar-versions-menu {

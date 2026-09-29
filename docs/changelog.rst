@@ -49,9 +49,14 @@ Changelog
   no longer set to ``0``.
 - :gh:`2977`: new :func:`bytes2human` utility function, converting a number of
   bytes to a human-readable string (e.g. ``9.8K``).
+- :gh:`1109`, [Linux]: :meth:`Process.memory_extras` returns a new
+  :field:`locked` field: locked virtual memory (:manpage:`mlock(2)`).
+- :gh:`1452`, :gh:`2993`, [Linux, macOS, Windows]:
+  :meth:`Process.memory_footprint` returns a new :field:`shared` field:
+  resident memory shared with other processes.
 
-Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
-:gh:`2733`, :gh:`2988`).
+Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
+:gh:`2988`).
 
 - New :meth:`Process.memory_extras` method, returning extra platform-specific
   memory metrics on Linux, macOS and Windows. See
@@ -92,6 +97,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
 
 **Other API changes**
 
+- :gh:`2992`: :meth:`Process.memory_percent` result is now rounded to 2 decimal
+  places. It was the only ``*_percent`` API returning an unrounded float.
 - :gh:`2747`, :label:`breaking`: the field order of the named tuple returned by
   :func:`cpu_times` has been normalized on all platforms, and the first 3
   fields are now always :field:`user`, :field:`system`, :field:`idle`. See
@@ -233,6 +240,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   the helper, ``Shift+D`` toggles dark/light mode, ``Ctrl+K`` focuses the
   search box, ``Up``/``Down`` navigate the search results and ``Enter`` opens
   the selected one.
+
+- Go to API definition: pressing ``@`` on any page opens a menu that
+  fuzzy-matches psutil's function, class and method names and jumps to their
+  API definition, like in Sublime Text or VS Code (:gh:`2995`).
 
 - Testing: ``rstcheck`` was replaced by ``sphinx-lint``, plus a custom script
   detecting dead reference links in ``.rst`` files (:gh:`2767`). Python code

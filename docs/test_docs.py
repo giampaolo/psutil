@@ -5,6 +5,7 @@
 """Sanity checks for the Sphinx docs and blog posts."""
 
 import importlib.util
+import json
 import pathlib
 import re
 import shutil
@@ -247,6 +248,14 @@ class TestHtmlBuild:
         html = read_html("index.html")
         assert f"{substitutions.years_in_development()} years" in html
         assert "{{" not in html
+
+    def test_no_leaked_rst_markup(self, subtests):
+        pre_pat = re.compile(r"<pre\b.*?</pre>", re.DOTALL)
+        leak_pat = re.compile(r":[a-z]+:`|``")
+        for html in all_html_pages():
+            with subtests.test(page=html.relative_to(HTML_DIR)):
+                body = pre_pat.sub("", html.read_text())
+                assert leak_pat.search(body) is None
 
     def test_changelog_anchors(self):
         # Indirectly test _ext/changelog_anchors.py. Every X.Y.Z
@@ -897,6 +906,43 @@ class TestNotFound:
         for target in ("/install/", "/api/", "/faq/", "/recipes/", "/blog/"):
             with subtests.test(target=target):
                 assert f'href="{target}"' in html
+
+
+@pytest.mark.usefixtures("build_html")
+class TestSearch:
+    def test_search_terms_extract_context(self, subtests):
+        raw = (HTML_DIR / "searchindex.js").read_text()
+        data = json.loads(raw[raw.index("(") + 1 : raw.rindex(")")])
+        for term in ("disk", "zombi"):
+            docidxs = data["terms"][term]
+            if isinstance(docidxs, int):
+                docidxs = [docidxs]
+            for i in docidxs:
+                docname = data["docnames"][i]
+                with subtests.test(term=term, page=docname):
+                    m = re.search(
+                        r'<main\b[^>]*\brole="main".*?</main>',
+                        read_html(docname + ".html"),
+                        re.DOTALL,
+                    )
+                    assert m
+                    text = re.sub(r"<[^>]+>", " ", m.group(0))
+                    assert term in text.lower()
+
+    def test_results_have_icon_selectors(self, subtests):
+        css = (HTML_DIR / "_static" / "css" / "doc-icons.css").read_text()
+        base_frags = set(
+            re.findall(r'^a\[href\*="([^"]+)"\]', css, re.MULTILINE)
+        )
+        search_frags = set(
+            re.findall(r'ul\.search > li:has\(> a\[href\*="([^"]+)"\]\)', css)
+        )
+        assert base_frags
+        assert base_frags <= search_frags
+        for frag in sorted(search_frags):
+            with subtests.test(frag=frag):
+                path = HTML_DIR / frag.lstrip("/") / "index.html"
+                assert path.is_file()
 
 
 @pytest.mark.usefixtures("build_html")

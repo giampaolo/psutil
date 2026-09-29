@@ -238,6 +238,11 @@ ul.search > li > span:not(.highlighted) {
     white-space: nowrap;
 }
 
+[data-theme="dark"] ul.search > li > span:not(.highlighted) {
+    color: var(--text-secondary);
+    opacity: 1;
+}
+
 /* Context paragraph (snippet under the title), aligned with the
    icon column. */
 ul.search > li > p.context {
@@ -260,9 +265,25 @@ ul.search > li > p.context .highlighted {
     border-radius: 2px;
 }
 
+[data-theme="dark"] ul.search .highlighted,
+[data-theme="dark"] ul.search > li > p.context .highlighted {
+    color: var(--text-secondary);
+}
+
 /* Active row when navigating with ArrowUp / ArrowDown. */
 ul.search > li.search-result-active {
-    background: var(--bg-key);
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+    box-shadow: inset 0 0 0 100vmax
+        color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+[data-theme="dark"] ul.search > li.search-result-active {
+    box-shadow: inset 0 0 0 100vmax
+        color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+ul.search > li > a:focus {
     outline: none;
 }
 

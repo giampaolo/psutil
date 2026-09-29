@@ -41,7 +41,7 @@ PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
 PyObject *psutil_proc_environ(PyObject *self, PyObject *args);
 PyObject *psutil_proc_exe(PyObject *self, PyObject *args);
 PyObject *psutil_proc_memory_extras(PyObject *self, PyObject *args);
-PyObject *psutil_proc_memory_uss(PyObject *self, PyObject *args);
+PyObject *psutil_proc_memory_footprint(PyObject *self, PyObject *args);
 PyObject *psutil_proc_name(PyObject *self, PyObject *args);
 PyObject *psutil_proc_net_connections(PyObject *self, PyObject *args);
 PyObject *psutil_proc_num_fds(PyObject *self, PyObject *args);

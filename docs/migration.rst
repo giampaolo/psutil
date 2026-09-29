@@ -155,7 +155,8 @@ memory_full_info() is deprecated
 
 :meth:`Process.memory_full_info` is deprecated. Use
 :meth:`Process.memory_footprint` instead; it returns the same fields
-(:field:`uss`, :field:`pss` and :field:`swap`).
+(:field:`uss`, :field:`pss` and :field:`swap`), plus a new :field:`shared`
+field.
 
 .. _migration-8.0-memory-extras:
 
@@ -166,7 +167,7 @@ New memory_extras() method
 platform-specific memory metrics which complement :meth:`Process.memory_info`:
 
 - Linux: :field:`peak_rss`, :field:`peak_vms`, :field:`rss_anon`,
-  :field:`rss_file`, :field:`rss_shmem`, :field:`swap_anon`, :field:`hugetlb`.
+  :field:`rss_file`, :field:`rss_shmem`, :field:`swap_anon`, :field:`locked`.
 - macOS: :field:`phys_footprint`, :field:`peak_footprint`.
 - Windows: :field:`virtual`, :field:`peak_virtual`, :field:`paged_pool`,
   :field:`nonpaged_pool`, :field:`peak_paged_pool`,
