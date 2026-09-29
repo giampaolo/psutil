@@ -19,12 +19,11 @@ calls :manpage:`malloc(3)` without a corresponding :manpage:`free(3)`, that
 memory often won't show up in :term:`RSS` / :term:`VMS`. You have a leak, and
 you don't know.
 
-psutil 7.2.0 introduces two new APIs for **C :term:`heap` introspection**,
-designed specifically to catch these kinds of native leaks. They give you a
-window directly into the underlying platform allocator (e.g. glibc's malloc),
-letting you track how much memory the C layer actually allocates. If your
-:term:`RSS` is flat but your C :term:`heap` usage climbs, you now have a way to
-see it.
+psutil 7.2.0 introduces two new APIs for **C heap introspection**, designed
+specifically to catch these kinds of native leaks. They give you a window
+directly into the underlying platform allocator (e.g. glibc's malloc), letting
+you track how much memory the C layer actually allocates. If your :term:`RSS`
+is flat but your C :term:`heap` usage climbs, you now have a way to see it.
 
 Why native heap introspection matters
 -------------------------------------

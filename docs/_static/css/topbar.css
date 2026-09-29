@@ -147,7 +147,7 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 600;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -170,8 +170,8 @@
 /* ---- Mobile responsive ---------------------------------------------- */
 
 @media (max-width: 1024px) {
-    .topbar-logo,
-    .topbar-logo:visited {
+    .topbar .topbar-logo,
+    .topbar .topbar-logo:visited {
         width: auto;
         padding-left: 0;
     }

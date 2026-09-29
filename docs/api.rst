@@ -1,18 +1,21 @@
-.. note::
-   psutil 8.0 introduces breaking API changes. See the
-   :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
 
 API reference
 =============
 
 Complete reference for all psutil classes and functions. Provided as a single
-HTML page for ease of searchability.
+HTML page for ease of searchability. For a high-level overview with short
+examples see :doc:`api-overview`.
+
+.. note::
+   psutil 8.0 introduces breaking API changes. See the
+   :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
+
+.. tip::
+   Press :kbd:`@` to quickly jump to a function, class, or method definition.
 
 .. contents::
    :local:
    :depth: 1
-
-For a high-level overview with short examples see :doc:`api-overview`.
 
 System related functions
 ------------------------
@@ -94,12 +97,19 @@ CPU
 
   Return the current system-wide CPU utilization as a percentage.
 
-  If *interval* is > ``0.0``, measures CPU times before and after the interval
-  (blocking). If ``0.0`` or ``None``, returns the utilization since the last
-  call or module import, returning immediately. That means the first time this
-  is called it will return a meaningless ``0.0`` value which you are supposed
-  to ignore. In this case it is recommended for accuracy that this function be
-  called with at least ``0.1`` seconds between calls.
+  *interval* is expressed in seconds. If *interval* is > ``0.0``, measures CPU
+  times before and after the interval (blocking). If ``0.0`` or ``None``,
+  returns the utilization since the last call or module import, returning
+  immediately. That means the first time this is called it will return a
+  meaningless ``0.0`` value which you are supposed to ignore. In this case it
+  is recommended for accuracy that this function be called with at least
+  ``0.1`` seconds between calls.
+
+  If *percpu* is ``False``, the result is based on aggregate CPU times across
+  all :term:`logical CPUs <logical CPU>`, normalized to a range of ``0.0`` to
+  ``100.0``. For example, on a system with 4 logical CPUs, if one CPU is fully
+  busy and the other three are idle, the result is approximately ``25.0``.
+  Unlike :meth:`Process.cpu_percent`, returned values cannot exceed ``100.0``.
 
   If *percpu* is ``True``, returns a list of floats representing each
   :term:`logical CPU`. The list is ordered by CPU index and consistent across
@@ -120,10 +130,12 @@ CPU
      2.9
      >>> # blocking, per-cpu
      >>> psutil.cpu_percent(interval=1, percpu=True)
-     [5.6, 1.0]
+     [4.0, 6.9, 3.7, 9.2]
      >>>
 
-  .. seealso:: :ref:`faq_cpu_percent`
+  .. seealso::
+    - :ref:`faq_cpu_percent`
+    - :ref:`why Process.cpu_percent() can exceed 100% <faq_cpu_percent_gt_100>`
 
   .. versionchanged:: 5.9.6
      the function is now thread safe.
@@ -135,7 +147,8 @@ CPU
   in :func:`cpu_percent`. On Linux, :field:`guest` and :field:`guest_nice`
   percentages are not accounted in :field:`user` and :field:`user_nice`.
 
-  .. seealso:: :ref:`faq_cpu_percent`
+  .. seealso::
+    - :ref:`faq_cpu_percent`
 
   .. versionchanged:: 5.9.6
      function is now thread safe.
@@ -170,7 +183,8 @@ CPU
      >>> len(psutil.Process().cpu_affinity())
      1
 
-  .. seealso:: :ref:`faq_cpu_count`
+  .. seealso::
+    - :ref:`faq_cpu_count`
 
 .. function:: cpu_stats()
 
@@ -475,7 +489,8 @@ Disks
      [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro'),
       sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw')]
 
-  .. seealso:: :src:`scripts/disk_usage.py`.
+  .. seealso::
+    - :src:`scripts/disk_usage.py`
 
   .. versionchanged:: 5.7.4
      added :field:`maxfile` and :field:`maxpath` fields.
@@ -505,7 +520,8 @@ Disks
     :field:`percent` may appear ~5% higher than expected. All values match the
     ``df`` command line utility.
 
-  .. seealso:: :src:`scripts/disk_usage.py`.
+  .. seealso::
+    - :src:`scripts/disk_usage.py`
 
 .. function:: disk_io_counters(perdisk=False, nowrap=True)
 
@@ -603,7 +619,9 @@ Network
      {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
       'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
 
-  .. seealso:: :src:`scripts/nettop.py` and :src:`scripts/ifconfig.py`.
+  .. seealso::
+    - :src:`scripts/nettop.py`
+    - :src:`scripts/ifconfig.py`
 
 .. function:: net_connections(kind="inet")
 
@@ -720,7 +738,9 @@ Network
                 snicaddr(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
      >>>
 
-  .. seealso:: :src:`scripts/nettop.py` and :src:`scripts/ifconfig.py`.
+  .. seealso::
+    - :src:`scripts/nettop.py`
+    - :src:`scripts/ifconfig.py`
 
   .. versionchanged:: 7.0.0
      Windows: added support for :field:`broadcast` field, which is no longer
@@ -745,7 +765,9 @@ Network
      {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500, flags='up,broadcast,running,multicast'),
       'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536, flags='up,loopback,running')}
 
-  .. seealso:: :src:`scripts/nettop.py` and :src:`scripts/ifconfig.py`.
+  .. seealso::
+    - :src:`scripts/nettop.py`
+    - :src:`scripts/ifconfig.py`
 
   .. versionchanged:: 5.7.3
      UNIX: :field:`isup` also reflects whether the :term:`NIC` is running.
@@ -784,7 +806,9 @@ Sensors
                    shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
                    shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
 
-  .. seealso:: :src:`scripts/temperatures.py` and :src:`scripts/sensors.py`.
+  .. seealso::
+    - :src:`scripts/temperatures.py`
+    - :src:`scripts/sensors.py`
 
   .. availability:: Linux, FreeBSD
 
@@ -802,7 +826,9 @@ Sensors
      >>> psutil.sensors_fans()
      {'asus': [sfan(label='cpu_fan', current=3200)]}
 
-  .. seealso:: :src:`scripts/fans.py` and :src:`scripts/sensors.py`.
+  .. seealso::
+    - :src:`scripts/fans.py`
+    - :src:`scripts/sensors.py`
 
   .. availability:: Linux
 
@@ -834,7 +860,9 @@ Sensors
      >>> print("charge = %s%%, time left = %s" % (battery.percent, secs2hours(battery.secsleft)))
      charge = 93%, time left = 4:37:08
 
-  .. seealso:: :src:`scripts/battery.py` and :src:`scripts/sensors.py`.
+  .. seealso::
+    - :src:`scripts/battery.py`
+    - :src:`scripts/sensors.py`
 
   .. availability:: Linux, Windows, macOS, FreeBSD
 
@@ -960,7 +988,8 @@ Functions
     :func:`process_iter` call will overwrite or clear any previously
     pre-fetched values. Do not rely on cached values from a prior iteration.
 
-  .. seealso:: :ref:`perf-process-iter`
+  .. seealso::
+    - :ref:`perf-process-iter`
 
   .. versionchanged:: 6.0.0
 
@@ -982,7 +1011,8 @@ Functions
   Check whether the given PID exists in the current process list. This is
   faster than doing ``pid in psutil.pids()``, and should be preferred.
 
-  .. seealso:: :ref:`faq_pid_exists_vs_isrunning`
+  .. seealso::
+    - :ref:`faq_pid_exists_vs_isrunning`
 
 .. function:: wait_procs(procs, timeout=None, callback=None)
 
@@ -1032,7 +1062,8 @@ Exceptions
   attribute is set only if :meth:`Process.name` was called before the process
   disappeared.
 
-  .. seealso:: :ref:`faq_no_such_process`
+  .. seealso::
+    - :ref:`faq_no_such_process`
 
 .. exception:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
@@ -1044,7 +1075,8 @@ Exceptions
   If you do not need to detect zombies, you can ignore this exception and just
   catch :exc:`NoSuchProcess`.
 
-  .. seealso:: :ref:`faq_zombie_process`
+  .. seealso::
+    - :ref:`faq_zombie_process`
 
 .. exception:: AccessDenied(pid=None, name=None, msg=None)
 
@@ -1052,7 +1084,8 @@ Exceptions
   insufficient privileges. *name* is set if :meth:`Process.name` was called
   before the exception was raised.
 
-  .. seealso:: :ref:`faq_access_denied`
+  .. seealso::
+    - :ref:`faq_access_denied`
 
 .. exception:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
 
@@ -1127,7 +1160,8 @@ Process class
     ``p.name()`` instead of ``p.info['name']``) or :func:`process_iter` +
     :meth:`Process.as_dict` if you need a dict structure.
 
-    .. seealso:: :ref:`migration guide <migration-8.0>`.
+    .. seealso::
+      - :ref:`migration guide <migration-8.0>`
 
     .. deprecated:: 8.0.0
 
@@ -1165,7 +1199,8 @@ Process class
     The process name. On Windows the return value is cached after first call.
     Not on POSIX because the process name may change.
 
-    .. seealso:: how to :ref:`find a process by name <recipe_find_process_by_name>`.
+    .. seealso::
+      - :ref:`Find process by name recipe <recipe_find_process_by_name>`
 
   .. method:: exe()
 
@@ -1407,7 +1442,8 @@ Process class
        >>> p.rlimit(psutil.RLIMIT_FSIZE)                # get current limits of ...
        (1024, 1024)
 
-    .. seealso:: :src:`scripts/procinfo.py`.
+    .. seealso::
+      - :src:`scripts/procinfo.py`
 
     .. availability:: Linux, FreeBSD
 
@@ -1525,12 +1561,13 @@ Process class
     Return process CPU utilization as a percentage. Values can exceed ``100.0``
     if the process runs multiple threads on different CPUs.
 
-    If *interval* is > ``0.0``, measures CPU times before and after the
-    interval (blocking). If ``0.0`` or ``None``, returns the utilization since
-    the last call or module import, returning immediately. That means the first
-    time this is called it will return a meaningless ``0.0`` value which you
-    are supposed to ignore. In this case it is recommended for accuracy that
-    this method be called with at least ``0.1`` seconds between calls.
+    *interval* is expressed in seconds. If *interval* is > ``0.0``, measures
+    CPU times before and after the interval (blocking). If ``0.0`` or ``None``,
+    returns the utilization since the last call or module import, returning
+    immediately. That means the first time this is called it will return a
+    meaningless ``0.0`` value which you are supposed to ignore. In this case it
+    is recommended for accuracy that this method be called with at least
+    ``0.1`` seconds between calls.
 
     .. code-block:: pycon
 
@@ -1585,7 +1622,8 @@ Process class
     ``psutil.cpu_percent(percpu=True)`` to observe the system workload
     distributed across multiple CPUs.
 
-    .. seealso:: :src:`scripts/cpu_distribution.py`.
+    .. seealso::
+      - :src:`scripts/cpu_distribution.py`
 
     .. availability:: Linux, FreeBSD, SunOS
 
@@ -1660,6 +1698,7 @@ Process class
     .. seealso::
       - :ref:`faq_memory_rss_vs_vms`
       - :ref:`faq_memory_footprint`
+      - :ref:`faq_memory_shared`
 
     .. versionchanged:: 8.0.0 (see :ref:`migration guide <migration-8.0>`)
 
@@ -1698,7 +1737,7 @@ Process class
     +-------------+----------------+--------------------+
     | swap_anon   |                | peak_nonpaged_pool |
     +-------------+----------------+--------------------+
-    | hugetlb     |                |                    |
+    | locked      |                |                    |
     +-------------+----------------+--------------------+
 
     Linux:
@@ -1716,9 +1755,10 @@ Process class
     - :field:`swap_anon`: :term:`anonymous memory` currently in
       :term:`swap <swap memory>`. Cheaper than :meth:`memory_footprint`'s
       :field:`swap` (it reads :proc:`/proc/pid/status` instead of smaps) but
-      does not count shmem swap. Set to 0 on Linux < 2.6.34.
-    - :field:`hugetlb`: resident memory backed by huge pages. Set to 0 on Linux
-      < 4.4.
+      does not count shmem swap (see :ref:`faq_memory_swap`). Set to 0 on Linux
+      < 2.6.34.
+    - :field:`locked`: locked memory that cannot be
+      :term:`swapped out <swap-out>`. Typically locked via :manpage:`mlock(2)`.
 
     macOS:
 
@@ -1749,10 +1789,10 @@ Process class
 
   .. method:: memory_footprint()
 
-    Return :field:`uss`, :field:`pss` and :field:`swap` memory metrics. These
-    give a more accurate picture of actual memory consumption than
-    :meth:`memory_info`. It walks the full process address space, so it is
-    slower than :meth:`memory_info` and may require elevated privileges.
+    Return :field:`uss`, :field:`pss`, :field:`swap` and :field:`shared` memory
+    metrics. These give a more accurate picture of actual memory consumption
+    than :meth:`memory_info`. It walks the full process address space, so it is
+    slower than :meth:`memory_info` and may require higher privileges.
 
     - :field:`uss` *(Linux, macOS, Windows)*: aka :term:`USS`; the
       :term:`private memory` of the process, which would be freed if the
@@ -1765,6 +1805,16 @@ Process class
     - :field:`swap` *(Linux)*: process memory currently in
       :term:`swap <swap memory>`, counted per-mapping.
 
+    - :field:`shared` *(Linux, macOS, Windows)*: resident memory shared with
+      other processes. On Linux this counts pages mapped more than once,
+      usually by other processes, but multiple mappings by this same process
+      count too. It is stricter than :meth:`memory_info`'s :field:`shared`,
+      which also counts shareable pages mapped only once (see
+      :ref:`faq_memory_shared`). On macOS the accounting is per VM object
+      rather than per page, following what ``top`` historically reported as
+      RSHRD. On Windows it counts working set pages shared with at least
+      another process.
+
     Example on Linux:
 
     .. code-block:: pycon
@@ -1772,10 +1822,10 @@ Process class
        >>> import psutil
        >>> p = psutil.Process()
        >>> p.memory_footprint()
-       pfootprint(uss=6545408, pss=6872064, swap=0)
+       pfootprint(uss=6545408, pss=6872064, swap=0, shared=4341760)
 
     .. seealso::
-      - :src:`scripts/procsmem.py`.
+      - :src:`scripts/procsmem.py`
       - :ref:`faq_memory_footprint`
       - :doc:`/blog/2016/real-process-memory-in-python`
 
@@ -1786,7 +1836,8 @@ Process class
   .. method:: memory_full_info()
 
     This deprecated method returns the same information as :meth:`memory_info`
-    plus :meth:`memory_footprint` in a single named tuple.
+    plus :meth:`memory_footprint`'s :field:`uss`, :field:`pss` and
+    :field:`swap` in a single named tuple.
 
     .. deprecated:: 8.0.0
        use :meth:`memory_footprint` instead. See
@@ -1804,7 +1855,9 @@ Process class
     *memtype* selects which memory field to use and can be any attribute from
     :meth:`memory_info`, :meth:`memory_extras`, or :meth:`memory_footprint`
     (default is ``"rss"``). The divisor is always total physical memory,
-    regardless of *memtype*.
+    regardless of *memtype*. The result is rounded to 2 decimal places.
+
+    .. versionchanged:: 8.0.0 the result is rounded to 2 decimal places.
 
   .. method:: memory_maps(grouped=True)
 
@@ -1876,7 +1929,8 @@ Process class
         pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so', rss=3821568, size=3842048, pss=3821568, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=3821568, referenced=3575808, anonymous=3821568, swap=0),
         ...]
 
-    .. seealso:: :src:`scripts/pmap.py`.
+    .. seealso::
+      - :src:`scripts/pmap.py`
 
     .. availability:: Linux, Windows, FreeBSD, SunOS
 
@@ -1911,7 +1965,8 @@ Process class
     is well illustrated by this
     `unit test <https://github.com/giampaolo/psutil/blob/65a52341b55faaab41f68ebc4ed31f18f0929754/psutil/tests/test_process.py#L1064-L1075>`_.
 
-    .. seealso:: how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
+    .. seealso::
+      - :ref:`Kill process tree recipe <recipe_kill_proc_tree>`
 
   .. method:: page_faults()
 
@@ -2015,7 +2070,8 @@ Process class
     ``CTRL_BREAK_EVENT`` signals are supported, and ``SIGTERM`` is treated as
     an alias for :meth:`kill`.
 
-    .. seealso:: how to :ref:`kill a process tree <recipe_kill_proc_tree>`
+    .. seealso::
+      - :ref:`Kill process tree recipe <recipe_kill_proc_tree>`
 
   .. method:: suspend()
 
@@ -2038,7 +2094,8 @@ Process class
     ``os.kill(pid, signal.SIGTERM)``. On Windows this is an alias for
     :meth:`kill`.
 
-    .. seealso:: how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
+    .. seealso::
+      - :ref:`Kill process tree recipe <recipe_kill_proc_tree>`
 
   .. method:: kill()
 
@@ -2047,7 +2104,8 @@ Process class
     ``os.kill(pid, signal.SIGKILL)``. On Windows this is done by using
     `TerminateProcess`_.
 
-    .. seealso:: how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
+    .. seealso::
+      - :ref:`Kill process tree recipe <recipe_kill_proc_tree>`
 
   .. method:: wait(timeout=None)
 
@@ -2079,7 +2137,8 @@ Process class
        >>> p.wait()
        <NegSignal.SIGTERM: -15>
 
-    .. seealso:: :doc:`/blog/2026/event-driven-process-waiting`
+    .. seealso::
+      - :doc:`/blog/2026/event-driven-process-waiting`
 
     .. note::
 
@@ -2167,7 +2226,7 @@ that Python's memory tracking misses.
 
 .. seealso::
 
-  :doc:`/blog/2025/heap-introspection-apis`
+  - :doc:`/blog/2025/heap-introspection-apis`
 
 .. tip::
 

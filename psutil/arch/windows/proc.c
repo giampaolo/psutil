@@ -511,11 +511,11 @@ psutil_GetProcWsetInformation(
 }
 
 
-// Returns the USS of the process.
-// Reference:
+// Returns the working set metrics of the process: USS (private
+// pages) and shared pages. Reference:
 // https://dxr.mozilla.org/mozilla-central/source/xpcom/base/nsMemoryReporterManager.cpp
 PyObject *
-psutil_proc_memory_uss(PyObject *self, PyObject *args) {
+psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess;
     PSUTIL_PROCESS_WS_COUNTERS wsCounters;
@@ -535,30 +535,28 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     memset(&wsCounters, 0, sizeof(PSUTIL_PROCESS_WS_COUNTERS));
 
     for (i = 0; i < wsInfo->NumberOfEntries; i++) {
-        // This is what ProcessHacker does.
-        /*
-        wsCounters.NumberOfPages++;
-        if (wsInfo->WorkingSetInfo[i].ShareCount > 1)
-            wsCounters.NumberOfSharedPages++;
-        if (wsInfo->WorkingSetInfo[i].ShareCount == 0)
-            wsCounters.NumberOfPrivatePages++;
-        if (wsInfo->WorkingSetInfo[i].Shared)
-            wsCounters.NumberOfShareablePages++;
-        */
-
-        // This is what we do: count shared pages that only one process
-        // is using as private (USS).
+        // Count shared pages that only one process is using as
+        // private (USS).
         if (!wsInfo->WorkingSetInfo[i].Shared
             || wsInfo->WorkingSetInfo[i].ShareCount <= 1)
         {
             wsCounters.NumberOfPrivatePages++;
+        }
+        else {
+            wsCounters.NumberOfSharedPages++;
         }
     }
 
     FREE(wsInfo);
     CloseHandle(hProcess);
 
-    return Py_BuildValue("I", wsCounters.NumberOfPrivatePages);
+    return Py_BuildValue(
+        "{s:K, s:K}",
+        "uss",
+        (unsigned long long)wsCounters.NumberOfPrivatePages,
+        "shared",
+        (unsigned long long)wsCounters.NumberOfSharedPages
+    );
 }
 
 

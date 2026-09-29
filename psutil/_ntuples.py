@@ -322,6 +322,7 @@ if LINUX or MACOS or WINDOWS:
         if LINUX:
             pss: int
             swap: int
+        shared: int
 
 
 # psutil.Process.net_connections()
@@ -418,7 +419,7 @@ if LINUX:
         rss_file: int
         rss_shmem: int
         swap_anon: int
-        hugetlb: int
+        locked: int
 
     # psutil.Process().memory_full_info()
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss", "pss", "swap"))

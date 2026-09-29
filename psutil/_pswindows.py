@@ -789,9 +789,9 @@ class Process:
 
     @wrap_exceptions
     def memory_footprint(self):
-        uss = _psutil.proc_memory_uss(self.pid)
-        uss *= getpagesize()
-        return ntp.pfootprint(uss)
+        d = _psutil.proc_memory_footprint(self.pid)
+        pagesize = getpagesize()
+        return ntp.pfootprint(d["uss"] * pagesize, d["shared"] * pagesize)
 
     @wrap_exceptions
     def page_faults(self):
