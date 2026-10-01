@@ -1613,21 +1613,38 @@ def wrap_exceptions(fun):
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
         pid, name = self.pid, self._name
-        try:
-            return fun(self, *args, **kwargs)
-        except PermissionError as err:
-            raise AccessDenied(pid, name) from err
-        except ProcessLookupError as err:
-            self._raise_if_zombie()
-            raise NoSuchProcess(pid, name) from err
-        except FileNotFoundError as err:
-            self._raise_if_zombie()
-            # /proc/PID directory may still exist, but the files within
-            # it may not, indicating the process is gone, see:
-            # https://github.com/giampaolo/psutil/issues/2418
-            if not os.path.exists(f"{self._procfs_path}/{pid}/stat"):
+        stat_file = f"{self._procfs_path}/{pid}/stat"
+        retried = False
+        while True:
+            try:
+                return fun(self, *args, **kwargs)
+            except PermissionError as err:
+                raise AccessDenied(pid, name) from err
+            except ProcessLookupError as err:
+                self._raise_if_zombie()
                 raise NoSuchProcess(pid, name) from err
-            raise
+            except FileNotFoundError as err:
+                self._raise_if_zombie()
+                # /proc/PID directory may still exist, but the files within
+                # it may not, indicating the process is gone, see:
+                # https://github.com/giampaolo/psutil/issues/2418
+                if not os.path.exists(stat_file):
+                    raise NoSuchProcess(pid, name) from err
+                # With /proc mounted hidepid=invisible the stat file can
+                # briefly disappear while the process is alive, then
+                # become visible again, see:
+                # https://github.com/giampaolo/psutil/issues/3010
+                # If the file that could not be read is the stat file
+                # itself, the process raced us, so retry the read once.
+                # If it still cannot be read, the process cannot be
+                # observed right now: report NoSuchProcess, which is what
+                # a process hidden by hidepid=invisible already gets.
+                if err.filename == stat_file:
+                    if not retried:
+                        retried = True
+                        continue
+                    raise NoSuchProcess(pid, name) from err
+                raise
 
     return wrapper
 

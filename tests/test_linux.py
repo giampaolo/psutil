@@ -2413,6 +2413,57 @@ class TestProcess(LinuxTestCase):
                 with pytest.raises(psutil.NoSuchProcess):
                     p.memory_info()
 
+    def test_issue_3010(self):
+        # Emulates /proc/PID/stat briefly disappearing under
+        # hidepid=invisible while the process stays alive: the first
+        # open fails, the stat file is visible again at the existence
+        # check, and a retry succeeds. A raw FileNotFoundError used to
+        # escape here.
+        path = f"/proc/{os.getpid()}/stat"
+        orig_open = open
+        failed = []
+
+        def open_mock(name, *args, **kwargs):
+            if name == path and not failed:
+                failed.append(name)
+                raise FileNotFoundError(
+                    errno.ENOENT, "No such file or directory", name
+                )
+            return orig_open(name, *args, **kwargs)
+
+        expected = psutil.Process().name()
+        p = psutil.Process()
+        with mock.patch("builtins.open", create=True, side_effect=open_mock):
+            assert p.name() == expected
+        assert failed == [path]
+
+    def test_issue_3010_stat_unreadable(self):
+        # If /proc/PID/stat cannot be read even after one retry while
+        # the process keeps existing, report NoSuchProcess instead of
+        # leaking a raw FileNotFoundError.
+        path = f"/proc/{os.getpid()}/stat"
+        orig_open = open
+        failed = []
+
+        def open_mock(name, *args, **kwargs):
+            if name == path:
+                failed.append(name)
+                raise FileNotFoundError(
+                    errno.ENOENT, "No such file or directory", name
+                )
+            return orig_open(name, *args, **kwargs)
+
+        p = psutil.Process()
+        with mock.patch("builtins.open", create=True, side_effect=open_mock):
+            with mock.patch("os.path.exists", return_value=True):
+                with mock.patch.object(
+                    psutil._pslinux.Process, "_raise_if_zombie"
+                ):
+                    with pytest.raises(psutil.NoSuchProcess):
+                        p.name()
+        # One initial attempt and one retry.
+        assert failed == [path, path]
+
     @skipif(not HAS_PROC_RLIMIT, reason="not supported")
     def test_rlimit_zombie(self):
         # Emulate a case where rlimit() raises ENOSYS, which may
