@@ -2437,6 +2437,58 @@ class TestProcess(LinuxTestCase):
             assert p.name() == expected
         assert failed == [path]
 
+    def test_issue_3010_other_proc_file(self):
+        cases = [
+            ("status", "uids"),
+            ("statm", "memory_info"),
+            ("cmdline", "cmdline"),
+        ]
+        for filename, method in cases:
+            with self.subTest(filename=filename):
+                path = f"/proc/{os.getpid()}/{filename}"
+                orig_open = open
+                failed = []
+
+                def open_mock(
+                    name,
+                    *args,
+                    path=path,
+                    failed=failed,
+                    orig_open=orig_open,
+                    **kwargs,
+                ):
+                    if name == path and not failed:
+                        failed.append(name)
+                        raise FileNotFoundError(
+                            errno.ENOENT, "No such file or directory", name
+                        )
+                    return orig_open(name, *args, **kwargs)
+
+                p = psutil.Process()
+                expected = getattr(p, method)()
+                with mock.patch(
+                    "builtins.open", create=True, side_effect=open_mock
+                ):
+                    assert getattr(p, method)() == expected
+                assert failed == [path]
+
+    def test_issue_3010_persistent_non_stat(self):
+        for inside_proc in (True, False):
+            with self.subTest(inside_proc=inside_proc):
+                path = (
+                    f"/proc/{os.getpid()}/smaps" if inside_proc else "/missing"
+                )
+                error = FileNotFoundError(errno.ENOENT, "No such file", path)
+                operation = mock.Mock(side_effect=error)
+                wrapped = psutil._pslinux.wrap_exceptions(operation)
+                p = psutil._pslinux.Process(os.getpid())
+                with mock.patch.object(p.__class__, "_raise_if_zombie"):
+                    with mock.patch("os.path.exists", return_value=True):
+                        with pytest.raises(FileNotFoundError) as exc:
+                            wrapped(p)
+                assert exc.value is error
+                assert operation.call_count == (2 if inside_proc else 1)
+
     def test_issue_3010_stat_unreadable(self):
         # If /proc/PID/stat cannot be read even after one retry while
         # the process keeps existing, report NoSuchProcess instead of

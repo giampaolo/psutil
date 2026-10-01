@@ -1634,15 +1634,18 @@ def wrap_exceptions(fun):
                 # briefly disappear while the process is alive, then
                 # become visible again, see:
                 # https://github.com/giampaolo/psutil/issues/3010
-                # If the file that could not be read is the stat file
-                # itself, the process raced us, so retry the read once.
-                # If it still cannot be read, the process cannot be
-                # observed right now: report NoSuchProcess, which is what
-                # a process hidden by hidepid=invisible already gets.
+                # Retry reads within this process's procfs directory once,
+                # since hidepid can temporarily hide any of its files.
+                if (
+                    not retried
+                    and isinstance(err.filename, str)
+                    and err.filename.startswith(f"{self._procfs_path}/{pid}/")
+                ):
+                    retried = True
+                    continue
+                # A persistently missing non-stat file can be legitimate
+                # (e.g. smaps); preserve its original error, see #1014.
                 if err.filename == stat_file:
-                    if not retried:
-                        retried = True
-                        continue
                     raise NoSuchProcess(pid, name) from err
                 raise
 
