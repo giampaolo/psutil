@@ -17,14 +17,14 @@ import time
 import urllib.error
 import urllib.request
 
-ROOT = pathlib.Path(__file__).resolve().parents[3]
+ROOT_DIR = pathlib.Path(__file__).resolve().parents[3]
 TIMEOUT = 5
 RETRIES = 3
 BACKOFF = 5
 TARGETS = [
-    ROOT / "docs/adoption.rst",
-    ROOT / "docs/index.rst",
-    ROOT / "README.rst",
+    ROOT_DIR / "docs/adoption.rst",
+    ROOT_DIR / "docs/index.rst",
+    ROOT_DIR / "README.rst",
 ]
 DEPENDENTS_URL = "https://github.com/giampaolo/psutil/network/dependents"
 DOWNLOADS_URL = "https://pypistats.org/api/packages/psutil/recent"
@@ -137,10 +137,10 @@ def main():
             new_text, n = pat.subn(repl, new_text)
             totals[i] += n
         if new_text == text:
-            print(f"  {path.relative_to(ROOT)}: already current")
+            print(f"  {path.relative_to(ROOT_DIR)}: already current")
         else:
             path.write_text(new_text)
-            print(f"  {path.relative_to(ROOT)}: updated")
+            print(f"  {path.relative_to(ROOT_DIR)}: updated")
 
     for i, (pat, _) in enumerate(subs):
         if totals[i] == 0:

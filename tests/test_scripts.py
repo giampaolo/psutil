@@ -194,14 +194,14 @@ class TestInternalScripts(ScriptsTestCase):
     scripts_dir = INTERNAL_SCRIPTS_DIR
 
     @staticmethod
-    def ls():
+    def walk():
         for root, dirs, files in os.walk(INTERNAL_SCRIPTS_DIR):
             for file in files:
                 if file.endswith(".py"):
                     yield os.path.join(root, file)
 
     def test_syntax_all(self):
-        for path in self.ls():
+        for path in self.walk():
             with open(path, encoding="utf8") as f:
                 data = f.read()
             ast.parse(data)
@@ -210,7 +210,7 @@ class TestInternalScripts(ScriptsTestCase):
     @skipif(not LINUX, reason="not on LINUX")
     @skipif(CI_TESTING, reason="not on CI")
     def test_import_all(self):
-        for path in self.ls():
+        for path in self.walk():
             try:
                 import_module_by_path(path)
             except SystemExit:
@@ -219,6 +219,25 @@ class TestInternalScripts(ScriptsTestCase):
                 if "pyperf" in str(err) or "requests" in str(err):
                     continue
                 raise
+
+    @skipif(not LINUX, reason="not on LINUX")
+    @skipif(CI_TESTING, reason="not on CI")
+    def test_root_dir(self):
+        root = pathlib.Path(ROOT_DIR).resolve()
+        for path in self.walk():
+            try:
+                mod = import_module_by_path(path)
+            except SystemExit:
+                continue
+            except ImportError as err:
+                if "pyperf" in str(err) or "requests" in str(err):
+                    continue
+                raise
+            value = getattr(mod, "ROOT_DIR", None)
+            if value is not None and pathlib.Path(value).resolve() != root:
+                return pytest.fail(
+                    f"ROOT_DIR in {path!r} is {value!r}, expected {root!r}"
+                )
 
     def test_print_api_speed(self):
         self.assert_stdout("print/api_speed.py", "-t", "2")
