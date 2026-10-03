@@ -22,6 +22,7 @@ import psutil
 from psutil import WINDOWS
 from psutil import _psutil
 
+from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import PYPY
 from . import TOLERANCE_DISK_USAGE
@@ -74,6 +75,18 @@ def is_bash_env():
     return "bash" in env.get("SHELL", "")
 
 
+def cim_datetime_to_utc(value):
+    # WMI timestamps look like "20261002203208.500000-420", where the
+    # trailing number is the offset from UTC in minutes. Tests used to
+    # drop it, which only works when the machine runs on UTC.
+    naive = datetime.datetime.strptime(value[:14], "%Y%m%d%H%M%S")
+    minutes = int(value[22:25])
+    if value[21] == "-":
+        minutes = -minutes
+    tz = datetime.timezone(datetime.timedelta(minutes=minutes))
+    return naive.replace(tzinfo=tz)
+
+
 def powershell(cmd):
     """Run a powershell command and return its output.
     Example usage:
@@ -94,7 +107,7 @@ def powershell(cmd):
         "-Command",
         cmd,
     ]
-    return sh(cmdline)
+    return sh(cmdline, timeout=GLOBAL_TIMEOUT * 4)
 
 
 def wmic(path, what, converter=int):
@@ -441,11 +454,10 @@ class TestOtherSystemAPIs(WindowsTestCase):
 
     def test_boot_time(self):
         wmi_os = wmi.WMI().Win32_OperatingSystem()
-        wmi_btime_str = wmi_os[0].LastBootUpTime.split('.')[0]
-        wmi_btime_dt = datetime.datetime.strptime(
-            wmi_btime_str, "%Y%m%d%H%M%S"
+        wmi_btime_dt = cim_datetime_to_utc(wmi_os[0].LastBootUpTime)
+        psutil_dt = datetime.datetime.fromtimestamp(
+            psutil.boot_time(), datetime.timezone.utc
         )
-        psutil_dt = datetime.datetime.fromtimestamp(psutil.boot_time())
         diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
         assert diff <= 5, (psutil_dt, wmi_btime_dt)
 
@@ -876,9 +888,11 @@ class TestProcessWMI(WindowsTestCase):
     def test_create_time(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
-        wmic_create = str(w.CreationDate.split('.')[0])
+        wmic_create = cim_datetime_to_utc(w.CreationDate).strftime(
+            "%Y%m%d%H%M%S"
+        )
         psutil_create = time.strftime(
-            "%Y%m%d%H%M%S", time.localtime(p.create_time())
+            "%Y%m%d%H%M%S", time.gmtime(p.create_time())
         )
         assert wmic_create == psutil_create
 

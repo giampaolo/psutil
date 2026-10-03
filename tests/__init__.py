@@ -520,7 +520,7 @@ def pyrun(src, **kwds):
 
 
 @_reap_children_on_err
-def sh(cmd, **kwds):
+def sh(cmd, timeout=GLOBAL_TIMEOUT, **kwds):
     """Run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
@@ -536,7 +536,7 @@ def sh(cmd, **kwds):
         cmd = shlex.split(cmd)
     p = subprocess.Popen(cmd, **kwds)
     _subprocesses_started.add(p)
-    stdout, stderr = p.communicate(timeout=GLOBAL_TIMEOUT)
+    stdout, stderr = p.communicate(timeout=timeout)
     if p.returncode != 0:
         raise RuntimeError(stdout + stderr)
     if stderr:

@@ -23,6 +23,7 @@ INSTALL_PYDEPS = PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh
 
 # `make` called with no args is like `make help`
 .DEFAULT_GOAL := help
+.MAIN: help  # BSD make support
 .PHONY: build test
 
 # install git hook (skipped in worktrees, where .git is a file)
@@ -42,7 +43,7 @@ clean:  ## Remove all build files.
 		-o -type f -name \*.pyo \
 		-o -type f -name \*.rej \
 		-o -type f -name \*.so \
-		-o -type f -name \*.~ \
+		-o -type f -name \*~ \
 		-o -name \*@psutil-\*`
 	@rm -rfv \
 		*.core \
@@ -423,4 +424,4 @@ ci-run:  ## Manually run a CI workflow, e.g. `make ci-run JOB=bsd`
 	gh workflow run $(JOB).yml --ref $$(git rev-parse --abbrev-ref HEAD)
 
 help: ## Display callable targets.
-	@awk -F':.*?## ' '/^[a-zA-Z0-9_.-]+:.*?## / {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+	@awk -F':.*?## ' '/^[a-zA-Z0-9_.-]+:.*?## / {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}' Makefile | sort
