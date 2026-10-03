@@ -9,7 +9,11 @@ so it renders correctly on PyPI when uploading a new release.
 """
 
 import argparse
+import pathlib
 import re
+
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent.parent
+README = ROOT_DIR / "README.rst"
 
 quick_links = """\
 Quick links
@@ -24,14 +28,17 @@ Quick links
 """
 
 
-def main():
+def parse_cli():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('file', type=str)
-    args = parser.parse_args()
+    parser.parse_args()
+
+
+def main():
+    parse_cli()
 
     lines = []
 
-    with open(args.file) as f:
+    with open(README) as f:
         excluding = False
         for line in f:
             # Exclude sections which are not meant to be rendered on PYPI

@@ -16,9 +16,9 @@ import sys
 
 from psutil import __version__
 
-ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent.parent
 CHANGELOG = ROOT_DIR / 'docs' / 'changelog.rst'
-PRINT_HASHES_PY = ROOT_DIR / 'scripts' / 'internal' / 'print_hashes.py'
+PRINT_HASHES_PY = ROOT_DIR / 'scripts' / 'internal' / 'print' / 'hashes.py'
 
 PRJ_NAME = 'psutil'
 PRJ_VERSION = __version__

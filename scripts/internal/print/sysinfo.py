@@ -30,7 +30,7 @@ except ImportError:
     wheel = None
 
 
-ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(ROOT_DIR))
 from _bootstrap import load_module  # noqa: E402
 

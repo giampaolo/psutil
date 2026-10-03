@@ -6,7 +6,7 @@
 
 """Benchmark all API calls and print them from fastest to slowest.
 
-$ make print_api_speed
+$ make print-api-speed
 SYSTEM APIS                NUM CALLS      SECONDS
 -------------------------------------------------
 getloadavg                       300      0.00013

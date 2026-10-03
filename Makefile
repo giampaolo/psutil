@@ -294,7 +294,7 @@ ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(MAKE) create-sdist
 	mv wheelhouse/* dist/
 	$(MAKE) check-dist
-	$(PYTHON) scripts/internal/print_dist.py --check
+	$(PYTHON) scripts/internal/print/dist.py --check
 
 # ===================================================================
 # Distribution
@@ -379,25 +379,25 @@ git-tag-release:  ## Git-tag a new release.
 # ===================================================================
 
 print-announce:  ## Print announce of new release.
-	@$(PYTHON) scripts/internal/print_announce.py
+	@$(PYTHON) scripts/internal/print/announce.py
 
 print-access-denied: ## Print AD exceptions
-	$(PYTHON) scripts/internal/print_access_denied.py
+	$(PYTHON) scripts/internal/print/access_denied.py
 
 print-api-speed:  ## Benchmark all API calls
-	$(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
+	$(PYTHON) scripts/internal/print/api_speed.py $(ARGS)
 
 print-downloads:  ## Print PYPI download statistics
-	$(PYTHON) scripts/internal/print_downloads.py
+	$(PYTHON) scripts/internal/print/downloads.py
 
 print-hashes:  ## Prints hashes of files in dist/ directory
-	$(PYTHON) scripts/internal/print_hashes.py
+	$(PYTHON) scripts/internal/print/hashes.py
 
 print-sysinfo:  ## Prints system info
-	$(PYTHON) scripts/internal/print_sysinfo.py
+	$(PYTHON) scripts/internal/print/sysinfo.py
 
 print-dist:  ## Print downloaded wheels / tar.gz
-	$(PYTHON) scripts/internal/print_dist.py
+	$(PYTHON) scripts/internal/print/dist.py
 
 # ===================================================================
 # Misc
