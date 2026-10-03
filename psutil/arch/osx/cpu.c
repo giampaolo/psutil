@@ -57,40 +57,6 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
 
 
 PyObject *
-psutil_cpu_times(PyObject *self, PyObject *args) {
-    mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
-    kern_return_t error;
-    host_cpu_load_info_data_t r_load;
-    mach_port_t mport = mach_host_self();
-
-    if (mport == MACH_PORT_NULL) {
-        psutil_runtime_error("mach_host_self() returned MACH_PORT_NULL");
-        return NULL;
-    }
-
-    error = host_statistics(
-        mport, HOST_CPU_LOAD_INFO, (host_info_t)&r_load, &count
-    );
-    mach_port_deallocate(mach_task_self(), mport);
-
-    if (error != KERN_SUCCESS) {
-        return psutil_runtime_error(
-            "host_statistics(HOST_CPU_LOAD_INFO) syscall failed: %s",
-            mach_error_string(error)
-        );
-    }
-
-    return Py_BuildValue(
-        "(dddd)",
-        (double)r_load.cpu_ticks[CPU_STATE_USER] / CLK_TCK,
-        (double)r_load.cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
-        (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
-        (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
-    );
-}
-
-
-PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
     kern_return_t ret;
     mach_msg_type_number_t count = HOST_VM_INFO_COUNT;

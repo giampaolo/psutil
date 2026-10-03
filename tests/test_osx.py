@@ -8,6 +8,7 @@
 
 import re
 import time
+from unittest import mock
 
 import psutil
 from psutil import MACOS
@@ -83,6 +84,32 @@ class TestProcess(MacosTestCase):
 # =====================================================================
 # --- Test system APIs
 # =====================================================================
+
+
+class TestCpuTimes(MacosTestCase):
+
+    def test_cpu_times_sum(self):
+        # Native tuples are (user, nice, system, idle), in seconds.
+        # Include a large value with a fraction to catch float32 rounding.
+        times = [(2**24 + 0.25, 2.0, 3.0, 4.0), (5.0, 6.0, 7.0, 8.0)]
+        with mock.patch.object(_psutil, "per_cpu_times", return_value=times):
+            result = psutil.cpu_times()
+        assert result.user == 2**24 + 5.25
+        assert result.nice == 8.0
+        assert result.system == 10.0
+        assert result.idle == 12.0
+
+    def test_cpu_percent_sum(self):
+        # Only the first CPU advances. Reading just the last CPU would
+        # incorrectly report zero utilization (see issue #2368).
+        before = [(10.0, 0.0, 10.0, 10.0), (20.0, 0.0, 20.0, 20.0)]
+        after = [(11.0, 0.0, 11.0, 12.0), before[1]]
+        with mock.patch.object(
+            _psutil, "per_cpu_times", side_effect=[before, after]
+        ) as m:
+            with mock.patch("psutil.time.sleep"):
+                assert psutil.cpu_percent(interval=0.1) == 50.0
+            assert m.call_count == 2
 
 
 class TestVirtualMemory(MacosTestCase):

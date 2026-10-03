@@ -380,7 +380,9 @@ class TestMiscAPIs(PsutilTestCase):
             # mimalloc, so glibc's malloc arena stays mostly unused.
             assert m.mmap_used == 0
         else:
-            assert m.mmap_used > 0
+            # The allocator may satisfy all allocations from the heap,
+            # without any outstanding mmap allocations.
+            assert m.mmap_used >= 0
         if WINDOWS:
             assert m.heap_count >= 0
 

@@ -95,7 +95,10 @@ heap_trim = _psutil.heap_trim
 
 def cpu_times():
     """Return system CPU times as a named tuple."""
-    user, nice, system, idle = _psutil.cpu_times()
+    # host_statistics(HOST_CPU_LOAD_INFO) is rate limited and may return
+    # cached counters, causing spurious zero CPU utilization (#2368).
+    # Sum the uncached host_processor_info() counters instead.
+    user, nice, system, idle = map(sum, zip(*_psutil.per_cpu_times()))
     return ntp.scputimes(user, system, idle, nice)
 
 
