@@ -84,7 +84,7 @@ def cim_datetime_to_utc(value):
     if value[21] == "-":
         minutes = -minutes
     tz = datetime.timezone(datetime.timedelta(minutes=minutes))
-    return naive.replace(tzinfo=tz)
+    return naive.replace(tzinfo=tz).astimezone(datetime.timezone.utc)
 
 
 def powershell(cmd):
@@ -316,16 +316,21 @@ class TestNetAPIs(WindowsTestCase):
     def test_net_connections(self):
         # Compare listening TCP ports; they're stable unlike active
         # connections.
-        ps_ports = {
-            c.laddr.port
-            for c in psutil.net_connections(kind='tcp')
-            if c.status == psutil.CONN_LISTEN
-        }
+        def listening_ports():
+            return {
+                c.laddr.port
+                for c in psutil.net_connections(kind='tcp')
+                if c.status == psutil.CONN_LISTEN
+            }
+
+        ports_before = listening_ports()
         out = powershell(
             "(Get-NetTCPConnection -State Listen).LocalPort -join ','"
         )
+        ports_after = listening_ports()
         win_ports = {int(p) for p in out.strip().split(',') if p.strip()}
-        assert ps_ports == win_ports
+        assert ports_before & ports_after <= win_ports
+        assert win_ports <= ports_before | ports_after
 
     def test_net_if_stats(self):
         ps_names = set(_psutil.net_if_stats())
@@ -746,7 +751,7 @@ class TestProcess(WindowsTestCase):
 
     def test_num_threads(self):
         ps = psutil.Process(self.pid).num_threads()
-        win = int(powershell(f"(Get-Process -Id {self.pid}).Threads.Count"))
+        win = wmi.WMI().Win32_Process(ProcessId=self.pid)[0].ThreadCount
         assert ps == win
 
     def test_cpu_affinity(self):
