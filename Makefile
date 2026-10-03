@@ -18,6 +18,7 @@ FILES =
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
 DPRINT = ~/.dprint/bin/dprint
+DPRINT_FILES = '*.md' '*.json' '*.jsonc' '*.yml' '*.yaml' '*.js' '*.css' '.clang-format'
 INSTALL_PYDEPS = PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh
 
 # `make` called with no args is like `make help`
@@ -209,7 +210,7 @@ lint-c:  ## Run C linter.
 	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format --dry-run --Werror {}
 
 dprint:  ## Run linter for .md / .json / .yml / .js / .css files.
-	@$(DPRINT) check
+	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) check
 
 lint-rst:  ## Run linter for .rst files.
 	@$(call _ls,'*.rst') | xargs $(PYTHON) scripts/internal/docs/rst_unused_targets.py
@@ -256,7 +257,7 @@ fix-rst:  ## Re-wrap .rst files.
 	@$(call _ls,'*.rst') | xargs rstwrap
 
 fix-dprint:  ## Reformat .md / .json / .yml / .js / .css files.
-	@$(DPRINT) fmt
+	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) fmt
 
 fix-all:  ## Run all code fixers.
 	$(MAKE) fix-ruff
