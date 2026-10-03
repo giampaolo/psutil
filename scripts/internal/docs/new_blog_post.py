@@ -13,8 +13,7 @@ import datetime
 import pathlib
 import sys
 
-HERE = pathlib.Path(__file__).resolve().parent
-ROOT_DIR = HERE.parent.parent.parent
+ROOT_DIR = pathlib.Path(__file__).resolve().parents[3]
 AUTHOR = "Giampaolo Rodola"
 
 SLUG = ""

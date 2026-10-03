@@ -12,7 +12,7 @@ import argparse
 import pathlib
 import re
 
-ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent.parent
+ROOT_DIR = pathlib.Path(__file__).resolve().parents[3]
 README = ROOT_DIR / "README.rst"
 
 quick_links = """\

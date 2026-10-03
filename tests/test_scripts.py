@@ -221,7 +221,6 @@ class TestInternalScripts(ScriptsTestCase):
                 raise
 
     @skipif(not LINUX, reason="not on LINUX")
-    @skipif(CI_TESTING, reason="not on CI")
     def test_root_dir(self):
         root = pathlib.Path(ROOT_DIR).resolve()
         for path in self.walk():
