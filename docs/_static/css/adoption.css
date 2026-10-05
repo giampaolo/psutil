@@ -1,0 +1,89 @@
+/*
+ * psutil-sphinx-theme: the "Who uses psutil" page.
+ */
+
+body[data-page="adoption"] {
+    --content-max-width: 1600px;
+}
+
+body[data-page="adoption"] .article table.docutils th,
+body[data-page="adoption"] .article table.docutils td {
+    padding: 8px 12px;
+}
+
+.adopter-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin: 22px 0 34px;
+}
+
+.adopter-card {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding: 14px 16px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--border-radius);
+    background: var(--table-row-odd);
+}
+
+.adopter-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.adopter-card img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.adopter-what {
+    flex: 1;
+    color: var(--text-muted);
+    font-size: 0.92em;
+    line-height: 1.45;
+}
+
+.adopter-links {
+    display: flex;
+    gap: 14px;
+    font-size: 0.85em;
+}
+
+.adopter-card .logo-on-dark {
+    display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .adopter-card .logo-on-light {
+        display: none;
+    }
+
+    :root:not([data-theme="light"]) .adopter-card .logo-on-dark {
+        display: block;
+    }
+}
+
+:root[data-theme="dark"] .adopter-card .logo-on-light {
+    display: none;
+}
+
+:root[data-theme="dark"] .adopter-card .logo-on-dark {
+    display: block;
+}
+
+@media (max-width: 1024px) {
+    .adopter-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .adopter-cards {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
