@@ -19,7 +19,7 @@ test = [
     "pytest>=9 ; python_version >= '3.10'",
     "pywin32 ; os_name == 'nt' and implementation_name != 'pypy'",
     "wmi ; os_name == 'nt' and implementation_name != 'pypy'",
-    {include-group = "build"},
+    { include-group = "build" },
 ]
 lint = [
     "black",
@@ -45,9 +45,9 @@ dev = [
     "virtualenv",
     "vulture",
     "wheel",
-    {include-group = "build"},
-    {include-group = "lint"},
-    {include-group = "test"},
+    { include-group = "build" },
+    { include-group = "lint" },
+    { include-group = "test" },
 ]
 docs = [
     "ablog==0.11.13",

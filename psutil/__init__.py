@@ -1652,8 +1652,13 @@ class Process:
             raise ValueError(msg)
         if timeout is not None:
             # bool subclasses int; timeout=True would silently mean 1 second
-            if isinstance(timeout, bool) or not isinstance(timeout, (int, float)):
-                msg = f"timeout must be an int or float, not bool (got {timeout!r})"
+            if isinstance(timeout, bool) or not isinstance(
+                timeout, (int, float)
+            ):
+                msg = (
+                    "timeout must be an int or float, not bool (got"
+                    f" {timeout!r})"
+                )
                 raise TypeError(msg)
             if timeout < 0:
                 msg = f"timeout must be positive or zero (got {timeout})"
