@@ -496,8 +496,9 @@ class TestVirtualMemoryMocks(LinuxTestCase):
                     assert ret.available == 2057400 * 1024 + 4818144 * 1024
                     w = ws[0]
                     assert (
-                        "inactive memory stats couldn't be determined"
-                        in str(w.message)
+                        "inactive memory stats couldn't be determined" in str(
+                            w.message
+                        )
                     )
 
     def test_virtual_memory_mocked(self):
