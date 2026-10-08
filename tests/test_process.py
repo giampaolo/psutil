@@ -584,8 +584,6 @@ class TestProcess(PsutilTestCase):
         for nt in maps:
             if nt.path.startswith('['):
                 continue
-            if BSD and nt.path == "pvclock":
-                continue
             assert os.path.isabs(nt.path), nt.path
 
             if POSIX:

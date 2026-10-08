@@ -531,6 +531,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   returned the file descriptors of every process on the system, because the
   kernel treats a PID of 0 as a wildcard in ``sysctl(KERN_FILE2)``. They now
   return ``0`` and an empty list, as on macOS and OpenBSD.
+- [FreeBSD]: :meth:`Process.memory_maps` returned the kernel's internal names
+  for non-file mappings as plain strings, such as ``sys:vm_anon`` and
+  ``rtld:bss`` on FreeBSD 15 or ``pvclock`` for the device mapping. They are
+  now bracketed like the other pseudo paths, e.g. ``[sys:vm_anon]``.
 
 **Bug fixes: UNIX**
 
