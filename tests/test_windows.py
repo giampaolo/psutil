@@ -638,6 +638,13 @@ class TestProcess(WindowsTestCase):
         with pytest.raises(psutil.NoSuchProcess):
             p.send_signal(signal.CTRL_BREAK_EVENT)
 
+    def test_pid_0_ctrl_signals(self):
+        p = psutil.Process(0)
+        with pytest.raises(psutil.AccessDenied):
+            p.send_signal(signal.CTRL_C_EVENT)
+        with pytest.raises(psutil.AccessDenied):
+            p.send_signal(signal.CTRL_BREAK_EVENT)
+
     def test_username(self):
         name = win32api.GetUserNameEx(win32con.NameSamCompatible)
         if name.endswith('$'):

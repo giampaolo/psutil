@@ -825,6 +825,8 @@ class Process:
         if sig == signal.SIGTERM:
             _psutil.proc_kill(self.pid)
         elif sig in {signal.CTRL_C_EVENT, signal.CTRL_BREAK_EVENT}:
+            if self.pid == 0:
+                raise AccessDenied(self.pid, self._name)
             os.kill(self.pid, sig)
         else:
             msg = (

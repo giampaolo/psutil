@@ -690,12 +690,16 @@ class Process:
     @wrap_exceptions
     def open_files(self):
         """Return files opened by process as a list of named tuples."""
+        if NETBSD and self.pid == 0:
+            return []
         rawlist = _psutil.proc_open_files(self.pid)
         return [ntp.popenfile(path, fd) for path, fd in rawlist]
 
     @wrap_exceptions
     def num_fds(self):
         """Return the number of file descriptors opened by this process."""
+        if NETBSD and self.pid == 0:
+            return 0
         ret = _psutil.proc_num_fds(self.pid)
         if NETBSD:
             self._assert_alive()

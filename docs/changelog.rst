@@ -414,6 +414,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2941`, [Windows]: :func:`net_io_counters` raised :exc:`RuntimeError`,
   losing the counters of all the other NICs, if a NIC was disabled or unplugged
   mid-call. Now it's skipped.
+- [Windows]: :meth:`Process.send_signal` with ``CTRL_C_EVENT`` or
+  ``CTRL_BREAK_EVENT`` on PID 0 delivered the event to every process attached
+  to the caller's console, the caller included. It now raises
+  :exc:`AccessDenied`, as ``SIGTERM`` already did for PID 0.
 
 **Bug fixes: macOS**
 
@@ -520,6 +524,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   consistency, :meth:`Process.environ` for a zombie now raises
   :exc:`ZombieProcess` on all BSDs (NetBSD used to return an empty dict, see
   :gh:`2911`).
+- [NetBSD]: :meth:`Process.num_fds` and :meth:`Process.open_files` for PID 0
+  returned the file descriptors of every process on the system, because the
+  kernel treats a PID of 0 as a wildcard in ``sysctl(KERN_FILE2)``. They now
+  return ``0`` and an empty list, as on macOS and OpenBSD.
 
 **Bug fixes: UNIX**
 
