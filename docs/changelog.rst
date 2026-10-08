@@ -574,6 +574,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`3018`, [SunOS], [AIX]: :func:`boot_time`, and :func:`cpu_times` per-CPU
   values on SunOS, were computed as a C ``float`` and lost precision. They are
   now ``double``.
+- :gh:`3013`, [AIX]: :meth:`Process.uids` and :meth:`Process.gids` returned
+  garbage on 32-bit builds. The ids in ``/proc/PID/cred`` are 64-bit integers
+  and were read as 32-bit ones.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
