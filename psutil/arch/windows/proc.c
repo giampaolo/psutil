@@ -242,7 +242,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
 
     CloseHandle(hProcess);
 
-    return PyLong_FromLong((long)ExitCode);
+    return PyLong_FromUnsignedLong(ExitCode);
 }
 
 

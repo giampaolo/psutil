@@ -1697,6 +1697,13 @@ class TestProcessWait(PsutilTestCase):
         assert code == 5
         self.assert_proc_gone(p)
 
+    @skipif(not WINDOWS, reason="WINDOWS only")
+    def test_wait_exited_ntstatus(self):
+        code = "import ctypes; ctypes.windll.kernel32.ExitProcess(0xC0000005)"
+        p = self.spawn_psproc([PYTHON_EXE, "-c", code])
+        assert p.wait() == 0xC0000005
+        self.assert_proc_gone(p)
+
     @skipif(not POSIX, reason="not POSIX")
     def test_wait_signaled(self):
         p = psutil.Process(self.spawn_subproc().pid)

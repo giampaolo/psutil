@@ -421,6 +421,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`3019`, [Windows]: :meth:`Process.memory_maps` returned a truncated
   :field:`rss` for memory regions of 4 GiB or larger, because the region size
   was passed through a 32-bit integer.
+- :gh:`3022`, [Windows]: :meth:`Process.wait` returned exit codes with the high
+  bit set, such as the ``0xC0000005`` NTSTATUS of a crashed process, as
+  negative numbers. They are now unsigned, like :mod:`subprocess` reports them.
 
 **Bug fixes: macOS**
 
