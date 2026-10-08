@@ -49,8 +49,8 @@ jobs:
             make ci-install
             pw useradd -n tester -m
             chown -R tester .
-            su tester -c "cd $(pwd) && make test-parallel"
-            su tester -c "cd $(pwd) && make test-memleaks-parallel"
+            su tester -c "cd $(pwd) && LOGNAME=tester make test-parallel"
+            su tester -c "cd $(pwd) && LOGNAME=tester make test-memleaks-parallel"
 
   openbsd:
     # if: false
