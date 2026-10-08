@@ -1615,21 +1615,41 @@ def wrap_exceptions(fun):
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
         pid, name = self.pid, self._name
-        try:
-            return fun(self, *args, **kwargs)
-        except PermissionError as err:
-            raise AccessDenied(pid, name) from err
-        except ProcessLookupError as err:
-            self._raise_if_zombie()
-            raise NoSuchProcess(pid, name) from err
-        except FileNotFoundError as err:
-            self._raise_if_zombie()
-            # /proc/PID directory may still exist, but the files within
-            # it may not, indicating the process is gone, see:
-            # https://github.com/giampaolo/psutil/issues/2418
-            if not os.path.exists(f"{self._procfs_path}/{pid}/stat"):
+        stat_file = f"{self._procfs_path}/{pid}/stat"
+        retried = False
+        while True:
+            try:
+                return fun(self, *args, **kwargs)
+            except PermissionError as err:
+                raise AccessDenied(pid, name) from err
+            except ProcessLookupError as err:
+                self._raise_if_zombie()
                 raise NoSuchProcess(pid, name) from err
-            raise
+            except FileNotFoundError as err:
+                self._raise_if_zombie()
+                # /proc/PID directory may still exist, but the files within
+                # it may not, indicating the process is gone, see:
+                # https://github.com/giampaolo/psutil/issues/2418
+                if not os.path.exists(stat_file):
+                    raise NoSuchProcess(pid, name) from err
+                # With /proc mounted hidepid=invisible the stat file can
+                # briefly disappear while the process is alive, then
+                # become visible again, see:
+                # https://github.com/giampaolo/psutil/issues/3010
+                # Retry reads within this process's procfs directory once,
+                # since hidepid can temporarily hide any of its files.
+                if (
+                    not retried
+                    and isinstance(err.filename, str)
+                    and err.filename.startswith(f"{self._procfs_path}/{pid}/")
+                ):
+                    retried = True
+                    continue
+                # A persistently missing non-stat file can be legitimate
+                # (e.g. smaps); preserve its original error, see #1014.
+                if err.filename == stat_file:
+                    raise NoSuchProcess(pid, name) from err
+                raise
 
     return wrapper
 
