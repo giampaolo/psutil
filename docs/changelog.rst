@@ -580,6 +580,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`3013`, [AIX]: :meth:`Process.uids` and :meth:`Process.gids` returned
   garbage on 32-bit builds. The ids in ``/proc/PID/cred`` are 64-bit integers
   and were read as 32-bit ones.
+- :gh:`3013`, [SunOS]: :meth:`Process.uids` and :meth:`Process.gids` returned
+  negative numbers for ephemeral ids (>= 2**31), such as the ones idmap assigns
+  to SMB and NFSv4 identities.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
