@@ -535,6 +535,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   internal names for non-file mappings as plain strings, such as
   ``sys:vm_anon``, ``rtld:bss`` or ``pvclock``. They are now bracketed like the
   other pseudo paths, e.g. ``[sys:vm_anon]``.
+- :gh:`3013`, [BSD]: :func:`net_io_counters` returned garbage on 32-bit builds.
+  The kernel's 64-bit interface counters were passed as ``unsigned long``,
+  which is 32 bits there.
 
 **Bug fixes: UNIX**
 

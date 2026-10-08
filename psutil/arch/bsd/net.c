@@ -63,18 +63,18 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                 continue;
 
             py_ifc_info = Py_BuildValue(
-                "(kkkkkkki)",
-                if2m->ifm_data.ifi_obytes,
-                if2m->ifm_data.ifi_ibytes,
-                if2m->ifm_data.ifi_opackets,
-                if2m->ifm_data.ifi_ipackets,
-                if2m->ifm_data.ifi_ierrors,
-                if2m->ifm_data.ifi_oerrors,
-                if2m->ifm_data.ifi_iqdrops,
+                "(KKKKKKKK)",
+                (unsigned long long)if2m->ifm_data.ifi_obytes,
+                (unsigned long long)if2m->ifm_data.ifi_ibytes,
+                (unsigned long long)if2m->ifm_data.ifi_opackets,
+                (unsigned long long)if2m->ifm_data.ifi_ipackets,
+                (unsigned long long)if2m->ifm_data.ifi_ierrors,
+                (unsigned long long)if2m->ifm_data.ifi_oerrors,
+                (unsigned long long)if2m->ifm_data.ifi_iqdrops,
 #ifdef _IFI_OQDROPS
-                if2m->ifm_data.ifi_oqdrops
+                (unsigned long long)if2m->ifm_data.ifi_oqdrops
 #else
-                0
+                (unsigned long long)0
 #endif
             );
             if (!py_ifc_info)
