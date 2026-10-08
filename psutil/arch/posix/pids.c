@@ -13,7 +13,7 @@
 
 static int
 has_pid_zero(void) {
-#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
+#if defined(PSUTIL_LINUX)
     return 0;
 #else
     return 1;
