@@ -71,10 +71,10 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                 (unsigned long long)if2m->ifm_data.ifi_ierrors,
                 (unsigned long long)if2m->ifm_data.ifi_oerrors,
                 (unsigned long long)if2m->ifm_data.ifi_iqdrops,
-#ifdef _IFI_OQDROPS
-                (unsigned long long)if2m->ifm_data.ifi_oqdrops
-#else
+#ifdef PSUTIL_NETBSD
                 (unsigned long long)0
+#else
+                (unsigned long long)if2m->ifm_data.ifi_oqdrops
 #endif
             );
             if (!py_ifc_info)
