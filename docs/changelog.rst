@@ -564,6 +564,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`3017`, [POSIX]: :exc:`OSError` messages built by the C extension from
   ``strerror()`` were decoded as UTF-8, so in a locale with a non-UTF-8 charset
   and translated messages a failing syscall could raise ``UnicodeDecodeError``.
+- :gh:`3018`, [SunOS], [AIX]: :func:`boot_time`, and :func:`cpu_times` per-CPU
+  values on SunOS, were computed as a C ``float`` and lost precision. They are
+  now ``double``.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^

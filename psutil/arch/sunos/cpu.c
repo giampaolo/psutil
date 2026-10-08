@@ -40,11 +40,11 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
             }
             if (!pylist_append_fmt(
                     py_retlist,
-                    "ffff",
-                    (float)cs.cpu_sysinfo.cpu[CPU_USER],
-                    (float)cs.cpu_sysinfo.cpu[CPU_KERNEL],
-                    (float)cs.cpu_sysinfo.cpu[CPU_IDLE],
-                    (float)cs.cpu_sysinfo.cpu[CPU_WAIT]
+                    "dddd",
+                    (double)cs.cpu_sysinfo.cpu[CPU_USER],
+                    (double)cs.cpu_sysinfo.cpu[CPU_KERNEL],
+                    (double)cs.cpu_sysinfo.cpu[CPU_IDLE],
+                    (double)cs.cpu_sysinfo.cpu[CPU_WAIT]
                 ))
             {
                 goto error;
