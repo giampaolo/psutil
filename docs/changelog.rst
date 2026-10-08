@@ -561,6 +561,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   ``setpriority(2)`` treats PID 0 as the caller. On macOS and AIX the getter
   returned the caller's niceness for the same reason. Both now raise
   :exc:`AccessDenied`.
+- :gh:`3017`, [POSIX]: :exc:`OSError` messages built by the C extension from
+  ``strerror()`` were decoded as UTF-8, so in a locale with a non-UTF-8 charset
+  and translated messages a failing syscall could raise ``UnicodeDecodeError``.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
