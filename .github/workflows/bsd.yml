@@ -46,8 +46,11 @@ jobs:
           release: "14.3"
           usesh: true
           run: |
-            make ci-test
-            make test-memleaks-parallel
+            make ci-install
+            pw useradd -n tester -m
+            chown -R tester .
+            su tester -c "cd $(pwd) && make test-parallel"
+            su tester -c "cd $(pwd) && make test-memleaks-parallel"
 
   openbsd:
     # if: false
@@ -61,8 +64,11 @@ jobs:
         with:
           usesh: true
           run: |
-            make ci-test
-            make test-memleaks-parallel
+            make ci-install
+            useradd -m tester
+            chown -R tester .
+            su tester -c "cd $(pwd) && make test-parallel"
+            su tester -c "cd $(pwd) && make test-memleaks-parallel"
 
   netbsd:
     # if: false
@@ -76,5 +82,8 @@ jobs:
         with:
           usesh: true
           run: |
-            make ci-test
-            make test-memleaks-parallel
+            make ci-install
+            useradd -m tester
+            chown -R tester .
+            su tester -c "cd $(pwd) && make test-parallel"
+            su tester -c "cd $(pwd) && make test-memleaks-parallel"
