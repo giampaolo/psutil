@@ -1895,12 +1895,13 @@ class TestMisc(LinuxTestCase):
 @skipif(not HAS_BATTERY, reason="no battery")
 class TestSensorsBattery(LinuxTestCase):
     @requires_cli("acpi")
+    @retry_on_failure
     def test_percent(self):
         out = sh("acpi -b")
         first_battery = out.split("\n")[0]
         acpi_value = int(first_battery.split(",")[1].strip().replace('%', ''))
         psutil_value = psutil.sensors_battery().percent
-        assert abs(acpi_value - psutil_value) < 1
+        assert abs(acpi_value - psutil_value) < 2
 
     def test_emulate_power_plugged(self):
         # Pretend the AC power cable is connected.

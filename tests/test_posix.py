@@ -498,19 +498,19 @@ class TestSystemAPIs(PosixTestCase):
             tstamp = "%Y-%m-%d %H:%M"
         else:
             # 'Apr 10 22:27' (macOS)
-            started = re.findall(r"[A-Z][a-z][a-z] \d\d \d\d:\d\d", out)
+            started = re.findall(r"[A-Z][a-z][a-z] [ \d]\d \d\d:\d\d", out)
             if started:
-                tstamp = "%b %d %H:%M"
+                tstamp = "%b %e %H:%M"
             else:
                 # 'Apr 10'
-                started = re.findall(r"[A-Z][a-z][a-z] \d\d", out)
+                started = re.findall(r"[A-Z][a-z][a-z] [ \d]\d", out)
                 if started:
-                    tstamp = "%b %d"
+                    tstamp = "%b %e"
                 else:
                     # 'apr 10' (sunOS)
-                    started = re.findall(r"[a-z][a-z][a-z] \d\d", out)
+                    started = re.findall(r"[a-z][a-z][a-z] [ \d]\d", out)
                     if started:
-                        tstamp = "%b %d"
+                        tstamp = "%b %e"
                         started = [x.capitalize() for x in started]
 
         if not tstamp:

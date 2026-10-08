@@ -532,6 +532,13 @@ def sh(cmd, timeout=GLOBAL_TIMEOUT, **kwds):
     kwds.setdefault("encoding", ENCODING)
     kwds.setdefault("errors", ENCODING_ERRS)
     kwds.setdefault("creationflags", flags)
+
+    # Tests parse the output of these commands, so decimal separators
+    # and month names must not depend on the user's locale.
+    env = dict(os.environ, LC_NUMERIC="C", LC_TIME="C")
+    env.pop("LC_ALL", None)
+    kwds.setdefault("env", env)
+
     if isinstance(cmd, str):
         cmd = shlex.split(cmd)
     p = subprocess.Popen(cmd, **kwds)
