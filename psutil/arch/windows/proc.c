@@ -1095,11 +1095,11 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                 goto error;
             if (!pylist_append_fmt(
                     py_retlist,
-                    "(KsOI)",
+                    "(KsOK)",
                     (unsigned long long)baseAddress,
                     get_region_protection_string(basicInfo.Protect),
                     py_str,
-                    basicInfo.RegionSize
+                    (unsigned long long)basicInfo.RegionSize
                 ))
             {
                 goto error;
