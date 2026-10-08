@@ -577,7 +577,30 @@ class Process:
 
     def _raise_if_pid_reused(self):
         """Raise `NoSuchProcess` in case process PID has been reused."""
-        if self._pid_reused or (not self.is_running() and self._pid_reused):
+        if not self._pid_reused and not self._gone:
+            # Don't instantiate a second Process just to read its
+            # create time. _get_ident() goes through self._proc, so
+            # inside oneshot() it reuses the read we already did.
+            try:
+                ident = self._get_ident()
+            except (AccessDenied, ZombieProcess):
+                # Can't tell, so don't claim the PID was reused.
+                return
+            except NoSuchProcess:
+                self._gone = True
+                return
+            cmp = self._cmp_idents(self._ident, ident)
+            if cmp == "different":
+                debug(f"PID reuse detected: {self._ident} vs. {ident}")
+                self._pid_reused = True
+                _pids_reused.add(self.pid)
+            elif cmp == "unknown":
+                debug(
+                    "null create time, PID reuse check inconclusive:"
+                    f" {self._ident} vs. {ident}"
+                )
+
+        if self._pid_reused:
             # We may directly raise NSP in here already if PID is just
             # not running, but I prefer NSP to be raised naturally by
             # the actual Process API call. This way unit tests will tell
