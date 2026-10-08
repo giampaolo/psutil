@@ -535,6 +535,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   internal names for non-file mappings as plain strings, such as
   ``sys:vm_anon``, ``rtld:bss`` or ``pvclock``. They are now bracketed like the
   other pseudo paths, e.g. ``[sys:vm_anon]``.
+- :gh:`3013`, [BSD]: :func:`net_io_counters` returned garbage on 32-bit builds.
+  The kernel's 64-bit interface counters were passed as ``unsigned long``,
+  which is 32 bits there.
 
 **Bug fixes: UNIX**
 
@@ -574,6 +577,12 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`3018`, [SunOS], [AIX]: :func:`boot_time`, and :func:`cpu_times` per-CPU
   values on SunOS, were computed as a C ``float`` and lost precision. They are
   now ``double``.
+- :gh:`3013`, [AIX]: :meth:`Process.uids` and :meth:`Process.gids` returned
+  garbage on 32-bit builds. The ids in ``/proc/PID/cred`` are 64-bit integers
+  and were read as 32-bit ones.
+- :gh:`3013`, [SunOS]: :meth:`Process.uids` and :meth:`Process.gids` returned
+  negative numbers for ephemeral ids (>= 2**31), such as the ones idmap assigns
+  to SMB and NFSv4 identities.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
