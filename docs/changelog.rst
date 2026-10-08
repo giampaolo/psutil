@@ -418,6 +418,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   ``CTRL_BREAK_EVENT`` on PID 0 delivered the event to every process attached
   to the caller's console, the caller included. It now raises
   :exc:`AccessDenied`, as ``SIGTERM`` already did for PID 0.
+- [Windows]: :meth:`Process.memory_maps` returned a truncated :field:`rss` for
+  memory regions of 4 GiB or larger, because the region size was passed through
+  a 32-bit integer.
 
 **Bug fixes: macOS**
 
