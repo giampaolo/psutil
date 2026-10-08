@@ -981,7 +981,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess;
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
-    DWORD_PTR mask;
+    unsigned long long mask;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID "K", &pid, &mask))
         return NULL;
@@ -989,7 +989,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     if (hProcess == NULL)
         return NULL;
 
-    if (SetProcessAffinityMask(hProcess, mask) == 0) {
+    if (SetProcessAffinityMask(hProcess, (DWORD_PTR)mask) == 0) {
         psutil_oserror();
         CloseHandle(hProcess);
         return NULL;
