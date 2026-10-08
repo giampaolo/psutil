@@ -360,6 +360,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             }
         }
         else if (kve->kve_path[0] != '/') {
+            // Anonymous mappings (sys:vm_anon, rtld:bss,
+            // jemalloc:extent, ...). Bracket them like the pseudo
+            // paths above.
             str_format(named, sizeof(named), "[%s]", kve->kve_path);
             path = named;
         }
