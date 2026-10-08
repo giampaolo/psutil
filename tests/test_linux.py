@@ -2150,6 +2150,14 @@ class TestSensorsFans(LinuxTestCase):
 
 
 class TestProcess(LinuxTestCase):
+    def test_ioprio_pid_0(self):
+        ioclass, value = _psutil.proc_ioprio_get(os.getpid())
+        with pytest.raises(PermissionError):
+            _psutil.proc_ioprio_get(0)
+        with pytest.raises(PermissionError):
+            _psutil.proc_ioprio_set(0, ioclass, value)
+        assert _psutil.proc_ioprio_get(os.getpid()) == (ioclass, value)
+
     @retry_on_failure
     def test_parse_smaps_vs_memory_maps(self):
         sproc = self.spawn_subproc()
