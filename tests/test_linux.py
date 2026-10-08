@@ -2122,6 +2122,51 @@ class TestSensorsTemperatures(LinuxTestCase):
                 assert temp.critical == 50.0
 
 
+@skipif(not LINUX, reason="LINUX only")
+@pytest.mark.parametrize("backend", ["hwmon", "thermal"])
+def test_temperatures_skip_temporarily_unavailable_sensor(backend):
+    # A binary read can return None on EAGAIN, as on Jetson thermal zones.
+    if backend == "hwmon":
+        pattern = '/sys/class/hwmon/hwmon*/temp*_*'
+        bases = ['/sys/class/hwmon/hwmon0', '/sys/class/hwmon/hwmon1']
+        inputs = [base + '/temp1_input' for base in bases]
+        names = [base + '/name' for base in bases]
+        paths = inputs
+    else:
+        pattern = '/sys/class/thermal/thermal_zone*'
+        bases = [
+            '/sys/class/thermal/thermal_zone0',
+            '/sys/class/thermal/thermal_zone1',
+        ]
+        inputs = [base + '/temp' for base in bases]
+        names = [base + '/type' for base in bases]
+        paths = bases
+
+    read_fd, write_fd = os.pipe()
+    with contextlib.ExitStack() as stack:
+        stack.callback(os.close, read_fd)
+        stack.callback(os.close, write_fd)
+        os.set_blocking(read_fd, False)
+
+        def open_mock(path, *args, **kwargs):
+            if path == inputs[0]:
+                return os.fdopen(os.dup(read_fd), 'rb')
+            if path == inputs[1]:
+                return io.BytesIO(b'42000')
+            if path in names:
+                return io.StringIO('sensor')
+            raise FileNotFoundError(path)
+
+        with mock.patch('builtins.open', side_effect=open_mock):
+            with mock.patch(
+                'glob.glob',
+                side_effect=lambda path: paths if path == pattern else [],
+            ):
+                result = psutil.sensors_temperatures()
+
+    assert result == {'sensor': [('', 42.0, None, None)]}
+
+
 class TestSensorsFans(LinuxTestCase):
     def test_emulate_data(self):
         def open_mock(name, *args, **kwargs):
