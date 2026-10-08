@@ -92,6 +92,7 @@ __all__ = [
     'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
+    'py_exe_copy_runs',
     # os
     'get_winver', 'kernel_version', 'is_busybox',
     # sync primitives
@@ -226,11 +227,13 @@ except Exception:  # noqa: BLE001
 
 def _get_py_exe():
     def attempt(exe):
+        if not exe:
+            return None
         try:
             subprocess.check_call(
                 [exe, "-V"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-        except subprocess.CalledProcessError:
+        except (OSError, subprocess.CalledProcessError):
             return None
         else:
             return exe
@@ -271,13 +274,20 @@ def _get_py_exe():
     elif GITHUB_ACTIONS:
         return sys.executable, env
     elif MACOS:
+        # Framework interpreters are reached through a chain of symlinks
+        # and rewrite argv[0] to the real binary inside the bundle, so
+        # prefer the path the kernel itself reports.
+        try:
+            own_exe = psutil.Process().exe()
+        except psutil.Error:
+            own_exe = None
         exe = (
-            attempt(sys.executable)
+            attempt(own_exe)
+            or attempt(sys.executable)
             or attempt(os.path.realpath(sys.executable))
             or attempt(
                 shutil.which("python{}.{}".format(*sys.version_info[:2]))
             )
-            or attempt(psutil.Process().exe())
         )
         if not exe:
             raise ValueError("can't find python exe real abspath")
@@ -950,29 +960,72 @@ def create_py_exe(path):
     return path
 
 
+@functools.lru_cache(maxsize=None)
+def py_exe_copy_runs():
+    """Whether a copy of PYTHON_EXE is still runnable. It isn't for
+    macOS framework interpreters: they load their libs relative to
+    @executable_path, so a copy placed elsewhere aborts in dyld.
+    """
+    path = get_testfn()
+    try:
+        create_py_exe(path)
+        subprocess.check_output(
+            [path, "-c", "pass"],
+            stderr=subprocess.STDOUT,
+            timeout=GLOBAL_TIMEOUT,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    else:
+        return True
+    finally:
+        safe_rmpath(path)
+
+
 def create_c_exe(path, c_code=None):
     """Create a compiled C executable in the given location."""
     assert not os.path.exists(path), path
-    if not shutil.which("gcc"):
-        return pytest.skip("gcc is not installed")
+    if WINDOWS:
+        cc = shutil.which("cl")
+        if not cc:
+            return pytest.skip("cl.exe is not available (run vcvarsall)")
+    else:
+        cc = shutil.which("gcc") or shutil.which("cc")
+        if not cc:
+            return pytest.skip("no C compiler installed")
     if c_code is None:
-        c_code = textwrap.dedent("""
-            #include <unistd.h>
-            int main() {
-                pause();
-                return 1;
-            }
-            """)
+        if WINDOWS:
+            c_code = textwrap.dedent("""
+                #include <windows.h>
+                int main() {
+                    Sleep(INFINITE);
+                    return 1;
+                }
+                """)
+        else:
+            c_code = textwrap.dedent("""
+                #include <unistd.h>
+                int main() {
+                    pause();
+                    return 1;
+                }
+                """)
     else:
         assert isinstance(c_code, str), c_code
 
     atexit.register(safe_rmpath, path)
     with open(get_testfn(suffix='.c'), "w") as f:
         f.write(c_code)
+    obj = get_testfn(suffix='.obj')
     try:
-        subprocess.check_call(["gcc", f.name, "-o", path])
+        if WINDOWS:
+            cmd = [cc, "/nologo", f.name, f"/Fe:{path}", f"/Fo:{obj}"]
+        else:
+            cmd = [cc, f.name, "-o", path]
+        subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
     finally:
         safe_rmpath(f.name)
+        safe_rmpath(obj)
     return path
 
 
