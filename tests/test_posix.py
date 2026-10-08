@@ -329,6 +329,14 @@ class TestProcess(PosixTestCase):
         psutil_nice = psutil.Process().nice()
         assert ps_nice == psutil_nice
 
+    def test_nice_pid_0(self):
+        own_nice = os.getpriority(os.PRIO_PROCESS, os.getpid())
+        with pytest.raises(PermissionError):
+            _psutil.proc_priority_get(0)
+        with pytest.raises(PermissionError):
+            _psutil.proc_priority_set(0, own_nice)
+        assert os.getpriority(os.PRIO_PROCESS, os.getpid()) == own_nice
+
     @isolated
     @retry_on_failure
     def test_num_ctx_switches(self):
