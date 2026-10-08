@@ -58,6 +58,8 @@ psutil_proc_priority_get(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
+    if (pid == 0)
+        return psutil_oserror_ad("automatically set for PID 0");
 
 #ifdef PSUTIL_OSX
     priority = getpriority(PRIO_PROCESS, (id_t)pid);
@@ -79,6 +81,8 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID "i", &pid, &priority))
         return NULL;
+    if (pid == 0)
+        return psutil_oserror_ad("automatically set for PID 0");
 
 #ifdef PSUTIL_OSX
     retval = setpriority(PRIO_PROCESS, (id_t)pid, priority);

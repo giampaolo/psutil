@@ -548,6 +548,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   ``getpriority(3)``. :meth:`Process.net_connections` returned UNIX sockets
   with ``type=-1`` and ``fd=-1``. Also, :meth:`Process.net_connections` now
   raises :exc:`ZombieProcess` instead of ``RuntimeError`` for zombie processes.
+- [POSIX]: :meth:`Process.nice` called on PID 0 with a value changed the
+  niceness of the calling process instead, because ``setpriority(2)`` treats
+  PID 0 as the caller. On macOS and AIX the getter returned the caller's
+  niceness for the same reason. Both now raise :exc:`AccessDenied`.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
