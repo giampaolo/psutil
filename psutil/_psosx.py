@@ -14,6 +14,8 @@ from . import _psutil
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
+from ._common import cache_activate
+from ._common import cache_deactivate
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import debug
@@ -351,12 +353,10 @@ class Process:
         return _psutil.proc_oneshot_pidtaskinfo(self.pid)
 
     def oneshot_enter(self):
-        self._oneshot_kinfo.cache_activate(self)
-        self._oneshot_pidtaskinfo.cache_activate(self)
+        cache_activate(self)
 
     def oneshot_exit(self):
-        self._oneshot_kinfo.cache_deactivate(self)
-        self._oneshot_pidtaskinfo.cache_deactivate(self)
+        cache_deactivate(self)
 
     @wrap_exceptions
     def name(self):

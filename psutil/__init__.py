@@ -58,6 +58,8 @@ from ._common import NoSuchProcess
 from ._common import TimeoutExpired
 from ._common import ZombieProcess
 from ._common import bytes2human
+from ._common import cache_activate as _cache_activate
+from ._common import cache_deactivate as _cache_deactivate
 from ._common import debug
 from ._common import memoize_when_activated
 from ._common import warn
@@ -650,23 +652,11 @@ class Process:
                 yield
             else:
                 try:
-                    self.cpu_times.cache_activate(self)
-                    # cached in case memory_percent() is used
-                    self.memory_info.cache_activate(self)
-                    # cached in case parent() is used
-                    self.ppid.cache_activate(self)
-                    # cached in case username() is used
-                    if POSIX:
-                        self.uids.cache_activate(self)
-                    # specific implementation cache
+                    _cache_activate(self)
                     self._proc.oneshot_enter()
                     yield
                 finally:
-                    self.cpu_times.cache_deactivate(self)
-                    self.memory_info.cache_deactivate(self)
-                    self.ppid.cache_deactivate(self)
-                    if POSIX:
-                        self.uids.cache_deactivate(self)
+                    _cache_deactivate(self)
                     self._proc.oneshot_exit()
 
     def as_dict(

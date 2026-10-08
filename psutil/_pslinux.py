@@ -27,6 +27,8 @@ from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
 from ._common import bcat
+from ._common import cache_activate
+from ._common import cache_deactivate
 from ._common import cat
 from ._common import debug
 from ._common import decode
@@ -1751,14 +1753,10 @@ class Process:
             return f.read().strip()
 
     def oneshot_enter(self):
-        self._parse_stat_file.cache_activate(self)
-        self._read_status_file.cache_activate(self)
-        self._read_smaps_file.cache_activate(self)
+        cache_activate(self)
 
     def oneshot_exit(self):
-        self._parse_stat_file.cache_deactivate(self)
-        self._read_status_file.cache_deactivate(self)
-        self._read_smaps_file.cache_deactivate(self)
+        cache_deactivate(self)
 
     @wrap_exceptions
     def name(self):

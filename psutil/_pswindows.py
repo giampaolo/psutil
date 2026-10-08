@@ -20,6 +20,8 @@ from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import TimeoutExpired
+from ._common import cache_activate
+from ._common import cache_deactivate
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import debug
@@ -645,12 +647,10 @@ class Process:
     # --- oneshot() stuff
 
     def oneshot_enter(self):
-        self._oneshot.cache_activate(self)
-        self.exe.cache_activate(self)
+        cache_activate(self)
 
     def oneshot_exit(self):
-        self._oneshot.cache_deactivate(self)
-        self.exe.cache_deactivate(self)
+        cache_deactivate(self)
 
     @memoize_when_activated
     def _oneshot(self):

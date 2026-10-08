@@ -18,6 +18,8 @@ from ._common import OPENBSD
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
+from ._common import cache_activate
+from ._common import cache_deactivate
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import debug
@@ -475,10 +477,10 @@ class Process:
         return _psutil.proc_oneshot_kinfo(self.pid)
 
     def oneshot_enter(self):
-        self.oneshot.cache_activate(self)
+        cache_activate(self)
 
     def oneshot_exit(self):
-        self.oneshot.cache_deactivate(self)
+        cache_deactivate(self)
 
     @wrap_exceptions
     def name(self):

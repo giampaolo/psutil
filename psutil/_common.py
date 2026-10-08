@@ -223,6 +223,19 @@ def usage_percent(used, total, round_=None):
         return ret
 
 
+def cache_activate(proc):
+    """Make `memoize_when_activated` methods of *proc* start caching."""
+    proc._cache = {}
+
+
+def cache_deactivate(proc):
+    """Stop caching and discard what was collected."""
+    try:
+        del proc._cache
+    except AttributeError:
+        pass
+
+
 def memoize_when_activated(fun):
     """A memoize decorator which is disabled by default. It can be
     activated and deactivated on request.
@@ -242,7 +255,7 @@ def memoize_when_activated(fun):
     1
     >>>
     >>> # activated
-    >>> foo.cache_activate(self)
+    >>> cache_activate(f)
     >>> foo()
     1
     >>> foo()
@@ -276,21 +289,6 @@ def memoize_when_activated(fun):
                 pass
         return ret
 
-    def cache_activate(proc):
-        """Activate cache. Expects a Process instance. Cache will be
-        stored as a "_cache" instance attribute.
-        """
-        proc._cache = {}
-
-    def cache_deactivate(proc):
-        """Deactivate and clear cache."""
-        try:
-            del proc._cache
-        except AttributeError:
-            pass
-
-    wrapper.cache_activate = cache_activate
-    wrapper.cache_deactivate = cache_deactivate
     return wrapper
 
 

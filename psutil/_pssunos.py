@@ -21,6 +21,8 @@ from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
+from ._common import cache_activate
+from ._common import cache_deactivate
 from ._common import conn_tmap
 from ._common import debug
 from ._common import get_procfs_path
@@ -352,14 +354,10 @@ class Process:
         os.stat(f"{self._procfs_path}/{self.pid}")
 
     def oneshot_enter(self):
-        self._oneshot.cache_activate(self)
-        self._proc_name_and_args.cache_activate(self)
-        self._proc_cred.cache_activate(self)
+        cache_activate(self)
 
     def oneshot_exit(self):
-        self._oneshot.cache_deactivate(self)
-        self._proc_name_and_args.cache_deactivate(self)
-        self._proc_cred.cache_deactivate(self)
+        cache_deactivate(self)
 
     @wrap_exceptions
     @memoize_when_activated
