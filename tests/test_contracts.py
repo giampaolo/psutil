@@ -9,6 +9,7 @@ returned types and APIs availability.
 Some of these are duplicates of tests test_system.py and test_process.py.
 """
 
+import os
 import platform
 import socket
 
@@ -313,7 +314,13 @@ class TestAvailProcessAPIs(PsutilTestCase):
 
     def test_io_counters(self):
         hasit = hasattr(psutil.Process, "io_counters")
-        assert hasit == (not (MACOS or SUNOS))
+        if LINUX:
+            # On Linux, Process.io_counters() is backed by /proc/{PID}/io,
+            # which only exists if the kernel was built with
+            # CONFIG_TASK_IO_ACCOUNTING.
+            assert hasit == os.path.exists(f"/proc/{os.getpid()}/io")
+        else:
+            assert hasit == (not (MACOS or SUNOS))
 
     def test_num_fds(self):
         assert hasattr(psutil.Process, "num_fds") == POSIX

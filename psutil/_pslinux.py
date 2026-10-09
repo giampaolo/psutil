@@ -1808,11 +1808,19 @@ class Process:
             return None
         return _psposix.get_terminal(tty_nr)
 
-    # May not be available on old kernels.
     if os.path.exists(f"/proc/{os.getpid()}/io"):
 
         @wrap_exceptions
         def io_counters(self):
+            """Return process's I/O statistics as a named tuple. Fields are
+            explained in 'man proc_pid_io'; here is an updated (August 2026)
+            version: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/filesystems/proc.rst?id=ed3b875bea55a3ec4837113356df2ead11115af9.
+
+            /proc/{PID}/io does not exist on kernels < 2.6.20 or if
+            CONFIG_TASK_IO_ACCOUNTING kernel configuration option is not
+            enabled.
+            """
+
             fname = f"{self._procfs_path}/{self.pid}/io"
             fields = {}
             with open_binary(fname) as f:
