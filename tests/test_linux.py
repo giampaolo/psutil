@@ -1858,6 +1858,31 @@ class TestMisc(LinuxTestCase):
         finally:
             psutil.PROCFS_PATH = "/proc"
 
+    def test_set_procfs_path(self):
+        tdir = self.get_testfn()
+        os.mkdir(tdir)
+        try:
+            psutil.set_procfs_path(tdir + "/")
+            assert tdir == psutil.PROCFS_PATH
+            with pytest.raises(OSError):
+                psutil.virtual_memory()
+            with pytest.raises(FileNotFoundError):
+                psutil.set_procfs_path(tdir + "/nonexistent")
+            assert tdir == psutil.PROCFS_PATH
+        finally:
+            psutil.set_procfs_path("/proc")
+
+    def test_procfs_path_env_var(self):
+        tdir = self.get_testfn()
+        os.mkdir(tdir)
+        try:
+            with mock.patch.dict(os.environ, {"PSUTIL_PROCFS_PATH": tdir}):
+                reload_module(psutil)
+            assert tdir == psutil.PROCFS_PATH
+        finally:
+            reload_module(psutil)
+        assert psutil.PROCFS_PATH == "/proc"
+
     @retry_on_failure
     @isolated
     def test_issue_687(self):

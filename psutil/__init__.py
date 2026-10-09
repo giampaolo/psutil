@@ -189,10 +189,6 @@ if _TYPE_CHECKING:
 
 
 if LINUX:
-    # This is public API and it will be retrieved from _pslinux.py
-    # via sys.modules.
-    PROCFS_PATH = "/proc"
-
     from . import _pslinux as _psplatform
     from ._enums import ProcessIOPriority
     from ._enums import ProcessRlimit
@@ -214,16 +210,8 @@ elif BSD:
 elif SUNOS:
     from . import _pssunos as _psplatform
 
-    # This is public writable API which is read from _pslinux.py and
-    # _pssunos.py via sys.modules.
-    PROCFS_PATH = "/proc"
-
 elif AIX:
     from . import _psaix as _psplatform
-
-    # This is public API and it will be retrieved from _pslinux.py
-    # via sys.modules.
-    PROCFS_PATH = "/proc"
 
 else:  # pragma: no cover
     msg = f"platform {sys.platform} is not supported"
@@ -285,7 +273,16 @@ if WINDOWS:
 if LINUX or FREEBSD:
     _export_enum(ProcessRlimit)
 if LINUX or SUNOS or AIX:
-    __all__.append("PROCFS_PATH")
+    PROCFS_PATH = os.environ.get("PSUTIL_PROCFS_PATH", "/proc")
+    __all__.extend(["PROCFS_PATH", "set_procfs_path"])
+
+    def set_procfs_path(path: str) -> None:
+        global PROCFS_PATH, _TOTAL_PHYMEM
+        path = os.fspath(path)
+        os.listdir(path)
+        PROCFS_PATH = path.rstrip("/") or "/"
+        _TOTAL_PHYMEM = None
+
 
 del _globals, _export_enum
 

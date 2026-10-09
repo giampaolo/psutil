@@ -13,6 +13,8 @@ import sys
 from collections import namedtuple
 from socket import AF_INET
 
+import psutil
+
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil
@@ -25,7 +27,6 @@ from ._common import cache_activate
 from ._common import cache_deactivate
 from ._common import conn_tmap
 from ._common import debug
-from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import sockfam_to_enum
@@ -298,7 +299,7 @@ def users():
 
 def pids():
     """Returns a list of PIDs currently running on the system."""
-    path = get_procfs_path().encode(ENCODING)
+    path = psutil.PROCFS_PATH.encode(ENCODING)
     return [int(x) for x in os.listdir(path) if x.isdigit()]
 
 
@@ -345,7 +346,7 @@ class Process:
         self.pid = pid
         self._name = None
         self._ppid = None
-        self._procfs_path = get_procfs_path()
+        self._procfs_path = psutil.PROCFS_PATH
 
     def _assert_alive(self):
         """Raise NSP if the process disappeared on us."""

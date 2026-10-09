@@ -2745,10 +2745,11 @@ Other constants
 
 .. data:: PROCFS_PATH
 
-  The path of the ``/proc`` filesystem on Linux, Solaris and AIX (defaults to
-  ``'/proc'``). You may want to re-set this constant right after importing
-  psutil in case ``/proc`` is mounted elsewhere, or if you want to retrieve
-  information about Linux containers such as Docker, Heroku or LXC (see
+  The path of the ``/proc`` filesystem on Linux, Solaris and AIX. Defaults to
+  ``'/proc'``, or to the :envvar:`PSUTIL_PROCFS_PATH` environment variable when
+  set. Change it with :func:`set_procfs_path` when ``/proc`` is mounted
+  elsewhere, typically to read the host's ``/proc`` from inside a Linux
+  container such as Docker, Heroku or LXC (see
   `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`_
   for more info).
 
@@ -2757,6 +2758,19 @@ Other constants
   class methods).
 
   .. availability:: Linux, SunOS, AIX
+
+  .. versionchanged:: 8.0.0
+     the :envvar:`PSUTIL_PROCFS_PATH` environment variable is honored.
+
+.. function:: set_procfs_path(path)
+
+  Set :data:`PROCFS_PATH`. *path* must be an existing directory. Prefer this
+  over assigning the constant directly: it validates the path and resets the
+  internal caches that depend on it.
+
+  .. availability:: Linux, SunOS, AIX
+
+  .. versionadded:: 8.0.0
 
 Utilities
 ---------
@@ -2797,6 +2811,12 @@ Environment variables
   a lower level. The variable is checked at import time, and affects both the
   Python layer and the underlying C extension modules. It can also be toggled
   programmatically at runtime via ``psutil._set_debug(True)``.
+
+.. envvar:: PSUTIL_PROCFS_PATH
+
+  The initial value of :data:`PROCFS_PATH`, checked at import time.
+
+  .. versionadded:: 8.0.0
 
   .. code-block:: bash
 
