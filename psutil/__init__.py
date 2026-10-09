@@ -363,6 +363,19 @@ def _check_conn_kind(kind):
         raise ValueError(msg)
 
 
+def _reject_bool(value, name):
+    """Raise TypeError if *value* is a bool.
+
+    ``bool`` subclasses ``int``, so checks like
+    ``isinstance(x, (int, float))`` accept ``True``/``False``. Callers that
+    mean a numeric timeout, interval, PID, or niceness must reject bools
+    explicitly or ``True`` silently becomes ``1``.
+    """
+    if isinstance(value, bool):
+        msg = f"{name} must not be a bool (got {value!r})"
+        raise TypeError(msg)
+
+
 # =====================================================================
 # --- Process class
 # =====================================================================
@@ -416,6 +429,8 @@ class Process:
         if pid is None:
             pid = os.getpid()
         else:
+            # bool subclasses int; pid=True would silently mean PID 1
+            _reject_bool(pid, "pid")
             if pid < 0:
                 msg = f"pid must be a positive integer (got {pid})"
                 raise ValueError(msg)
@@ -962,6 +977,8 @@ class Process:
         if value is None:
             return self._proc.nice_get()
         else:
+            # bool subclasses int; nice(True) would silently set niceness to 1
+            _reject_bool(value, "nice value")
             self._raise_if_pid_reused()
             self._proc.nice_set(value)
 
@@ -1246,6 +1263,9 @@ class Process:
           2.9
           >>>
         """
+        if interval is not None:
+            # bool subclasses int; interval=True would sleep for 1 second
+            _reject_bool(interval, "interval")
         blocking = interval is not None and interval > 0.0
         if interval is not None and interval < 0:
             msg = f"interval is not positive (got {interval!r})"
@@ -1644,8 +1664,14 @@ class Process:
             msg = "can't wait for PID 0"
             raise ValueError(msg)
         if timeout is not None:
-            if not isinstance(timeout, (int, float)):
-                msg = f"timeout must be an int or float (got {type(timeout)})"
+            # bool subclasses int; timeout=True would silently mean 1 second
+            if isinstance(timeout, bool) or not isinstance(
+                timeout, (int, float)
+            ):
+                msg = (
+                    "timeout must be an int or float, not bool (got"
+                    f" {timeout!r})"
+                )
                 raise TypeError(msg)
             if timeout < 0:
                 msg = f"timeout must be positive or zero (got {timeout})"
@@ -1779,6 +1805,8 @@ def pid_exists(pid: int) -> bool:
     This is faster than doing `pid in psutil.pids()` and should be
     preferred.
     """
+    # bool subclasses int; pid_exists(True) would silently check PID 1
+    _reject_bool(pid, "pid")
     if pid < 0:
         return False
     elif pid == 0 and POSIX:
@@ -1940,6 +1968,9 @@ def wait_procs(
                 if callback is not None:
                     callback(proc)
 
+    if timeout is not None:
+        # bool subclasses int; timeout=True would silently mean 1 second
+        _reject_bool(timeout, "timeout")
     if timeout is not None and not timeout >= 0:
         msg = f"timeout must be a positive integer, got {timeout}"
         raise ValueError(msg)
@@ -2145,6 +2176,9 @@ def cpu_percent(
       >>>
     """
     tid = threading.current_thread().ident
+    if interval is not None:
+        # bool subclasses int; interval=True would sleep for 1 second
+        _reject_bool(interval, "interval")
     blocking = interval is not None and interval > 0.0
     if interval is not None and interval < 0:
         msg = f"interval is not positive (got {interval})"
@@ -2208,6 +2242,9 @@ def cpu_times_percent(
     `cpu_percent()`.
     """
     tid = threading.current_thread().ident
+    if interval is not None:
+        # bool subclasses int; interval=True would sleep for 1 second
+        _reject_bool(interval, "interval")
     blocking = interval is not None and interval > 0.0
     if interval is not None and interval < 0:
         msg = f"interval is not positive (got {interval!r})"
