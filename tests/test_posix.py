@@ -481,15 +481,18 @@ class TestSystemAPIs(PosixTestCase):
             else:
                 susers.append((user, terminal))
 
+        users = psutil.users()
         if LINUX or MACOS:
-            pusers = [(u.name, u.terminal, u.pid) for u in psutil.users()]
+            pusers = [(u.name, u.terminal, u.pid) for u in users]
         else:
-            pusers = [(u.name, u.terminal) for u in psutil.users()]
+            pusers = [(u.name, u.terminal) for u in users]
 
-        assert len(susers) == len(pusers)
-        assert sorted(susers) == sorted(pusers)
+        # "who" may include records that psutil does not consider sessions.
+        for puser in pusers:
+            assert puser in susers
+            susers.remove(puser)
 
-        for user in psutil.users():
+        for user in users:
             if user.pid is not None:
                 assert user.pid > 0
 
@@ -524,11 +527,18 @@ class TestSystemAPIs(PosixTestCase):
         if not tstamp:
             return pytest.skip(f"cannot interpret tstamp in who output\n{out}")
 
-        for idx, u in enumerate(psutil.users()):
-            psutil_value = datetime.datetime.fromtimestamp(u.started).strftime(
+        susers = []
+        for line, timestamp in zip(out.splitlines(), started):
+            fields = line.split()
+            susers.append((fields[0], fields[1], timestamp))
+
+        for user in psutil.users():
+            started = datetime.datetime.fromtimestamp(user.started).strftime(
                 tstamp
             )
-            assert psutil_value == started[idx]
+            puser = (user.name, user.terminal, started)
+            assert puser in susers
+            susers.remove(puser)
 
     def test_pid_exists_let_raise(self):
         # According to "man 2 kill" possible error values for kill
