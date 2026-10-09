@@ -97,7 +97,7 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
         }
     }
     else {
-        if ((errno == EOPNOTSUPP) || (errno == EINVAL) || (errno == EBUSY)) {
+        if ((errno == EOPNOTSUPP) || (errno == EINVAL) || (errno == EBUSY) || (errno == ENOTTY)) {
             // EOPNOTSUPP may occur in case of wi-fi cards.
             // For EINVAL see:
             // https://github.com/giampaolo/psutil/issues/797
