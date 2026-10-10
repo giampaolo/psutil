@@ -40,9 +40,9 @@ jobs:
         include:
           # manylinux and musllinux share a runner, so give them a lane each
           # instead of building one set after the other.
-          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp314{,t}-manylinux*", tag: manylinux }
+          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp314{,t}-manylinux* cp315t-manylinux*", tag: manylinux }
           - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp314-musllinux*", tag: musllinux }
-          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp314{,t}-manylinux*", tag: manylinux }
+          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp314{,t}-manylinux* cp315t-manylinux*", tag: manylinux }
           - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp314-musllinux*", tag: musllinux }
           - { os: ubuntu-latest, osname: linux, arch: ppc64le, build: "cp314-manylinux*", tag: abi3, qemu: ppc64le }
           - { os: ubuntu-latest, osname: linux, arch: s390x, build: "cp314-manylinux*", tag: abi3, qemu: s390x }
@@ -50,11 +50,14 @@ jobs:
           # (faster).
           - { os: macos-15, osname: macos, arch: "arm64 x86_64", archname: both, build: "cp314-*", tag: abi3 }
           - { os: macos-15, osname: macos, arch: "arm64 x86_64", archname: both, build: "cp314t-*", tag: cp314t }
+          - { os: macos-15, osname: macos, arch: "arm64 x86_64", archname: both, build: "cp315t-*", tag: cp315t }
           # Same idea for Windows.
           - { os: windows-2025, osname: win, arch: AMD64, build: "cp314-*", tag: abi3 }
           - { os: windows-2025, osname: win, arch: AMD64, build: "cp314t-*", tag: cp314t }
+          - { os: windows-2025, osname: win, arch: AMD64, build: "cp315t-*", tag: cp315t }
           - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp314-*", tag: abi3 }
           - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp314t-*", tag: cp314t }
+          - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp315t-*", tag: cp315t }
     steps:
       - uses: actions/checkout@v7
 
@@ -89,7 +92,7 @@ jobs:
       # every lane, which takes ~18 secs instead of ~5.
       - name: Build wheels
         shell: bash
-        run: uvx --from 'cibuildwheel==4.1.1' cibuildwheel --output-dir wheelhouse
+        run: uvx --from 'cibuildwheel==4.2.1' cibuildwheel --output-dir wheelhouse
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "${{ matrix.build }}"
