@@ -76,6 +76,12 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
         return psutil_badargs("psutil_sysctl_procargs");
 
     if (sysctl(mib, 3, procargs, argmax, NULL, 0) < 0) {
+        // Save errno now: psutil_pid_exists() and is_zombie() below
+        // may overwrite it (kill() failing with EPERM, or is_zombie()
+        // resetting it to 0 when the process has gone away), see:
+        // https://github.com/giampaolo/psutil/issues/3024
+        int saved_errno = errno;
+
         if (psutil_pid_exists(pid) == 0) {
             psutil_oserror_nsp("psutil_pid_exists -> 0");
             return -1;
@@ -86,23 +92,24 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
             return -1;
         }
 
-        if (errno == EINVAL) {
+        if (saved_errno == EINVAL) {
             psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to AD");
             psutil_oserror_ad("sysctl(KERN_PROCARGS2) -> EINVAL");
             return -1;
         }
 
-        if (errno == EIO) {
+        if (saved_errno == EIO) {
             psutil_debug("sysctl(KERN_PROCARGS2) -> EIO translated to AD");
             psutil_oserror_ad("sysctl(KERN_PROCARGS2) -> EIO");
             return -1;
         }
-        if (errno == 0) {
+        if (saved_errno == 0) {
             // see: https://github.com/giampaolo/psutil/issues/2708
             psutil_debug("sysctl(KERN_PROCARGS2) -> errno 0");
             psutil_oserror_ad("sysctl(KERN_PROCARGS2) -> errno 0");
             return -1;
         }
+        errno = saved_errno;
         psutil_oserror_wsyscall("sysctl(KERN_PROCARGS2)");
         return -1;
     }
