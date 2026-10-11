@@ -2121,13 +2121,14 @@ class TestSensorsTemperatures(LinuxTestCase):
 
 
 @skipif(not LINUX, reason="LINUX only")
-@pytest.mark.parametrize("backend", ["hwmon", "thermal"])
-def test_temperatures_skip_temporarily_unavailable_sensor(backend):
+@pytest.mark.parametrize("backend", ["hwmon", "thermal", "fans"])
+def test_sensors_skip_temporarily_unavailable_sensor(backend):
     # A binary read can return None on EAGAIN, as on Jetson thermal zones.
-    if backend == "hwmon":
-        pattern = '/sys/class/hwmon/hwmon*/temp*_*'
+    if backend in {"hwmon", "fans"}:
+        kind = 'fan' if backend == 'fans' else 'temp'
+        pattern = f'/sys/class/hwmon/hwmon*/{kind}*_*'
         bases = ['/sys/class/hwmon/hwmon0', '/sys/class/hwmon/hwmon1']
-        inputs = [base + '/temp1_input' for base in bases]
+        inputs = [base + f'/{kind}1_input' for base in bases]
         names = [base + '/name' for base in bases]
         paths = inputs
     else:
@@ -2160,9 +2161,15 @@ def test_temperatures_skip_temporarily_unavailable_sensor(backend):
                 'glob.glob',
                 side_effect=lambda path: paths if path == pattern else [],
             ):
-                result = psutil.sensors_temperatures()
+                if backend == 'fans':
+                    result = psutil.sensors_fans()
+                else:
+                    result = psutil.sensors_temperatures()
 
-    assert result == {'sensor': [('', 42.0, None, None)]}
+    if backend == 'fans':
+        assert result == {'sensor': [('', 42000)]}
+    else:
+        assert result == {'sensor': [('', 42.0, None, None)]}
 
 
 class TestSensorsFans(LinuxTestCase):
