@@ -15,6 +15,7 @@ import shutil
 import signal
 import socket
 import sys
+import textwrap
 import time
 import warnings
 from unittest import mock
@@ -47,11 +48,13 @@ from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import MACOS_12PLUS
+from . import PYTHON_EXE
 from . import UNICODE_SUFFIX
 from . import PsutilTestCase
 from . import check_net_address
 from . import pytest
 from . import retry_on_failure
+from . import sh
 from . import skipif
 
 # ===================================================================
@@ -379,12 +382,51 @@ class TestMiscAPIs(PsutilTestCase):
             # macOS doesn't support it. Free-threaded builds allocate via
             # mimalloc, so glibc's malloc arena stays mostly unused.
             assert m.mmap_used == 0
-        else:
-            # The allocator may satisfy all allocations from the heap,
-            # without any outstanding mmap allocations.
-            assert m.mmap_used >= 0
+        elif not LINUX:
+            assert m.mmap_used > 0
         if WINDOWS:
             assert m.heap_count >= 0
+
+    @skipif(not LINUX or not HAS_HEAP_INFO, reason="requires glibc")
+    def test_heap_info_allocation(self):
+        # Use an isolated process and glibc directly, including on Python
+        # builds which use a different allocator (e.g. mimalloc).
+        code = textwrap.dedent("""\
+            import ctypes
+            import psutil
+
+            libc = ctypes.CDLL("libc.so.6")
+            libc.malloc.argtypes = [ctypes.c_size_t]
+            libc.malloc.restype = ctypes.c_void_p
+            libc.free.argtypes = [ctypes.c_void_p]
+            libc.free.restype = None
+
+            def used():
+                info = psutil.heap_info()
+                return info.heap_used + info.mmap_used
+
+            used()  # Warm up the statistics query before measuring.
+            size = 16 * 1024 * 1024
+            before = used()
+            ptr = libc.malloc(size)
+            assert ptr, "malloc failed"
+            try:
+                allocated = used()
+            finally:
+                libc.free(ptr)
+            after = used()
+            # Allow small Python allocations made by the measurements.
+            minimum = size - 64 * 1024
+            assert allocated - before >= minimum, (before, allocated)
+            assert allocated - after >= minimum, (allocated, after)
+            """)
+        for mmap_max in (None, "0"):
+            with self.subTest(mmap_max=mmap_max):
+                env = os.environ.copy()
+                if mmap_max is not None:
+                    # Large malloc requests can also be served from the heap.
+                    env["MALLOC_MMAP_MAX_"] = mmap_max
+                sh([PYTHON_EXE, "-c", code], env=env)
 
     @skipif(not HAS_HEAP_INFO, reason="not supported")
     def test_heap_trim(self):
