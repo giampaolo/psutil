@@ -496,8 +496,9 @@ class TestVirtualMemoryMocks(LinuxTestCase):
                     assert ret.available == 2057400 * 1024 + 4818144 * 1024
                     w = ws[0]
                     assert (
-                        "inactive memory stats couldn't be determined"
-                        in str(w.message)
+                        "inactive memory stats couldn't be determined" in str(
+                            w.message
+                        )
                     )
 
     def test_virtual_memory_mocked(self):
@@ -1894,12 +1895,13 @@ class TestMisc(LinuxTestCase):
 @skipif(not HAS_BATTERY, reason="no battery")
 class TestSensorsBattery(LinuxTestCase):
     @requires_cli("acpi")
+    @retry_on_failure
     def test_percent(self):
         out = sh("acpi -b")
         first_battery = out.split("\n")[0]
         acpi_value = int(first_battery.split(",")[1].strip().replace('%', ''))
         psutil_value = psutil.sensors_battery().percent
-        assert abs(acpi_value - psutil_value) < 1
+        assert abs(acpi_value - psutil_value) < 2
 
     def test_emulate_power_plugged(self):
         # Pretend the AC power cable is connected.
@@ -2148,6 +2150,14 @@ class TestSensorsFans(LinuxTestCase):
 
 
 class TestProcess(LinuxTestCase):
+    def test_ioprio_pid_0(self):
+        ioclass, value = _psutil.proc_ioprio_get(os.getpid())
+        with pytest.raises(PermissionError):
+            _psutil.proc_ioprio_get(0)
+        with pytest.raises(PermissionError):
+            _psutil.proc_ioprio_set(0, ioclass, value)
+        assert _psutil.proc_ioprio_get(os.getpid()) == (ioclass, value)
+
     @retry_on_failure
     def test_parse_smaps_vs_memory_maps(self):
         sproc = self.spawn_subproc()

@@ -595,7 +595,7 @@ Network
     :term:`NIC` level. Unlike :field:`errin`, drops indicate the interface or
     kernel buffer was overwhelmed.
   - :field:`dropout`: total number of outgoing packets dropped (always 0 on
-    macOS and BSD). A non-zero and growing count is a sign of network
+    macOS and NetBSD). A non-zero and growing count is a sign of network
     saturation.
 
   If *pernic* is ``True``, return the same information for every network
@@ -622,6 +622,9 @@ Network
   .. seealso::
     - :src:`scripts/nettop.py`
     - :src:`scripts/ifconfig.py`
+
+  .. versionchanged:: 8.0.0
+     FreeBSD, OpenBSD: :field:`dropout` is no longer always ``0``.
 
 .. function:: net_connections(kind="inet")
 

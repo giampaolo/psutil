@@ -15,6 +15,8 @@
         return;
     }
 
+    sidebar.setAttribute("tabindex", "-1");
+
     const backdrop = document.createElement("div");
     backdrop.className = "sidebar-backdrop";
     backdrop.setAttribute("aria-hidden", "true");
@@ -23,10 +25,7 @@
     function open() {
         body.classList.add("sidebar-open");
         btn.setAttribute("aria-expanded", "true");
-        const firstLink = sidebar.querySelector("a");
-        if (firstLink) {
-            firstLink.focus();
-        }
+        sidebar.focus();
     }
 
     function close() {
@@ -147,7 +146,11 @@
             }
             const first = items[0];
             const last = items[items.length - 1];
-            if (e.shiftKey && document.activeElement === first) {
+            if (
+                e.shiftKey &&
+                (document.activeElement === first ||
+                    document.activeElement === sidebar)
+            ) {
                 e.preventDefault();
                 last.focus();
             }

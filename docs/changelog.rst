@@ -47,6 +47,8 @@ Changelog
   only a directory path).
 - :gh:`2816`, [OpenBSD]: :func:`swap_memory` :field:`sin` and :field:`sout` are
   no longer set to ``0``.
+- :gh:`3023`, [FreeBSD], [OpenBSD]: :func:`net_io_counters` :field:`dropout` is
+  no longer always ``0``.
 - :gh:`2977`: new :func:`bytes2human` utility function, converting a number of
   bytes to a human-readable string (e.g. ``9.8K``).
 - :gh:`1109`, [Linux]: :meth:`Process.memory_extras` returns a new
@@ -414,6 +416,16 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2941`, [Windows]: :func:`net_io_counters` raised :exc:`RuntimeError`,
   losing the counters of all the other NICs, if a NIC was disabled or unplugged
   mid-call. Now it's skipped.
+- [Windows]: :meth:`Process.send_signal` with ``CTRL_C_EVENT`` or
+  ``CTRL_BREAK_EVENT`` on PID 0 delivered the event to every process attached
+  to the caller's console, the caller included. It now raises
+  :exc:`AccessDenied`, as ``SIGTERM`` already did for PID 0.
+- :gh:`3019`, [Windows]: :meth:`Process.memory_maps` returned a truncated
+  :field:`rss` for memory regions of 4 GiB or larger, because the region size
+  was passed through a 32-bit integer.
+- :gh:`3022`, [Windows]: :meth:`Process.wait` returned exit codes with the high
+  bit set, such as the ``0xC0000005`` NTSTATUS of a crashed process, as
+  negative numbers. They are now unsigned, like :mod:`subprocess` reports them.
 
 **Bug fixes: macOS**
 
@@ -520,6 +532,17 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   consistency, :meth:`Process.environ` for a zombie now raises
   :exc:`ZombieProcess` on all BSDs (NetBSD used to return an empty dict, see
   :gh:`2911`).
+- [NetBSD]: :meth:`Process.num_fds` and :meth:`Process.open_files` for PID 0
+  returned the file descriptors of every process on the system, because the
+  kernel treats a PID of 0 as a wildcard in ``sysctl(KERN_FILE2)``. They now
+  return ``0`` and an empty list, as on macOS and OpenBSD.
+- :gh:`3020`, [FreeBSD]: :meth:`Process.memory_maps` returned the kernel's
+  internal names for non-file mappings as plain strings, such as
+  ``sys:vm_anon``, ``rtld:bss`` or ``pvclock``. They are now bracketed like the
+  other pseudo paths, e.g. ``[sys:vm_anon]``.
+- :gh:`3013`, [BSD]: :func:`net_io_counters` returned garbage on 32-bit builds.
+  The kernel's 64-bit interface counters were passed as ``unsigned long``,
+  which is 32 bits there.
 
 **Bug fixes: UNIX**
 
@@ -548,6 +571,23 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   ``getpriority(3)``. :meth:`Process.net_connections` returned UNIX sockets
   with ``type=-1`` and ``fd=-1``. Also, :meth:`Process.net_connections` now
   raises :exc:`ZombieProcess` instead of ``RuntimeError`` for zombie processes.
+- :gh:`3015`, [POSIX]: :meth:`Process.nice` called on PID 0 with a value
+  changed the niceness of the calling process instead, because
+  ``setpriority(2)`` treats PID 0 as the caller. On macOS and AIX the getter
+  returned the caller's niceness for the same reason. Both now raise
+  :exc:`AccessDenied`.
+- :gh:`3017`, [POSIX]: :exc:`OSError` messages built by the C extension from
+  ``strerror()`` were decoded as UTF-8, so in a locale with a non-UTF-8 charset
+  and translated messages a failing syscall could raise ``UnicodeDecodeError``.
+- :gh:`3018`, [SunOS], [AIX]: :func:`boot_time`, and :func:`cpu_times` per-CPU
+  values on SunOS, were computed as a C ``float`` and lost precision. They are
+  now ``double``.
+- :gh:`3013`, [AIX]: :meth:`Process.uids` and :meth:`Process.gids` returned
+  garbage on 32-bit builds. The ids in ``/proc/PID/cred`` are 64-bit integers
+  and were read as 32-bit ones.
+- :gh:`3013`, [SunOS]: :meth:`Process.uids` and :meth:`Process.gids` returned
+  negative numbers for ephemeral ids (>= 2**31), such as the ones idmap assigns
+  to SMB and NFSv4 identities.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^

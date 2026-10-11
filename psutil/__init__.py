@@ -58,6 +58,8 @@ from ._common import NoSuchProcess
 from ._common import TimeoutExpired
 from ._common import ZombieProcess
 from ._common import bytes2human
+from ._common import cache_activate as _cache_activate
+from ._common import cache_deactivate as _cache_deactivate
 from ._common import debug
 from ._common import memoize_when_activated
 from ._common import warn
@@ -575,7 +577,30 @@ class Process:
 
     def _raise_if_pid_reused(self):
         """Raise `NoSuchProcess` in case process PID has been reused."""
-        if self._pid_reused or (not self.is_running() and self._pid_reused):
+        if not self._pid_reused and not self._gone:
+            # Don't instantiate a second Process just to read its
+            # create time. _get_ident() goes through self._proc, so
+            # inside oneshot() it reuses the read we already did.
+            try:
+                ident = self._get_ident()
+            except (AccessDenied, ZombieProcess):
+                # Can't tell, so don't claim the PID was reused.
+                return
+            except NoSuchProcess:
+                self._gone = True
+                return
+            cmp = self._cmp_idents(self._ident, ident)
+            if cmp == "different":
+                debug(f"PID reuse detected: {self._ident} vs. {ident}")
+                self._pid_reused = True
+                _pids_reused.add(self.pid)
+            elif cmp == "unknown":
+                debug(
+                    "null create time, PID reuse check inconclusive:"
+                    f" {self._ident} vs. {ident}"
+                )
+
+        if self._pid_reused:
             # We may directly raise NSP in here already if PID is just
             # not running, but I prefer NSP to be raised naturally by
             # the actual Process API call. This way unit tests will tell
@@ -650,23 +675,11 @@ class Process:
                 yield
             else:
                 try:
-                    self.cpu_times.cache_activate(self)
-                    # cached in case memory_percent() is used
-                    self.memory_info.cache_activate(self)
-                    # cached in case parent() is used
-                    self.ppid.cache_activate(self)
-                    # cached in case username() is used
-                    if POSIX:
-                        self.uids.cache_activate(self)
-                    # specific implementation cache
+                    _cache_activate(self)
                     self._proc.oneshot_enter()
                     yield
                 finally:
-                    self.cpu_times.cache_deactivate(self)
-                    self.memory_info.cache_deactivate(self)
-                    self.ppid.cache_deactivate(self)
-                    if POSIX:
-                        self.uids.cache_deactivate(self)
+                    _cache_deactivate(self)
                     self._proc.oneshot_exit()
 
     def as_dict(

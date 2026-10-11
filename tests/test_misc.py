@@ -25,6 +25,8 @@ from psutil import WINDOWS
 from psutil import _psutil
 from psutil._common import bcat
 from psutil._common import broadcast_addr
+from psutil._common import cache_activate
+from psutil._common import cache_deactivate
 from psutil._common import cat
 from psutil._common import debug
 from psutil._common import isfile_strict
@@ -390,14 +392,14 @@ class TestCommonModule(PsutilTestCase):
 
         # activate
         calls = []
-        f.foo.cache_activate(f)
+        cache_activate(f)
         f.foo()
         f.foo()
         assert len(calls) == 1
 
         # deactivate
         calls = []
-        f.foo.cache_deactivate(f)
+        cache_deactivate(f)
         f.foo()
         f.foo()
         assert len(calls) == 2

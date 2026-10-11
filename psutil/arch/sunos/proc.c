@@ -57,7 +57,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
-        "ikkdiiikiiii",
+        "ikkdiiikIIII",
         info.pr_ppid,  // parent pid
         info.pr_rssize,  // rss
         info.pr_size,  // vms
@@ -66,10 +66,10 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
         info.pr_nlwp,  // no. of threads
         info.pr_lwp.pr_state,  // status code
         info.pr_ttydev,  // tty nr
-        (int)info.pr_uid,  // real user id
-        (int)info.pr_euid,  // effective user id
-        (int)info.pr_gid,  // real group id
-        (int)info.pr_egid  // effective group id
+        info.pr_uid,  // real user id
+        info.pr_euid,  // effective user id
+        info.pr_gid,  // real group id
+        info.pr_egid  // effective group id
     );
 }
 
@@ -354,7 +354,7 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
-        "iiiiii",
+        "IIIIII",
         info.pr_ruid,
         info.pr_euid,
         info.pr_suid,

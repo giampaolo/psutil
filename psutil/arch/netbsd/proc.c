@@ -14,7 +14,7 @@
 
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     char path[MAXPATHLEN];
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
@@ -93,7 +93,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_proc_num_threads(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     struct kinfo_proc2 kp;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
@@ -253,7 +253,7 @@ error:
 
 PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int cnt;
 
     struct kinfo_file *freep;
