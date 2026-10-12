@@ -168,6 +168,9 @@ ignore = [
     "UP032",  # [*] Use f-string instead of `format` call
 ]
 
+[tool.ruff.lint.flake8-import-conventions.extend-aliases]
+datetime = "datetime"
+
 [tool.ruff.lint.per-file-ignores]
 # B904 == Use `raise from` to specify exception cause
 # EM101 == raw-string-in-exception
