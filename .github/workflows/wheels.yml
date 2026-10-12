@@ -40,9 +40,11 @@ jobs:
         include:
           # manylinux and musllinux share a runner, so give them a lane each
           # instead of building one set after the other.
-          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp314{,t}-manylinux* cp315t-manylinux*", tag: manylinux }
+          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp314{,t}-manylinux*", tag: manylinux }
+          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp315t-manylinux*", tag: cp315t }
           - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp314-musllinux*", tag: musllinux }
-          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp314{,t}-manylinux* cp315t-manylinux*", tag: manylinux }
+          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp314{,t}-manylinux*", tag: manylinux }
+          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp315t-manylinux*", tag: cp315t }
           - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp314-musllinux*", tag: musllinux }
           - { os: ubuntu-latest, osname: linux, arch: ppc64le, build: "cp314-manylinux*", tag: abi3, qemu: ppc64le }
           - { os: ubuntu-latest, osname: linux, arch: s390x, build: "cp314-manylinux*", tag: abi3, qemu: s390x }
