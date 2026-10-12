@@ -1643,6 +1643,7 @@ class Process:
         "_name",
         "_ppid",
         "_procfs_path",
+        "_tgid_cache",
         "pid",
     ]
 
@@ -1651,6 +1652,7 @@ class Process:
         self._name = None
         self._ppid = None
         self._ctime = None
+        self._tgid_cache = None
         self._procfs_path = get_procfs_path()
 
     def _is_zombie(self):
@@ -2326,8 +2328,14 @@ class Process:
         return len(os.listdir(f"{self._procfs_path}/{self.pid}/fd"))
 
     @wrap_exceptions
-    def ppid(self):
-        return int(self._parse_stat_file()['ppid'])
+    def ppid(self, _tgid_re=re.compile(br'Tgid:\t(\d+)')):
+        stat = self._parse_stat_file()
+        ident = (self.pid, stat['create_time'])
+        if self._tgid_cache is None or self._tgid_cache[0] != ident:
+            tgid = int(_tgid_re.findall(self._read_status_file())[0])
+            self._tgid_cache = (ident, tgid)
+        tgid = self._tgid_cache[1]
+        return tgid if tgid != self.pid else int(stat['ppid'])
 
     @wrap_exceptions
     def uids(self, _uids_re=re.compile(br'Uid:\t(\d+)\t(\d+)\t(\d+)')):

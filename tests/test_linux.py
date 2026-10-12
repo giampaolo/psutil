@@ -2150,6 +2150,57 @@ class TestSensorsFans(LinuxTestCase):
 
 
 class TestProcess(LinuxTestCase):
+
+    def test_thread_process_ppid(self):
+        with ThreadTask() as task:
+            p = psutil.Process(task.native_id)
+            assert p.pid != os.getpid()
+            assert p.ppid() == os.getpid()
+            assert p.ppid() == os.getpid()
+            assert p.parent().pid == os.getpid()
+
+    def test_thread_process_ppid_oneshot(self):
+        with ThreadTask() as task:
+            p = psutil.Process(task.native_id)
+            with p.oneshot():
+                assert p.ppid() == os.getpid()
+                assert p.parent().pid == os.getpid()
+            assert p.ppid() == os.getpid()
+
+    def test_thread_process_ppid_exited(self):
+        with ThreadTask() as task:
+            p = psutil.Process(task.native_id)
+            assert p.ppid() == os.getpid()
+        with pytest.raises(psutil.NoSuchProcess):
+            p.ppid()
+
+    def test_thread_process_ppid_reused(self):
+        with ThreadTask() as task:
+            p = psutil.Process(task.native_id)
+            assert p.ppid() == os.getpid()
+            reused_ident = (p.pid, p.create_time() + 1)
+            with mock.patch.object(
+                psutil.Process, '_get_ident', return_value=reused_ident
+            ):
+                with pytest.raises(psutil.NoSuchProcess):
+                    p.ppid()
+
+    def test_ppid_reused_tid(self):
+        p = psutil._pslinux.Process(12345)
+        stats = [
+            {'create_time': b'100', 'ppid': b'11'},
+            {'create_time': b'200', 'ppid': b'22'},
+            {'create_time': b'200', 'ppid': b'33'},
+        ]
+        statuses = [b'Tgid:\t98765\n', b'Tgid:\t12345\n']
+        with mock.patch.object(type(p), '_parse_stat_file', side_effect=stats):
+            with mock.patch.object(
+                type(p), '_read_status_file', side_effect=statuses
+            ):
+                assert p.ppid() == 98765
+                assert p.ppid() == 22
+                assert p.ppid() == 33
+
     def test_ioprio_pid_0(self):
         ioclass, value = _psutil.proc_ioprio_get(os.getpid())
         with pytest.raises(PermissionError):

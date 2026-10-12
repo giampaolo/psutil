@@ -1302,7 +1302,8 @@ Process class
     The process parent PID. On Windows the return value is cached after the
     first call. On POSIX it is not cached because it may change if the process
     becomes a :term:`zombie <zombie process>`. See also :meth:`parent` and
-    :meth:`parents` methods.
+    :meth:`parents` methods. On Linux, if this instance represents a thread,
+    return the PID of the process to which the thread belongs.
 
   .. method:: parent()
 
