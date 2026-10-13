@@ -322,7 +322,15 @@ class TestProcess(PsutilTestCase):
                 # number instead of -1. It looks like a bug with PyPy.
                 if PYPY:
                     continue
-                assert p.rlimit(value) == resource.getrlimit(value)
+                expected = tuple(
+                    (
+                        psutil.RLIM_INFINITY
+                        if limit == resource.RLIM_INFINITY
+                        else limit
+                    )
+                    for limit in resource.getrlimit(value)
+                )
+                assert p.rlimit(value) == expected
             else:
                 ret = p.rlimit(value)
                 assert len(ret) == 2

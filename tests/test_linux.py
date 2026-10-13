@@ -2637,6 +2637,21 @@ class TestProcess(LinuxTestCase):
         assert soft == psutil.RLIM_INFINITY
         assert hard == psutil.RLIM_INFINITY
 
+    def test_rlimit_infinity_set_uses_resource_constant(self):
+        unsigned = 2**64 - 1
+        p = psutil.Process()
+        with mock.patch("psutil._pslinux.resource.RLIM_INFINITY", unsigned):
+            with mock.patch("psutil._pslinux.resource.prlimit") as prlimit:
+                p.rlimit(
+                    psutil.RLIMIT_FSIZE,
+                    (psutil.RLIM_INFINITY, psutil.RLIM_INFINITY),
+                )
+        prlimit.assert_called_once_with(
+            p.pid,
+            psutil.RLIMIT_FSIZE,
+            (unsigned, unsigned),
+        )
+
 
 class TestProcessAgainstStatus(LinuxTestCase):
     """/proc/pid/stat and /proc/pid/status have many values in common.
