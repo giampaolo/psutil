@@ -2252,6 +2252,12 @@ class Process:
                             f"tuple, got {limits!r}"
                         )
                         raise ValueError(msg)
+                    limits = tuple(
+                        resource.RLIM_INFINITY
+                        if limit == _psutil.RLIM_INFINITY
+                        else limit
+                        for limit in limits
+                    )
                     resource.prlimit(self.pid, resource_, limits)
             except OSError as err:
                 if err.errno == errno.ENOSYS:
