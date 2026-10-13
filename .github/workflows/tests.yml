@@ -24,31 +24,39 @@ concurrency:
   # failure.
   group: test-${{ github.ref }}
   cancel-in-progress: true
+permissions:
+  contents: read
+
 jobs:
 
   # Run tests on Linux, macOS, Windows
   tests:
     name: "${{ matrix.osname }} ${{ matrix.arch }} (py${{ matrix.python }})"
-    # Skip same-repo PR runs: the push event already covers them.
-    if: &skip_same_repo_pr github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    # Forks run manually; upstream skips duplicate same-repo PR runs.
+    if: &skip_same_repo_pr (github.repository == 'giampaolo/psutil' || github.event_name == 'workflow_dispatch') &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name !=
+      github.repository)
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, osname: linux, arch: x86_64, python: "3.14", memleaks: true }
-          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, python: "3.8" }
+          - { os: ubuntu-latest, osname: linux, arch: x86_64, python: "3.9" }
+          - { os: ubuntu-latest, osname: linux, arch: x86_64, python: "3.15", memleaks: true }
+          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, python: "3.11" }
           - { os: ubuntu-latest, osname: linux, arch: x86_64, python: "3.14t" }
+          - { os: ubuntu-latest, osname: linux, arch: x86_64, python: "3.15t" }
           - { os: macos-15, osname: macos, arch: arm64, python: "3.14", memleaks: true }
-          - { os: macos-15-intel, osname: macos, arch: x86_64, python: "3.13" } # py 3.9 install is too slow
-          - { os: windows-2025, osname: win, arch: AMD64, python: "3.10", memleaks: true }
+          - { os: macos-15-intel, osname: macos, arch: x86_64, python: "3.13" }
+          - { os: windows-2025, osname: win, arch: AMD64, python: "3.11", memleaks: true }
           - { os: windows-11-arm, osname: win, arch: ARM64, python: "3.14" }
     steps:
-      - uses: actions/checkout@v7
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Install Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python }}
 
@@ -68,14 +76,16 @@ jobs:
     if: *skip_same_repo_pr
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: 3.x
       # Cache dprint binary + plugins, which would otherwise be recompiled
       # on every run (~5s).
       - name: Cache dprint
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.dprint

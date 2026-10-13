@@ -39,15 +39,19 @@ concurrency:
   group: docs-deploy
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    if: github.repository == 'giampaolo/psutil' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # full history for sphinx-last-updated-by-git
-
-      - uses: actions/setup-python@v7
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: 3.x
 
@@ -76,15 +80,14 @@ jobs:
         run: make -C docs versions
 
       - name: Add deploy marker
-        run: echo "${{ github.sha }}" > docs/_build/html/build-sha.txt
-
-      - uses: actions/upload-pages-artifact@v5
+        run: echo "$GITHUB_SHA" > docs/_build/html/build-sha.txt
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: docs/_build/html
 
   deploy:
     needs: build
-    if: github.event_name != 'pull_request'
+    if: github.repository == 'giampaolo/psutil' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -94,15 +97,17 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
 
   test-online:
     needs: deploy
-    if: github.event_name != 'pull_request'
+    if: github.repository == 'giampaolo/psutil' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: 3.x
       - name: Install dependencies
@@ -116,8 +121,8 @@ jobs:
         run: |
           for i in $(seq 1 60); do
             live=$(curl -fsS "https://psutil.io/build-sha.txt?cb=$i" || true)
-            if [ "$live" = "${{ github.sha }}" ]; then
-              echo "live site is serving ${{ github.sha }}"
+            if [ "$live" = "$GITHUB_SHA" ]; then
+              echo "live site is serving $GITHUB_SHA"
               exit 0
             fi
             echo "waiting for CDN propagation ($i)..."

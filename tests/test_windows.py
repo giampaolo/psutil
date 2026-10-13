@@ -414,6 +414,33 @@ class TestDiskApis(WindowsTestCase):
 
 class TestOtherSystemAPIs(WindowsTestCase):
 
+    def test_noargs_methods_reject_arguments(self):
+        for name in (
+            "GetPerformanceInfo",
+            "boot_time",
+            "cpu_count_cores",
+            "cpu_count_logical",
+            "cpu_freq",
+            "cpu_stats",
+            "cpu_times",
+            "disk_io_counters",
+            "getloadavg",
+            "getpagesize",
+            "heap_info",
+            "heap_trim",
+            "net_if_addrs",
+            "net_if_stats",
+            "net_io_counters",
+            "per_cpu_times",
+            "pids",
+            "ppid_map",
+            "sensors_battery",
+            "users",
+            "winservice_enumerate",
+        ):
+            with pytest.raises(TypeError, match="takes no arguments"):
+                getattr(_psutil, name)(object())
+
     # @skipif(wmi is None, reason="wmi module is not installed")
     # def test__UPTIME(self):
     #     # _UPTIME constant is not public but it is used internally

@@ -6,6 +6,7 @@
 
 #include <Python.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #if defined(PSUTIL_WINDOWS)

@@ -4,11 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Install pip, or upgrade it if it's too old.
-
-Note: we build wheels on Python 3.8 (the floor), but don't run tests
-for it, nor installs deps, so this script is never called there.
-"""
+"""Install pip, or upgrade it if it's too old."""
 
 import re
 import ssl

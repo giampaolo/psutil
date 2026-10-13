@@ -70,11 +70,11 @@ from ._enums import NicDuplex
 from ._enums import ProcessStatus
 
 if _TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Collection
+    from collections.abc import Generator
+    from collections.abc import Iterator
     from typing import Any
-    from typing import Callable
-    from typing import Generator
-    from typing import Iterator
 
     from ._ntuples import pconn
     from ._ntuples import pcputimes

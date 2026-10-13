@@ -8,10 +8,12 @@
 
 import argparse
 import collections
-import fnmatch
 import os
 import pathlib
+import re
 import sys
+
+from packaging.utils import parse_wheel_filename
 
 ROOT_DIR = pathlib.Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT_DIR))
@@ -21,31 +23,23 @@ _common = load_module(ROOT_DIR / "psutil" / "_common.py")
 bytes2human = _common.bytes2human
 print_color = _common.print_color
 
-# Tags are spelled out because they change silently when a different
-# Python builds the wheel. Trailing manylinux ones follow the image.
-EXPECTED_WHEELS = [
-    # Linux
-    "*-cp38-abi3-manylinux2010_x86_64.*.whl",
-    "*-cp38-abi3-manylinux2014_aarch64.*.whl",
-    "*-cp38-abi3-manylinux2014_ppc64le.*.whl",
-    "*-cp38-abi3-manylinux2014_s390x.*.whl",
-    # Linux musl
-    "*-cp38-abi3-musllinux_1_2_x86_64.whl",
-    "*-cp38-abi3-musllinux_1_2_aarch64.whl",
-    # macOS
-    "*-cp38-abi3-macosx_10_15_x86_64.whl",
-    "*-cp38-abi3-macosx_11_0_arm64.whl",
-    # Windows
-    "*-cp38-abi3-win_amd64.whl",
-    "*-cp38-abi3-win_arm64.whl",
-    # Free-threading
-    "*-cp314-cp314t-manylinux2010_x86_64.*.whl",
-    "*-cp314-cp314t-manylinux2014_aarch64.*.whl",
-    "*-cp314-cp314t-macosx_10_15_x86_64.whl",
-    "*-cp314-cp314t-macosx_11_0_arm64.whl",
-    "*-cp314-cp314t-win_amd64.whl",
-    "*-cp314-cp314t-win_arm64.whl",
-]
+# Require every ABI/platform pair and a manylinux floor no higher than 2.28.
+EXPECTED_WHEELS = {
+    (*abi.split("-"), platform)
+    for abi in ("cp39-abi3", "cp314-cp314t", "cp315-cp315t")
+    for platform in (
+        "manylinux_x86_64",
+        "manylinux_aarch64",
+        "manylinux_ppc64le",
+        "manylinux_s390x",
+        "musllinux_1_2_x86_64",
+        "musllinux_1_2_aarch64",
+        "macosx_10_15_x86_64",
+        "macosx_11_0_arm64",
+        "win_amd64",
+        "win_arm64",
+    )
+}
 
 
 class Wheel:
@@ -129,16 +123,34 @@ def check_dist(wheels, tarballs):
     """Assert the full expected set of wheels + one sdist is present.
     Returns a list of error strings (empty means all good).
     """
-    names = [w.name for w in wheels]
-    errors = [
-        f"missing wheel: {pat}"
-        for pat in EXPECTED_WHEELS
-        if not any(fnmatch.fnmatch(n, pat) for n in names)
-    ]
+    found = set()
+    errors = []
+    for wheel in wheels:
+        tags = set()
+        for tag in parse_wheel_filename(wheel.name)[3]:
+            platform = tag.platform
+            match = re.fullmatch(
+                r"manylinux(?:_2_(\d+)|(1|2010|2014))_(.+)", platform
+            )
+            if match:
+                minor = (
+                    int(match[1])
+                    if match[1]
+                    else {"1": 5, "2010": 12, "2014": 17}[match[2]]
+                )
+                if minor <= 28 and (
+                    match[2] not in {"1", "2010"} or match[3] == "x86_64"
+                ):
+                    platform = f"manylinux_{match[3]}"
+            tags.add((tag.interpreter, tag.abi, platform))
+        matched = tags & EXPECTED_WHEELS
+        if len(matched) != 1:
+            errors.append(f"unexpected wheel: {wheel.name}")
+        else:
+            found.update(matched)
     errors += [
-        f"unexpected wheel: {n}"
-        for n in names
-        if not any(fnmatch.fnmatch(n, p) for p in EXPECTED_WHEELS)
+        f"missing wheel: {'-'.join(tag)}"
+        for tag in sorted(EXPECTED_WHEELS - found)
     ]
     if len(tarballs) != 1:
         errors.append(f"expected 1 sdist, found {len(tarballs)}")

@@ -56,7 +56,6 @@ from . import HAS_PROC_MEMORY_MAPS
 from . import HAS_PROC_OPEN_FILES_PATH
 from . import HAS_PROC_RLIMIT
 from . import HAS_PROC_THREADS
-from . import PYPY
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
 from . import PsutilTestCase
@@ -317,12 +316,12 @@ class TestProcess(PsutilTestCase):
             assert value >= 0
             if name in dir(resource):
                 assert value == getattr(resource, name)
-                # XXX - On PyPy RLIMIT_INFINITY returned by
-                # resource.getrlimit() is reported as a very big long
-                # number instead of -1. It looks like a bug with PyPy.
-                if PYPY:
-                    continue
-                assert p.rlimit(value) == resource.getrlimit(value)
+                # Python 3.15 and PyPy report infinity as unsigned.
+                expected = tuple(
+                    psutil.RLIM_INFINITY if x == resource.RLIM_INFINITY else x
+                    for x in resource.getrlimit(value)
+                )
+                assert p.rlimit(value) == expected
             else:
                 ret = p.rlimit(value)
                 assert len(ret) == 2
@@ -716,9 +715,7 @@ class TestProcess(PsutilTestCase):
 
     def test_name(self):
         p = self.spawn_psproc()
-        name = p.name().lower()
-        if name.endswith("t"):  # in the free-threaded build
-            name = name[:-1]
+        name = p.name().lower().removesuffix("t")
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 

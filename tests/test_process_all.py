@@ -9,6 +9,7 @@ test all psutil.Process() methods.
 """
 
 import collections
+import contextlib
 import enum
 import errno
 import os
@@ -125,6 +126,11 @@ class ProcInfo:
                 assert exc.ppid >= 0
                 assert exc.ppid == self.ppid
         elif isinstance(exc, psutil.NoSuchProcess):
+            if MACOS:
+                # Exiting tasks may disappear while sysctl still lists the PID.
+                with contextlib.suppress(psutil.NoSuchProcess):
+                    if self.proc.status() == psutil.STATUS_IDLE:
+                        return
             self.tcase.assert_proc_gone(self.proc)
         str(exc)
         repr(exc)
@@ -200,6 +206,34 @@ def proc_info(pid):
             exc.add_note(msg)
             raise
         raise RuntimeError(msg) from exc
+
+
+@pytest.mark.parametrize(
+    ("macos", "status", "allowed"),
+    [
+        (True, "idle", True),
+        (True, "running", False),
+        (False, "idle", False),
+        (True, None, False),
+    ],
+)
+def test_exiting_process_exception(monkeypatch, macos, status, allowed):
+    from unittest.mock import Mock
+
+    monkeypatch.setitem(ProcInfo.check_exception.__globals__, "MACOS", macos)
+    info = ProcInfo(123)
+    info.proc = Mock()
+    info.proc.status.return_value = status
+    if status is None:
+        info.proc.status.side_effect = psutil.NoSuchProcess(info.pid)
+    info.tcase.assert_proc_gone = Mock(side_effect=AssertionError)
+    exc = psutil.NoSuchProcess(info.pid)
+    if allowed:
+        info.check_exception(exc)
+        info.tcase.assert_proc_gone.assert_not_called()
+    else:
+        with pytest.raises(AssertionError):
+            info.check_exception(exc)
 
 
 class TestFetchAllProcesses(PsutilTestCase):

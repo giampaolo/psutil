@@ -558,9 +558,7 @@ def sh(cmd, timeout=GLOBAL_TIMEOUT, **kwds):
         raise RuntimeError(stdout + stderr)
     if stderr:
         warn(stderr)
-    if stdout.endswith('\n'):
-        stdout = stdout[:-1]
-    return stdout
+    return stdout.removesuffix('\n')
 
 
 def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
@@ -960,7 +958,7 @@ def create_py_exe(path):
     return path
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def py_exe_copy_runs():
     """Whether a copy of PYTHON_EXE is still runnable. It isn't for
     macOS framework interpreters: they load their libs relative to
@@ -1851,7 +1849,7 @@ class TypeHintsChecker:
         UNION_TYPES = (typing.Union,)
 
     @staticmethod
-    @functools.lru_cache(maxsize=None)
+    @functools.cache
     def _get_ntuple_hints(nt):
         cls = type(nt)
         try:
@@ -1922,7 +1920,7 @@ class TypeHintsChecker:
             assert isinstance(value, types_), (field, value, types_)
 
     @staticmethod
-    @functools.lru_cache(maxsize=None)
+    @functools.cache
     def _get_return_hint(fun):
         """Get the 'return' type hint for a psutil API function or
         method. Resolves annotation strings using a combined namespace

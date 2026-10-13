@@ -111,7 +111,7 @@ install-pydeps-dev:  ## Install python deps meant for local development.
 _PYTEST_EXTRA = `{ if [ "$$OS" = "Windows_NT" ]; then printf '%s ' '-o cache_dir=/tmp/pytest-psutil-cache'; fi; if [ -n "$$CI" ]; then printf '%s ' '-p no:instafail'; fi; }`
 
 RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --durations=5 $(_PYTEST_EXTRA)
-RUN_TEST_MEMLEAKS = PYTHONMALLOC=malloc $(RUN_TEST) -k test_memleaks.py
+RUN_TEST_MEMLEAKS = PYTHONMALLOC=malloc $(RUN_TEST) tests/test_memleaks.py
 
 # --- main
 

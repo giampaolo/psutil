@@ -386,7 +386,7 @@ class TestModuleFunctions(MemoryLeakTestCase):
         with create_sockets():
             psutil.net_connections(kind='all')
             self.execute(
-                lambda: psutil.net_connections(kind='all'), times=TIMES / 2
+                lambda: psutil.net_connections(kind='all'), times=TIMES // 2
             )
 
     def test_net_if_addrs(self):
@@ -396,6 +396,8 @@ class TestModuleFunctions(MemoryLeakTestCase):
         self.execute(psutil.net_if_addrs, tolerance=tolerance)
 
     def test_net_if_stats(self):
+        if WINDOWS:
+            psutil.net_if_stats()  # Prime IP Helper initialization.
         self.execute(psutil.net_if_stats)
 
     # --- sensors
@@ -421,6 +423,8 @@ class TestModuleFunctions(MemoryLeakTestCase):
         self.execute(psutil.boot_time)
 
     def test_users(self):
+        if WINDOWS:
+            psutil.users()  # Prime session-query initialization.
         self.execute(psutil.users)
 
     def test_set_debug(self):

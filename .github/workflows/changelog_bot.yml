@@ -37,7 +37,7 @@ jobs:
             exit 1
           fi
           PERMISSION=$(gh api \
-            "repos/${{ github.repository }}/collaborators/$COMMENTER/permission" \
+            "repos/$GITHUB_REPOSITORY/collaborators/$COMMENTER/permission" \
             --jq '.permission')
           echo "permission=$PERMISSION"
           if [[ "$PERMISSION" != "write" && "$PERMISSION" != "admin" ]]; then
@@ -52,22 +52,21 @@ jobs:
           PR_NUMBER: ${{ github.event.issue.number }}
         run: |
           PR_JSON=$(gh pr view "$PR_NUMBER" \
-            --repo "${{ github.repository }}" \
+            --repo "$GITHUB_REPOSITORY" \
             --json headRefName,headRepository,headRepositoryOwner,headRefOid)
           HEAD_BRANCH=$(echo "$PR_JSON" | jq -r '.headRefName')
           HEAD_OWNER=$(echo "$PR_JSON" | jq -r '.headRepositoryOwner.login')
           HEAD_REPO=$(echo "$PR_JSON" | jq -r '.headRepository.name')
           HEAD_SHA=$(echo "$PR_JSON" | jq -r '.headRefOid')
-          echo "branch=$HEAD_BRANCH" >> "$GITHUB_OUTPUT"
-          echo "head_repo=$HEAD_OWNER/$HEAD_REPO" >> "$GITHUB_OUTPUT"
-          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          printf 'branch=%s\nhead_repo=%s\nhead_sha=%s\n' \
+            "$HEAD_BRANCH" "$HEAD_OWNER/$HEAD_REPO" "$HEAD_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Checkout PR branch
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ steps.pr-info.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
-
+          persist-credentials: false
       - name: Install dependencies
         run: pip install anthropic rstwrap
 
@@ -75,6 +74,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           PR_NUMBER: ${{ github.event.issue.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Run the trusted script from master, not the PR's copy, so a
           # malicious PR can't get arbitrary code executed on the runner.
@@ -82,8 +82,8 @@ jobs:
           git show origin/master:.github/workflows/changelog_bot.py > /tmp/changelog_bot.py
           python /tmp/changelog_bot.py \
             --pr-number "$PR_NUMBER" \
-            --repo "${{ github.repository }}" \
-            --token "${{ secrets.GITHUB_TOKEN }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --token "$GH_TOKEN" \
             --comment-file "$RUNNER_TEMP/changelog_comment.md" \
             --error-file "$RUNNER_TEMP/changelog_error.md"
 
@@ -120,7 +120,7 @@ jobs:
           PR_NUMBER: ${{ github.event.issue.number }}
         run: |
           gh pr comment "$PR_NUMBER" \
-            --repo "${{ github.repository }}" \
+            --repo "$GITHUB_REPOSITORY" \
             --body-file "$RUNNER_TEMP/changelog_comment.md"
 
       - name: Report failure on the PR
@@ -136,10 +136,10 @@ jobs:
           ERROR_FILE="$RUNNER_TEMP/changelog_error.md"
           if [ -s "$ERROR_FILE" ]; then
             gh pr comment "$PR_NUMBER" \
-              --repo "${{ github.repository }}" \
+              --repo "$GITHUB_REPOSITORY" \
               --body-file "$ERROR_FILE"
           else
             gh pr comment "$PR_NUMBER" \
-              --repo "${{ github.repository }}" \
+              --repo "$GITHUB_REPOSITORY" \
               --body "⚠️ The /changelog bot failed. See the run log: $RUN_URL"
           fi

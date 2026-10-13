@@ -77,7 +77,7 @@ macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 # The oldest interpreter we support, and the one the wheel claims to
 # run on. Py_LIMITED_API lets us create a single wheel which works with
 # multiple python versions, including unreleased ones.
-MIN_PY_VERSION = (3, 8)
+MIN_PY_VERSION = (3, 9)
 
 abi3_platform = MACOS or LINUX or WINDOWS  # the ones we ship wheels for
 if CPYTHON and abi3_platform and not Py_GIL_DISABLED:

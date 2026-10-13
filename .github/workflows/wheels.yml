@@ -1,5 +1,6 @@
 # Generates wheels for all platforms, architectures and free-threaded builds,
-# then checks the resulting distribution. Tests are run by tests.yml.
+# tests their native calls, then checks the resulting distribution.
+# The broader source suite is run by tests.yml.
 #
 # Useful URLs:
 # * https://github.com/pypa/cibuildwheel
@@ -25,42 +26,58 @@ concurrency:
   # failure.
   group: wheels-${{ github.ref }}
   cancel-in-progress: true
+permissions:
+  contents: read
+
 jobs:
   wheels:
-    name: "${{ matrix.osname }} ${{ matrix.archname || matrix.arch }}${{ matrix.tag && format(' ({0})', matrix.tag) || '' }}"
-    # Skip same-repo PR runs: the push event already covers them.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    name: "${{ matrix.osname }} ${{ matrix.arch }}${{ matrix.tag && format(' ({0})', matrix.tag) || '' }}"
+    # Forks run manually; upstream skips duplicate same-repo PR runs.
+    if: (github.repository == 'giampaolo/psutil' || github.event_name == 'workflow_dispatch') &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository)
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
-      # We produce an abi3 wheel which works from Python 3.8 onwards. We
-      # generate it on Python 3.14, which is faster.
+      # Reuse each GIL abi3 wheel across all supported Python versions.
+      # Free-threaded Python needs its own version-specific wheels.
       matrix:
         include:
           # manylinux and musllinux share a runner, so give them a lane each
           # instead of building one set after the other.
-          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp314{,t}-manylinux*", tag: manylinux }
-          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp314-musllinux*", tag: musllinux }
-          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp314{,t}-manylinux*", tag: manylinux }
-          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp314-musllinux*", tag: musllinux }
-          - { os: ubuntu-latest, osname: linux, arch: ppc64le, build: "cp314-manylinux*", tag: abi3, qemu: ppc64le }
-          - { os: ubuntu-latest, osname: linux, arch: s390x, build: "cp314-manylinux*", tag: abi3, qemu: s390x }
-          # Cross-builds x86_64 under Rosetta, so one runner covers both arches
-          # (faster).
-          - { os: macos-15, osname: macos, arch: "arm64 x86_64", archname: both, build: "cp314-*", tag: abi3 }
-          - { os: macos-15, osname: macos, arch: "arm64 x86_64", archname: both, build: "cp314t-*", tag: cp314t }
-          # Same idea for Windows.
-          - { os: windows-2025, osname: win, arch: AMD64, build: "cp314-*", tag: abi3 }
-          - { os: windows-2025, osname: win, arch: AMD64, build: "cp314t-*", tag: cp314t }
-          - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp314-*", tag: abi3 }
-          - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp314t-*", tag: cp314t }
+          - {
+              os: ubuntu-latest,
+              osname: linux,
+              arch: x86_64,
+              build: &manylinux "cp3{9,10,11,12,13,14,15}-manylinux* cp31{4,5}t-manylinux*",
+              tag: manylinux,
+            }
+          - {
+              os: ubuntu-latest,
+              osname: linux,
+              arch: x86_64,
+              build: &musllinux "cp3{9,10,11,12,13,14,15}-musllinux* cp31{4,5}t-musllinux*",
+              tag: musllinux,
+            }
+          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: *manylinux, tag: manylinux }
+          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: *musllinux, tag: musllinux }
+          - { os: ubuntu-latest, osname: linux, arch: ppc64le, build: *manylinux, tag: manylinux, qemu: ppc64le }
+          - { os: ubuntu-latest, osname: linux, arch: s390x, build: *manylinux, tag: manylinux, qemu: s390x }
+          - { os: macos-15, osname: macos, arch: arm64, build: &abi3 "cp3{9,10,11,12,13,14,15}-*", tag: abi3 }
+          - { os: macos-15, osname: macos, arch: arm64, build: &free_threaded "cp31{4,5}t-*", tag: free-threaded }
+          - { os: macos-15-intel, osname: macos, arch: x86_64, build: *abi3, tag: abi3 }
+          - { os: macos-15-intel, osname: macos, arch: x86_64, build: *free_threaded, tag: free-threaded }
+          - { os: windows-2025, osname: win, arch: AMD64, build: *abi3, tag: abi3 }
+          - { os: windows-2025, osname: win, arch: AMD64, build: *free_threaded, tag: free-threaded }
+          - { os: windows-11-arm, osname: win, arch: ARM64, build: *abi3, tag: abi3 }
+          - { os: windows-11-arm, osname: win, arch: ARM64, build: *free_threaded, tag: free-threaded }
     steps:
-      - uses: actions/checkout@v7
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Set up QEMU
         if: matrix.qemu
-        uses: docker/setup-qemu-action@v4
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
         with:
           platforms: ${{ matrix.qemu }}
 
@@ -71,7 +88,7 @@ jobs:
       # #2931).
       - name: Cache cibuildwheel interpreters
         if: runner.os == 'Windows'
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/cibw-cache
           # Refresh the cache every time wheels.yml or pyproject.toml change.
@@ -81,21 +98,22 @@ jobs:
           restore-keys: cibw-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}-
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.0.1
-        with:
-          version: "0.12.3"
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
 
       # Not pypa/cibuildwheel: that action pip-installs itself from an sdist on
       # every lane, which takes ~18 secs instead of ~5.
       - name: Build wheels
         shell: bash
-        run: uvx --from 'cibuildwheel==4.1.1' cibuildwheel --output-dir wheelhouse
+        run: uv run --only-group wheels cibuildwheel --output-dir wheelhouse
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "${{ matrix.build }}"
           CIBW_CACHE_PATH: ${{ runner.temp }}/cibw-cache
           CIBW_BUILD_FRONTEND: "build[uv]"
-          CIBW_TEST_COMMAND: 'python -W error::RuntimeWarning -c "import psutil; print(psutil.__version__)"'
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: >-
+            python -m pytest -q -o addopts= --noconftest --import-mode=importlib
+            {project}/tests/test_free_threaded.py -k fresh_import_and_concurrent_process_queries
           # Disabled, "make ci-check-dist" does it already.
           CIBW_AUDIT_COMMAND: ""
           # Pin it, else it follows whichever Python builds the wheel.
@@ -105,9 +123,9 @@ jobs:
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: wheels-${{ matrix.os }}-${{ matrix.archname || matrix.arch }}-${{ matrix.tag || 'all' }}
+          name: wheels-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.tag || 'all' }}
           path: wheelhouse
           compression-level: 0
 
@@ -116,18 +134,20 @@ jobs:
     needs: [wheels]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: 3.x
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: wheels-*
           path: wheelhouse
           merge-multiple: true
       - run: |
           make ci-check-dist
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wheels
           path: dist/*.whl

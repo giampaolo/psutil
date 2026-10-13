@@ -294,7 +294,7 @@ class TestCheckFunTypeHints(TypeHintTestCase):
             check_fun_type_hints(foo, "str")
 
     def test_generator(self):
-        from typing import Generator
+        from collections.abc import Generator  # noqa: TC003
 
         def foo() -> Generator[int, None, None]:
             yield 1

@@ -1,11 +1,26 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
+  - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: "monthly"
-    # Bundle all action bumps into one PR instead of one each.
+      interval: weekly
+    cooldown:
+      default-days: 7
     groups:
-      github-actions:
-        patterns:
-          - "*"
+      minor-and-patch:
+        update-types: [minor, patch]
+      security:
+        applies-to: security-updates
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    cooldown:
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 7
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+      security:
+        applies-to: security-updates
