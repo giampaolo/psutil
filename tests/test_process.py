@@ -323,9 +323,11 @@ class TestProcess(PsutilTestCase):
                 if PYPY:
                     continue
                 expected = tuple(
-                    psutil.RLIM_INFINITY
-                    if limit == resource.RLIM_INFINITY
-                    else limit
+                    (
+                        psutil.RLIM_INFINITY
+                        if limit == resource.RLIM_INFINITY
+                        else limit
+                    )
                     for limit in resource.getrlimit(value)
                 )
                 assert p.rlimit(value) == expected

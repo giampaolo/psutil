@@ -45,6 +45,12 @@ EXPECTED_WHEELS = [
     "*-cp314-cp314t-macosx_11_0_arm64.whl",
     "*-cp314-cp314t-win_amd64.whl",
     "*-cp314-cp314t-win_arm64.whl",
+    "*-cp315-cp315t-manylinux2010_x86_64.*.whl",
+    "*-cp315-cp315t-manylinux2014_aarch64.*.whl",
+    "*-cp315-cp315t-macosx_10_15_x86_64.whl",
+    "*-cp315-cp315t-macosx_11_0_arm64.whl",
+    "*-cp315-cp315t-win_amd64.whl",
+    "*-cp315-cp315t-win_arm64.whl",
 ]
 
 

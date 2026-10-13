@@ -2253,9 +2253,11 @@ class Process:
                         )
                         raise ValueError(msg)
                     limits = tuple(
-                        resource.RLIM_INFINITY
-                        if limit == _psutil.RLIM_INFINITY
-                        else limit
+                        (
+                            resource.RLIM_INFINITY
+                            if limit == _psutil.RLIM_INFINITY
+                            else limit
+                        )
                         for limit in limits
                     )
                     resource.prlimit(self.pid, resource_, limits)
