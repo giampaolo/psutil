@@ -130,6 +130,14 @@ html {
     .main {
         padding: 0 12px;
     }
+
+    .genindextable,
+    .genindextable tbody,
+    .genindextable tr,
+    .genindextable td {
+        display: block;
+        width: 100% !important;
+    }
 }
 
 /* ---- Keyboard shortcut flyout (triggered by "?") ----------------- */
