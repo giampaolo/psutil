@@ -145,7 +145,7 @@ CPU
   Similar to :func:`cpu_percent`, but provides utilization percentages for each
   specific CPU time. *interval* and *percpu* arguments have the same meaning as
   in :func:`cpu_percent`. On Linux, :field:`guest` and :field:`guest_nice`
-  percentages are not accounted in :field:`user` and :field:`user_nice`.
+  percentages are not accounted in :field:`user` and :field:`nice`.
 
   .. seealso::
     - :ref:`faq_cpu_percent`
