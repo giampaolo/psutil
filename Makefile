@@ -34,17 +34,18 @@ _ := $(shell test -d .git && mkdir -p .git/hooks/ && ln -sf ../../scripts/intern
 # ===================================================================
 
 clean:  ## Remove all build files.
-	@rm -rfv `find . \
+	@find . -name .git -prune -o \( \
 		-type d -name __pycache__ \
-		-o -type f -name \*.bak \
-		-o -type f -name \*.orig \
-		-o -type f -name \*.pyc \
-		-o -type f -name \*.pyd \
-		-o -type f -name \*.pyo \
-		-o -type f -name \*.rej \
-		-o -type f -name \*.so \
-		-o -type f -name \*~ \
-		-o -name \*@psutil-\*`
+		-o -type f -name '*.bak' \
+		-o -type f -name '*.orig' \
+		-o -type f -name '*.pyc' \
+		-o -type f -name '*.pyd' \
+		-o -type f -name '*.pyo' \
+		-o -type f -name '*.rej' \
+		-o -type f -name '*.so' \
+		-o -type f -name '*~' \
+		-o -name '*@psutil-*' \
+	\) -prune -exec rm -rfv {} +
 	@rm -rfv \
 		*.core \
 		*.egg-info \
