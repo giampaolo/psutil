@@ -2473,7 +2473,7 @@ def net_io_counters(
      - errout:       total number of errors while sending
      - dropin:       total number of incoming packets which were dropped
      - dropout:      total number of outgoing packets which were dropped
-                     (always 0 on macOS and BSD)
+                     (always 0 on macOS and NetBSD)
 
     If *pernic* is True return the same information for every
     network interface as a dictionary with interface names as the
