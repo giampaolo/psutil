@@ -145,7 +145,7 @@ CPU
   Similar to :func:`cpu_percent`, but provides utilization percentages for each
   specific CPU time. *interval* and *percpu* arguments have the same meaning as
   in :func:`cpu_percent`. On Linux, :field:`guest` and :field:`guest_nice`
-  percentages are not accounted in :field:`user` and :field:`user_nice`.
+  percentages are not accounted in :field:`user` and :field:`nice`.
 
   .. seealso::
     - :ref:`faq_cpu_percent`
@@ -682,10 +682,10 @@ Network
 
      >>> import psutil
      >>> psutil.net_connections()
-     [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=1254),
-      pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>, pid=2987),
-      pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=None),
-      pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>, pid=None)
+     [sconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=1254),
+      sconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>, pid=2987),
+      sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=None),
+      sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>, pid=None)
       ...]
 
   .. warning::

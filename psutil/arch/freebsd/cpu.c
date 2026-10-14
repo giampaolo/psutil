@@ -89,11 +89,11 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
-    unsigned int v_soft;
-    unsigned int v_intr;
-    unsigned int v_syscall;
-    unsigned int v_trap;
-    unsigned int v_swtch;
+    uint64_t v_soft;
+    uint64_t v_intr;
+    uint64_t v_syscall;
+    uint64_t v_trap;
+    uint64_t v_swtch;
     size_t size = sizeof(v_soft);
 
     if (psutil_sysctlbyname("vm.stats.sys.v_soft", &v_soft, size) != 0)
@@ -108,12 +108,12 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         return NULL;
 
     return Py_BuildValue(
-        "IIIII",
-        v_swtch,  // ctx switches
-        v_intr,  // interrupts
-        v_soft,  // software interrupts
-        v_syscall,  // syscalls
-        v_trap  // traps
+        "KKKKK",
+        (unsigned long long)v_swtch,  // ctx switches
+        (unsigned long long)v_intr,  // interrupts
+        (unsigned long long)v_soft,  // software interrupts
+        (unsigned long long)v_syscall,  // syscalls
+        (unsigned long long)v_trap  // traps
     );
 }
 
