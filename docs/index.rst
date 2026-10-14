@@ -167,8 +167,8 @@
 
             >>> import psutil
             >>> psutil.net_io_counters(pernic=True)
-            {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, ...),
-             'lo':   netio(bytes_sent=2838627,   bytes_recv=2838627,   ...)}
+            {'eth0': snetio(bytes_sent=485291293, bytes_recv=6004858642, ...),
+             'lo':   snetio(bytes_sent=2838627,   bytes_recv=2838627,   ...)}
             >>> psutil.net_connections(kind='tcp')
             [sconn(family=2, type=1, laddr=addr('10.0.0.1', 48776), raddr=addr('93.186.135.91', 80), status='ESTABLISHED', pid=1254), ...]
             >>> psutil.net_if_addrs()['wlan0']
