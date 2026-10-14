@@ -133,7 +133,7 @@ Network
     >>> import psutil
     >>>
     >>> psutil.net_io_counters(pernic=True)
-    {'eth0': netio(bytes_sent=485291293,
+    {'eth0': snetio(bytes_sent=485291293,
                    bytes_recv=6004858642,
                    packets_sent=3251564,
                    packets_recv=4787798,
@@ -141,7 +141,7 @@ Network
                    errout=0,
                    dropin=0,
                    dropout=0),
-     'lo': netio(bytes_sent=2838627,
+     'lo': snetio(bytes_sent=2838627,
                  bytes_recv=2838627,
                  packets_sent=30567,
                  packets_recv=30567,
