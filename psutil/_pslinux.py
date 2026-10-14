@@ -453,7 +453,7 @@ def cpu_times():
             return lst[idx]
         except IndexError:
             debug(f"can't get {field_name} CPU time; set it to 0")
-            return 0
+            return 0.0
 
     procfs_path = get_procfs_path()
     with open_binary(f"{procfs_path}/stat") as f:
