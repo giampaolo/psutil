@@ -199,6 +199,10 @@ ignore = [
     "T203",
 ]
 
+[tool.ruff.lint.flake8-import-conventions.extend-aliases]
+# Keep the project's established datetime import convention.
+datetime = "datetime"
+
 [tool.ruff.lint.isort]
 # https://beta.ruff.rs/docs/settings/#isort
 force-single-line = true  # one import per line

@@ -8,6 +8,7 @@
 
 import collections
 import contextlib
+import errno
 import io
 import json
 import os
@@ -525,6 +526,35 @@ class TestCommonModule(PsutilTestCase):
             bcat(testfn + '-invalid')
         assert cat(testfn + '-invalid', fallback="bar") == "bar"
         assert bcat(testfn + '-invalid', fallback="bar") == "bar"
+
+    @skipif(not POSIX, reason="requires non-blocking POSIX pipes")
+    def test_bcat_nonblocking(self):
+        read_fd, write_fd = os.pipe()
+        with contextlib.ExitStack() as stack:
+            stack.callback(os.close, read_fd)
+            writer = stack.enter_context(
+                os.fdopen(write_fd, 'wb', buffering=0)
+            )
+            os.set_blocking(read_fd, False)
+            stack.enter_context(
+                mock.patch.object(
+                    psutil._common,
+                    'open_binary',
+                    side_effect=lambda _: os.fdopen(os.dup(read_fd), 'rb'),
+                )
+            )
+            with pytest.raises(BlockingIOError) as exc:
+                bcat('sensor')
+            assert exc.value.errno == errno.EAGAIN
+            assert exc.value.filename == 'sensor'
+            assert bcat('sensor', fallback=None) is None
+            fallback = object()
+            assert bcat('sensor', fallback=fallback) is fallback
+
+            writer.write(b'healthy')
+            assert bcat('sensor', fallback=fallback) == b'healthy'
+            writer.close()
+            assert bcat('sensor', fallback=fallback) == b''
 
     def test_broadcast_addr(self):
         def addr(address, netmask):

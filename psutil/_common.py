@@ -9,6 +9,7 @@ psutil or third-party modules.
 """
 
 import collections
+import errno
 import functools
 import os
 import socket
@@ -601,15 +602,19 @@ def cat(fname, fallback=_DEFAULT, _open=open_text):
     returned in case of error, either if the file does not exist or
     it can't be read().
     """
-    if fallback is _DEFAULT:
+    try:
         with _open(fname) as f:
-            return f.read()
-    else:
-        try:
-            with _open(fname) as f:
-                return f.read()
-        except OSError:
-            return fallback
+            data = f.read()
+            if data is None:
+                # Non-blocking binary streams return None on EAGAIN.
+                raise BlockingIOError(
+                    errno.EAGAIN, os.strerror(errno.EAGAIN), fname
+                )
+            return data
+    except OSError:
+        if fallback is _DEFAULT:
+            raise
+        return fallback
 
 
 def bcat(fname, fallback=_DEFAULT):

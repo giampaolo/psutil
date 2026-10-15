@@ -11,6 +11,7 @@ import datetime
 import os
 import platform
 import re
+import shutil
 import signal
 import socket
 import subprocess
@@ -94,7 +95,9 @@ def powershell(cmd):
         "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize"
     )
     """
-    exe = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+    exe = shutil.which("pwsh") or (
+        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+    )
     cmdline = [
         exe,
         "-ExecutionPolicy",
