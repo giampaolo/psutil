@@ -2609,7 +2609,7 @@ def net_if_stats() -> dict[str, snicstats]:
      - isup: whether the interface is up (bool)
      - duplex: can be either `NIC_DUPLEX_FULL`, `NIC_DUPLEX_HALF` or
                `NIC_DUPLEX_UNKNOWN`
-     - speed: the NIC speed expressed in mega bits (MB); if it can't
+     - speed: the NIC speed expressed in megabits (Mbps); if it can't
               be determined (e.g. 'localhost') it will be set to 0.
      - mtu: the maximum transmission unit expressed in bytes.
      - flags: a string of comma-separated flags on the interface.
