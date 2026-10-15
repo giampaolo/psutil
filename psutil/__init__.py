@@ -1696,16 +1696,15 @@ class Popen(Process):
 
       >>> import psutil
       >>> from subprocess import PIPE
-      >>> p = psutil.Popen(["python", "-c", "print 'hi'"], stdout=PIPE)
+      >>> p = psutil.Popen(["python3", "-c", "print('hi')"], stdout=PIPE)
       >>> p.name()
       'python3'
       >>> p.uids()
-      user(real=1000, effective=1000, saved=1000)
+      puids(real=1000, effective=1000, saved=1000)
       >>> p.username()
       'giampaolo'
       >>> p.communicate()
-      ('hi', None)
-      >>> p.terminate()
+      ('hi\n', None)
       >>> p.wait(timeout=2)
       0
       >>>
