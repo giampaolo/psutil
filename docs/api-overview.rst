@@ -19,9 +19,9 @@ CPU
     >>>
     >>> psutil.cpu_times()
     scputimes(user=3961.46,
-              nice=169.729,
               system=2150.659,
               idle=16900.540,
+              nice=169.729,
               iowait=629.59,
               irq=0.0,
               softirq=19.42,
@@ -46,9 +46,9 @@ CPU
     >>> for x in range(3):
     ...     psutil.cpu_times_percent(interval=1, percpu=False)
     ...
-    scputimes(user=1.5, nice=0.0, system=0.5, idle=96.5, iowait=1.5, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
-    scputimes(user=1.0, nice=0.0, system=0.0, idle=99.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
-    scputimes(user=2.0, nice=0.0, system=0.0, idle=98.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+    scputimes(user=1.5, system=0.5, idle=96.5, nice=0.0, iowait=1.5, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+    scputimes(user=1.0, system=0.0, idle=99.0, nice=0.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+    scputimes(user=2.0, system=0.0, idle=98.0, nice=0.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
     >>>
     >>> psutil.cpu_count()
     4
