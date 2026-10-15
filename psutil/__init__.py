@@ -2715,7 +2715,7 @@ def users() -> list[suser]:
     """Return users currently connected on the system as a list of
     named tuples including the following fields:
 
-     - user: the name of the user
+     - name: the name of the user
      - terminal: the tty or pseudo-tty associated with the user, if any.
      - host: the host name associated with the entry, if any.
      - started: the creation time as a floating point number expressed in
