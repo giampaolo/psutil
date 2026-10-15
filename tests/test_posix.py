@@ -153,6 +153,15 @@ def df(device):
     return (sys_total, sys_used, sys_free, sys_percent)
 
 
+def who_u():
+    cmd = "who -u"
+    if LINUX:
+        # psutil reads utmpx USER_PROCESS records directly. On Fedora,
+        # plain "who" can use systemd-logind and report extra records (#2653).
+        cmd += " /var/run/utmp"
+    return sh(cmd)
+
+
 @skipif(not POSIX, reason="POSIX only")
 class PosixTestCase(PsutilTestCase):
     pass
@@ -465,7 +474,7 @@ class TestSystemAPIs(PosixTestCase):
     @skipif(NO_UTMP, reason="no /var/run/utmp file")
     @retry_on_failure
     def test_users(self):
-        out = sh("who -u")
+        out = who_u()
         if not out.strip():
             return pytest.skip("no users on this system")
 
@@ -494,9 +503,10 @@ class TestSystemAPIs(PosixTestCase):
                 assert user.pid > 0
 
     @skipif(is_busybox("who"), reason="busybox who has no -u option")
+    @skipif(NO_UTMP, reason="no /var/run/utmp file")
     @retry_on_failure
     def test_users_started(self):
-        out = sh("who -u")
+        out = who_u()
         if not out.strip():
             return pytest.skip("no users on this system")
         tstamp = None
