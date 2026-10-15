@@ -502,7 +502,7 @@ Disks
 
   Return disk usage statistics for the partition containing *path*. Values are
   expressed in bytes and include :field:`total`, :field:`used` and
-  :field:`free` space, plus the :field:`percentage` usage. On UNIX, *path* must
+  :field:`free` space, plus the :field:`percent` usage. On UNIX, *path* must
   point to a path within a **mounted** filesystem partition. This function was
   later incorporated in Python 3.3 as :func:`shutil.disk_usage` (see
   :bpo:`12442`).
@@ -725,7 +725,8 @@ Network
     unconfigured NIC), or :data:`AF_LINK` (a MAC address).
   - :field:`address`: the primary NIC address.
   - :field:`netmask`: the netmask address.
-  - :field:`broadcast`: the broadcast address; always ``None`` on Windows.
+  - :field:`broadcast`: the broadcast address; on Windows it is calculated from
+    the netmask.
   - :field:`ptp`: a "point to point" address (typically a VPN); always ``None``
     on Windows.
 
