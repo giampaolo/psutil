@@ -2622,7 +2622,7 @@ def net_if_stats() -> dict[str, snicstats]:
 # =====================================================================
 
 
-# Linux, macOS
+# Linux, FreeBSD
 if hasattr(_psplatform, "sensors_temperatures"):
 
     def sensors_temperatures(
