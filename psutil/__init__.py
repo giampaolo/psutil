@@ -2548,7 +2548,8 @@ def net_if_addrs() -> dict[str, list[snicaddr]]:
       unconfigured NIC).
     - address: the primary NIC address
     - netmask: the netmask address
-    - broadcast: the broadcast address; always None on Windows
+    - broadcast: the broadcast address; on Windows it is calculated from
+      the netmask
     - ptp: a "point to point" address (typically a VPN); always None on
       Windows
     """
