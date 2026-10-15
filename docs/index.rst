@@ -118,7 +118,7 @@
 
             >>> import psutil
             >>> psutil.cpu_times()
-            scputimes(user=3961.46, nice=169.72, system=2150.65, idle=16900.54, iowait=629.59, ...)
+            scputimes(user=3961.46, system=2150.65, idle=16900.54, nice=169.72, iowait=629.59, ...)
             >>> psutil.cpu_percent(interval=1)
             4.0
             >>> psutil.cpu_count(logical=False)
