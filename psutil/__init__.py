@@ -1366,8 +1366,10 @@ class Process:
     # DEPRECATED
     def memory_full_info(self) -> pfullmem:
         """Return the same information as `memory_info()` plus
-        `memory_footprint()`'s `uss`, `pss` and `swap` fields in a
-        single named tuple.
+        `memory_footprint()`'s `uss` field, and on Linux also `pss`
+        and `swap`, in a single named tuple. On *BSD, SunOS and AIX
+        no footprint field is added, so the result is just
+        `memory_info()`'s.
 
         DEPRECATED in 8.0.0. Use `memory_footprint()` instead.
         """
