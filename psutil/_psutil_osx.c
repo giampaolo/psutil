@@ -39,7 +39,6 @@ static PyMethodDef mod_methods[] = {
     {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS},
     {"cpu_freq", psutil_cpu_freq, METH_VARARGS},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS},
-    {"cpu_times", psutil_cpu_times, METH_VARARGS},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
     {"disk_usage_used", psutil_disk_usage_used, METH_VARARGS},
