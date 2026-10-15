@@ -725,8 +725,8 @@ Network
     unconfigured NIC), or :data:`AF_LINK` (a MAC address).
   - :field:`address`: the primary NIC address.
   - :field:`netmask`: the netmask address.
-  - :field:`broadcast`: the broadcast address; on Windows it is calculated
-    from the netmask.
+  - :field:`broadcast`: the broadcast address; on Windows it is calculated from
+    the netmask.
   - :field:`ptp`: a "point to point" address (typically a VPN); always ``None``
     on Windows.
 
