@@ -1367,7 +1367,7 @@ class Process:
     def memory_full_info(self) -> pfullmem:
         """Return the same information as `memory_info()` plus
         `memory_footprint()`'s `uss` field, and on Linux also `pss`
-        and `swap`, in a single named tuple. On *BSD, SunOS and AIX
+        and `swap`, in a single named tuple. On BSD, SunOS and AIX
         no footprint field is added, so the result is just
         `memory_info()`'s.
 
