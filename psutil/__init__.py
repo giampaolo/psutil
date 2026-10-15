@@ -2200,8 +2200,8 @@ def cpu_times_percent(
     For instance, on Linux we'll get:
 
       >>> cpu_times_percent()
-      cpupercent(user=4.8, nice=0.0, system=4.8, idle=90.5, iowait=0.0,
-                 irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+      scputimes(user=4.8, system=4.8, idle=90.5, nice=0.0, iowait=0.0,
+                irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
       >>>
 
     *interval* and *percpu* arguments have the same meaning as in
