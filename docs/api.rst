@@ -1840,8 +1840,10 @@ Process class
   .. method:: memory_full_info()
 
     This deprecated method returns the same information as :meth:`memory_info`
-    plus :meth:`memory_footprint`'s :field:`uss`, :field:`pss` and
-    :field:`swap` in a single named tuple.
+    plus :meth:`memory_footprint`'s :field:`uss` (and, on Linux, also
+    :field:`pss` and :field:`swap`) in a single named tuple. On BSD, SunOS and
+    AIX no footprint field is added, so the result is just
+    :meth:`memory_info`'s.
 
     .. deprecated:: 8.0.0
        use :meth:`memory_footprint` instead. See

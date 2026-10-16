@@ -138,7 +138,7 @@ def virtual_memory():
 
 
 def swap_memory():
-    """Swap system memory as a (total, used, free, sin, sout) tuple."""
+    """Swap memory as a (total, used, free, percent, sin, sout) tuple."""
     info = _psutil.GetPerformanceInfo()
     pagesize = info["PageSize"]
     total_phys = info["PhysicalTotal"] * pagesize

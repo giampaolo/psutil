@@ -1366,8 +1366,10 @@ class Process:
     # DEPRECATED
     def memory_full_info(self) -> pfullmem:
         """Return the same information as `memory_info()` plus
-        `memory_footprint()`'s `uss`, `pss` and `swap` fields in a
-        single named tuple.
+        `memory_footprint()`'s `uss` field, and on Linux also `pss`
+        and `swap`, in a single named tuple. On BSD, SunOS and AIX
+        no footprint field is added, so the result is just
+        `memory_info()`'s.
 
         DEPRECATED in 8.0.0. Use `memory_footprint()` instead.
         """
@@ -1681,7 +1683,7 @@ Process.attrs = frozenset(
 
 
 class Popen(Process):
-    """Same as `subprocess.Popen`, but in addition it provides all
+    r"""Same as `subprocess.Popen`, but in addition it provides all
     `Process` methods in a single class.
 
     For the following methods which are common to both classes, psutil
@@ -1696,16 +1698,15 @@ class Popen(Process):
 
       >>> import psutil
       >>> from subprocess import PIPE
-      >>> p = psutil.Popen(["python", "-c", "print 'hi'"], stdout=PIPE)
+      >>> p = psutil.Popen(["python3", "-c", "print('hi')"], stdout=PIPE)
       >>> p.name()
       'python3'
       >>> p.uids()
-      user(real=1000, effective=1000, saved=1000)
+      puids(real=1000, effective=1000, saved=1000)
       >>> p.username()
       'giampaolo'
       >>> p.communicate()
-      ('hi', None)
-      >>> p.terminate()
+      (b'hi\n', None)
       >>> p.wait(timeout=2)
       0
       >>>
@@ -2200,8 +2201,8 @@ def cpu_times_percent(
     For instance, on Linux we'll get:
 
       >>> cpu_times_percent()
-      cpupercent(user=4.8, nice=0.0, system=4.8, idle=90.5, iowait=0.0,
-                 irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+      scputimes(user=4.8, system=4.8, idle=90.5, nice=0.0, iowait=0.0,
+                irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
       >>>
 
     *interval* and *percpu* arguments have the same meaning as in
@@ -2609,7 +2610,7 @@ def net_if_stats() -> dict[str, snicstats]:
      - isup: whether the interface is up (bool)
      - duplex: can be either `NIC_DUPLEX_FULL`, `NIC_DUPLEX_HALF` or
                `NIC_DUPLEX_UNKNOWN`
-     - speed: the NIC speed expressed in mega bits (MB); if it can't
+     - speed: the NIC speed expressed in megabits (Mbps); if it can't
               be determined (e.g. 'localhost') it will be set to 0.
      - mtu: the maximum transmission unit expressed in bytes.
      - flags: a string of comma-separated flags on the interface.
@@ -2622,7 +2623,7 @@ def net_if_stats() -> dict[str, snicstats]:
 # =====================================================================
 
 
-# Linux, macOS
+# Linux, FreeBSD
 if hasattr(_psplatform, "sensors_temperatures"):
 
     def sensors_temperatures(
@@ -2715,7 +2716,7 @@ def users() -> list[suser]:
     """Return users currently connected on the system as a list of
     named tuples including the following fields:
 
-     - user: the name of the user
+     - name: the name of the user
      - terminal: the tty or pseudo-tty associated with the user, if any.
      - host: the host name associated with the entry, if any.
      - started: the creation time as a floating point number expressed in
