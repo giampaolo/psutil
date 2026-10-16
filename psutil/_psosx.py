@@ -79,7 +79,7 @@ def virtual_memory():
 
 
 def swap_memory():
-    """Swap system memory as a (total, used, free, sin, sout) tuple."""
+    """Swap memory as a (total, used, free, percent, sin, sout) tuple."""
     d = _psutil.swap_mem()
     d["percent"] = usage_percent(d["used"], d["total"], round_=1)
     return ntp.sswap(**d)
