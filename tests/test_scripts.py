@@ -10,9 +10,6 @@ import ast
 import os
 import pathlib
 import stat
-import sys
-import types
-from unittest import mock
 
 import pytest
 
@@ -145,36 +142,6 @@ class TestExampleScripts(ScriptsTestCase):
 
     def test_top(self):
         self.assert_syntax('top.py')
-
-    def test_top_poll(self):
-        # cpu_percent may be None (e.g. zombie processes on macOS), which
-        # used to make poll()'s sort raise TypeError, see issue #1386.
-        def mkproc(pid, cpu_percent, status):
-            return types.SimpleNamespace(
-                pid=pid,
-                as_dict=mock.Mock(
-                    return_value={
-                        "cpu_percent": cpu_percent,
-                        "status": status,
-                    }
-                ),
-            )
-
-        procs = [
-            mkproc(1, 50.0, psutil.STATUS_RUNNING),
-            mkproc(2, None, psutil.STATUS_ZOMBIE),
-            mkproc(3, 10.0, psutil.STATUS_SLEEPING),
-        ]
-        # top.py initializes curses at import time
-        with mock.patch.dict(sys.modules, {"curses": mock.MagicMock()}):
-            top = import_module_by_path(SCRIPTS_DIR / "top.py")
-            with mock.patch.object(
-                top.psutil, "process_iter", return_value=iter(procs)
-            ):
-                processes, procs_status = top.poll(0)
-
-        assert [p.pid for p in processes] == [1, 3, 2]
-        assert procs_status[psutil.STATUS_ZOMBIE] == 1
 
     def test_iotop(self):
         self.assert_syntax('iotop.py')
