@@ -156,9 +156,25 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/p/psutil
+    timeout-minutes: 60
     permissions:
       id-token: write
+      actions: read
     steps:
+      - name: Wait for tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for wf in tests.yml bsd.yml sunos.yml; do
+            while true; do
+              state=$(gh run list -R "$GITHUB_REPOSITORY" --workflow "$wf" --commit "$GITHUB_SHA" --json status,conclusion \
+                --jq 'if any(.[]; .conclusion == "success") then "ok" elif length > 0 and all(.[]; .status == "completed") then "failed" else "pending" end')
+              echo "$wf: $state"
+              [ "$state" = ok ] && break
+              [ "$state" = failed ] && { echo "ERR: $wf failed, re-run its failed jobs, then re-run this job"; exit 1; }
+              sleep 60
+            done
+          done
       - uses: actions/download-artifact@v8
         with:
           name: dist
