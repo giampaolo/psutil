@@ -318,14 +318,6 @@ create-sdist:  ## Create tar.gz source distribution.
 create-wheels:  ## Create .whl files
 	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
 
-download-wheels:  ## Download latest wheels hosted on github.
-	$(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.api.key
-	$(MAKE) print-dist
-
-create-dist:  ## Create .tar.gz + .whl distribution.
-	$(MAKE) create-sdist
-	$(MAKE) download-wheels
-
 # --- check
 
 check-manifest:  ## Check sanity of MANIFEST.in file.
@@ -354,30 +346,21 @@ check-dist:  ## Run all sanity checks re. to the package distribution.
 # --- release
 
 pre-release:  ## Check if we're ready to produce a new release.
-	$(MAKE) clean
-	$(MAKE) create-dist
-	$(MAKE) check-dist
-	$(MAKE) install
 	@$(PYTHON) -c \
 		"import requests, sys; \
 		from packaging.version import parse; \
-		from psutil import __version__; \
+		from _bootstrap import get_version; \
+		__version__ = get_version(); \
 		res = requests.get('https://pypi.org/pypi/psutil/json', timeout=5); \
 		versions = sorted(res.json()['releases'], key=parse, reverse=True); \
 		sys.exit('version %r already exists on PYPI' % __version__) if __version__ in versions else 0"
-	@ver=$$($(PYTHON) -c "from psutil import __version__; print(__version__)"); \
+	@ver=$$($(PYTHON) -c "from _bootstrap import get_version; print(get_version())"); \
 		grep -q "$$ver" docs/changelog.rst || { echo "ERR: version $$ver not found in docs/changelog.rst"; exit 1; }; \
 		grep -q "$$ver" docs/timeline.rst || { echo "ERR: version $$ver not found in docs/timeline.rst"; exit 1; }
-	$(MAKE) print-hashes
-	$(MAKE) print-dist
 
-release:  ## Upload a new release.
-	$(PYTHON) -m twine upload dist/*.tar.gz
-	$(PYTHON) -m twine upload dist/*.whl
-	$(MAKE) git-tag-release
-
-git-tag-release:  ## Git-tag a new release.
-	git tag -a v`$(PYTHON) -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
+release:  ## Push a signed vX.Y.Z tag; CI uploads to PyPI after approval.
+	$(MAKE) pre-release
+	git tag -s v`$(PYTHON) -c "from _bootstrap import get_version; print(get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
 	git push --follow-tags
 
 # ===================================================================

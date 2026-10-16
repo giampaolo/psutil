@@ -212,7 +212,9 @@ Releases
 
 For project maintainers:
 
-- Releases are uploaded to `PyPI`_ via ``make release``.
+- ``make release`` pushes a signed ``vX.Y.Z`` tag. The
+  :src:`wheels.yml <.github/workflows/wheels.yml>` workflow then builds the
+  distribution and uploads it to `PyPI`_.
 - Git tags use the ``vX.Y.Z`` format (e.g. ``v7.2.2``).
 - The version string is defined in :src:`psutil/__init__.py` (``__version__``).
 

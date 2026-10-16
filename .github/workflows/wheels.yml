@@ -1,6 +1,6 @@
 # Generates wheels for all platforms, architectures and free-threaded builds,
 # then checks the resulting distribution. Tests are run by tests.yml.
-# Pushing a v* tag uploads the distribution to PyPI, after manual approval.
+# Pushing a v* tag uploads the distribution to PyPI.
 # Running it by hand with -f testpypi=true uploads to TestPyPI instead.
 #
 # Useful URLs:

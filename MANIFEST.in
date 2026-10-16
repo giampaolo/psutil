@@ -146,7 +146,6 @@ include scripts/internal/docs/find_adopters.py
 include scripts/internal/docs/new_blog_post.py
 include scripts/internal/docs/refresh_adoption_stats.py
 include scripts/internal/docs/rst_unused_targets.py
-include scripts/internal/download_wheels.py
 include scripts/internal/find_broken_links.py
 include scripts/internal/generate_manifest.py
 include scripts/internal/git_pre_commit.py
