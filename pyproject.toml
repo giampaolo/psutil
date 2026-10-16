@@ -33,7 +33,6 @@ dev = [
     "check-manifest",
     "colorama ; os_name == 'nt'",
     "coverage",
-    "packaging",
     "pylint",  # not enforced
     "pyperf",
     "pypinfo",

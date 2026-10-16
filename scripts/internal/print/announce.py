@@ -9,16 +9,15 @@ See: https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode.
 
 """
 
+import json
 import pathlib
 import re
-import subprocess
-import sys
+import urllib.request
 
 from psutil import __version__
 
 ROOT_DIR = pathlib.Path(__file__).resolve().parents[3]
 CHANGELOG = ROOT_DIR / 'docs' / 'changelog.rst'
-PRINT_HASHES_PY = ROOT_DIR / 'scripts' / 'internal' / 'print' / 'hashes.py'
 
 PRJ_NAME = 'psutil'
 PRJ_VERSION = __version__
@@ -125,13 +124,23 @@ def get_changes():
     return text
 
 
+def get_hashes():
+    url = f'https://pypi.org/pypi/{PRJ_NAME}/{PRJ_VERSION}/json'
+    with urllib.request.urlopen(url, timeout=10) as f:
+        files = json.load(f)['urls']
+    lines = []
+    for file in sorted(files, key=lambda x: x['filename']):
+        digests = file['digests']
+        lines.append(
+            f"{file['filename']}\nmd5: {digests['md5']}\n"
+            f"sha256: {digests['sha256']}\n"
+        )
+    return '\n'.join(lines).strip()
+
+
 def main():
     changes = get_changes()
-    hashes = (
-        subprocess.check_output([sys.executable, PRINT_HASHES_PY, 'dist/'])
-        .strip()
-        .decode()
-    )
+    hashes = get_hashes()
     text = template.format(
         prj_name=PRJ_NAME,
         prj_version=PRJ_VERSION,
