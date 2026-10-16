@@ -346,19 +346,9 @@ check-dist:  ## Run all sanity checks re. to the package distribution.
 # --- release
 
 pre-release:  ## Check if we're ready to produce a new release.
-	@$(PYTHON) -c \
-		"import requests, sys; \
-		from packaging.version import parse; \
-		from _bootstrap import get_version; \
-		__version__ = get_version(); \
-		res = requests.get('https://pypi.org/pypi/psutil/json', timeout=5); \
-		versions = sorted(res.json()['releases'], key=parse, reverse=True); \
-		sys.exit('version %r already exists on PYPI' % __version__) if __version__ in versions else 0"
-	@ver=$$($(PYTHON) -c "from _bootstrap import get_version; print(get_version())"); \
-		grep -q "$$ver" docs/changelog.rst || { echo "ERR: version $$ver not found in docs/changelog.rst"; exit 1; }; \
-		grep -q "$$ver" docs/timeline.rst || { echo "ERR: version $$ver not found in docs/timeline.rst"; exit 1; }
+	$(PYTHON) scripts/internal/check_release.py
 
-release:  ## Push a signed vX.Y.Z tag; CI uploads to PyPI after approval.
+release:  ## Push a signed vX.Y.Z tag; CI uploads it to PyPI.
 	$(MAKE) pre-release
 	git tag -s v`$(PYTHON) -c "from _bootstrap import get_version; print(get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
 	git push --follow-tags

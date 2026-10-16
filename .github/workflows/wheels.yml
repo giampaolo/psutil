@@ -138,11 +138,7 @@ jobs:
           make ci-check-dist
       - name: Check release version
         if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          ver=$(python3 -c "from _bootstrap import get_version; print(get_version())")
-          test "v$ver" = "$GITHUB_REF_NAME" || { echo "ERR: tag $GITHUB_REF_NAME doesn't match version $ver"; exit 1; }
-          grep -q "$ver" docs/changelog.rst || { echo "ERR: version $ver not found in docs/changelog.rst"; exit 1; }
-          grep -q "$ver" docs/timeline.rst || { echo "ERR: version $ver not found in docs/timeline.rst"; exit 1; }
+        run: python3 scripts/internal/check_release.py --tag "$GITHUB_REF_NAME"
       - uses: actions/upload-artifact@v7
         with:
           name: dist
