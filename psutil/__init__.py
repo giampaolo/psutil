@@ -535,9 +535,6 @@ class Process:
             return NotImplemented
         return self._cmp_idents(self._ident, other._ident) != "different"
 
-    def __ne__(self, other):
-        return not self == other
-
     def __hash__(self):
         # PID only: __eq__ can match idents with different ctimes, and
         # equal objects must hash the same.
