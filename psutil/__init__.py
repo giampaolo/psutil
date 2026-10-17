@@ -422,6 +422,14 @@ class ProcessSnapshot:
         msg = f"{self.__class__.__name__} is read-only"
         raise AttributeError(msg)
 
+    def __eq__(self, other):
+        if not isinstance(other, ProcessSnapshot):
+            return NotImplemented
+        return self.__dict__ == other.__dict__
+
+    # unhashable: values can be lists or dicts
+    __hash__ = None
+
     def __repr__(self):
         return f"{self.__class__.__name__}({self.__dict__!r})"
 

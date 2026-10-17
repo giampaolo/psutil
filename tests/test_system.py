@@ -165,6 +165,15 @@ class TestProcessSnapshot(PsutilTestCase):
         assert "snapshot" not in psutil.Process.attrs
         assert psutil.Process().snapshot is None
 
+    def test_eq(self):
+        a = psutil.ProcessSnapshot({"pid": 1, "name": "foo"})
+        b = psutil.ProcessSnapshot({"pid": 1, "name": "foo"})
+        assert a == b
+        assert a != psutil.ProcessSnapshot({"pid": 2, "name": "foo"})
+        assert a != {"pid": 1, "name": "foo"}
+        with pytest.raises(TypeError):
+            hash(a)
+
     def test_annotations(self):
         hints = psutil.ProcessSnapshot.__annotations__
         assert psutil.Process.attrs <= set(hints)
