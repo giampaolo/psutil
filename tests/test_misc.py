@@ -243,31 +243,50 @@ class TestMisc(PsutilTestCase):
         p.foo = '1'
         assert 'foo' not in p.as_dict()
 
-    def test_serialization(self):
-        def check(ret):
-            json.loads(json.dumps(ret))
+    def test_sanity_version_check(self):
+        # see: https://github.com/giampaolo/psutil/issues/564
+        with mock.patch.object(_psutil, "version", return_value="0.0.0"):
+            with pytest.raises(ImportError) as cm:
+                reload_module(psutil)
+            assert "version conflict" in str(cm.value).lower()
 
-            a = pickle.dumps(ret)
-            b = pickle.loads(a)
-            assert ret == b
+    def test_reload_keeps_all(self):
+        # A reload reuses the module dict, so the enum constants are
+        # already there and used to not make it back into __all__.
+        before = sorted(psutil.__all__)
+        reload_module(psutil)
+        assert sorted(psutil.__all__) == before
 
-        # --- process APIs
 
+# ===================================================================
+# --- Serialization
+# ===================================================================
+
+
+class TestSerialization(PsutilTestCase):
+    @staticmethod
+    def check(ret):
+        json.loads(json.dumps(ret))
+
+        a = pickle.dumps(ret)
+        b = pickle.loads(a)
+        assert ret == b
+
+    def test_process_apis(self):
         proc = psutil.Process()
-        check(psutil.Process().as_dict())
+        self.check(psutil.Process().as_dict())
 
         ns = process_namespace(proc)
         for fun, name in ns.iter(ns.getters, clear_cache=True):
             with self.subTest(proc=str(proc), name=name):
                 try:
                     ret = fun()
-                except psutil.Error:
-                    pass
+                except psutil.Error as err:
+                    self.check(err)
                 else:
-                    check(ret)
+                    self.check(ret)
 
-        # --- system APIs
-
+    def test_system_apis(self):
         ns = system_namespace()
         for fun, name in ns.iter(ns.getters):
             if name in {"win_service_iter", "win_service_get"}:
@@ -275,13 +294,12 @@ class TestMisc(PsutilTestCase):
             with self.subTest(name=name):
                 try:
                     ret = fun()
-                except psutil.AccessDenied:
-                    pass
+                except psutil.AccessDenied as err:
+                    self.check(err)
                 else:
-                    check(ret)
+                    self.check(ret)
 
-        # --- exception classes
-
+    def test_exceptions(self):
         b = pickle.loads(
             pickle.dumps(
                 psutil.NoSuchProcess(pid=4567, name='name', msg='msg')
@@ -320,20 +338,6 @@ class TestMisc(PsutilTestCase):
         assert b.seconds == 33
         assert b.pid == 4567
         assert b.name == 'name'
-
-    def test_sanity_version_check(self):
-        # see: https://github.com/giampaolo/psutil/issues/564
-        with mock.patch.object(_psutil, "version", return_value="0.0.0"):
-            with pytest.raises(ImportError) as cm:
-                reload_module(psutil)
-            assert "version conflict" in str(cm.value).lower()
-
-    def test_reload_keeps_all(self):
-        # A reload reuses the module dict, so the enum constants are
-        # already there and used to not make it back into __all__.
-        before = sorted(psutil.__all__)
-        reload_module(psutil)
-        assert sorted(psutil.__all__) == before
 
 
 # ===================================================================
