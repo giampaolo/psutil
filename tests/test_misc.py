@@ -8,6 +8,7 @@
 
 import collections
 import contextlib
+import copy
 import io
 import json
 import os
@@ -338,6 +339,18 @@ class TestSerialization(PsutilTestCase):
         assert b.seconds == 33
         assert b.pid == 4567
         assert b.name == 'name'
+
+    def test_process_snapshot(self):
+        snap = next(psutil.process_iter(attrs=["pid", "name"])).snapshot
+        json.loads(json.dumps(vars(snap)))
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            b = pickle.loads(pickle.dumps(snap, proto))
+            assert b == snap
+            assert vars(b) is not vars(snap)
+        for fun in (copy.copy, copy.deepcopy):
+            b = fun(snap)
+            assert b == snap
+            assert vars(b) is not vars(snap)
 
 
 # ===================================================================
