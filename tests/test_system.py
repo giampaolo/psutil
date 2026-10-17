@@ -159,6 +159,21 @@ class TestProcessSnapshot(PsutilTestCase):
         assert "snapshot" not in psutil.Process.attrs
         assert psutil.Process().snapshot is None
 
+    def test_annotations(self):
+        hints = psutil.ProcessSnapshot.__annotations__
+        assert psutil.Process.attrs <= set(hints)
+
+        # Each annotation must match the annotation of the
+        # corresponding Process method.
+        for name in psutil.Process.attrs:
+            fun = getattr(psutil.Process, name)
+            fun = getattr(fun, "fget", fun)  # pid is a property
+            expected = fun.__annotations__["return"]
+            if name in {"nice", "ionice", "cpu_affinity"}:
+                # getter/setter: None is returned only when setting
+                expected = expected.replace(" | None", "")
+            assert hints[name] == expected
+
 
 class TestProcessAPIs(PsutilTestCase):
     def test_wait_procs(self):
