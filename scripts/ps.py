@@ -49,22 +49,22 @@ def main():
                        "STATUS", "START", "TIME", "CMDLINE"))
     # fmt: on
     for p in psutil.process_iter(attrs, ad_value=None):
-        if p.create_time():
-            ctime = datetime.datetime.fromtimestamp(p.create_time())
+        if p.info['create_time']:
+            ctime = datetime.datetime.fromtimestamp(p.info['create_time'])
             if ctime.date() == today_day:
                 ctime = ctime.strftime("%H:%M")
             else:
                 ctime = ctime.strftime("%b%d")
         else:
             ctime = ''
-        if p.cpu_times():
+        if p.info['cpu_times']:
             cputime = time.strftime(
-                "%M:%S", time.localtime(sum(p.cpu_times()))
+                "%M:%S", time.localtime(sum(p.info['cpu_times']))
             )
         else:
             cputime = ''
 
-        user = p.username()
+        user = p.info['username']
         if not user and psutil.POSIX:
             try:
                 user = p.uids()[0]
@@ -76,30 +76,30 @@ def main():
             user = ''
         user = user[:9]
         vms = (
-            bytes2human(p.memory_info().vms)
-            if p.memory_info() is not None
+            bytes2human(p.info['memory_info'].vms)
+            if p.info['memory_info'] is not None
             else ''
         )
         rss = (
-            bytes2human(p.memory_info().rss)
-            if p.memory_info() is not None
+            bytes2human(p.info['memory_info'].rss)
+            if p.info['memory_info'] is not None
             else ''
         )
         memp = (
-            round(p.memory_percent(), 1)
-            if p.memory_percent() is not None
+            round(p.info['memory_percent'], 1)
+            if p.info['memory_percent'] is not None
             else ''
         )
-        nice = int(p.nice()) if p.nice() else ''
-        if p.cmdline():  # noqa: SIM108
-            cmdline = ' '.join(p.cmdline())
+        nice = int(p.info['nice']) if p.info['nice'] else ''
+        if p.info['cmdline']:
+            cmdline = ' '.join(p.info['cmdline'])
         else:
-            cmdline = p.name()
-        status = p.status()[:5] if p.status() else ''
+            cmdline = p.info['name']
+        status = p.info['status'][:5] if p.info['status'] else ''
 
         line = templ.format(
             user,
-            p.pid,
+            p.info['pid'],
             memp,
             vms,
             rss,
