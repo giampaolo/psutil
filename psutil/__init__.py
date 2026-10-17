@@ -406,6 +406,14 @@ class ProcessSnapshot:
     def __init__(self, data):
         object.__setattr__(self, "__dict__", data)
 
+    def __getattr__(self, name):
+        # called only when regular attribute lookup fails
+        if name in Process.attrs:
+            msg = f"{name!r} was not requested in process_iter(attrs=...)"
+        else:
+            msg = f"{name!r} is not a valid Process attribute"
+        raise AttributeError(msg)
+
     def __setattr__(self, name, value):
         msg = f"{self.__class__.__name__} is read-only"
         raise AttributeError(msg)

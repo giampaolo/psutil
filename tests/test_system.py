@@ -154,8 +154,10 @@ class TestProcessSnapshot(PsutilTestCase):
             assert p.snapshot.pid == p.pid
             assert p.snapshot.name == p.info["name"]
             assert p.snapshot.name == p.name()
-            with pytest.raises(AttributeError):
+            with pytest.raises(AttributeError, match="not requested"):
                 p.snapshot.exe  # noqa: B018
+            with pytest.raises(AttributeError, match="not a valid"):
+                p.snapshot.foo  # noqa: B018
             with pytest.raises(AttributeError):
                 p.snapshot.name = "foo"
             with pytest.raises(AttributeError):
