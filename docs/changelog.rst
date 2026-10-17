@@ -109,11 +109,6 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   :field:`interrupt` field renamed to :field:`irq` to match the field name used
   on Linux and BSD. :field:`interrupt` still works but raises
   :exc:`DeprecationWarning`.
-- :gh:`2784`, :label:`breaking`: :func:`process_iter`: when *attrs* is
-  specified, the pre-fetched values are now cached on the :class:`Process`
-  instance, so subsequent method calls return them without new system calls.
-  The ``p.info`` dict is deprecated. See
-  :ref:`migration guide <migration-8.0-process-iter>`.
 - :gh:`2889`, [Windows], :label:`breaking`: 32-bit psutil can no longer inspect
   64-bit processes. This relied on the undocumented ``NtWow64*`` APIs and
   stopped being tested when 32-bit wheels were dropped in 7.1.2 (:gh:`2657`).

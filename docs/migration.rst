@@ -15,8 +15,6 @@ Migrating to 8.0
 
 Key breaking changes in 8.0:
 
-- :func:`process_iter` now pre-fetches values.
-- :attr:`Process.info` is deprecated: use direct methods instead.
 - Named tuple field order changed: use attribute access instead of positional
   unpacking.
 - Some return types are now enums instead of strings.
@@ -34,52 +32,6 @@ Key breaking changes in 8.0:
 
   Do not rely on positional unpacking of named tuples. Always use attribute
   access (e.g. ``t.rss``).
-
-.. _migration-8.0-process-iter:
-
-process_iter(): p.info is deprecated
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-:func:`process_iter` now caches pre-fetched values internally, so normal method
-calls can return them without using the :attr:`Process.info` dict. ``p.info``
-still works, but raises :exc:`DeprecationWarning`.
-
-.. code-block:: python
-
-  import psutil
-
-  # before
-  for p in psutil.process_iter(attrs=["name", "status"]):
-      print(p.info["name"], p.info["status"])
-
-  # after
-  for p in psutil.process_iter(attrs=["name", "status"]):
-      print(p.name(), p.status())  # return cached values, never raise
-
-When ``attrs`` are specified, the corresponding method calls return cached
-values without extra syscalls. :exc:`AccessDenied` / :exc:`ZombieProcess` are
-handled transparently by returning ``ad_value``.
-
-If you need a dict, use :meth:`Process.as_dict` instead of
-:attr:`Process.info`.
-
-.. code-block:: python
-
-  import psutil
-
-  # before
-  for p in psutil.process_iter(attrs=["name", "status"]):
-      print(p.info)
-
-  # after
-  attrs = ["name", "status"]
-  for p in psutil.process_iter(attrs=attrs):
-      print(p.as_dict(attrs))  # return cached values, never raise
-
-.. note::
-  If ``"name"`` was pre-fetched via ``attrs``, ``p.name()`` returns
-  ``ad_value`` instead of raising :exc:`AccessDenied`. If you need the
-  exception, do not include the method in ``attrs``.
 
 .. _migration-8.0-namedtuples:
 
@@ -310,4 +262,4 @@ explicitly:
 
   for p in psutil.process_iter(["name"]):
       if p.is_running():
-          print(p.pid, p.name())
+          print(p.pid, p.info["name"])

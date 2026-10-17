@@ -952,13 +952,9 @@ Functions
 
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict`.
 
-  If *attrs* is specified, :meth:`Process.as_dict` is called internally, and
-  the results are cached so that subsequent method calls (e.g. ``p.name()``,
-  ``p.status()``) return the cached values instead of issuing new system calls.
-  See :attr:`Process.attrs` for a list of valid *attrs* names.
-
-  If a method raises :exc:`AccessDenied` during pre-fetch, it will return
-  *ad_value* (default ``None``) instead of raising.
+  If *attrs* is specified, :meth:`Process.as_dict` result will be stored as a
+  ``info`` attribute attached to the returned :class:`Process` instances. See
+  :attr:`Process.attrs` for a list of valid *attrs* names.
 
   Processes are returned sorted by PID.
 
@@ -966,11 +962,11 @@ Functions
 
      >>> import psutil
      >>> for proc in psutil.process_iter(['pid', 'name', 'username']):
-     ...     print(proc.pid, proc.name(), proc.username())  # return cached values, never raise
+     ...     print(proc.info)
      ...
-     1 systemd root
-     2 kthreadd root
-     3 ksoftirqd/0 root
+     {'name': 'systemd', 'pid': 1, 'username': 'root'}
+     {'name': 'kthreadd', 'pid': 2, 'username': 'root'}
+     {'name': 'ksoftirqd/0', 'pid': 3, 'username': 'root'}
      ...
 
   All process *attrs* except slow ones:
@@ -986,12 +982,6 @@ Functions
 
      >>> psutil.process_iter.cache_clear()
 
-  .. note::
-
-    since :class:`Process` instances are reused across calls, a subsequent
-    :func:`process_iter` call will overwrite or clear any previously
-    pre-fetched values. Do not rely on cached values from a prior iteration.
-
   .. seealso::
     - :ref:`perf-process-iter`
 
@@ -1002,11 +992,6 @@ Functions
 
   .. versionchanged:: 8.0.0
 
-     - When *attrs* is specified, the pre-fetched values are cached directly on
-       the :class:`Process` instance, so that subsequent method calls (e.g.
-       ``p.name()``, ``p.status()``) return the cached values instead of making
-       new system calls. The :attr:`Process.info` dict is deprecated in favor
-       of this new approach.
      - Passing an empty list (``attrs=[]``) to mean "all attributes" is
        deprecated; use :attr:`Process.attrs` instead.
 
@@ -1155,19 +1140,6 @@ Process class
        >>> psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
 
     .. versionadded:: 8.0.0
-
-  .. attribute:: info
-
-    A dict containing pre-fetched process info, set by :func:`process_iter`
-    when called with ``attrs`` argument. Accessing this attribute is deprecated
-    and raises :exc:`DeprecationWarning`. Use method calls instead (e.g.
-    ``p.name()`` instead of ``p.info['name']``) or :func:`process_iter` +
-    :meth:`Process.as_dict` if you need a dict structure.
-
-    .. seealso::
-      - :ref:`migration guide <migration-8.0>`
-
-    .. deprecated:: 8.0.0
 
   .. method:: oneshot()
 
