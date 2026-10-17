@@ -1564,18 +1564,24 @@ class TestProcessPidReuse(PsutilTestCase):
 
         list(psutil.process_iter())
         assert p.pid in psutil._pmap
+        original_proc = psutil._pmap[p.pid]
         assert not p.is_running()
 
-        # make sure is_running() removed PID from process_iter()
-        # internal cache
+        # make sure is_running() flags the PID as reused so that
+        # process_iter() refreshes its internal cache
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
             with contextlib.redirect_stderr(io.StringIO()) as f:
-                list(psutil.process_iter())
+                procs = list(psutil.process_iter())
         assert (
             f"refreshing Process instance for reused PID {p.pid}"
             in f.getvalue()
         )
-        assert p.pid not in psutil._pmap
+        # The stale instance is evicted AND the live process is
+        # returned by this very call, see:
+        # https://github.com/giampaolo/psutil/issues/2601
+        assert p.pid in psutil._pmap
+        assert psutil._pmap[p.pid] is not original_proc
+        assert p.pid in [proc.pid for proc in procs]
 
         assert p != psutil.Process(subp.pid)
         msg = "process no longer exists and its PID has been reused"
