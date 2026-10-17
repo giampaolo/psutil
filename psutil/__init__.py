@@ -1922,9 +1922,9 @@ def cpu_times(percpu: bool = False) -> scputimes | list[scputimes]:
     - `user`
     - `system`
     - `idle`
-    - `nice` (UNIX)
-    - `iowait` (Linux)
-    - `irq` (Linux, FreeBSD)
+    - `nice` (Linux, macOS, BSD)
+    - `iowait` (Linux, SunOS, AIX)
+    - `irq` (Linux, Windows, BSD)
     - `softirq` (Linux)
     - `steal` (Linux)
     - `guest` (Linux)
