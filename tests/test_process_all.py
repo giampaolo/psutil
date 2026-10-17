@@ -289,9 +289,6 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def name(self, ret, info):
         assert isinstance(ret, str)
-        if WINDOWS and not ret and is_win_secure_system_proc(info['pid']):
-            # https://github.com/giampaolo/psutil/issues/2338
-            return
         # on AIX, "<exiting>" processes don't have names
         if not AIX:
             assert ret, repr(ret)
@@ -362,6 +359,8 @@ class TestFetchAllProcesses(PsutilTestCase):
     def num_threads(self, ret, info):
         assert isinstance(ret, int)
         if WINDOWS and ret == 0 and is_win_secure_system_proc(info['pid']):
+            # this process runs in VTL1 (VBS) and has no VTL0 threads,
+            # hence the kernel process table reports 0 for it:
             # https://github.com/giampaolo/psutil/issues/2338
             return
         if POSIX and ret == 0 and info['pid'] == self.zombie.pid:
