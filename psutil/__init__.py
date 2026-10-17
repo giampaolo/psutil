@@ -372,7 +372,7 @@ class ProcessSnapshot:
     __slots__ = ("_data",)
 
     cmdline: list[str]
-    cpu_affinity: list[int] | None
+    cpu_affinity: list[int]
     cpu_num: int
     cpu_percent: float
     cpu_times: pcputimes
@@ -382,7 +382,7 @@ class ProcessSnapshot:
     exe: str
     gids: pgids
     io_counters: pio
-    ionice: pionice | ProcessIOPriority | None
+    ionice: pionice | ProcessIOPriority
     memory_extras: pmem_extras
     memory_footprint: pfootprint
     memory_info: pmem
@@ -390,7 +390,7 @@ class ProcessSnapshot:
     memory_percent: float
     name: str
     net_connections: list[pconn]
-    nice: int | None
+    nice: int
     num_ctx_switches: pctxsw
     num_fds: int
     num_handles: int
