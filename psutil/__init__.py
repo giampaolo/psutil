@@ -1748,7 +1748,8 @@ class Popen(Process):
             return object.__getattribute__(self, name)
         except AttributeError:
             try:
-                return object.__getattribute__(self.__subproc, name)
+                subproc = object.__getattribute__(self, '_Popen__subproc')
+                return object.__getattribute__(subproc, name)
             except AttributeError:
                 msg = f"{self.__class__!r} has no attribute {name!r}"
                 raise AttributeError(msg) from None

@@ -2054,3 +2054,21 @@ class TestPopen(PsutilTestCase):
             proc.wait()
             with pytest.raises(AttributeError):
                 proc.foo  # noqa: B018
+
+    def test__getattribute__failed_init(self):
+        # Regression for #3000: a Popen whose __init__ raised never gets
+        # _Popen__subproc set, so touching it used to recurse through
+        # __getattribute__ until the stack blew. The fix short-circuits
+        # the inner lookup so the existing AttributeError handler runs.
+        class _BrokenPopen(psutil.Popen):
+            def __init__(self, *args, **kwargs):
+                try:
+                    super().__init__(*args, **kwargs)
+                except OSError:
+                    pass
+
+        p = _BrokenPopen(["this-executable-does-not-exist"])
+        with pytest.raises(AttributeError):
+            p.poll()  # noqa: B018
+        with pytest.raises(AttributeError):
+            repr(p)  # noqa: B018
