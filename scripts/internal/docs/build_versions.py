@@ -16,8 +16,8 @@ import venv
 SITE_DIR = None
 ONLY = None
 
-ROOT = pathlib.Path(__file__).resolve().parents[3]
-VERSIONS_JSON = ROOT / "docs" / "versions.json"
+ROOT_DIR = pathlib.Path(__file__).resolve().parents[3]
+VERSIONS_JSON = ROOT_DIR / "docs" / "versions.json"
 FONT_DIRS = ("_static/fonts", "_static/css/fonts")
 LEGACY_FONTS = ("*.ttf", "*.eot", "*.svg", "*.woff")
 DROP = ("blog", "_sources", "_images/social_previews", ".doctrees")
@@ -93,7 +93,7 @@ def build_one(entry, current, site_dir):
     try:
         run(
             ["git", "worktree", "add", "--detach", worktree, entry["ref"]],
-            cwd=ROOT,
+            cwd=ROOT_DIR,
         )
         env = tmp / "venv"
         venv.create(env, with_pip=True)
@@ -119,7 +119,7 @@ def build_one(entry, current, site_dir):
         print(f"  {entry['name']}: {pages} pages, {size / 1048576:.1f} MB")
     finally:
         subprocess.call(
-            ["git", "worktree", "remove", "--force", worktree], cwd=ROOT
+            ["git", "worktree", "remove", "--force", worktree], cwd=ROOT_DIR
         )
         shutil.rmtree(tmp, ignore_errors=True)
 

@@ -92,18 +92,12 @@ else:
 
 
 def get_long_description():
-    script = ROOT_DIR / "scripts" / "internal" / "convert_readme.py"
-    readme = ROOT_DIR / 'README.rst'
-    p = subprocess.Popen(
-        [sys.executable, script, readme],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
+    script = (
+        ROOT_DIR / "scripts" / "internal" / "print" / "converted_readme.py"
     )
-    stdout, stderr = p.communicate()
-    if p.returncode != 0:
-        raise RuntimeError(stderr)
-    return stdout
+    return subprocess.check_output(
+        [sys.executable, script], universal_newlines=True
+    )
 
 
 def num_cpus():

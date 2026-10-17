@@ -324,8 +324,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
         if (!pylist_append_fmt(
                 py_retlist,
-                "Idd",
-                threadt[i].tid,
+                "Kdd",
+                (unsigned long long)threadt[i].tid,
                 threadt[i].ucpu_time,
                 threadt[i].scpu_time
             ))
@@ -410,13 +410,13 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
-        "iiiiii",
-        info.pr_ruid,
-        info.pr_euid,
-        info.pr_suid,
-        info.pr_rgid,
-        info.pr_egid,
-        info.pr_sgid
+        "KKKKKK",
+        (unsigned long long)info.pr_ruid,
+        (unsigned long long)info.pr_euid,
+        (unsigned long long)info.pr_suid,
+        (unsigned long long)info.pr_rgid,
+        (unsigned long long)info.pr_egid,
+        (unsigned long long)info.pr_sgid
     );
 }
 

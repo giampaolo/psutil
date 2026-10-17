@@ -117,12 +117,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         vmstat.v_swtch,
         vmstat.v_intr,
         vmstat.v_soft,
-#if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \
-    && __MAC_OS_X_VERSION_MIN_REQUIRED__ >= 120000
-        0,
-#else
         vmstat.v_syscall,
-#endif
         vmstat.v_trap
     );
 }

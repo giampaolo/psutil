@@ -612,6 +612,11 @@ class OpenBSDSystemTestCase(PsutilTestCase):
 
 @skipif(not NETBSD, reason="NETBSD only")
 class NetBSDTestCase(PsutilTestCase):
+    def test_pid_0(self):
+        p = psutil.Process(0)
+        assert p.num_fds() == 0
+        assert p.open_files() == []
+
     @staticmethod
     def parse_vmstat(look_for):
         """Parse a cumulative field from 'vmstat -s' output.

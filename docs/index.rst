@@ -118,7 +118,7 @@
 
             >>> import psutil
             >>> psutil.cpu_times()
-            scputimes(user=3961.46, nice=169.72, system=2150.65, idle=16900.54, iowait=629.59, ...)
+            scputimes(user=3961.46, system=2150.65, idle=16900.54, nice=169.72, iowait=629.59, ...)
             >>> psutil.cpu_percent(interval=1)
             4.0
             >>> psutil.cpu_count(logical=False)
@@ -167,14 +167,14 @@
 
             >>> import psutil
             >>> psutil.net_io_counters(pernic=True)
-            {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, ...),
-             'lo':   netio(bytes_sent=2838627,   bytes_recv=2838627,   ...)}
+            {'eth0': snetio(bytes_sent=485291293, bytes_recv=6004858642, ...),
+             'lo':   snetio(bytes_sent=2838627,   bytes_recv=2838627,   ...)}
             >>> psutil.net_connections(kind='tcp')
-            [sconn(family=2, type=1, laddr=addr('10.0.0.1', 48776), raddr=addr('93.186.135.91', 80), status='ESTABLISHED', pid=1254), ...]
+            [sconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=1254), ...]
             >>> psutil.net_if_addrs()['wlan0']
-            [snicaddr(family=2,  address='192.168.1.3', netmask='255.255.255.0', ...), ...]
+            [snicaddr(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255', ptp=None), ...]
             >>> psutil.net_if_stats()['wlan0']
-            snicstats(isup=True, duplex=2, speed=100, mtu=1500, flags='up,broadcast,running')
+            snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500, flags='up,broadcast,running')
 
          .. container:: home-tab-more
 

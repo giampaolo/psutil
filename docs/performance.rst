@@ -206,13 +206,13 @@ on Linux:
 Measuring APIs speed
 --------------------
 
-:src:`scripts/internal/print_api_speed.py` shows the relative cost of each API
+:src:`scripts/internal/print/api_speed.py` shows the relative cost of each API
 call. This helps you understand which operations are more expensive. E.g. on
 Linux:
 
 .. code-block:: none
 
-  $ python3 scripts/internal/print_api_speed.py
+  $ python3 scripts/internal/print/api_speed.py
   SYSTEM APIS                NUM CALLS      SECONDS
   -------------------------------------------------
   getloadavg                       300      0.00013
