@@ -352,7 +352,7 @@ class ThreadTask(threading.Thread):
             time.sleep(self._interval)
 
     def stop(self):
-        """Stop thread execution and and waits until it is stopped."""
+        """Stop thread execution and waits until it is stopped."""
         if not self._running:
             raise ValueError("already stopped")
         self._running = False
