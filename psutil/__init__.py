@@ -369,8 +369,6 @@ def _check_conn_kind(kind):
 
 
 class ProcessSnapshot:
-    __slots__ = ("_data",)
-
     cmdline: list[str]
     cpu_affinity: list[int]
     cpu_num: int
@@ -406,17 +404,18 @@ class ProcessSnapshot:
     username: str
 
     def __init__(self, data):
-        self._data = data
+        object.__setattr__(self, "__dict__", data)
 
-    def __getattr__(self, name):
-        try:
-            return self._data[name]
-        except KeyError:
-            msg = f"{name!r} was not requested in process_iter(attrs=...)"
-            raise AttributeError(msg) from None
+    def __setattr__(self, name, value):
+        msg = f"{self.__class__.__name__} is read-only"
+        raise AttributeError(msg)
+
+    def __delattr__(self, name):
+        msg = f"{self.__class__.__name__} is read-only"
+        raise AttributeError(msg)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self._data!r})"
+        return f"{self.__class__.__name__}({self.__dict__!r})"
 
 
 class Process:

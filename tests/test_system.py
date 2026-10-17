@@ -156,6 +156,10 @@ class TestProcessSnapshot(PsutilTestCase):
             assert p.snapshot.name == p.name()
             with pytest.raises(AttributeError):
                 p.snapshot.exe  # noqa: B018
+            with pytest.raises(AttributeError):
+                p.snapshot.name = "foo"
+            with pytest.raises(AttributeError):
+                del p.snapshot.name
         assert "snapshot" not in psutil.Process.attrs
         assert psutil.Process().snapshot is None
 
