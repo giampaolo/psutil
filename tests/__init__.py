@@ -1318,7 +1318,6 @@ class process_namespace:
         ('attrs', (), {}),
         ('children', (), {'recursive': True}),
         ('connections', (), {}),  # deprecated
-        ('info', (), {}),
         ('is_running', (), {}),
         ('memory_full_info', (), {}),  # deprecated
         ('oneshot', (), {}),
