@@ -371,6 +371,40 @@ def _check_conn_kind(kind):
 class ProcessSnapshot:
     __slots__ = ("_data",)
 
+    cmdline: list[str]
+    cpu_affinity: list[int] | None
+    cpu_num: int
+    cpu_percent: float
+    cpu_times: pcputimes
+    create_time: float
+    cwd: str
+    environ: dict[str, str]
+    exe: str
+    gids: pgids
+    io_counters: pio
+    ionice: pionice | ProcessIOPriority | None
+    memory_extras: pmem_extras
+    memory_footprint: pfootprint
+    memory_info: pmem
+    memory_maps: list[pmmap_grouped] | list[pmmap_ext]
+    memory_percent: float
+    name: str
+    net_connections: list[pconn]
+    nice: int | None
+    num_ctx_switches: pctxsw
+    num_fds: int
+    num_handles: int
+    num_threads: int
+    open_files: list[popenfile]
+    page_faults: ppagefaults
+    pid: int
+    ppid: int
+    status: ProcessStatus | str
+    terminal: str | None
+    threads: list[pthread]
+    uids: puids
+    username: str
+
     def __init__(self, data):
         self._data = data
 
