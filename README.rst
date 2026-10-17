@@ -140,8 +140,8 @@ For the full API with more examples, see the
 .. code-block:: python
 
     >>> psutil.net_io_counters(pernic=True)
-    {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, ...),
-     'lo': netio(bytes_sent=2838627, bytes_recv=2838627, ...)}
+    {'eth0': snetio(bytes_sent=485291293, bytes_recv=6004858642, ...),
+     'lo': snetio(bytes_sent=2838627, bytes_recv=2838627, ...)}
     >>> psutil.net_connections(kind='tcp')
     [sconn(fd=115, family=2, type=1, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED', pid=1254),
      ...]

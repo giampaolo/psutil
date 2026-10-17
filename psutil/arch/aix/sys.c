@@ -15,14 +15,14 @@
 
 PyObject *
 psutil_boot_time(PyObject *self, PyObject *args) {
-    float boot_time = 0.0;
+    double boot_time = 0.0;
     struct utmpx *ut;
 
     UTXENT_MUTEX_LOCK();
     setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == BOOT_TIME) {
-            boot_time = (float)ut->ut_tv.tv_sec;
+            boot_time = (double)ut->ut_tv.tv_sec;
             break;
         }
     }
@@ -33,5 +33,5 @@ psutil_boot_time(PyObject *self, PyObject *args) {
         psutil_runtime_error("can't determine boot time");
         return NULL;
     }
-    return Py_BuildValue("f", boot_time);
+    return Py_BuildValue("d", boot_time);
 }

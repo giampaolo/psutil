@@ -19,6 +19,8 @@ from . import _psutil
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
+from ._common import cache_activate
+from ._common import cache_deactivate
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import get_procfs_path
@@ -90,7 +92,7 @@ def virtual_memory():
 
 
 def swap_memory():
-    """Swap system memory as a (total, used, free, sin, sout) tuple."""
+    """Swap memory as a (total, used, free, percent, sin, sout) tuple."""
     total, free, sin, sout = _psutil.swap_mem()
     used = total - free
     percent = usage_percent(used, total, round_=1)
@@ -329,12 +331,10 @@ class Process:
         self._procfs_path = get_procfs_path()
 
     def oneshot_enter(self):
-        self._proc_oneshot.cache_activate(self)
-        self._proc_cred.cache_activate(self)
+        cache_activate(self)
 
     def oneshot_exit(self):
-        self._proc_oneshot.cache_deactivate(self)
-        self._proc_cred.cache_deactivate(self)
+        cache_deactivate(self)
 
     @wrap_exceptions
     @memoize_when_activated

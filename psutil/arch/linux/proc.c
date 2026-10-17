@@ -46,6 +46,8 @@ psutil_proc_ioprio_get(PyObject *self, PyObject *args) {
     int ioprio, ioclass, iodata;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
+    if (pid == 0)
+        return psutil_oserror_ad("automatically set for PID 0");
     ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
     if (ioprio == -1)
         return psutil_oserror();
@@ -67,6 +69,8 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID "ii", &pid, &ioclass, &iodata)) {
         return NULL;
     }
+    if (pid == 0)
+        return psutil_oserror_ad("automatically set for PID 0");
     ioprio = IOPRIO_PRIO_VALUE(ioclass, iodata);
     retval = ioprio_set(IOPRIO_WHO_PROCESS, pid, ioprio);
     if (retval == -1)

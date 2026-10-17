@@ -145,7 +145,7 @@ CPU
   Similar to :func:`cpu_percent`, but provides utilization percentages for each
   specific CPU time. *interval* and *percpu* arguments have the same meaning as
   in :func:`cpu_percent`. On Linux, :field:`guest` and :field:`guest_nice`
-  percentages are not accounted in :field:`user` and :field:`user_nice`.
+  percentages are not accounted in :field:`user` and :field:`nice`.
 
   .. seealso::
     - :ref:`faq_cpu_percent`
@@ -502,7 +502,7 @@ Disks
 
   Return disk usage statistics for the partition containing *path*. Values are
   expressed in bytes and include :field:`total`, :field:`used` and
-  :field:`free` space, plus the :field:`percentage` usage. On UNIX, *path* must
+  :field:`free` space, plus the :field:`percent` usage. On UNIX, *path* must
   point to a path within a **mounted** filesystem partition. This function was
   later incorporated in Python 3.3 as :func:`shutil.disk_usage` (see
   :bpo:`12442`).
@@ -595,7 +595,7 @@ Network
     :term:`NIC` level. Unlike :field:`errin`, drops indicate the interface or
     kernel buffer was overwhelmed.
   - :field:`dropout`: total number of outgoing packets dropped (always 0 on
-    macOS and BSD). A non-zero and growing count is a sign of network
+    macOS and NetBSD). A non-zero and growing count is a sign of network
     saturation.
 
   If *pernic* is ``True``, return the same information for every network
@@ -622,6 +622,9 @@ Network
   .. seealso::
     - :src:`scripts/nettop.py`
     - :src:`scripts/ifconfig.py`
+
+  .. versionchanged:: 8.0.0
+     FreeBSD, OpenBSD: :field:`dropout` is no longer always ``0``.
 
 .. function:: net_connections(kind="inet")
 
@@ -679,10 +682,10 @@ Network
 
      >>> import psutil
      >>> psutil.net_connections()
-     [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=1254),
-      pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>, pid=2987),
-      pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=None),
-      pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>, pid=None)
+     [sconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=1254),
+      sconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>, pid=2987),
+      sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=None),
+      sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>, pid=None)
       ...]
 
   .. warning::
@@ -722,7 +725,8 @@ Network
     unconfigured NIC), or :data:`AF_LINK` (a MAC address).
   - :field:`address`: the primary NIC address.
   - :field:`netmask`: the netmask address.
-  - :field:`broadcast`: the broadcast address; always ``None`` on Windows.
+  - :field:`broadcast`: the broadcast address; on Windows it is calculated from
+    the netmask.
   - :field:`ptp`: a "point to point" address (typically a VPN); always ``None``
     on Windows.
 
@@ -1836,8 +1840,10 @@ Process class
   .. method:: memory_full_info()
 
     This deprecated method returns the same information as :meth:`memory_info`
-    plus :meth:`memory_footprint`'s :field:`uss`, :field:`pss` and
-    :field:`swap` in a single named tuple.
+    plus :meth:`memory_footprint`'s :field:`uss` (and, on Linux, also
+    :field:`pss` and :field:`swap`) in a single named tuple. On BSD, SunOS and
+    AIX no footprint field is added, so the result is just
+    :meth:`memory_info`'s.
 
     .. deprecated:: 8.0.0
        use :meth:`memory_footprint` instead. See

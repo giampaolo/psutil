@@ -185,8 +185,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             "(IILLKK)",
             diskPerformance->ReadCount,
             diskPerformance->WriteCount,
-            diskPerformance->BytesRead,
-            diskPerformance->BytesWritten,
+            diskPerformance->BytesRead.QuadPart,
+            diskPerformance->BytesWritten.QuadPart,
             // convert to ms:
             // https://github.com/giampaolo/psutil/issues/1012
             (unsigned long long)(diskPerformance->ReadTime.QuadPart)

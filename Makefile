@@ -18,10 +18,12 @@ FILES =
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
 DPRINT = ~/.dprint/bin/dprint
+DPRINT_FILES = '*.md' '*.json' '*.jsonc' '*.yml' '*.yaml' '*.js' '*.css' '.clang-format'
 INSTALL_PYDEPS = PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh
 
 # `make` called with no args is like `make help`
 .DEFAULT_GOAL := help
+.MAIN: help  # BSD make support
 .PHONY: build test
 
 # install git hook (skipped in worktrees, where .git is a file)
@@ -32,17 +34,18 @@ _ := $(shell test -d .git && mkdir -p .git/hooks/ && ln -sf ../../scripts/intern
 # ===================================================================
 
 clean:  ## Remove all build files.
-	@rm -rfv `find . \
+	@find . -name .git -prune -o \( \
 		-type d -name __pycache__ \
-		-o -type f -name \*.bak \
-		-o -type f -name \*.orig \
-		-o -type f -name \*.pyc \
-		-o -type f -name \*.pyd \
-		-o -type f -name \*.pyo \
-		-o -type f -name \*.rej \
-		-o -type f -name \*.so \
-		-o -type f -name \*.~ \
-		-o -name \*@psutil-\*`
+		-o -type f -name '*.bak' \
+		-o -type f -name '*.orig' \
+		-o -type f -name '*.pyc' \
+		-o -type f -name '*.pyd' \
+		-o -type f -name '*.pyo' \
+		-o -type f -name '*.rej' \
+		-o -type f -name '*.so' \
+		-o -type f -name '*~' \
+		-o -name '*@psutil-*' \
+	\) -prune -exec rm -rfv {} +
 	@rm -rfv \
 		*.core \
 		*.egg-info \
@@ -209,7 +212,7 @@ lint-c:  ## Run C linter.
 	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format --dry-run --Werror {}
 
 dprint:  ## Run linter for .md / .json / .yml / .js / .css files.
-	@$(DPRINT) check
+	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) check
 
 lint-rst:  ## Run linter for .rst files.
 	@$(call _ls,'*.rst') | xargs $(PYTHON) scripts/internal/docs/rst_unused_targets.py
@@ -256,7 +259,7 @@ fix-rst:  ## Re-wrap .rst files.
 	@$(call _ls,'*.rst') | xargs rstwrap
 
 fix-dprint:  ## Reformat .md / .json / .yml / .js / .css files.
-	@$(DPRINT) fmt
+	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) fmt
 
 fix-all:  ## Run all code fixers.
 	$(MAKE) fix-ruff
@@ -277,7 +280,7 @@ ci-lint:  ## Run all linters on GitHub CI.
 	clang-format --version
 	$(MAKE) lint-all
 
-ci-test:  ## Run tests on GitHub CI.
+ci-install:  ## Install deps and build on GitHub CI.
 	$(MAKE) install-sysdeps
 	# Editable install: it builds in-place, and having psutil already
 	# installed stops pip from pulling it from PyPI for psleak.
@@ -287,6 +290,9 @@ ci-test:  ## Run tests on GitHub CI.
 	# Warm pywin32's gen_py cache: concurrent first imports of wmi in
 	# the pytest workers corrupt it (EOFError from gencache).
 	if [ "$$OS" = "Windows_NT" ]; then $(PYTHON) -c "import wmi"; fi
+
+ci-test:  ## Run tests on GitHub CI.
+	$(MAKE) ci-install
 	$(MAKE) test-parallel
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
@@ -294,7 +300,7 @@ ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(MAKE) create-sdist
 	mv wheelhouse/* dist/
 	$(MAKE) check-dist
-	$(PYTHON) scripts/internal/print_dist.py --check
+	$(PYTHON) scripts/internal/print/dist.py --check
 
 # ===================================================================
 # Distribution
@@ -379,25 +385,25 @@ git-tag-release:  ## Git-tag a new release.
 # ===================================================================
 
 print-announce:  ## Print announce of new release.
-	@$(PYTHON) scripts/internal/print_announce.py
+	@$(PYTHON) scripts/internal/print/announce.py
 
 print-access-denied: ## Print AD exceptions
-	$(PYTHON) scripts/internal/print_access_denied.py
+	$(PYTHON) scripts/internal/print/access_denied.py
 
 print-api-speed:  ## Benchmark all API calls
-	$(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
+	$(PYTHON) scripts/internal/print/api_speed.py $(ARGS)
 
 print-downloads:  ## Print PYPI download statistics
-	$(PYTHON) scripts/internal/print_downloads.py
+	$(PYTHON) scripts/internal/print/downloads.py
 
 print-hashes:  ## Prints hashes of files in dist/ directory
-	$(PYTHON) scripts/internal/print_hashes.py
+	$(PYTHON) scripts/internal/print/hashes.py
 
 print-sysinfo:  ## Prints system info
-	$(PYTHON) scripts/internal/print_sysinfo.py
+	$(PYTHON) scripts/internal/print/sysinfo.py
 
 print-dist:  ## Print downloaded wheels / tar.gz
-	$(PYTHON) scripts/internal/print_dist.py
+	$(PYTHON) scripts/internal/print/dist.py
 
 # ===================================================================
 # Misc
@@ -422,4 +428,4 @@ ci-run:  ## Manually run a CI workflow, e.g. `make ci-run JOB=bsd`
 	gh workflow run $(JOB).yml --ref $$(git rev-parse --abbrev-ref HEAD)
 
 help: ## Display callable targets.
-	@awk -F':.*?## ' '/^[a-zA-Z0-9_.-]+:.*?## / {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+	@awk -F':.*?## ' '/^[a-zA-Z0-9_.-]+:.*?## / {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}' Makefile | sort

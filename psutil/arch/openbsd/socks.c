@@ -127,7 +127,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             // populate tuple and list
             if (!pylist_append_fmt(
                     py_retlist,
-                    "(iiiNNil)",
+                    "(iiiNNii)",
                     kif->fd_fd,
                     kif->so_family,
                     kif->so_type,
@@ -150,7 +150,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
             if (!pylist_append_fmt(
                     py_retlist,
-                    "(iiiOsil)",
+                    "(iiiOsii)",
                     kif->fd_fd,
                     kif->so_family,
                     kif->so_type,

@@ -63,6 +63,14 @@
         inset -3px 0 0 var(--bg-sidebar);
 }
 
+.left-sidebar a:focus-visible {
+    outline-offset: -2px;
+}
+
+.left-sidebar:focus {
+    outline: none;
+}
+
 /* ---- Mobile: off-canvas drawer ------------------------------------- */
 
 @media (max-width: 1024px) {

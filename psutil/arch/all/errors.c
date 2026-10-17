@@ -29,6 +29,27 @@ psutil_oserror(void) {
 }
 
 
+// Set OSError(errnum, msg). msg is locale text (strerror() output),
+// so decode it the way Python does instead of assuming UTF-8, or a
+// non-UTF-8 locale turns the OSError into a UnicodeDecodeError.
+static PyObject *
+psutil_oserror_msg(int errnum, const char *msg) {
+    PyObject *text;
+    PyObject *exc;
+
+    text = PyUnicode_DecodeLocale(msg, "surrogateescape");
+    if (text == NULL)
+        return NULL;
+    exc = PyObject_CallFunction(PyExc_OSError, "(iO)", errnum, text);
+    Py_DECREF(text);
+    if (exc != NULL) {
+        PyErr_SetObject(PyExc_OSError, exc);
+        Py_DECREF(exc);
+    }
+    return NULL;
+}
+
+
 // Same as above, but adds the syscall to the exception message. On
 // Windows this is achieved by setting the `filename` attribute of the
 // OSError object.
@@ -41,7 +62,6 @@ psutil_oserror_wsyscall(const char *syscall) {
     str_format(msg, sizeof(msg), "(originated from %s)", syscall);
     PyErr_SetFromWindowsErrWithFilename(err, msg);
 #else
-    PyObject *exc;
     int saved_errno = errno;
     str_format(
         msg,
@@ -50,11 +70,7 @@ psutil_oserror_wsyscall(const char *syscall) {
         strerror(saved_errno),
         syscall
     );
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", saved_errno, msg);
-    if (exc != NULL) {
-        PyErr_SetObject(PyExc_OSError, exc);
-        Py_DECREF(exc);
-    }
+    psutil_oserror_msg(saved_errno, msg);
 #endif
     return NULL;
 }
@@ -63,25 +79,18 @@ psutil_oserror_wsyscall(const char *syscall) {
 // Set OSError(errno=ESRCH) ("No such process").
 PyObject *
 psutil_oserror_nsp(const char *syscall) {
-    PyObject *exc;
     char msg[MSG_SIZE];
 
     str_format(
         msg, sizeof(msg), "force no such process (originated from %s)", syscall
     );
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
-    if (exc != NULL) {
-        PyErr_SetObject(PyExc_OSError, exc);
-        Py_DECREF(exc);
-    }
-    return NULL;
+    return psutil_oserror_msg(ESRCH, msg);
 }
 
 
 // Set OSError(errno=EACCES) ("Permission denied").
 PyObject *
 psutil_oserror_ad(const char *syscall) {
-    PyObject *exc;
     char msg[MSG_SIZE];
 
     str_format(
@@ -90,12 +99,7 @@ psutil_oserror_ad(const char *syscall) {
         "force permission denied (originated from %s)",
         syscall
     );
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
-    if (exc != NULL) {
-        PyErr_SetObject(PyExc_OSError, exc);
-        Py_DECREF(exc);
-    }
-    return NULL;
+    return psutil_oserror_msg(EACCES, msg);
 }
 
 
@@ -129,6 +133,7 @@ _psutil_warn_impl(const char *file, int lineno, const char *fmt, ...) {
     va_list args;
     int ret;
     PyGILState_STATE gstate;
+    PyObject *text;
 
     va_start(args, fmt);
     ret = vsnprintf(msg, sizeof(msg), fmt, args);
@@ -156,8 +161,15 @@ _psutil_warn_impl(const char *file, int lineno, const char *fmt, ...) {
     // inside Py_BEGIN/END_ALLOW_THREADS blocks. Caveat: the
     // PyGILState_* API doesn't support sub-interpreters.
     gstate = PyGILState_Ensure();
-    if (PyErr_WarnEx(PyExc_RuntimeWarning, warning, 1) != 0)
+    text = PyUnicode_DecodeLocale(warning, "surrogateescape");
+    if (text == NULL) {
         PyErr_Clear();
+    }
+    else {
+        if (PyErr_WarnFormat(PyExc_RuntimeWarning, 1, "%U", text) != 0)
+            PyErr_Clear();
+        Py_DECREF(text);
+    }
     PyGILState_Release(gstate);
 }
 

@@ -584,8 +584,6 @@ class TestProcess(PsutilTestCase):
         for nt in maps:
             if nt.path.startswith('['):
                 continue
-            if BSD and nt.path == "pvclock":
-                continue
             assert os.path.isabs(nt.path), nt.path
 
             if POSIX:
@@ -1599,6 +1597,21 @@ class TestProcessPidReuse(PsutilTestCase):
         with pytest.raises(psutil.NoSuchProcess, match=msg):
             p.children()
 
+    @skipif(
+        FREEBSD or OPENBSD or SUNOS or AIX,
+        reason="PID reuse detection disabled on this platform",
+    )
+    def test_reused_pid_detected_by_ppid(self):
+        subp = self.spawn_subproc()
+        p = psutil.Process(subp.pid)
+        assert p._ident[1] is not None
+        self.addCleanup(psutil._pids_reused.discard, p.pid)
+        p._ident = (p.pid, p._ident[1] + 100)
+        assert not p._pid_reused
+        msg = "process no longer exists and its PID has been reused"
+        with pytest.raises(psutil.NoSuchProcess, match=msg):
+            p.ppid()
+
     def test_reused_pid_with_null_ctime(self):
         # A null create time on either side must not count as PID
         # reuse, see: https://github.com/giampaolo/psutil/issues/2895.
@@ -1682,6 +1695,13 @@ class TestProcessWait(PsutilTestCase):
         p = self.spawn_psproc(cmd)
         code = p.wait()
         assert code == 5
+        self.assert_proc_gone(p)
+
+    @skipif(not WINDOWS, reason="WINDOWS only")
+    def test_wait_exited_ntstatus(self):
+        code = "import ctypes; ctypes.windll.kernel32.ExitProcess(0xC0000005)"
+        p = self.spawn_psproc([PYTHON_EXE, "-c", code])
+        assert p.wait() == 0xC0000005
         self.assert_proc_gone(p)
 
     @skipif(not POSIX, reason="not POSIX")

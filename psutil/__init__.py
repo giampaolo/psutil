@@ -58,6 +58,8 @@ from ._common import NoSuchProcess
 from ._common import TimeoutExpired
 from ._common import ZombieProcess
 from ._common import bytes2human
+from ._common import cache_activate as _cache_activate
+from ._common import cache_deactivate as _cache_deactivate
 from ._common import debug
 from ._common import memoize_when_activated
 from ._common import warn
@@ -575,7 +577,30 @@ class Process:
 
     def _raise_if_pid_reused(self):
         """Raise `NoSuchProcess` in case process PID has been reused."""
-        if self._pid_reused or (not self.is_running() and self._pid_reused):
+        if not self._pid_reused and not self._gone:
+            # Don't instantiate a second Process just to read its
+            # create time. _get_ident() goes through self._proc, so
+            # inside oneshot() it reuses the read we already did.
+            try:
+                ident = self._get_ident()
+            except (AccessDenied, ZombieProcess):
+                # Can't tell, so don't claim the PID was reused.
+                return
+            except NoSuchProcess:
+                self._gone = True
+                return
+            cmp = self._cmp_idents(self._ident, ident)
+            if cmp == "different":
+                debug(f"PID reuse detected: {self._ident} vs. {ident}")
+                self._pid_reused = True
+                _pids_reused.add(self.pid)
+            elif cmp == "unknown":
+                debug(
+                    "null create time, PID reuse check inconclusive:"
+                    f" {self._ident} vs. {ident}"
+                )
+
+        if self._pid_reused:
             # We may directly raise NSP in here already if PID is just
             # not running, but I prefer NSP to be raised naturally by
             # the actual Process API call. This way unit tests will tell
@@ -650,23 +675,11 @@ class Process:
                 yield
             else:
                 try:
-                    self.cpu_times.cache_activate(self)
-                    # cached in case memory_percent() is used
-                    self.memory_info.cache_activate(self)
-                    # cached in case parent() is used
-                    self.ppid.cache_activate(self)
-                    # cached in case username() is used
-                    if POSIX:
-                        self.uids.cache_activate(self)
-                    # specific implementation cache
+                    _cache_activate(self)
                     self._proc.oneshot_enter()
                     yield
                 finally:
-                    self.cpu_times.cache_deactivate(self)
-                    self.memory_info.cache_deactivate(self)
-                    self.ppid.cache_deactivate(self)
-                    if POSIX:
-                        self.uids.cache_deactivate(self)
+                    _cache_deactivate(self)
                     self._proc.oneshot_exit()
 
     def as_dict(
@@ -1353,8 +1366,10 @@ class Process:
     # DEPRECATED
     def memory_full_info(self) -> pfullmem:
         """Return the same information as `memory_info()` plus
-        `memory_footprint()`'s `uss`, `pss` and `swap` fields in a
-        single named tuple.
+        `memory_footprint()`'s `uss` field, and on Linux also `pss`
+        and `swap`, in a single named tuple. On BSD, SunOS and AIX
+        no footprint field is added, so the result is just
+        `memory_info()`'s.
 
         DEPRECATED in 8.0.0. Use `memory_footprint()` instead.
         """
@@ -1668,7 +1683,7 @@ Process.attrs = frozenset(
 
 
 class Popen(Process):
-    """Same as `subprocess.Popen`, but in addition it provides all
+    r"""Same as `subprocess.Popen`, but in addition it provides all
     `Process` methods in a single class.
 
     For the following methods which are common to both classes, psutil
@@ -1683,16 +1698,15 @@ class Popen(Process):
 
       >>> import psutil
       >>> from subprocess import PIPE
-      >>> p = psutil.Popen(["python", "-c", "print 'hi'"], stdout=PIPE)
+      >>> p = psutil.Popen(["python3", "-c", "print('hi')"], stdout=PIPE)
       >>> p.name()
       'python3'
       >>> p.uids()
-      user(real=1000, effective=1000, saved=1000)
+      puids(real=1000, effective=1000, saved=1000)
       >>> p.username()
       'giampaolo'
       >>> p.communicate()
-      ('hi', None)
-      >>> p.terminate()
+      (b'hi\n', None)
       >>> p.wait(timeout=2)
       0
       >>>
@@ -2187,8 +2201,8 @@ def cpu_times_percent(
     For instance, on Linux we'll get:
 
       >>> cpu_times_percent()
-      cpupercent(user=4.8, nice=0.0, system=4.8, idle=90.5, iowait=0.0,
-                 irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+      scputimes(user=4.8, system=4.8, idle=90.5, nice=0.0, iowait=0.0,
+                irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
       >>>
 
     *interval* and *percpu* arguments have the same meaning as in
@@ -2460,7 +2474,7 @@ def net_io_counters(
      - errout:       total number of errors while sending
      - dropin:       total number of incoming packets which were dropped
      - dropout:      total number of outgoing packets which were dropped
-                     (always 0 on macOS and BSD)
+                     (always 0 on macOS and NetBSD)
 
     If *pernic* is True return the same information for every
     network interface as a dictionary with interface names as the
@@ -2535,7 +2549,8 @@ def net_if_addrs() -> dict[str, list[snicaddr]]:
       unconfigured NIC).
     - address: the primary NIC address
     - netmask: the netmask address
-    - broadcast: the broadcast address; always None on Windows
+    - broadcast: the broadcast address; on Windows it is calculated from
+      the netmask
     - ptp: a "point to point" address (typically a VPN); always None on
       Windows
     """
@@ -2595,7 +2610,7 @@ def net_if_stats() -> dict[str, snicstats]:
      - isup: whether the interface is up (bool)
      - duplex: can be either `NIC_DUPLEX_FULL`, `NIC_DUPLEX_HALF` or
                `NIC_DUPLEX_UNKNOWN`
-     - speed: the NIC speed expressed in mega bits (MB); if it can't
+     - speed: the NIC speed expressed in megabits (Mbps); if it can't
               be determined (e.g. 'localhost') it will be set to 0.
      - mtu: the maximum transmission unit expressed in bytes.
      - flags: a string of comma-separated flags on the interface.
@@ -2608,7 +2623,7 @@ def net_if_stats() -> dict[str, snicstats]:
 # =====================================================================
 
 
-# Linux, macOS
+# Linux, FreeBSD
 if hasattr(_psplatform, "sensors_temperatures"):
 
     def sensors_temperatures(
@@ -2701,7 +2716,7 @@ def users() -> list[suser]:
     """Return users currently connected on the system as a list of
     named tuples including the following fields:
 
-     - user: the name of the user
+     - name: the name of the user
      - terminal: the tty or pseudo-tty associated with the user, if any.
      - host: the host name associated with the entry, if any.
      - started: the creation time as a floating point number expressed in
