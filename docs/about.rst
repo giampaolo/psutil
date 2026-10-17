@@ -107,7 +107,7 @@ Copy page
 ---------
 
 Next to the title of every documentation page there's a *Copy page* button,
-which copies the page's RsT source to your clipboard. Handy for for pasting a
+which copies the page's RsT source to your clipboard. Handy for pasting a
 whole page into an LLM.
 
 .. image:: /_static/images/about/copypage.png
