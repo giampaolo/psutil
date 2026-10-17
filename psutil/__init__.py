@@ -368,6 +368,23 @@ def _check_conn_kind(kind):
 # =====================================================================
 
 
+class ProcessSnapshot:
+    __slots__ = ("_data",)
+
+    def __init__(self, data):
+        self._data = data
+
+    def __getattr__(self, name):
+        try:
+            return self._data[name]
+        except KeyError:
+            msg = f"{name!r} was not requested in process_iter(attrs=...)"
+            raise AttributeError(msg) from None
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self._data!r})"
+
+
 class Process:
     """Represents an OS process identified by a PID.
 
@@ -404,6 +421,7 @@ class Process:
                 raise NoSuchProcess(pid, msg=msg) from err
 
         self._pid = pid
+        self._snapshot = None
         self._name = None
         self._exe = None
         self._create_time = None
@@ -579,6 +597,10 @@ class Process:
             # APIs which don't use _raise_if_pid_reused().
             msg = "process no longer exists and its PID has been reused"
             raise NoSuchProcess(self.pid, self._name, msg=msg)
+
+    @property
+    def snapshot(self) -> ProcessSnapshot | None:
+        return self._snapshot
 
     @property
     def pid(self) -> int:
@@ -1585,7 +1607,7 @@ Process.attrs = frozenset(
     x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'connections', 'memory_full_info', 'oneshot', 'attrs'}
+      'connections', 'memory_full_info', 'oneshot', 'attrs', 'snapshot'}
 )
 # fmt: on
 
@@ -1777,6 +1799,7 @@ def process_iter(
                     proc = add(pid)
                 if attrs is not None:
                     proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
+                    proc._snapshot = ProcessSnapshot(proc.info)
                 yield proc
             except ZombieProcess:
                 if proc is not None:

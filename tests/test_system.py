@@ -122,6 +122,16 @@ class TestProcessIter(PsutilTestCase):
                 assert p.info['pid'] >= 0
             assert m.called
 
+    def test_snapshot(self):
+        for p in psutil.process_iter(attrs=["pid", "name"]):
+            assert p.snapshot.pid == p.pid
+            assert p.snapshot.name == p.info["name"]
+            assert p.snapshot.name == p.name()
+            with pytest.raises(AttributeError):
+                p.snapshot.exe  # noqa: B018
+        assert "snapshot" not in psutil.Process.attrs
+        assert psutil.Process().snapshot is None
+
     def test_deprecated_prefetch_empty_attrs(self):
         # attrs=[] should prefetch all methods.
         with pytest.warns(DeprecationWarning):
