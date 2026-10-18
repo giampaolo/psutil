@@ -6,6 +6,7 @@
  */
 
 #include <Python.h>
+#include <string.h>
 #include <utmp.h>
 
 #include "../../arch/all/init.h"
@@ -41,13 +42,21 @@ psutil_users(PyObject *self, PyObject *args) {
             break;
         if (*ut.ut_name == '\0')
             continue;
-        py_username = PyUnicode_DecodeFSDefault(ut.ut_name);
+        // utmp fields are not null-terminated when they fill the
+        // whole array.
+        py_username = PyUnicode_DecodeFSDefaultAndSize(
+            ut.ut_name, strnlen(ut.ut_name, sizeof(ut.ut_name))
+        );
         if (!py_username)
             goto error;
-        py_tty = PyUnicode_DecodeFSDefault(ut.ut_line);
+        py_tty = PyUnicode_DecodeFSDefaultAndSize(
+            ut.ut_line, strnlen(ut.ut_line, sizeof(ut.ut_line))
+        );
         if (!py_tty)
             goto error;
-        py_hostname = PyUnicode_DecodeFSDefault(ut.ut_host);
+        py_hostname = PyUnicode_DecodeFSDefaultAndSize(
+            ut.ut_host, strnlen(ut.ut_host, sizeof(ut.ut_host))
+        );
         if (!py_hostname)
             goto error;
         if (!pylist_append_fmt(

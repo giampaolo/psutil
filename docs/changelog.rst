@@ -547,6 +547,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   kernel), even though :func:`pids` lists it.
 - [OpenBSD], :label:`critical`: :func:`users` crashed with ``fclose(NULL)``
   instead of raising :exc:`OSError` if ``/var/run/utmp`` could not be opened.
+- [OpenBSD]: :func:`users` could return garbage trailing characters in
+  :field:`name`, :field:`terminal` or :field:`host` when the ``utmp`` field is
+  full, since it then has no null terminator.
 
 **Bug fixes: UNIX**
 
