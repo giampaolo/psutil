@@ -190,6 +190,9 @@ class TestSpecialMethods(PsutilTestCase):
 
     def test_process_snapshot__repr__(self):
         assert repr(psutil.ProcessSnapshot({})) == "ProcessSnapshot()"
+
+        # pid and name come first, the rest is sorted. Lists and
+        # namedtuples are cut after 4 items, strings to 60 chars.
         nt5 = collections.namedtuple("nt5", "a b c d e")
         snap = psutil.ProcessSnapshot({
             "zzz": "x" * 100,
@@ -206,6 +209,19 @@ class TestSpecialMethods(PsutilTestCase):
             + "..."
             + "x" * 28
             + "')"
+        )
+
+        # nesting stops at reprlib's default depth of 6
+        nt2 = collections.namedtuple("nt2", "a b")
+        nested = nt2(1, 2)
+        for _ in range(20):
+            nested = nt2(nested, 0)
+        assert repr(psutil.ProcessSnapshot({"x": nested})) == (
+            "ProcessSnapshot(x="
+            + "nt2(a=" * 6
+            + "nt2(...)"
+            + ", b=0)" * 6
+            + ")"
         )
 
 

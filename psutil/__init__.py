@@ -443,9 +443,14 @@ class ProcessSnapshot:
         # Truncate long values (memory_maps, environ, ...).
         class SnapshotRepr(reprlib.Repr):
             def repr_instance(self, x, level):
-                # reprlib would cut namedtuples mid-string; keep their
-                # field names instead.
+                # reprlib dispatches on the type name, so namedtuples
+                # end up in this fallback and get cut mid-string. Print
+                # them field by field instead.
                 if isinstance(x, tuple) and hasattr(x, "_fields"):
+                    # depth limit, as reprlib does for tuples. Literal
+                    # "..." because Repr.fillvalue only exists in 3.12+.
+                    if level <= 0 and x:
+                        return f"{type(x).__name__}(...)"
                     fields = x._fields[: self.maxtuple]
                     s = ", ".join(
                         f"{f}={self.repr1(getattr(x, f), level - 1)}"
