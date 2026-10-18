@@ -85,8 +85,8 @@ class ConnectionStatus(StrEnum):
     if WINDOWS:
         CONN_DELETE_TCB = "DELETE_TCB"
     if SUNOS:
-        CONN_BOUND = "CONN_BOUND"
-        CONN_IDLE = "CONN_IDLE"
+        CONN_BOUND = "BOUND"
+        CONN_IDLE = "IDLE"
 
 
 # psutil.net_if_stats()
