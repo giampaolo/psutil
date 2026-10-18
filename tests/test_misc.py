@@ -303,6 +303,12 @@ class TestMisc(PsutilTestCase):
 class TestSerialization(PsutilTestCase):
     @staticmethod
     def check(ret):
+        if isinstance(ret, Exception):
+            b = pickle.loads(pickle.dumps(ret))
+            assert type(b) is type(ret)
+            assert vars(b) == vars(ret)
+            return
+
         json.loads(json.dumps(ret))
 
         a = pickle.dumps(ret)
