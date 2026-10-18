@@ -36,8 +36,8 @@ extern CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 double psutil_FiletimeToUnixTime(FILETIME ft);
 double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);
 int psutil_setup_windows(void);
-PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
-PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
+FARPROC psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
+FARPROC psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
 PVOID psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall);
 
 extern PyObject *TimeoutExpired;

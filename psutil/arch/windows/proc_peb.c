@@ -87,7 +87,7 @@ get_proc_data(DWORD pid, enum peb_kind kind, WCHAR **pdata, SIZE_T *psize) {
      */
     SIZE_T size = 0;
     HANDLE hProcess = NULL;
-    LPCVOID src;
+    LPCVOID src = NULL;
     WCHAR *buffer = NULL;
 #ifdef _WIN64
     LPVOID ppeb32 = NULL;

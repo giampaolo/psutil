@@ -161,8 +161,12 @@ def get_extra_compile_args():
     breaking normal pip source installs.
     """
     if WINDOWS:
-        # /W4 is the highest useful warning level (/Wall is too noisy)
-        args = ["/W4"]
+        args = [
+            # /the highest useful warning level (/Wall is too noisy)
+            "/W4",
+            # C4100: unreferenced "self" parameter (-Wno-unused-parameter)
+            "/wd4100",
+        ]
         if os.getenv("PSUTIL_WERROR"):
             args.append("/WX")
         return args
