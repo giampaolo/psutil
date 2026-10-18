@@ -1930,7 +1930,7 @@ def process_iter(
                 elif proc._snapshot:  # left over from a scan with attrs
                     proc._snapshot = ProcessSnapshot({})
 
-                # the deprecated 'info' is reset whenever the snapshot is
+                # invalidate the deprecated info cache on every scan
                 proc._info = _SENTINEL
                 yield proc
             except ZombieProcess:
