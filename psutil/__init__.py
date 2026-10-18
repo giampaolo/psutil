@@ -509,6 +509,7 @@ class Process:
                 raise NoSuchProcess(pid, msg=msg) from err
 
         self._pid = pid
+        # None would be better, but then type checkers (pyright) go crazy.
         self._snapshot = ProcessSnapshot({})
         self._info = _SENTINEL
         self._name = None
@@ -686,6 +687,9 @@ class Process:
 
     @property
     def snapshot(self) -> ProcessSnapshot:
+        """The attributes collected by `process_iter(attrs=...)` as a
+        read-only `ProcessSnapshot`, or an empty one.
+        """
         return self._snapshot
 
     @property
@@ -1859,9 +1863,9 @@ def process_iter(
     `Process.as_dict()`.
 
     If *attrs* is specified, `Process.as_dict()` is called and the
-    resulting dict is stored as a `info` attribute attached to the
-    returned `Process` instance. Use `attrs=Process.attrs` to retrieve
-    all process info (slow).
+    result is made available as `Process.snapshot`, a read-only
+    `ProcessSnapshot` with one attribute per requested name. Use
+    `attrs=Process.attrs` to retrieve all process info (slow).
     """
     global _pmap
 

@@ -104,6 +104,8 @@ Accessing an attribute that was not requested raises :exc:`AttributeError`
 instead of :exc:`KeyError`. If you need a dict, use
 :meth:`p.snapshot.as_dict() <ProcessSnapshot.as_dict>`.
 
+.. _migration-8.0-attrs:
+
 New Process.attrs class attribute
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -182,8 +184,6 @@ platform-specific memory metrics which complement :meth:`Process.memory_info`:
 - Windows: :field:`virtual`, :field:`peak_virtual`, :field:`paged_pool`,
   :field:`nonpaged_pool`, :field:`peak_paged_pool`,
   :field:`peak_nonpaged_pool`.
-
-.. _migration-8.0-attrs:
 
 Python 3.6 and 3.7 dropped
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1141,7 +1141,7 @@ Process class
 
     .. deprecated:: 8.0.0
        use :meth:`snapshot.as_dict() <ProcessSnapshot.as_dict>` instead. See
-       :ref:`migration guide <migration-8.0>`.
+       :ref:`migration guide <migration-8.0-snapshot>`.
 
   .. attribute:: attrs
 
