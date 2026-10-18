@@ -136,6 +136,13 @@ class TestProcessIter(PsutilTestCase):
         p = next(psutil.process_iter(attrs=["pid", "name"]))
         with pytest.warns(DeprecationWarning, match="snapshot"):
             assert p.info == p.snapshot.as_dict()
+        p = psutil.Process()
+        with pytest.warns(DeprecationWarning, match="deprecated"):
+            p.info = {"pid": 1, "name": "foo"}
+        with pytest.warns(DeprecationWarning, match="snapshot"):
+            assert p.info == {"pid": 1, "name": "foo"}
+        # legacy writes must not touch the snapshot
+        assert p.snapshot.as_dict() == {}
 
     def test_zombie_process_is_not_skipped(self):
         # ZombieProcess is a subclass of NoSuchProcess; make sure

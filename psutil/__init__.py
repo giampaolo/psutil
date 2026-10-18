@@ -510,6 +510,7 @@ class Process:
 
         self._pid = pid
         self._snapshot = ProcessSnapshot({})
+        self._info = _SENTINEL
         self._name = None
         self._exe = None
         self._create_time = None
@@ -699,7 +700,16 @@ class Process:
             " instead"
         )
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        return self._snapshot.as_dict()
+        # cached so in-place edits stick, like the 7.x plain attribute
+        if self._info is _SENTINEL:
+            self._info = self._snapshot.as_dict()
+        return self._info
+
+    @info.setter
+    def info(self, value: dict[str, Any]) -> None:
+        msg = "setting Process.info is deprecated"
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        self._info = value
 
     @property
     def pid(self) -> int:
@@ -1902,6 +1912,8 @@ def process_iter(
                     proc._snapshot = ProcessSnapshot(data)
                 else:
                     proc._snapshot = ProcessSnapshot({})
+                # 7.x overwrote 'info' on every scan
+                proc._info = _SENTINEL
                 yield proc
             except ZombieProcess:
                 if proc is not None:
