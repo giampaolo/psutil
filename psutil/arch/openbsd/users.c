@@ -22,7 +22,7 @@ psutil_users(PyObject *self, PyObject *args) {
         return NULL;
 
     struct utmp ut;
-    FILE *fp;
+    FILE *fp = NULL;
     size_t nread;
 
     Py_BEGIN_ALLOW_THREADS
@@ -71,7 +71,8 @@ psutil_users(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    fclose(fp);
+    if (fp != NULL)
+        fclose(fp);
     Py_XDECREF(py_username);
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);

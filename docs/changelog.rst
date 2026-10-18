@@ -545,6 +545,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   kernel's 64-bit ``vm.stats.sys`` sysctls were read as ``unsigned int``.
 - :gh:`3017`, [FreeBSD]: :func:`pid_exists` returned ``False`` for PID 0 (the
   kernel), even though :func:`pids` lists it.
+- [OpenBSD], :label:`critical`: :func:`users` crashed with ``fclose(NULL)``
+  instead of raising :exc:`OSError` if ``/var/run/utmp`` could not be opened.
 
 **Bug fixes: UNIX**
 
