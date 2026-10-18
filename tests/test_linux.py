@@ -1479,6 +1479,21 @@ class TestDiskPartitions(LinuxTestCase):
         finally:
             psutil.PROCFS_PATH = "/proc"
 
+    def test_emulate_filesystems_permission_error(self):
+        real_open = psutil._pslinux.open_text
+
+        def fake_open(path, *args, **kwargs):
+            if path.endswith("/filesystems"):
+                raise PermissionError(path)
+            return real_open(path, *args, **kwargs)
+
+        expected = psutil.disk_partitions()
+        with mock.patch.object(psutil._pslinux, "open_text", fake_open):
+            ret = psutil.disk_partitions()
+        assert set(expected) <= set(ret)
+        for part in ret:
+            assert part.device.startswith("/dev/") or part.fstype == "zfs"
+
 
 class TestDiskIoCounters(LinuxTestCase):
     def test_emulate_kernel_2_4(self):

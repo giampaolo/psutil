@@ -1237,11 +1237,16 @@ def disk_partitions(all=False):
     def fstypes_from_mountinfo():
         with open_text(f"{procfs_path}/self/mountinfo") as f:
             for line in f:
-                line = line.strip().split()
-                if len(line) > 1:
-                    for i in range(len(line) - 1):
-                        if line[i] == "-":
-                            fstypes.add(line[i + 1])
+                fields = line.split()
+                try:
+                    i = fields.index("-")
+                    fstype, source = fields[i + 1], fields[i + 2]
+                except (ValueError, IndexError):
+                    continue
+                # A /dev/ source is the equivalent of a non "nodev"
+                # entry in /proc/filesystems.
+                if source.startswith("/dev/") or fstype == "zfs":
+                    fstypes.add(fstype)
         return fstypes
 
     if not all:
