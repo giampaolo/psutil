@@ -157,23 +157,28 @@ def unix_can_compile(c_code, extra_args=()):
 
 def get_extra_compile_args():
     """Enable compiler warnings for all builds. PSUTIL_WERROR=1 makes
-    them fatal (Makefile does this), so CI catches new warnings
-    without breaking normal pip source installs.
+    them fatal (Makefile does this), so CI catches new warnings without
+    breaking normal pip source installs.
     """
     if WINDOWS:
+        # /W4 is the highest useful warning level (/Wall is too noisy)
         args = ["/W4"]
         if os.getenv("PSUTIL_WERROR"):
             args.append("/WX")
         return args
     # Check flags individually, as some compilers (xlc, Sun cc) may
     # not support all of them.
-    # -Wno-unused-parameter: suppress warnings for unused C API "self".
-    # -Wno-missing-field-initializers: allow initializers like {0}.
     args = []
     for flag in [
+        # unused vars, uninitialized use, wrong printf args, missing
+        # return, etc.
         "-Wall",
+        # signed/unsigned compares, "size_t < 0" tests that can never
+        # be true, set but unused vars, empty bodies
         "-Wextra",
+        # suppress warnings for unused C API "self" arg
         "-Wno-unused-parameter",
+        # allow initializers like {0}
         "-Wno-missing-field-initializers",
     ]:
         if unix_can_compile("int main(void) { return 0; }", [flag]):
