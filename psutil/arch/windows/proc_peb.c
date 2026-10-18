@@ -139,7 +139,7 @@ get_proc_data(DWORD pid, enum peb_kind kind, WCHAR **pdata, SIZE_T *psize) {
 
         switch (kind) {
             case PEB_CMDLINE:
-                src = UlongToPtr(procParameters32.CommandLine.Buffer),
+                src = UlongToPtr(procParameters32.CommandLine.Buffer);
                 size = procParameters32.CommandLine.Length;
                 break;
             case PEB_CWD:
