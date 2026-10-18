@@ -41,11 +41,11 @@ open_address_space(pid_t pid, const char *procfs_path) {
 
 // Read chunk of data by offset to specified buffer of the same size.
 // Return the amount of bytes stored to the buffer or -1 on error.
-static size_t
+static ssize_t
 read_offt(int fd, off_t offset, char *buf, size_t buf_size) {
     size_t to_read = buf_size;
     size_t stored = 0;
-    int r;
+    ssize_t r;
 
     while (to_read) {
         Py_BEGIN_ALLOW_THREADS
@@ -217,7 +217,7 @@ ptr_size_by_psinfo(psinfo_t info) {
 static int
 search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
     int count = 0;
-    size_t r;
+    ssize_t r;
     char buf[8];
     static const char zeros[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -235,7 +235,7 @@ search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
         if (r == 0)
             break;
 
-        if (r != ptr_size) {
+        if ((size_t)r != ptr_size) {
             psutil_runtime_error("pointer block is truncated");
             return -1;
         }
