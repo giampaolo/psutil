@@ -160,7 +160,7 @@ read_cstrings_block(int fd, off_t offset, size_t ptr_size, size_t count) {
         goto error;
     }
 
-    if (read_offt(fd, offset, pblock, pblock_size) != pblock_size)
+    if (read_offt(fd, offset, pblock, pblock_size) != (ssize_t)pblock_size)
         goto error;
 
     result = (char **)calloc(count, sizeof(char *));
