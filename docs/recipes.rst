@@ -24,7 +24,7 @@ Find process by name:
   def find_procs_by_name(name):
       ls = []
       for p in psutil.process_iter(["name"]):
-          if p.info["name"] == name:
+          if p.snapshot.name == name:
               ls.append(p)
       return ls
 
@@ -41,9 +41,9 @@ A bit more advanced, check string against :meth:`Process.name`,
       ls = []
       for p in psutil.process_iter(["name", "exe", "cmdline"]):
           if (
-              name == p.info["name"]
-              or (p.info["exe"] and os.path.basename(p.info["exe"]) == name)
-              or (p.info["cmdline"] and p.info["cmdline"][0] == name)
+              name == p.snapshot.name
+              or (p.snapshot.exe and os.path.basename(p.snapshot.exe) == name)
+              or (p.snapshot.cmdline and p.snapshot.cmdline[0] == name)
           ):
               ls.append(p)
       return ls
@@ -100,7 +100,7 @@ Find all processes that have a given file open (useful on Windows):
   def find_procs_using_file(path):
       ls = []
       for p in psutil.process_iter(["open_files"]):
-          for f in p.info["open_files"] or []:
+          for f in p.snapshot.open_files or []:
               if f.path == path:
                   ls.append(p)
                   break
@@ -119,9 +119,9 @@ Processes owned by user:
       if user is None:
           user = getpass.getuser()
       return [
-          (p.pid, p.info["name"])
+          (p.pid, p.snapshot.name)
           for p in psutil.process_iter(["name", "username"])
-          if p.info["username"] == user
+          if p.snapshot.username == user
       ]
 
 -------------------------------------------------------------------------------
@@ -131,9 +131,9 @@ Processes using log files:
 .. code-block:: pycon
 
   >>> for p in psutil.process_iter(["name", "open_files"]):
-  ...      for file in p.info["open_files"] or []:
+  ...      for file in p.snapshot.open_files or []:
   ...          if file.path.endswith(".log"):
-  ...               print("{:<5} {:<10} {}".format(p.pid, p.info["name"][:10], file.path))
+  ...               print("{:<5} {:<10} {}".format(p.pid, p.snapshot.name[:10], file.path))
   ...
   1510  upstart    /home/giampaolo/.cache/upstart/unity-settings-daemon.log
   2174  nautilus   /home/giampaolo/.local/share/gvfs-metadata/home-ce08efac.log
@@ -149,9 +149,9 @@ Processes consuming more than 500M of memory:
 
   def procs_by_memory(min_bytes=500 * 1024 * 1024):
       return [
-          (p.pid, p.info["name"], p.info["memory_info"].rss)
+          (p.pid, p.snapshot.name, p.snapshot.memory_info.rss)
           for p in psutil.process_iter(["name", "memory_info"])
-          if p.info["memory_info"].rss > min_bytes
+          if p.snapshot.memory_info.rss > min_bytes
       ]
 
 -------------------------------------------------------------------------------
@@ -165,9 +165,9 @@ Top N processes by :term:`cumulative <cumulative counter>` CPU time:
   def top_cpu_procs(n=3):
       procs = sorted(
           psutil.process_iter(["name", "cpu_times"]),
-          key=lambda p: sum(p.info["cpu_times"][:2]),
+          key=lambda p: sum(p.snapshot.cpu_times[:2]),
       )
-      return [(p.pid, p.info["name"], sum(p.info["cpu_times"])) for p in procs[-n:]]
+      return [(p.pid, p.snapshot.name, sum(p.snapshot.cpu_times)) for p in procs[-n:]]
 
 -------------------------------------------------------------------------------
 
@@ -181,7 +181,7 @@ bytes (similar to ``iotop``):
   def top_io_procs(n=5):
       procs = []
       for p in psutil.process_iter(["io_counters"]):
-          io = p.info["io_counters"]
+          io = p.snapshot.io_counters
           procs.append((io.read_bytes + io.write_bytes, p))
       procs.sort(key=lambda x: x[0], reverse=True)
       return procs[:n]
@@ -197,7 +197,7 @@ Top N processes by open file descriptors (useful for diagnosing fd leaks):
   def top_open_files(n=5):
       procs = []
       for p in psutil.process_iter(["num_fds"]):
-          procs.append((p.info["num_fds"], p))
+          procs.append((p.snapshot.num_fds, p))
       procs.sort(key=lambda x: x[0], reverse=True)
       return procs[:n]
 

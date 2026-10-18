@@ -175,7 +175,7 @@ For the full API with more examples, see the
     [popenfile(path='/home/giampaolo/monit.py', fd=3, position=0, mode='r', flags=32768)]
     >>>
     >>> for p in psutil.process_iter(['pid', 'name']):
-    ...     print(p.pid, p.name())
+    ...     print(p.snapshot.pid, p.snapshot.name)
     ...
     1 systemd
     2 kthreadd

@@ -1318,12 +1318,14 @@ class process_namespace:
         ('attrs', (), {}),
         ('children', (), {'recursive': True}),
         ('connections', (), {}),  # deprecated
+        ('info', (), {}),  # deprecated
         ('is_running', (), {}),
         ('memory_full_info', (), {}),  # deprecated
         ('oneshot', (), {}),
         ('parent', (), {}),
         ('parents', (), {}),
         ('pid', (), {}),
+        ('snapshot', (), {}),
         ('wait', (0,), {}),
     ]
 

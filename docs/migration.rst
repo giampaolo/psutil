@@ -24,6 +24,9 @@ Key breaking changes in 8.0:
   memory metrics.
 - New :attr:`Process.attrs`: :class:`frozenset` of valid attribute names;
   ``process_iter(attrs=[])`` is deprecated.
+- New :attr:`Process.snapshot`: a read-only :class:`ProcessSnapshot` holding
+  the attributes collected by :func:`process_iter`; ``Process.info`` is
+  deprecated.
 - Python 3.6 and 3.7 dropped.
 - Windows < 10 dropped.
 - macOS 10.7 and 10.8 dropped.
@@ -72,6 +75,63 @@ Named tuple field order changed
 
 - :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired`
   fields were added.
+
+.. _migration-8.0-snapshot:
+
+Process.info is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The attributes collected by :func:`process_iter(attrs=...) <process_iter>` are
+now exposed as a read-only :class:`ProcessSnapshot` via
+:attr:`Process.snapshot`, with one attribute per requested name. The ``info``
+dict is deprecated and still works, but raises :exc:`DeprecationWarning`.
+
+Before:
+
+.. code-block:: python
+
+  for p in psutil.process_iter(["name", "username"]):
+      print(p.info["name"], p.info["username"])
+
+After:
+
+.. code-block:: python
+
+  for p in psutil.process_iter(["name", "username"]):
+      print(p.snapshot.name, p.snapshot.username)
+
+Accessing an attribute that was not requested raises :exc:`AttributeError`
+instead of :exc:`KeyError`. If you need a dict, use
+:meth:`p.snapshot.as_dict() <ProcessSnapshot.as_dict>`.
+
+.. _migration-8.0-attrs:
+
+New Process.attrs class attribute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:attr:`Process.attrs` is a new :class:`frozenset` containing the valid
+attribute names accepted by :meth:`Process.as_dict` and :func:`process_iter`.
+It avoids creating a throwaway process just to discover them:
+
+.. code-block:: python
+
+  # before
+  attrs = list(psutil.Process().as_dict().keys())
+
+  # after
+  attrs = psutil.Process.attrs
+
+It also makes it easy to pass all or a subset of attributes.
+``process_iter(attrs=[])`` (empty list meaning "all") is now deprecated; use
+:attr:`Process.attrs` instead:
+
+.. code-block:: python
+
+  # all attrs
+  psutil.process_iter(attrs=psutil.Process.attrs)
+
+  # all except connections
+  psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
 
 cpu_times() interrupt renamed to irq on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -124,35 +184,6 @@ platform-specific memory metrics which complement :meth:`Process.memory_info`:
 - Windows: :field:`virtual`, :field:`peak_virtual`, :field:`paged_pool`,
   :field:`nonpaged_pool`, :field:`peak_paged_pool`,
   :field:`peak_nonpaged_pool`.
-
-.. _migration-8.0-attrs:
-
-New Process.attrs class attribute
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-:attr:`Process.attrs` is a new :class:`frozenset` containing the valid
-attribute names accepted by :meth:`Process.as_dict` and :func:`process_iter`.
-It avoids creating a throwaway process just to discover them:
-
-.. code-block:: python
-
-  # before
-  attrs = list(psutil.Process().as_dict().keys())
-
-  # after
-  attrs = psutil.Process.attrs
-
-It also makes it easy to pass all or a subset of attributes.
-``process_iter(attrs=[])`` (empty list meaning "all") is now deprecated; use
-:attr:`Process.attrs` instead:
-
-.. code-block:: python
-
-  # all attrs
-  psutil.process_iter(attrs=psutil.Process.attrs)
-
-  # all except connections
-  psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
 
 Python 3.6 and 3.7 dropped
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -262,4 +293,4 @@ explicitly:
 
   for p in psutil.process_iter(["name"]):
       if p.is_running():
-          print(p.pid, p.info["name"])
+          print(p.pid, p.snapshot.name)

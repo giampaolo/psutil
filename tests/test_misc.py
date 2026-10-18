@@ -8,6 +8,7 @@
 
 import collections
 import contextlib
+import copy
 import io
 import json
 import os
@@ -187,6 +188,42 @@ class TestSpecialMethods(PsutilTestCase):
             == "timeout after 5 seconds (pid=321, name='name')"
         )
 
+    def test_process_snapshot__repr__(self):
+        assert repr(psutil.ProcessSnapshot({})) == "ProcessSnapshot()"
+
+        # pid and name come first, the rest is sorted. Lists and
+        # namedtuples are cut after 4 items, strings to 60 chars.
+        nt5 = collections.namedtuple("nt5", "a b c d e")
+        snap = psutil.ProcessSnapshot({
+            "zzz": "x" * 100,
+            "name": "foo",
+            "cmdline": list(range(10)),
+            "pid": 1,
+            "memory_info": nt5(1, 2, 3, 4, 5),
+        })
+        assert repr(snap) == (
+            "ProcessSnapshot(pid=1, name='foo', cmdline=[0, 1, 2, 3, ...],"
+            " memory_info=nt5(a=1, b=2, c=3, d=4, ...),"
+            " zzz='"
+            + "x" * 27
+            + "..."
+            + "x" * 28
+            + "')"
+        )
+
+        # nesting stops at reprlib's default depth of 6
+        nt2 = collections.namedtuple("nt2", "a b")
+        nested = nt2(1, 2)
+        for _ in range(20):
+            nested = nt2(nested, 0)
+        assert repr(psutil.ProcessSnapshot({"x": nested})) == (
+            "ProcessSnapshot(x="
+            + "nt2(a=" * 6
+            + "nt2(...)"
+            + ", b=0)" * 6
+            + ")"
+        )
+
 
 # ===================================================================
 # --- Misc, generic, corner cases
@@ -338,6 +375,18 @@ class TestSerialization(PsutilTestCase):
         assert b.seconds == 33
         assert b.pid == 4567
         assert b.name == 'name'
+
+    def test_process_snapshot(self):
+        snap = next(psutil.process_iter(attrs=["pid", "name"])).snapshot
+        json.loads(json.dumps(snap.as_dict()))
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            b = pickle.loads(pickle.dumps(snap, proto))
+            assert b == snap
+            assert vars(b) is not vars(snap)
+        for fun in (copy.copy, copy.deepcopy):
+            b = fun(snap)
+            assert b == snap
+            assert vars(b) is not vars(snap)
 
 
 # ===================================================================

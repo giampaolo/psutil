@@ -25,6 +25,7 @@ import contextlib
 import datetime
 import functools
 import os
+import reprlib
 import signal
 import socket
 import subprocess
@@ -246,7 +247,7 @@ __all__ = [
     "SUNOS", "WINDOWS", "AIX",
 
     # classes
-    "Process", "Popen",
+    "Process", "ProcessSnapshot", "Popen",
 
     # functions
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
@@ -368,6 +369,120 @@ def _check_conn_kind(kind):
 # =====================================================================
 
 
+class ProcessSnapshot:
+    """A read-only view of the process attributes collected by
+    `process_iter(attrs=...)`, available as `Process.snapshot`.
+
+    Each requested attribute holds the value returned by its
+    corresponding `Process` method during the scan. `as_dict()`
+    returns them as a dict.
+    """
+
+    cmdline: list[str]
+    cpu_affinity: list[int]
+    cpu_num: int
+    cpu_percent: float
+    cpu_times: pcputimes
+    create_time: float
+    cwd: str
+    environ: dict[str, str]
+    exe: str
+    gids: pgids
+    io_counters: pio
+    ionice: pionice | ProcessIOPriority
+    memory_extras: pmem_extras
+    memory_footprint: pfootprint
+    memory_info: pmem
+    memory_maps: list[pmmap_grouped] | list[pmmap_ext]
+    memory_percent: float
+    name: str
+    net_connections: list[pconn]
+    nice: int
+    num_ctx_switches: pctxsw
+    num_fds: int
+    num_handles: int
+    num_threads: int
+    open_files: list[popenfile]
+    page_faults: ppagefaults
+    pid: int
+    ppid: int
+    status: ProcessStatus | str
+    terminal: str | None
+    threads: list[pthread]
+    uids: puids
+    username: str
+
+    def __init__(self, data):
+        # Copied so the caller can't change the snapshot by updating
+        # the passed dict.
+        object.__setattr__(self, "__dict__", dict(data))
+
+    def __getattr__(self, name):
+        # called only when regular attribute lookup fails
+        if name in Process.attrs:
+            msg = f"{name!r} was not requested in process_iter(attrs=...)"
+        else:
+            msg = f"{name!r} is not a valid Process attribute"
+        raise AttributeError(msg)
+
+    def __setattr__(self, name, value):
+        msg = f"{self.__class__.__name__} is read-only"
+        raise AttributeError(msg)
+
+    def __delattr__(self, name):
+        msg = f"{self.__class__.__name__} is read-only"
+        raise AttributeError(msg)
+
+    def __eq__(self, other):
+        if not isinstance(other, ProcessSnapshot):
+            return NotImplemented
+        return self.__dict__ == other.__dict__
+
+    # unhashable: values can be lists or dicts
+    __hash__ = None
+
+    def __bool__(self):
+        return bool(self.__dict__)
+
+    def __repr__(self):
+        # Truncate long values (memory_maps, environ, ...).
+        class SnapshotRepr(reprlib.Repr):
+            def repr_instance(self, x, level):
+                # reprlib dispatches on the type name, so namedtuples
+                # end up in this fallback and get cut mid-string. Print
+                # them field by field instead.
+                if isinstance(x, tuple) and hasattr(x, "_fields"):
+                    # depth limit, as reprlib does for tuples. Literal
+                    # "..." because Repr.fillvalue only exists in 3.11+.
+                    if level <= 0 and x:
+                        return f"{type(x).__name__}(...)"
+                    fields = x._fields[: self.maxtuple]
+                    s = ", ".join(
+                        f"{f}={self.repr1(getattr(x, f), level - 1)}"
+                        for f in fields
+                    )
+                    if len(x._fields) > self.maxtuple:
+                        s += ", ..."
+                    return f"{type(x).__name__}({s})"
+                return super().repr_instance(x, level)
+
+        r = SnapshotRepr()
+        r.maxlist = r.maxtuple = 4
+        r.maxdict = 3
+        r.maxstring = r.maxother = 60
+        # as_dict() order is not deterministic
+        d = self.__dict__
+        first = ("pid", "name", "status")
+        keys = [k for k in first if k in d]
+        keys.extend(sorted(k for k in d if k not in first))
+        items = [f"{k}={r.repr(d[k])}" for k in keys]
+        return f"{self.__class__.__name__}({', '.join(items)})"
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a dict representation of the snapshot."""
+        return dict(self.__dict__)
+
+
 class Process:
     """Represents an OS process identified by a PID.
 
@@ -404,6 +519,9 @@ class Process:
                 raise NoSuchProcess(pid, msg=msg) from err
 
         self._pid = pid
+        # None would be better, but then type checkers (pyright) go crazy.
+        self._snapshot = ProcessSnapshot({})
+        self._info = _SENTINEL
         self._name = None
         self._exe = None
         self._create_time = None
@@ -576,6 +694,36 @@ class Process:
             # APIs which don't use _raise_if_pid_reused().
             msg = "process no longer exists and its PID has been reused"
             raise NoSuchProcess(self.pid, self._name, msg=msg)
+
+    @property
+    def snapshot(self) -> ProcessSnapshot:
+        """The attributes collected by `process_iter(attrs=...)` as a
+        read-only `ProcessSnapshot`, or an empty one.
+        """
+        return self._snapshot
+
+    @property
+    def info(self) -> dict[str, Any]:
+        """The attributes collected by `process_iter(attrs=...)` as a
+        dict, or an empty dict.
+
+        DEPRECATED in 8.0.0. Use `snapshot.as_dict()` instead.
+        """
+        msg = (
+            "Process.info is deprecated; use Process.snapshot.as_dict()"
+            " instead"
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        # cached so in-place edits stick, like the 7.x plain attribute
+        if self._info is _SENTINEL:
+            self._info = self._snapshot.as_dict()
+        return self._info
+
+    @info.setter
+    def info(self, value: dict[str, Any]) -> None:
+        msg = "setting Process.info is deprecated"
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        self._info = value
 
     @property
     def pid(self) -> int:
@@ -1584,7 +1732,8 @@ Process.attrs = frozenset(
     x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'connections', 'memory_full_info', 'oneshot', 'attrs'}
+      'connections', 'memory_full_info', 'oneshot', 'attrs', 'snapshot',
+      'info'}
 )
 # fmt: on
 
@@ -1726,9 +1875,9 @@ def process_iter(
     `Process.as_dict()`.
 
     If *attrs* is specified, `Process.as_dict()` is called and the
-    resulting dict is stored as a `info` attribute attached to the
-    returned `Process` instance. Use `attrs=Process.attrs` to retrieve
-    all process info (slow).
+    result is made available as `Process.snapshot`, a read-only
+    `ProcessSnapshot` with one attribute per requested name. Use
+    `attrs=Process.attrs` to retrieve all process info (slow).
     """
     global _pmap
 
@@ -1774,8 +1923,15 @@ def process_iter(
             try:
                 if proc is None:  # new process
                     proc = add(pid)
+
                 if attrs is not None:
-                    proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
+                    data = proc.as_dict(attrs=attrs, ad_value=ad_value)
+                    proc._snapshot = ProcessSnapshot(data)
+                elif proc._snapshot:  # left over from a scan with attrs
+                    proc._snapshot = ProcessSnapshot({})
+
+                # invalidate the deprecated info cache on every scan
+                proc._info = _SENTINEL
                 yield proc
             except ZombieProcess:
                 if proc is not None:

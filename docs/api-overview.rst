@@ -517,7 +517,7 @@ Other process functions
     True
     >>>
     >>> for p in psutil.process_iter(['pid', 'name']):
-    ...     print(p.pid, p.name())
+    ...     print(p.snapshot.pid, p.snapshot.name)
     ...
     1 systemd
     2 kthreadd

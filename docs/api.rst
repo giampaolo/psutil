@@ -952,9 +952,10 @@ Functions
 
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict`.
 
-  If *attrs* is specified, :meth:`Process.as_dict` result will be stored as a
-  ``info`` attribute attached to the returned :class:`Process` instances. See
-  :attr:`Process.attrs` for a list of valid *attrs* names.
+  If *attrs* is specified, the collected values are exposed as a
+  :class:`ProcessSnapshot` via the :attr:`Process.snapshot` attribute of the
+  returned :class:`Process` instances. See :attr:`Process.attrs` for a list of
+  valid *attrs* names.
 
   Processes are returned sorted by PID.
 
@@ -962,11 +963,11 @@ Functions
 
      >>> import psutil
      >>> for proc in psutil.process_iter(['pid', 'name', 'username']):
-     ...     print(proc.info)
+     ...     print(proc.snapshot.pid, proc.snapshot.name, proc.snapshot.username)
      ...
-     {'name': 'systemd', 'pid': 1, 'username': 'root'}
-     {'name': 'kthreadd', 'pid': 2, 'username': 'root'}
-     {'name': 'ksoftirqd/0', 'pid': 3, 'username': 'root'}
+     1 systemd root
+     2 kthreadd root
+     3 ksoftirqd/0 root
      ...
 
   All process *attrs* except slow ones:
@@ -992,6 +993,8 @@ Functions
 
   .. versionchanged:: 8.0.0
 
+     - Collected attributes are exposed via :attr:`Process.snapshot`;
+       ``Process.info`` is deprecated.
      - Passing an empty list (``attrs=[]``) to mean "all attributes" is
        deprecated; use :attr:`Process.attrs` instead.
 
@@ -1121,6 +1124,24 @@ Process class
   .. attribute:: pid
 
     The process PID as a read-only property.
+
+  .. attribute:: snapshot
+
+    A :class:`ProcessSnapshot` holding the attributes collected by the last
+    :func:`process_iter(attrs=...) <psutil.process_iter>` call. It is empty for
+    a :class:`Process` created directly or yielded by :func:`process_iter`
+    without *attrs*.
+
+    .. versionadded:: 8.0.0
+
+  .. attribute:: info
+
+    The attributes collected by
+    :func:`process_iter(attrs=...) <psutil.process_iter>` as a dictionary.
+
+    .. deprecated:: 8.0.0
+       use :meth:`snapshot.as_dict() <ProcessSnapshot.as_dict>` instead. See
+       :ref:`migration guide <migration-8.0-snapshot>`.
 
   .. attribute:: attrs
 
@@ -2181,6 +2202,46 @@ Popen class
      >>> p.wait(timeout=2)
      0
      >>>
+
+-------------------------------------------------------------------------------
+
+ProcessSnapshot class
+^^^^^^^^^^^^^^^^^^^^^
+
+.. class:: ProcessSnapshot
+
+  A read-only object holding the process attributes collected by
+  :func:`process_iter(attrs=...) <psutil.process_iter>`, available as
+  :attr:`Process.snapshot`. It is not supposed to be instantiated directly.
+
+  Each requested attribute is exposed as a plain attribute named after the
+  corresponding :class:`Process` method, holding the value it returned when the
+  process was scanned (or *ad_value* if it raised :exc:`AccessDenied`).
+  Accessing an attribute that was not requested raises :exc:`AttributeError`.
+  Values are never refreshed: call the :class:`Process` method to get a live
+  one.
+
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> for p in psutil.process_iter(["pid", "name", "cpu_percent"]):
+     ...     if p.snapshot.cpu_percent > 50:
+     ...         print(p.snapshot)
+     ...
+     ProcessSnapshot(pid=4821, name='python3', cpu_percent=72.3)
+     >>> p.snapshot.exe
+     Traceback (most recent call last):
+       ...
+     AttributeError: 'exe' was not requested in process_iter(attrs=...)
+
+  Snapshots support ``==``, are false when empty, and can be pickled and
+  copied.
+
+  .. method:: as_dict()
+
+    Return the collected attributes as a new dictionary.
+
+  .. versionadded:: 8.0.0
 
 -------------------------------------------------------------------------------
 
