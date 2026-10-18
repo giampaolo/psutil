@@ -1919,11 +1919,13 @@ def process_iter(
             try:
                 if proc is None:  # new process
                     proc = add(pid)
+
                 if attrs is not None:
                     data = proc.as_dict(attrs=attrs, ad_value=ad_value)
                     proc._snapshot = ProcessSnapshot(data)
-                else:
+                elif proc._snapshot:  # left over from a scan with attrs
                     proc._snapshot = ProcessSnapshot({})
+
                 # 7.x overwrote 'info' on every scan
                 proc._info = _SENTINEL
                 yield proc
