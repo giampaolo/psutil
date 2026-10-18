@@ -2234,7 +2234,8 @@ ProcessSnapshot class
        ...
      AttributeError: 'exe' was not requested in process_iter(attrs=...)
 
-  Snapshots support ``==`` and can be pickled and copied.
+  Snapshots support ``==``, are false when empty, and can be pickled and
+  copied.
 
   .. method:: as_dict()
 
