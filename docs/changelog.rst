@@ -344,8 +344,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   deadlock the calling process. On timeout, the internal thread querying a
   handle name was killed with ``TerminateThread()``, which cannot terminate a
   thread blocked in the kernel (e.g. on a pipe with a pending read) and left
-  locks and memory in an inconsistent state. The thread is now abandoned and
-  cleans up after itself.
+  locks and memory in an inconsistent state. The thread now only runs syscalls,
+  so killing it is safe, and if it refuses to die it is abandoned instead of
+  waited on.
 - :gh:`2859`, [Windows], :label:`critical`: :func:`net_connections` /
   :meth:`Process.net_connections` could crash with an invalid
   ``Py_DECREF(NULL)`` when argument parsing failed before the result list was
