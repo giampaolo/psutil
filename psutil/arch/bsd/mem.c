@@ -74,12 +74,12 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     percent = psutil_usage_percent((double)swap_used, (double)swap_total, 1);
 
 done:
-    if (!(pydict_add(dict, "total", "K", swap_total)
-          | pydict_add(dict, "used", "K", swap_used)
-          | pydict_add(dict, "free", "K", swap_free)
-          | pydict_add(dict, "percent", "d", percent)
-          | pydict_add(dict, "sin", "K", sin)
-          | pydict_add(dict, "sout", "K", sout)))
+    if (!pydict_add(dict, "total", "K", swap_total)
+        || !pydict_add(dict, "used", "K", swap_used)
+        || !pydict_add(dict, "free", "K", swap_free)
+        || !pydict_add(dict, "percent", "d", percent)
+        || !pydict_add(dict, "sin", "K", sin)
+        || !pydict_add(dict, "sout", "K", sout))
         goto error;
 
     return dict;
