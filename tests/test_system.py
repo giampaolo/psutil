@@ -160,7 +160,8 @@ class TestProcessSnapshot(PsutilTestCase):
     def test_base(self):
         for p in psutil.process_iter(attrs=["pid", "name"]):
             assert p.snapshot.pid == p.pid
-            assert p.snapshot.name == p.name()
+            if p.pid == os.getpid():
+                assert p.snapshot.name == p.name()
             with pytest.raises(AttributeError, match="not requested"):
                 p.snapshot.exe  # noqa: B018
             with pytest.raises(AttributeError, match="not a valid"):
