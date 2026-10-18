@@ -61,7 +61,7 @@ def main():
     start = time.time()
     for p in psutil.process_iter(attrs=[], ad_value=signaler):
         tot_procs += 1
-        for methname, value in p.info.items():
+        for methname, value in p.snapshot.as_dict().items():
             tot_calls += 1
             if value is signaler:
                 tot_ads += 1
