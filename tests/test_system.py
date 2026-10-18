@@ -192,6 +192,18 @@ class TestProcessSnapshot(PsutilTestCase):
         p = next(x for x in psutil.process_iter() if x.pid == pid)
         assert p.snapshot.as_dict() == {}
 
+    def test_refresh(self):
+        # A new scan replaces the snapshot object instead of updating it
+        pid = os.getpid()
+        p = next(
+            x for x in psutil.process_iter(attrs=["name"]) if x.pid == pid
+        )
+        old = p.snapshot
+        p = next(
+            x for x in psutil.process_iter(attrs=["name"]) if x.pid == pid
+        )
+        assert p.snapshot is not old
+
     def test_eq(self):
         a = psutil.ProcessSnapshot({"pid": 1, "name": "foo"})
         b = psutil.ProcessSnapshot({"pid": 1, "name": "foo"})
