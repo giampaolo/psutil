@@ -552,6 +552,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   in :func:`users`. When ``ut_host`` fills the whole field it has no null
   terminator, and the terminator was written one byte past the end of the local
   buffer.
+- [POSIX], :label:`critical`: :func:`net_if_addrs` freed an uninitialized
+  pointer if ``getifaddrs()`` failed (e.g. out of memory), instead of raising
+  :exc:`OSError`.
 - :gh:`2789`, [AIX], :label:`build-fail`: fix compilation error caused by a
   typo (accidental space) in ``psutil_net_io_counters()``, introduced during a
   previous code reformatting.
