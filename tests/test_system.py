@@ -96,10 +96,10 @@ class TestProcessIter(PsutilTestCase):
 
     def test_attrs(self):
         for p in psutil.process_iter(attrs=['pid']):
-            assert list(vars(p.snapshot)) == ['pid']
+            assert list(p.snapshot.as_dict()) == ['pid']
         # yield again
         for p in psutil.process_iter(attrs=['pid']):
-            assert list(vars(p.snapshot)) == ['pid']
+            assert list(p.snapshot.as_dict()) == ['pid']
         with pytest.raises(ValueError):
             list(psutil.process_iter(attrs=['foo']))
         with mock.patch(
@@ -127,7 +127,7 @@ class TestProcessIter(PsutilTestCase):
         with pytest.warns(DeprecationWarning):
             for p in psutil.process_iter(attrs=[]):
                 break
-        assert vars(p.snapshot).keys() == psutil.Process.attrs
+        assert p.snapshot.as_dict().keys() == psutil.Process.attrs
 
     def test_deprecated_info(self):
         p = psutil.Process()
@@ -135,9 +135,7 @@ class TestProcessIter(PsutilTestCase):
             assert p.info == {}
         p = next(psutil.process_iter(attrs=["pid", "name"]))
         with pytest.warns(DeprecationWarning, match="snapshot"):
-            assert p.info == vars(p.snapshot)
-        with pytest.warns(DeprecationWarning):
-            assert p.info is not vars(p.snapshot)
+            assert p.info == p.snapshot.as_dict()
 
     def test_zombie_process_is_not_skipped(self):
         # ZombieProcess is a subclass of NoSuchProcess; make sure
@@ -190,6 +188,8 @@ class TestProcessSnapshot(PsutilTestCase):
         assert a == b
         assert a != psutil.ProcessSnapshot({"pid": 2, "name": "foo"})
         assert a != {"pid": 1, "name": "foo"}
+        assert a.as_dict() == {"pid": 1, "name": "foo"}
+        assert a.as_dict() is not a.as_dict()
         with pytest.raises(TypeError):
             hash(a)
 

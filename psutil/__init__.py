@@ -373,7 +373,8 @@ class ProcessSnapshot:
     `process_iter(attrs=...)`, available as `Process.snapshot`.
 
     Each requested attribute holds the value returned by its
-    corresponding `Process` method during the scan.
+    corresponding `Process` method during the scan. `as_dict()`
+    returns them as a dict.
     """
 
     cmdline: list[str]
@@ -439,6 +440,10 @@ class ProcessSnapshot:
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.__dict__!r})"
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a dict representation of the snapshot."""
+        return dict(self.__dict__)
 
 
 class Process:
@@ -660,13 +665,16 @@ class Process:
         """The attributes collected by `process_iter(attrs=...)` as a
         dict, or an empty dict.
 
-        DEPRECATED in 8.0.0. Use `snapshot` instead.
+        DEPRECATED in 8.0.0. Use `snapshot.as_dict()` instead.
         """
-        msg = "Process.info is deprecated; use Process.snapshot instead"
+        msg = (
+            "Process.info is deprecated; use Process.snapshot.as_dict()"
+            " instead"
+        )
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         if self._snapshot is None:
             return {}
-        return dict(vars(self._snapshot))
+        return self._snapshot.as_dict()
 
     @property
     def pid(self) -> int:

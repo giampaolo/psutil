@@ -342,7 +342,7 @@ class TestSerialization(PsutilTestCase):
 
     def test_process_snapshot(self):
         snap = next(psutil.process_iter(attrs=["pid", "name"])).snapshot
-        json.loads(json.dumps(vars(snap)))
+        json.loads(json.dumps(snap.as_dict()))
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             b = pickle.loads(pickle.dumps(snap, proto))
             assert b == snap
