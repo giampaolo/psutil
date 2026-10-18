@@ -439,6 +439,9 @@ class ProcessSnapshot:
     # unhashable: values can be lists or dicts
     __hash__ = None
 
+    def __bool__(self):
+        return bool(self.__dict__)
+
     def __repr__(self):
         # Truncate long values (memory_maps, environ, ...).
         class SnapshotRepr(reprlib.Repr):

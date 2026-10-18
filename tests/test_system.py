@@ -215,6 +215,11 @@ class TestProcessSnapshot(PsutilTestCase):
         with pytest.raises(TypeError):
             hash(a)
 
+    def test_bool(self):
+        assert not psutil.ProcessSnapshot({})
+        assert psutil.ProcessSnapshot({"pid": 1})
+        assert not psutil.Process().snapshot
+
     def test_annotations(self):
         hints = psutil.ProcessSnapshot.__annotations__
         assert psutil.Process.attrs <= set(hints)
