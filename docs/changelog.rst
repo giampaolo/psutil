@@ -34,6 +34,11 @@ Changelog
 
 **New APIs**
 
+- :gh:`3052`: new :attr:`Process.snapshot` attribute, a read-only
+  :class:`ProcessSnapshot` exposing the attributes collected by
+  :func:`process_iter` (``p.snapshot.name`` instead of ``p.info["name"]``).
+  ``Process.info`` still works but raises :exc:`DeprecationWarning`. See
+  :ref:`migration guide <migration-8.0-snapshot>`.
 - :gh:`2798`, :label:`breaking`: new :attr:`Process.attrs` class attribute, a
   :class:`frozenset` of the attribute names accepted by :meth:`Process.as_dict`
   and :func:`process_iter`. Passing ``attrs=[]`` to :func:`process_iter` to

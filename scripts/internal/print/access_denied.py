@@ -59,7 +59,9 @@ def main():
     signaler = object()
     d = defaultdict(int)
     start = time.time()
-    for p in psutil.process_iter(attrs=[], ad_value=signaler):
+    for p in psutil.process_iter(
+        attrs=psutil.Process.attrs, ad_value=signaler
+    ):
         tot_procs += 1
         for methname, value in p.snapshot.as_dict().items():
             tot_calls += 1
