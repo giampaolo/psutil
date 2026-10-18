@@ -776,7 +776,9 @@ class Process:
             return self._ppid
 
     def name(self) -> str:
-        """The process name. The return value is cached after first call."""
+        """The process name.
+        On Windows the return value is cached after first call.
+        """
         # Process name is only cached on Windows as on POSIX it may
         # change, see:
         # https://github.com/giampaolo/psutil/issues/692
