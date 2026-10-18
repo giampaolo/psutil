@@ -165,6 +165,16 @@ class TestProcessSnapshot(PsutilTestCase):
         assert "snapshot" not in psutil.Process.attrs
         assert psutil.Process().snapshot is None
 
+    def test_no_attrs(self):
+        # If no attrs are specificied, snapshot should be None
+        pid = os.getpid()
+        p = next(
+            x for x in psutil.process_iter(attrs=["name"]) if x.pid == pid
+        )
+        assert p.snapshot is not None
+        p = next(x for x in psutil.process_iter() if x.pid == pid)
+        assert p.snapshot is None
+
     def test_eq(self):
         a = psutil.ProcessSnapshot({"pid": 1, "name": "foo"})
         b = psutil.ProcessSnapshot({"pid": 1, "name": "foo"})

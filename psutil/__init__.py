@@ -1853,6 +1853,8 @@ def process_iter(
                 if attrs is not None:
                     proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
                     proc._snapshot = ProcessSnapshot(proc.info)
+                else:
+                    proc._snapshot = None
                 yield proc
             except ZombieProcess:
                 if proc is not None:
