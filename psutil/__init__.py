@@ -656,6 +656,19 @@ class Process:
         return self._snapshot
 
     @property
+    def info(self) -> dict[str, Any]:
+        """The attributes collected by `process_iter(attrs=...)` as a
+        dict, or an empty dict.
+
+        DEPRECATED in 8.0.0. Use `snapshot` instead.
+        """
+        msg = "Process.info is deprecated; use Process.snapshot instead"
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        if self._snapshot is None:
+            return {}
+        return dict(vars(self._snapshot))
+
+    @property
     def pid(self) -> int:
         """The process PID."""
         return self._pid
@@ -1660,7 +1673,8 @@ Process.attrs = frozenset(
     x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'connections', 'memory_full_info', 'oneshot', 'attrs', 'snapshot'}
+      'connections', 'memory_full_info', 'oneshot', 'attrs', 'snapshot',
+      'info'}
 )
 # fmt: on
 
@@ -1851,8 +1865,8 @@ def process_iter(
                 if proc is None:  # new process
                     proc = add(pid)
                 if attrs is not None:
-                    proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
-                    proc._snapshot = ProcessSnapshot(proc.info)
+                    data = proc.as_dict(attrs=attrs, ad_value=ad_value)
+                    proc._snapshot = ProcessSnapshot(data)
                 else:
                     proc._snapshot = None
                 yield proc

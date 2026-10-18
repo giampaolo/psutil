@@ -96,10 +96,10 @@ class TestProcessIter(PsutilTestCase):
 
     def test_attrs(self):
         for p in psutil.process_iter(attrs=['pid']):
-            assert list(p.info.keys()) == ['pid']
+            assert list(vars(p.snapshot)) == ['pid']
         # yield again
         for p in psutil.process_iter(attrs=['pid']):
-            assert list(p.info.keys()) == ['pid']
+            assert list(vars(p.snapshot)) == ['pid']
         with pytest.raises(ValueError):
             list(psutil.process_iter(attrs=['foo']))
         with mock.patch(
@@ -107,8 +107,8 @@ class TestProcessIter(PsutilTestCase):
             side_effect=psutil.AccessDenied(0, ""),
         ) as m:
             for p in psutil.process_iter(attrs=["pid", "cpu_times"]):
-                assert p.info['cpu_times'] is None
-                assert p.info['pid'] >= 0
+                assert p.snapshot.cpu_times is None
+                assert p.snapshot.pid >= 0
             assert m.called
         with mock.patch(
             "psutil._psplatform.Process.cpu_times",
@@ -118,8 +118,8 @@ class TestProcessIter(PsutilTestCase):
             for p in psutil.process_iter(
                 attrs=["pid", "cpu_times"], ad_value=flag
             ):
-                assert p.info['cpu_times'] is flag
-                assert p.info['pid'] >= 0
+                assert p.snapshot.cpu_times is flag
+                assert p.snapshot.pid >= 0
             assert m.called
 
     def test_deprecated_prefetch_empty_attrs(self):
@@ -127,7 +127,17 @@ class TestProcessIter(PsutilTestCase):
         with pytest.warns(DeprecationWarning):
             for p in psutil.process_iter(attrs=[]):
                 break
-        assert p.info.keys() == psutil.Process.attrs
+        assert vars(p.snapshot).keys() == psutil.Process.attrs
+
+    def test_deprecated_info(self):
+        p = psutil.Process()
+        with pytest.warns(DeprecationWarning, match="snapshot"):
+            assert p.info == {}
+        p = next(psutil.process_iter(attrs=["pid", "name"]))
+        with pytest.warns(DeprecationWarning, match="snapshot"):
+            assert p.info == vars(p.snapshot)
+        with pytest.warns(DeprecationWarning):
+            assert p.info is not vars(p.snapshot)
 
     def test_zombie_process_is_not_skipped(self):
         # ZombieProcess is a subclass of NoSuchProcess; make sure
@@ -152,7 +162,6 @@ class TestProcessSnapshot(PsutilTestCase):
     def test_base(self):
         for p in psutil.process_iter(attrs=["pid", "name"]):
             assert p.snapshot.pid == p.pid
-            assert p.snapshot.name == p.info["name"]
             assert p.snapshot.name == p.name()
             with pytest.raises(AttributeError, match="not requested"):
                 p.snapshot.exe  # noqa: B018
