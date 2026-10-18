@@ -1453,7 +1453,7 @@ class Process:
             fp = self.memory_footprint()
             names = _ntp.pfullmem._fields[len(basic_mem) :]
             return _ntp.pfullmem(*basic_mem, *[getattr(fp, x) for x in names])
-        return _ntp.pfullmem(*basic_mem)
+        return basic_mem
 
     def memory_percent(self, memtype: str = "rss") -> float:
         """Compare process memory to total physical system memory and
