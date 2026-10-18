@@ -57,7 +57,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
-        "ikkdiiikIIII",
+        "ikkdiiilIIII",
         info.pr_ppid,  // parent pid
         info.pr_rssize,  // rss
         info.pr_size,  // vms
@@ -65,7 +65,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
         info.pr_lwp.pr_nice - NZERO,  // nice
         info.pr_nlwp,  // no. of threads
         info.pr_lwp.pr_state,  // status code
-        info.pr_ttydev,  // tty nr
+        (long)info.pr_ttydev,  // tty nr, PRNODEV becomes -1
         info.pr_uid,  // real user id
         info.pr_euid,  // effective user id
         info.pr_gid,  // real group id

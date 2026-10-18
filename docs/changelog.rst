@@ -567,6 +567,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   result dictionary when ``kstat_read()`` failed mid-iteration; the error path
   now goes through the existing cleanup block.
 - :gh:`2687`, [SunOS]: :func:`users` failed with ``ValueError`` on illumos.
+- [SunOS]: :meth:`Process.terminal` returned the path of file descriptor 0
+  (e.g. a regular file) instead of ``None`` for a process without a controlling
+  terminal. The ``PRNODEV`` check never matched because the tty device number
+  was exported as unsigned.
 - :gh:`2778`, [UNIX]: :func:`net_if_addrs` skips interfaces with no addresses,
   which are typically virtual IPv4/IPv6 tunnel interfaces. Now they are
   included in the returned dict with :field:`family` ==

@@ -481,7 +481,7 @@ class Process:
     def terminal(self):
         procfs_path = self._procfs_path
         hit_enoent = False
-        tty = wrap_exceptions(self._oneshot()[proc_info_map['ttynr']])
+        tty = self._oneshot()[proc_info_map['ttynr']]
         if tty != _psutil.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
