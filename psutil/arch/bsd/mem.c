@@ -69,6 +69,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     sout = (uint64_t)uv.pgswapout * pagesize;
 
     free(swdev);
+    swdev = NULL;
 
     swap_used = swap_total - swap_free;
     percent = psutil_usage_percent((double)swap_used, (double)swap_total, 1);
