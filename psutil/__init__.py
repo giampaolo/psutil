@@ -246,7 +246,7 @@ __all__ = [
     "SUNOS", "WINDOWS", "AIX",
 
     # classes
-    "Process", "Popen",
+    "Process", "ProcessSnapshot", "Popen",
 
     # functions
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
@@ -369,6 +369,13 @@ def _check_conn_kind(kind):
 
 
 class ProcessSnapshot:
+    """A read-only view of the process attributes collected by
+    `process_iter(attrs=...)`, available as `Process.snapshot`.
+
+    Each requested attribute holds the value returned by its
+    corresponding `Process` method during the scan.
+    """
+
     cmdline: list[str]
     cpu_affinity: list[int]
     cpu_num: int

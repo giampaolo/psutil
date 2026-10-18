@@ -1324,6 +1324,7 @@ class process_namespace:
         ('parent', (), {}),
         ('parents', (), {}),
         ('pid', (), {}),
+        ('snapshot', (), {}),
         ('wait', (0,), {}),
     ]
 
