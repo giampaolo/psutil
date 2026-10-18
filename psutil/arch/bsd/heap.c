@@ -23,7 +23,7 @@
 PyObject *
 psutil_heap_info(PyObject *self, PyObject *args) {
     uint64_t epoch = 0;
-    uint64_t allocated = 0, active = 0, mapped = 0;
+    uint64_t allocated = 0, mapped = 0;
     size_t sz_epoch = sizeof(epoch);
     size_t sz_val;
     int ret;

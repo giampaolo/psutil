@@ -22,7 +22,6 @@
 
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    int maxcpus;
     int mib[2];
     int ncpu;
     size_t size;

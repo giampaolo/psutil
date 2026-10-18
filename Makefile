@@ -15,7 +15,7 @@ PYTHON = python3
 ARGS =
 FILES =
 
-PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PSUTIL_WERROR=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
 DPRINT = ~/.dprint/bin/dprint
 DPRINT_FILES = '*.md' '*.json' '*.jsonc' '*.yml' '*.yaml' '*.js' '*.css' '.clang-format'
@@ -284,7 +284,7 @@ ci-install:  ## Install deps and build on GitHub CI.
 	$(MAKE) install-sysdeps
 	# Editable install: it builds in-place, and having psutil already
 	# installed stops pip from pulling it from PyPI for psleak.
-	$(INSTALL_PYDEPS) --editable .
+	$(PYTHON_ENV_VARS) $(INSTALL_PYDEPS) --editable .
 	$(MAKE) install-pydeps-test
 	$(MAKE) print-sysinfo
 	# Warm pywin32's gen_py cache: concurrent first imports of wmi in
