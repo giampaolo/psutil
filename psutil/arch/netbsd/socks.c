@@ -52,10 +52,10 @@ static void
 psutil_kiflist_clear(void) {
     while (!SLIST_EMPTY(&kihead)) {
         struct kif *kif = SLIST_FIRST(&kihead);
+        SLIST_REMOVE_HEAD(&kihead, kifs);
         if (kif->has_buf == 1)
             free(kif->buf);
         free(kif);
-        SLIST_REMOVE_HEAD(&kihead, kifs);
     }
 }
 
@@ -72,10 +72,10 @@ static void
 psutil_kpcblist_clear(void) {
     while (!SLIST_EMPTY(&kpcbhead)) {
         struct kpcb *kpcb = SLIST_FIRST(&kpcbhead);
+        SLIST_REMOVE_HEAD(&kpcbhead, kpcbs);
         if (kpcb->has_buf == 1)
             free(kpcb->buf);
         free(kpcb);
-        SLIST_REMOVE_HEAD(&kpcbhead, kpcbs);
     }
 }
 

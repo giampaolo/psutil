@@ -550,6 +550,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - [OpenBSD]: :func:`users` could return garbage trailing characters in
   :field:`name`, :field:`terminal` or :field:`host` when the ``utmp`` field is
   full, since it then has no null terminator.
+- [NetBSD], :label:`critical`: :func:`net_connections` and
+  :meth:`Process.net_connections` read freed memory when releasing their
+  internal result lists; each node was ``free()``'d before being unlinked.
 
 **Bug fixes: UNIX**
 
