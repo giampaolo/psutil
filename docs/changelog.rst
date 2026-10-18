@@ -543,6 +543,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   which is 32 bits there.
 - :gh:`3032`, [FreeBSD]: :func:`cpu_stats` counters wrapped around at 2^32. The
   kernel's 64-bit ``vm.stats.sys`` sysctls were read as ``unsigned int``.
+- :gh:`3017`, [FreeBSD]: :func:`pid_exists` returned ``False`` for PID 0 (the
+  kernel), even though :func:`pids` lists it.
 
 **Bug fixes: UNIX**
 
