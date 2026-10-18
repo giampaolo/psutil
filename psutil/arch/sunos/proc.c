@@ -468,7 +468,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     prxmap_t *xmap = NULL, *p;
     off_t size;
-    size_t nread;
+    ssize_t nread;
     int nmap;
     uintptr_t pr_addr_sz;
     uintptr_t stk_base_sz, brk_base_sz;
@@ -511,6 +511,10 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     Py_BEGIN_ALLOW_THREADS
     nread = pread(fd, xmap, size, 0);
     Py_END_ALLOW_THREADS
+    if (nread == -1) {
+        psutil_oserror();
+        goto error;
+    }
     nmap = nread / sizeof(prxmap_t);
     p = xmap;
 

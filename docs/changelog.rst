@@ -571,6 +571,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   (e.g. a regular file) instead of ``None`` for a process without a controlling
   terminal. The ``PRNODEV`` check never matched because the tty device number
   was exported as unsigned.
+- [SunOS], :label:`critical`: :meth:`Process.memory_maps` read past the end of
+  a heap buffer if ``pread()`` of ``/proc/[pid]/xmap`` failed; the -1 return
+  value was stored unsigned and taken as a huge number of map entries. Now it
+  raises :exc:`OSError`.
 - :gh:`2778`, [UNIX]: :func:`net_if_addrs` skips interfaces with no addresses,
   which are typically virtual IPv4/IPv6 tunnel interfaces. Now they are
   included in the returned dict with :field:`family` ==
