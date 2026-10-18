@@ -413,7 +413,9 @@ class ProcessSnapshot:
     username: str
 
     def __init__(self, data):
-        object.__setattr__(self, "__dict__", data)
+        # Copied so the caller can't change the snapshot by updating
+        # the passed dict.
+        object.__setattr__(self, "__dict__", dict(data))
 
     def __getattr__(self, name):
         # called only when regular attribute lookup fails
@@ -451,7 +453,7 @@ class ProcessSnapshot:
                 # them field by field instead.
                 if isinstance(x, tuple) and hasattr(x, "_fields"):
                     # depth limit, as reprlib does for tuples. Literal
-                    # "..." because Repr.fillvalue only exists in 3.12+.
+                    # "..." because Repr.fillvalue only exists in 3.11+.
                     if level <= 0 and x:
                         return f"{type(x).__name__}(...)"
                     fields = x._fields[: self.maxtuple]
