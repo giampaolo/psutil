@@ -180,7 +180,6 @@ PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
     int mib[4];
-    int st;
     int attempt = 0;
     int max_attempts = 50;
     size_t len = 0;
