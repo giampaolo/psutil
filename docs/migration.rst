@@ -104,6 +104,33 @@ Accessing an attribute that was not requested raises :exc:`AttributeError`
 instead of :exc:`KeyError`. If you need a dict, use
 :meth:`p.snapshot.as_dict() <ProcessSnapshot.as_dict>`.
 
+New Process.attrs class attribute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:attr:`Process.attrs` is a new :class:`frozenset` containing the valid
+attribute names accepted by :meth:`Process.as_dict` and :func:`process_iter`.
+It avoids creating a throwaway process just to discover them:
+
+.. code-block:: python
+
+  # before
+  attrs = list(psutil.Process().as_dict().keys())
+
+  # after
+  attrs = psutil.Process.attrs
+
+It also makes it easy to pass all or a subset of attributes.
+``process_iter(attrs=[])`` (empty list meaning "all") is now deprecated; use
+:attr:`Process.attrs` instead:
+
+.. code-block:: python
+
+  # all attrs
+  psutil.process_iter(attrs=psutil.Process.attrs)
+
+  # all except connections
+  psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
+
 cpu_times() interrupt renamed to irq on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -157,33 +184,6 @@ platform-specific memory metrics which complement :meth:`Process.memory_info`:
   :field:`peak_nonpaged_pool`.
 
 .. _migration-8.0-attrs:
-
-New Process.attrs class attribute
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-:attr:`Process.attrs` is a new :class:`frozenset` containing the valid
-attribute names accepted by :meth:`Process.as_dict` and :func:`process_iter`.
-It avoids creating a throwaway process just to discover them:
-
-.. code-block:: python
-
-  # before
-  attrs = list(psutil.Process().as_dict().keys())
-
-  # after
-  attrs = psutil.Process.attrs
-
-It also makes it easy to pass all or a subset of attributes.
-``process_iter(attrs=[])`` (empty list meaning "all") is now deprecated; use
-:attr:`Process.attrs` instead:
-
-.. code-block:: python
-
-  # all attrs
-  psutil.process_iter(attrs=psutil.Process.attrs)
-
-  # all except connections
-  psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
 
 Python 3.6 and 3.7 dropped
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
