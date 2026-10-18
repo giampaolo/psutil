@@ -2318,7 +2318,7 @@ Windows services
 
   .. method:: start_type()
 
-    A string which can either be either ``'automatic'``, ``'manual'`` or
+    A string which can either be ``'automatic'``, ``'manual'`` or
     ``'disabled'``.
 
   .. method:: pid()
