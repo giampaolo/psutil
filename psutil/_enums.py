@@ -54,7 +54,7 @@ else:
 class ProcessStatus(StrEnum):
     STATUS_DEAD = "dead"
     STATUS_DISK_SLEEP = "disk-sleep"
-    STATUS_IDLE = "idle"  # Linux, macOS, FreeBSD
+    STATUS_IDLE = "idle"  # Linux, macOS, FreeBSD, OpenBSD, NetBSD, SunOS, AIX
     STATUS_LOCKED = "locked"  # FreeBSD
     STATUS_PARKED = "parked"  # Linux
     STATUS_RUNNING = "running"
@@ -62,7 +62,7 @@ class ProcessStatus(StrEnum):
     STATUS_STOPPED = "stopped"
     STATUS_SUSPENDED = "suspended"  # NetBSD
     STATUS_TRACING_STOP = "tracing-stop"
-    STATUS_WAITING = "waiting"  # FreeBSD
+    STATUS_WAITING = "waiting"  # FreeBSD, SunOS
     STATUS_WAKE_KILL = "wake-kill"
     STATUS_WAKING = "waking"
     STATUS_ZOMBIE = "zombie"
