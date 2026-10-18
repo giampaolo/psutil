@@ -251,7 +251,6 @@ psutil_gather_unix(
     struct xunpgen *xug, *exug;
     struct xunpcb *xup;
     const char *varname = NULL;
-    const char *protoname = NULL;
     size_t len;
     size_t bufsize;
     void *buf;
@@ -264,11 +263,9 @@ psutil_gather_unix(
     switch (proto) {
         case SOCK_STREAM:
             varname = "net.local.stream.pcblist";
-            protoname = "stream";
             break;
         case SOCK_DGRAM:
             varname = "net.local.dgram.pcblist";
-            protoname = "dgram";
             break;
     }
 
