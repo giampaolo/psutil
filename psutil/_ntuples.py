@@ -436,7 +436,7 @@ elif WINDOWS:
             return inst
 
         def __getattr__(self, name):
-            depr = self.__dict__["_deprecated"]
+            depr = self.__dict__.get("_deprecated", {})
             if name in depr:
                 msg = f"pmem.{name} is deprecated"
                 if name in {
