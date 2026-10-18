@@ -1928,7 +1928,7 @@ def process_iter(
                 elif proc._snapshot:  # left over from a scan with attrs
                     proc._snapshot = ProcessSnapshot({})
 
-                # 7.x overwrote 'info' on every scan
+                # the deprecated 'info' is reset whenever the snapshot is
                 proc._info = _SENTINEL
                 yield proc
             except ZombieProcess:
