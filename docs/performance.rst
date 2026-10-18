@@ -72,7 +72,7 @@ Fast:
   import psutil
 
   for p in psutil.process_iter(["name", "status"]):
-      print(p.pid, p.info["name"], p.info["status"])  # no try/except needed
+      print(p.pid, p.snapshot.name, p.snapshot.status)  # no try/except needed
 
 :func:`process_iter(attrs=...) <psutil.process_iter>` is effectively equivalent
 to using :meth:`Process.oneshot` on each process. Using :func:`process_iter`

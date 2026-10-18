@@ -62,7 +62,7 @@ You have two options to deal with it.
 - Option 2: use :func:`process_iter` with a list of attribute names to
   pre-fetch. Both :exc:`AccessDenied` and :exc:`NoSuchProcess` are handled
   internally: if fetching an attribute raises :exc:`AccessDenied`, its value in
-  ``p.info`` is set to ``None`` (or to the ``ad_value`` argument, if
+  ``p.snapshot`` is set to ``None`` (or to the ``ad_value`` argument, if
   specified). This also avoids the race condition where a process disappears
   between iteration and method call:
 
@@ -71,7 +71,7 @@ You have two options to deal with it.
     import psutil
 
     for p in psutil.process_iter(["name", "username"], ad_value="N/A"):
-        print(p.info["name"], p.info["username"])  # no try/except needed
+        print(p.snapshot.name, p.snapshot.username)  # no try/except needed
 
 .. _faq_no_such_process:
 
@@ -108,7 +108,7 @@ iteration:
   import psutil
 
   for p in psutil.process_iter(["name"]):
-      print(p.info["name"])
+      print(p.snapshot.name)
 
 If you have a specific PID (e.g. a known child process), wrap the call in a
 try/except:
@@ -220,7 +220,7 @@ subclass of :exc:`NoSuchProcess`.
   import psutil
 
   for p in psutil.process_iter(["status"]):
-      if p.info["status"] == psutil.STATUS_ZOMBIE:
+      if p.snapshot.status == psutil.STATUS_ZOMBIE:
           print(f"zombie: pid={p.pid}")
 
 **How to get rid of a zombie:**
