@@ -2228,7 +2228,7 @@ ProcessSnapshot class
      ...     if p.snapshot.cpu_percent > 50:
      ...         print(p.snapshot)
      ...
-     ProcessSnapshot({'cpu_percent': 72.3, 'name': 'python3', 'pid': 4821})
+     ProcessSnapshot(pid=4821, name='python3', cpu_percent=72.3)
      >>> p.snapshot.exe
      Traceback (most recent call last):
        ...

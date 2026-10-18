@@ -188,6 +188,26 @@ class TestSpecialMethods(PsutilTestCase):
             == "timeout after 5 seconds (pid=321, name='name')"
         )
 
+    def test_process_snapshot__repr__(self):
+        assert repr(psutil.ProcessSnapshot({})) == "ProcessSnapshot()"
+        nt5 = collections.namedtuple("nt5", "a b c d e")
+        snap = psutil.ProcessSnapshot({
+            "zzz": "x" * 100,
+            "name": "foo",
+            "cmdline": list(range(10)),
+            "pid": 1,
+            "memory_info": nt5(1, 2, 3, 4, 5),
+        })
+        assert repr(snap) == (
+            "ProcessSnapshot(pid=1, name='foo', cmdline=[0, 1, 2, 3, ...],"
+            " memory_info=nt5(a=1, b=2, c=3, d=4, ...),"
+            " zzz='"
+            + "x" * 27
+            + "..."
+            + "x" * 28
+            + "')"
+        )
+
 
 # ===================================================================
 # --- Misc, generic, corner cases

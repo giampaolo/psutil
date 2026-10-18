@@ -25,6 +25,7 @@ import contextlib
 import datetime
 import functools
 import os
+import reprlib
 import signal
 import socket
 import subprocess
@@ -439,7 +440,33 @@ class ProcessSnapshot:
     __hash__ = None
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.__dict__!r})"
+        # Truncate long values (memory_maps, environ, ...).
+        class SnapshotRepr(reprlib.Repr):
+            def repr_instance(self, x, level):
+                # reprlib would cut namedtuples mid-string; keep their
+                # field names instead.
+                if isinstance(x, tuple) and hasattr(x, "_fields"):
+                    fields = x._fields[: self.maxtuple]
+                    s = ", ".join(
+                        f"{f}={self.repr1(getattr(x, f), level - 1)}"
+                        for f in fields
+                    )
+                    if len(x._fields) > self.maxtuple:
+                        s += ", ..."
+                    return f"{type(x).__name__}({s})"
+                return super().repr_instance(x, level)
+
+        r = SnapshotRepr()
+        r.maxlist = r.maxtuple = 4
+        r.maxdict = 3
+        r.maxstring = r.maxother = 60
+        # as_dict() order is not deterministic
+        d = self.__dict__
+        first = ("pid", "name", "status")
+        keys = [k for k in first if k in d]
+        keys.extend(sorted(k for k in d if k not in first))
+        items = [f"{k}={r.repr(d[k])}" for k in keys]
+        return f"{self.__class__.__name__}({', '.join(items)})"
 
     def as_dict(self) -> dict[str, Any]:
         """Return a dict representation of the snapshot."""
