@@ -170,17 +170,19 @@ class TestProcessSnapshot(PsutilTestCase):
             with pytest.raises(AttributeError):
                 del p.snapshot.name
         assert "snapshot" not in psutil.Process.attrs
-        assert psutil.Process().snapshot is None
+        assert psutil.Process().snapshot.as_dict() == {}
+        with pytest.raises(AttributeError, match="not requested"):
+            psutil.Process().snapshot.name  # noqa: B018
 
     def test_no_attrs(self):
-        # If no attrs are specificied, snapshot should be None
+        # If no attrs are specificied, snapshot should be empty
         pid = os.getpid()
         p = next(
             x for x in psutil.process_iter(attrs=["name"]) if x.pid == pid
         )
-        assert p.snapshot is not None
+        assert p.snapshot.as_dict() != {}
         p = next(x for x in psutil.process_iter() if x.pid == pid)
-        assert p.snapshot is None
+        assert p.snapshot.as_dict() == {}
 
     def test_eq(self):
         a = psutil.ProcessSnapshot({"pid": 1, "name": "foo"})

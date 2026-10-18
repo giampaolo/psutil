@@ -482,7 +482,7 @@ class Process:
                 raise NoSuchProcess(pid, msg=msg) from err
 
         self._pid = pid
-        self._snapshot = None
+        self._snapshot = ProcessSnapshot({})
         self._name = None
         self._exe = None
         self._create_time = None
@@ -657,7 +657,7 @@ class Process:
             raise NoSuchProcess(self.pid, self._name, msg=msg)
 
     @property
-    def snapshot(self) -> ProcessSnapshot | None:
+    def snapshot(self) -> ProcessSnapshot:
         return self._snapshot
 
     @property
@@ -672,8 +672,6 @@ class Process:
             " instead"
         )
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        if self._snapshot is None:
-            return {}
         return self._snapshot.as_dict()
 
     @property
@@ -1876,7 +1874,7 @@ def process_iter(
                     data = proc.as_dict(attrs=attrs, ad_value=ad_value)
                     proc._snapshot = ProcessSnapshot(data)
                 else:
-                    proc._snapshot = None
+                    proc._snapshot = ProcessSnapshot({})
                 yield proc
             except ZombieProcess:
                 if proc is not None:
