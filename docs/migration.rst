@@ -24,6 +24,9 @@ Key breaking changes in 8.0:
   memory metrics.
 - New :attr:`Process.attrs`: :class:`frozenset` of valid attribute names;
   ``process_iter(attrs=[])`` is deprecated.
+- New :attr:`Process.snapshot`: a read-only :class:`ProcessSnapshot` holding
+  the attributes collected by :func:`process_iter`; ``Process.info`` is
+  deprecated.
 - Python 3.6 and 3.7 dropped.
 - Windows < 10 dropped.
 - macOS 10.7 and 10.8 dropped.
@@ -72,6 +75,34 @@ Named tuple field order changed
 
 - :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired`
   fields were added.
+
+.. _migration-8.0-snapshot:
+
+Process.info is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The attributes collected by :func:`process_iter(attrs=...) <process_iter>` are
+now exposed as a read-only :class:`ProcessSnapshot` via
+:attr:`Process.snapshot`, with one attribute per requested name. The ``info``
+dict is deprecated and still works, but raises :exc:`DeprecationWarning`.
+
+Before:
+
+.. code-block:: python
+
+  for p in psutil.process_iter(["name", "username"]):
+      print(p.info["name"], p.info["username"])
+
+After:
+
+.. code-block:: python
+
+  for p in psutil.process_iter(["name", "username"]):
+      print(p.snapshot.name, p.snapshot.username)
+
+Accessing an attribute that was not requested raises :exc:`AttributeError`
+instead of :exc:`KeyError`. If you need a dict, use
+:meth:`p.snapshot.as_dict() <ProcessSnapshot.as_dict>`.
 
 cpu_times() interrupt renamed to irq on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -262,4 +293,4 @@ explicitly:
 
   for p in psutil.process_iter(["name"]):
       if p.is_running():
-          print(p.pid, p.info["name"])
+          print(p.pid, p.snapshot.name)
