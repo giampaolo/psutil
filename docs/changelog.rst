@@ -201,6 +201,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   compiles. Use :envvar:`PSUTIL_BUILD_JOBS` to cap the number of jobs.
 - :gh:`2927`: python dependencies (``make install-pydeps-*``) are now installed
   with ``uv`` when available, saving around 10 secs for each CI run.
+- :gh:`3066`: the C extension is now compiled with ``-Wall -Wextra`` (``/W4``
+  on Windows). CI turns warnings into errors. Fixed the warnings this surfaced
+  on Windows, BSD and SunOS.
 
 **Documentation**
 

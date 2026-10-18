@@ -164,7 +164,7 @@ def get_extra_compile_args():
         args = [
             # /the highest useful warning level (/Wall is too noisy)
             "/W4",
-            # C4100: unreferenced "self" parameter (-Wno-unused-parameter)
+            # disable unused "self" parameter
             "/wd4100",
         ]
         if os.getenv("PSUTIL_WERROR"):
