@@ -1266,6 +1266,15 @@ class TestNetConnections(LinuxTestCase):
             assert psutil.net_connections(kind='inet6') == []
         assert inet_ntop.called
 
+    @skipif(not psutil._pslinux.LITTLE_ENDIAN, reason="big endian")
+    def test_decode_address(self):
+        decode = psutil._pslinux.NetConnections.decode_address
+        assert decode("0500000A:0016", socket.AF_INET) == ("10.0.0.5", 22)
+        assert decode(
+            "0000000000000000FFFF00000100007F:9E49", socket.AF_INET6
+        ) == ("::ffff:127.0.0.1", 40521)
+        assert decode("0500000A:0000", socket.AF_INET) == ()
+
     def test_emulate_unix(self):
         content = textwrap.dedent("""\
             0: 00000003 000 000 0001 03 462170 @/tmp/dbus-Qw2hMPIU3n
@@ -2447,3 +2456,10 @@ class TestUtils(LinuxTestCase):
         with mock.patch("os.readlink", return_value="foo (deleted)") as m:
             assert psutil._psplatform.readlink("bar") == "foo"
             assert m.called
+
+    def test_parse_cpulist(self):
+        assert _parse_cpulist("0-3,8,10-11\n") == [0, 1, 2, 3, 8, 10, 11]
+        assert _parse_cpulist("5") == [5]
+        assert _parse_cpulist("") == []
+        with pytest.raises(ValueError, match="invalid CPU range"):
+            _parse_cpulist("3-1")
