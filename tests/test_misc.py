@@ -9,6 +9,7 @@
 import collections
 import contextlib
 import copy
+import importlib
 import io
 import json
 import os
@@ -44,7 +45,6 @@ from . import PsutilTestCase
 from . import import_module_by_path
 from . import process_namespace
 from . import pytest
-from . import reload_module
 from . import skipif
 from . import system_namespace
 
@@ -278,14 +278,14 @@ class TestMisc(PsutilTestCase):
         # see: https://github.com/giampaolo/psutil/issues/564
         with mock.patch.object(_psutil, "version", return_value="0.0.0"):
             with pytest.raises(ImportError) as cm:
-                reload_module(psutil)
+                importlib.reload(psutil)
             assert "version conflict" in str(cm.value).lower()
 
     def test_reload_keeps_all(self):
         # A reload reuses the module dict, so the enum constants are
         # already there and used to not make it back into __all__.
         before = sorted(psutil.__all__)
-        reload_module(psutil)
+        importlib.reload(psutil)
         assert sorted(psutil.__all__) == before
 
     def test_check_pid_range(self):

@@ -531,9 +531,9 @@ class TestProcessCredentials(PsutilTestCase):
     def test_gids(self):
         p = psutil.Process()
         real, effective, _saved = p.gids()
-        # os.getuid() refers to "real" uid
+        # os.getgid() refers to "real" gid
         assert real == os.getgid()
-        # os.geteuid() refers to "effective" uid
+        # os.getegid() refers to "effective" gid
         assert effective == os.getegid()
         # No such thing as os.getsgid() ("saved" gid), but we have
         # os.getresgid() which returns all of them.

@@ -518,7 +518,7 @@ def cext_has(name):
 
 
 class TestBadargs2(MemoryLeakTestCase):
-    """Like TestBadargsMemleaks, but for the error paths reached
+    """Like TestBadargs, but for the error paths reached
     *after* `PyArg_ParseTuple` succeeds, by passing an invalid arg like
     a negative PID, a bogus NIC name etc., making the C function fail
     deeper.

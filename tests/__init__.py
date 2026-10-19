@@ -69,18 +69,20 @@ __all__ = [
     'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'PYTHON_SLEEP_CODE', 'ROOT_DIR',
     'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE',
+    'GITHUB_ACTIONS', 'AF_UNIX', 'ASCII_FS', 'SKIP_SYSCONS',
     "HAS_PROC_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_PROC_ENVIRON",
     "HAS_PROC_IO_COUNTERS", "HAS_PROC_IONICE",
     "HAS_PROC_MEMORY_EXTRAS", "HAS_PROC_MEMORY_FOOTPRINT",
     "HAS_PROC_MEMORY_MAPS",
-    "HAS_PROC_CPU_NUM", "HAS_PROC_RLIMIT", "HAS_SENSORS_BATTERY",
+    "HAS_PROC_CPU_NUM", "HAS_PROC_RLIMIT", "HAS_PROC_THREADS",
+    "HAS_SENSORS_BATTERY", "HAS_HEAP_INFO", "HAS_NET_IO_COUNTERS",
     "HAS_BATTERY", "HAS_SENSORS_FANS", "HAS_SENSORS_TEMPERATURES",
     "HAS_NET_CONNECTIONS_UNIX", "HAS_PROC_OPEN_FILES_PATH",
     "MACOS_12PLUS",
     "AARCH64", "PYTEST_PARALLEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_subproc', 'spawn_zombie',
-    'spawn_children_pair', 'filter_alien_children',
+    'spawn_children_pair', 'filter_alien_children', 'sh', 'df', 'sysctl',
     # threads
     'ThreadTask',
     # test utils
@@ -91,18 +93,20 @@ __all__ = [
     # type hints
     'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
-    'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
-    'py_exe_copy_runs',
+    'chdir', 'safe_rmpath', 'safe_mkdir', 'create_py_exe', 'create_c_exe',
+    'get_testfn', 'py_exe_copy_runs',
     # os
-    'get_winver', 'kernel_version', 'is_busybox',
+    'kernel_version', 'is_busybox',
     # sync primitives
-    'call_until', 'wait_for_pid', 'wait_for_file', 'wait_for_file_subproc',
+    'retry', 'call_until', 'wait_for_pid', 'wait_for_file',
+    'wait_for_file_subproc',
     # network
-    'check_net_address', 'filter_proc_net_connections',
+    'check_net_address', 'check_connection_ntuple',
+    'filter_proc_net_connections',
     'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
     'unix_socketpair', 'create_sockets',
-    # compat
-    'reload_module', 'import_module_by_path',
+    # import utils
+    'import_module_by_path',
     # others
     'warn', 'copyload_shared_lib', 'is_namedtuple', 'assert_ntuple_of_nums',
 ]
@@ -624,9 +628,8 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         except ProcessLookupError:
             pass
         except OSError as err:
-            if WINDOWS and err.winerror == 6:  # "invalid handle"
-                pass
-            raise
+            if not (WINDOWS and err.winerror == 6):  # "invalid handle"
+                raise
         return wait(proc, timeout)
 
     def term_psutil_proc(proc, timeout):
@@ -755,14 +758,6 @@ def kernel_version():
     if len(nums) >= 3:
         micro = int(nums[2])
     return (major, minor, micro)
-
-
-def get_winver():
-    if not WINDOWS:
-        raise NotImplementedError("not WINDOWS")
-    wv = sys.getwindowsversion()
-    sp = wv.service_pack_major or 0
-    return (wv[0], wv[1], sp)
 
 
 @functools.lru_cache
@@ -934,7 +929,9 @@ def safe_rmpath(path):
             try:
                 return fun()
             except FileNotFoundError:
-                pass
+                # rmtree() also raises it for an entry gone mid-walk
+                if not os.path.exists(path):
+                    return None
             except OSError as _:
                 err = _
                 warn(f"ignoring {err}")
@@ -1118,11 +1115,8 @@ class PsutilTestCase(unittest.TestCase):
     # run, similar to pytest output. Used only when running tests with
     # the unittest runner.
     def __str__(self):
-        fqmod = self.__class__.__module__
-        if not fqmod.startswith('psutil.'):
-            fqmod = 'tests.' + fqmod
         return "{}.{}.{}".format(
-            fqmod,
+            self.__class__.__module__,
             self.__class__.__name__,
             self._testMethodName,
         )
@@ -1167,8 +1161,8 @@ class PsutilTestCase(unittest.TestCase):
         assert isinstance(exc, psutil.Error)
         assert exc.pid == proc.pid
         assert exc.name == proc._name
-        if exc.name:
-            assert exc.name
+        if exc.name is not None:
+            assert isinstance(exc.name, str)
         if isinstance(exc, psutil.ZombieProcess):
             assert exc.ppid == proc._ppid
             if exc.ppid is not None:
@@ -1299,20 +1293,22 @@ class PsutilTestCase(unittest.TestCase):
                 assert diff <= nt.rss * 0.05
 
 
+# "Secure System" starts at boot, so one snapshot is enough.
+@functools.lru_cache
+def _win_tasklist():
+    ret = {}
+    out = sh("tasklist.exe /NH /FO csv")
+    for line in out.splitlines()[1:]:
+        bits = [x.replace('"', "") for x in line.split(",")]
+        name, pid = bits[0], int(bits[1])
+        ret[pid] = name
+    return ret
+
+
 def is_win_secure_system_proc(pid):
     # see: https://github.com/giampaolo/psutil/issues/2338
-    @functools.lru_cache
-    def get_procs():
-        ret = {}
-        out = sh("tasklist.exe /NH /FO csv")
-        for line in out.splitlines()[1:]:
-            bits = [x.replace('"', "") for x in line.split(",")]
-            name, pid = bits[0], int(bits[1])
-            ret[pid] = name
-        return ret
-
     try:
-        return get_procs()[pid] == "Secure System"
+        return _win_tasklist()[pid] == "Secure System"
     except KeyError:
         return False
 
@@ -1639,7 +1635,6 @@ def skip_on_not_implemented(only_if: "bool | typing.Callable | None" = None):
 # ===================================================================
 
 
-# XXX: no longer used
 def get_free_port(host='127.0.0.1'):
     """Return an unused TCP port. Subject to race conditions."""
     with socket.socket() as sock:
@@ -2024,10 +2019,6 @@ check_fun_type_hints = TypeHintsChecker.check_fun_type_hints
 # ===================================================================
 # --- import utils
 # ===================================================================
-
-
-def reload_module(module):
-    return importlib.reload(module)
 
 
 def import_module_by_path(path):

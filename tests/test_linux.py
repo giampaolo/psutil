@@ -12,6 +12,7 @@ import ctypes
 import errno
 import fnmatch
 import glob
+import importlib
 import io
 import mmap
 import os
@@ -43,7 +44,6 @@ from . import df
 from . import is_busybox
 from . import isolated
 from . import pytest
-from . import reload_module
 from . import requires_cli
 from . import retry_on_failure
 from . import safe_rmpath
@@ -252,13 +252,13 @@ def mock_cpufreq_sysfs(files, num_policies):
     orig_glob = glob.glob
     try:
         with mock.patch("os.path.exists", side_effect=exists_mock):
-            reload_module(psutil._pslinux)
+            importlib.reload(psutil._pslinux)
             with mock.patch("glob.glob", side_effect=glob_mock):
                 with mock_open_content(files):
                     yield
     finally:
-        reload_module(psutil._pslinux)
-        reload_module(psutil)
+        importlib.reload(psutil._pslinux)
+        importlib.reload(psutil)
 
 
 # =====================================================================
@@ -847,7 +847,7 @@ class TestCpuFreq(LinuxTestCase):
         os_path_exists = os.path.exists
         try:
             with mock.patch("os.path.exists", side_effect=path_exists_mock):
-                reload_module(psutil._pslinux)
+                importlib.reload(psutil._pslinux)
                 ret = psutil.cpu_freq()
                 assert ret, ret
                 assert ret.max == 0.0
@@ -856,8 +856,8 @@ class TestCpuFreq(LinuxTestCase):
                     assert freq.max == 0.0
                     assert freq.min == 0.0
         finally:
-            reload_module(psutil._pslinux)
-            reload_module(psutil)
+            importlib.reload(psutil._pslinux)
+            importlib.reload(psutil)
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_data(self):
@@ -1585,7 +1585,7 @@ class TestMisc(LinuxTestCase):
 
         try:
             with mock_open_content({"/proc*": FileNotFoundError}):
-                reload_module(psutil)
+                importlib.reload(psutil)
 
                 with pytest.raises(OSError):
                     psutil.cpu_times()
@@ -1628,7 +1628,7 @@ class TestMisc(LinuxTestCase):
                 )
         finally:
             shutil.rmtree(my_procfs)
-            reload_module(psutil)
+            importlib.reload(psutil)
 
         assert psutil.PROCFS_PATH == '/proc'
 
