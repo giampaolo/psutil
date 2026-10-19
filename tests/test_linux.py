@@ -1338,44 +1338,37 @@ class TestDiskPartitions(LinuxTestCase):
 
 
 class TestDiskIoCounters(LinuxTestCase):
+    def emulate_diskstats(self, content, storage_devices, perdisk=False):
+        with mock_open_content({"/proc/diskstats": content}):
+            with mock.patch(
+                "psutil._pslinux.is_storage_device",
+                side_effect=lambda name: name in storage_devices,
+            ):
+                return psutil.disk_io_counters(perdisk=perdisk, nowrap=False)
+
+    def check_full_counters(self, ret):
+        assert ret.read_count == 1
+        assert ret.read_merged_count == 2
+        assert ret.read_bytes == 3 * SECTOR_SIZE
+        assert ret.read_time == 4
+        assert ret.write_count == 5
+        assert ret.write_merged_count == 6
+        assert ret.write_bytes == 7 * SECTOR_SIZE
+        assert ret.write_time == 8
+        assert ret.busy_time == 10
+
     def test_emulate_kernel_2_4(self):
         # Tests /proc/diskstats parsing format for 2.4 kernels, see:
         # https://github.com/giampaolo/psutil/issues/767
         content = "   3     0   1 hda 2 3 4 5 6 7 8 9 10 11 12"
-        with mock_open_content({'/proc/diskstats': content}):
-            with mock.patch(
-                'psutil._pslinux.is_storage_device', return_value=True
-            ):
-                ret = psutil.disk_io_counters(nowrap=False)
-                assert ret.read_count == 1
-                assert ret.read_merged_count == 2
-                assert ret.read_bytes == 3 * SECTOR_SIZE
-                assert ret.read_time == 4
-                assert ret.write_count == 5
-                assert ret.write_merged_count == 6
-                assert ret.write_bytes == 7 * SECTOR_SIZE
-                assert ret.write_time == 8
-                assert ret.busy_time == 10
+        self.check_full_counters(self.emulate_diskstats(content, {"hda"}))
 
     def test_emulate_kernel_2_6_full(self):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
         # lines reporting all metrics:
         # https://github.com/giampaolo/psutil/issues/767
         content = "   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"
-        with mock_open_content({"/proc/diskstats": content}):
-            with mock.patch(
-                'psutil._pslinux.is_storage_device', return_value=True
-            ):
-                ret = psutil.disk_io_counters(nowrap=False)
-                assert ret.read_count == 1
-                assert ret.read_merged_count == 2
-                assert ret.read_bytes == 3 * SECTOR_SIZE
-                assert ret.read_time == 4
-                assert ret.write_count == 5
-                assert ret.write_merged_count == 6
-                assert ret.write_bytes == 7 * SECTOR_SIZE
-                assert ret.write_time == 8
-                assert ret.busy_time == 10
+        self.check_full_counters(self.emulate_diskstats(content, {"hda"}))
 
     def test_emulate_kernel_2_6_limited(self):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
@@ -1383,21 +1376,17 @@ class TestDiskIoCounters(LinuxTestCase):
         # amount of metrics when it bumps into a partition
         # (instead of a disk). See:
         # https://github.com/giampaolo/psutil/issues/767
-        with mock_open_content({"/proc/diskstats": "   3    1   hda 1 2 3 4"}):
-            with mock.patch(
-                'psutil._pslinux.is_storage_device', return_value=True
-            ):
-                ret = psutil.disk_io_counters(nowrap=False)
-                assert ret.read_count == 1
-                assert ret.read_bytes == 2 * SECTOR_SIZE
-                assert ret.write_count == 3
-                assert ret.write_bytes == 4 * SECTOR_SIZE
+        ret = self.emulate_diskstats("   3    1   hda 1 2 3 4", {"hda"})
+        assert ret.read_count == 1
+        assert ret.read_bytes == 2 * SECTOR_SIZE
+        assert ret.write_count == 3
+        assert ret.write_bytes == 4 * SECTOR_SIZE
 
-                assert ret.read_merged_count == 0
-                assert ret.read_time == 0
-                assert ret.write_merged_count == 0
-                assert ret.write_time == 0
-                assert ret.busy_time == 0
+        assert ret.read_merged_count == 0
+        assert ret.read_time == 0
+        assert ret.write_merged_count == 0
+        assert ret.write_time == 0
+        assert ret.busy_time == 0
 
     def test_emulate_include_partitions(self):
         # Make sure that when perdisk=True disk partitions are returned,
@@ -1407,16 +1396,12 @@ class TestDiskIoCounters(LinuxTestCase):
             3    0   nvme0n1 1 2 3 4 5 6 7 8 9 10 11
             3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
             """)
-        with mock_open_content({"/proc/diskstats": content}):
-            with mock.patch(
-                'psutil._pslinux.is_storage_device', return_value=False
-            ):
-                ret = psutil.disk_io_counters(perdisk=True, nowrap=False)
-                assert len(ret) == 2
-                assert ret['nvme0n1'].read_count == 1
-                assert ret['nvme0n1p1'].read_count == 1
-                assert ret['nvme0n1'].write_count == 5
-                assert ret['nvme0n1p1'].write_count == 5
+        ret = self.emulate_diskstats(content, set(), perdisk=True)
+        assert len(ret) == 2
+        assert ret['nvme0n1'].read_count == 1
+        assert ret['nvme0n1p1'].read_count == 1
+        assert ret['nvme0n1'].write_count == 5
+        assert ret['nvme0n1p1'].write_count == 5
 
     def test_emulate_exclude_partitions(self):
         # Make sure that when perdisk=False partitions (e.g. 'sda1',
@@ -1426,29 +1411,11 @@ class TestDiskIoCounters(LinuxTestCase):
             3    0   nvme0n1 1 2 3 4 5 6 7 8 9 10 11
             3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
             """)
-        with mock_open_content({"/proc/diskstats": content}):
-            with mock.patch(
-                'psutil._pslinux.is_storage_device', return_value=False
-            ):
-                ret = psutil.disk_io_counters(perdisk=False, nowrap=False)
-                assert ret is None
+        assert self.emulate_diskstats(content, set()) is None
 
-        def is_storage_device(name):
-            return name == 'nvme0n1'
-
-        content = textwrap.dedent("""\
-            3    0   nvme0n1 1 2 3 4 5 6 7 8 9 10 11
-            3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
-            """)
-        with mock_open_content({"/proc/diskstats": content}):
-            with mock.patch(
-                'psutil._pslinux.is_storage_device',
-                create=True,
-                side_effect=is_storage_device,
-            ):
-                ret = psutil.disk_io_counters(perdisk=False, nowrap=False)
-                assert ret.read_count == 1
-                assert ret.write_count == 5
+        ret = self.emulate_diskstats(content, {"nvme0n1"})
+        assert ret.read_count == 1
+        assert ret.write_count == 5
 
     def test_emulate_use_sysfs(self):
         def exists(path):
