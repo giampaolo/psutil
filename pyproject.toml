@@ -305,7 +305,8 @@ strict_markers = true
 verbosity_subtests = "0"
 verbosity_assertions = "2"
 testpaths = ["tests/"]
-python_files = ["test_*.py"]
+# __init__.py: so that pytest rewrites the asserts in its helpers
+python_files = ["test_*.py", "tests/__init__.py"]
 markers = [
     "isolated: run in a separate serial pytest phase, not under -n auto",
 ]
