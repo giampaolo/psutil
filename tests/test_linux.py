@@ -450,6 +450,29 @@ class TestVirtualMemoryMocks(LinuxTestCase):
             diff_percent = abs(a - b) / a * 100
             assert diff_percent < 15
 
+    def test_calculate_avail_vmem(self):
+        zoneinfo = textwrap.dedent("""\
+            Node 0, zone      DMA
+                    min      5
+                    low      10
+                    high     15
+            Node 0, zone   Normal
+                    low      10
+            """)
+        mems = {
+            b"MemFree:": 1_000_000,
+            b"Active(file):": 100_000,
+            b"Inactive(file):": 60_000,
+            b"SReclaimable:": 400_000,
+        }
+        with mock.patch("psutil._pslinux.PAGESIZE", 4096):
+            with mock_open_content({"/proc/zoneinfo": zoneinfo.encode()}):
+                ret = calculate_avail_vmem(mems)
+        wmark_low = 20 * 4096
+        pagecache = 160_000 - 160_000 / 2
+        slab = 400_000 - wmark_low
+        assert ret == int(1_000_000 - wmark_low + pagecache + slab)
+
     def test_avail_old_comes_from_kernel(self):
         # Make sure "MemAvailable:" coluimn is used instead of relying
         # on our internal algorithm to calculate avail mem.
