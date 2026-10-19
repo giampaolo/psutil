@@ -69,18 +69,20 @@ __all__ = [
     'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'PYTHON_SLEEP_CODE', 'ROOT_DIR',
     'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE',
+    'GITHUB_ACTIONS', 'AF_UNIX', 'ASCII_FS', 'SKIP_SYSCONS',
     "HAS_PROC_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_PROC_ENVIRON",
     "HAS_PROC_IO_COUNTERS", "HAS_PROC_IONICE",
     "HAS_PROC_MEMORY_EXTRAS", "HAS_PROC_MEMORY_FOOTPRINT",
     "HAS_PROC_MEMORY_MAPS",
-    "HAS_PROC_CPU_NUM", "HAS_PROC_RLIMIT", "HAS_SENSORS_BATTERY",
+    "HAS_PROC_CPU_NUM", "HAS_PROC_RLIMIT", "HAS_PROC_THREADS",
+    "HAS_SENSORS_BATTERY", "HAS_HEAP_INFO", "HAS_NET_IO_COUNTERS",
     "HAS_BATTERY", "HAS_SENSORS_FANS", "HAS_SENSORS_TEMPERATURES",
     "HAS_NET_CONNECTIONS_UNIX", "HAS_PROC_OPEN_FILES_PATH",
     "MACOS_12PLUS",
     "AARCH64", "PYTEST_PARALLEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_subproc', 'spawn_zombie',
-    'spawn_children_pair', 'filter_alien_children',
+    'spawn_children_pair', 'filter_alien_children', 'sh', 'df', 'sysctl',
     # threads
     'ThreadTask',
     # test utils
@@ -91,14 +93,16 @@ __all__ = [
     # type hints
     'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
-    'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
-    'py_exe_copy_runs',
+    'chdir', 'safe_rmpath', 'safe_mkdir', 'create_py_exe', 'create_c_exe',
+    'get_testfn', 'py_exe_copy_runs',
     # os
     'kernel_version', 'is_busybox',
     # sync primitives
-    'call_until', 'wait_for_pid', 'wait_for_file', 'wait_for_file_subproc',
+    'retry', 'call_until', 'wait_for_pid', 'wait_for_file',
+    'wait_for_file_subproc',
     # network
-    'check_net_address', 'filter_proc_net_connections',
+    'check_net_address', 'check_connection_ntuple',
+    'filter_proc_net_connections',
     'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
     'unix_socketpair', 'create_sockets',
     # compat
