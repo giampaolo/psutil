@@ -1715,30 +1715,17 @@ class TestProcessWait(PsutilTestCase):
 
     def test_wait_exited(self):
         # Test waitpid() + WIFEXITED -> WEXITSTATUS.
-        # normal return, same as exit(0)
-        cmd = [PYTHON_EXE, "-c", "pass"]
-        p = self.spawn_psproc(cmd)
-        code = p.wait()
-        assert code == 0
-        self.assert_proc_gone(p)
-        # exit(1), implicit in case of error
-        cmd = [PYTHON_EXE, "-c", "1 / 0"]
-        p = self.spawn_psproc(cmd, stderr=subprocess.PIPE)
-        code = p.wait()
-        assert code == 1
-        self.assert_proc_gone(p)
-        # via sys.exit()
-        cmd = [PYTHON_EXE, "-c", "import sys; sys.exit(5);"]
-        p = self.spawn_psproc(cmd)
-        code = p.wait()
-        assert code == 5
-        self.assert_proc_gone(p)
-        # via os._exit()
-        cmd = [PYTHON_EXE, "-c", "import os; os._exit(5);"]
-        p = self.spawn_psproc(cmd)
-        code = p.wait()
-        assert code == 5
-        self.assert_proc_gone(p)
+        cases = [
+            ("pass", 0),  # normal return, same as exit(0)
+            ("1 / 0", 1),  # exit(1), implicit in case of error
+            ("import sys; sys.exit(5);", 5),
+            ("import os; os._exit(5);", 5),
+        ]
+        for code, exitcode in cases:
+            cmd = [PYTHON_EXE, "-c", code]
+            p = self.spawn_psproc(cmd, stderr=subprocess.PIPE)
+            assert p.wait() == exitcode
+            self.assert_proc_gone(p)
 
     @skipif(not WINDOWS, reason="WINDOWS only")
     def test_wait_exited_ntstatus(self):
