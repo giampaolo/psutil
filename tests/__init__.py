@@ -66,7 +66,7 @@ if POSIX:
 __all__ = [
     # constants
     'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
-    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR',
+    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'PYTHON_SLEEP_CODE', 'ROOT_DIR',
     'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE',
     "HAS_PROC_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_PROC_ENVIRON",
@@ -299,6 +299,7 @@ def _get_py_exe():
 
 
 PYTHON_EXE, PYTHON_EXE_ENV = _get_py_exe()
+PYTHON_SLEEP_CODE = "import time; [time.sleep(0.1) for x in range(100)]"
 DEVNULL = open(os.devnull, 'r+')  # noqa: SIM115
 atexit.register(DEVNULL.close)
 
@@ -408,11 +409,7 @@ def spawn_subproc(cmd=None, **kwds):
         testfn = get_testfn(dir=os.getcwd())
         try:
             safe_rmpath(testfn)
-            pyline = (
-                "import time;"
-                f"open(r'{testfn}', 'w').close();"
-                "[time.sleep(0.1) for x in range(100)];"  # 10 secs
-            )
+            pyline = f"open(r'{testfn}', 'w').close(); {PYTHON_SLEEP_CODE}"
             cmd = [PYTHON_EXE, "-c", pyline]
             kwds.setdefault("stderr", subprocess.PIPE)
             sproc = subprocess.Popen(cmd, **kwds)

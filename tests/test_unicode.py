@@ -81,6 +81,7 @@ from . import HAS_NET_CONNECTIONS_UNIX
 from . import HAS_PROC_ENVIRON
 from . import HAS_PROC_MEMORY_MAPS
 from . import INVALID_UNICODE_SUFFIX
+from . import PYTHON_SLEEP_CODE
 from . import TESTFN_PREFIX
 from . import UNICODE_SUFFIX
 from . import PsutilTestCase
@@ -186,7 +187,7 @@ class TestFSAPIs(BaseUnicodeTest):
         cmd = [
             self.funky_name,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)]",
+            PYTHON_SLEEP_CODE,
         ]
         subp = self.spawn_subproc(cmd)
         p = psutil.Process(subp.pid)
@@ -199,7 +200,7 @@ class TestFSAPIs(BaseUnicodeTest):
         cmd = [
             self.funky_name,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)]",
+            PYTHON_SLEEP_CODE,
         ]
         subp = self.spawn_subproc(cmd)
         name = psutil.Process(subp.pid).name()
@@ -211,7 +212,7 @@ class TestFSAPIs(BaseUnicodeTest):
         cmd = [
             self.funky_name,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)]",
+            PYTHON_SLEEP_CODE,
         ]
         subp = self.spawn_subproc(cmd)
         p = psutil.Process(subp.pid)

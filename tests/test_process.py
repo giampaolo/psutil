@@ -59,6 +59,7 @@ from . import HAS_PROC_THREADS
 from . import PYPY
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
+from . import PYTHON_SLEEP_CODE
 from . import PsutilTestCase
 from . import ThreadTask
 from . import call_until
@@ -201,10 +202,7 @@ class TestProcessIdentity(PsutilTestCase):
 
     def test_cmdline(self):
         testfn = self.get_testfn()
-        pyline = (
-            f"import time; open(r'{testfn}', 'w').close(); "
-            "[time.sleep(0.1) for x in range(100)]"
-        )
+        pyline = f"open(r'{testfn}', 'w').close(); {PYTHON_SLEEP_CODE}"
         cmdline = [PYTHON_EXE, "-c", pyline]
         p = self.spawn_psproc(cmdline)
         wait_for_file(testfn, delete=True, empty=True)
@@ -242,7 +240,7 @@ class TestProcessIdentity(PsutilTestCase):
         cmdline = [
             pyexe,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)]",
+            PYTHON_SLEEP_CODE,
         ]
         p = self.spawn_psproc(cmdline)
         if OPENBSD:
@@ -275,10 +273,7 @@ class TestProcessIdentity(PsutilTestCase):
         cmd = [
             PYTHON_EXE,
             "-c",
-            (
-                "import os, time; os.chdir('..'); [time.sleep(0.1) for x in"
-                " range(100)]"
-            ),
+            f"import os; os.chdir('..'); {PYTHON_SLEEP_CODE}",
         ]
         p = self.spawn_psproc(cmd)
         call_until(lambda: p.cwd() == os.path.dirname(os.getcwd()))
@@ -2016,10 +2011,7 @@ class TestPopen(PsutilTestCase):
         cmd = [
             PYTHON_EXE,
             "-c",
-            (
-                "print('ready', flush=True);"
-                "import time; [time.sleep(0.1) for x in range(100)];"
-            ),
+            f"print('ready', flush=True); {PYTHON_SLEEP_CODE}",
         ]
         with psutil.Popen(
             cmd,
@@ -2077,7 +2069,7 @@ class TestPopen(PsutilTestCase):
         cmd = [
             PYTHON_EXE,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)];",
+            PYTHON_SLEEP_CODE,
         ]
         with psutil.Popen(
             cmd,
@@ -2103,7 +2095,7 @@ class TestPopen(PsutilTestCase):
         cmd = [
             PYTHON_EXE,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)];",
+            PYTHON_SLEEP_CODE,
         ]
         with psutil.Popen(
             cmd,

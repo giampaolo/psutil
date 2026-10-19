@@ -26,6 +26,7 @@ from psutil._common import supports_ipv6
 from . import HAS_NET_CONNECTIONS_UNIX
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
+from . import PYTHON_SLEEP_CODE
 from . import PsutilTestCase
 from . import bind_socket
 from . import bind_unix_socket
@@ -312,7 +313,7 @@ class TestProcessUtils(PsutilTestCase):
         cmd = [
             PYTHON_EXE,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)];",
+            PYTHON_SLEEP_CODE,
         ]
         p = psutil.Popen(
             cmd,
