@@ -1962,21 +1962,21 @@ class TestPopen(PsutilTestCase):
     def tearDownClass(cls):
         reap_children()
 
+    def popen(self, args, **kwargs):
+        return psutil.Popen(
+            [PYTHON_EXE, *args],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=PYTHON_EXE_ENV,
+            **kwargs,
+        )
+
     def test_misc(self):
         # XXX this test causes a ResourceWarning because
         # psutil.__subproc instance doesn't get properly freed.
         # Not sure what to do though.
-        cmd = [
-            PYTHON_EXE,
-            "-c",
-            f"print('ready', flush=True); {PYTHON_SLEEP_CODE}",
-        ]
-        with psutil.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=PYTHON_EXE_ENV,
-        ) as proc:
+        code = f"print('ready', flush=True); {PYTHON_SLEEP_CODE}"
+        with self.popen(["-c", code]) as proc:
             proc.name()
             proc.cpu_times()
             proc.stdin  # noqa: B018
@@ -2007,13 +2007,7 @@ class TestPopen(PsutilTestCase):
                 )
 
     def test_ctx_manager(self):
-        with psutil.Popen(
-            [PYTHON_EXE, "-V"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
-            env=PYTHON_EXE_ENV,
-        ) as proc:
+        with self.popen(["-V"], stdin=subprocess.PIPE) as proc:
             proc.communicate()
         assert proc.stdout.closed
         assert proc.stderr.closed
@@ -2024,17 +2018,7 @@ class TestPopen(PsutilTestCase):
         # subprocess.Popen()'s terminate(), kill() and send_signal() do
         # not raise exception after the process is gone. psutil.Popen
         # diverges from that.
-        cmd = [
-            PYTHON_EXE,
-            "-c",
-            PYTHON_SLEEP_CODE,
-        ]
-        with psutil.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=PYTHON_EXE_ENV,
-        ) as proc:
+        with self.popen(["-c", PYTHON_SLEEP_CODE]) as proc:
             proc.terminate()
             proc.wait()
             with pytest.raises(psutil.NoSuchProcess):
@@ -2050,17 +2034,7 @@ class TestPopen(PsutilTestCase):
                     proc.send_signal(signal.CTRL_BREAK_EVENT)
 
     def test__getattribute__(self):
-        cmd = [
-            PYTHON_EXE,
-            "-c",
-            PYTHON_SLEEP_CODE,
-        ]
-        with psutil.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=PYTHON_EXE_ENV,
-        ) as proc:
+        with self.popen(["-c", PYTHON_SLEEP_CODE]) as proc:
             proc.terminate()
             proc.wait()
             with pytest.raises(AttributeError):
