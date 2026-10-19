@@ -548,12 +548,13 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   kernel's 64-bit ``vm.stats.sys`` sysctls were read as ``unsigned int``.
 - :gh:`3017`, [FreeBSD]: :func:`pid_exists` returned ``False`` for PID 0 (the
   kernel), even though :func:`pids` lists it.
-- [OpenBSD], :label:`critical`: :func:`users` crashed with ``fclose(NULL)``
-  instead of raising :exc:`OSError` if ``/var/run/utmp`` could not be opened.
-- [OpenBSD]: :func:`users` could return garbage trailing characters in
-  :field:`name`, :field:`terminal` or :field:`host` when the ``utmp`` field is
-  full, since it then has no null terminator.
-- [NetBSD], :label:`critical`: :func:`net_connections` and
+- :gh:`3071`, [OpenBSD], :label:`critical`: :func:`users` crashed with
+  ``fclose(NULL)`` instead of raising :exc:`OSError` if ``/var/run/utmp`` could
+  not be opened.
+- :gh:`3072`, [OpenBSD]: :func:`users` could return garbage trailing characters
+  in :field:`name`, :field:`terminal` or :field:`host` when the ``utmp`` field
+  is full, since it then has no null terminator.
+- :gh:`3073`, [NetBSD], :label:`critical`: :func:`net_connections` and
   :meth:`Process.net_connections` read freed memory when releasing their
   internal result lists; each node was ``free()``'d before being unlinked.
 
@@ -563,9 +564,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   in :func:`users`. When ``ut_host`` fills the whole field it has no null
   terminator, and the terminator was written one byte past the end of the local
   buffer.
-- [POSIX], :label:`critical`: :func:`net_if_addrs` freed an uninitialized
-  pointer if ``getifaddrs()`` failed (e.g. out of memory), instead of raising
-  :exc:`OSError`.
+- :gh:`3070`, [POSIX], :label:`critical`: :func:`net_if_addrs` freed an
+  uninitialized pointer if ``getifaddrs()`` failed (e.g. out of memory),
+  instead of raising :exc:`OSError`.
 - :gh:`2789`, [AIX], :label:`build-fail`: fix compilation error caused by a
   typo (accidental space) in ``psutil_net_io_counters()``, introduced during a
   previous code reformatting.
@@ -573,19 +574,19 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   result dictionary when ``kstat_read()`` failed mid-iteration; the error path
   now goes through the existing cleanup block.
 - :gh:`2687`, [SunOS]: :func:`users` failed with ``ValueError`` on illumos.
-- [SunOS]: :meth:`Process.terminal` returned the path of file descriptor 0
-  (e.g. a regular file) instead of ``None`` for a process without a controlling
-  terminal. The ``PRNODEV`` check never matched because the tty device number
-  was exported as unsigned.
-- [SunOS], :label:`critical`: :meth:`Process.memory_maps` read past the end of
-  a heap buffer if ``pread()`` of ``/proc/[pid]/xmap`` failed; the -1 return
-  value was stored unsigned and taken as a huge number of map entries. Now it
-  raises :exc:`OSError`.
-- [SunOS]: :meth:`Process.cmdline` and :meth:`Process.environ` could raise
-  ``SystemError`` instead of :exc:`NoSuchProcess` if the process exited
-  mid-read. The read error was stored in an unsigned variable, so the ``< 0``
-  check never matched and a half-filled buffer was returned with the exception
-  still set.
+- :gh:`3074`, [SunOS]: :meth:`Process.terminal` returned the path of file
+  descriptor 0 (e.g. a regular file) instead of ``None`` for a process without
+  a controlling terminal. The ``PRNODEV`` check never matched because the tty
+  device number was exported as unsigned.
+- :gh:`3075`, [SunOS], :label:`critical`: :meth:`Process.memory_maps` read past
+  the end of a heap buffer if ``pread()`` of ``/proc/[pid]/xmap`` failed; the
+  -1 return value was stored unsigned and taken as a huge number of map
+  entries. Now it raises :exc:`OSError`.
+- :gh:`3076`, [SunOS]: :meth:`Process.cmdline` and :meth:`Process.environ`
+  could raise ``SystemError`` instead of :exc:`NoSuchProcess` if the process
+  exited mid-read. The read error was stored in an unsigned variable, so the
+  ``< 0`` check never matched and a half-filled buffer was returned with the
+  exception still set.
 - :gh:`2778`, [UNIX]: :func:`net_if_addrs` skips interfaces with no addresses,
   which are typically virtual IPv4/IPv6 tunnel interfaces. Now they are
   included in the returned dict with :field:`family` ==
