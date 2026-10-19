@@ -387,17 +387,6 @@ class TestDiskApis(WindowsTestCase):
 
 class TestOtherSystemAPIs(WindowsTestCase):
 
-    # @skipif(wmi is None, reason="wmi module is not installed")
-    # def test__UPTIME(self):
-    #     # _UPTIME constant is not public but it is used internally
-    #     # as value to return for pid 0 creation time.
-    #     # WMI behaves the same.
-    #     w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-    #     p = psutil.Process(0)
-    #     wmic_create = str(w.CreationDate.split('.')[0])
-    #     psutil_create = time.strftime("%Y%m%d%H%M%S",
-    #                                   time.localtime(p.create_time()))
-
     def test_convert_dos_path_drive(self):
         winpath = 'C:\\Windows\\Temp'
         driveletter = 'C:'
@@ -617,14 +606,6 @@ class TestProcessCpu(WindowsTestCase):
         )
         ps = psutil.Process(self.pid).cpu_affinity()
         assert ps == win
-
-    # XXX - occasional failures
-
-    # def test_cpu_times(self):
-    #     a = psutil.Process().cpu_times()
-    #     b = win32process.GetProcessTimes(self.OpenProcess())
-    #     assert abs(a.user - b['UserTime'] / 10000000.0) < 0.2
-    #     assert abs(a.user - b['KernelTime'] / 10000000.0) < 0.2
 
 
 class TestProcessMemory(WindowsTestCase):
