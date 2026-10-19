@@ -896,8 +896,6 @@ class TestDiskAPIs(PsutilTestCase):
         assert ret is not None, "no disks on this system?"
         check_ntuple(ret)
         ret = psutil.disk_io_counters(perdisk=True)
-        # make sure there are no duplicates
-        assert len(ret) == len(set(ret))
         for key in ret:
             assert key, key
             check_ntuple(ret[key])
@@ -930,7 +928,7 @@ class TestNetAPIs(PsutilTestCase):
         ret = psutil.net_io_counters(pernic=False)
         check_ntuple(ret)
         ret = psutil.net_io_counters(pernic=True)
-        assert ret != []
+        assert ret
         for key in ret:
             assert key
             assert isinstance(key, str)
