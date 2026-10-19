@@ -1263,14 +1263,20 @@ class TestNetIoCounters(LinuxTestCase):
 class TestNetConnections(LinuxTestCase):
     @mock.patch('psutil._pslinux.socket.inet_ntop', side_effect=ValueError)
     @mock.patch('psutil._pslinux.supports_ipv6', return_value=False)
+    @skipif(not os.path.exists("/proc/net/tcp6"), reason="no IPv6")
     def test_emulate_ipv6_unsupported(self, supports_ipv6, inet_ntop):
         # see: https://github.com/giampaolo/psutil/issues/623
-        with socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as s:
-            try:
-                s.bind(("::1", 0))
-            except OSError:
-                pass
-            psutil.net_connections(kind='inet6')
+        header = "  sl  local_address remote_address st\n"
+        content = (
+            header
+            + "   0: 00000000000000000000000001000000:0016"
+            " 00000000000000000000000000000000:0000 0A 00000000:00000000"
+            " 00:00000000 00000000     0        0 12345 1\n"
+        )
+        files = {"/proc/net/tcp6": content, "/proc/net/udp6": header}
+        with mock_open_content(files):
+            assert psutil.net_connections(kind='inet6') == []
+        assert inet_ntop.called
 
     def test_emulate_unix(self):
         content = textwrap.dedent("""\
