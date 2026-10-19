@@ -190,11 +190,12 @@ class TestProcessIdentity(PsutilTestCase):
                 # We do not want to consider this difference in accuracy
                 # an error.
                 ver = f"{sys.version_info[0]}.{sys.version_info[1]}"
-                try:
-                    assert exe.replace(ver, '') == PYTHON_EXE.replace(ver, '')
-                except AssertionError:
-                    # Typically MACOS. Really not sure what to do here.
-                    pass
+                if not MACOS and (
+                    exe.replace(ver, '') != PYTHON_EXE.replace(ver, '')
+                ):
+                    assert os.path.realpath(exe) == os.path.realpath(
+                        PYTHON_EXE
+                    )
 
         out = sh([exe, "-c", "import os; print('hey')"])
         assert out == 'hey'
