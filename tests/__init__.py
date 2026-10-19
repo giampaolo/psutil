@@ -624,9 +624,8 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         except ProcessLookupError:
             pass
         except OSError as err:
-            if WINDOWS and err.winerror == 6:  # "invalid handle"
-                pass
-            raise
+            if not (WINDOWS and err.winerror == 6):  # "invalid handle"
+                raise
         return wait(proc, timeout)
 
     def term_psutil_proc(proc, timeout):
