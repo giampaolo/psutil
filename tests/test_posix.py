@@ -256,7 +256,6 @@ class TestProcessIdentity(PosixTestCase):
     # the Python framework.
     # There's a race condition between the ps call & the psutil call below
     # depending on the completion of the execve call so let's retry on failure
-
     @retry_on_failure
     def test_cmdline(self):
         ps_cmdline = ps_args(self.pid)
@@ -265,12 +264,6 @@ class TestProcessIdentity(PosixTestCase):
             assert psutil_cmdline.startswith(ps_cmdline)
         else:
             assert ps_cmdline == psutil_cmdline
-
-    # On SUNOS "ps" reads niceness /proc/pid/psinfo which returns an
-    # incorrect value (20); the real deal is getpriority(2) which
-    # returns 0; psutil relies on it, see:
-    # https://github.com/giampaolo/psutil/issues/1082
-    # AIX has the same issue
 
     def test_terminal_pty_opened_later(self):
         # A PTY opened after the map was cached must still resolve.
@@ -339,6 +332,11 @@ class TestProcessCpu(PosixTestCase):
     def tearDownClass(cls):
         terminate(cls.pid)
 
+    # On SUNOS "ps" reads niceness /proc/pid/psinfo which returns an
+    # incorrect value (20); the real deal is getpriority(2) which
+    # returns 0; psutil relies on it, see:
+    # https://github.com/giampaolo/psutil/issues/1082
+    # AIX has the same issue
     @skipif(SUNOS, reason="not reliable on SUNOS")
     @skipif(AIX, reason="not reliable on AIX")
     def test_nice(self):
@@ -495,7 +493,6 @@ class TestSystemAPIs(PosixTestCase):
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
-
     @skipif(SUNOS, reason="unreliable on SUNOS")
     @requires_cli("ifconfig")
     @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
@@ -593,7 +590,6 @@ class TestSystemAPIs(PosixTestCase):
             assert m.called
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
-
     @skipif(AIX, reason="unreliable on AIX")
     @retry_on_failure
     def test_disk_usage(self):
