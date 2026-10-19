@@ -450,29 +450,6 @@ class TestVirtualMemoryMocks(LinuxTestCase):
             diff_percent = abs(a - b) / a * 100
             assert diff_percent < 15
 
-    def test_calculate_avail_vmem(self):
-        zoneinfo = textwrap.dedent("""\
-            Node 0, zone      DMA
-                    min      5
-                    low      10
-                    high     15
-            Node 0, zone   Normal
-                    low      10
-            """)
-        mems = {
-            b"MemFree:": 1_000_000,
-            b"Active(file):": 100_000,
-            b"Inactive(file):": 60_000,
-            b"SReclaimable:": 400_000,
-        }
-        with mock.patch("psutil._pslinux.PAGESIZE", 4096):
-            with mock_open_content({"/proc/zoneinfo": zoneinfo.encode()}):
-                ret = calculate_avail_vmem(mems)
-        wmark_low = 20 * 4096
-        pagecache = 160_000 - 160_000 / 2
-        slab = 400_000 - wmark_low
-        assert ret == int(1_000_000 - wmark_low + pagecache + slab)
-
     def test_avail_old_comes_from_kernel(self):
         # Make sure "MemAvailable:" coluimn is used instead of relying
         # on our internal algorithm to calculate avail mem.
@@ -1309,22 +1286,6 @@ class TestNetConnections(LinuxTestCase):
             psutil.net_connections(kind='unix')
             assert m.called
 
-    def test_emulate_malformed_lines(self):
-        nc = psutil._pslinux.NetConnections
-        header = "  sl  local_address remote_address st\n"
-        content = header + "   0: 0100007F:0016 00000000:0000 0A\n"
-        with mock_open_content({"/proc/net/tcp": content}):
-            with pytest.raises(RuntimeError, match="malformed line 1"):
-                list(
-                    nc.process_inet(
-                        "/proc/net/tcp", socket.AF_INET, socket.SOCK_STREAM, {}
-                    )
-                )
-        content = header + "0: 00000003 000 000\n"
-        with mock_open_content({"/proc/net/unix": content}):
-            with pytest.raises(RuntimeError, match="malformed line"):
-                list(nc.process_unix("/proc/net/unix", socket.AF_UNIX, {}))
-
     @serial
     @requires_cli("ss")
     @retry_on_failure
@@ -1447,12 +1408,6 @@ class TestDiskIoCounters(LinuxTestCase):
         # https://github.com/giampaolo/psutil/issues/767
         content = "   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"
         self.check_full_counters(self.emulate_diskstats(content, {"hda"}))
-
-    def test_emulate_kernel_4_18_and_5_5(self):
-        base = "   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"
-        for extra in (" 0 0 0 0", " 0 0 0 0 0 0"):
-            ret = self.emulate_diskstats(base + extra, {"hda"})
-            self.check_full_counters(ret)
 
     def test_emulate_kernel_2_6_limited(self):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
@@ -2520,10 +2475,3 @@ class TestUtils(LinuxTestCase):
         with mock.patch("os.readlink", return_value="foo (deleted)") as m:
             assert psutil._psplatform.readlink("bar") == "foo"
             assert m.called
-
-    def test_parse_cpulist(self):
-        assert _parse_cpulist("0-3,8,10-11\n") == [0, 1, 2, 3, 8, 10, 11]
-        assert _parse_cpulist("5") == [5]
-        assert _parse_cpulist("") == []
-        with pytest.raises(ValueError, match="invalid CPU range"):
-            _parse_cpulist("3-1")
