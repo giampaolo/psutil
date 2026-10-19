@@ -29,6 +29,7 @@ from . import AARCH64
 from . import HAS_NET_IO_COUNTERS
 from . import PYTHON_EXE
 from . import PsutilTestCase
+from . import df
 from . import is_busybox
 from . import isolated
 from . import pytest
@@ -135,22 +136,6 @@ def ps_vsz(pid):
     if AIX:
         field = "vsize"
     return ps(field, pid)
-
-
-def df(device):
-    try:
-        out = sh(f"df -k {device}").strip()
-    except RuntimeError as err:
-        if "device busy" in str(err).lower():
-            return pytest.skip("df returned EBUSY")
-        raise
-    line = out.split('\n')[1]
-    fields = line.split()
-    sys_total = int(fields[1]) * 1024
-    sys_used = int(fields[2]) * 1024
-    sys_free = int(fields[3]) * 1024
-    sys_percent = float(fields[4].replace('%', ''))
-    return (sys_total, sys_used, sys_free, sys_percent)
 
 
 def who():
@@ -559,7 +544,7 @@ class TestSystemAPIs(PosixTestCase):
         for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
             try:
-                sys_total, sys_used, sys_free, sys_percent = df(
+                _, sys_total, sys_used, sys_free, sys_percent = df(
                     part.mountpoint
                 )
             except RuntimeError as err:

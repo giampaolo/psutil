@@ -38,6 +38,7 @@ from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
 from . import ThreadTask
 from . import call_until
+from . import df
 from . import is_busybox
 from . import isolated
 from . import pytest
@@ -1424,20 +1425,9 @@ class TestDiskPartitions(LinuxTestCase):
     def test_against_df(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
-        def df(path):
-            out = sh(f'df -P -B 1 "{path}"').strip()
-            lines = out.split('\n')
-            lines.pop(0)
-            line = lines.pop(0)
-            dev, total, used, free = line.split()[:4]
-            if dev == 'none':
-                dev = ''
-            total, used, free = int(total), int(used), int(free)
-            return dev, total, used, free
-
         for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
-            _, total, used, free = df(part.mountpoint)
+            _, total, used, free, _ = df(part.mountpoint)
             assert usage.total == total
             assert abs(usage.free - free) < TOLERANCE_DISK_USAGE
             assert abs(usage.used - used) < TOLERANCE_DISK_USAGE

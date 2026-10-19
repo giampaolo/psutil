@@ -25,6 +25,7 @@ from psutil import _psutil
 from . import HAS_BATTERY
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
+from . import df
 from . import isolated
 from . import pytest
 from . import requires_cli
@@ -32,24 +33,10 @@ from . import retry_on_failure
 from . import sh
 from . import skipif
 from . import spawn_subproc
+from . import sysctl
 from . import terminate
 
 PAGESIZE = _psutil.getpagesize() if BSD else None
-
-
-def sysctl(cmdline):
-    """Expects a sysctl command with an argument and parse the result
-    returning only the value of interest.
-    """
-    result = sh("sysctl " + cmdline)
-    if FREEBSD:
-        result = result[result.find(": ") + 2 :]
-    elif OPENBSD or NETBSD:
-        result = result[result.find("=") + 1 :]
-    try:
-        return int(result)
-    except ValueError:
-        return result
 
 
 # =====================================================================
@@ -64,22 +51,9 @@ class TestSystemAPIs(PsutilTestCase):
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
-        def df(path):
-            out = sh(f'df -k "{path}"').strip()
-            lines = out.split('\n')
-            lines.pop(0)
-            line = lines.pop(0)
-            dev, total, used, free = line.split()[:4]
-            if dev == 'none':
-                dev = ''
-            total = int(total) * 1024
-            used = int(used) * 1024
-            free = int(free) * 1024
-            return dev, total, used, free
-
         for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
-            dev, total, used, free = df(part.mountpoint)
+            dev, total, used, free, _ = df(part.mountpoint)
             assert part.device == dev
             assert usage.total == total
             # 10 MB tolerance

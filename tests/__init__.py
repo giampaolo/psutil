@@ -563,6 +563,42 @@ def sh(cmd, timeout=GLOBAL_TIMEOUT, **kwds):
     return stdout
 
 
+def df(path):
+    """A wrapper around df command on POSIX."""
+    if LINUX:
+        cmd = f'df -P -B 1 "{path}"'
+        unit = 1
+    else:
+        cmd = f'df -k "{path}"'
+        unit = 1024
+    try:
+        out = sh(cmd).strip()
+    except RuntimeError as err:
+        if "device busy" in str(err).lower():
+            return pytest.skip("df returned EBUSY")
+        raise
+    fields = out.split("\n")[1].split()
+    dev = "" if fields[0] == "none" else fields[0]
+    total = int(fields[1]) * unit
+    used = int(fields[2]) * unit
+    free = int(fields[3]) * unit
+    percent = float(fields[4].replace("%", ""))
+    return (dev, total, used, free, percent)
+
+
+def sysctl(name):
+    """A wrapper around sysctl command on POSIX."""
+    out = sh(f"sysctl {name}")
+    if OPENBSD or NETBSD:
+        result = out[out.find("=") + 1 :]
+    else:
+        result = out[out.find(": ") + 2 :]
+    try:
+        return int(result)
+    except ValueError:
+        return result
+
+
 def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
     """Terminate a process and wait() for it.
     Process can be a PID or an instance of psutil.Process(),

@@ -18,23 +18,13 @@ from . import HAS_BATTERY
 from . import TOLERANCE_DISK_USAGE
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
+from . import df
 from . import retry_on_failure
 from . import sh
 from . import skipif
 from . import spawn_subproc
+from . import sysctl
 from . import terminate
-
-
-def sysctl(cmdline):
-    """Expects a sysctl command with an argument and parse the result
-    returning only the value of interest.
-    """
-    out = sh(cmdline)
-    result = out.split()[1]
-    try:
-        return int(result)
-    except ValueError:
-        return result
 
 
 def vm_stat(field):
@@ -88,7 +78,7 @@ class TestProcess(MacosTestCase):
 class TestVirtualMemory(MacosTestCase):
 
     def test_total(self):
-        sysctl_hwphymem = sysctl('sysctl hw.memsize')
+        sysctl_hwphymem = sysctl('hw.memsize')
         assert sysctl_hwphymem == psutil.virtual_memory().total
 
     @retry_on_failure
@@ -163,11 +153,11 @@ class TestSwapMemory(MacosTestCase):
 class TestCpuAPIs(MacosTestCase):
 
     def test_cpu_count_logical(self):
-        num = sysctl("sysctl hw.logicalcpu")
+        num = sysctl("hw.logicalcpu")
         assert num == psutil.cpu_count(logical=True)
 
     def test_cpu_count_cores(self):
-        num = sysctl("sysctl hw.physicalcpu")
+        num = sysctl("hw.physicalcpu")
         assert num == psutil.cpu_count(logical=False)
 
     # On Apple Silicon cpu_freq() reads IOKit, and there's no sysctl
@@ -175,9 +165,9 @@ class TestCpuAPIs(MacosTestCase):
     @skipif(AARCH64, reason="no hw.cpufrequency sysctl on Apple Silicon")
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()
-        assert freq.current * 1000 * 1000 == sysctl("sysctl hw.cpufrequency")
-        assert freq.min * 1000 * 1000 == sysctl("sysctl hw.cpufrequency_min")
-        assert freq.max * 1000 * 1000 == sysctl("sysctl hw.cpufrequency_max")
+        assert freq.current * 1000 * 1000 == sysctl("hw.cpufrequency")
+        assert freq.min * 1000 * 1000 == sysctl("hw.cpufrequency_min")
+        assert freq.max * 1000 * 1000 == sysctl("hw.cpufrequency_max")
 
 
 class TestDiskAPIs(MacosTestCase):
@@ -186,22 +176,9 @@ class TestDiskAPIs(MacosTestCase):
     def test_disk_partitions(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
-        def df(path):
-            out = sh(f'df -k "{path}"').strip()
-            lines = out.split('\n')
-            lines.pop(0)
-            line = lines.pop(0)
-            dev, total, used, free = line.split()[:4]
-            if dev == 'none':
-                dev = ''
-            total = int(total) * 1024
-            used = int(used) * 1024
-            free = int(free) * 1024
-            return dev, total, used, free
-
         for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
-            dev, total, used, free = df(part.mountpoint)
+            dev, total, used, free, _ = df(part.mountpoint)
             assert part.device == dev
             assert usage.total == total
             assert abs(usage.free - free) < TOLERANCE_DISK_USAGE
