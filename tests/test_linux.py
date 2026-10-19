@@ -381,6 +381,28 @@ class TestVirtualMemoryAgainstMeminfo(LinuxTestCase):
 
 
 class TestVirtualMemoryMocks(LinuxTestCase):
+    MEMINFO_NO_AVAIL = textwrap.dedent("""\
+        Active:          9444728 kB
+        Active(anon):    6145416 kB
+        Active(file):    2950064 kB
+        Buffers:          287952 kB
+        Cached:          4818144 kB
+        Inactive(anon):   574764 kB
+        Inactive(file):  1567648 kB
+        MemFree:         2057400 kB
+        MemTotal:       16325648 kB
+        Shmem:            577588 kB
+        SReclaimable:     346648 kB
+        """)
+
+    def mocked_virtual_memory(self, files):
+        with mock_open_content(files) as m:
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                ret = psutil.virtual_memory()
+        assert m.called
+        return ret, [str(w.message) for w in ws]
+
     def test_warnings_on_misses(self):
         # Emulate a case where /proc/meminfo provides few info.
         # psutil is supposed to set the missing fields to 0 and
@@ -395,27 +417,23 @@ class TestVirtualMemoryMocks(LinuxTestCase):
             MemTotal:       16325648 kB
             SReclaimable:     346648 kB
             """).encode()
-        with mock_open_content({'/proc/meminfo': content}) as m:
-            with warnings.catch_warnings(record=True) as ws:
-                warnings.simplefilter("always")
-                ret = psutil.virtual_memory()
-                assert m.called
-                assert len(ws) == 1
-                w = ws[0]
-                assert "memory stats couldn't be determined" in str(w.message)
-                assert "cached" in str(w.message)
-                assert "shared" in str(w.message)
-                assert "active" in str(w.message)
-                assert "inactive" in str(w.message)
-                assert "buffers" in str(w.message)
-                assert "available" in str(w.message)
-                assert ret.cached == 0
-                assert ret.active == 0
-                assert ret.inactive == 0
-                assert ret.shared == 0
-                assert ret.buffers == 0
-                assert ret.available == 0
-                assert ret.slab == 0
+        ret, ws = self.mocked_virtual_memory({"/proc/meminfo": content})
+        assert len(ws) == 1
+        msg = ws[0]
+        assert "memory stats couldn't be determined" in msg
+        assert "cached" in msg
+        assert "shared" in msg
+        assert "active" in msg
+        assert "inactive" in msg
+        assert "buffers" in msg
+        assert "available" in msg
+        assert ret.cached == 0
+        assert ret.active == 0
+        assert ret.inactive == 0
+        assert ret.shared == 0
+        assert ret.buffers == 0
+        assert ret.available == 0
+        assert ret.slab == 0
 
     @retry_on_failure
     def test_avail_old_percent(self):
@@ -436,84 +454,38 @@ class TestVirtualMemoryMocks(LinuxTestCase):
     def test_avail_old_comes_from_kernel(self):
         # Make sure "MemAvailable:" coluimn is used instead of relying
         # on our internal algorithm to calculate avail mem.
-        content = textwrap.dedent("""\
-            Active:          9444728 kB
-            Active(anon):    6145416 kB
-            Active(file):    2950064 kB
-            Buffers:          287952 kB
-            Cached:          4818144 kB
-            Inactive(file):  1578132 kB
-            Inactive(anon):   574764 kB
-            Inactive(file):  1567648 kB
-            MemAvailable:    6574984 kB
-            MemFree:         2057400 kB
-            MemTotal:       16325648 kB
-            Shmem:            577588 kB
-            SReclaimable:     346648 kB
-            """).encode()
-        with mock_open_content({'/proc/meminfo': content}) as m:
-            with warnings.catch_warnings(record=True) as ws:
-                ret = psutil.virtual_memory()
-            assert m.called
-            assert ret.available == 6574984 * 1024
-            w = ws[0]
-            assert "inactive memory stats couldn't be determined" in str(
-                w.message
-            )
+        content = self.MEMINFO_NO_AVAIL + "MemAvailable:    6574984 kB\n"
+        ret, ws = self.mocked_virtual_memory(
+            {"/proc/meminfo": content.encode()}
+        )
+        assert ret.available == 6574984 * 1024
+        assert "inactive memory stats couldn't be determined" in ws[0]
 
     def test_avail_old_missing_fields(self):
         # Remove Active(file), Inactive(file) and SReclaimable
         # from /proc/meminfo and make sure the fallback is used
         # (free + cached),
-        content = textwrap.dedent("""\
-            Active:          9444728 kB
-            Active(anon):    6145416 kB
-            Buffers:          287952 kB
-            Cached:          4818144 kB
-            Inactive(file):  1578132 kB
-            Inactive(anon):   574764 kB
-            MemFree:         2057400 kB
-            MemTotal:       16325648 kB
-            Shmem:            577588 kB
-            """).encode()
-        with mock_open_content({"/proc/meminfo": content}) as m:
-            with warnings.catch_warnings(record=True) as ws:
-                ret = psutil.virtual_memory()
-            assert m.called
-            assert ret.available == 2057400 * 1024 + 4818144 * 1024
-            w = ws[0]
-            assert "inactive memory stats couldn't be determined" in str(
-                w.message
-            )
+        removed = ("Active(file):", "Inactive(file):", "SReclaimable:")
+        content = "".join(
+            line
+            for line in self.MEMINFO_NO_AVAIL.splitlines(keepends=True)
+            if not line.startswith(removed)
+        )
+        ret, ws = self.mocked_virtual_memory(
+            {"/proc/meminfo": content.encode()}
+        )
+        assert ret.available == 2057400 * 1024 + 4818144 * 1024
+        assert "inactive memory stats couldn't be determined" in ws[0]
 
     def test_avail_old_missing_zoneinfo(self):
         # Remove /proc/zoneinfo file. Make sure fallback is used
         # (free + cached).
-        content = textwrap.dedent("""\
-            Active:          9444728 kB
-            Active(anon):    6145416 kB
-            Active(file):    2950064 kB
-            Buffers:          287952 kB
-            Cached:          4818144 kB
-            Inactive(file):  1578132 kB
-            Inactive(anon):   574764 kB
-            Inactive(file):  1567648 kB
-            MemFree:         2057400 kB
-            MemTotal:       16325648 kB
-            Shmem:            577588 kB
-            SReclaimable:     346648 kB
-            """).encode()
-        with mock_open_content({"/proc/meminfo": content}):
-            with mock_open_exception("/proc/zoneinfo", FileNotFoundError):
-                with warnings.catch_warnings(record=True) as ws:
-                    ret = psutil.virtual_memory()
-                    assert ret.available == 2057400 * 1024 + 4818144 * 1024
-                    w = ws[0]
-                    assert (
-                        "inactive memory stats couldn't be determined" in str(
-                            w.message
-                        )
-                    )
+        ret, ws = self.mocked_virtual_memory({
+            "/proc/meminfo": self.MEMINFO_NO_AVAIL.encode(),
+            "/proc/zoneinfo": FileNotFoundError,
+        })
+        assert ret.available == 2057400 * 1024 + 4818144 * 1024
+        assert "inactive memory stats couldn't be determined" in ws[0]
 
     def test_virtual_memory_mocked(self):
         # Emulate /proc/meminfo because neither vmstat nor free return slab.
