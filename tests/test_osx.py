@@ -188,6 +188,7 @@ class TestDiskAPIs(MacosTestCase):
 class TestNetAPIs(MacosTestCase):
 
     def test_net_if_stats(self):
+        checked = 0
         for name, stats in psutil.net_if_stats().items():
             try:
                 out = sh(f"ifconfig {name}")
@@ -196,6 +197,8 @@ class TestNetAPIs(MacosTestCase):
             else:
                 assert stats.isup == ('RUNNING' in out), out
                 assert stats.mtu == int(re.findall(r'mtu (\d+)', out)[0])
+                checked += 1
+        assert checked
 
     @retry_on_failure
     def test_net_io_counters(self):
