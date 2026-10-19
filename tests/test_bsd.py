@@ -56,7 +56,11 @@ def vmstat(labels):
 
 
 @skipif(not BSD, reason="BSD only")
-class TestSystemAPIs(PsutilTestCase):
+class BSDTestCase(PsutilTestCase):
+    pass
+
+
+class TestSystemAPIs(BSDTestCase):
     """System tests common to all BSD variants."""
 
     def test_disks(self):
@@ -79,7 +83,7 @@ class TestSystemAPIs(PsutilTestCase):
         assert psutil.cpu_count(logical=True) == syst
 
     # On NetBSD total is UVM's managed pages, which is less than
-    # physical RAM. NetBSDTestCase.test_vmem_total covers it instead.
+    # physical RAM. TestNetBSDMemory.test_vmem_total covers it instead.
     @requires_cli("sysctl")
     @skipif(NETBSD, reason="hw.physmem is not what psutil reports")
     def test_virtual_memory_total(self):
@@ -99,8 +103,7 @@ class TestSystemAPIs(PsutilTestCase):
                     assert stats.mtu == int(re.findall(r'mtu (\d+)', out)[0])
 
 
-@skipif(not BSD, reason="BSD only")
-class TestProcessAPIs(PsutilTestCase):
+class TestProcessAPIs(BSDTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -126,8 +129,7 @@ class TestProcessAPIs(PsutilTestCase):
             zombie.environ()
 
 
-@skipif(not BSD, reason="BSD only")
-class TestVmstat(PsutilTestCase):
+class TestVmstat(BSDTestCase):
 
     # --- virtual_memory()
 
@@ -232,7 +234,11 @@ class TestVmstat(PsutilTestCase):
 
 
 @skipif(not FREEBSD, reason="FREEBSD only")
-class FreeBSDProcessTestCase(PsutilTestCase):
+class FreeBSDTestCase(PsutilTestCase):
+    pass
+
+
+class TestFreeBSDProcess(FreeBSDTestCase):
     @classmethod
     def setUpClass(cls):
         cls.pid = spawn_subproc().pid
@@ -320,8 +326,7 @@ class FreeBSDProcessTestCase(PsutilTestCase):
             raise RuntimeError("couldn't find lines match in procstat out")
 
 
-@skipif(not FREEBSD, reason="FREEBSD only")
-class TestFreeBSDCpu(PsutilTestCase):
+class TestFreeBSDCpu(FreeBSDTestCase):
     def test_cpu_count_cores(self):
         cores = sysctl("kern.smp.cores")
         assert psutil.cpu_count(logical=False) == cores
@@ -404,8 +409,7 @@ class TestFreeBSDCpu(PsutilTestCase):
         )
 
 
-@skipif(not FREEBSD, reason="FREEBSD only")
-class TestFreeBSDMemory(PsutilTestCase):
+class TestFreeBSDMemory(FreeBSDTestCase):
     @staticmethod
     def parse_swapinfo():
         # the last line is always the total
@@ -462,8 +466,7 @@ class TestFreeBSDMemory(PsutilTestCase):
         assert abs(psutil.swap_memory().total - total) < TOLERANCE_SYS_MEM
 
 
-@skipif(not FREEBSD, reason="FREEBSD only")
-class TestFreeBSDNetwork(PsutilTestCase):
+class TestFreeBSDNetwork(FreeBSDTestCase):
     @retry_on_failure
     def test_net_io_counters(self):
         out = sh("netstat -ib")
@@ -482,8 +485,7 @@ class TestFreeBSDNetwork(PsutilTestCase):
             assert abs(ps[name].bytes_sent - obytes) < tolerance
 
 
-@skipif(not FREEBSD, reason="FREEBSD only")
-class TestFreeBSDSensors(PsutilTestCase):
+class TestFreeBSDSensors(FreeBSDTestCase):
     @skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors_battery(self):
         def secs2hours(secs):
@@ -554,8 +556,7 @@ class TestFreeBSDSensors(PsutilTestCase):
             )
 
 
-@skipif(not FREEBSD, reason="FREEBSD only")
-class TestFreeBSDOtherSystemAPIs(PsutilTestCase):
+class TestFreeBSDOtherSystemAPIs(FreeBSDTestCase):
     def test_boot_time(self):
         s = sysctl('kern.boottime')
         s = s[s.find(" sec = ") + 7 :]
@@ -570,7 +571,11 @@ class TestFreeBSDOtherSystemAPIs(PsutilTestCase):
 
 
 @skipif(not OPENBSD, reason="OPENBSD only")
-class OpenBSDSystemTestCase(PsutilTestCase):
+class OpenBSDTestCase(PsutilTestCase):
+    pass
+
+
+class TestOpenBSDOtherSystemAPIs(OpenBSDTestCase):
     def test_boot_time(self):
         s = sysctl('kern.boottime')
         sys_bt = datetime.datetime.strptime(s, "%a %b %d %H:%M:%S %Y")
@@ -585,13 +590,17 @@ class OpenBSDSystemTestCase(PsutilTestCase):
 
 @skipif(not NETBSD, reason="NETBSD only")
 class NetBSDTestCase(PsutilTestCase):
+    pass
+
+
+class TestNetBSDProcess(NetBSDTestCase):
     def test_pid_0(self):
         p = psutil.Process(0)
         assert p.num_fds() == 0
         assert p.open_files() == []
 
-    # --- virtual mem
 
+class TestNetBSDMemory(NetBSDTestCase):
     def test_vmem_total(self):
         num = vmstat(["pages managed"])
         assert num * PAGESIZE == psutil.virtual_memory().total
