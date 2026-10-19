@@ -21,6 +21,7 @@ import re
 import shutil
 import socket
 import struct
+import sys
 import textwrap
 import time
 import warnings
@@ -1266,7 +1267,7 @@ class TestNetConnections(LinuxTestCase):
             assert psutil.net_connections(kind='inet6') == []
         assert inet_ntop.called
 
-    @skipif(not psutil._pslinux.LITTLE_ENDIAN, reason="big endian")
+    @skipif(sys.byteorder != "little", reason="big endian")
     def test_decode_address(self):
         decode = psutil._pslinux.NetConnections.decode_address
         assert decode("0500000A:0016", socket.AF_INET) == ("10.0.0.5", 22)
@@ -1946,9 +1947,12 @@ class TestProcessIdentity(LinuxTestCase):
         with mock.patch(
             'psutil._pslinux.readlink', side_effect=FileNotFoundError
         ) as m:
-            ret = psutil.Process().exe()
-            assert m.called
-            assert ret == ""
+            with mock.patch(
+                'psutil._pslinux.Process.cmdline', return_value=[]
+            ):
+                ret = psutil.Process().exe()
+                assert m.called
+                assert ret == ""
 
     def test_cwd_mocked(self):
         # https://github.com/giampaolo/psutil/issues/2514
