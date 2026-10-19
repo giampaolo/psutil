@@ -317,10 +317,13 @@ class TestVirtualMemoryAgainstFree(LinuxTestCase):
 
 
 class TestVirtualMemoryAgainstVmstat(LinuxTestCase):
-    def test_total(self):
-        vmstat_value = vmstat('total memory') * 1024
-        psutil_value = psutil.virtual_memory().total
+    def check_vmstat(self, stat, field):
+        vmstat_value = vmstat(stat) * 1024
+        psutil_value = getattr(psutil.virtual_memory(), field)
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_total(self):
+        self.check_vmstat("total memory", "total")
 
     @retry_on_failure
     def test_used(self):
@@ -332,33 +335,23 @@ class TestVirtualMemoryAgainstVmstat(LinuxTestCase):
         # https://gitlab.com/procps-ng/procps/-/commit/2184e90d2e7
         if get_free_version_info() < (4, 0, 1):
             return pytest.skip("free version too old")
-        vmstat_value = vmstat('used memory') * 1024
-        psutil_value = psutil.virtual_memory().used
-        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+        self.check_vmstat("used memory", "used")
 
     @retry_on_failure
     def test_free(self):
-        vmstat_value = vmstat('free memory') * 1024
-        psutil_value = psutil.virtual_memory().free
-        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+        self.check_vmstat("free memory", "free")
 
     @retry_on_failure
     def test_buffers(self):
-        vmstat_value = vmstat('buffer memory') * 1024
-        psutil_value = psutil.virtual_memory().buffers
-        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+        self.check_vmstat("buffer memory", "buffers")
 
     @retry_on_failure
     def test_active(self):
-        vmstat_value = vmstat('active memory') * 1024
-        psutil_value = psutil.virtual_memory().active
-        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+        self.check_vmstat("active memory", "active")
 
     @retry_on_failure
     def test_inactive(self):
-        vmstat_value = vmstat('inactive memory') * 1024
-        psutil_value = psutil.virtual_memory().inactive
-        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+        self.check_vmstat("inactive memory", "inactive")
 
 
 class TestVirtualMemoryAgainstMeminfo(LinuxTestCase):
