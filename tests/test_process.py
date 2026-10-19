@@ -42,7 +42,6 @@ from psutil import _psutil
 from psutil._common import open_text
 
 from . import CI_TESTING
-from . import GITHUB_ACTIONS
 from . import GLOBAL_TIMEOUT
 from . import HAS_PROC_CPU_AFFINITY
 from . import HAS_PROC_CPU_NUM
@@ -377,12 +376,11 @@ class TestProcessIdentity(PsutilTestCase):
                 for k, v in d.items()
             }
 
-        self.maxDiff = None
-        p = psutil.Process()
-        d1 = clean_dict(p.environ())
-        d2 = clean_dict(os.environ.copy())
-        if not MACOS and GITHUB_ACTIONS:
-            assert d1 == d2
+        env = os.environ.copy()
+        env["PSUTIL_TEST_ENVIRON"] = "foo"
+        p = self.spawn_psproc(env=env)
+        assert p.environ()["PSUTIL_TEST_ENVIRON"] == "foo"
+        assert clean_dict(p.environ()) == clean_dict(env)
 
 
 # ===================================================================
