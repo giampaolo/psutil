@@ -20,6 +20,14 @@ from . import skipif
 
 @skipif(not AIX, reason="AIX only")
 class AIXSpecificTestCase(PsutilTestCase):
+    def test_users(self):
+        for user in psutil.users():
+            assert isinstance(user.name, str)
+            assert isinstance(user.terminal, str)
+            assert isinstance(user.host, (str, type(None)))
+            assert isinstance(user.started, float)
+            assert isinstance(user.pid, int)
+
     def test_virtual_memory(self):
         out = sh('/usr/bin/svmon -O unit=KB')
         re_pattern = r"memory\s*"
