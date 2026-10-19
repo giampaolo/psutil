@@ -1286,6 +1286,22 @@ class TestNetConnections(LinuxTestCase):
             psutil.net_connections(kind='unix')
             assert m.called
 
+    def test_emulate_malformed_lines(self):
+        nc = psutil._pslinux.NetConnections
+        header = "  sl  local_address remote_address st\n"
+        content = header + "   0: 0100007F:0016 00000000:0000 0A\n"
+        with mock_open_content({"/proc/net/tcp": content}):
+            with pytest.raises(RuntimeError, match="malformed line 1"):
+                list(
+                    nc.process_inet(
+                        "/proc/net/tcp", socket.AF_INET, socket.SOCK_STREAM, {}
+                    )
+                )
+        content = header + "0: 00000003 000 000\n"
+        with mock_open_content({"/proc/net/unix": content}):
+            with pytest.raises(RuntimeError, match="malformed line"):
+                list(nc.process_unix("/proc/net/unix", socket.AF_UNIX, {}))
+
     @serial
     @requires_cli("ss")
     @retry_on_failure
