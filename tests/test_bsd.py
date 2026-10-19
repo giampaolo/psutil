@@ -191,7 +191,7 @@ class TestVmstat(PsutilTestCase):
         assert abs(vmstat_value - psutil_value) < 1024
 
     def test_swap_sout(self):
-        vmstat_value = vmstat(['pages swapped oud']) * PAGESIZE
+        vmstat_value = vmstat(['pages swapped out']) * PAGESIZE
         psutil_value = psutil.swap_memory().sout
         assert abs(vmstat_value - psutil_value) < 1024
 
@@ -523,7 +523,9 @@ class TestFreeBSDSensors(PsutilTestCase):
         # https://github.com/giampaolo/psutil/issues/1074
         with pytest.raises(RuntimeError):
             sysctl("hw.acpi.battery.life")
+        with pytest.raises(RuntimeError):
             sysctl("hw.acpi.battery.time")
+        with pytest.raises(RuntimeError):
             sysctl("hw.acpi.acline")
         assert psutil.sensors_battery() is None
 
@@ -555,7 +557,7 @@ class TestFreeBSDSensors(PsutilTestCase):
 @skipif(not FREEBSD, reason="FREEBSD only")
 class TestFreeBSDOtherSystemAPIs(PsutilTestCase):
     def test_boot_time(self):
-        s = sysctl('sysctl kern.boottime')
+        s = sysctl('kern.boottime')
         s = s[s.find(" sec = ") + 7 :]
         s = s[: s.find(',')]
         btime = int(s)

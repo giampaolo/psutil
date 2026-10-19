@@ -538,7 +538,7 @@ class TestProcessCredentials(PsutilTestCase):
         assert effective == os.getegid()
         # No such thing as os.getsgid() ("saved" gid), but we have
         # os.getresgid() which returns all of them.
-        if hasattr(os, "getresuid"):
+        if hasattr(os, "getresgid"):
             assert os.getresgid() == p.gids()
 
     def test_username(self):
@@ -844,9 +844,6 @@ class TestProcessCpu(PsutilTestCase):
             assert p.cpu_affinity() == [n]
             if hasattr(os, "sched_getaffinity"):
                 assert p.cpu_affinity() == list(os.sched_getaffinity(p.pid))
-            # also test num_cpu()
-            if hasattr(p, "num_cpu"):
-                assert p.cpu_affinity()[0] == p.num_cpu()
 
         # [] is an alias for "all eligible CPUs"; on Linux this may
         # not be equal to all available CPUs, see:
@@ -1486,7 +1483,7 @@ class TestSpecialProcesses(PsutilTestCase):
                     user = 'NT AUTHORITY\\SYSTEM' if WINDOWS else 'root'
                     assert p.username() == user
                 elif name == "name":
-                    assert name, name
+                    assert ret, ret
 
         if not OPENBSD:
             assert 0 in psutil.pids()
@@ -1761,7 +1758,7 @@ class TestProcessWait(PsutilTestCase):
             assert grandchild_ret is None
         else:
             assert child_ret == signal.SIGTERM
-            assert child_ret == signal.SIGTERM
+            assert grandchild_ret == signal.SIGTERM
 
     def test_wait_timeout(self):
         p = self.spawn_psproc()

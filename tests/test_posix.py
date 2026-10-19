@@ -294,8 +294,8 @@ class TestProcess(PosixTestCase):
             # "/usr/local/bin/python"
             # We do not want to consider this difference in accuracy
             # an error.
-            adjusted_ps_pathname = ps_pathname[: len(ps_pathname)]
-            assert ps_pathname == adjusted_ps_pathname
+            adjusted_psutil_pathname = psutil_pathname[: len(ps_pathname)]
+            assert ps_pathname == adjusted_psutil_pathname
 
     # On macOS the official python installer exposes a python wrapper that
     # executes a python executable hidden inside an application bundle inside
@@ -320,7 +320,7 @@ class TestProcess(PosixTestCase):
     @skipif(AIX, reason="not reliable on AIX")
     def test_nice(self):
         ps_nice = ps('nice', self.pid)
-        psutil_nice = psutil.Process().nice()
+        psutil_nice = psutil.Process(self.pid).nice()
         assert ps_nice == psutil_nice
 
     def test_nice_pid_0(self):

@@ -186,7 +186,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
     @skipif(not POSIX, reason="POSIX only")
     def test_unix_udp(self):
         testfn = self.get_testfn()
-        with closing(bind_unix_socket(testfn, type=SOCK_STREAM)) as sock:
+        with closing(bind_unix_socket(testfn, type=SOCK_DGRAM)) as sock:
             self.check_socket(sock, "", psutil.CONN_NONE)
 
 
@@ -545,7 +545,7 @@ class TestMisc(PsutilTestCase):
                 num = getattr(psutil, name)
                 str_ = str(num)
                 assert str_.isupper(), str_
-                assert str not in strs
+                assert str_ not in strs
                 assert num not in ints
                 ints.append(num)
                 strs.append(str_)
