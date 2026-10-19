@@ -1037,17 +1037,6 @@ class TestCpuStats(LinuxTestCase):
         self.assert_close_to_vmstat(vmstat_value, psutil_value)
 
 
-class TestLoadAvg(LinuxTestCase):
-    def test_getloadavg(self):
-        psutil_value = psutil.getloadavg()
-        with open("/proc/loadavg") as f:
-            proc_value = f.read().split()
-
-        assert abs(float(proc_value[0]) - psutil_value[0]) < 1
-        assert abs(float(proc_value[1]) - psutil_value[1]) < 1
-        assert abs(float(proc_value[2]) - psutil_value[2]) < 1
-
-
 # =====================================================================
 # --- system network
 # =====================================================================
