@@ -366,6 +366,7 @@ class TestProcessIdentity(PsutilTestCase):
                     "__CF_USER_TEXT_ENCODING",
                     "VERSIONER_PYTHON_PREFER_32_BIT",
                     "VERSIONER_PYTHON_VERSION",
+                    "__PYVENV_LAUNCHER__",
                 ])
             for name in list(d.keys()):
                 if name in exclude or name.startswith("PYTEST_"):
