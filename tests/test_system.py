@@ -542,11 +542,8 @@ class TestCpuAPIs(PsutilTestCase):
         cores = psutil.cpu_count(logical=False)
         if cores is None:
             return pytest.skip("cpu_count_cores() is None")
-        if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista
-            assert cores is None
-        else:
-            assert cores >= 1
-            assert logical >= cores
+        assert cores >= 1
+        assert logical >= cores
 
     def test_cpu_count_none(self):
         # https://github.com/giampaolo/psutil/issues/1085

@@ -9,7 +9,6 @@
 import ctypes
 import datetime
 import os
-import platform
 import re
 import signal
 import socket
@@ -564,14 +563,7 @@ class TestProcessIdentity(WindowsTestCase):
         str(p)
         p.username()
         assert p.create_time() >= 0.0
-        try:
-            rss, _vms = p.memory_info()[:2]
-        except psutil.AccessDenied:
-            # expected on Windows Vista and Windows 7
-            if platform.uname()[1] not in {'vista', 'win-7', 'win7'}:
-                raise
-        else:
-            assert rss > 0
+        assert p.memory_info().rss > 0
 
     def test_username(self):
         name = win32api.GetUserNameEx(win32con.NameSamCompatible)

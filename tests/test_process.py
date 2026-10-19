@@ -650,7 +650,7 @@ class TestProcessCpu(PsutilTestCase):
             p.ionice(value=1)
 
     @skipif(not HAS_PROC_IONICE, reason="not supported")
-    @skipif(not WINDOWS, reason="not supported on this win version")
+    @skipif(not WINDOWS, reason="WINDOWS only")
     def test_ionice_win(self):
         p = psutil.Process()
         if not CI_TESTING:
