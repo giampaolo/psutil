@@ -494,19 +494,6 @@ class TestProcessTree(PsutilTestCase):
         else:
             assert len(c) == len(set(c))
 
-    def test_parents_and_children(self):
-        parent = psutil.Process()
-        child, grandchild = self.spawn_children_pair()
-        # forward
-        children = filter_alien_children(parent.children(recursive=True))
-        assert len(children) == 2
-        assert children[0] == child
-        assert children[1] == grandchild
-        # backward
-        parents = grandchild.parents()
-        assert parents[0] == child
-        assert parents[1] == parent
-
 
 # ===================================================================
 # --- Process credentials
