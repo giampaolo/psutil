@@ -1547,13 +1547,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
             b = finder.ask_sys_class_block()
         c = finder.ask_sys_dev_block()
 
-        base = a or b or c
-        if base and a:
-            assert base == a
-        if base and b:
-            assert base == b
-        if base and c:
-            assert base == c
+        assert {x for x in (a, b, c) if x} == {finder.find()}
 
     @requires_cli("findmnt")
     @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
