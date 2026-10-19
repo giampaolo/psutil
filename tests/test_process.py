@@ -433,8 +433,7 @@ class TestProcessTree(PsutilTestCase):
         assert grandchild.parents()[0] == child
         assert grandchild.parents()[1] == parent
 
-    def test_children(self):
-        parent = psutil.Process()
+    def check_children(self, parent):
         assert not filter_alien_children(parent.children())
         assert not filter_alien_children(parent.children(recursive=True))
         # On Windows we set the flag to 0 in order to cancel out the
@@ -447,6 +446,9 @@ class TestProcessTree(PsutilTestCase):
             assert len(children) == 1
             assert children[0].pid == child.pid
             assert children[0].ppid() == parent.pid
+
+    def test_children(self):
+        self.check_children(psutil.Process())
 
     def test_children_mocked_ctime(self):
         # Make sure we get a fresh copy of the ctime before processing
@@ -458,19 +460,7 @@ class TestProcessTree(PsutilTestCase):
         parent.create_time()  # trigger cache
         assert parent._create_time
         parent._create_time += 100000
-
-        assert not filter_alien_children(parent.children())
-        assert not filter_alien_children(parent.children(recursive=True))
-        # On Windows we set the flag to 0 in order to cancel out the
-        # CREATE_NO_WINDOW flag (enabled by default) which creates
-        # an extra "conhost.exe" child.
-        child = self.spawn_psproc(creationflags=0)
-        children1 = filter_alien_children(parent.children())
-        children2 = filter_alien_children(parent.children(recursive=True))
-        for children in (children1, children2):
-            assert len(children) == 1
-            assert children[0].pid == child.pid
-            assert children[0].ppid() == parent.pid
+        self.check_children(parent)
 
     def test_children_recursive(self):
         # Test children() against two sub processes, p1 and p2, where
