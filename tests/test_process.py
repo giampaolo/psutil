@@ -1356,12 +1356,9 @@ class TestProcessSignals(PsutilTestCase):
     def test_suspend_resume(self):
         p = self.spawn_psproc()
         p.suspend()
-        for _ in range(100):
-            if p.status() == psutil.STATUS_STOPPED:
-                break
-            time.sleep(0.01)
+        call_until(lambda: p.status() == psutil.STATUS_STOPPED)
         p.resume()
-        assert p.status() != psutil.STATUS_STOPPED
+        call_until(lambda: p.status() != psutil.STATUS_STOPPED)
 
 
 # ===================================================================
