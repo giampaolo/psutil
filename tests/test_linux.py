@@ -1425,6 +1425,12 @@ class TestDiskIoCounters(LinuxTestCase):
         content = "   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"
         self.check_full_counters(self.emulate_diskstats(content, {"hda"}))
 
+    def test_emulate_kernel_4_18_and_5_5(self):
+        base = "   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"
+        for extra in (" 0 0 0 0", " 0 0 0 0 0 0"):
+            ret = self.emulate_diskstats(base + extra, {"hda"})
+            self.check_full_counters(ret)
+
     def test_emulate_kernel_2_6_limited(self):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
         # where one line of /proc/partitions return a limited
