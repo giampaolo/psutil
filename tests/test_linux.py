@@ -819,19 +819,22 @@ class TestCpuFreq(LinuxTestCase):
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     @skipif(AARCH64, reason="aarch64 does not always expose frequency")
+    @skipif(
+        not os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq"),
+        reason="no cpu0/cpufreq in sysfs",
+    )
     def test_emulate_use_second_file(self):
         # https://github.com/giampaolo/psutil/issues/981
-        def path_exists_mock(path):
-            if path.startswith("/sys/devices/system/cpu/cpufreq/policy"):
-                return False
+        def glob_mock(pattern):
+            if pattern.startswith("/sys/devices/system/cpu/cpufreq/policy"):
+                return []
             else:
-                return orig_exists(path)
+                return orig_glob(pattern)
 
-        orig_exists = os.path.exists
-        with mock.patch(
-            "os.path.exists", side_effect=path_exists_mock, create=True
-        ):
-            assert psutil.cpu_freq()
+        orig_glob = glob.glob
+        with mock.patch("glob.glob", side_effect=glob_mock) as m:
+            assert psutil.cpu_freq(percpu=True)
+        m.assert_any_call("/sys/devices/system/cpu/cpu[0-9]*/cpufreq")
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     @skipif(not CPUINFO_HAS_MHZ, reason="no 'cpu MHz' in /proc/cpuinfo")
