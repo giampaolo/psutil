@@ -1585,6 +1585,25 @@ class TestRootFsDeviceFinder(LinuxTestCase):
 
         assert {x for x in (a, b, c) if x} == {finder.find()}
 
+    def test_find_fallbacks(self):
+        finder = RootFsDeviceFinder()
+        finder.major = 8
+        finder.minor = 1
+        files = {
+            "/proc/partitions": FileNotFoundError,
+            "/sys/dev/block/8:1/uevent": "MAJOR=8\nDEVNAME=sdb1\n",
+            "/sys/class/block/sda/dev": "8:0\n",
+            "/sys/class/block/sda1/dev": "8:1\n",
+        }
+        dev_files = ["/sys/class/block/sda/dev", "/sys/class/block/sda1/dev"]
+        with mock.patch("os.path.exists", return_value=True):
+            with mock.patch("glob.iglob", return_value=dev_files):
+                with mock_open_content(files):
+                    assert finder.find() == "/dev/sdb1"
+                files["/sys/dev/block/8:1/uevent"] = FileNotFoundError
+                with mock_open_content(files):
+                    assert finder.find() == "/dev/sda1"
+
     @requires_cli("findmnt")
     @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
     def test_against_findmnt(self):
