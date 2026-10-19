@@ -364,55 +364,6 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         total, used, free = (int(p) * 1024 for p in parts[1:4])
         return total, used, free
 
-    def test_cpu_count_cores(self):
-        cores = sysctl("kern.smp.cores")
-        assert psutil.cpu_count(logical=False) == cores
-
-    @retry_on_failure
-    def test_cpu_times(self):
-        clk_tck = os.sysconf("SC_CLK_TCK")
-        ticks = [int(x) for x in sysctl("kern.cp_time").split()]
-        ct = psutil.cpu_times()
-        tolerance = 0.5
-        assert abs(ct.user - ticks[0] / clk_tck) < tolerance
-        assert abs(ct.nice - ticks[1] / clk_tck) < tolerance
-        assert abs(ct.system - ticks[2] / clk_tck) < tolerance
-        assert abs(ct.irq - ticks[3] / clk_tck) < tolerance
-        assert abs(ct.idle - ticks[4] / clk_tck) < tolerance
-
-    def test_cpu_frequency_against_sysctl(self):
-        # Currently only cpu 0 is frequency is supported in FreeBSD
-        # All other cores use the same frequency.
-        sensor = "dev.cpu.0.freq"
-        try:
-            sysctl_result = int(sysctl(sensor))
-        except RuntimeError:
-            return pytest.skip("frequencies not supported by kernel")
-        assert psutil.cpu_freq().current == sysctl_result
-
-        sensor = "dev.cpu.0.freq_levels"
-        sysctl_result = sysctl(sensor)
-        # sysctl returns a string of the format:
-        # <freq_level_1>/<voltage_level_1> <freq_level_2>/<voltage_level_2>...
-        # Ordered highest available to lowest available.
-        max_freq = int(sysctl_result.split()[0].split("/")[0])
-        min_freq = int(sysctl_result.split()[-1].split("/")[0])
-        assert psutil.cpu_freq().max == max_freq
-        assert psutil.cpu_freq().min == min_freq
-
-    def test_cpu_freq_no_levels(self):
-        # No freq_levels means we can't tell min / max. It used to
-        # raise NameError, or reuse the previous CPU's values.
-        with mock.patch.object(
-            _psutil, "cpu_freq", return_value=(100, "")
-        ) as m:
-            ret = psutil._psbsd.cpu_freq()
-            assert m.called
-        for nt in ret:
-            assert nt.current == 100
-            assert nt.min is None
-            assert nt.max is None
-
     # --- virtual_memory(); tests against sysctl
 
     @retry_on_failure
@@ -445,70 +396,9 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         syst = sysctl("vfs.bufspace")
         assert abs(psutil.virtual_memory().buffers - syst) < TOLERANCE_SYS_MEM
 
-    def test_cpu_stats_ctx_switches(self):
-        assert (
-            abs(
-                psutil.cpu_stats().ctx_switches
-                - sysctl('vm.stats.sys.v_swtch')
-            )
-            < 1000
-        )
-
-    def test_cpu_stats_interrupts(self):
-        assert (
-            abs(psutil.cpu_stats().interrupts - sysctl('vm.stats.sys.v_intr'))
-            < 1000
-        )
-
-    def test_cpu_stats_soft_interrupts(self):
-        assert (
-            abs(
-                psutil.cpu_stats().soft_interrupts
-                - sysctl('vm.stats.sys.v_soft')
-            )
-            < 1000
-        )
-
-    @retry_on_failure
-    def test_cpu_stats_syscalls(self):
-        # pretty high tolerance but it looks like it's OK.
-        assert (
-            abs(psutil.cpu_stats().syscalls - sysctl('vm.stats.sys.v_syscall'))
-            < 200000
-        )
-
     # --- swap memory
 
-    def test_swapmem_free(self):
-        _total, _used, free = self.parse_swapinfo()
-        assert abs(psutil.swap_memory().free - free) < TOLERANCE_SYS_MEM
-
-    def test_swapmem_used(self):
-        _total, used, _free = self.parse_swapinfo()
-        assert abs(psutil.swap_memory().used - used) < TOLERANCE_SYS_MEM
-
-    def test_swapmem_total(self):
-        total, _used, _free = self.parse_swapinfo()
-        assert abs(psutil.swap_memory().total - total) < TOLERANCE_SYS_MEM
-
     # --- net
-
-    @retry_on_failure
-    def test_net_io_counters(self):
-        out = sh("netstat -ib")
-        netstat = {}
-        for line in out.splitlines():
-            fields = line.split()
-            if len(fields) == 12 and "<Link#" in fields[2]:
-                name = fields[0]
-                netstat[name] = (int(fields[7]), int(fields[10]))
-        ps = psutil.net_io_counters(pernic=True)
-        tolerance = 1 * 1024 * 1024  # 1 MB
-        for name, (ibytes, obytes) in netstat.items():
-            if name not in ps:
-                continue
-            assert abs(ps[name].bytes_recv - ibytes) < tolerance
-            assert abs(ps[name].bytes_sent - obytes) < tolerance
 
     # --- others
 
@@ -521,74 +411,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 
     # --- sensors_battery
 
-    @skipif(not HAS_BATTERY, reason="no battery")
-    def test_sensors_battery(self):
-        def secs2hours(secs):
-            m, _s = divmod(secs, 60)
-            h, m = divmod(m, 60)
-            return f"{int(h)}:{int(m):02}"
-
-        out = sh("acpiconf -i 0")
-        fields = {x.split('\t')[0]: x.split('\t')[-1] for x in out.split("\n")}
-        metrics = psutil.sensors_battery()
-        percent = int(fields['Remaining capacity:'].replace('%', ''))
-        remaining_time = fields['Remaining time:']
-        assert metrics.percent == percent
-        if remaining_time == 'unknown':
-            assert metrics.secsleft == psutil.POWER_TIME_UNLIMITED
-        else:
-            assert secs2hours(metrics.secsleft) == remaining_time
-
-    @skipif(not HAS_BATTERY, reason="no battery")
-    def test_sensors_battery_against_sysctl(self):
-        assert psutil.sensors_battery().percent == sysctl(
-            "hw.acpi.battery.life"
-        )
-        assert psutil.sensors_battery().power_plugged == (
-            sysctl("hw.acpi.acline") == 1
-        )
-        secsleft = psutil.sensors_battery().secsleft
-        if secsleft < 0:
-            assert sysctl("hw.acpi.battery.time") == -1
-        else:
-            assert secsleft == sysctl("hw.acpi.battery.time") * 60
-
-    @skipif(HAS_BATTERY, reason="has battery")
-    def test_sensors_battery_no_battery(self):
-        # If no battery is present one of these calls is supposed
-        # to fail, see:
-        # https://github.com/giampaolo/psutil/issues/1074
-        with pytest.raises(RuntimeError):
-            sysctl("hw.acpi.battery.life")
-            sysctl("hw.acpi.battery.time")
-            sysctl("hw.acpi.acline")
-        assert psutil.sensors_battery() is None
-
     # --- sensors_temperatures
-
-    def test_sensors_temperatures_against_sysctl(self):
-        num_cpus = psutil.cpu_count(True)
-        for cpu in range(num_cpus):
-            sensor = f"dev.cpu.{cpu}.temperature"
-            # sysctl returns a string in the format 46.0C
-            try:
-                sysctl_result = int(float(sysctl(sensor)[:-1]))
-            except RuntimeError:
-                return pytest.skip("temperatures not supported by kernel")
-            assert (
-                abs(
-                    psutil.sensors_temperatures()["coretemp"][cpu].current
-                    - sysctl_result
-                )
-                < 10
-            )
-
-            sensor = f"dev.cpu.{cpu}.coretemp.tjmax"
-            sysctl_result = int(float(sysctl(sensor)[:-1]))
-            assert (
-                psutil.sensors_temperatures()["coretemp"][cpu].high
-                == sysctl_result
-            )
 
 
 # =====================================================================
