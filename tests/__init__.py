@@ -933,7 +933,9 @@ def safe_rmpath(path):
             try:
                 return fun()
             except FileNotFoundError:
-                pass
+                # rmtree() also raises it for an entry gone mid-walk
+                if not os.path.exists(path):
+                    return None
             except OSError as _:
                 err = _
                 warn(f"ignoring {err}")
