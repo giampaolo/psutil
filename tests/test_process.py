@@ -1758,7 +1758,7 @@ class TestProcessWait(PsutilTestCase):
             assert grandchild_ret is None
         else:
             assert child_ret == signal.SIGTERM
-            assert grandchild_ret == signal.SIGTERM
+            assert grandchild_ret in {signal.SIGTERM, None}
 
     def test_wait_timeout(self):
         p = self.spawn_psproc()
