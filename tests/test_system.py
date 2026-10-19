@@ -323,6 +323,12 @@ class TestProcessAPIs(PsutilTestCase):
             p.terminate()
         psutil.wait_procs(procs)
 
+    def test_pids(self):
+        pids = psutil.pids()
+        assert pids == sorted(set(pids))
+        assert all(isinstance(pid, int) for pid in pids)
+        assert os.getpid() in pids
+
     def test_pid_exists(self):
         sproc = self.spawn_subproc()
         assert psutil.pid_exists(sproc.pid)
