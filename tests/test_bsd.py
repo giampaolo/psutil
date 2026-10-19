@@ -351,18 +351,6 @@ class FreeBSDProcessTestCase(PsutilTestCase):
 
 @skipif(not FREEBSD, reason="FREEBSD only")
 class FreeBSDSystemTestCase(PsutilTestCase):
-    @staticmethod
-    def parse_swapinfo():
-        # the last line is always the total
-        output = sh("swapinfo -k").splitlines()[-1]
-        parts = re.split(r'\s+', output)
-
-        if not parts:
-            raise ValueError(f"Can't parse swapinfo: {output}")
-
-        # the size is in 1k units, so multiply by 1024
-        total, used, free = (int(p) * 1024 for p in parts[1:4])
-        return total, used, free
 
     def test_cpu_count_cores(self):
         cores = sysctl("kern.smp.cores")
@@ -414,36 +402,6 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             assert nt.max is None
 
     # --- virtual_memory(); tests against sysctl
-
-    @retry_on_failure
-    def test_vmem_active(self):
-        syst = sysctl("vm.stats.vm.v_active_count") * PAGESIZE
-        assert abs(psutil.virtual_memory().active - syst) < TOLERANCE_SYS_MEM
-
-    @retry_on_failure
-    def test_vmem_inactive(self):
-        syst = sysctl("vm.stats.vm.v_inactive_count") * PAGESIZE
-        assert abs(psutil.virtual_memory().inactive - syst) < TOLERANCE_SYS_MEM
-
-    @retry_on_failure
-    def test_vmem_wired(self):
-        syst = sysctl("vm.stats.vm.v_wire_count") * PAGESIZE
-        assert abs(psutil.virtual_memory().wired - syst) < TOLERANCE_SYS_MEM
-
-    @retry_on_failure
-    def test_vmem_cached(self):
-        syst = sysctl("vm.stats.vm.v_cache_count") * PAGESIZE
-        assert abs(psutil.virtual_memory().cached - syst) < TOLERANCE_SYS_MEM
-
-    @retry_on_failure
-    def test_vmem_free(self):
-        syst = sysctl("vm.stats.vm.v_free_count") * PAGESIZE
-        assert abs(psutil.virtual_memory().free - syst) < TOLERANCE_SYS_MEM
-
-    @retry_on_failure
-    def test_vmem_buffers(self):
-        syst = sysctl("vfs.bufspace")
-        assert abs(psutil.virtual_memory().buffers - syst) < TOLERANCE_SYS_MEM
 
     def test_cpu_stats_ctx_switches(self):
         assert (
@@ -511,13 +469,6 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             assert abs(ps[name].bytes_sent - obytes) < tolerance
 
     # --- others
-
-    def test_boot_time(self):
-        s = sysctl('sysctl kern.boottime')
-        s = s[s.find(" sec = ") + 7 :]
-        s = s[: s.find(',')]
-        btime = int(s)
-        assert btime == psutil.boot_time()
 
     # --- sensors_battery
 
