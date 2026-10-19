@@ -105,8 +105,8 @@ __all__ = [
     'filter_proc_net_connections',
     'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
     'unix_socketpair', 'create_sockets',
-    # compat
-    'reload_module', 'import_module_by_path',
+    # import utils
+    'import_module_by_path',
     # others
     'warn', 'copyload_shared_lib', 'is_namedtuple', 'assert_ntuple_of_nums',
 ]
@@ -2019,10 +2019,6 @@ check_fun_type_hints = TypeHintsChecker.check_fun_type_hints
 # ===================================================================
 # --- import utils
 # ===================================================================
-
-
-def reload_module(module):
-    return importlib.reload(module)
 
 
 def import_module_by_path(path):
