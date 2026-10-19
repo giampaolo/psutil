@@ -34,6 +34,7 @@ from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import SKIP_SYSCONS
 from . import PsutilTestCase
+from . import assert_ntuple_of_nums
 from . import create_sockets
 from . import enum
 from . import is_namedtuple
@@ -358,25 +359,18 @@ class TestSystemAPITypes(PsutilTestCase):
     def setUpClass(cls):
         cls.proc = psutil.Process()
 
-    def assert_ntuple_of_nums(self, nt, type_=float, gezero=True):
-        assert is_namedtuple(nt)
-        for n in nt:
-            assert isinstance(n, type_)
-            if gezero:
-                assert n >= 0
-
     def test_cpu_times(self):
-        self.assert_ntuple_of_nums(psutil.cpu_times())
+        assert_ntuple_of_nums(psutil.cpu_times())
         for nt in psutil.cpu_times(percpu=True):
-            self.assert_ntuple_of_nums(nt)
+            assert_ntuple_of_nums(nt)
 
     def test_cpu_percent(self):
         assert isinstance(psutil.cpu_percent(interval=None), float)
         assert isinstance(psutil.cpu_percent(interval=0.00001), float)
 
     def test_cpu_times_percent(self):
-        self.assert_ntuple_of_nums(psutil.cpu_times_percent(interval=None))
-        self.assert_ntuple_of_nums(psutil.cpu_times_percent(interval=0.0001))
+        assert_ntuple_of_nums(psutil.cpu_times_percent(interval=None))
+        assert_ntuple_of_nums(psutil.cpu_times_percent(interval=0.0001))
 
     def test_cpu_count(self):
         assert isinstance(psutil.cpu_count(), int)
@@ -385,13 +379,13 @@ class TestSystemAPITypes(PsutilTestCase):
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
             return pytest.skip("cpu_freq() returns None")
-        self.assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int))
+        assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int))
 
     def test_disk_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
         for k, v in psutil.disk_io_counters(perdisk=True).items():
             assert isinstance(k, str)
-            self.assert_ntuple_of_nums(v, type_=int)
+            assert_ntuple_of_nums(v, type_=int)
 
     def test_disk_partitions(self):
         # Duplicate of test_system.py. Keep it anyway.

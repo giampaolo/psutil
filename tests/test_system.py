@@ -47,6 +47,7 @@ from . import HAS_SENSORS_TEMPERATURES
 from . import MACOS_12PLUS
 from . import UNICODE_SUFFIX
 from . import PsutilTestCase
+from . import assert_ntuple_of_nums
 from . import check_net_address
 from . import pytest
 from . import retry_on_failure
@@ -562,14 +563,8 @@ class TestCpuAPIs(PsutilTestCase):
 
     def test_cpu_times(self):
         # Check type, value >= 0, str().
-        total = 0
         times = psutil.cpu_times()
-        sum(times)
-        for cp_time in times:
-            assert isinstance(cp_time, float)
-            assert cp_time >= 0.0
-            total += cp_time
-        assert round(abs(total - sum(times)), 6) == 0
+        assert_ntuple_of_nums(times)
         str(times)
         # CPU times are always supposed to increase over time
         # or at least remain the same and that's because time
@@ -601,13 +596,7 @@ class TestCpuAPIs(PsutilTestCase):
     def test_per_cpu_times(self):
         # Check type, value >= 0, str().
         for times in psutil.cpu_times(percpu=True):
-            total = 0
-            sum(times)
-            for cp_time in times:
-                assert isinstance(cp_time, float)
-                assert cp_time >= 0.0
-                total += cp_time
-            assert round(abs(total - sum(times)), 6) == 0
+            assert_ntuple_of_nums(times)
             str(times)
         assert len(psutil.cpu_times(percpu=True)[0]) == len(
             psutil.cpu_times(percpu=False)
@@ -748,10 +737,7 @@ class TestCpuAPIs(PsutilTestCase):
         def check_ls(ls):
             for nt in ls:
                 assert nt._fields == ('current', 'min', 'max')
-                for name in nt._fields:
-                    value = getattr(nt, name)
-                    assert isinstance(value, (int, float))
-                    assert value >= 0
+                assert_ntuple_of_nums(nt, type_=(int, float))
 
         ls = psutil.cpu_freq(percpu=True)
         if (FREEBSD or AARCH64) and not ls:
@@ -904,8 +890,7 @@ class TestDiskAPIs(PsutilTestCase):
                     assert nt[8] == nt.busy_time
                 elif FREEBSD:
                     assert nt[6] == nt.busy_time
-            for name in nt._fields:
-                assert getattr(nt, name) >= 0, nt
+            assert_ntuple_of_nums(nt, type_=int)
 
         ret = psutil.disk_io_counters(perdisk=False)
         assert ret is not None, "no disks on this system?"
@@ -940,14 +925,7 @@ class TestNetAPIs(PsutilTestCase):
             assert nt[5] == nt.errout
             assert nt[6] == nt.dropin
             assert nt[7] == nt.dropout
-            assert nt.bytes_sent >= 0, nt
-            assert nt.bytes_recv >= 0, nt
-            assert nt.packets_sent >= 0, nt
-            assert nt.packets_recv >= 0, nt
-            assert nt.errin >= 0, nt
-            assert nt.errout >= 0, nt
-            assert nt.dropin >= 0, nt
-            assert nt.dropout >= 0, nt
+            assert_ntuple_of_nums(nt, type_=int)
 
         ret = psutil.net_io_counters(pernic=False)
         check_ntuple(ret)

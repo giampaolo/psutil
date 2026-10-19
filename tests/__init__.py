@@ -104,7 +104,7 @@ __all__ = [
     # compat
     'reload_module', 'import_module_by_path',
     # others
-    'warn', 'copyload_shared_lib', 'is_namedtuple'
+    'warn', 'copyload_shared_lib', 'is_namedtuple', 'assert_ntuple_of_nums',
 ]
 # fmt: on
 
@@ -2065,6 +2065,13 @@ def is_namedtuple(x):
     if not isinstance(f, tuple):
         return False
     return all(isinstance(n, str) for n in f)
+
+
+def assert_ntuple_of_nums(nt, type_=float):
+    assert is_namedtuple(nt)
+    for n in nt:
+        assert isinstance(n, type_)
+        assert n >= 0
 
 
 if POSIX:

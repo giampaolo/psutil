@@ -62,6 +62,7 @@ from . import PYTHON_EXE_ENV
 from . import PYTHON_SLEEP_CODE
 from . import PsutilTestCase
 from . import ThreadTask
+from . import assert_ntuple_of_nums
 from . import call_until
 from . import copyload_shared_lib
 from . import create_py_exe
@@ -600,12 +601,7 @@ class TestProcessCpu(PsutilTestCase):
 
     def test_cpu_times(self):
         times = psutil.Process().cpu_times()
-        assert times.user >= 0.0, times
-        assert times.system >= 0.0, times
-        assert times.children_user >= 0.0, times
-        assert times.children_system >= 0.0, times
-        if LINUX:
-            assert times.iowait >= 0.0, times
+        assert_ntuple_of_nums(times)
         # make sure returned values can be pretty printed with strftime
         for name in times._fields:
             time.strftime("%H:%M:%S", time.localtime(getattr(times, name)))
