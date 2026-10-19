@@ -1349,36 +1349,27 @@ class TestProcessFiles(PsutilTestCase):
 
 
 class TestProcessSignals(PsutilTestCase):
-    def test_kill(self):
-        p = self.spawn_psproc()
-        p.kill()
-        code = p.wait()
-        if WINDOWS:
-            assert code == signal.SIGTERM
-        else:
-            assert code == -signal.SIGKILL
-        self.assert_proc_gone(p)
+    SIGKILL = signal.SIGKILL if POSIX else signal.SIGTERM
 
-    def test_terminate(self):
+    def check_killed_by(self, fun, sig):
         p = self.spawn_psproc()
-        p.terminate()
-        code = p.wait()
-        if WINDOWS:
-            assert code == signal.SIGTERM
-        else:
-            assert code == -signal.SIGTERM
-        self.assert_proc_gone(p)
-
-    def test_send_signal(self):
-        sig = signal.SIGKILL if POSIX else signal.SIGTERM
-        p = self.spawn_psproc()
-        p.send_signal(sig)
+        fun(p)
         code = p.wait()
         if WINDOWS:
             assert code == sig
         else:
             assert code == -sig
         self.assert_proc_gone(p)
+
+    def test_kill(self):
+        self.check_killed_by(psutil.Process.kill, self.SIGKILL)
+
+    def test_terminate(self):
+        self.check_killed_by(psutil.Process.terminate, signal.SIGTERM)
+
+    def test_send_signal(self):
+        sig = self.SIGKILL
+        self.check_killed_by(lambda p: p.send_signal(sig), sig)
 
     @skipif(not POSIX, reason="not POSIX")
     def test_send_signal_mocked(self):
