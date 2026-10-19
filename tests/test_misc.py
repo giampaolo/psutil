@@ -816,6 +816,31 @@ class TestWrapNumbers(PsutilTestCase):
         caches = wrap_numbers.cache_info()
         assert caches == ({}, {}, {})
 
+    def check_nowrap_public_api(self, fun, platfun, ntuple):
+        def side_effect(*args, **kwargs):
+            return {"x": (next(values),) * len(ntuple._fields)}
+
+        values = iter([100, 10, 10])
+        with mock.patch(platfun, side_effect=side_effect):
+            assert [fun()[0] for _ in range(3)] == [100, 110, 110]
+        values = iter([100, 10, 10])
+        with mock.patch(platfun, side_effect=side_effect):
+            assert [fun(nowrap=False)[0] for _ in range(3)] == [100, 10, 10]
+
+    def test_disk_io_counters_nowrap(self):
+        self.check_nowrap_public_api(
+            psutil.disk_io_counters,
+            "psutil._psplatform.disk_io_counters",
+            psutil._ntp.sdiskio,
+        )
+
+    def test_net_io_counters_nowrap(self):
+        self.check_nowrap_public_api(
+            psutil.net_io_counters,
+            "psutil._psplatform.net_io_counters",
+            psutil._ntp.snetio,
+        )
+
 
 # ===================================================================
 # --- Test setup.py
