@@ -10,6 +10,7 @@ import collections
 import contextlib
 import ctypes
 import errno
+import fnmatch
 import glob
 import io
 import mmap
@@ -207,38 +208,29 @@ def get_free_version_info():
 @contextlib.contextmanager
 def mock_open_content(pairs):
     """Mock open() builtin and forces it to return a certain content
-    for a given path. `pairs` is a {"path": "content", ...} dict.
+    for a given path. `pairs` is a {"pattern": content, ...} dict.
+    Patterns are fnmatch()ed in order, the first match wins. Content
+    can be str, bytes or an exception to raise.
     """
 
     def open_mock(name, *args, **kwargs):
-        if name in pairs:
-            content = pairs[name]
-            if isinstance(content, str):
-                return io.StringIO(content)
-            else:
-                return io.BytesIO(content)
-        else:
-            return orig_open(name, *args, **kwargs)
-
-    orig_open = open
-    with mock.patch("builtins.open", create=True, side_effect=open_mock) as m:
-        yield m
-
-
-@contextlib.contextmanager
-def mock_open_exception(for_path, exc):
-    """Mock open() builtin and raises `exc` if the path being opened
-    matches `for_path`.
-    """
-
-    def open_mock(name, *args, **kwargs):
-        if name == for_path:
-            raise exc
+        for pattern, content in pairs.items():
+            if fnmatch.fnmatchcase(name, pattern):
+                if isinstance(content, str):
+                    return io.StringIO(content)
+                elif isinstance(content, bytes):
+                    return io.BytesIO(content)
+                else:
+                    raise content
         return orig_open(name, *args, **kwargs)
 
     orig_open = open
     with mock.patch("builtins.open", create=True, side_effect=open_mock) as m:
         yield m
+
+
+def mock_open_exception(for_path, exc):
+    return mock_open_content({for_path: exc})
 
 
 # =====================================================================
@@ -876,26 +868,13 @@ class TestCpuFreq(LinuxTestCase):
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_data(self):
-        def open_mock(name, *args, **kwargs):
-            if name.endswith('/scaling_cur_freq') and name.startswith(
-                "/sys/devices/system/cpu/cpufreq/policy"
-            ):
-                return io.BytesIO(b"500000")
-            elif name.endswith('/scaling_min_freq') and name.startswith(
-                "/sys/devices/system/cpu/cpufreq/policy"
-            ):
-                return io.BytesIO(b"600000")
-            elif name.endswith('/scaling_max_freq') and name.startswith(
-                "/sys/devices/system/cpu/cpufreq/policy"
-            ):
-                return io.BytesIO(b"700000")
-            elif name == '/proc/cpuinfo':
-                return io.BytesIO(b"cpu MHz     : 500")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock):
+        policy = "/sys/devices/system/cpu/cpufreq/policy*"
+        with mock_open_content({
+            f"{policy}/scaling_cur_freq": b"500000",
+            f"{policy}/scaling_min_freq": b"600000",
+            f"{policy}/scaling_max_freq": b"700000",
+            "/proc/cpuinfo": b"cpu MHz     : 500",
+        }):
             with mock.patch('os.path.exists', return_value=True):
                 freq = psutil.cpu_freq()
                 assert freq.current == 500.0
@@ -908,38 +887,18 @@ class TestCpuFreq(LinuxTestCase):
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_multi_cpu(self):
-        def open_mock(name, *args, **kwargs):
-            n = name
-            if n.endswith('/scaling_cur_freq') and n.startswith(
-                "/sys/devices/system/cpu/cpufreq/policy0"
-            ):
-                return io.BytesIO(b"100000")
-            elif n.endswith('/scaling_min_freq') and n.startswith(
-                "/sys/devices/system/cpu/cpufreq/policy0"
-            ):
-                return io.BytesIO(b"200000")
-            elif n.endswith('/scaling_max_freq') and n.startswith(
-                "/sys/devices/system/cpu/cpufreq/policy0"
-            ):
-                return io.BytesIO(b"300000")
-            elif n.endswith('/scaling_cur_freq') and n.startswith(
-                "/sys/devices/system/cpu/cpufreq/policy1"
-            ):
-                return io.BytesIO(b"400000")
-            elif n.endswith('/scaling_min_freq') and n.startswith(
-                "/sys/devices/system/cpu/cpufreq/policy1"
-            ):
-                return io.BytesIO(b"500000")
-            elif n.endswith('/scaling_max_freq') and n.startswith(
-                "/sys/devices/system/cpu/cpufreq/policy1"
-            ):
-                return io.BytesIO(b"600000")
-            elif n.endswith('/affected_cpus'):
-                return io.BytesIO(b"0" if "/policy0/" in n else b"1")
-            elif name == '/proc/cpuinfo':
-                return io.BytesIO(b"cpu MHz     : 100\ncpu MHz     : 400")
-            else:
-                return orig_open(name, *args, **kwargs)
+        policy = "/sys/devices/system/cpu/cpufreq/policy"
+        files = {
+            f"{policy}0*/scaling_cur_freq": b"100000",
+            f"{policy}0*/scaling_min_freq": b"200000",
+            f"{policy}0*/scaling_max_freq": b"300000",
+            f"{policy}1*/scaling_cur_freq": b"400000",
+            f"{policy}1*/scaling_min_freq": b"500000",
+            f"{policy}1*/scaling_max_freq": b"600000",
+            "*/policy0/affected_cpus": b"0",
+            "*/affected_cpus": b"1",
+            "/proc/cpuinfo": b"cpu MHz     : 100\ncpu MHz     : 400",
+        }
 
         def glob_mock(pattern):
             if pattern == "/sys/devices/system/cpu/cpufreq/policy[0-9]*":
@@ -950,8 +909,7 @@ class TestCpuFreq(LinuxTestCase):
             f"/sys/devices/system/cpu/cpufreq/policy{n}" for n in range(2)
         ]
         orig_glob = glob.glob
-        orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock):
+        with mock_open_content(files):
             with mock.patch('os.path.exists', return_value=True):
                 with mock.patch("glob.glob", side_effect=glob_mock):
                     # min and max are 0 when the /proc/cpuinfo-only
@@ -973,18 +931,13 @@ class TestCpuFreq(LinuxTestCase):
     def test_emulate_shared_policy(self):
         # A single policy governing 4 CPUs must yield 4 entries, see:
         # https://github.com/giampaolo/psutil/issues/2512
-        def open_mock(name, *args, **kwargs):
-            if name.endswith('/affected_cpus'):
-                return io.BytesIO(b"0 1 2 3")
-            elif name.endswith('/scaling_cur_freq'):
-                return io.BytesIO(b"100000")
-            elif name.endswith('/scaling_min_freq'):
-                return io.BytesIO(b"200000")
-            elif name.endswith('/scaling_max_freq'):
-                return io.BytesIO(b"300000")
-            elif name == '/proc/cpuinfo':
-                return io.BytesIO(b"")
-            return orig_open(name, *args, **kwargs)
+        files = {
+            "*/affected_cpus": b"0 1 2 3",
+            "*/scaling_cur_freq": b"100000",
+            "*/scaling_min_freq": b"200000",
+            "*/scaling_max_freq": b"300000",
+            "/proc/cpuinfo": b"",
+        }
 
         def glob_mock(pattern):
             if pattern == "/sys/devices/system/cpu/cpufreq/policy[0-9]*":
@@ -999,12 +952,11 @@ class TestCpuFreq(LinuxTestCase):
 
         orig_exists = os.path.exists
         orig_glob = glob.glob
-        orig_open = open
         try:
             with mock.patch("os.path.exists", side_effect=exists_mock):
                 reload_module(psutil._pslinux)
                 with mock.patch("glob.glob", side_effect=glob_mock):
-                    with mock.patch("builtins.open", side_effect=open_mock):
+                    with mock_open_content(files):
                         freq = psutil.cpu_freq(percpu=True)
             assert len(freq) == 4
             for nt in freq:
@@ -1016,18 +968,11 @@ class TestCpuFreq(LinuxTestCase):
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_no_scaling_cur_freq_file(self):
         # See: https://github.com/giampaolo/psutil/issues/1071
-        def open_mock(name, *args, **kwargs):
-            if name.endswith('/scaling_cur_freq'):
-                raise FileNotFoundError
-            if name.endswith('/cpuinfo_cur_freq'):
-                return io.BytesIO(b"200000")
-            elif name == '/proc/cpuinfo':
-                return io.BytesIO(b"cpu MHz     : 200")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock):
+        with mock_open_content({
+            "*/scaling_cur_freq": FileNotFoundError,
+            "*/cpuinfo_cur_freq": b"200000",
+            "/proc/cpuinfo": b"cpu MHz     : 200",
+        }):
             with mock.patch('os.path.exists', return_value=True):
                 with mock.patch(
                     'psutil._pslinux.cpu_count_logical', return_value=1
@@ -1055,38 +1000,29 @@ class TestCpuFreq(LinuxTestCase):
                 return list(policies)
             return orig_glob(pattern)
 
-        def open_mock(name, *args, **kwargs):
-            # Only CPUs 0 and 1 are online; 2 and 3 are offline.
-            if name == '/proc/cpuinfo':
-                return io.BytesIO(b"cpu MHz\t: 200\ncpu MHz\t: 400")
-            elif name.endswith('/affected_cpus'):
-                num = re.search(r"/policy(\d+)/", name).group(1)
-                return io.BytesIO(num.encode())
-            elif "/policy0/" in name or "/policy1/" in name:
-                if name.endswith('/scaling_cur_freq'):
-                    cur = b"200000" if "/policy0/" in name else b"400000"
-                    return io.BytesIO(cur)
-                elif name.endswith('/scaling_min_freq'):
-                    return io.BytesIO(b"100000")
-                elif name.endswith('/scaling_max_freq'):
-                    return io.BytesIO(b"300000")
-            elif "/policy2/" in name or "/policy3/" in name:
-                # Offline cores have no frequency files.
-                if name.endswith(('/scaling_cur_freq', '/cpuinfo_cur_freq')):
-                    raise FileNotFoundError
-            elif name.endswith('/online'):
-                # CPUs 2 and 3 are offline.
-                return io.StringIO("0\n")
-            return orig_open(name, *args, **kwargs)
+        # Only CPUs 0 and 1 are online; 2 and 3 are offline.
+        files = {
+            "/proc/cpuinfo": b"cpu MHz\t: 200\ncpu MHz\t: 400",
+            "*/policy0/affected_cpus": b"0",
+            "*/policy1/affected_cpus": b"1",
+            "*/policy2/affected_cpus": b"2",
+            "*/policy3/affected_cpus": b"3",
+            "*/policy0/scaling_cur_freq": b"200000",
+            "*/policy1/scaling_cur_freq": b"400000",
+            "*/policy[01]/scaling_min_freq": b"100000",
+            "*/policy[01]/scaling_max_freq": b"300000",
+            "*/policy[23]/scaling_cur_freq": FileNotFoundError,
+            "*/policy[23]/cpuinfo_cur_freq": FileNotFoundError,
+            "*/online": "0\n",
+        }
 
         orig_exists = os.path.exists
         orig_glob = glob.glob
-        orig_open = open
         try:
             with mock.patch("os.path.exists", side_effect=exists_mock):
                 reload_module(psutil._pslinux)
                 with mock.patch("glob.glob", side_effect=glob_mock):
-                    with mock.patch("builtins.open", side_effect=open_mock):
+                    with mock_open_content(files):
                         percpu = psutil.cpu_freq(percpu=True)
                         assert len(percpu) == 2
                         assert [f.current for f in percpu] == [200.0, 400.0]
@@ -1731,14 +1667,7 @@ class TestMisc(LinuxTestCase):
             f.write('cpu1  0 0 0 0 0 0 0 0 0 0\n')
 
         try:
-            orig_open = open
-
-            def open_mock(name, *args, **kwargs):
-                if name.startswith('/proc'):
-                    raise FileNotFoundError
-                return orig_open(name, *args, **kwargs)
-
-            with mock.patch("builtins.open", side_effect=open_mock):
+            with mock_open_content({"/proc*": FileNotFoundError}):
                 reload_module(psutil)
 
                 with pytest.raises(OSError):
@@ -1910,14 +1839,9 @@ class TestSensorsBattery(LinuxTestCase):
 
     def test_emulate_power_plugged(self):
         # Pretend the AC power cable is connected.
-        def open_mock(name, *args, **kwargs):
-            if name.endswith(('AC0/online', 'AC/online')):
-                return io.BytesIO(b"1")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock) as m:
+        with mock_open_content(
+            {"*/AC0/online": b"1", "*/AC/online": b"1"}
+        ) as m:
             assert psutil.sensors_battery().power_plugged is True
             assert (
                 psutil.sensors_battery().secsleft
@@ -1928,64 +1852,41 @@ class TestSensorsBattery(LinuxTestCase):
     def test_emulate_power_plugged_2(self):
         # Same as above but pretend /AC0/online does not exist in which
         # case code relies on /status file.
-        def open_mock(name, *args, **kwargs):
-            if name.endswith(('AC0/online', 'AC/online')):
-                raise FileNotFoundError
-            if name.endswith("/status"):
-                return io.StringIO("charging")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock) as m:
+        with mock_open_content({
+            "*/AC0/online": FileNotFoundError,
+            "*/AC/online": FileNotFoundError,
+            "*/status": "charging",
+        }) as m:
             assert psutil.sensors_battery().power_plugged is True
             assert m.called
 
     def test_emulate_power_not_plugged(self):
         # Pretend the AC power cable is not connected.
-        def open_mock(name, *args, **kwargs):
-            if name.endswith(('AC0/online', 'AC/online')):
-                return io.BytesIO(b"0")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock) as m:
+        with mock_open_content(
+            {"*/AC0/online": b"0", "*/AC/online": b"0"}
+        ) as m:
             assert psutil.sensors_battery().power_plugged is False
             assert m.called
 
     def test_emulate_power_not_plugged_2(self):
         # Same as above but pretend /AC0/online does not exist in which
         # case code relies on /status file.
-        def open_mock(name, *args, **kwargs):
-            if name.endswith(('AC0/online', 'AC/online')):
-                raise FileNotFoundError
-            if name.endswith("/status"):
-                return io.StringIO("discharging")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock) as m:
+        with mock_open_content({
+            "*/AC0/online": FileNotFoundError,
+            "*/AC/online": FileNotFoundError,
+            "*/status": "discharging",
+        }) as m:
             assert psutil.sensors_battery().power_plugged is False
             assert m.called
 
     def test_emulate_power_undetermined(self):
         # Pretend we can't know whether the AC power cable not
         # connected (assert fallback to False).
-        def open_mock(name, *args, **kwargs):
-            if name.startswith((
-                '/sys/class/power_supply/AC0/online',
-                '/sys/class/power_supply/AC/online',
-            )):
-                raise FileNotFoundError
-            if name.startswith("/sys/class/power_supply/BAT0/status"):
-                return io.BytesIO(b"???")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock) as m:
+        with mock_open_content({
+            "/sys/class/power_supply/AC0/online": FileNotFoundError,
+            "/sys/class/power_supply/AC/online": FileNotFoundError,
+            "/sys/class/power_supply/BAT0/status": b"???",
+        }) as m:
             assert psutil.sensors_battery().power_plugged is None
             assert m.called
 
@@ -2000,18 +1901,12 @@ class TestSensorsBattery(LinuxTestCase):
     def test_emulate_energy_full_not_avail(self):
         # Emulate a case where energy_full file does not exist.
         # Expected fallback on /capacity.
-        with mock_open_exception(
-            "/sys/class/power_supply/BAT0/energy_full",
-            FileNotFoundError,
-        ):
-            with mock_open_exception(
-                "/sys/class/power_supply/BAT0/charge_full",
-                FileNotFoundError,
-            ):
-                with mock_open_content(
-                    {"/sys/class/power_supply/BAT0/capacity": b"88"}
-                ):
-                    assert psutil.sensors_battery().percent == 88
+        with mock_open_content({
+            "/sys/class/power_supply/BAT0/energy_full": FileNotFoundError,
+            "/sys/class/power_supply/BAT0/charge_full": FileNotFoundError,
+            "/sys/class/power_supply/BAT0/capacity": b"88",
+        }):
+            assert psutil.sensors_battery().percent == 88
 
     @skipif(
         not os.path.isfile("/sys/class/power_supply/BAT0/capacity"),
@@ -2030,32 +1925,21 @@ class TestSensorsBattery(LinuxTestCase):
 
     def test_emulate_no_power(self):
         # Emulate a case where /AC0/online file nor /BAT0/status exist.
-        with mock_open_exception(
-            "/sys/class/power_supply/AC/online", FileNotFoundError
-        ):
-            with mock_open_exception(
-                "/sys/class/power_supply/AC0/online", FileNotFoundError
-            ):
-                with mock_open_exception(
-                    "/sys/class/power_supply/BAT0/status",
-                    FileNotFoundError,
-                ):
-                    assert psutil.sensors_battery().power_plugged is None
+        with mock_open_content({
+            "/sys/class/power_supply/AC/online": FileNotFoundError,
+            "/sys/class/power_supply/AC0/online": FileNotFoundError,
+            "/sys/class/power_supply/BAT0/status": FileNotFoundError,
+        }):
+            assert psutil.sensors_battery().power_plugged is None
 
     def test_fully_emulated(self):
-        def open_mock(name, *args, **kwargs):
-            if name.endswith("/energy_now"):
-                return io.StringIO("60000000")
-            elif name.endswith("/power_now"):
-                return io.StringIO("0")
-            elif name.endswith("/energy_full"):
-                return io.StringIO("60000001")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
+        files = {
+            "*/energy_now": "60000000",
+            "*/power_now": "0",
+            "*/energy_full": "60000001",
+        }
         with mock.patch('os.listdir', return_value=["BAT0"]) as mlistdir:
-            with mock.patch("builtins.open", side_effect=open_mock) as mopen:
+            with mock_open_content(files) as mopen:
                 assert psutil.sensors_battery() is not None
         assert mlistdir.called
         assert mopen.called
@@ -2063,22 +1947,13 @@ class TestSensorsBattery(LinuxTestCase):
 
 class TestSensorsTemperatures(LinuxTestCase):
     def test_emulate_class_hwmon(self):
-        def open_mock(name, *args, **kwargs):
-            if name.endswith('/name'):
-                return io.StringIO("name")
-            elif name.endswith('/temp1_label'):
-                return io.StringIO("label")
-            elif name.endswith('/temp1_input'):
-                return io.BytesIO(b"30000")
-            elif name.endswith('/temp1_max'):
-                return io.BytesIO(b"40000")
-            elif name.endswith('/temp1_crit'):
-                return io.BytesIO(b"50000")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock):
+        with mock_open_content({
+            "*/name": "name",
+            "*/temp1_label": "label",
+            "*/temp1_input": b"30000",
+            "*/temp1_max": b"40000",
+            "*/temp1_crit": b"50000",
+        }):
             # Test case with /sys/class/hwmon
             with mock.patch(
                 'glob.glob', return_value=['/sys/class/hwmon/hwmon0/temp1']
@@ -2090,17 +1965,12 @@ class TestSensorsTemperatures(LinuxTestCase):
                 assert temp.critical == 50.0
 
     def test_emulate_class_thermal(self):
-        def open_mock(name, *args, **kwargs):
-            if name.endswith('0_temp'):
-                return io.BytesIO(b"50000")
-            elif name.endswith('temp'):
-                return io.BytesIO(b"30000")
-            elif name.endswith('0_type'):
-                return io.StringIO("critical")
-            elif name.endswith('type'):
-                return io.StringIO("name")
-            else:
-                return orig_open(name, *args, **kwargs)
+        files = {
+            "*0_temp": b"50000",
+            "*temp": b"30000",
+            "*0_type": "critical",
+            "*type": "name",
+        }
 
         def glob_mock(path):
             if path in {
@@ -2117,8 +1987,7 @@ class TestSensorsTemperatures(LinuxTestCase):
                 ]
             return []
 
-        orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock):
+        with mock_open_content(files):
             with mock.patch('glob.glob', create=True, side_effect=glob_mock):
                 temp = psutil.sensors_temperatures()['name'][0]
                 assert temp.label == ''
@@ -2129,18 +1998,11 @@ class TestSensorsTemperatures(LinuxTestCase):
 
 class TestSensorsFans(LinuxTestCase):
     def test_emulate_data(self):
-        def open_mock(name, *args, **kwargs):
-            if name.endswith('/name'):
-                return io.StringIO("name")
-            elif name.endswith('/fan1_label'):
-                return io.StringIO("label")
-            elif name.endswith('/fan1_input'):
-                return io.StringIO("2000")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock):
+        with mock_open_content({
+            "*/name": "name",
+            "*/fan1_label": "label",
+            "*/fan1_input": "2000",
+        }):
             with mock.patch(
                 'glob.glob', return_value=['/sys/class/hwmon/hwmon2/fan1']
             ):
@@ -2433,25 +2295,15 @@ class TestProcessThreads(LinuxTestCase):
         # which no longer exists by the time we open() it (race
         # condition). threads() is supposed to ignore that instead
         # of raising NSP.
-        def open_mock_1(name, *args, **kwargs):
-            if name.startswith(f"/proc/{os.getpid()}/task"):
-                raise FileNotFoundError
-            return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        with mock.patch("builtins.open", side_effect=open_mock_1) as m:
+        task = f"/proc/{os.getpid()}/task*"
+        with mock_open_content({task: FileNotFoundError}) as m:
             ret = psutil.Process().threads()
             assert m.called
             assert ret == []
 
         # ...but if it bumps into something != ENOENT we want an
         # exception.
-        def open_mock_2(name, *args, **kwargs):
-            if name.startswith(f"/proc/{os.getpid()}/task"):
-                raise PermissionError
-            return orig_open(name, *args, **kwargs)
-
-        with mock.patch("builtins.open", side_effect=open_mock_2):
+        with mock_open_content({task: PermissionError}):
             with pytest.raises(psutil.AccessDenied):
                 psutil.Process().threads()
 
