@@ -971,6 +971,45 @@ class TestCpuTimes(LinuxTestCase):
         assert abs(ct.softirq - fields[6]) < TOLERANCE
         assert abs(ct.steal - fields[7]) < TOLERANCE
 
+    def test_cpu_steal_decrease(self):
+        # Test cumulative cpu stats decrease. We should ignore this.
+        # See issue #1210.
+        content = textwrap.dedent("""\
+            cpu   0 0 0 0 0 0 0 1 0 0
+            cpu0  0 0 0 0 0 0 0 1 0 0
+            cpu1  0 0 0 0 0 0 0 1 0 0
+            """).encode()
+        with mock_open_content({"/proc/stat": content}) as m:
+            # first call to "percent" functions should read the new stat file
+            # and compare to the "real" file read at import time - so the
+            # values are meaningless
+            psutil.cpu_percent()
+            assert m.called
+            psutil.cpu_percent(percpu=True)
+            psutil.cpu_times_percent()
+            psutil.cpu_times_percent(percpu=True)
+
+        content = textwrap.dedent("""\
+            cpu   1 0 0 0 0 0 0 0 0 0
+            cpu0  1 0 0 0 0 0 0 0 0 0
+            cpu1  1 0 0 0 0 0 0 0 0 0
+            """).encode()
+        with mock_open_content({"/proc/stat": content}) as m:
+            # Increase "user" while steal goes "backwards" to zero.
+            cpu_percent = psutil.cpu_percent()
+            assert m.called
+            cpu_percent_percpu = psutil.cpu_percent(percpu=True)
+            cpu_times_percent = psutil.cpu_times_percent()
+            cpu_times_percent_percpu = psutil.cpu_times_percent(percpu=True)
+            assert cpu_percent != 0
+            assert sum(cpu_percent_percpu) != 0
+            assert sum(cpu_times_percent) != 0
+            assert sum(cpu_times_percent) != 100.0
+            assert sum(map(sum, cpu_times_percent_percpu)) != 0
+            assert sum(map(sum, cpu_times_percent_percpu)) != 100.0
+            assert cpu_times_percent.steal == 0
+            assert cpu_times_percent.user != 0
+
 
 class TestCpuStats(LinuxTestCase):
 
@@ -1535,11 +1574,6 @@ class TestRootFsDeviceFinder(LinuxTestCase):
 
 
 class TestMisc(LinuxTestCase):
-    def test_boot_time(self):
-        vmstat_value = vmstat('boot time')
-        psutil_value = psutil.boot_time()
-        assert int(vmstat_value) == int(psutil_value)
-
     def test_no_procfs_on_import(self):
         my_procfs = self.get_testfn()
         os.mkdir(my_procfs)
@@ -1598,57 +1632,6 @@ class TestMisc(LinuxTestCase):
 
         assert psutil.PROCFS_PATH == '/proc'
 
-    def test_cpu_steal_decrease(self):
-        # Test cumulative cpu stats decrease. We should ignore this.
-        # See issue #1210.
-        content = textwrap.dedent("""\
-            cpu   0 0 0 0 0 0 0 1 0 0
-            cpu0  0 0 0 0 0 0 0 1 0 0
-            cpu1  0 0 0 0 0 0 0 1 0 0
-            """).encode()
-        with mock_open_content({"/proc/stat": content}) as m:
-            # first call to "percent" functions should read the new stat file
-            # and compare to the "real" file read at import time - so the
-            # values are meaningless
-            psutil.cpu_percent()
-            assert m.called
-            psutil.cpu_percent(percpu=True)
-            psutil.cpu_times_percent()
-            psutil.cpu_times_percent(percpu=True)
-
-        content = textwrap.dedent("""\
-            cpu   1 0 0 0 0 0 0 0 0 0
-            cpu0  1 0 0 0 0 0 0 0 0 0
-            cpu1  1 0 0 0 0 0 0 0 0 0
-            """).encode()
-        with mock_open_content({"/proc/stat": content}) as m:
-            # Increase "user" while steal goes "backwards" to zero.
-            cpu_percent = psutil.cpu_percent()
-            assert m.called
-            cpu_percent_percpu = psutil.cpu_percent(percpu=True)
-            cpu_times_percent = psutil.cpu_times_percent()
-            cpu_times_percent_percpu = psutil.cpu_times_percent(percpu=True)
-            assert cpu_percent != 0
-            assert sum(cpu_percent_percpu) != 0
-            assert sum(cpu_times_percent) != 0
-            assert sum(cpu_times_percent) != 100.0
-            assert sum(map(sum, cpu_times_percent_percpu)) != 0
-            assert sum(map(sum, cpu_times_percent_percpu)) != 100.0
-            assert cpu_times_percent.steal == 0
-            assert cpu_times_percent.user != 0
-
-    def test_boot_time_mocked(self):
-        with mock.patch('psutil._common.open', create=True) as m:
-            with pytest.raises(RuntimeError):
-                psutil._pslinux.boot_time()
-            assert m.called
-
-    def test_users(self):
-        # Make sure the C extension converts ':0' and ':0.0' to
-        # 'localhost'.
-        for user in psutil.users():
-            assert user.host not in {":0", ":0.0"}
-
     def test_procfs_path(self):
         tdir = self.get_testfn()
         os.mkdir(tdir)
@@ -1674,26 +1657,6 @@ class TestMisc(LinuxTestCase):
                 psutil.Process()
         finally:
             psutil.PROCFS_PATH = "/proc"
-
-    @retry_on_failure
-    @isolated
-    def test_issue_687(self):
-        # In case of thread ID:
-        # - pid_exists() is supposed to return False
-        # - Process(tid) is supposed to work
-        # - pids() should not return the TID
-        # See: https://github.com/giampaolo/psutil/issues/687
-
-        p = psutil.Process()
-        nthreads = len(p.threads())
-        with ThreadTask():
-            threads = p.threads()
-            assert len(threads) == nthreads + 1
-            tid = sorted(threads, key=lambda x: x.id)[1].id
-            assert p.pid != tid
-            pt = psutil.Process(tid)
-            pt.as_dict()
-            assert tid not in psutil.pids()
 
     def test_pid_exists_no_proc_status(self):
         # Internally pid_exists relies on /proc/{pid}/status.
@@ -1892,6 +1855,30 @@ class TestSensorsFans(LinuxTestCase):
                 fan = psutil.sensors_fans()['name'][0]
                 assert fan.label == 'label'
                 assert fan.current == 2000
+
+
+# =====================================================================
+# --- other system APIs
+# =====================================================================
+
+
+class TestOtherSystemAPIs(LinuxTestCase):
+    def test_boot_time(self):
+        vmstat_value = vmstat('boot time')
+        psutil_value = psutil.boot_time()
+        assert int(vmstat_value) == int(psutil_value)
+
+    def test_boot_time_mocked(self):
+        with mock.patch('psutil._common.open', create=True) as m:
+            with pytest.raises(RuntimeError):
+                psutil._pslinux.boot_time()
+            assert m.called
+
+    def test_users(self):
+        # Make sure the C extension converts ':0' and ':0.0' to
+        # 'localhost'.
+        for user in psutil.users():
+            assert user.host not in {":0", ":0.0"}
 
 
 # =====================================================================
@@ -2166,6 +2153,25 @@ class TestProcessThreads(LinuxTestCase):
         with mock_open_content({task: PermissionError}):
             with pytest.raises(psutil.AccessDenied):
                 psutil.Process().threads()
+
+    @retry_on_failure
+    @isolated
+    def test_issue_687(self):
+        # In case of thread ID:
+        # - pid_exists() is supposed to return False
+        # - Process(tid) is supposed to work
+        # - pids() should not return the TID
+        # See: https://github.com/giampaolo/psutil/issues/687
+        p = psutil.Process()
+        nthreads = len(p.threads())
+        with ThreadTask():
+            threads = p.threads()
+            assert len(threads) == nthreads + 1
+            tid = sorted(threads, key=lambda x: x.id)[1].id
+            assert p.pid != tid
+            pt = psutil.Process(tid)
+            pt.as_dict()
+            assert tid not in psutil.pids()
 
 
 class TestProcessFiles(LinuxTestCase):
