@@ -26,8 +26,8 @@ class SunOSSpecificTestCase(PsutilTestCase):
         total = free = 0
         for line in lines:
             fields = line.split()
-            total = int(fields[3]) * 512
-            free = int(fields[4]) * 512
+            total += int(fields[3]) * 512
+            free += int(fields[4]) * 512
         used = total - free
 
         psutil_swap = psutil.swap_memory()

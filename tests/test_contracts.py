@@ -14,7 +14,6 @@ import socket
 
 import psutil
 from psutil import AIX
-from psutil import BSD
 from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
@@ -174,8 +173,8 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             assert sorted(
                 psutil.ProcessIOPriority.__members__.keys()
             ) == sorted(names)
-        else:
-            not hasattr(psutil, "ProcessIOPriority")
+        elif not WINDOWS:
+            assert not hasattr(psutil, "ProcessIOPriority")
 
     def test_proc_ioprio_value_windows(self):
         names = (
@@ -205,7 +204,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
                 names
             )
         else:
-            not hasattr(psutil, "ProcessPriority")
+            assert not hasattr(psutil, "ProcessPriority")
 
     def test_rlimit(self):
         names = (
@@ -274,14 +273,14 @@ class TestAvailSystemAPIs(PsutilTestCase):
         if LINUX:
             assert hasit == (platform.libc_ver()[0] == "glibc")
         else:
-            assert hasit == MACOS or WINDOWS or BSD
+            assert hasit == (MACOS or WINDOWS or FREEBSD or NETBSD)
 
     def test_heap_trim(self):
         hasit = hasattr(psutil, "heap_trim")
         if LINUX:
             assert hasit == (platform.libc_ver()[0] == "glibc")
         else:
-            assert hasit == MACOS or WINDOWS or BSD
+            assert hasit == (MACOS or WINDOWS or FREEBSD or NETBSD)
 
 
 class TestAvailProcessAPIs(PsutilTestCase):
@@ -301,7 +300,7 @@ class TestAvailProcessAPIs(PsutilTestCase):
         assert hasattr(psutil.Process, "uids") == POSIX
 
     def test_gids(self):
-        assert hasattr(psutil.Process, "uids") == POSIX
+        assert hasattr(psutil.Process, "gids") == POSIX
 
     def test_terminal(self):
         assert hasattr(psutil.Process, "terminal") == POSIX

@@ -1621,7 +1621,7 @@ class TestMisc(LinuxTestCase):
             cpu0  1 0 0 0 0 0 0 0 0 0
             cpu1  1 0 0 0 0 0 0 0 0 0
             """).encode()
-        with mock_open_content({"/proc/stat": content}):
+        with mock_open_content({"/proc/stat": content}) as m:
             # Increase "user" while steal goes "backwards" to zero.
             cpu_percent = psutil.cpu_percent()
             assert m.called
@@ -1699,7 +1699,7 @@ class TestMisc(LinuxTestCase):
         # Internally pid_exists relies on /proc/{pid}/status.
         # Emulate a case where this file is empty in which case
         # psutil is supposed to fall back on using pids().
-        with mock_open_content({"/proc/%s/status": ""}) as m:
+        with mock_open_content({f"/proc/{os.getpid()}/status": ""}) as m:
             assert psutil.pid_exists(os.getpid())
             assert m.called
 
@@ -2177,9 +2177,8 @@ class TestProcessFiles(LinuxTestCase):
                 for file in p.open_files():
                     if file.path == os.path.abspath(fname):
                         return file
-                    elif time.monotonic() > giveup_at:
-                        break
-            raise RuntimeError("timeout looking for test file")
+                if time.monotonic() > giveup_at:
+                    raise RuntimeError("timeout looking for test file")
 
         testfn = self.get_testfn()
         with open(testfn, "w"):
