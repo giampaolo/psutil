@@ -1530,43 +1530,37 @@ class TestProcessPidReuse(PsutilTestCase):
         else:
             assert p._ident[1] is not None
 
-    def test_eq(self):
-        def proc(pid, ctime):
-            p = psutil.Process()
-            p._ident = (pid, ctime)
-            p._hash = None
-            return p
+    def proc(self, pid, ctime):
+        p = psutil.Process()
+        p._ident = (pid, ctime)
+        p._hash = None
+        return p
 
+    def test_eq(self):
         # same pid, same ctime
-        assert proc(100, 50.0) == proc(100, 50.0)
+        assert self.proc(100, 50.0) == self.proc(100, 50.0)
         # same pid, different ctime: the PID has been reused
-        assert proc(100, 50.0) != proc(100, 60.0)
+        assert self.proc(100, 50.0) != self.proc(100, 60.0)
         # different pid always means different process
-        assert proc(100, 50.0) != proc(101, 50.0)
-        assert proc(100, None) != proc(101, None)
-        assert proc(100, 0.0) != proc(101, 0.0)
+        assert self.proc(100, 50.0) != self.proc(101, 50.0)
+        assert self.proc(100, None) != self.proc(101, None)
+        assert self.proc(100, 0.0) != self.proc(101, 0.0)
         # a null ctime on either side means identity is unknown,
         # which is not proof of a different process
         for null_value in (0.0, None):
-            assert proc(100, 50.0) == proc(100, null_value)
-            assert proc(100, null_value) == proc(100, 50.0)
-            assert proc(100, null_value) == proc(100, null_value)
+            assert self.proc(100, 50.0) == self.proc(100, null_value)
+            assert self.proc(100, null_value) == self.proc(100, 50.0)
+            assert self.proc(100, null_value) == self.proc(100, null_value)
         # comparison with a non-Process object
-        assert proc(100, 50.0) != "foo"
+        assert self.proc(100, 50.0) != "foo"
 
     def test_hash(self):
-        def proc(pid, ctime):
-            p = psutil.Process()
-            p._ident = (pid, ctime)
-            p._hash = None
-            return p
-
         # a == b implies hash(a) == hash(b)
         pairs = [
-            (proc(100, 50.0), proc(100, 50.0)),
-            (proc(100, 50.0), proc(100, None)),
-            (proc(100, 50.0), proc(100, 0.0)),
-            (proc(100, None), proc(100, 0.0)),
+            (self.proc(100, 50.0), self.proc(100, 50.0)),
+            (self.proc(100, 50.0), self.proc(100, None)),
+            (self.proc(100, 50.0), self.proc(100, 0.0)),
+            (self.proc(100, None), self.proc(100, 0.0)),
         ]
         for a, b in pairs:
             assert a == b
@@ -1575,7 +1569,7 @@ class TestProcessPidReuse(PsutilTestCase):
             assert {a: "x"}[b] == "x"
         # same pid but different ctime (PID reuse): unequal, and a set
         # must keep both
-        a, b = proc(100, 50.0), proc(100, 60.0)
+        a, b = self.proc(100, 50.0), self.proc(100, 60.0)
         assert a != b
         assert len({a, b}) == 2
         # sanity check against the real world
