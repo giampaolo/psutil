@@ -342,7 +342,6 @@ class TestDiskApis(WindowsTestCase):
                         break
                     assert usage.total == int(wmi_part.Size)
                     wmi_free = int(wmi_part.FreeSpace)
-                    assert usage.free == wmi_free
                     # 10 MB tolerance
                     if abs(usage.free - wmi_free) > 10 * 1024 * 1024:
                         return pytest.fail(
