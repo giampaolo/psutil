@@ -1297,20 +1297,22 @@ class PsutilTestCase(unittest.TestCase):
                 assert diff <= nt.rss * 0.05
 
 
+# "Secure System" starts at boot, so one snapshot is enough.
+@functools.lru_cache
+def _win_tasklist():
+    ret = {}
+    out = sh("tasklist.exe /NH /FO csv")
+    for line in out.splitlines()[1:]:
+        bits = [x.replace('"', "") for x in line.split(",")]
+        name, pid = bits[0], int(bits[1])
+        ret[pid] = name
+    return ret
+
+
 def is_win_secure_system_proc(pid):
     # see: https://github.com/giampaolo/psutil/issues/2338
-    @functools.lru_cache
-    def get_procs():
-        ret = {}
-        out = sh("tasklist.exe /NH /FO csv")
-        for line in out.splitlines()[1:]:
-            bits = [x.replace('"', "") for x in line.split(",")]
-            name, pid = bits[0], int(bits[1])
-            ret[pid] = name
-        return ret
-
     try:
-        return get_procs()[pid] == "Secure System"
+        return _win_tasklist()[pid] == "Secure System"
     except KeyError:
         return False
 
