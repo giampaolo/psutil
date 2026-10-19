@@ -1535,8 +1535,8 @@ class TestRootFsDeviceFinder(LinuxTestCase):
         if os.path.exists("/proc/partitions"):
             a = finder.ask_proc_partitions()
         if os.path.exists(f"/sys/dev/block/{self.major}:{self.minor}/uevent"):
-            b = finder.ask_sys_class_block()
-        c = finder.ask_sys_dev_block()
+            b = finder.ask_sys_dev_block()
+        c = finder.ask_sys_class_block()
 
         assert {x for x in (a, b, c) if x} == {finder.find()}
 
