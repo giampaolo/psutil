@@ -58,6 +58,11 @@ jobs:
         shell: bash
         run: make PYTHON=python ci-test
 
+      - name: Run C static analyzer
+        if: matrix.osname == 'macos' && matrix.arch == 'arm64'
+        shell: bash
+        run: make PYTHON=python lint-c-analyze
+
       - name: Run memleak tests
         if: matrix.memleaks
         shell: bash

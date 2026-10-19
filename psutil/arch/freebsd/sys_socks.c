@@ -201,6 +201,9 @@ psutil_gather_inet(
             inet_ntop(AF_INET6, &inp->in6p_laddr.s6_addr, lip, sizeof(lip));
             inet_ntop(AF_INET6, &inp->in6p_faddr.s6_addr, rip, sizeof(rip));
         }
+        else {
+            continue;
+        }
 
         // construct python tuple/list
         py_laddr = Py_BuildValue("(si)", lip, lport);

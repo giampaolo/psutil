@@ -20,7 +20,7 @@ PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
     int i;
     int ret;
-    struct statinfo stats;
+    struct statinfo stats = {0};
 
     PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;

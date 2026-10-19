@@ -211,6 +211,9 @@ black:  ## Run black formatter.
 lint-c:  ## Run C linter.
 	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format --dry-run --Werror {}
 
+lint-c-analyze:  ## Run clang static analyzer on C files.
+	$(PYTHON) scripts/internal/analyze_c.py
+
 dprint:  ## Run linter for .md / .json / .yml / .js / .css files.
 	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) check
 
@@ -279,6 +282,7 @@ ci-lint:  ## Run all linters on GitHub CI.
 	$(DPRINT) --version
 	clang-format --version
 	$(MAKE) lint-all
+	$(MAKE) lint-c-analyze
 
 ci-install:  ## Install deps and build on GitHub CI.
 	$(MAKE) install-sysdeps

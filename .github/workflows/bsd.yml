@@ -21,6 +21,7 @@ on:
       - "psutil/arch/*posix*/**"
       - "psutil/arch/all/**"
       - "pyproject.toml"
+      - "scripts/internal/analyze_c.py"
       - "scripts/internal/install-pydeps.sh"
       - "scripts/internal/install-sysdeps.sh"
       - "setup.py"
@@ -47,6 +48,7 @@ jobs:
           usesh: true
           run: |
             make ci-install
+            make lint-c-analyze
             pw useradd -n tester -m
             chown -R tester .
             su tester -c "cd $(pwd) && LOGNAME=tester make test-parallel"

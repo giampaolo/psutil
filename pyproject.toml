@@ -27,6 +27,7 @@ lint = [
     "ruff",
     "sphinx-lint",
     "toml-sort",
+    { include-group = "build" },
 ]
 dev = [
     "abi3audit",
