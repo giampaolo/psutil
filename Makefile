@@ -117,7 +117,7 @@ RUN_TEST_MEMLEAKS = PYTHONMALLOC=malloc $(RUN_TEST) -k test_memleaks.py
 # --- main
 
 test:  ## Run all tests (except memleak tests).
-	# To run a specific test do `make test ARGS=tests/test_process.py::TestProcess::test_cmdline`
+	# To run a specific test do `make test ARGS=tests/test_process.py::TestProcessIdentity::test_cmdline`
 	$(RUN_TEST) $(ARGS)
 
 test-parallel:  ## Run all tests (except memleak tests) in parallel.
