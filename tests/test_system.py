@@ -346,7 +346,7 @@ class TestProcessAPIs(PsutilTestCase):
             assert not psutil.pid_exists(pid)
 
 
-class TestMiscAPIs(PsutilTestCase):
+class TestOtherSystemAPIs(PsutilTestCase):
     def test_boot_time(self):
         bt = psutil.boot_time()
         assert isinstance(bt, float)
@@ -373,22 +373,6 @@ class TestMiscAPIs(PsutilTestCase):
                     assert user.pid is None
                 else:
                     psutil.Process(user.pid)
-
-    @skipif(not HAS_HEAP_INFO, reason="not supported")
-    def test_heap_info(self):
-        m = psutil.heap_info()
-        assert m.heap_used > 0
-        if MACOS:
-            # macOS doesn't support it.
-            assert m.mmap_used == 0
-        else:
-            assert m.mmap_used >= 0
-        if WINDOWS:
-            assert m.heap_count >= 0
-
-    @skipif(not HAS_HEAP_INFO, reason="not supported")
-    def test_heap_trim(self):
-        psutil.heap_trim()
 
     def test_os_constants(self):
         names = [
@@ -438,6 +422,24 @@ class TestMiscAPIs(PsutilTestCase):
         # assert all other constants are set to False
         for name in names:
             assert not getattr(psutil, name), name
+
+
+class TestHeapAPIs(PsutilTestCase):
+    @skipif(not HAS_HEAP_INFO, reason="not supported")
+    def test_heap_info(self):
+        m = psutil.heap_info()
+        assert m.heap_used > 0
+        if MACOS:
+            # macOS doesn't support it.
+            assert m.mmap_used == 0
+        else:
+            assert m.mmap_used >= 0
+        if WINDOWS:
+            assert m.heap_count >= 0
+
+    @skipif(not HAS_HEAP_INFO, reason="not supported")
+    def test_heap_trim(self):
+        psutil.heap_trim()
 
 
 class TestMemoryAPIs(PsutilTestCase):
