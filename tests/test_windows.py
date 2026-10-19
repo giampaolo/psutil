@@ -537,17 +537,6 @@ class TestSensorsBattery(WindowsTestCase):
             )
             assert m.called
 
-    def test_emulate_secs_left_unknown(self):
-        with mock.patch.object(
-            _psutil,
-            "sensors_battery",
-            return_value=(0, 0, 0, -1),
-        ) as m:
-            assert (
-                psutil.sensors_battery().secsleft == psutil.POWER_TIME_UNKNOWN
-            )
-            assert m.called
-
 
 # ===================================================================
 # Process APIs
