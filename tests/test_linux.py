@@ -1461,14 +1461,15 @@ class TestDiskIoCounters(LinuxTestCase):
 
     def test_emulate_use_sysfs(self):
         def exists(path):
-            return path == '/proc/diskstats'
+            return path == '/sys/block'
 
         wprocfs = psutil.disk_io_counters(perdisk=True)
         with mock.patch(
             'psutil._pslinux.os.path.exists', create=True, side_effect=exists
-        ):
+        ) as m:
             wsysfs = psutil.disk_io_counters(perdisk=True)
-        assert len(wprocfs) == len(wsysfs)
+        m.assert_any_call('/sys/block')
+        assert sorted(wprocfs) == sorted(wsysfs)
 
     def test_emulate_not_impl(self):
         def exists(path):
