@@ -2356,6 +2356,12 @@ class TestProcessProcfsParsing(LinuxTestCase):
             assert cpu.iowait == 7 / CLOCK_TICKS
             assert p.cpu_num() == 6
 
+        content = " ".join(args[:-1]).encode()
+        with mock_open_content({f"/proc/{os.getpid()}/stat": content}):
+            cpu = psutil.Process().cpu_times()
+            assert cpu.user == 2 / CLOCK_TICKS
+            assert cpu.iowait == 0
+
     def test_status_file_parsing(self):
         content = textwrap.dedent("""\
             Uid:\t1000\t1001\t1002\t1003
