@@ -1165,8 +1165,8 @@ class PsutilTestCase(unittest.TestCase):
         assert isinstance(exc, psutil.Error)
         assert exc.pid == proc.pid
         assert exc.name == proc._name
-        if exc.name:
-            assert exc.name
+        if exc.name is not None:
+            assert isinstance(exc.name, str)
         if isinstance(exc, psutil.ZombieProcess):
             assert exc.ppid == proc._ppid
             if exc.ppid is not None:
