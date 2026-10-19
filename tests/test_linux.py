@@ -2451,15 +2451,12 @@ class TestProcessAgainstStatus(LinuxTestCase):
 
     def test_cpu_affinity(self):
         value = self.read_status_file("Cpus_allowed_list:")
-        if '-' in str(value):
-            # The mask covers the possible CPUs, while sched_getaffinity
-            # only reports the online ones.
-            with open("/sys/devices/system/cpu/online") as f:
-                online = f.read().strip()
-            omin, omax = map(int, online.split('-'))
-            min_, max_ = map(int, value.split('-'))
-            expected = [x for x in range(min_, max_ + 1) if omin <= x <= omax]
-            assert self.proc.cpu_affinity() == expected
+        # The mask covers the possible CPUs, while sched_getaffinity
+        # only reports the online ones.
+        with open("/sys/devices/system/cpu/online") as f:
+            online = _parse_cpulist(f.read())
+        expected = [x for x in _parse_cpulist(str(value)) if x in online]
+        assert self.proc.cpu_affinity() == expected
 
     def test_cpu_affinity_eligible_cpus(self):
         value = self.read_status_file("Cpus_allowed_list:")
