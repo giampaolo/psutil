@@ -1119,11 +1119,8 @@ class PsutilTestCase(unittest.TestCase):
     # run, similar to pytest output. Used only when running tests with
     # the unittest runner.
     def __str__(self):
-        fqmod = self.__class__.__module__
-        if not fqmod.startswith('psutil.'):
-            fqmod = 'tests.' + fqmod
         return "{}.{}.{}".format(
-            fqmod,
+            self.__class__.__module__,
             self.__class__.__name__,
             self._testMethodName,
         )
