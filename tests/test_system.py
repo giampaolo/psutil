@@ -747,6 +747,7 @@ class TestCpuAPIs(PsutilTestCase):
             )
 
         assert ls, ls
+        check_ls(ls)
         check_ls([psutil.cpu_freq(percpu=False)])
 
         if LINUX:
