@@ -2164,10 +2164,7 @@ class TestSensorsFans(LinuxTestCase):
 # =====================================================================
 
 
-class TestProcess(LinuxTestCase):
-
-    # --- mocked tests
-
+class TestProcessIdentity(LinuxTestCase):
     def test_terminal_mocked(self):
         with mock.patch(
             'psutil._pslinux._psposix._get_terminal_map', return_value={}
@@ -2249,6 +2246,36 @@ class TestProcess(LinuxTestCase):
         assert p._proc.create_time() != p._proc.create_time(monotonic=True)
         assert p._get_ident()[1] == p._proc.create_time(monotonic=True)
 
+
+class TestProcessCpu(LinuxTestCase):
+    def test_ioprio_pid_0(self):
+        ioclass, value = _psutil.proc_ioprio_get(os.getpid())
+        with pytest.raises(PermissionError):
+            _psutil.proc_ioprio_get(0)
+        with pytest.raises(PermissionError):
+            _psutil.proc_ioprio_set(0, ioclass, value)
+        assert _psutil.proc_ioprio_get(os.getpid()) == (ioclass, value)
+
+    @skipif(not HAS_PROC_RLIMIT, reason="not supported")
+    def test_rlimit_zombie(self):
+        # Emulate a case where rlimit() raises ENOSYS, which may
+        # happen in case of zombie process:
+        # https://travis-ci.org/giampaolo/psutil/jobs/51368273
+        with mock.patch(
+            "resource.prlimit", side_effect=OSError(errno.ENOSYS, "")
+        ) as m1:
+            with mock.patch(
+                "psutil._pslinux.Process._is_zombie", return_value=True
+            ) as m2:
+                p = psutil.Process()
+                p.name()
+                with pytest.raises(psutil.ZombieProcess) as cm:
+                    p.rlimit(psutil.RLIMIT_NOFILE)
+        assert m1.called
+        assert m2.called
+        assert cm.value.pid == p.pid
+        assert cm.value.name == p.name()
+
     def test_rlimit_infinity_normalized(self):
         # Python 3.15 changed resource.prlimit() to return RLIM_INFINITY
         # as the unsigned 2**64-1 instead of -1; psutil maps it back.
@@ -2262,6 +2289,376 @@ class TestProcess(LinuxTestCase):
             assert m.called
         assert soft == psutil.RLIM_INFINITY
         assert hard == psutil.RLIM_INFINITY
+
+
+class TestProcessMemory(LinuxTestCase):
+    @retry_on_failure
+    def test_parse_smaps_vs_memory_maps(self):
+        sproc = self.spawn_subproc()
+        uss, pss, swap, shared = psutil._pslinux.Process(
+            sproc.pid
+        )._parse_smaps()
+        maps = psutil.Process(sproc.pid).memory_maps(grouped=False)
+        assert (
+            abs(uss - sum(x.private_dirty + x.private_clean for x in maps))
+            < 4096
+        )
+        assert abs(pss - sum(x.pss for x in maps)) < 4096
+        assert abs(swap - sum(x.swap for x in maps)) < 4096
+        assert (
+            abs(shared - sum(x.shared_dirty + x.shared_clean for x in maps))
+            < 4096
+        )
+
+    def test_parse_smaps_mocked(self):
+        # See: https://github.com/giampaolo/psutil/issues/1222
+        content = textwrap.dedent("""\
+            fffff0 r-xp 00000000 00:00 0                  [vsyscall]
+            Size:                  1 kB
+            Rss:                   2 kB
+            Pss:                   3 kB
+            Shared_Clean:          4 kB
+            Shared_Dirty:          5 kB
+            Private_Clean:         6 kB
+            Private_Dirty:         7 kB
+            Referenced:            8 kB
+            Anonymous:             9 kB
+            LazyFree:              10 kB
+            AnonHugePages:         11 kB
+            ShmemPmdMapped:        12 kB
+            Shared_Hugetlb:        13 kB
+            Private_Hugetlb:       14 kB
+            Swap:                  15 kB
+            SwapPss:               16 kB
+            KernelPageSize:        17 kB
+            MMUPageSize:           18 kB
+            Locked:                19 kB
+            VmFlags: rd ex
+            """).encode()
+        with mock_open_content({f"/proc/{os.getpid()}/smaps": content}) as m:
+            p = psutil._pslinux.Process(os.getpid())
+            uss, pss, swap, shared = p._parse_smaps()
+            assert m.called
+            assert uss == (6 + 7 + 14) * 1024
+            assert pss == 3 * 1024
+            assert swap == 15 * 1024
+            assert shared == (4 + 5 + 13) * 1024
+
+    def test_issue_1014(self):
+        # Emulates a case where smaps file does not exist. In this case
+        # wrap_exception decorator should not raise NoSuchProcess.
+        with mock_open_exception(
+            f"/proc/{os.getpid()}/smaps", FileNotFoundError
+        ) as m:
+            p = psutil.Process()
+            with pytest.raises(FileNotFoundError):
+                p.memory_maps()
+            assert m.called
+
+    def test_issue_2418(self):
+        p = psutil.Process()
+        with mock_open_exception(
+            f"/proc/{os.getpid()}/statm", FileNotFoundError
+        ):
+            with mock.patch("os.path.exists", return_value=False):
+                with pytest.raises(psutil.NoSuchProcess):
+                    p.memory_info()
+
+    def test_memory_extras(self):
+        p = psutil.Process()
+        with open(f"/proc/{p.pid}/status", "rb") as f:
+            data = f.read()
+        with mock.patch.object(
+            psutil._pslinux.Process, "_read_status_file", return_value=data
+        ):
+            mem = p.memory_extras()
+        vmrss = int(re.search(br"VmRSS:\s+(\d+)", data).group(1)) * 1024
+        assert mem.rss_anon + mem.rss_file + mem.rss_shmem == vmrss
+
+    def test_memory_extras_locked(self):
+        libc = ctypes.CDLL(None, use_errno=True)
+        size = mmap.PAGESIZE * 4
+        buf = mmap.mmap(-1, size)
+        self.addCleanup(buf.close)
+        view = ctypes.c_char.from_buffer(buf)
+        addr = ctypes.addressof(view)
+        del view
+        base = psutil.Process().memory_extras().locked
+        if libc.mlock(ctypes.c_void_p(addr), ctypes.c_size_t(size)) != 0:
+            err = ctypes.get_errno()
+            return pytest.skip(f"mlock() failed: {os.strerror(err)}")
+        self.addCleanup(
+            libc.munlock, ctypes.c_void_p(addr), ctypes.c_size_t(size)
+        )
+        after = psutil.Process().memory_extras().locked
+        assert after - base == size
+
+    def test_memory_footprint_shared_self_mappings(self):
+        # A page mapped twice by the same process counts as shared,
+        # even with no other process involved.
+        size = 4 * 1024 * 1024
+        path = self.get_testfn()
+        with open(path, "wb") as f:
+            f.write(b"\x00" * size)
+        with open(path, "r+b") as f:
+            m1 = mmap.mmap(f.fileno(), size)
+            self.addCleanup(m1.close)
+            m2 = mmap.mmap(f.fileno(), size)
+            self.addCleanup(m2.close)
+            base = psutil.Process().memory_footprint().shared
+            for i in range(0, size, 4096):
+                m1[i]
+                m2[i]
+            after = psutil.Process().memory_footprint().shared
+        assert after - base >= size // 2
+
+    def test_parse_smaps_rollup_mocked(self):
+        data = (
+            b"Rss:                 100 kB\n"
+            b"Pss:                  50 kB\n"
+            b"Shared_Clean:         30 kB\n"
+            b"Shared_Dirty:         40 kB\n"
+            b"Private_Clean:        20 kB\n"
+            b"Private_Dirty:        10 kB\n"
+            b"Swap:                  5 kB\n"
+            b"SwapPss:               3 kB\n"
+            b"Shared_Hugetlb:        2 kB\n"
+            b"Private_Hugetlb:       1 kB\n"
+        )
+        p = psutil.Process()
+        with mock.patch(
+            "psutil._pslinux.open_binary", return_value=io.BytesIO(data)
+        ):
+            assert p._proc._parse_smaps_rollup() == (
+                31 * 1024,
+                50 * 1024,
+                5 * 1024,
+                72 * 1024,
+            )
+
+
+class TestProcessThreads(LinuxTestCase):
+    def test_threads_mocked(self):
+        # Test the case where os.listdir() returns a file (thread)
+        # which no longer exists by the time we open() it (race
+        # condition). threads() is supposed to ignore that instead
+        # of raising NSP.
+        def open_mock_1(name, *args, **kwargs):
+            if name.startswith(f"/proc/{os.getpid()}/task"):
+                raise FileNotFoundError
+            return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        with mock.patch("builtins.open", side_effect=open_mock_1) as m:
+            ret = psutil.Process().threads()
+            assert m.called
+            assert ret == []
+
+        # ...but if it bumps into something != ENOENT we want an
+        # exception.
+        def open_mock_2(name, *args, **kwargs):
+            if name.startswith(f"/proc/{os.getpid()}/task"):
+                raise PermissionError
+            return orig_open(name, *args, **kwargs)
+
+        with mock.patch("builtins.open", side_effect=open_mock_2):
+            with pytest.raises(psutil.AccessDenied):
+                psutil.Process().threads()
+
+
+class TestProcessFiles(LinuxTestCase):
+    def test_open_files_mode(self):
+        def get_test_file(fname):
+            p = psutil.Process()
+            giveup_at = time.monotonic() + GLOBAL_TIMEOUT
+            while True:
+                for file in p.open_files():
+                    if file.path == os.path.abspath(fname):
+                        return file
+                    elif time.monotonic() > giveup_at:
+                        break
+            raise RuntimeError("timeout looking for test file")
+
+        testfn = self.get_testfn()
+        with open(testfn, "w"):
+            assert get_test_file(testfn).mode == "w"
+        with open(testfn):
+            assert get_test_file(testfn).mode == "r"
+        with open(testfn, "a"):
+            assert get_test_file(testfn).mode == "a"
+        with open(testfn, "r+"):
+            assert get_test_file(testfn).mode == "r+"
+        with open(testfn, "w+"):
+            assert get_test_file(testfn).mode == "r+"
+        with open(testfn, "a+"):
+            assert get_test_file(testfn).mode == "a+"
+
+        safe_rmpath(testfn)
+        with open(testfn, "x"):
+            assert get_test_file(testfn).mode == "w"
+        safe_rmpath(testfn)
+        with open(testfn, "x+"):
+            assert get_test_file(testfn).mode == "r+"
+
+    def test_open_files_file_gone(self):
+        # simulates a file which gets deleted during open_files()
+        # execution
+        p = psutil.Process()
+        files = p.open_files()
+        with open(self.get_testfn(), 'w'):
+            # give the kernel some time to see the new file
+            call_until(lambda: len(p.open_files()) != len(files))
+            with mock.patch(
+                'psutil._pslinux.os.readlink',
+                side_effect=FileNotFoundError,
+            ) as m:
+                assert p.open_files() == []
+                assert m.called
+            # also simulate the case where os.readlink() returns EINVAL
+            # in which case psutil is supposed to 'continue'
+            with mock.patch(
+                'psutil._pslinux.os.readlink',
+                side_effect=OSError(errno.EINVAL, ""),
+            ) as m:
+                assert p.open_files() == []
+                assert m.called
+
+    def test_open_files_fd_gone(self):
+        # Simulate a case where /proc/{pid}/fdinfo/{fd} disappears
+        # while iterating through fds.
+        # https://travis-ci.org/giampaolo/psutil/jobs/225694530
+        p = psutil.Process()
+        files = p.open_files()
+        with open(self.get_testfn(), 'w'):
+            # give the kernel some time to see the new file
+            call_until(lambda: len(p.open_files()) != len(files))
+            with mock.patch(
+                "builtins.open", side_effect=FileNotFoundError
+            ) as m:
+                assert p.open_files() == []
+                assert m.called
+
+    def test_open_files_enametoolong(self):
+        # Simulate a case where /proc/{pid}/fd/{fd} symlink
+        # points to a file with full path longer than PATH_MAX, see:
+        # https://github.com/giampaolo/psutil/issues/1940
+        p = psutil.Process()
+        files = p.open_files()
+        with open(self.get_testfn(), 'w'):
+            # give the kernel some time to see the new file
+            call_until(lambda: len(p.open_files()) != len(files))
+            patch_point = 'psutil._pslinux.os.readlink'
+            with mock.patch(
+                patch_point, side_effect=OSError(errno.ENAMETOOLONG, "")
+            ) as m:
+                with mock.patch("psutil._pslinux.debug"):
+                    assert p.open_files() == []
+                    assert m.called
+
+    def test_net_connections_enametoolong(self):
+        # Simulate a case where /proc/{pid}/fd/{fd} symlink points to
+        # a file with full path longer than PATH_MAX, see:
+        # https://github.com/giampaolo/psutil/issues/1940
+        with mock.patch(
+            'psutil._pslinux.os.readlink',
+            side_effect=OSError(errno.ENAMETOOLONG, ""),
+        ) as m:
+            p = psutil.Process()
+            with mock.patch("psutil._pslinux.debug"):
+                assert p.net_connections() == []
+                assert m.called
+
+
+class TestProcessProcfsParsing(LinuxTestCase):
+    def test_stat_file_parsing(self):
+        args = [
+            "0",  # pid
+            "(cat)",  # name
+            "Z",  # status
+            "1",  # ppid
+            "0",  # pgrp
+            "0",  # session
+            "0",  # tty
+            "0",  # tpgid
+            "0",  # flags
+            "0",  # minflt
+            "0",  # cminflt
+            "0",  # majflt
+            "0",  # cmajflt
+            "2",  # utime
+            "3",  # stime
+            "4",  # cutime
+            "5",  # cstime
+            "0",  # priority
+            "0",  # nice
+            "0",  # num_threads
+            "0",  # itrealvalue
+            "6",  # starttime
+            "0",  # vsize
+            "0",  # rss
+            "0",  # rsslim
+            "0",  # startcode
+            "0",  # endcode
+            "0",  # startstack
+            "0",  # kstkesp
+            "0",  # kstkeip
+            "0",  # signal
+            "0",  # blocked
+            "0",  # sigignore
+            "0",  # sigcatch
+            "0",  # wchan
+            "0",  # nswap
+            "0",  # cnswap
+            "0",  # exit_signal
+            "6",  # processor
+            "0",  # rt priority
+            "0",  # policy
+            "7",  # delayacct_blkio_ticks
+        ]
+        content = " ".join(args).encode()
+        with mock_open_content({f"/proc/{os.getpid()}/stat": content}):
+            p = psutil.Process()
+            assert p.name() == 'cat'
+            assert p.status() == psutil.STATUS_ZOMBIE
+            assert p.ppid() == 1
+            assert p.create_time() == 6 / CLOCK_TICKS + psutil.boot_time()
+            cpu = p.cpu_times()
+            assert cpu.user == 2 / CLOCK_TICKS
+            assert cpu.system == 3 / CLOCK_TICKS
+            assert cpu.children_user == 4 / CLOCK_TICKS
+            assert cpu.children_system == 5 / CLOCK_TICKS
+            assert cpu.iowait == 7 / CLOCK_TICKS
+            assert p.cpu_num() == 6
+
+    def test_status_file_parsing(self):
+        content = textwrap.dedent("""\
+            Uid:\t1000\t1001\t1002\t1003
+            Gid:\t1004\t1005\t1006\t1007
+            Threads:\t66
+            Cpus_allowed:\tf
+            Cpus_allowed_list:\t0-7
+            voluntary_ctxt_switches:\t12
+            nonvoluntary_ctxt_switches:\t13""").encode()
+        with mock_open_content({f"/proc/{os.getpid()}/status": content}):
+            p = psutil.Process()
+            assert p.num_ctx_switches().voluntary == 12
+            assert p.num_ctx_switches().involuntary == 13
+            assert p.num_threads() == 66
+            uids = p.uids()
+            assert uids.real == 1000
+            assert uids.effective == 1001
+            assert uids.saved == 1002
+            gids = p.gids()
+            assert gids.real == 1004
+            assert gids.effective == 1005
+            assert gids.saved == 1006
+            assert p._proc._get_eligible_cpus() == list(range(8))
+
+    def test_status_file_cpus_allowed_list(self):
+        content = b"Cpus_allowed_list:\t0-3,8\n"
+        with mock_open_content({f"/proc/{os.getpid()}/status": content}):
+            p = psutil.Process()
+            assert p._proc._get_eligible_cpus() == [0, 1, 2, 3, 8]
 
 
 class TestProcessAgainstStatus(LinuxTestCase):
