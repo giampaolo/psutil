@@ -2181,6 +2181,7 @@ class TestProcessThreads(LinuxTestCase):
             assert p.pid != tid
             pt = psutil.Process(tid)
             pt.as_dict()
+            assert not psutil.pid_exists(tid)
             assert tid not in psutil.pids()
 
 
