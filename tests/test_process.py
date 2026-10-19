@@ -1219,7 +1219,7 @@ class TestProcessFiles(PsutilTestCase):
         p = psutil.Process()
         testfn = self.get_testfn()
         files = p.open_files()
-        assert testfn not in files
+        assert testfn not in [x.path for x in files]
         with open(testfn, 'wb') as f:
             f.write(b'x' * 1024)
             f.flush()
@@ -1295,8 +1295,9 @@ class TestProcessFiles(PsutilTestCase):
             ntuple = p.open_files()[0]
             assert ntuple[0] == ntuple.path
             assert ntuple[1] == ntuple.fd
-            # test file is gone
-            assert fileobj.name not in p.open_files()
+        # test file is gone
+        paths = [normcase(x.path) for x in p.open_files()]
+        assert normcase(fileobj.name) not in paths
 
     @isolated
     @skipif(not POSIX, reason="POSIX only")
