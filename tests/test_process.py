@@ -761,17 +761,9 @@ class TestProcessCpu(PsutilTestCase):
         p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
 
     def test_nice(self):
-        def cleanup(init):
-            try:
-                p.nice(init)
-            except psutil.AccessDenied:
-                pass
-
-        p = psutil.Process()
+        p = self.spawn_psproc()
         with pytest.raises(TypeError):
             p.nice("str")
-        init = p.nice()
-        self.addCleanup(cleanup, init)
 
         if WINDOWS:
             highest_prio = None
@@ -805,26 +797,18 @@ class TestProcessCpu(PsutilTestCase):
                         else:
                             assert new_prio == prio
         else:
+            if hasattr(os, "getpriority"):
+                assert os.getpriority(os.PRIO_PROCESS, p.pid) == p.nice()
+            p.nice(1)
+            assert p.nice() == 1
+            if hasattr(os, "getpriority"):
+                assert os.getpriority(os.PRIO_PROCESS, p.pid) == p.nice()
             try:
-                if hasattr(os, "getpriority"):
-                    assert (
-                        os.getpriority(os.PRIO_PROCESS, os.getpid())
-                        == p.nice()
-                    )
-                p.nice(1)
-                assert p.nice() == 1
-                if hasattr(os, "getpriority"):
-                    assert (
-                        os.getpriority(os.PRIO_PROCESS, os.getpid())
-                        == p.nice()
-                    )
-                # XXX - going back to previous nice value raises
-                # AccessDenied on MACOS
-                if not MACOS:
-                    p.nice(0)
-                    assert p.nice() == 0
+                p.nice(0)
             except psutil.AccessDenied:
                 pass
+            else:
+                assert p.nice() == 0
 
     @skipif(not HAS_PROC_CPU_AFFINITY, reason="not supported")
     def test_cpu_affinity(self):
