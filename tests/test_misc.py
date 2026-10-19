@@ -343,44 +343,12 @@ class TestSerialization(PsutilTestCase):
                     self.check(ret)
 
     def test_exceptions(self):
-        b = pickle.loads(
-            pickle.dumps(
-                psutil.NoSuchProcess(pid=4567, name='name', msg='msg')
-            )
+        self.check(psutil.NoSuchProcess(pid=4567, name='name', msg='msg'))
+        self.check(
+            psutil.ZombieProcess(pid=4567, name='name', ppid=42, msg='msg')
         )
-        assert isinstance(b, psutil.NoSuchProcess)
-        assert b.pid == 4567
-        assert b.name == 'name'
-        assert b.msg == 'msg'
-
-        b = pickle.loads(
-            pickle.dumps(
-                psutil.ZombieProcess(pid=4567, name='name', ppid=42, msg='msg')
-            )
-        )
-        assert isinstance(b, psutil.ZombieProcess)
-        assert b.pid == 4567
-        assert b.ppid == 42
-        assert b.name == 'name'
-        assert b.msg == 'msg'
-
-        b = pickle.loads(
-            pickle.dumps(psutil.AccessDenied(pid=123, name='name', msg='msg'))
-        )
-        assert isinstance(b, psutil.AccessDenied)
-        assert b.pid == 123
-        assert b.name == 'name'
-        assert b.msg == 'msg'
-
-        b = pickle.loads(
-            pickle.dumps(
-                psutil.TimeoutExpired(seconds=33, pid=4567, name='name')
-            )
-        )
-        assert isinstance(b, psutil.TimeoutExpired)
-        assert b.seconds == 33
-        assert b.pid == 4567
-        assert b.name == 'name'
+        self.check(psutil.AccessDenied(pid=123, name='name', msg='msg'))
+        self.check(psutil.TimeoutExpired(seconds=33, pid=4567, name='name'))
 
     def test_process_snapshot(self):
         snap = next(psutil.process_iter(attrs=["pid", "name"])).snapshot
