@@ -1126,35 +1126,23 @@ class TestProcessMemory(PsutilTestCase):
 
 class TestProcessThreads(PsutilTestCase):
     @isolated
+    @skip_on_access_denied(only_if=OPENBSD)
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
         # but this does not apply across all platforms (MACOS, Windows)
         p = psutil.Process()
-        if OPENBSD:
-            try:
-                step1 = p.num_threads()
-            except psutil.AccessDenied:
-                return pytest.skip("on OpenBSD this requires root access")
-        else:
-            step1 = p.num_threads()
-
+        step1 = p.num_threads()
         with ThreadTask():
             step2 = p.num_threads()
             assert step2 == step1 + 1
 
     @skipif(not HAS_PROC_THREADS, reason="not supported")
     @isolated
+    @skip_on_access_denied(only_if=OPENBSD)
     def test_threads(self):
         p = psutil.Process()
-        if OPENBSD:
-            try:
-                step1 = p.threads()
-            except psutil.AccessDenied:
-                return pytest.skip("on OpenBSD this requires root access")
-        else:
-            step1 = p.threads()
-
+        step1 = p.threads()
         with ThreadTask():
             step2 = p.threads()
             assert len(step2) == len(step1) + 1
@@ -1165,15 +1153,10 @@ class TestProcessThreads(PsutilTestCase):
             assert athread.system_time == athread[2]
 
     @retry_on_failure
-    @skip_on_access_denied(only_if=MACOS)
+    @skip_on_access_denied(only_if=MACOS or OPENBSD)
     @skipif(not HAS_PROC_THREADS, reason="not supported")
     def test_threads_2(self):
         p = self.spawn_psproc()
-        if OPENBSD:
-            try:
-                p.threads()
-            except psutil.AccessDenied:
-                return pytest.skip("on OpenBSD this requires root access")
         assert (
             abs(p.cpu_times().user - sum(x.user_time for x in p.threads()))
             < 0.1
