@@ -51,7 +51,7 @@ class ScriptsTestCase(PsutilTestCase):
             out = sh(cmd, env=env).strip()
         except RuntimeError as err:
             if 'AccessDenied' in str(err):
-                return str(err)
+                return pytest.skip(str(err))
             else:
                 raise
         assert out, out
