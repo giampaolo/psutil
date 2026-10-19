@@ -1536,7 +1536,8 @@ def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
                     prefix = "\n" if attempt == 0 else ""
                     short_err = str(err).split("\n")[0]
                     print(  # noqa: T201
-                        f"{prefix}{short_err}, retrying"
+                        f"{prefix}{test_method.__qualname__}: {short_err},"
+                        " retrying"
                         f" {attempt + 1}/{retries} ...",
                         file=sys.stderr,
                     )
