@@ -233,6 +233,34 @@ def mock_open_exception(for_path, exc):
     return mock_open_content({for_path: exc})
 
 
+@contextlib.contextmanager
+def mock_cpufreq_sysfs(files, num_policies):
+    def exists_mock(path):
+        if path.startswith("/sys/devices/system/cpu/"):
+            return True
+        return orig_exists(path)
+
+    def glob_mock(pattern):
+        if pattern == "/sys/devices/system/cpu/cpufreq/policy[0-9]*":
+            return [
+                f"/sys/devices/system/cpu/cpufreq/policy{n}"
+                for n in range(num_policies)
+            ]
+        return orig_glob(pattern)
+
+    orig_exists = os.path.exists
+    orig_glob = glob.glob
+    try:
+        with mock.patch("os.path.exists", side_effect=exists_mock):
+            reload_module(psutil._pslinux)
+            with mock.patch("glob.glob", side_effect=glob_mock):
+                with mock_open_content(files):
+                    yield
+    finally:
+        reload_module(psutil._pslinux)
+        reload_module(psutil)
+
+
 # =====================================================================
 # --- system virtual memory
 # =====================================================================
@@ -868,64 +896,33 @@ class TestCpuFreq(LinuxTestCase):
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_data(self):
-        policy = "/sys/devices/system/cpu/cpufreq/policy*"
-        with mock_open_content({
-            f"{policy}/scaling_cur_freq": b"500000",
-            f"{policy}/scaling_min_freq": b"600000",
-            f"{policy}/scaling_max_freq": b"700000",
+        files = {
+            "*/affected_cpus": b"0",
+            "*/scaling_cur_freq": b"500000",
+            "*/scaling_min_freq": b"600000",
+            "*/scaling_max_freq": b"700000",
             "/proc/cpuinfo": b"cpu MHz     : 500",
-        }):
-            with mock.patch('os.path.exists', return_value=True):
-                freq = psutil.cpu_freq()
-                assert freq.current == 500.0
-                # when /proc/cpuinfo is used min and max frequencies are not
-                # available and are set to 0.
-                if freq.min != 0.0:
-                    assert freq.min == 600.0
-                if freq.max != 0.0:
-                    assert freq.max == 700.0
+        }
+        with mock_cpufreq_sysfs(files, 1):
+            freq = psutil.cpu_freq()
+        assert freq == (500.0, 600.0, 700.0)
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_multi_cpu(self):
-        policy = "/sys/devices/system/cpu/cpufreq/policy"
         files = {
-            f"{policy}0*/scaling_cur_freq": b"100000",
-            f"{policy}0*/scaling_min_freq": b"200000",
-            f"{policy}0*/scaling_max_freq": b"300000",
-            f"{policy}1*/scaling_cur_freq": b"400000",
-            f"{policy}1*/scaling_min_freq": b"500000",
-            f"{policy}1*/scaling_max_freq": b"600000",
             "*/policy0/affected_cpus": b"0",
-            "*/affected_cpus": b"1",
+            "*/policy0/scaling_cur_freq": b"100000",
+            "*/policy0/scaling_min_freq": b"200000",
+            "*/policy0/scaling_max_freq": b"300000",
+            "*/policy1/affected_cpus": b"1",
+            "*/policy1/scaling_cur_freq": b"400000",
+            "*/policy1/scaling_min_freq": b"500000",
+            "*/policy1/scaling_max_freq": b"600000",
             "/proc/cpuinfo": b"cpu MHz     : 100\ncpu MHz     : 400",
         }
-
-        def glob_mock(pattern):
-            if pattern == "/sys/devices/system/cpu/cpufreq/policy[0-9]*":
-                return list(policies)
-            return orig_glob(pattern)
-
-        policies = [
-            f"/sys/devices/system/cpu/cpufreq/policy{n}" for n in range(2)
-        ]
-        orig_glob = glob.glob
-        with mock_open_content(files):
-            with mock.patch('os.path.exists', return_value=True):
-                with mock.patch("glob.glob", side_effect=glob_mock):
-                    # min and max are 0 when the /proc/cpuinfo-only
-                    # implementation is in use, e.g. in a container
-                    # with no /sys/devices/system/cpu/cpufreq.
-                    freq = psutil.cpu_freq(percpu=True)
-                    assert freq[0].current == 100.0
-                    if freq[0].min != 0.0:
-                        assert freq[0].min == 200.0
-                    if freq[0].max != 0.0:
-                        assert freq[0].max == 300.0
-                    assert freq[1].current == 400.0
-                    if freq[1].min != 0.0:
-                        assert freq[1].min == 500.0
-                    if freq[1].max != 0.0:
-                        assert freq[1].max == 600.0
+        with mock_cpufreq_sysfs(files, 2):
+            freq = psutil.cpu_freq(percpu=True)
+        assert freq == [(100.0, 200.0, 300.0), (400.0, 500.0, 600.0)]
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_shared_policy(self):
@@ -938,68 +935,32 @@ class TestCpuFreq(LinuxTestCase):
             "*/scaling_max_freq": b"300000",
             "/proc/cpuinfo": b"",
         }
-
-        def glob_mock(pattern):
-            if pattern == "/sys/devices/system/cpu/cpufreq/policy[0-9]*":
-                return ["/sys/devices/system/cpu/cpufreq/policy0"]
-            return orig_glob(pattern)
-
-        def exists_mock(path):
-            # Make sure the sysfs-based implementation is used.
-            if path.startswith("/sys/devices/system/cpu/"):
-                return True
-            return orig_exists(path)
-
-        orig_exists = os.path.exists
-        orig_glob = glob.glob
-        try:
-            with mock.patch("os.path.exists", side_effect=exists_mock):
-                reload_module(psutil._pslinux)
-                with mock.patch("glob.glob", side_effect=glob_mock):
-                    with mock_open_content(files):
-                        freq = psutil.cpu_freq(percpu=True)
-            assert len(freq) == 4
-            for nt in freq:
-                assert nt == (100.0, 200.0, 300.0)
-        finally:
-            reload_module(psutil._pslinux)
-            reload_module(psutil)
+        with mock_cpufreq_sysfs(files, 1):
+            freq = psutil.cpu_freq(percpu=True)
+        assert len(freq) == 4
+        for nt in freq:
+            assert nt == (100.0, 200.0, 300.0)
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_no_scaling_cur_freq_file(self):
         # See: https://github.com/giampaolo/psutil/issues/1071
-        with mock_open_content({
+        files = {
+            "*/affected_cpus": b"0",
             "*/scaling_cur_freq": FileNotFoundError,
             "*/cpuinfo_cur_freq": b"200000",
-            "/proc/cpuinfo": b"cpu MHz     : 200",
-        }):
-            with mock.patch('os.path.exists', return_value=True):
-                with mock.patch(
-                    'psutil._pslinux.cpu_count_logical', return_value=1
-                ):
-                    freq = psutil.cpu_freq()
-                    assert freq.current == 200
+            "*/scaling_min_freq": b"100000",
+            "*/scaling_max_freq": b"300000",
+            "/proc/cpuinfo": b"",
+        }
+        with mock_cpufreq_sysfs(files, 1):
+            freq = psutil.cpu_freq()
+        assert freq.current == 200
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_emulate_offline_cpus(self):
         # Offline CPU cores must not be taken into account, else they
         # drag down the average frequency. See:
         # https://github.com/giampaolo/psutil/issues/2628
-        policies = [
-            f"/sys/devices/system/cpu/cpufreq/policy{n}" for n in range(4)
-        ]
-
-        def exists_mock(path):
-            # Make sure the sysfs-based implementation is used.
-            if path.startswith("/sys/devices/system/cpu/"):
-                return True
-            return orig_exists(path)
-
-        def glob_mock(pattern):
-            if pattern == "/sys/devices/system/cpu/cpufreq/policy[0-9]*":
-                return list(policies)
-            return orig_glob(pattern)
-
         # Only CPUs 0 and 1 are online; 2 and 3 are offline.
         files = {
             "/proc/cpuinfo": b"cpu MHz\t: 200\ncpu MHz\t: 400",
@@ -1016,24 +977,14 @@ class TestCpuFreq(LinuxTestCase):
             "*/online": "0\n",
         }
 
-        orig_exists = os.path.exists
-        orig_glob = glob.glob
-        try:
-            with mock.patch("os.path.exists", side_effect=exists_mock):
-                reload_module(psutil._pslinux)
-                with mock.patch("glob.glob", side_effect=glob_mock):
-                    with mock_open_content(files):
-                        percpu = psutil.cpu_freq(percpu=True)
-                        assert len(percpu) == 2
-                        assert [f.current for f in percpu] == [200.0, 400.0]
-
-                        freq = psutil.cpu_freq()
-                        assert freq.current == 300.0
-                        assert freq.min == 100.0
-                        assert freq.max == 300.0
-        finally:
-            reload_module(psutil._pslinux)
-            reload_module(psutil)
+        with mock_cpufreq_sysfs(files, 4):
+            percpu = psutil.cpu_freq(percpu=True)
+            freq = psutil.cpu_freq()
+        assert len(percpu) == 2
+        assert [f.current for f in percpu] == [200.0, 400.0]
+        assert freq.current == 300.0
+        assert freq.min == 100.0
+        assert freq.max == 300.0
 
 
 class TestCpuTimes(LinuxTestCase):
