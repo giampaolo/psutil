@@ -152,9 +152,7 @@ class PosixTestCase(PsutilTestCase):
     pass
 
 
-class TestProcess(PosixTestCase):
-    """Compare psutil results against 'ps' command line utility (mainly)."""
-
+class TestProcessIdentity(PosixTestCase):
     @classmethod
     def setUpClass(cls):
         cls.pid = spawn_subproc(
@@ -169,50 +167,6 @@ class TestProcess(PosixTestCase):
         ppid_ps = ps('ppid', self.pid)
         ppid_psutil = psutil.Process(self.pid).ppid()
         assert ppid_ps == ppid_psutil
-
-    def test_uid(self):
-        uid_ps = ps('uid', self.pid)
-        uid_psutil = psutil.Process(self.pid).uids().real
-        assert uid_ps == uid_psutil
-
-    def test_gid(self):
-        gid_ps = ps('rgid', self.pid)
-        gid_psutil = psutil.Process(self.pid).gids().real
-        assert gid_ps == gid_psutil
-
-    def test_username(self):
-        username_ps = ps('user', self.pid)
-        username_psutil = psutil.Process(self.pid).username()
-        assert username_ps == username_psutil
-
-    def test_username_no_resolution(self):
-        # Emulate a case where the system can't resolve the uid to
-        # a username in which case psutil is supposed to return
-        # the stringified uid.
-        p = psutil.Process()
-        with mock.patch("psutil.pwd.getpwuid", side_effect=KeyError) as fun:
-            assert p.username() == str(p.uids().real)
-            assert fun.called
-
-    @skip_on_access_denied
-    @retry_on_failure
-    def test_rss_memory(self):
-        # give python interpreter some time to properly initialize
-        # so that the results are the same
-        time.sleep(0.1)
-        rss_ps = ps_rss(self.pid)
-        rss_psutil = psutil.Process(self.pid).memory_info()[0] / 1024
-        assert rss_ps == rss_psutil
-
-    @skip_on_access_denied
-    @retry_on_failure
-    def test_vsz_memory(self):
-        # give python interpreter some time to properly initialize
-        # so that the results are the same
-        time.sleep(0.1)
-        vsz_ps = ps_vsz(self.pid)
-        vsz_psutil = psutil.Process(self.pid).memory_info()[1] / 1024
-        assert vsz_ps == vsz_psutil
 
     def test_name(self):
         name_ps = ps_name(self.pid)
@@ -302,6 +256,7 @@ class TestProcess(PosixTestCase):
     # the Python framework.
     # There's a race condition between the ps call & the psutil call below
     # depending on the completion of the execve call so let's retry on failure
+
     @retry_on_failure
     def test_cmdline(self):
         ps_cmdline = ps_args(self.pid)
@@ -316,6 +271,74 @@ class TestProcess(PosixTestCase):
     # returns 0; psutil relies on it, see:
     # https://github.com/giampaolo/psutil/issues/1082
     # AIX has the same issue
+
+    def test_terminal_pty_opened_later(self):
+        # A PTY opened after the map was cached must still resolve.
+        # See: https://github.com/giampaolo/psutil/issues/2830
+        _psposix._get_terminal_map()  # prime the cache
+        master, slave = pty.openpty()
+        self.addCleanup(os.close, master)
+        self.addCleanup(os.close, slave)
+        path = os.ttyname(slave)
+        assert _psposix.get_terminal(os.stat(path).st_rdev) == path
+
+    def test_terminal_skip_map(self):
+        # setsid() leaves the child without a controlling terminal.
+        # Such a process must not reach get_terminal().
+        p = self.spawn_psproc(start_new_session=True)
+        assert p.terminal() is None
+        with mock.patch.object(_psposix, "get_terminal") as m:
+            p.terminal()
+            assert not m.called
+
+
+class TestProcessCredentials(PosixTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc(
+            [PYTHON_EXE, "-E", "-O"], stdin=subprocess.PIPE
+        ).pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
+
+    def test_uid(self):
+        uid_ps = ps('uid', self.pid)
+        uid_psutil = psutil.Process(self.pid).uids().real
+        assert uid_ps == uid_psutil
+
+    def test_gid(self):
+        gid_ps = ps('rgid', self.pid)
+        gid_psutil = psutil.Process(self.pid).gids().real
+        assert gid_ps == gid_psutil
+
+    def test_username(self):
+        username_ps = ps('user', self.pid)
+        username_psutil = psutil.Process(self.pid).username()
+        assert username_ps == username_psutil
+
+    def test_username_no_resolution(self):
+        # Emulate a case where the system can't resolve the uid to
+        # a username in which case psutil is supposed to return
+        # the stringified uid.
+        p = psutil.Process()
+        with mock.patch("psutil.pwd.getpwuid", side_effect=KeyError) as fun:
+            assert p.username() == str(p.uids().real)
+            assert fun.called
+
+
+class TestProcessCpu(PosixTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc(
+            [PYTHON_EXE, "-E", "-O"], stdin=subprocess.PIPE
+        ).pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
+
     @skipif(SUNOS, reason="not reliable on SUNOS")
     @skipif(AIX, reason="not reliable on AIX")
     def test_nice(self):
@@ -368,6 +391,38 @@ class TestProcess(PosixTestCase):
         cws = psutil.Process().cpu_times()
         assert cws.user == pytest.approx(ru.ru_utime, abs=0.3)
         assert cws.system == pytest.approx(ru.ru_stime, abs=0.3)
+
+
+class TestProcessMemory(PosixTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc(
+            [PYTHON_EXE, "-E", "-O"], stdin=subprocess.PIPE
+        ).pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
+
+    @skip_on_access_denied
+    @retry_on_failure
+    def test_rss_memory(self):
+        # give python interpreter some time to properly initialize
+        # so that the results are the same
+        time.sleep(0.1)
+        rss_ps = ps_rss(self.pid)
+        rss_psutil = psutil.Process(self.pid).memory_info()[0] / 1024
+        assert rss_ps == rss_psutil
+
+    @skip_on_access_denied
+    @retry_on_failure
+    def test_vsz_memory(self):
+        # give python interpreter some time to properly initialize
+        # so that the results are the same
+        time.sleep(0.1)
+        vsz_ps = ps_vsz(self.pid)
+        vsz_psutil = psutil.Process(self.pid).memory_info()[1] / 1024
+        assert vsz_ps == vsz_psutil
 
     @retry_on_failure
     @isolated
@@ -440,6 +495,7 @@ class TestSystemAPIs(PosixTestCase):
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
+
     @skipif(SUNOS, reason="unreliable on SUNOS")
     @requires_cli("ifconfig")
     @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
@@ -537,6 +593,7 @@ class TestSystemAPIs(PosixTestCase):
             assert m.called
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
+
     @skipif(AIX, reason="unreliable on AIX")
     @retry_on_failure
     def test_disk_usage(self):
@@ -564,25 +621,6 @@ class TestSystemAPIs(PosixTestCase):
                 assert abs(usage.used - sys_used) < tolerance
                 assert abs(usage.free - sys_free) < tolerance
                 assert abs(usage.percent - sys_percent) <= 1
-
-    def test_terminal_pty_opened_later(self):
-        # A PTY opened after the map was cached must still resolve.
-        # See: https://github.com/giampaolo/psutil/issues/2830
-        _psposix._get_terminal_map()  # prime the cache
-        master, slave = pty.openpty()
-        self.addCleanup(os.close, master)
-        self.addCleanup(os.close, slave)
-        path = os.ttyname(slave)
-        assert _psposix.get_terminal(os.stat(path).st_rdev) == path
-
-    def test_terminal_skip_map(self):
-        # setsid() leaves the child without a controlling terminal.
-        # Such a process must not reach get_terminal().
-        p = self.spawn_psproc(start_new_session=True)
-        assert p.terminal() is None
-        with mock.patch.object(_psposix, "get_terminal") as m:
-            p.terminal()
-            assert not m.called
 
 
 class TestMisc(PosixTestCase):

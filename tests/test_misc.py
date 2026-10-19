@@ -54,12 +54,6 @@ from . import system_namespace
 
 
 class TestSpecialMethods(PsutilTestCase):
-    def test_check_pid_range(self):
-        with pytest.raises(OverflowError):
-            _psutil.check_pid_range(2**128)
-        with pytest.raises(psutil.NoSuchProcess):
-            psutil.Process(2**128)
-
     def test_process__repr__(self, func=repr):
         p = psutil.Process(self.spawn_subproc().pid)
         r = func(p)
@@ -293,6 +287,12 @@ class TestMisc(PsutilTestCase):
         before = sorted(psutil.__all__)
         reload_module(psutil)
         assert sorted(psutil.__all__) == before
+
+    def test_check_pid_range(self):
+        with pytest.raises(OverflowError):
+            _psutil.check_pid_range(2**128)
+        with pytest.raises(psutil.NoSuchProcess):
+            psutil.Process(2**128)
 
 
 # ===================================================================
