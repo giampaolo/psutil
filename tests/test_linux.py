@@ -1682,8 +1682,20 @@ class TestMisc(LinuxTestCase):
 # =====================================================================
 
 
-@skipif(not HAS_BATTERY, reason="no battery")
+@contextlib.contextmanager
+def mock_battery(files):
+    pairs = dict(files)
+    pairs.setdefault("*/BAT0/energy_now", b"50000000")
+    pairs.setdefault("*/BAT0/power_now", b"10000000")
+    pairs.setdefault("*/BAT0/energy_full", b"60000000")
+    pairs.setdefault("/sys/class/power_supply/*", FileNotFoundError)
+    with mock.patch("psutil._pslinux.os.listdir", return_value=["BAT0"]):
+        with mock_open_content(pairs) as m:
+            yield m
+
+
 class TestSensorsBattery(LinuxTestCase):
+    @skipif(not HAS_BATTERY, reason="no battery")
     @requires_cli("acpi")
     @retry_on_failure
     def test_percent(self):
@@ -1695,9 +1707,7 @@ class TestSensorsBattery(LinuxTestCase):
 
     def test_emulate_power_plugged(self):
         # Pretend the AC power cable is connected.
-        with mock_open_content(
-            {"*/AC0/online": b"1", "*/AC/online": b"1"}
-        ) as m:
+        with mock_battery({"*/AC0/online": b"1", "*/AC/online": b"1"}) as m:
             assert psutil.sensors_battery().power_plugged is True
             assert (
                 psutil.sensors_battery().secsleft
@@ -1708,7 +1718,7 @@ class TestSensorsBattery(LinuxTestCase):
     def test_emulate_power_plugged_2(self):
         # Same as above but pretend /AC0/online does not exist in which
         # case code relies on /status file.
-        with mock_open_content({
+        with mock_battery({
             "*/AC0/online": FileNotFoundError,
             "*/AC/online": FileNotFoundError,
             "*/status": "charging",
@@ -1718,16 +1728,14 @@ class TestSensorsBattery(LinuxTestCase):
 
     def test_emulate_power_not_plugged(self):
         # Pretend the AC power cable is not connected.
-        with mock_open_content(
-            {"*/AC0/online": b"0", "*/AC/online": b"0"}
-        ) as m:
+        with mock_battery({"*/AC0/online": b"0", "*/AC/online": b"0"}) as m:
             assert psutil.sensors_battery().power_plugged is False
             assert m.called
 
     def test_emulate_power_not_plugged_2(self):
         # Same as above but pretend /AC0/online does not exist in which
         # case code relies on /status file.
-        with mock_open_content({
+        with mock_battery({
             "*/AC0/online": FileNotFoundError,
             "*/AC/online": FileNotFoundError,
             "*/status": "discharging",
@@ -1738,7 +1746,7 @@ class TestSensorsBattery(LinuxTestCase):
     def test_emulate_power_undetermined(self):
         # Pretend we can't know whether the AC power cable not
         # connected (assert fallback to False).
-        with mock_open_content({
+        with mock_battery({
             "/sys/class/power_supply/AC0/online": FileNotFoundError,
             "/sys/class/power_supply/AC/online": FileNotFoundError,
             "/sys/class/power_supply/BAT0/status": b"???",
@@ -1748,7 +1756,7 @@ class TestSensorsBattery(LinuxTestCase):
 
     def test_emulate_energy_full_0(self):
         # Emulate a case where energy_full files returns 0.
-        with mock_open_content(
+        with mock_battery(
             {"/sys/class/power_supply/BAT0/energy_full": b"0"}
         ) as m:
             assert psutil.sensors_battery().percent == 0
@@ -1757,13 +1765,14 @@ class TestSensorsBattery(LinuxTestCase):
     def test_emulate_energy_full_not_avail(self):
         # Emulate a case where energy_full file does not exist.
         # Expected fallback on /capacity.
-        with mock_open_content({
+        with mock_battery({
             "/sys/class/power_supply/BAT0/energy_full": FileNotFoundError,
             "/sys/class/power_supply/BAT0/charge_full": FileNotFoundError,
             "/sys/class/power_supply/BAT0/capacity": b"88",
         }):
             assert psutil.sensors_battery().percent == 88
 
+    @skipif(not HAS_BATTERY, reason="no battery")
     @skipif(
         not os.path.isfile("/sys/class/power_supply/BAT0/capacity"),
         reason="BAT /capacity file don't exist",
@@ -1781,7 +1790,7 @@ class TestSensorsBattery(LinuxTestCase):
 
     def test_emulate_no_power(self):
         # Emulate a case where /AC0/online file nor /BAT0/status exist.
-        with mock_open_content({
+        with mock_battery({
             "/sys/class/power_supply/AC/online": FileNotFoundError,
             "/sys/class/power_supply/AC0/online": FileNotFoundError,
             "/sys/class/power_supply/BAT0/status": FileNotFoundError,
