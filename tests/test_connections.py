@@ -6,6 +6,7 @@
 
 """Tests for psutil.net_connections() and Process.net_connections() APIs."""
 
+import ast
 import os
 import socket
 import subprocess
@@ -334,7 +335,8 @@ class TestFilters(ConnectionTestCase):
                 family=int(family), addr=addr, testfn=testfile
             )
             proc = self.pyrun(src, stderr=subprocess.PIPE)
-            laddr = eval(wait_for_file_subproc(testfile, proc, delete=True))
+            data = wait_for_file_subproc(testfile, proc, delete=True)
+            laddr = ast.literal_eval(data.decode())
             return proc, laddr
 
         # launch various subprocess instantiating a socket of various
