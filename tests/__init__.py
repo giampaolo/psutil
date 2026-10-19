@@ -94,7 +94,7 @@ __all__ = [
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     'py_exe_copy_runs',
     # os
-    'get_winver', 'kernel_version', 'is_busybox',
+    'kernel_version', 'is_busybox',
     # sync primitives
     'call_until', 'wait_for_pid', 'wait_for_file', 'wait_for_file_subproc',
     # network
@@ -754,14 +754,6 @@ def kernel_version():
     if len(nums) >= 3:
         micro = int(nums[2])
     return (major, minor, micro)
-
-
-def get_winver():
-    if not WINDOWS:
-        raise NotImplementedError("not WINDOWS")
-    wv = sys.getwindowsversion()
-    sp = wv.service_pack_major or 0
-    return (wv[0], wv[1], sp)
 
 
 @functools.lru_cache
@@ -1639,7 +1631,6 @@ def skip_on_not_implemented(only_if: "bool | typing.Callable | None" = None):
 # ===================================================================
 
 
-# XXX: no longer used
 def get_free_port(host='127.0.0.1'):
     """Return an unused TCP port. Subject to race conditions."""
     with socket.socket() as sock:
