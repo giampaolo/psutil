@@ -229,11 +229,11 @@
    <div class="home-section-label">Stats</div>
    <div class="home-stats">
      <a class="home-stat" href="https://clickpy.clickhouse.com/dashboard/psutil">
-       <span class="home-stat-num">390+ million</span>
+       <span class="home-stat-num">280+ million</span>
        <span class="home-stat-label">downloads per month</span>
      </a>
      <a class="home-stat" href="https://github.com/giampaolo/psutil/network/dependents">
-       <span class="home-stat-num">780,000+</span>
+       <span class="home-stat-num">790,000+</span>
        <span class="home-stat-label">GitHub repositories</span>
      </a>
      <a class="home-stat" href="timeline/">
