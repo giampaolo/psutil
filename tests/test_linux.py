@@ -34,7 +34,6 @@ from . import AARCH64
 from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
-from . import HAS_PROC_RLIMIT
 from . import TOLERANCE_DISK_USAGE
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
@@ -1309,7 +1308,6 @@ class TestNetConnections(LinuxTestCase):
 
 
 class TestDiskPartitions(LinuxTestCase):
-    @skipif(not hasattr(os, 'statvfs'), reason="os.statvfs() not available")
     @skip_on_not_implemented
     def test_against_df(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
@@ -1348,15 +1346,10 @@ class TestDiskPartitions(LinuxTestCase):
 
     def test_emulate_realpath_fail(self):
         # See: https://github.com/giampaolo/psutil/issues/1307
-        try:
-            with mock.patch(
-                'os.path.realpath', return_value='/non/existent'
-            ) as m:
-                with pytest.raises(FileNotFoundError):
-                    psutil.disk_partitions()
-                assert m.called
-        finally:
-            psutil.PROCFS_PATH = "/proc"
+        with mock.patch('os.path.realpath', return_value='/non/existent') as m:
+            with pytest.raises(FileNotFoundError):
+                psutil.disk_partitions()
+            assert m.called
 
     def test_emulate_filesystems_permission_error(self):
         real_open = psutil._pslinux.open_text
@@ -1925,13 +1918,9 @@ class TestProcessIdentity(LinuxTestCase):
         with mock.patch(
             'psutil._pslinux.readlink', side_effect=FileNotFoundError
         ) as m:
-            # de-activate guessing from cmdline()
-            with mock.patch(
-                'psutil._pslinux.Process.cmdline', return_value=[]
-            ):
-                ret = psutil.Process().exe()
-                assert m.called
-                assert ret == ""
+            ret = psutil.Process().exe()
+            assert m.called
+            assert ret == ""
 
     def test_cwd_mocked(self):
         # https://github.com/giampaolo/psutil/issues/2514
@@ -1957,7 +1946,6 @@ class TestProcessCpu(LinuxTestCase):
             _psutil.proc_ioprio_set(0, ioclass, value)
         assert _psutil.proc_ioprio_get(os.getpid()) == (ioclass, value)
 
-    @skipif(not HAS_PROC_RLIMIT, reason="not supported")
     def test_rlimit_zombie(self):
         # Emulate a case where rlimit() raises ENOSYS, which may
         # happen in case of zombie process:

@@ -1166,7 +1166,6 @@ class TestProcessFiles(PsutilTestCase):
                 # On BSD read_bytes and write_bytes are always set to -1.
                 continue
             assert io2[i] >= 0
-            assert io2[i] >= 0
 
     @skipif(not WINDOWS, reason="WINDOWS only")
     def test_num_handles(self):
