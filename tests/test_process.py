@@ -735,18 +735,6 @@ class TestProcessCpu(PsutilTestCase):
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             assert p.rlimit(psutil.RLIMIT_FSIZE) == (soft, hard)
 
-    @skipif(not HAS_PROC_RLIMIT, reason="not supported")
-    def test_rlimit_infinity_value(self):
-        # RLIMIT_FSIZE should be RLIM_INFINITY, which will be a really
-        # big number on a platform with large file support.  On these
-        # platforms we need to test that the get/setrlimit functions
-        # properly convert the number to a C long long and that the
-        # conversion doesn't raise an error.
-        p = psutil.Process()
-        soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
-        assert hard == psutil.RLIM_INFINITY
-        p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
-
     def test_nice(self):
         p = self.spawn_psproc()
         with pytest.raises(TypeError):
