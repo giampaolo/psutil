@@ -17,7 +17,11 @@ from . import skipif
 
 
 @skipif(not SUNOS, reason="SUNOS only")
-class SunOSSpecificTestCase(PsutilTestCase):
+class SunOSTestCase(PsutilTestCase):
+    pass
+
+
+class TestSunOSMemory(SunOSTestCase):
     def test_swap_memory(self):
         out = sh(f"env PATH=/usr/sbin:/sbin:{os.environ['PATH']} swap -l")
         lines = out.strip().split('\n')[1:]
@@ -35,6 +39,8 @@ class SunOSSpecificTestCase(PsutilTestCase):
         assert psutil_swap.used == used
         assert psutil_swap.free == free
 
+
+class TestSunOSCpu(SunOSTestCase):
     def test_cpu_count(self):
         out = sh("/usr/sbin/psrinfo")
         assert psutil.cpu_count() == len(out.split('\n'))
