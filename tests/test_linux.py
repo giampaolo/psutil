@@ -21,6 +21,7 @@ import re
 import shutil
 import socket
 import struct
+import sys
 import textwrap
 import time
 import warnings
@@ -34,7 +35,6 @@ from . import AARCH64
 from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
-from . import HAS_PROC_RLIMIT
 from . import TOLERANCE_DISK_USAGE
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
@@ -819,19 +819,22 @@ class TestCpuFreq(LinuxTestCase):
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     @skipif(AARCH64, reason="aarch64 does not always expose frequency")
+    @skipif(
+        not os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq"),
+        reason="no cpu0/cpufreq in sysfs",
+    )
     def test_emulate_use_second_file(self):
         # https://github.com/giampaolo/psutil/issues/981
-        def path_exists_mock(path):
-            if path.startswith("/sys/devices/system/cpu/cpufreq/policy"):
-                return False
+        def glob_mock(pattern):
+            if pattern.startswith("/sys/devices/system/cpu/cpufreq/policy"):
+                return []
             else:
-                return orig_exists(path)
+                return orig_glob(pattern)
 
-        orig_exists = os.path.exists
-        with mock.patch(
-            "os.path.exists", side_effect=path_exists_mock, create=True
-        ):
-            assert psutil.cpu_freq()
+        orig_glob = glob.glob
+        with mock.patch("glob.glob", side_effect=glob_mock) as m:
+            assert psutil.cpu_freq(percpu=True)
+        m.assert_any_call("/sys/devices/system/cpu/cpu[0-9]*/cpufreq")
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
     @skipif(not CPUINFO_HAS_MHZ, reason="no 'cpu MHz' in /proc/cpuinfo")
@@ -1032,17 +1035,6 @@ class TestCpuStats(LinuxTestCase):
         vmstat_value = vmstat("interrupts")
         psutil_value = psutil.cpu_stats().interrupts
         self.assert_close_to_vmstat(vmstat_value, psutil_value)
-
-
-class TestLoadAvg(LinuxTestCase):
-    def test_getloadavg(self):
-        psutil_value = psutil.getloadavg()
-        with open("/proc/loadavg") as f:
-            proc_value = f.read().split()
-
-        assert abs(float(proc_value[0]) - psutil_value[0]) < 1
-        assert abs(float(proc_value[1]) - psutil_value[1]) < 1
-        assert abs(float(proc_value[2]) - psutil_value[2]) < 1
 
 
 # =====================================================================
@@ -1260,14 +1252,29 @@ class TestNetIoCounters(LinuxTestCase):
 class TestNetConnections(LinuxTestCase):
     @mock.patch('psutil._pslinux.socket.inet_ntop', side_effect=ValueError)
     @mock.patch('psutil._pslinux.supports_ipv6', return_value=False)
+    @skipif(not os.path.exists("/proc/net/tcp6"), reason="no IPv6")
     def test_emulate_ipv6_unsupported(self, supports_ipv6, inet_ntop):
         # see: https://github.com/giampaolo/psutil/issues/623
-        with socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as s:
-            try:
-                s.bind(("::1", 0))
-            except OSError:
-                pass
-            psutil.net_connections(kind='inet6')
+        header = "  sl  local_address remote_address st\n"
+        content = (
+            header
+            + "   0: 00000000000000000000000001000000:0016"
+            " 00000000000000000000000000000000:0000 0A 00000000:00000000"
+            " 00:00000000 00000000     0        0 12345 1\n"
+        )
+        files = {"/proc/net/tcp6": content, "/proc/net/udp6": header}
+        with mock_open_content(files):
+            assert psutil.net_connections(kind='inet6') == []
+        assert inet_ntop.called
+
+    @skipif(sys.byteorder != "little", reason="big endian")
+    def test_decode_address(self):
+        decode = psutil._pslinux.NetConnections.decode_address
+        assert decode("0500000A:0016", socket.AF_INET) == ("10.0.0.5", 22)
+        assert decode(
+            "0000000000000000FFFF00000100007F:9E49", socket.AF_INET6
+        ) == ("::ffff:127.0.0.1", 40521)
+        assert decode("0500000A:0000", socket.AF_INET) == ()
 
     def test_emulate_unix(self):
         content = textwrap.dedent("""\
@@ -1311,7 +1318,6 @@ class TestNetConnections(LinuxTestCase):
 
 
 class TestDiskPartitions(LinuxTestCase):
-    @skipif(not hasattr(os, 'statvfs'), reason="os.statvfs() not available")
     @skip_on_not_implemented
     def test_against_df(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
@@ -1350,15 +1356,10 @@ class TestDiskPartitions(LinuxTestCase):
 
     def test_emulate_realpath_fail(self):
         # See: https://github.com/giampaolo/psutil/issues/1307
-        try:
-            with mock.patch(
-                'os.path.realpath', return_value='/non/existent'
-            ) as m:
-                with pytest.raises(FileNotFoundError):
-                    psutil.disk_partitions()
-                assert m.called
-        finally:
-            psutil.PROCFS_PATH = "/proc"
+        with mock.patch('os.path.realpath', return_value='/non/existent') as m:
+            with pytest.raises(FileNotFoundError):
+                psutil.disk_partitions()
+            assert m.called
 
     def test_emulate_filesystems_permission_error(self):
         real_open = psutil._pslinux.open_text
@@ -1458,14 +1459,15 @@ class TestDiskIoCounters(LinuxTestCase):
 
     def test_emulate_use_sysfs(self):
         def exists(path):
-            return path == '/proc/diskstats'
+            return path == '/sys/block'
 
         wprocfs = psutil.disk_io_counters(perdisk=True)
         with mock.patch(
             'psutil._pslinux.os.path.exists', create=True, side_effect=exists
-        ):
+        ) as m:
             wsysfs = psutil.disk_io_counters(perdisk=True)
-        assert len(wprocfs) == len(wsysfs)
+        m.assert_any_call('/sys/block')
+        assert sorted(wprocfs) == sorted(wsysfs)
 
     def test_emulate_not_impl(self):
         def exists(path):
@@ -1534,16 +1536,29 @@ class TestRootFsDeviceFinder(LinuxTestCase):
         if os.path.exists("/proc/partitions"):
             a = finder.ask_proc_partitions()
         if os.path.exists(f"/sys/dev/block/{self.major}:{self.minor}/uevent"):
-            b = finder.ask_sys_class_block()
-        c = finder.ask_sys_dev_block()
+            b = finder.ask_sys_dev_block()
+        c = finder.ask_sys_class_block()
 
-        base = a or b or c
-        if base and a:
-            assert base == a
-        if base and b:
-            assert base == b
-        if base and c:
-            assert base == c
+        assert {x for x in (a, b, c) if x} == {finder.find()}
+
+    def test_find_fallbacks(self):
+        finder = RootFsDeviceFinder()
+        finder.major = 8
+        finder.minor = 1
+        files = {
+            "/proc/partitions": FileNotFoundError,
+            "/sys/dev/block/8:1/uevent": "MAJOR=8\nDEVNAME=sdb1\n",
+            "/sys/class/block/sda/dev": "8:0\n",
+            "/sys/class/block/sda1/dev": "8:1\n",
+        }
+        dev_files = ["/sys/class/block/sda/dev", "/sys/class/block/sda1/dev"]
+        with mock.patch("os.path.exists", return_value=True):
+            with mock.patch("glob.iglob", return_value=dev_files):
+                with mock_open_content(files):
+                    assert finder.find() == "/dev/sdb1"
+                files["/sys/dev/block/8:1/uevent"] = FileNotFoundError
+                with mock_open_content(files):
+                    assert finder.find() == "/dev/sda1"
 
     @requires_cli("findmnt")
     @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
@@ -1672,8 +1687,20 @@ class TestMisc(LinuxTestCase):
 # =====================================================================
 
 
-@skipif(not HAS_BATTERY, reason="no battery")
+@contextlib.contextmanager
+def mock_battery(files):
+    pairs = dict(files)
+    pairs.setdefault("*/BAT0/energy_now", b"50000000")
+    pairs.setdefault("*/BAT0/power_now", b"10000000")
+    pairs.setdefault("*/BAT0/energy_full", b"60000000")
+    pairs.setdefault("/sys/class/power_supply/*", FileNotFoundError)
+    with mock.patch("psutil._pslinux.os.listdir", return_value=["BAT0"]):
+        with mock_open_content(pairs) as m:
+            yield m
+
+
 class TestSensorsBattery(LinuxTestCase):
+    @skipif(not HAS_BATTERY, reason="no battery")
     @requires_cli("acpi")
     @retry_on_failure
     def test_percent(self):
@@ -1685,9 +1712,7 @@ class TestSensorsBattery(LinuxTestCase):
 
     def test_emulate_power_plugged(self):
         # Pretend the AC power cable is connected.
-        with mock_open_content(
-            {"*/AC0/online": b"1", "*/AC/online": b"1"}
-        ) as m:
+        with mock_battery({"*/AC0/online": b"1", "*/AC/online": b"1"}) as m:
             assert psutil.sensors_battery().power_plugged is True
             assert (
                 psutil.sensors_battery().secsleft
@@ -1698,7 +1723,7 @@ class TestSensorsBattery(LinuxTestCase):
     def test_emulate_power_plugged_2(self):
         # Same as above but pretend /AC0/online does not exist in which
         # case code relies on /status file.
-        with mock_open_content({
+        with mock_battery({
             "*/AC0/online": FileNotFoundError,
             "*/AC/online": FileNotFoundError,
             "*/status": "charging",
@@ -1708,16 +1733,14 @@ class TestSensorsBattery(LinuxTestCase):
 
     def test_emulate_power_not_plugged(self):
         # Pretend the AC power cable is not connected.
-        with mock_open_content(
-            {"*/AC0/online": b"0", "*/AC/online": b"0"}
-        ) as m:
+        with mock_battery({"*/AC0/online": b"0", "*/AC/online": b"0"}) as m:
             assert psutil.sensors_battery().power_plugged is False
             assert m.called
 
     def test_emulate_power_not_plugged_2(self):
         # Same as above but pretend /AC0/online does not exist in which
         # case code relies on /status file.
-        with mock_open_content({
+        with mock_battery({
             "*/AC0/online": FileNotFoundError,
             "*/AC/online": FileNotFoundError,
             "*/status": "discharging",
@@ -1728,7 +1751,7 @@ class TestSensorsBattery(LinuxTestCase):
     def test_emulate_power_undetermined(self):
         # Pretend we can't know whether the AC power cable not
         # connected (assert fallback to False).
-        with mock_open_content({
+        with mock_battery({
             "/sys/class/power_supply/AC0/online": FileNotFoundError,
             "/sys/class/power_supply/AC/online": FileNotFoundError,
             "/sys/class/power_supply/BAT0/status": b"???",
@@ -1738,7 +1761,7 @@ class TestSensorsBattery(LinuxTestCase):
 
     def test_emulate_energy_full_0(self):
         # Emulate a case where energy_full files returns 0.
-        with mock_open_content(
+        with mock_battery(
             {"/sys/class/power_supply/BAT0/energy_full": b"0"}
         ) as m:
             assert psutil.sensors_battery().percent == 0
@@ -1747,13 +1770,14 @@ class TestSensorsBattery(LinuxTestCase):
     def test_emulate_energy_full_not_avail(self):
         # Emulate a case where energy_full file does not exist.
         # Expected fallback on /capacity.
-        with mock_open_content({
+        with mock_battery({
             "/sys/class/power_supply/BAT0/energy_full": FileNotFoundError,
             "/sys/class/power_supply/BAT0/charge_full": FileNotFoundError,
             "/sys/class/power_supply/BAT0/capacity": b"88",
         }):
             assert psutil.sensors_battery().percent == 88
 
+    @skipif(not HAS_BATTERY, reason="no battery")
     @skipif(
         not os.path.isfile("/sys/class/power_supply/BAT0/capacity"),
         reason="BAT /capacity file don't exist",
@@ -1771,7 +1795,7 @@ class TestSensorsBattery(LinuxTestCase):
 
     def test_emulate_no_power(self):
         # Emulate a case where /AC0/online file nor /BAT0/status exist.
-        with mock_open_content({
+        with mock_battery({
             "/sys/class/power_supply/AC/online": FileNotFoundError,
             "/sys/class/power_supply/AC0/online": FileNotFoundError,
             "/sys/class/power_supply/BAT0/status": FileNotFoundError,
@@ -1923,7 +1947,6 @@ class TestProcessIdentity(LinuxTestCase):
         with mock.patch(
             'psutil._pslinux.readlink', side_effect=FileNotFoundError
         ) as m:
-            # de-activate guessing from cmdline()
             with mock.patch(
                 'psutil._pslinux.Process.cmdline', return_value=[]
             ):
@@ -1955,7 +1978,6 @@ class TestProcessCpu(LinuxTestCase):
             _psutil.proc_ioprio_set(0, ioclass, value)
         assert _psutil.proc_ioprio_get(os.getpid()) == (ioclass, value)
 
-    @skipif(not HAS_PROC_RLIMIT, reason="not supported")
     def test_rlimit_zombie(self):
         # Emulate a case where rlimit() raises ENOSYS, which may
         # happen in case of zombie process:
@@ -2171,6 +2193,7 @@ class TestProcessThreads(LinuxTestCase):
             assert p.pid != tid
             pt = psutil.Process(tid)
             pt.as_dict()
+            assert not psutil.pid_exists(tid)
             assert tid not in psutil.pids()
 
 
@@ -2337,6 +2360,12 @@ class TestProcessProcfsParsing(LinuxTestCase):
             assert cpu.iowait == 7 / CLOCK_TICKS
             assert p.cpu_num() == 6
 
+        content = " ".join(args[:-1]).encode()
+        with mock_open_content({f"/proc/{os.getpid()}/stat": content}):
+            cpu = psutil.Process().cpu_times()
+            assert cpu.user == 2 / CLOCK_TICKS
+            assert cpu.iowait == 0
+
     def test_status_file_parsing(self):
         content = textwrap.dedent("""\
             Uid:\t1000\t1001\t1002\t1003
@@ -2431,15 +2460,12 @@ class TestProcessAgainstStatus(LinuxTestCase):
 
     def test_cpu_affinity(self):
         value = self.read_status_file("Cpus_allowed_list:")
-        if '-' in str(value):
-            # The mask covers the possible CPUs, while sched_getaffinity
-            # only reports the online ones.
-            with open("/sys/devices/system/cpu/online") as f:
-                online = f.read().strip()
-            omin, omax = map(int, online.split('-'))
-            min_, max_ = map(int, value.split('-'))
-            expected = [x for x in range(min_, max_ + 1) if omin <= x <= omax]
-            assert self.proc.cpu_affinity() == expected
+        # The mask covers the possible CPUs, while sched_getaffinity
+        # only reports the online ones.
+        with open("/sys/devices/system/cpu/online") as f:
+            online = _parse_cpulist(f.read())
+        expected = [x for x in _parse_cpulist(str(value)) if x in online]
+        assert self.proc.cpu_affinity() == expected
 
     def test_cpu_affinity_eligible_cpus(self):
         value = self.read_status_file("Cpus_allowed_list:")

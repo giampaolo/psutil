@@ -37,7 +37,6 @@ from . import assert_ntuple_of_nums
 from . import create_sockets
 from . import enum
 from . import is_namedtuple
-from . import kernel_version
 from . import pytest
 from . import serial
 from . import skipif
@@ -226,20 +225,20 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             ("RLIMIT_SWAP", "RLIMIT_SBSIZE", "RLIMIT_NPTS"), FREEBSD
         )
 
-        if POSIX:
-            if kernel_version() >= (2, 6, 8):
-                self.check_constants(("RLIMIT_MSGQUEUE",), LINUX)
-            if kernel_version() >= (2, 6, 12):
-                self.check_constants(("RLIMIT_NICE", "RLIMIT_RTPRIO"), LINUX)
-            if kernel_version() >= (2, 6, 25):
-                self.check_constants(("RLIMIT_RTTIME",), LINUX)
-            if kernel_version() >= (2, 6, 8):
-                self.check_constants(("RLIMIT_SIGPENDING",), LINUX)
+        names = (
+            "RLIMIT_MSGQUEUE",
+            "RLIMIT_NICE",
+            "RLIMIT_RTPRIO",
+            "RLIMIT_RTTIME",
+            "RLIMIT_SIGPENDING",
+        )
+        self.check_constants(names, LINUX)
 
     def test_enum_containers(self):
         self.check_constants(("ProcessStatus",), True)
         self.check_constants(("ProcessPriority",), WINDOWS)
         self.check_constants(("ProcessIOPriority",), LINUX or WINDOWS)
+        self.check_constants(("ProcessRlimit",), LINUX or FREEBSD)
         self.check_constants(("ConnectionStatus",), True)
         self.check_constants(("NicDuplex",), True)
         self.check_constants(("BatteryTime",), True)

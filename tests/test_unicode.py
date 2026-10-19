@@ -229,7 +229,7 @@ class TestFSAPIs(BaseUnicodeTest):
         with chdir(dname):
             p = psutil.Process()
             cwd = p.cwd()
-        assert isinstance(p.cwd(), str)
+        assert isinstance(cwd, str)
         if self.expect_exact_path_match():
             assert cwd == dname
 

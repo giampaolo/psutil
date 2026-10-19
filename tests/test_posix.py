@@ -477,19 +477,18 @@ class TestSystemAPIs(PosixTestCase):
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
-        pids_ps = sorted(ps("pid"))
-        pids_psutil = psutil.pids()
+        before = set(psutil.pids())
+        pids_ps = set(ps("pid"))
+        after = set(psutil.pids())
 
         # on MACOS and OPENBSD ps doesn't show pid 0
-        if MACOS or (OPENBSD and 0 not in pids_ps):
-            pids_ps.insert(0, 0)
+        if MACOS or OPENBSD:
+            pids_ps.add(0)
 
-        # There will often be one more process in pids_ps for ps itself
-        if len(pids_ps) - len(pids_psutil) > 1:
-            difference = [x for x in pids_psutil if x not in pids_ps] + [
-                x for x in pids_ps if x not in pids_psutil
-            ]
-            return pytest.fail("difference: " + str(difference))
+        # ps itself
+        only_ps = pids_ps - before - after
+        assert len(only_ps) <= 1
+        assert (before & after) - pids_ps == set()
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil

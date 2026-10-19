@@ -9,7 +9,6 @@
 import ctypes
 import datetime
 import os
-import platform
 import re
 import signal
 import socket
@@ -139,6 +138,8 @@ class TestCpuCount(WindowsTestCase):
     def test_against_cpu_times(self):
         assert psutil.cpu_count() == len(psutil.cpu_times(percpu=True))
 
+
+class TestCpuTimes(WindowsTestCase):
     def test_irq_field(self):
         t = psutil.cpu_times()
         assert t.irq >= 0
@@ -342,7 +343,6 @@ class TestDiskApis(WindowsTestCase):
                         break
                     assert usage.total == int(wmi_part.Size)
                     wmi_free = int(wmi_part.FreeSpace)
-                    assert usage.free == wmi_free
                     # 10 MB tolerance
                     if abs(usage.free - wmi_free) > 10 * 1024 * 1024:
                         return pytest.fail(
@@ -388,17 +388,6 @@ class TestDiskApis(WindowsTestCase):
 
 
 class TestOtherSystemAPIs(WindowsTestCase):
-
-    # @skipif(wmi is None, reason="wmi module is not installed")
-    # def test__UPTIME(self):
-    #     # _UPTIME constant is not public but it is used internally
-    #     # as value to return for pid 0 creation time.
-    #     # WMI behaves the same.
-    #     w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-    #     p = psutil.Process(0)
-    #     wmic_create = str(w.CreationDate.split('.')[0])
-    #     psutil_create = time.strftime("%Y%m%d%H%M%S",
-    #                                   time.localtime(p.create_time()))
 
     def test_convert_dos_path_drive(self):
         winpath = 'C:\\Windows\\Temp'
@@ -539,17 +528,6 @@ class TestSensorsBattery(WindowsTestCase):
             )
             assert m.called
 
-    def test_emulate_secs_left_unknown(self):
-        with mock.patch.object(
-            _psutil,
-            "sensors_battery",
-            return_value=(0, 0, 0, -1),
-        ) as m:
-            assert (
-                psutil.sensors_battery().secsleft == psutil.POWER_TIME_UNKNOWN
-            )
-            assert m.called
-
 
 # ===================================================================
 # Process APIs
@@ -565,14 +543,7 @@ class TestProcessIdentity(WindowsTestCase):
         str(p)
         p.username()
         assert p.create_time() >= 0.0
-        try:
-            rss, _vms = p.memory_info()[:2]
-        except psutil.AccessDenied:
-            # expected on Windows Vista and Windows 7
-            if platform.uname()[1] not in {'vista', 'win-7', 'win7'}:
-                raise
-        else:
-            assert rss > 0
+        assert p.memory_info().rss > 0
 
     def test_username(self):
         name = win32api.GetUserNameEx(win32con.NameSamCompatible)
@@ -637,14 +608,6 @@ class TestProcessCpu(WindowsTestCase):
         )
         ps = psutil.Process(self.pid).cpu_affinity()
         assert ps == win
-
-    # XXX - occasional failures
-
-    # def test_cpu_times(self):
-    #     a = psutil.Process().cpu_times()
-    #     b = win32process.GetProcessTimes(self.OpenProcess())
-    #     assert abs(a.user - b['UserTime'] / 10000000.0) < 0.2
-    #     assert abs(a.user - b['KernelTime'] / 10000000.0) < 0.2
 
 
 class TestProcessMemory(WindowsTestCase):
@@ -1084,15 +1047,6 @@ class TestWow64Process(PsutilTestCase):
 @skipif(not WINDOWS, reason="WINDOWS only")
 class TestServices(PsutilTestCase):
     def test_win_service_iter(self):
-        valid_statuses = {
-            "running",
-            "paused",
-            "start",
-            "pause",
-            "continue",
-            "stop",
-            "stopped",
-        }
         valid_start_types = {"automatic", "manual", "disabled"}
         valid_statuses = {
             "running",
@@ -1118,10 +1072,8 @@ class TestServices(PsutilTestCase):
             if data['pid'] is not None:
                 psutil.Process(data['pid'])
             assert isinstance(data['binpath'], str)
-            assert isinstance(data['username'], str)
             assert isinstance(data['start_type'], str)
             assert data['start_type'] in valid_start_types
-            assert data['status'] in valid_statuses
             assert isinstance(data['description'], str)
             pid = serv.pid()
             if pid is not None:

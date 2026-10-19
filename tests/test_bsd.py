@@ -92,6 +92,7 @@ class TestSystemAPIs(BSDTestCase):
 
     @requires_cli("ifconfig")
     def test_net_if_stats(self):
+        checked = 0
         for name, stats in psutil.net_if_stats().items():
             try:
                 out = sh(f"ifconfig {name}")
@@ -101,6 +102,8 @@ class TestSystemAPIs(BSDTestCase):
                 assert stats.isup == ('RUNNING' in out)
                 if "mtu" in out:
                     assert stats.mtu == int(re.findall(r'mtu (\d+)', out)[0])
+                checked += 1
+        assert checked
 
 
 class TestProcessAPIs(BSDTestCase):
@@ -500,7 +503,10 @@ class TestFreeBSDSensors(FreeBSDTestCase):
         remaining_time = fields['Remaining time:']
         assert metrics.percent == percent
         if remaining_time == 'unknown':
-            assert metrics.secsleft == psutil.POWER_TIME_UNLIMITED
+            if metrics.power_plugged:
+                assert metrics.secsleft == psutil.POWER_TIME_UNLIMITED
+            else:
+                assert metrics.secsleft == psutil.POWER_TIME_UNKNOWN
         else:
             assert secs2hours(metrics.secsleft) == remaining_time
 

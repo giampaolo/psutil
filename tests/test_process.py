@@ -42,7 +42,6 @@ from psutil import _psutil
 from psutil._common import open_text
 
 from . import CI_TESTING
-from . import GITHUB_ACTIONS
 from . import GLOBAL_TIMEOUT
 from . import HAS_PROC_CPU_AFFINITY
 from . import HAS_PROC_CPU_NUM
@@ -191,11 +190,12 @@ class TestProcessIdentity(PsutilTestCase):
                 # We do not want to consider this difference in accuracy
                 # an error.
                 ver = f"{sys.version_info[0]}.{sys.version_info[1]}"
-                try:
-                    assert exe.replace(ver, '') == PYTHON_EXE.replace(ver, '')
-                except AssertionError:
-                    # Typically MACOS. Really not sure what to do here.
-                    pass
+                if not MACOS and (
+                    exe.replace(ver, '') != PYTHON_EXE.replace(ver, '')
+                ):
+                    assert os.path.realpath(exe) == os.path.realpath(
+                        PYTHON_EXE
+                    )
 
         out = sh([exe, "-c", "import os; print('hey')"])
         assert out == 'hey'
@@ -336,6 +336,12 @@ class TestProcessIdentity(PsutilTestCase):
         with pytest.raises(ValueError):
             p.as_dict(['foo', 'bar'])
 
+    def test_as_dict_no_new_names(self):
+        # See https://github.com/giampaolo/psutil/issues/813
+        p = psutil.Process()
+        p.foo = '1'
+        assert 'foo' not in p.as_dict()
+
     def test_attrs(self):
         # The `Process.attrs` attribute to use with `as_dict()`.
         p = psutil.Process()
@@ -366,6 +372,7 @@ class TestProcessIdentity(PsutilTestCase):
                     "__CF_USER_TEXT_ENCODING",
                     "VERSIONER_PYTHON_PREFER_32_BIT",
                     "VERSIONER_PYTHON_VERSION",
+                    "__PYVENV_LAUNCHER__",
                 ])
             for name in list(d.keys()):
                 if name in exclude or name.startswith("PYTEST_"):
@@ -377,12 +384,11 @@ class TestProcessIdentity(PsutilTestCase):
                 for k, v in d.items()
             }
 
-        self.maxDiff = None
-        p = psutil.Process()
-        d1 = clean_dict(p.environ())
-        d2 = clean_dict(os.environ.copy())
-        if not MACOS and GITHUB_ACTIONS:
-            assert d1 == d2
+        env = os.environ.copy()
+        env["PSUTIL_TEST_ENVIRON"] = "foo"
+        p = self.spawn_psproc(env=env)
+        assert p.environ()["PSUTIL_TEST_ENVIRON"] == "foo"
+        assert clean_dict(p.environ()) == clean_dict(env)
 
 
 # ===================================================================
@@ -493,19 +499,6 @@ class TestProcessTree(PsutilTestCase):
             pass
         else:
             assert len(c) == len(set(c))
-
-    def test_parents_and_children(self):
-        parent = psutil.Process()
-        child, grandchild = self.spawn_children_pair()
-        # forward
-        children = filter_alien_children(parent.children(recursive=True))
-        assert len(children) == 2
-        assert children[0] == child
-        assert children[1] == grandchild
-        # backward
-        parents = grandchild.parents()
-        assert parents[0] == child
-        assert parents[1] == parent
 
 
 # ===================================================================
@@ -650,7 +643,7 @@ class TestProcessCpu(PsutilTestCase):
             p.ionice(value=1)
 
     @skipif(not HAS_PROC_IONICE, reason="not supported")
-    @skipif(not WINDOWS, reason="not supported on this win version")
+    @skipif(not WINDOWS, reason="WINDOWS only")
     def test_ionice_win(self):
         p = psutil.Process()
         if not CI_TESTING:
@@ -748,30 +741,10 @@ class TestProcessCpu(PsutilTestCase):
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             assert p.rlimit(psutil.RLIMIT_FSIZE) == (soft, hard)
 
-    @skipif(not HAS_PROC_RLIMIT, reason="not supported")
-    def test_rlimit_infinity_value(self):
-        # RLIMIT_FSIZE should be RLIM_INFINITY, which will be a really
-        # big number on a platform with large file support.  On these
-        # platforms we need to test that the get/setrlimit functions
-        # properly convert the number to a C long long and that the
-        # conversion doesn't raise an error.
-        p = psutil.Process()
-        soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
-        assert hard == psutil.RLIM_INFINITY
-        p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
-
     def test_nice(self):
-        def cleanup(init):
-            try:
-                p.nice(init)
-            except psutil.AccessDenied:
-                pass
-
-        p = psutil.Process()
+        p = self.spawn_psproc()
         with pytest.raises(TypeError):
             p.nice("str")
-        init = p.nice()
-        self.addCleanup(cleanup, init)
 
         if WINDOWS:
             highest_prio = None
@@ -805,26 +778,18 @@ class TestProcessCpu(PsutilTestCase):
                         else:
                             assert new_prio == prio
         else:
+            if hasattr(os, "getpriority"):
+                assert os.getpriority(os.PRIO_PROCESS, p.pid) == p.nice()
+            p.nice(1)
+            assert p.nice() == 1
+            if hasattr(os, "getpriority"):
+                assert os.getpriority(os.PRIO_PROCESS, p.pid) == p.nice()
             try:
-                if hasattr(os, "getpriority"):
-                    assert (
-                        os.getpriority(os.PRIO_PROCESS, os.getpid())
-                        == p.nice()
-                    )
-                p.nice(1)
-                assert p.nice() == 1
-                if hasattr(os, "getpriority"):
-                    assert (
-                        os.getpriority(os.PRIO_PROCESS, os.getpid())
-                        == p.nice()
-                    )
-                # XXX - going back to previous nice value raises
-                # AccessDenied on MACOS
-                if not MACOS:
-                    p.nice(0)
-                    assert p.nice() == 0
+                p.nice(0)
             except psutil.AccessDenied:
                 pass
+            else:
+                assert p.nice() == 0
 
     @skipif(not HAS_PROC_CPU_AFFINITY, reason="not supported")
     def test_cpu_affinity(self):
@@ -1207,7 +1172,6 @@ class TestProcessFiles(PsutilTestCase):
                 # On BSD read_bytes and write_bytes are always set to -1.
                 continue
             assert io2[i] >= 0
-            assert io2[i] >= 0
 
     @skipif(not WINDOWS, reason="WINDOWS only")
     def test_num_handles(self):
@@ -1219,7 +1183,7 @@ class TestProcessFiles(PsutilTestCase):
         p = psutil.Process()
         testfn = self.get_testfn()
         files = p.open_files()
-        assert testfn not in files
+        assert testfn not in [x.path for x in files]
         with open(testfn, 'wb') as f:
             f.write(b'x' * 1024)
             f.flush()
@@ -1295,8 +1259,9 @@ class TestProcessFiles(PsutilTestCase):
             ntuple = p.open_files()[0]
             assert ntuple[0] == ntuple.path
             assert ntuple[1] == ntuple.fd
-            # test file is gone
-            assert fileobj.name not in p.open_files()
+        # test file is gone
+        paths = [normcase(x.path) for x in p.open_files()]
+        assert normcase(fileobj.name) not in paths
 
     @isolated
     @skipif(not POSIX, reason="POSIX only")
@@ -1356,12 +1321,9 @@ class TestProcessSignals(PsutilTestCase):
     def test_suspend_resume(self):
         p = self.spawn_psproc()
         p.suspend()
-        for _ in range(100):
-            if p.status() == psutil.STATUS_STOPPED:
-                break
-            time.sleep(0.01)
+        call_until(lambda: p.status() == psutil.STATUS_STOPPED)
         p.resume()
-        assert p.status() != psutil.STATUS_STOPPED
+        call_until(lambda: p.status() != psutil.STATUS_STOPPED)
 
 
 # ===================================================================

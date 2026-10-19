@@ -96,7 +96,7 @@ __all__ = [
     'chdir', 'safe_rmpath', 'safe_mkdir', 'create_py_exe', 'create_c_exe',
     'get_testfn', 'py_exe_copy_runs',
     # os
-    'kernel_version', 'is_busybox',
+    'is_busybox',
     # sync primitives
     'retry', 'call_until', 'wait_for_pid', 'wait_for_file',
     'wait_for_file_subproc',
@@ -734,30 +734,6 @@ def reap_children(recursive=False):
 # ===================================================================
 # --- OS
 # ===================================================================
-
-
-def kernel_version():
-    """Return a tuple such as (2, 6, 36)."""
-    if not POSIX:
-        raise NotImplementedError("not POSIX")
-    s = ""
-    uname = os.uname()[2]
-    for c in uname:
-        if c.isdigit() or c == '.':
-            s += c
-        else:
-            break
-    if not s:
-        raise ValueError(f"can't parse {uname!r}")
-    minor = 0
-    micro = 0
-    nums = s.split('.')
-    major = int(nums[0])
-    if len(nums) >= 2:
-        minor = int(nums[1])
-    if len(nums) >= 3:
-        micro = int(nums[2])
-    return (major, minor, micro)
 
 
 @functools.lru_cache

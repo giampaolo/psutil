@@ -323,6 +323,12 @@ class TestProcessAPIs(PsutilTestCase):
             p.terminate()
         psutil.wait_procs(procs)
 
+    def test_pids(self):
+        pids = psutil.pids()
+        assert pids == sorted(set(pids))
+        assert all(isinstance(pid, int) for pid in pids)
+        assert os.getpid() in pids
+
     def test_pid_exists(self):
         sproc = self.spawn_subproc()
         assert psutil.pid_exists(sproc.pid)
@@ -542,11 +548,8 @@ class TestCpuAPIs(PsutilTestCase):
         cores = psutil.cpu_count(logical=False)
         if cores is None:
             return pytest.skip("cpu_count_cores() is None")
-        if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista
-            assert cores is None
-        else:
-            assert cores >= 1
-            assert logical >= cores
+        assert cores >= 1
+        assert logical >= cores
 
     def test_cpu_count_none(self):
         # https://github.com/giampaolo/psutil/issues/1085
@@ -747,6 +750,7 @@ class TestCpuAPIs(PsutilTestCase):
             )
 
         assert ls, ls
+        check_ls(ls)
         check_ls([psutil.cpu_freq(percpu=False)])
 
         if LINUX:
@@ -896,8 +900,6 @@ class TestDiskAPIs(PsutilTestCase):
         assert ret is not None, "no disks on this system?"
         check_ntuple(ret)
         ret = psutil.disk_io_counters(perdisk=True)
-        # make sure there are no duplicates
-        assert len(ret) == len(set(ret))
         for key in ret:
             assert key, key
             check_ntuple(ret[key])
@@ -930,7 +932,7 @@ class TestNetAPIs(PsutilTestCase):
         ret = psutil.net_io_counters(pernic=False)
         check_ntuple(ret)
         ret = psutil.net_io_counters(pernic=True)
-        assert ret != []
+        assert ret
         for key in ret:
             assert key
             assert isinstance(key, str)

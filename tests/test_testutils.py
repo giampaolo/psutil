@@ -327,7 +327,7 @@ class TestProcessUtils(PsutilTestCase):
         # by PID
         pid = self.spawn_subproc().pid
         terminate(pid)
-        self.assert_pid_gone(p.pid)
+        self.assert_pid_gone(pid)
         terminate(pid)
         # zombie
         if POSIX:
@@ -340,7 +340,7 @@ class TestProcessUtils(PsutilTestCase):
 
 @serial
 class TestNetUtils(PsutilTestCase):
-    def bind_socket(self):
+    def test_bind_socket(self):
         port = get_free_port()
         with bind_socket(addr=('', port)) as s:
             assert s.getsockname()[1] == port

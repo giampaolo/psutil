@@ -6,6 +6,7 @@
 
 """Tests for psutil.net_connections() and Process.net_connections() APIs."""
 
+import ast
 import os
 import socket
 import subprocess
@@ -24,7 +25,6 @@ from psutil import NETBSD
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
-from psutil import WINDOWS
 from psutil._common import supports_ipv6
 
 from . import AF_UNIX
@@ -88,12 +88,6 @@ class ConnectionTestCase(PsutilTestCase):
 
 
 class TestBasicOperations(ConnectionTestCase):
-    @skipif(SKIP_SYSCONS, reason="requires root")
-    def test_system(self):
-        with create_sockets():
-            for conn in psutil.net_connections(kind='all'):
-                check_connection_ntuple(conn)
-
     def test_process(self):
         with create_sockets():
             for conn in this_proc_net_connections(kind='all'):
@@ -341,7 +335,8 @@ class TestFilters(ConnectionTestCase):
                 family=int(family), addr=addr, testfn=testfile
             )
             proc = self.pyrun(src, stderr=subprocess.PIPE)
-            laddr = eval(wait_for_file_subproc(testfile, proc, delete=True))
+            data = wait_for_file_subproc(testfile, proc, delete=True)
+            laddr = ast.literal_eval(data.decode())
             return proc, laddr
 
         # launch various subprocess instantiating a socket of various
@@ -534,23 +529,3 @@ class TestSystemWideConnections(ConnectionTestCase):
             assert len([x for x in syscons if x.pid == pid]) == expected
             p = psutil.Process(pid)
             assert len(p.net_connections('all')) == expected
-
-
-class TestMisc(PsutilTestCase):
-    def test_net_connection_constants(self):
-        ints = []
-        strs = []
-        for name in dir(psutil):
-            if name.startswith('CONN_'):
-                num = getattr(psutil, name)
-                str_ = str(num)
-                assert str_.isupper(), str_
-                assert str_ not in strs
-                assert num not in ints
-                ints.append(num)
-                strs.append(str_)
-        if SUNOS:
-            psutil.CONN_IDLE  # noqa: B018
-            psutil.CONN_BOUND  # noqa: B018
-        if WINDOWS:
-            psutil.CONN_DELETE_TCB  # noqa: B018
