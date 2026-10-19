@@ -407,8 +407,7 @@ class TestModuleFunctions(MemoryLeakTestCase):
     @skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     @skipif(LINUX, reason="too slow on LINUX")
     def test_sensors_temperatures(self):
-        times = FEW_TIMES if LINUX else self.times
-        self.execute(psutil.sensors_temperatures, times=times)
+        self.execute(psutil.sensors_temperatures)
 
     @skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_sensors_fans(self):

@@ -354,10 +354,6 @@ class TestSystemAPITypes(PsutilTestCase):
     https://github.com/giampaolo/psutil/issues/1039.
     """
 
-    @classmethod
-    def setUpClass(cls):
-        cls.proc = psutil.Process()
-
     def test_cpu_times(self):
         assert_ntuple_of_nums(psutil.cpu_times())
         for nt in psutil.cpu_times(percpu=True):

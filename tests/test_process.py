@@ -35,7 +35,6 @@ from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -382,7 +381,7 @@ class TestProcessIdentity(PsutilTestCase):
         p = psutil.Process()
         d1 = clean_dict(p.environ())
         d2 = clean_dict(os.environ.copy())
-        if not OSX and GITHUB_ACTIONS:
+        if not MACOS and GITHUB_ACTIONS:
             assert d1 == d2
 
 

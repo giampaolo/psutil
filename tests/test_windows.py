@@ -67,14 +67,6 @@ class WindowsTestCase(PsutilTestCase):
         return handle
 
 
-# Note used but could be useful in the future
-def is_bash_env():
-    env = os.environ
-    if "MSYSTEM" in env or "MINGW_PREFIX" in env or "MINGW_CHOST" in env:
-        return True
-    return "bash" in env.get("SHELL", "")
-
-
 def cim_datetime_to_utc(value):
     # WMI timestamps look like "20261002203208.500000-420", where the
     # trailing number is the offset from UTC in minutes. Tests used to
@@ -108,23 +100,6 @@ def powershell(cmd):
         cmd,
     ]
     return sh(cmdline, timeout=GLOBAL_TIMEOUT * 4)
-
-
-def wmic(path, what, converter=int):
-    """Currently not used, but available just in case. Usage:
-
-    >>> wmic("Win32_OperatingSystem", "FreePhysicalMemory")
-    2134124534
-    """
-    out = sh(f"wmic path {path} get {what}").strip()
-    data = "".join(out.splitlines()[1:]).strip()  # get rid of the header
-    if converter is not None:
-        if "," in what:
-            return tuple(converter(x) for x in data.split())
-        else:
-            return converter(data)
-    else:
-        return data
 
 
 # ===================================================================

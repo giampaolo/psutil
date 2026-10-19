@@ -45,6 +45,7 @@ from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import MACOS_12PLUS
+from . import TOLERANCE_DISK_USAGE
 from . import UNICODE_SUFFIX
 from . import PsutilTestCase
 from . import assert_ntuple_of_nums
@@ -786,12 +787,11 @@ class TestDiskAPIs(PsutilTestCase):
         assert 0 <= usage.percent <= 100, usage.percent
 
         shutil_usage = shutil.disk_usage(os.getcwd())
-        tolerance = 5 * 1024 * 1024  # 5MB
         assert usage.total == shutil_usage.total
-        assert abs(usage.free - shutil_usage.free) < tolerance
+        assert abs(usage.free - shutil_usage.free) < TOLERANCE_DISK_USAGE
         if not MACOS_12PLUS:
             # see https://github.com/giampaolo/psutil/issues/2147
-            assert abs(usage.used - shutil_usage.used) < tolerance
+            assert abs(usage.used - shutil_usage.used) < TOLERANCE_DISK_USAGE
 
         # if path does not exist FileNotFoundError is expected across
         # all platforms
