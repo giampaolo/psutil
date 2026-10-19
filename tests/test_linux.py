@@ -1906,47 +1906,24 @@ class TestProcessIdentity(LinuxTestCase):
         ):
             assert psutil._pslinux.Process(os.getpid()).terminal() is None
 
+    def check_cmdline(self, content, expected):
+        path = f"/proc/{os.getpid()}/cmdline"
+        with mock_open_content({path: content}):
+            assert psutil.Process().cmdline() == expected
+
     def test_cmdline_mocked(self):
         # see: https://github.com/giampaolo/psutil/issues/639
-        p = psutil.Process()
-        fake_file = io.StringIO('foo\x00bar\x00')
-        with mock.patch(
-            'psutil._common.open', return_value=fake_file, create=True
-        ) as m:
-            assert p.cmdline() == ['foo', 'bar']
-            assert m.called
-        fake_file = io.StringIO('foo\x00bar\x00\x00')
-        with mock.patch(
-            'psutil._common.open', return_value=fake_file, create=True
-        ) as m:
-            assert p.cmdline() == ['foo', 'bar', '']
-            assert m.called
+        self.check_cmdline('foo\x00bar\x00', ['foo', 'bar'])
+        self.check_cmdline('foo\x00bar\x00\x00', ['foo', 'bar', ''])
 
     def test_cmdline_spaces_mocked(self):
         # see: https://github.com/giampaolo/psutil/issues/1179
-        p = psutil.Process()
-        fake_file = io.StringIO('foo bar ')
-        with mock.patch(
-            'psutil._common.open', return_value=fake_file, create=True
-        ) as m:
-            assert p.cmdline() == ['foo', 'bar']
-            assert m.called
-        fake_file = io.StringIO('foo bar  ')
-        with mock.patch(
-            'psutil._common.open', return_value=fake_file, create=True
-        ) as m:
-            assert p.cmdline() == ['foo', 'bar', '']
-            assert m.called
+        self.check_cmdline('foo bar ', ['foo', 'bar'])
+        self.check_cmdline('foo bar  ', ['foo', 'bar', ''])
 
     def test_cmdline_mixed_separators(self):
         # https://github.com/giampaolo/psutil/issues/1179#issuecomment-552984549
-        p = psutil.Process()
-        fake_file = io.StringIO('foo\x20bar\x00')
-        with mock.patch(
-            'psutil._common.open', return_value=fake_file, create=True
-        ) as m:
-            assert p.cmdline() == ['foo', 'bar']
-            assert m.called
+        self.check_cmdline('foo\x20bar\x00', ['foo', 'bar'])
 
     def test_readlink_path_deleted_mocked(self):
         with mock.patch(
