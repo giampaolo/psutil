@@ -500,7 +500,10 @@ class TestFreeBSDSensors(FreeBSDTestCase):
         remaining_time = fields['Remaining time:']
         assert metrics.percent == percent
         if remaining_time == 'unknown':
-            assert metrics.secsleft == psutil.POWER_TIME_UNLIMITED
+            if metrics.power_plugged:
+                assert metrics.secsleft == psutil.POWER_TIME_UNLIMITED
+            else:
+                assert metrics.secsleft == psutil.POWER_TIME_UNKNOWN
         else:
             assert secs2hours(metrics.secsleft) == remaining_time
 
