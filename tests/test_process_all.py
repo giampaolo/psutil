@@ -330,7 +330,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret.strip()
 
     def status(self, ret, info):
-        assert isinstance(ret, str)
+        assert isinstance(ret, psutil.ProcessStatus)
         assert ret, ret
         assert ret != '?'  # XXX
         assert ret in VALID_PROC_STATUSES
@@ -343,7 +343,7 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def ionice(self, ret, info):
         if LINUX:
-            assert isinstance(ret.ioclass, int)
+            assert isinstance(ret.ioclass, psutil.ProcessIOPriority)
             assert isinstance(ret.value, int)
             assert ret.ioclass >= 0
             assert ret.value >= 0
@@ -354,7 +354,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                 psutil.IOPRIO_NORMAL,
                 psutil.IOPRIO_HIGH,
             ]
-            assert isinstance(ret, int)
+            assert isinstance(ret, psutil.ProcessIOPriority)
             assert ret >= 0
             assert ret in choices
 

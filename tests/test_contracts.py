@@ -238,6 +238,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         self.check_constants(("ProcessStatus",), True)
         self.check_constants(("ProcessPriority",), WINDOWS)
         self.check_constants(("ProcessIOPriority",), LINUX or WINDOWS)
+        self.check_constants(("ProcessRlimit",), LINUX or FREEBSD)
         self.check_constants(("ConnectionStatus",), True)
         self.check_constants(("NicDuplex",), True)
         self.check_constants(("BatteryTime",), True)
