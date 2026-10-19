@@ -268,12 +268,6 @@ class TestMisc(PsutilTestCase):
             == psutil.__version__
         )
 
-    def test_process_as_dict_no_new_names(self):
-        # See https://github.com/giampaolo/psutil/issues/813
-        p = psutil.Process()
-        p.foo = '1'
-        assert 'foo' not in p.as_dict()
-
     def test_sanity_version_check(self):
         # see: https://github.com/giampaolo/psutil/issues/564
         with mock.patch.object(_psutil, "version", return_value="0.0.0"):

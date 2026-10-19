@@ -138,6 +138,8 @@ class TestCpuCount(WindowsTestCase):
     def test_against_cpu_times(self):
         assert psutil.cpu_count() == len(psutil.cpu_times(percpu=True))
 
+
+class TestCpuTimes(WindowsTestCase):
     def test_irq_field(self):
         t = psutil.cpu_times()
         assert t.irq >= 0

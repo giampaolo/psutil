@@ -336,6 +336,12 @@ class TestProcessIdentity(PsutilTestCase):
         with pytest.raises(ValueError):
             p.as_dict(['foo', 'bar'])
 
+    def test_as_dict_no_new_names(self):
+        # See https://github.com/giampaolo/psutil/issues/813
+        p = psutil.Process()
+        p.foo = '1'
+        assert 'foo' not in p.as_dict()
+
     def test_attrs(self):
         # The `Process.attrs` attribute to use with `as_dict()`.
         p = psutil.Process()
