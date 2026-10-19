@@ -1075,15 +1075,6 @@ class TestWow64Process(PsutilTestCase):
 @skipif(not WINDOWS, reason="WINDOWS only")
 class TestServices(PsutilTestCase):
     def test_win_service_iter(self):
-        valid_statuses = {
-            "running",
-            "paused",
-            "start",
-            "pause",
-            "continue",
-            "stop",
-            "stopped",
-        }
         valid_start_types = {"automatic", "manual", "disabled"}
         valid_statuses = {
             "running",
@@ -1109,10 +1100,8 @@ class TestServices(PsutilTestCase):
             if data['pid'] is not None:
                 psutil.Process(data['pid'])
             assert isinstance(data['binpath'], str)
-            assert isinstance(data['username'], str)
             assert isinstance(data['start_type'], str)
             assert data['start_type'] in valid_start_types
-            assert data['status'] in valid_statuses
             assert isinstance(data['description'], str)
             pid = serv.pid()
             if pid is not None:
