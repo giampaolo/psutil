@@ -194,6 +194,10 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
             psutil_debug("sysctl(KERN_PROC_CWD) -> ENOENT converted to ''");
             return PyUnicode_FromString("");
         }
+        // EINVAL means a system process or one that is exiting.
+        else if (errno == EINVAL && !(kp.p_psflags & PS_SYSTEM)) {
+            return psutil_oserror_nsp("sysctl(KERN_PROC_CWD) -> EINVAL");
+        }
         else {
             psutil_oserror();
             return NULL;
