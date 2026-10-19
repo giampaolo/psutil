@@ -350,8 +350,7 @@ class FreeBSDProcessTestCase(PsutilTestCase):
 
 
 @skipif(not FREEBSD, reason="FREEBSD only")
-class FreeBSDSystemTestCase(PsutilTestCase):
-
+class TestFreeBSDCpu(PsutilTestCase):
     def test_cpu_count_cores(self):
         cores = sysctl("kern.smp.cores")
         assert psutil.cpu_count(logical=False) == cores
@@ -401,8 +400,6 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             assert nt.min is None
             assert nt.max is None
 
-    # --- virtual_memory(); tests against sysctl
-
     def test_cpu_stats_ctx_switches(self):
         assert (
             abs(
@@ -435,7 +432,51 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             < 200000
         )
 
-    # --- swap memory
+
+@skipif(not FREEBSD, reason="FREEBSD only")
+class TestFreeBSDMemory(PsutilTestCase):
+    @staticmethod
+    def parse_swapinfo():
+        # the last line is always the total
+        output = sh("swapinfo -k").splitlines()[-1]
+        parts = re.split(r'\s+', output)
+
+        if not parts:
+            raise ValueError(f"Can't parse swapinfo: {output}")
+
+        # the size is in 1k units, so multiply by 1024
+        total, used, free = (int(p) * 1024 for p in parts[1:4])
+        return total, used, free
+
+    @retry_on_failure
+    def test_vmem_active(self):
+        syst = sysctl("vm.stats.vm.v_active_count") * PAGESIZE
+        assert abs(psutil.virtual_memory().active - syst) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure
+    def test_vmem_inactive(self):
+        syst = sysctl("vm.stats.vm.v_inactive_count") * PAGESIZE
+        assert abs(psutil.virtual_memory().inactive - syst) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure
+    def test_vmem_wired(self):
+        syst = sysctl("vm.stats.vm.v_wire_count") * PAGESIZE
+        assert abs(psutil.virtual_memory().wired - syst) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure
+    def test_vmem_cached(self):
+        syst = sysctl("vm.stats.vm.v_cache_count") * PAGESIZE
+        assert abs(psutil.virtual_memory().cached - syst) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure
+    def test_vmem_free(self):
+        syst = sysctl("vm.stats.vm.v_free_count") * PAGESIZE
+        assert abs(psutil.virtual_memory().free - syst) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure
+    def test_vmem_buffers(self):
+        syst = sysctl("vfs.bufspace")
+        assert abs(psutil.virtual_memory().buffers - syst) < TOLERANCE_SYS_MEM
 
     def test_swapmem_free(self):
         _total, _used, free = self.parse_swapinfo()
@@ -449,8 +490,9 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         total, _used, _free = self.parse_swapinfo()
         assert abs(psutil.swap_memory().total - total) < TOLERANCE_SYS_MEM
 
-    # --- net
 
+@skipif(not FREEBSD, reason="FREEBSD only")
+class TestFreeBSDNetwork(PsutilTestCase):
     @retry_on_failure
     def test_net_io_counters(self):
         out = sh("netstat -ib")
@@ -468,10 +510,9 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             assert abs(ps[name].bytes_recv - ibytes) < tolerance
             assert abs(ps[name].bytes_sent - obytes) < tolerance
 
-    # --- others
 
-    # --- sensors_battery
-
+@skipif(not FREEBSD, reason="FREEBSD only")
+class TestFreeBSDSensors(PsutilTestCase):
     @skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors_battery(self):
         def secs2hours(secs):
@@ -515,8 +556,6 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             sysctl("hw.acpi.acline")
         assert psutil.sensors_battery() is None
 
-    # --- sensors_temperatures
-
     def test_sensors_temperatures_against_sysctl(self):
         num_cpus = psutil.cpu_count(True)
         for cpu in range(num_cpus):
@@ -540,6 +579,16 @@ class FreeBSDSystemTestCase(PsutilTestCase):
                 psutil.sensors_temperatures()["coretemp"][cpu].high
                 == sysctl_result
             )
+
+
+@skipif(not FREEBSD, reason="FREEBSD only")
+class TestFreeBSDOtherSystemAPIs(PsutilTestCase):
+    def test_boot_time(self):
+        s = sysctl('sysctl kern.boottime')
+        s = s[s.find(" sec = ") + 7 :]
+        s = s[: s.find(',')]
+        btime = int(s)
+        assert btime == psutil.boot_time()
 
 
 # =====================================================================
