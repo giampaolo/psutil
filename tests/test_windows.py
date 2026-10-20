@@ -86,6 +86,9 @@ def powershell(cmd):
     )
     """
     exe = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+    # XXX: workaround for powershell on ARM being super slow, see:
+    # https://github.com/actions/runner-images/issues/14830
+    cmd = f'$env:PSModulePath = "$PSHOME\\Modules"; {cmd}'
     cmdline = [
         exe,
         "-ExecutionPolicy",
