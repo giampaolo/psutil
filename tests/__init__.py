@@ -1549,6 +1549,7 @@ def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
                         self.setUp()
                     if hasattr(self, "setup_method"):
                         self.setup_method()
+                    time.sleep(0.1)
 
             raise err
 
