@@ -1519,7 +1519,9 @@ class system_namespace:
     test_class_coverage = process_namespace.test_class_coverage
 
 
-def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
+def retry_on_failure(
+    retries: "int | typing.Callable" = NO_RETRIES, interval: float = 0.1
+):
     """Decorator which runs a test function and retries N times before
     giving up and failing.
     """
@@ -1536,7 +1538,8 @@ def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
                     prefix = "\n" if attempt == 0 else ""
                     short_err = str(err).split("\n")[0]
                     print(  # noqa: T201
-                        f"{prefix}{short_err}, retrying"
+                        f"{prefix}{test_method.__qualname__}: {short_err},"
+                        " retrying"
                         f" {attempt + 1}/{retries} ...",
                         file=sys.stderr,
                     )
@@ -1548,6 +1551,7 @@ def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
                         self.setUp()
                     if hasattr(self, "setup_method"):
                         self.setup_method()
+                    time.sleep(interval)
 
             raise err
 

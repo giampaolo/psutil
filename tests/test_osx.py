@@ -38,6 +38,14 @@ def vm_stat(field):
     return int(re.search(r'\d+', line).group(0)) * _psutil.getpagesize()
 
 
+# psutil gets these numbers from host_statistics64(), which macOS
+# rate-limits for non-Apple binaries: after a few calls per second it
+# returns a cached copy. vm_stat is exempt, so retries comparing the
+# two must span more than 1 sec. See rate_limit_host_statistics() in
+# https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/kern/host.c
+VM_STAT_RETRY_INTERVAL = 0.2
+
+
 @skipif(not MACOS, reason="MACOS only")
 class MacosTestCase(PsutilTestCase):
     pass
@@ -81,25 +89,25 @@ class TestVirtualMemory(MacosTestCase):
         sysctl_hwphymem = sysctl('hw.memsize')
         assert sysctl_hwphymem == psutil.virtual_memory().total
 
-    @retry_on_failure
+    @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_free(self):
         vmstat_val = vm_stat("free")
         psutil_val = psutil.virtual_memory().free
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 5
 
-    @retry_on_failure
+    @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_active(self):
         vmstat_val = vm_stat("active")
         psutil_val = psutil.virtual_memory().active
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 5
 
-    @retry_on_failure
+    @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_inactive(self):
         vmstat_val = vm_stat("inactive")
         psutil_val = psutil.virtual_memory().inactive
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 5
 
-    @retry_on_failure
+    @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_wired(self):
         vmstat_val = vm_stat("wired")
         psutil_val = psutil.virtual_memory().wired
@@ -137,13 +145,13 @@ class TestSwapMemory(MacosTestCase):
         sysctl_val = self.parse_swapusage(out)["free"]
         assert abs(psutil.swap_memory().free - sysctl_val) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure
+    @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_sin(self):
         vmstat_val = vm_stat("Pageins")
         psutil_val = psutil.swap_memory().sin
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
-    @retry_on_failure
+    @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_sout(self):
         vmstat_val = vm_stat("Pageout")
         psutil_val = psutil.swap_memory().sout

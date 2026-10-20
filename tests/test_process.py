@@ -63,6 +63,7 @@ from . import ThreadTask
 from . import assert_ntuple_of_nums
 from . import call_until
 from . import copyload_shared_lib
+from . import create_c_exe
 from . import create_py_exe
 from . import filter_alien_children
 from . import isolated
@@ -234,14 +235,14 @@ class TestProcessIdentity(PsutilTestCase):
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
-    @retry_on_failure
     def test_long_name(self):
-        pyexe = create_py_exe(self.get_testfn(suffix=string.digits * 2))
-        cmdline = [
-            pyexe,
-            "-c",
-            PYTHON_SLEEP_CODE,
-        ]
+        testfn = self.get_testfn(suffix=string.digits * 2)
+        if MACOS:
+            pyexe = create_c_exe(testfn)
+            cmdline = [pyexe]
+        else:
+            pyexe = create_py_exe(testfn)
+            cmdline = [pyexe, "-c", PYTHON_SLEEP_CODE]
         p = self.spawn_psproc(cmdline)
         if OPENBSD:
             # XXX: for some reason the test process may turn into a

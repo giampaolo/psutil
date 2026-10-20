@@ -485,9 +485,8 @@ class TestSystemAPIs(PosixTestCase):
         if MACOS or OPENBSD:
             pids_ps.add(0)
 
-        # ps itself
         only_ps = pids_ps - before - after
-        assert len(only_ps) <= 1
+        assert {x for x in only_ps if psutil._psposix.pid_exists(x)} == set()
         assert (before & after) - pids_ps == set()
 
     # for some reason ifconfig -a does not report all interfaces
