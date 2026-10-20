@@ -202,4 +202,3 @@ include tests/test_testutils.py
 include tests/test_type_hints.py
 include tests/test_unicode.py
 include tests/test_windows.py
-include tests/test_zz_heapdebug.py
