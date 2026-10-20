@@ -2133,8 +2133,9 @@ class Process:
                 # it means thread disappeared on us
                 hit_enoent = True
                 continue
-            # ignore the first two values ("pid (exe)")
-            st = st[st.find(b')') + 2 :]
+            # ignore the first two values ("pid (exe)"); the thread
+            # name may contain ")" too, so look for the last one
+            st = st[st.rfind(b')') + 2 :]
             values = st.split(b' ')
             utime = float(values[11]) / CLOCK_TICKS
             stime = float(values[12]) / CLOCK_TICKS
