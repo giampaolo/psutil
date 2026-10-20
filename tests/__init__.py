@@ -1519,7 +1519,9 @@ class system_namespace:
     test_class_coverage = process_namespace.test_class_coverage
 
 
-def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
+def retry_on_failure(
+    retries: "int | typing.Callable" = NO_RETRIES, interval: float = 0.1
+):
     """Decorator which runs a test function and retries N times before
     giving up and failing.
     """
@@ -1549,7 +1551,7 @@ def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
                         self.setUp()
                     if hasattr(self, "setup_method"):
                         self.setup_method()
-                    time.sleep(0.1)
+                    time.sleep(interval)
 
             raise err
 
