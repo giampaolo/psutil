@@ -202,7 +202,6 @@ class TestHeap(HeapTestCase):
         increases heap_used.
         """
         size = HEAP_SIZE
-        free(malloc(size))
 
         mem1 = psutil.heap_info()
         ptr = malloc(size)
