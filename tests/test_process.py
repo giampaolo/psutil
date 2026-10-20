@@ -430,7 +430,6 @@ class TestProcessTree(PsutilTestCase):
         assert grandchild.parent() == child
         assert child.parent() == parent
 
-    @retry_on_failure
     def test_parents(self):
         parent = psutil.Process()
         assert parent.parents()
