@@ -128,9 +128,9 @@ issue reference, e.g.:
 :gh:`1234`, [macOS], [BSD]:
 
 Known tags: [Linux], [Windows], [macOS], [FreeBSD], [NetBSD],
-[OpenBSD], [SunOS], [AIX], [BSD], [UNIX], [PyPy]. Use the specific OS
+[OpenBSD], [SunOS], [AIX], [BSD], [POSIX], [PyPy]. Use the specific OS
 when one is named; [BSD] only when the change is about the BSDs as a
-family, [UNIX] for shared POSIX behavior where no single OS fits.
+family, [POSIX] for shared POSIX behavior where no single OS fits.
 Only add platform tags if the change clearly affects specific OSes.
 The script checks every tag against the issue's labels on the bug
 tracker and rejects the entry when a tag isn't backed by one.
@@ -361,12 +361,12 @@ TAG2LABEL = {
     "SunOS": "sunos",
     "AIX": "aix",
     "BSD": "bsd",
-    "UNIX": "unix",
-    "POSIX": "unix",
+    "UNIX": "posix",
+    "POSIX": "posix",
     "PyPy": "pypy",
 }
 NAMED_BSD = {"freebsd", "netbsd", "openbsd"}
-POSIXY = NAMED_BSD | {"linux", "macos", "sunos", "aix", "bsd", "unix"}
+POSIXY = NAMED_BSD | {"linux", "macos", "sunos", "aix", "bsd", "posix"}
 
 ENTRY_PREFIX_RE = re.compile(
     r"^- (?::gh:`\d+`, )*:gh:`\d+`((?:,? \[[^\]]+\])*)"
@@ -491,7 +491,7 @@ def check_platform_tags(entry_text, issue_labels):
             continue
         if label == "bsd" and have & NAMED_BSD:
             continue
-        if label == "unix" and have & POSIXY:
+        if label == "posix" and have & POSIXY:
             continue
         raise ValidationError(
             f"[{tag}] is not backed by a {label!r} label on the issue"
@@ -742,9 +742,9 @@ BUGFIX_FAMILY = {
     "netbsd": "BSD",
     "openbsd": "BSD",
     "bsd": "BSD",
-    "sunos": "UNIX",
-    "aix": "UNIX",
-    "unix": "UNIX",
+    "sunos": "POSIX",
+    "aix": "POSIX",
+    "posix": "POSIX",
 }
 
 

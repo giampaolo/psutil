@@ -558,9 +558,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   :meth:`Process.net_connections` read freed memory when releasing their
   internal result lists; each node was ``free()``'d before being unlinked.
 
-**Bug fixes: UNIX**
+**Bug fixes: POSIX**
 
-- :gh:`2877`, [UNIX], :label:`critical`: fix a one-byte stack buffer overflow
+- :gh:`2877`, [POSIX], :label:`critical`: fix a one-byte stack buffer overflow
   in :func:`users`. When ``ut_host`` fills the whole field it has no null
   terminator, and the terminator was written one byte past the end of the local
   buffer.
@@ -587,7 +587,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   exited mid-read. The read error was stored in an unsigned variable, so the
   ``< 0`` check never matched and a half-filled buffer was returned with the
   exception still set.
-- :gh:`2778`, [UNIX]: :func:`net_if_addrs` skips interfaces with no addresses,
+- :gh:`2778`, [POSIX]: :func:`net_if_addrs` skips interfaces with no addresses,
   which are typically virtual IPv4/IPv6 tunnel interfaces. Now they are
   included in the returned dict with :field:`family` ==
   :data:`socket.AF_UNSPEC` and an empty list of addresses. Main reason: it
@@ -1012,7 +1012,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   produces duplicates.
 - :gh:`2238`: :meth:`Process.cwd` now consistently returns ``""`` on all
   platforms when the directory can't be determined.
-- :gh:`2239`, [UNIX]: for zombie processes, return the truncated
+- :gh:`2239`, [POSIX]: for zombie processes, return the truncated
   :meth:`Process.name` (15 chars) instead of raising :exc:`ZombieProcess` when
   the full name can't be determined from :meth:`Process.cmdline`.
 

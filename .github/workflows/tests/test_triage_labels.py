@@ -79,12 +79,12 @@ class TestStaleLabels:
 
 class TestDropGeneralPlatforms:
     def test_named_os_wins_over_the_general_one(self):
-        decision = decide(platform=["unix", "linux"])
+        decision = decide(platform=["posix", "linux"])
         assert tl.fresh_labels(decision) == {"bug", "linux"}
 
         decision = decide(platform=["bsd", "freebsd"])
         assert tl.fresh_labels(decision) == {"bug", "freebsd"}
 
     def test_general_one_stays_when_nothing_names_an_os(self):
-        decision = decide(platform=["unix", "pypy"])
-        assert tl.fresh_labels(decision) == {"bug", "unix", "pypy"}
+        decision = decide(platform=["posix", "pypy"])
+        assert tl.fresh_labels(decision) == {"bug", "posix", "pypy"}

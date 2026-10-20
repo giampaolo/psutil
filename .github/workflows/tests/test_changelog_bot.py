@@ -239,7 +239,7 @@ class TestPlatformTags:
 
     def test_family_tag_backed_by_member(self):
         cb.check_platform_tags("- :gh:`1`, [BSD]: x.", ["freebsd"])
-        cb.check_platform_tags("- :gh:`1`, [UNIX]: x.", ["sunos"])
+        cb.check_platform_tags("- :gh:`1`, [POSIX]: x.", ["sunos"])
 
     def test_unbacked_tag_rejected(self):
         with pytest.raises(cb.ValidationError):

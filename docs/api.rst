@@ -1343,7 +1343,7 @@ Process class
     process as a named tuple. This is the same as :func:`os.getresuid`, but can
     be used for any process PID.
 
-    .. availability:: UNIX
+    .. availability:: POSIX
 
   .. method:: gids()
 
@@ -1351,14 +1351,14 @@ Process class
     process as a named tuple. This is the same as :func:`os.getresgid`, but can
     be used for any process PID.
 
-    .. availability:: UNIX
+    .. availability:: POSIX
 
   .. method:: terminal()
 
     The terminal associated with this process, if any, else ``None``. This is
     similar to ``tty`` command but can be used for any process PID.
 
-    .. availability:: UNIX
+    .. availability:: POSIX
 
   .. method:: nice(value=None)
 
@@ -1500,7 +1500,7 @@ Process class
     The number of :term:`file descriptors <file descriptor>` currently opened
     by this process (non cumulative).
 
-    .. availability:: UNIX
+    .. availability:: POSIX
 
   .. method:: num_handles()
 
@@ -2250,10 +2250,10 @@ C heap introspection
 
 The following functions provide direct access to the platform's native
 :term:`heap` allocator (such as glibc's ``malloc`` on Linux or ``jemalloc`` on
-BSD). They are low-level interfaces intended for detecting memory leaks in C
-extensions, which are usually not revealed via standard :term:`RSS` /
-:term:`VMS` metrics. These functions do not reflect Python object memory; they
-operate solely on allocations made in C via :manpage:`malloc(3)`,
+FreeBSD and NetBSD). They are low-level interfaces intended for detecting
+memory leaks in C extensions, which are usually not revealed via standard
+:term:`RSS` / :term:`VMS` metrics. These functions do not reflect Python object
+memory; they operate solely on allocations made in C via :manpage:`malloc(3)`,
 :manpage:`free(3)`, and related calls.
 
 The general idea behind these functions is straightforward: capture the state
@@ -2502,18 +2502,26 @@ Operating system constants
 platform, ``False`` otherwise.
 
 .. data:: POSIX
+
+  ``True`` on all supported platforms except Windows. Throughout this
+  documentation, "Availability: POSIX" refers to these platforms.
+
+.. data:: BSD
+
+  ``True`` on FreeBSD, NetBSD, and OpenBSD. Throughout this documentation,
+  "Availability: BSD" refers to these platforms.
+
 .. data:: LINUX
 .. data:: WINDOWS
 .. data:: MACOS
 .. data:: FREEBSD
 .. data:: NETBSD
 .. data:: OPENBSD
-.. data:: BSD
 .. data:: SUNOS
 .. data:: AIX
 .. data:: OSX
 
-  Alias for :data:`MACOS`.
+  Alias for :data:`MACOS`, retained for backward compatibility.
 
   .. deprecated:: 5.4.7
      use :data:`MACOS` instead.

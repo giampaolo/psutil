@@ -89,7 +89,7 @@ windows.
 One path does settle it. psutil/arch/ holds a directory per platform,
 and a diff that stays inside one of them says which: arch/windows/ is
 windows, arch/osx/ is macos, arch/solaris/ is sunos, arch/bsd/ is bsd,
-arch/posix/ is unix. Only arch/all/ is everywhere. Land in two of them
+arch/posix/ is posix. Only arch/all/ is everywhere. Land in two of them
 and you're back to the sweep above.
 
 An OS named in passing is not the subject either. "Known cases are
@@ -108,7 +108,7 @@ where the symptom was noticed.
   NetBSD)" is still one bsd label, not three. Reach for the specific
   ones only when the item is about some of them but not all.
 
-- unix: very rare. Shared POSIX code across several unices where no
+- posix: very rare. Shared POSIX code across several unices where no
   single OS fits and the item names none. Something POSIX has and
   Windows doesn't counts even with nothing named: zombie processes,
   signals, uid and gid, fork, terminals. So does a diff confined to
@@ -372,7 +372,7 @@ Body:
 TYPE_LABELS = ["bug"]
 PLATFORM_LABELS = [
     "linux", "windows", "macos", "freebsd", "openbsd", "netbsd", "bsd",
-    "sunos", "aix", "unix", "vm", "pypy",
+    "sunos", "aix", "posix", "vm", "pypy",
 ]  # fmt: skip
 SEVERITY_LABELS = ["critical", "badexc", "build-fail", "memleak"]
 COMPONENT_LABELS = [
@@ -412,7 +412,7 @@ def enum_list(labels, description):
 
 GENERAL_PLATFORMS = {
     "bsd": {"freebsd", "openbsd", "netbsd"},
-    "unix": {
+    "posix": {
         "aix",
         "bsd",
         "freebsd",
@@ -426,7 +426,7 @@ GENERAL_PLATFORMS = {
 
 
 def drop_general_platforms(labels):
-    """Drop unix / bsd when the same answer also names an OS."""
+    """Drop posix / bsd when the same answer also names an OS."""
     out = set(labels)
     for general, specific in GENERAL_PLATFORMS.items():
         if out & specific:

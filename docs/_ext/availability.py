@@ -27,7 +27,6 @@ _PLATFORMS = frozenset({
     "OpenBSD",
     "POSIX",
     "SunOS",
-    "UNIX",
     "Windows",
 })
 
