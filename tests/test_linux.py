@@ -954,6 +954,68 @@ class TestCpuFreq(LinuxTestCase):
         assert freq.min == 100.0
         assert freq.max == 300.0
 
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
+    def test_emulate_ebusy(self):
+        # On RHEL 7 kernels reading min/max frequency fails with EBUSY if
+        # the policy lock stays taken for a while. See:
+        # https://github.com/giampaolo/psutil/issues/2261
+        files = {
+            "*/affected_cpus": b"0",
+            "*/scaling_cur_freq": b"500000",
+            "*/scaling_min_freq": b"600000",
+            "*/scaling_max_freq": b"700000",
+            "/proc/cpuinfo": b"",
+        }
+        busy = collections.Counter()
+
+        class BusyFile(io.BytesIO):
+            def read(self, *args):
+                raise OSError(errno.EBUSY, os.strerror(errno.EBUSY))
+
+        def open_mock(name, *args, **kwargs):
+            if name.endswith(("/scaling_min_freq", "/scaling_max_freq")):
+                if busy[name] < 3:
+                    busy[name] += 1
+                    return BusyFile()
+            return sysfs_open(name, *args, **kwargs)
+
+        with mock_cpufreq_sysfs(files, 1):
+            sysfs_open = open
+            with mock.patch("builtins.open", side_effect=open_mock):
+                freq = psutil.cpu_freq()
+        assert freq == (500.0, 600.0, 700.0)
+        policy = "/sys/devices/system/cpu/cpufreq/policy0"
+        assert busy == {
+            f"{policy}/scaling_min_freq": 3,
+            f"{policy}/scaling_max_freq": 3,
+        }
+
+    @skipif(not HAS_CPU_FREQ, reason="not supported")
+    def test_emulate_ebusy_persistent(self):
+        # If the file stays busy, give up after 10 retries. See:
+        # https://github.com/giampaolo/psutil/issues/2261
+        files = {
+            "*/affected_cpus": b"0",
+            "*/scaling_cur_freq": b"500000",
+            "*/scaling_min_freq": b"600000",
+            "*/scaling_max_freq": OSError(errno.EBUSY, "busy"),
+            "/proc/cpuinfo": b"",
+        }
+        opened = collections.Counter()
+
+        def open_mock(name, *args, **kwargs):
+            opened[name] += 1
+            return sysfs_open(name, *args, **kwargs)
+
+        with mock_cpufreq_sysfs(files, 1):
+            sysfs_open = open
+            with mock.patch("builtins.open", side_effect=open_mock):
+                with pytest.raises(OSError) as cm:
+                    psutil.cpu_freq()
+        assert cm.value.errno == errno.EBUSY
+        policy = "/sys/devices/system/cpu/cpufreq/policy0"
+        assert opened[f"{policy}/scaling_max_freq"] == 11
+
 
 class TestCpuTimes(LinuxTestCase):
 
