@@ -4,91 +4,103 @@
  * found in the LICENSE file.
  */
 
-
 #include <Python.h>
-#include <sys/param.h>
+#include <kvm.h>
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
 #include <vm/vm_param.h>
-#include <devstat.h>
 #include <paths.h>
 #include <fcntl.h>
 
-#include "../../_psutil_common.h"
-#include "../../_psutil_posix.h"
-
+#include "../../arch/all/init.h"
 
 #ifndef _PATH_DEVNULL
-    #define _PATH_DEVNULL "/dev/null"
+#define _PATH_DEVNULL "/dev/null"
 #endif
+
+
+// shorter alias for psutil_sysctlbyname()
+static inline int
+sbn(const char *name, void *oldp, size_t oldlen) {
+    return psutil_sysctlbyname(name, oldp, oldlen);
+}
 
 
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    unsigned long  total;
-    unsigned int   active, inactive, wired, cached, free;
-    size_t         size = sizeof(total);
+    unsigned long _total;
+    long _buffers;
+    unsigned int _active, _inactive, _wired, _cached, _free;
+    unsigned long long total, buffers, active, inactive, wired, cached, free;
+    unsigned long long avail, used, shared;
+    double percent;
     struct vmtotal vm;
-    int            mib[] = {CTL_VM, VM_METER};
-    long           pagesize = psutil_getpagesize();
-#if __FreeBSD_version > 702101
-    long buffers;
-#else
-    int buffers;
-#endif
-    size_t buffers_size = sizeof(buffers);
+    int mib[] = {CTL_VM, VM_METER};
+    long pagesize = psutil_getpagesize();
+    PyObject *dict = PyDict_New();
 
-    if (sysctlbyname("hw.physmem", &total, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('hw.physmem')"
-        );
-    }
-    if (sysctlbyname("vm.stats.vm.v_active_count", &active, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_active_count')");
-    }
-    if (sysctlbyname("vm.stats.vm.v_inactive_count", &inactive, &size, NULL, 0))
-    {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_inactive_count')");
-    }
-    if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_wire_count')"
-        );
-    }
-    // https://github.com/giampaolo/psutil/issues/997
-    if (sysctlbyname("vm.stats.vm.v_cache_count", &cached, &size, NULL, 0)) {
-        cached = 0;
-    }
-    if (sysctlbyname("vm.stats.vm.v_free_count", &free, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_free_count')"
-        );
-    }
-    if (sysctlbyname("vfs.bufspace", &buffers, &buffers_size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vfs.bufspace')"
-        );
+    if (dict == NULL)
+        return NULL;
+
+    if (sbn("hw.physmem", &_total, sizeof(_total)) != 0)
+        goto error;
+    if (sbn("vm.stats.vm.v_active_count", &_active, sizeof(_active)) != 0)
+        goto error;
+    if (sbn("vm.stats.vm.v_inactive_count", &_inactive, sizeof(_inactive))
+        != 0)
+        goto error;
+    if (sbn("vm.stats.vm.v_wire_count", &_wired, sizeof(_wired)) != 0)
+        goto error;
+    if (sbn("vm.stats.vm.v_free_count", &_free, sizeof(_free)) != 0)
+        goto error;
+    if (sbn("vfs.bufspace", &_buffers, sizeof(_buffers)) != 0)
+        goto error;
+
+    // Optional; ignore error if not avail
+    if (sbn("vm.stats.vm.v_cache_count", &_cached, sizeof(_cached)) != 0) {
+        PyErr_Clear();
+        _cached = 0;
     }
 
-    size = sizeof(vm);
-    if (sysctl(mib, 2, &vm, &size, NULL, 0) != 0) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctl(CTL_VM | VM_METER)"
-        );
-    }
+    if (psutil_sysctl(mib, 2, &vm, sizeof(vm)) != 0)
+        goto error;
 
-    return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) total,
-        (unsigned long long) free     * pagesize,
-        (unsigned long long) active   * pagesize,
-        (unsigned long long) inactive * pagesize,
-        (unsigned long long) wired    * pagesize,
-        (unsigned long long) cached   * pagesize,
-        (unsigned long long) buffers,
-        (unsigned long long) (vm.t_vmshr + vm.t_rmshr) * pagesize  // shared
-    );
+    total = (unsigned long long)_total;
+    buffers = (unsigned long long)_buffers;
+    free = (unsigned long long)_free * pagesize;
+    active = (unsigned long long)_active * pagesize;
+    inactive = (unsigned long long)_inactive * pagesize;
+    wired = (unsigned long long)_wired * pagesize;
+    cached = (unsigned long long)_cached * pagesize;
+    shared = (unsigned long long)(vm.t_vmshr + vm.t_rmshr) * pagesize;
+
+    // matches freebsd-memory CLI:
+    // * https://people.freebsd.org/~rse/dist/freebsd-memory
+    // * https://www.cyberciti.biz/files/scripts/freebsd-memory.pl.txt
+    // matches zabbix:
+    // * https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/freebsd/memory.c#L143
+    avail = (inactive + cached + free);
+    used = (active + wired + cached);
+    percent = psutil_usage_percent((double)(total - avail), (double)total, 1);
+
+    if (!pydict_add(dict, "total", "K", total)
+        || !pydict_add(dict, "available", "K", avail)
+        || !pydict_add(dict, "percent", "d", percent)
+        || !pydict_add(dict, "used", "K", used)
+        || !pydict_add(dict, "free", "K", free)
+        || !pydict_add(dict, "active", "K", active)
+        || !pydict_add(dict, "inactive", "K", inactive)
+        || !pydict_add(dict, "buffers", "K", buffers)
+        || !pydict_add(dict, "cached", "K", cached)
+        || !pydict_add(dict, "shared", "K", shared)
+        || !pydict_add(dict, "wired", "K", wired))
+        goto error;
+
+    return dict;
+
+error:
+    Py_DECREF(dict);
+    return NULL;
 }
 
 
@@ -97,53 +109,55 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     // Return swap memory stats (see 'swapinfo' cmdline tool)
     kvm_t *kd;
     struct kvm_swap kvmsw[1];
+    unsigned long long total, used, free;
     unsigned int swapin, swapout, nodein, nodeout;
-    size_t size = sizeof(unsigned int);
     long pagesize = psutil_getpagesize();
+    double percent;
+    PyObject *dict = PyDict_New();
+
+    if (dict == NULL)
+        return NULL;
 
     kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
     if (kd == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "kvm_open() syscall failed");
-        return NULL;
+        psutil_runtime_error("kvm_open() syscall failed");
+        goto error;
     }
 
     if (kvm_getswapinfo(kd, kvmsw, 1, 0) < 0) {
         kvm_close(kd);
-        PyErr_SetString(PyExc_RuntimeError,
-                        "kvm_getswapinfo() syscall failed");
-        return NULL;
+        psutil_runtime_error("kvm_getswapinfo() syscall failed");
+        goto error;
     }
 
     kvm_close(kd);
 
-    if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_swapin)'"
-        );
-    }
-    if (sysctlbyname("vm.stats.vm.v_swapout", &swapout, &size, NULL, 0) == -1){
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_swapout)'"
-        );
-    }
-    if (sysctlbyname("vm.stats.vm.v_vnodein", &nodein, &size, NULL, 0) == -1) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_vnodein)'"
-        );
-    }
-    if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_vnodeout)'"
-        );
-    }
+    if (sbn("vm.stats.vm.v_swapin", &swapin, sizeof(swapin)) != 0)
+        goto error;
+    if (sbn("vm.stats.vm.v_swapout", &swapout, sizeof(swapout)) != 0)
+        goto error;
+    if (sbn("vm.stats.vm.v_vnodein", &nodein, sizeof(nodein)) != 0)
+        goto error;
+    if (sbn("vm.stats.vm.v_vnodeout", &nodeout, sizeof(nodeout)) != 0)
+        goto error;
 
-    return Py_BuildValue(
-        "(KKKII)",
-        (unsigned long long)kvmsw[0].ksw_total * pagesize,  // total
-        (unsigned long long)kvmsw[0].ksw_used * pagesize,  // used
-        (unsigned long long)kvmsw[0].ksw_total * pagesize - // free
-                                kvmsw[0].ksw_used * pagesize,
-        swapin + swapout,  // swap in
-        nodein + nodeout  // swap out
-    );
+    total = (unsigned long long)kvmsw[0].ksw_total * pagesize;
+    used = (unsigned long long)kvmsw[0].ksw_used * pagesize;
+    free = (unsigned long long)(kvmsw[0].ksw_total - kvmsw[0].ksw_used)
+           * pagesize;
+    percent = psutil_usage_percent((double)used, (double)total, 1);
+
+    if (!pydict_add(dict, "total", "K", total)
+        || !pydict_add(dict, "used", "K", used)
+        || !pydict_add(dict, "free", "K", free)
+        || !pydict_add(dict, "percent", "d", percent)
+        || !pydict_add(dict, "sin", "I", swapin + swapout)
+        || !pydict_add(dict, "sout", "I", nodein + nodeout))
+        goto error;
+
+    return dict;
+
+error:
+    Py_DECREF(dict);
+    return NULL;
 }

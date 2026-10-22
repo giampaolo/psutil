@@ -4,16 +4,19 @@
  * found in the LICENSE file.
  */
 
+#include "../../arch/all/init.h"
+
 #include <Python.h>
 #include <sys/syscall.h>
 #include <sched.h>
 #include <unistd.h>
 
-#include "proc.h"
-#include "../../_psutil_common.h"
+
+// ====================================================================
+// --- process priority (niceness)
+// ====================================================================
 
 
-#ifdef PSUTIL_HAVE_IOPRIO
 enum {
     IOPRIO_WHO_PROCESS = 1,
 };
@@ -35,18 +38,19 @@ ioprio_set(int which, int who, int ioprio) {
 #define IOPRIO_PRIO_DATA(mask) ((mask) & IOPRIO_PRIO_MASK)
 #define IOPRIO_PRIO_VALUE(class, data) (((class) << IOPRIO_CLASS_SHIFT) | data)
 
-
 // Return a (ioclass, iodata) Python tuple representing process I/O
 // priority.
 PyObject *
 psutil_proc_ioprio_get(PyObject *self, PyObject *args) {
     pid_t pid;
     int ioprio, ioclass, iodata;
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
+    if (pid == 0)
+        return psutil_oserror_ad("automatically set for PID 0");
     ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
     if (ioprio == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
     ioclass = IOPRIO_PRIO_CLASS(ioprio);
     iodata = IOPRIO_PRIO_DATA(ioprio);
     return Py_BuildValue("ii", ioclass, iodata);
@@ -62,22 +66,26 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
     int ioprio, ioclass, iodata;
     int retval;
 
-    if (! PyArg_ParseTuple(
-            args, _Py_PARSE_PID "ii", &pid, &ioclass, &iodata)) {
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "ii", &pid, &ioclass, &iodata)) {
         return NULL;
     }
+    if (pid == 0)
+        return psutil_oserror_ad("automatically set for PID 0");
     ioprio = IOPRIO_PRIO_VALUE(ioclass, iodata);
     retval = ioprio_set(IOPRIO_WHO_PROCESS, pid, ioprio);
     if (retval == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
     Py_RETURN_NONE;
 }
-#endif  // PSUTIL_HAVE_IOPRIO
 
 
-#ifdef PSUTIL_HAVE_CPU_AFFINITY
+// ====================================================================
+// --- process CPU affinity
+// ====================================================================
 
-// Return process CPU affinity as a Python list.
+
+#ifdef PSUTIL_HAS_CPU_AFFINITY
+// Return process CPU affinity as a list of integers.
 PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     int cpu, ncpus, count, cpucount_s;
@@ -102,10 +110,13 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
             break;
         CPU_FREE(mask);
         if (errno != EINVAL)
-            return PyErr_SetFromErrno(PyExc_OSError);
+            return psutil_oserror();
         if (ncpus > INT_MAX / 2) {
-            PyErr_SetString(PyExc_OverflowError, "could not allocate "
-                            "a large enough CPU set");
+            PyErr_SetString(
+                PyExc_OverflowError,
+                "could not allocate "
+                "a large enough CPU set"
+            );
             return NULL;
         }
         ncpus = ncpus * 2;
@@ -118,14 +129,8 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     cpucount_s = CPU_COUNT_S(setsize, mask);
     for (cpu = 0, count = cpucount_s; count; cpu++) {
         if (CPU_ISSET_S(cpu, setsize, mask)) {
-            PyObject *cpu_num = PyLong_FromLong(cpu);
-            if (cpu_num == NULL)
+            if (!pylist_append_obj(py_list, PyLong_FromLong(cpu)))
                 goto error;
-            if (PyList_Append(py_list, cpu_num)) {
-                Py_DECREF(cpu_num);
-                goto error;
-            }
-            Py_DECREF(cpu_num);
             --count;
         }
     }
@@ -155,7 +160,8 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     if (!PySequence_Check(py_cpu_set)) {
         return PyErr_Format(
             PyExc_TypeError,
-            "sequence argument expected, got %R", Py_TYPE(py_cpu_set)
+            "sequence argument expected, got %R",
+            Py_TYPE(py_cpu_set)
         );
     }
 
@@ -181,9 +187,9 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 
     len = sizeof(cpu_set);
     if (sched_setaffinity(pid, len, &cpu_set)) {
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
     }
 
     Py_RETURN_NONE;
 }
-#endif  // PSUTIL_HAVE_CPU_AFFINITY
+#endif  // PSUTIL_HAS_CPU_AFFINITY

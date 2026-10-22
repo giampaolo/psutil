@@ -42,12 +42,10 @@ wlp3s0:
          broadcast : ff:ff:ff:ff:ff:ff
 """
 
-
 import socket
 
 import psutil
-from psutil._common import bytes2human
-
+from psutil import bytes2human
 
 af_map = {
     socket.AF_INET: 'IPv4',

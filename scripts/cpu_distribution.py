@@ -6,7 +6,7 @@
 
 """Shows CPU workload split across different CPUs.
 
-$ python3 scripts/cpu_workload.py
+$ python3 scripts/cpu_distribution.py
 CPU 0     CPU 1     CPU 2     CPU 3     CPU 4     CPU 5     CPU 6     CPU 7
 19.8      20.6      18.2      15.8      6.9       17.3      5.0       20.4
 gvfsd     pytho     kwork     chrom     unity     kwork     kwork     kwork
@@ -38,7 +38,6 @@ rcu_b                                                                 cpuhp
 kwork
 """
 
-
 import collections
 import os
 import shutil
@@ -46,7 +45,6 @@ import sys
 import time
 
 import psutil
-
 
 if not hasattr(psutil.Process, "cpu_num"):
     sys.exit("platform not supported")
@@ -72,19 +70,19 @@ def main():
         clean_screen()
         cpus_percent = psutil.cpu_percent(percpu=True)
         for i in range(num_cpus):
-            print("CPU {:<6}".format(i), end="")
+            print(f"CPU {i:<6}", end="")
         if cpus_hidden:
             print(" (+ hidden)", end="")
 
         print()
         for _ in range(num_cpus):
-            print("{:<10}".format(cpus_percent.pop(0)), end="")
+            print(f"{cpus_percent.pop(0):<10}", end="")
         print()
 
         # processes
         procs = collections.defaultdict(list)
         for p in psutil.process_iter(['name', 'cpu_num']):
-            procs[p.info['cpu_num']].append(p.info['name'][:5])
+            procs[p.snapshot.cpu_num].append(p.snapshot.name[:5])
 
         curr_line = 3
         while True:
@@ -93,7 +91,7 @@ def main():
                     pname = procs[num].pop()
                 except IndexError:
                     pname = ""
-                print("{:<10}".format(pname[:10]), end="")
+                print(f"{pname[:10]:<10}", end="")
             print()
             curr_line += 1
             if curr_line >= shutil.get_terminal_size()[1]:

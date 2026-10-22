@@ -15,7 +15,6 @@ import time
 import psutil
 from psutil._common import hilite
 
-
 if not psutil.LINUX:
     sys.exit("linux only")
 

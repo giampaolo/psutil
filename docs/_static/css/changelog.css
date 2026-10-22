@@ -1,0 +1,52 @@
+/*
+ * psutil-sphinx-theme: changelog labels (:label:`critical` & co).
+ */
+
+.cl-label {
+    display: inline-block;
+    padding: 0 7px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-family: var(--font-body);
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.7;
+    white-space: nowrap;
+    vertical-align: 1px;
+}
+
+.cl-label-critical {
+    background: var(--label-critical-bg);
+    color: var(--label-critical-text);
+    border-color: var(--label-critical-border);
+}
+
+.cl-label-breaking {
+    background: var(--label-breaking-bg);
+    color: var(--label-breaking-text);
+    border-color: var(--label-breaking-border);
+}
+
+.cl-label-build-fail {
+    background: var(--label-build-fail-bg);
+    color: var(--label-build-fail-text);
+    border-color: var(--label-build-fail-border);
+}
+
+.cl-label-memleak {
+    background: var(--label-memleak-bg);
+    color: var(--label-memleak-text);
+    border-color: var(--label-memleak-border);
+}
+
+/* Printers drop backgrounds, which would leave the white text of
+   .cl-label-critical invisible. */
+@media print {
+    .cl-label {
+        background: none !important;
+        color: #000 !important;
+        border-color: #666 !important;
+    }
+}

@@ -4,44 +4,86 @@
 # https://github.com/vmactions/openbsd-vm
 # https://github.com/vmactions/netbsd-vm
 
-on: [push, pull_request]
-name: bsd-tests
+on:
+  workflow_dispatch:
+  push:
+    # only run this job if the following files are modified
+    paths: &bsd_paths
+      - ".github/workflows/bsd.yml"
+      - "Makefile"
+      - "psutil/__init__.py"
+      - "psutil/_common.py"
+      - "psutil/_ntuples.py"
+      - "psutil/_psbsd.py"
+      - "psutil/_psposix.py"
+      - "psutil/_psutil_bsd.c"
+      - "psutil/arch/*bsd*/**"
+      - "psutil/arch/*posix*/**"
+      - "psutil/arch/all/**"
+      - "pyproject.toml"
+      - "scripts/internal/install-pydeps.sh"
+      - "scripts/internal/install-sysdeps.sh"
+      - "setup.py"
+      - "tests/**"
+  pull_request:
+    paths: *bsd_paths
+name: bsd
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
   cancel-in-progress: true
 jobs:
   freebsd:
     # if: false
+    # Skip same-repo PR runs: the push event already covers them.
+    if: &skip_same_repo_pr github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run tests
         uses: vmactions/freebsd-vm@v1
         with:
+          release: "14.3"
           usesh: true
           run: |
-            PIP_BREAK_SYSTEM_PACKAGES=1 make install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks
+            make ci-install
+            pw useradd -n tester -m
+            chown -R tester .
+            su tester -c "cd $(pwd) && LOGNAME=tester make test-parallel"
+            su tester -c "cd $(pwd) && LOGNAME=tester make test-memleaks-parallel"
 
   openbsd:
     # if: false
+    if: *skip_same_repo_pr
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run tests
         uses: vmactions/openbsd-vm@v1
         with:
           usesh: true
           run: |
-            PIP_BREAK_SYSTEM_PACKAGES=1 make install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks
+            make ci-install
+            useradd -m tester
+            chown -R tester .
+            su tester -c "cd $(pwd) && make test-parallel"
+            su tester -c "cd $(pwd) && make test-memleaks-parallel"
 
   netbsd:
-    if: false  # XXX: disabled
+    # if: false
+    if: *skip_same_repo_pr
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run tests
         uses: vmactions/netbsd-vm@v1
         with:
           usesh: true
           run: |
-            PIP_BREAK_SYSTEM_PACKAGES=1 make PYTHON=python3.11 install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks
+            make ci-install
+            useradd -m tester
+            chown -R tester .
+            su tester -c "cd $(pwd) && make test-parallel"
+            su tester -c "cd $(pwd) && make test-memleaks-parallel"

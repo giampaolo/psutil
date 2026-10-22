@@ -1,0 +1,97 @@
+// Copyright (c) 2009 Giampaolo Rodola. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// Shows a helper when pressing "?" anywhere outside a form field, listing
+// the site's keyboard shortcuts. Esc / click on backdrop / second "?"
+// closes it.
+
+(function () {
+    const MODKEY = /Mac|iP(hone|ad|od)/.test(navigator.platform)
+        ? "⌘"
+        : "Ctrl";
+    const SHORTCUTS = [
+        { keys: ["Shift", "D"], desc: "Toggle dark / light mode" },
+        { keys: ["@"], desc: "Go to API definition" },
+        { keys: [MODKEY, "K"], desc: "Focus search" },
+        { keys: ["↑", "↓"], desc: "Navigate search or API results" },
+        { keys: ["Enter"], desc: "Open the highlighted entry" },
+        { keys: ["Esc"], desc: "Close menus and dialogs" },
+        { keys: ["?"], desc: "Show this help" },
+    ];
+
+    const flyout = document.createElement("div");
+    flyout.className = "shortcut-flyout";
+    flyout.setAttribute("aria-hidden", "true");
+    flyout.setAttribute("role", "dialog");
+    flyout.setAttribute("aria-modal", "true");
+    flyout.setAttribute("aria-label", "Keyboard shortcuts");
+    flyout.innerHTML = '<div class="shortcut-flyout-backdrop"></div>' +
+        '<div class="shortcut-flyout-panel" tabindex="-1">' +
+        '<div class="shortcut-flyout-title">Keyboard shortcuts</div>' +
+        '<dl class="shortcut-flyout-list">' +
+        SHORTCUTS.map((s) => {
+            return (
+                "<dt>" +
+                s.keys
+                    .map((k) => "<kbd>" + k + "</kbd>")
+                    .join(" + ") +
+                "</dt>" +
+                "<dd>" + s.desc + "</dd>"
+            );
+        }).join("") +
+        "</dl>" +
+        "</div>";
+    document.body.appendChild(flyout);
+
+    const backdrop = flyout.querySelector(".shortcut-flyout-backdrop");
+    const panel = flyout.querySelector(".shortcut-flyout-panel");
+    let lastFocused = null;
+
+    function open() {
+        lastFocused = document.activeElement;
+        flyout.classList.add("is-open");
+        flyout.setAttribute("aria-hidden", "false");
+        panel.focus();
+    }
+
+    function close() {
+        flyout.classList.remove("is-open");
+        flyout.setAttribute("aria-hidden", "true");
+        if (lastFocused && typeof lastFocused.focus === "function") {
+            lastFocused.focus();
+        }
+        lastFocused = null;
+    }
+
+    function toggle() {
+        if (flyout.classList.contains("is-open")) {
+            close();
+        }
+        else {
+            open();
+        }
+    }
+
+    backdrop.addEventListener("click", close);
+
+    document.addEventListener("keydown", (e) => {
+        const tag = document.activeElement && document.activeElement.tagName;
+        const isOpen = flyout.classList.contains("is-open");
+        if (!isOpen && (tag === "INPUT" || tag === "TEXTAREA")) {
+            return;
+        }
+        if (e.key === "?") {
+            e.preventDefault();
+            toggle();
+        }
+        else if (e.key === "Escape" && isOpen) {
+            close();
+        }
+        else if (e.key === "Tab" && isOpen) {
+            // Dialog has no focusable children: keep focus on the panel.
+            e.preventDefault();
+            panel.focus();
+        }
+    });
+})();

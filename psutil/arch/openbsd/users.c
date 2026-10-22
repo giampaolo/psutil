@@ -1,0 +1,90 @@
+/*
+ * Copyright (c) 2009, Giampaolo Rodola'.
+ * All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <Python.h>
+#include <string.h>
+#include <utmp.h>
+
+#include "../../arch/all/init.h"
+
+
+PyObject *
+psutil_users(PyObject *self, PyObject *args) {
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_username = NULL;
+    PyObject *py_tty = NULL;
+    PyObject *py_hostname = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+
+    struct utmp ut;
+    FILE *fp = NULL;
+    size_t nread;
+
+    Py_BEGIN_ALLOW_THREADS
+    fp = fopen(_PATH_UTMP, "r");
+    Py_END_ALLOW_THREADS
+    if (fp == NULL) {
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, _PATH_UTMP);
+        goto error;
+    }
+
+    while (1) {
+        Py_BEGIN_ALLOW_THREADS
+        nread = fread(&ut, sizeof(ut), 1, fp);
+        Py_END_ALLOW_THREADS
+        if (nread != 1)
+            break;
+        if (*ut.ut_name == '\0')
+            continue;
+        // utmp fields are not null-terminated when they fill the
+        // whole array.
+        py_username = PyUnicode_DecodeFSDefaultAndSize(
+            ut.ut_name, strnlen(ut.ut_name, sizeof(ut.ut_name))
+        );
+        if (!py_username)
+            goto error;
+        py_tty = PyUnicode_DecodeFSDefaultAndSize(
+            ut.ut_line, strnlen(ut.ut_line, sizeof(ut.ut_line))
+        );
+        if (!py_tty)
+            goto error;
+        py_hostname = PyUnicode_DecodeFSDefaultAndSize(
+            ut.ut_host, strnlen(ut.ut_host, sizeof(ut.ut_host))
+        );
+        if (!py_hostname)
+            goto error;
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(OOOdO)",
+                py_username,  // username
+                py_tty,  // tty
+                py_hostname,  // hostname
+                (double)ut.ut_time,  // start time
+                Py_None  // pid
+            ))
+        {
+            goto error;
+        }
+        Py_CLEAR(py_username);
+        Py_CLEAR(py_tty);
+        Py_CLEAR(py_hostname);
+    }
+
+    fclose(fp);
+    return py_retlist;
+
+error:
+    if (fp != NULL)
+        fclose(fp);
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tty);
+    Py_XDECREF(py_hostname);
+    Py_DECREF(py_retlist);
+    return NULL;
+}

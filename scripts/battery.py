@@ -13,7 +13,6 @@ status:     discharging
 plugged in: no
 """
 
-
 import sys
 
 import psutil

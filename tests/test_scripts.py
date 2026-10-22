@@ -1,0 +1,234 @@
+#!/usr/bin/env python3
+
+# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+"""Test various scripts."""
+
+import ast
+import os
+import pathlib
+import stat
+
+import pytest
+
+from psutil import LINUX
+from psutil import POSIX
+
+from . import CI_TESTING
+from . import HAS_BATTERY
+from . import HAS_PROC_MEMORY_FOOTPRINT
+from . import HAS_PROC_MEMORY_MAPS
+from . import HAS_SENSORS_BATTERY
+from . import HAS_SENSORS_FANS
+from . import HAS_SENSORS_TEMPERATURES
+from . import PYTHON_EXE
+from . import PYTHON_EXE_ENV
+from . import ROOT_DIR
+from . import PsutilTestCase
+from . import import_module_by_path
+from . import psutil
+from . import sh
+from . import skipif
+
+SCRIPTS_DIR = pathlib.Path(ROOT_DIR) / "scripts"
+INTERNAL_SCRIPTS_DIR = SCRIPTS_DIR / "internal"
+
+
+class ScriptsTestCase(PsutilTestCase):
+    scripts_dir = SCRIPTS_DIR
+
+    def assert_stdout(self, exe, *args):
+        """Execute the script, make sure it doesn't crash and prints
+        something.
+        """
+        exe = os.path.join(self.scripts_dir, exe)
+        env = PYTHON_EXE_ENV.copy()
+        env.pop("PSUTIL_DEBUG", None)  # avoid spamming to stderr
+        cmd = [PYTHON_EXE, exe, *args]
+        try:
+            out = sh(cmd, env=env).strip()
+        except RuntimeError as err:
+            if 'AccessDenied' in str(err):
+                return pytest.skip(str(err))
+            else:
+                raise
+        assert out, out
+        return out
+
+    def assert_syntax(self, exe):
+        """Check script's syntax without executing it."""
+        exe = os.path.join(self.scripts_dir, exe)
+        with open(exe, encoding="utf8") as f:
+            src = f.read()
+        ast.parse(src)
+
+
+# ===================================================================
+# --- Tests scripts in scripts/ directory
+# ===================================================================
+
+
+@skipif(
+    CI_TESTING and not os.path.exists(SCRIPTS_DIR),
+    reason="can't find scripts/ directory",
+)
+class TestExampleScripts(ScriptsTestCase):
+
+    def test_coverage(self):
+        # make sure all example scripts have a test method defined
+        meths = dir(self)
+        for name in os.listdir(SCRIPTS_DIR):
+            if name.endswith('.py') and not name.startswith("_"):
+                if 'test_' + os.path.splitext(name)[0] not in meths:
+                    # self.assert_stdout(name)
+                    return pytest.fail(
+                        "no test defined for"
+                        f" {os.path.join(SCRIPTS_DIR, name)!r} script"
+                    )
+
+    @skipif(not POSIX, reason="POSIX only")
+    def test_executable(self):
+        for root, dirs, files in os.walk(SCRIPTS_DIR):
+            for file in files:
+                if file.endswith('.py'):
+                    path = os.path.join(root, file)
+                    if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
+                        return pytest.fail(f"{path!r} is not executable")
+
+    def test_disk_usage(self):
+        self.assert_stdout('disk_usage.py')
+
+    def test_free(self):
+        self.assert_stdout('free.py')
+
+    def test_meminfo(self):
+        self.assert_stdout('meminfo.py')
+
+    def test_procinfo(self):
+        self.assert_stdout('procinfo.py', str(os.getpid()))
+
+    def test_who(self):
+        if not psutil.users():
+            return pytest.skip("no users logged in")
+        self.assert_stdout('who.py')
+
+    def test_ps(self):
+        self.assert_stdout('ps.py')
+
+    def test_pstree(self):
+        self.assert_stdout('pstree.py')
+
+    def test_netstat(self):
+        self.assert_stdout('netstat.py')
+
+    def test_ifconfig(self):
+        self.assert_stdout('ifconfig.py')
+
+    @skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
+    def test_pmap(self):
+        self.assert_stdout('pmap.py', str(os.getpid()))
+
+    @skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
+    def test_procsmem(self):
+        self.assert_syntax('procsmem.py')  # slow
+
+    def test_killall(self):
+        self.assert_syntax('killall.py')
+
+    def test_nettop(self):
+        self.assert_syntax('nettop.py')
+
+    def test_top(self):
+        self.assert_syntax('top.py')
+
+    def test_iotop(self):
+        self.assert_syntax('iotop.py')
+
+    def test_pidof(self):
+        output = self.assert_stdout('pidof.py', psutil.Process().name())
+        assert str(os.getpid()) in output
+
+    def test_winservices(self):
+        # Running it iterates over all services, which sporadically
+        # takes longer than GLOBAL_TIMEOUT on CI.
+        self.assert_syntax('winservices.py')
+
+    def test_cpu_distribution(self):
+        self.assert_syntax('cpu_distribution.py')
+
+    @skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
+    def test_temperatures(self):
+        if not psutil.sensors_temperatures():
+            return pytest.skip("no temperatures")
+        self.assert_stdout('temperatures.py')
+
+    @skipif(not HAS_SENSORS_FANS, reason="not supported")
+    def test_fans(self):
+        if not psutil.sensors_fans():
+            return pytest.skip("no fans")
+        self.assert_stdout('fans.py')
+
+    @skipif(not HAS_SENSORS_BATTERY, reason="not supported")
+    @skipif(not HAS_BATTERY, reason="no battery")
+    def test_battery(self):
+        self.assert_stdout('battery.py')
+
+    @skipif(not HAS_SENSORS_BATTERY, reason="not supported")
+    @skipif(not HAS_BATTERY, reason="no battery")
+    def test_sensors(self):
+        self.assert_stdout('sensors.py')
+
+    def test_forkstat(self):
+        self.assert_syntax('forkstat.py')
+
+
+# ===================================================================
+# --- Tests scripts in scripts/internal/ directory
+# ===================================================================
+
+
+@skipif(
+    CI_TESTING and not os.path.exists(INTERNAL_SCRIPTS_DIR),
+    reason="can't find scripts/internal/ directory",
+)
+class TestInternalScripts(ScriptsTestCase):
+    scripts_dir = INTERNAL_SCRIPTS_DIR
+
+    @staticmethod
+    def walk():
+        for root, dirs, files in os.walk(INTERNAL_SCRIPTS_DIR):
+            for file in files:
+                if file.endswith(".py"):
+                    yield os.path.join(root, file)
+
+    def test_syntax_all(self):
+        for path in self.walk():
+            with open(path, encoding="utf8") as f:
+                data = f.read()
+            ast.parse(data)
+
+    @skipif(not LINUX, reason="not on LINUX")
+    def test_root_dir(self):
+        root = pathlib.Path(ROOT_DIR).resolve()
+        for path in self.walk():
+            try:
+                mod = import_module_by_path(path)
+            except SystemExit:
+                continue
+            except ImportError as err:
+                if "pyperf" in str(err) or "requests" in str(err):
+                    continue
+                raise
+            value = getattr(mod, "ROOT_DIR", None)
+            if value is not None and pathlib.Path(value).resolve() != root:
+                return pytest.fail(
+                    f"ROOT_DIR in {path!r} is {value!r}, expected {root!r}"
+                )
+
+    def test_print_api_speed(self):
+        self.assert_stdout("print/api_speed.py", "-t", "2")
+
+    def test_print_sysinfo(self):
+        self.assert_stdout("print/sysinfo.py")

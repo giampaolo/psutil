@@ -33,15 +33,13 @@ pkts-recv               1214470               0
 import sys
 import time
 
-
 try:
     import curses
 except ImportError:
     sys.exit('platform not supported')
 
 import psutil
-from psutil._common import bytes2human
-
+from psutil import bytes2human
 
 lineno = 0
 win = curses.initscr()

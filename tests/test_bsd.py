@@ -1,0 +1,623 @@
+#!/usr/bin/env python3
+
+# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# TODO: (FreeBSD) add test for comparing connections with 'sockstat' cmd.
+
+
+"""Tests specific to all BSD platforms."""
+
+import datetime
+import os
+import re
+import time
+from unittest import mock
+
+import psutil
+from psutil import BSD
+from psutil import FREEBSD
+from psutil import NETBSD
+from psutil import OPENBSD
+from psutil import _psutil
+
+from . import HAS_BATTERY
+from . import TOLERANCE_SYS_MEM
+from . import PsutilTestCase
+from . import df
+from . import isolated
+from . import pytest
+from . import requires_cli
+from . import retry_on_failure
+from . import sh
+from . import skipif
+from . import spawn_subproc
+from . import sysctl
+from . import terminate
+
+PAGESIZE = _psutil.getpagesize() if BSD else None
+
+
+def vmstat(labels):
+    out = sh(["vmstat", "-s"], env={"LANG": "C.UTF-8"})
+    for line in out.split("\n"):
+        line = line.strip()
+        num, _, what = line.partition(" ")
+        for label in labels:
+            if label == what:
+                return int(num)
+    return pytest.skip(f"can't find {labels} in vmstat output")
+
+
+# =====================================================================
+# --- All BSD*
+# =====================================================================
+
+
+@skipif(not BSD, reason="BSD only")
+class BSDTestCase(PsutilTestCase):
+    pass
+
+
+class TestSystemAPIs(BSDTestCase):
+    """System tests common to all BSD variants."""
+
+    def test_disks(self):
+        # test psutil.disk_usage() and psutil.disk_partitions()
+        # against "df -a"
+        for part in psutil.disk_partitions(all=False):
+            usage = psutil.disk_usage(part.mountpoint)
+            dev, total, used, free, _ = df(part.mountpoint)
+            assert part.device == dev
+            assert usage.total == total
+            # 10 MB tolerance
+            if abs(usage.free - free) > 10 * 1024 * 1024:
+                return pytest.fail(f"psutil={usage.free}, df={free}")
+            if abs(usage.used - used) > 10 * 1024 * 1024:
+                return pytest.fail(f"psutil={usage.used}, df={used}")
+
+    @requires_cli("sysctl")
+    def test_cpu_count_logical(self):
+        syst = sysctl("hw.ncpu")
+        assert psutil.cpu_count(logical=True) == syst
+
+    # On NetBSD total is UVM's managed pages, which is less than
+    # physical RAM. TestNetBSDMemory.test_vmem_total covers it instead.
+    @requires_cli("sysctl")
+    @skipif(NETBSD, reason="hw.physmem is not what psutil reports")
+    def test_virtual_memory_total(self):
+        num = sysctl('hw.physmem')
+        assert num == psutil.virtual_memory().total
+
+    @requires_cli("ifconfig")
+    def test_net_if_stats(self):
+        checked = 0
+        for name, stats in psutil.net_if_stats().items():
+            try:
+                out = sh(f"ifconfig {name}")
+            except RuntimeError:
+                pass
+            else:
+                assert stats.isup == ('RUNNING' in out)
+                if "mtu" in out:
+                    assert stats.mtu == int(re.findall(r'mtu (\d+)', out)[0])
+                checked += 1
+        assert checked
+
+
+class TestProcessAPIs(BSDTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc().pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
+
+    @skipif(NETBSD, reason="-o lstart doesn't work on NETBSD")
+    def test_create_time(self):
+        output = sh(f"ps -o lstart -p {self.pid}")
+        start_ps = output.replace('STARTED', '').strip()
+        start_psutil = psutil.Process(self.pid).create_time()
+        start_psutil = time.strftime(
+            "%a %b %e %H:%M:%S %Y", time.localtime(start_psutil)
+        )
+        assert start_ps == start_psutil
+
+    def test_environ_zombie(self):
+        _parent, zombie = self.spawn_zombie()
+        with pytest.raises(psutil.ZombieProcess):
+            zombie.environ()
+
+
+class TestVmstat(BSDTestCase):
+
+    # --- virtual_memory()
+
+    def test_vmem_free(self):
+        vmstat_value = vmstat(['pages free']) * PAGESIZE
+        psutil_value = psutil.virtual_memory().free
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_active(self):
+        vmstat_value = vmstat(['pages active']) * PAGESIZE
+        psutil_value = psutil.virtual_memory().active
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_inactive(self):
+        vmstat_value = vmstat(['pages inactive']) * PAGESIZE
+        psutil_value = psutil.virtual_memory().inactive
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_cached(self):
+        # NetBSD / OpenBSD
+        vmstat_value = (
+            vmstat(['cached file pages']) + vmstat(['cached executable pages'])
+        ) * PAGESIZE
+        psutil_value = psutil.virtual_memory().cached
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_wired(self):
+        vmstat_value = vmstat(['pages wired', 'pages wired down']) * PAGESIZE
+        psutil_value = psutil.virtual_memory().wired
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    @skipif(not (OPENBSD or NETBSD), reason="NETBSD / OPENBSD only")
+    def test_vmem_shared(self):
+        out = sh("vmstat -t")
+        if "vm-sh" not in out:
+            return pytest.skip("can't find 'vm-sh' in vmstat output")
+        lines = out.splitlines()
+        headers = lines[1].split()
+        values = lines[2].split()
+        row = dict(zip(headers, values))
+        expected = int(row["vm-sh"]) * PAGESIZE
+        assert (
+            abs(psutil.virtual_memory().shared - expected) < TOLERANCE_SYS_MEM
+        )
+
+    # --- swap_memory()
+
+    def test_swap_total(self):
+        vmstat_value = vmstat(['swap pages']) * PAGESIZE
+        psutil_value = psutil.swap_memory().total
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_swap_used(self):
+        vmstat_value = vmstat(['swap pages in use']) * PAGESIZE
+        psutil_value = psutil.swap_memory().used
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_swap_sin(self):
+        vmstat_value = vmstat(['pages swapped in']) * PAGESIZE
+        psutil_value = psutil.swap_memory().sin
+        assert abs(vmstat_value - psutil_value) < 1024
+
+    def test_swap_sout(self):
+        vmstat_value = vmstat(['pages swapped out']) * PAGESIZE
+        psutil_value = psutil.swap_memory().sout
+        assert abs(vmstat_value - psutil_value) < 1024
+
+    # --- cpu_stats()
+
+    @isolated
+    @retry_on_failure
+    def test_cpu_stats_interrupts(self):
+        vmstat_value = vmstat(['device interrupts', 'interrupts'])
+        psutil_value = psutil.cpu_stats().interrupts
+        assert abs(vmstat_value - psutil_value) <= 100
+
+    @isolated
+    @retry_on_failure
+    def test_cpu_stats_soft_interrupts(self):
+        vmstat_value = vmstat(['software interrupts'])
+        psutil_value = psutil.cpu_stats().soft_interrupts
+        assert abs(vmstat_value - psutil_value) <= 100
+
+    @isolated
+    @retry_on_failure
+    def test_cpu_stats_syscalls(self):
+        vmstat_value = vmstat(['system calls', 'syscalls'])
+        psutil_value = psutil.cpu_stats().syscalls
+        assert abs(vmstat_value - psutil_value) <= 100
+
+    @isolated
+    @retry_on_failure
+    def test_cpu_stats_ctx_switches(self):
+        vmstat_value = vmstat(['cpu context switches'])
+        psutil_value = psutil.cpu_stats().ctx_switches
+        assert abs(vmstat_value - psutil_value) <= 100
+
+
+# =====================================================================
+# --- FreeBSD
+# =====================================================================
+
+
+@skipif(not FREEBSD, reason="FREEBSD only")
+class FreeBSDTestCase(PsutilTestCase):
+    pass
+
+
+class TestFreeBSDProcess(FreeBSDTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc().pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
+
+    @retry_on_failure
+    def test_memory_maps(self):
+        out = sh(f"procstat -v {self.pid}")
+        maps = psutil.Process(self.pid).memory_maps(grouped=False)
+        lines = out.split('\n')[1:]
+        while lines:
+            line = lines.pop()
+            fields = line.split()
+            _, start, stop, _perms, res = fields[:5]
+            map = maps.pop()
+            assert f"{start}-{stop}" == map.addr
+            assert int(res) * PAGESIZE == map.rss
+            if not map.path.startswith('['):
+                assert fields[10] == map.path
+
+    def test_exe(self):
+        out = sh(f"procstat -b {self.pid}")
+        assert psutil.Process(self.pid).exe() == out.split('\n')[1].split()[-1]
+
+    def test_cmdline(self):
+        out = sh(f"procstat -c {self.pid}")
+        assert ' '.join(psutil.Process(self.pid).cmdline()) == ' '.join(
+            out.split('\n')[1].split()[2:]
+        )
+
+    def test_uids_gids(self):
+        out = sh(f"procstat -s {self.pid}")
+        euid, ruid, suid, egid, rgid, sgid = out.split('\n')[1].split()[2:8]
+        p = psutil.Process(self.pid)
+        uids = p.uids()
+        gids = p.gids()
+        assert uids.real == int(ruid)
+        assert uids.effective == int(euid)
+        assert uids.saved == int(suid)
+        assert gids.real == int(rgid)
+        assert gids.effective == int(egid)
+        assert gids.saved == int(sgid)
+
+    @retry_on_failure
+    def test_ctx_switches(self):
+        tested = []
+        out = sh(f"procstat -r {self.pid}")
+        p = psutil.Process(self.pid)
+        for line in out.split('\n'):
+            line = line.lower().strip()
+            if ' voluntary context' in line:
+                pstat_value = int(line.split()[-1])
+                psutil_value = p.num_ctx_switches().voluntary
+                assert pstat_value == psutil_value
+                tested.append(None)
+            elif ' involuntary context' in line:
+                pstat_value = int(line.split()[-1])
+                psutil_value = p.num_ctx_switches().involuntary
+                assert pstat_value == psutil_value
+                tested.append(None)
+        if len(tested) != 2:
+            raise RuntimeError("couldn't find lines match in procstat out")
+
+    @retry_on_failure
+    def test_cpu_times(self):
+        tested = []
+        out = sh(f"procstat -r {self.pid}")
+        p = psutil.Process(self.pid)
+        for line in out.split('\n'):
+            line = line.lower().strip()
+            if 'user time' in line:
+                pstat_value = float('0.' + line.split()[-1].split('.')[-1])
+                psutil_value = p.cpu_times().user
+                assert pstat_value == psutil_value
+                tested.append(None)
+            elif 'system time' in line:
+                pstat_value = float('0.' + line.split()[-1].split('.')[-1])
+                psutil_value = p.cpu_times().system
+                assert pstat_value == psutil_value
+                tested.append(None)
+        if len(tested) != 2:
+            raise RuntimeError("couldn't find lines match in procstat out")
+
+
+class TestFreeBSDCpu(FreeBSDTestCase):
+    def test_cpu_count_cores(self):
+        cores = sysctl("kern.smp.cores")
+        assert psutil.cpu_count(logical=False) == cores
+
+    @retry_on_failure
+    def test_cpu_times(self):
+        clk_tck = os.sysconf("SC_CLK_TCK")
+        ticks = [int(x) for x in sysctl("kern.cp_time").split()]
+        ct = psutil.cpu_times()
+        tolerance = 0.5
+        assert abs(ct.user - ticks[0] / clk_tck) < tolerance
+        assert abs(ct.nice - ticks[1] / clk_tck) < tolerance
+        assert abs(ct.system - ticks[2] / clk_tck) < tolerance
+        assert abs(ct.irq - ticks[3] / clk_tck) < tolerance
+        assert abs(ct.idle - ticks[4] / clk_tck) < tolerance
+
+    def test_cpu_frequency_against_sysctl(self):
+        # Currently only cpu 0 is frequency is supported in FreeBSD
+        # All other cores use the same frequency.
+        sensor = "dev.cpu.0.freq"
+        try:
+            sysctl_result = int(sysctl(sensor))
+        except RuntimeError:
+            return pytest.skip("frequencies not supported by kernel")
+        assert psutil.cpu_freq().current == sysctl_result
+
+        sensor = "dev.cpu.0.freq_levels"
+        sysctl_result = sysctl(sensor)
+        # sysctl returns a string of the format:
+        # <freq_level_1>/<voltage_level_1> <freq_level_2>/<voltage_level_2>...
+        # Ordered highest available to lowest available.
+        max_freq = int(sysctl_result.split()[0].split("/")[0])
+        min_freq = int(sysctl_result.split()[-1].split("/")[0])
+        assert psutil.cpu_freq().max == max_freq
+        assert psutil.cpu_freq().min == min_freq
+
+    def test_cpu_freq_no_levels(self):
+        # No freq_levels means we can't tell min / max. It used to
+        # raise NameError, or reuse the previous CPU's values.
+        with mock.patch.object(
+            _psutil, "cpu_freq", return_value=(100, "")
+        ) as m:
+            ret = psutil._psbsd.cpu_freq()
+            assert m.called
+        for nt in ret:
+            assert nt.current == 100
+            assert nt.min is None
+            assert nt.max is None
+
+    def test_cpu_stats_ctx_switches(self):
+        assert (
+            abs(
+                psutil.cpu_stats().ctx_switches
+                - sysctl('vm.stats.sys.v_swtch')
+            )
+            < 1000
+        )
+
+    def test_cpu_stats_interrupts(self):
+        assert (
+            abs(psutil.cpu_stats().interrupts - sysctl('vm.stats.sys.v_intr'))
+            < 1000
+        )
+
+    def test_cpu_stats_soft_interrupts(self):
+        assert (
+            abs(
+                psutil.cpu_stats().soft_interrupts
+                - sysctl('vm.stats.sys.v_soft')
+            )
+            < 1000
+        )
+
+    @retry_on_failure
+    def test_cpu_stats_syscalls(self):
+        # pretty high tolerance but it looks like it's OK.
+        assert (
+            abs(psutil.cpu_stats().syscalls - sysctl('vm.stats.sys.v_syscall'))
+            < 200000
+        )
+
+
+class TestFreeBSDMemory(FreeBSDTestCase):
+    @staticmethod
+    def parse_swapinfo():
+        # the last line is always the total
+        output = sh("swapinfo -k").splitlines()[-1]
+        parts = re.split(r'\s+', output)
+
+        if not parts:
+            raise ValueError(f"Can't parse swapinfo: {output}")
+
+        # the size is in 1k units, so multiply by 1024
+        total, used, free = (int(p) * 1024 for p in parts[1:4])
+        return total, used, free
+
+    @retry_on_failure
+    def test_vmem_active(self):
+        syst = sysctl("vm.stats.vm.v_active_count") * PAGESIZE
+        assert abs(psutil.virtual_memory().active - syst) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure
+    def test_vmem_inactive(self):
+        syst = sysctl("vm.stats.vm.v_inactive_count") * PAGESIZE
+        assert abs(psutil.virtual_memory().inactive - syst) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure
+    def test_vmem_wired(self):
+        syst = sysctl("vm.stats.vm.v_wire_count") * PAGESIZE
+        assert abs(psutil.virtual_memory().wired - syst) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure
+    def test_vmem_cached(self):
+        syst = sysctl("vm.stats.vm.v_cache_count") * PAGESIZE
+        assert abs(psutil.virtual_memory().cached - syst) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure
+    def test_vmem_free(self):
+        syst = sysctl("vm.stats.vm.v_free_count") * PAGESIZE
+        assert abs(psutil.virtual_memory().free - syst) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure
+    def test_vmem_buffers(self):
+        syst = sysctl("vfs.bufspace")
+        assert abs(psutil.virtual_memory().buffers - syst) < TOLERANCE_SYS_MEM
+
+    def test_swapmem_free(self):
+        _total, _used, free = self.parse_swapinfo()
+        assert abs(psutil.swap_memory().free - free) < TOLERANCE_SYS_MEM
+
+    def test_swapmem_used(self):
+        _total, used, _free = self.parse_swapinfo()
+        assert abs(psutil.swap_memory().used - used) < TOLERANCE_SYS_MEM
+
+    def test_swapmem_total(self):
+        total, _used, _free = self.parse_swapinfo()
+        assert abs(psutil.swap_memory().total - total) < TOLERANCE_SYS_MEM
+
+
+class TestFreeBSDNetwork(FreeBSDTestCase):
+    @retry_on_failure
+    def test_net_io_counters(self):
+        out = sh("netstat -ib")
+        netstat = {}
+        for line in out.splitlines():
+            fields = line.split()
+            if len(fields) == 12 and "<Link#" in fields[2]:
+                name = fields[0]
+                netstat[name] = (int(fields[7]), int(fields[10]))
+        ps = psutil.net_io_counters(pernic=True)
+        tolerance = 1 * 1024 * 1024  # 1 MB
+        for name, (ibytes, obytes) in netstat.items():
+            if name not in ps:
+                continue
+            assert abs(ps[name].bytes_recv - ibytes) < tolerance
+            assert abs(ps[name].bytes_sent - obytes) < tolerance
+
+
+class TestFreeBSDSensors(FreeBSDTestCase):
+    @skipif(not HAS_BATTERY, reason="no battery")
+    def test_sensors_battery(self):
+        def secs2hours(secs):
+            m, _s = divmod(secs, 60)
+            h, m = divmod(m, 60)
+            return f"{int(h)}:{int(m):02}"
+
+        out = sh("acpiconf -i 0")
+        fields = {x.split('\t')[0]: x.split('\t')[-1] for x in out.split("\n")}
+        metrics = psutil.sensors_battery()
+        percent = int(fields['Remaining capacity:'].replace('%', ''))
+        remaining_time = fields['Remaining time:']
+        assert metrics.percent == percent
+        if remaining_time == 'unknown':
+            if metrics.power_plugged:
+                assert metrics.secsleft == psutil.POWER_TIME_UNLIMITED
+            else:
+                assert metrics.secsleft == psutil.POWER_TIME_UNKNOWN
+        else:
+            assert secs2hours(metrics.secsleft) == remaining_time
+
+    @skipif(not HAS_BATTERY, reason="no battery")
+    def test_sensors_battery_against_sysctl(self):
+        assert psutil.sensors_battery().percent == sysctl(
+            "hw.acpi.battery.life"
+        )
+        assert psutil.sensors_battery().power_plugged == (
+            sysctl("hw.acpi.acline") == 1
+        )
+        secsleft = psutil.sensors_battery().secsleft
+        if secsleft < 0:
+            assert sysctl("hw.acpi.battery.time") == -1
+        else:
+            assert secsleft == sysctl("hw.acpi.battery.time") * 60
+
+    @skipif(HAS_BATTERY, reason="has battery")
+    def test_sensors_battery_no_battery(self):
+        # If no battery is present one of these calls is supposed
+        # to fail, see:
+        # https://github.com/giampaolo/psutil/issues/1074
+        with pytest.raises(RuntimeError):
+            sysctl("hw.acpi.battery.life")
+        with pytest.raises(RuntimeError):
+            sysctl("hw.acpi.battery.time")
+        with pytest.raises(RuntimeError):
+            sysctl("hw.acpi.acline")
+        assert psutil.sensors_battery() is None
+
+    def test_sensors_temperatures_against_sysctl(self):
+        num_cpus = psutil.cpu_count(True)
+        for cpu in range(num_cpus):
+            sensor = f"dev.cpu.{cpu}.temperature"
+            # sysctl returns a string in the format 46.0C
+            try:
+                sysctl_result = int(float(sysctl(sensor)[:-1]))
+            except RuntimeError:
+                return pytest.skip("temperatures not supported by kernel")
+            assert (
+                abs(
+                    psutil.sensors_temperatures()["coretemp"][cpu].current
+                    - sysctl_result
+                )
+                < 10
+            )
+
+            sensor = f"dev.cpu.{cpu}.coretemp.tjmax"
+            sysctl_result = int(float(sysctl(sensor)[:-1]))
+            assert (
+                psutil.sensors_temperatures()["coretemp"][cpu].high
+                == sysctl_result
+            )
+
+
+class TestFreeBSDOtherSystemAPIs(FreeBSDTestCase):
+    def test_boot_time(self):
+        s = sysctl('kern.boottime')
+        s = s[s.find(" sec = ") + 7 :]
+        s = s[: s.find(',')]
+        btime = int(s)
+        assert btime == psutil.boot_time()
+
+
+# =====================================================================
+# --- OpenBSD
+# =====================================================================
+
+
+@skipif(not OPENBSD, reason="OPENBSD only")
+class OpenBSDTestCase(PsutilTestCase):
+    pass
+
+
+class TestOpenBSDOtherSystemAPIs(OpenBSDTestCase):
+    def test_boot_time(self):
+        s = sysctl('kern.boottime')
+        sys_bt = datetime.datetime.strptime(s, "%a %b %d %H:%M:%S %Y")
+        psutil_bt = datetime.datetime.fromtimestamp(psutil.boot_time())
+        assert sys_bt == psutil_bt
+
+
+# =====================================================================
+# --- NetBSD
+# =====================================================================
+
+
+@skipif(not NETBSD, reason="NETBSD only")
+class NetBSDTestCase(PsutilTestCase):
+    pass
+
+
+class TestNetBSDProcess(NetBSDTestCase):
+    def test_pid_0(self):
+        p = psutil.Process(0)
+        assert p.num_fds() == 0
+        assert p.open_files() == []
+
+
+class TestNetBSDMemory(NetBSDTestCase):
+    def test_vmem_total(self):
+        num = vmstat(["pages managed"])
+        assert num * PAGESIZE == psutil.virtual_memory().total
+
+    @retry_on_failure
+    def test_vmem_buffers(self):
+        # uv.filepages: file-backed pages excluding executable mappings
+        assert (
+            abs(
+                psutil.virtual_memory().buffers
+                - vmstat(["cached file pages"]) * PAGESIZE
+            )
+            < TOLERANCE_SYS_MEM
+        )

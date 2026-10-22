@@ -3,66 +3,60 @@
  * All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Retrieves system-wide open socket connections. This is based off of
- * sockstat utility source code:
- * https://github.com/freebsd/freebsd/blob/master/usr.bin/sockstat/sockstat.c
  */
+
+// Retrieves system-wide open socket connections. This is based off of
+// sockstat utility source code:
+// https://github.com/freebsd/freebsd/blob/master/usr.bin/sockstat/sockstat.c
 
 #include <Python.h>
 #include <sys/param.h>
 #include <sys/user.h>
 #include <sys/file.h>
-#include <sys/socketvar.h>    // for struct xsocket
+#include <sys/socketvar.h>  // for struct xsocket
 #include <sys/un.h>
 #include <sys/unpcb.h>
 #include <sys/sysctl.h>
-#if defined(__FreeBSD_version) && __FreeBSD_version < 800000
-#include <netinet/in_systm.h>
-#endif
-#include <netinet/in.h>   // for xinpcb struct
+#include <netinet/in.h>  // for xinpcb struct
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
-#include <netinet/tcp_var.h>   // for struct xtcpcb
-#include <arpa/inet.h>         // for inet_ntop()
+#include <netinet/tcp_var.h>  // for struct xtcpcb
+#include <arpa/inet.h>  // for inet_ntop()
 
-#include "../../_psutil_common.h"
-#include "../../_psutil_posix.h"
-
-static struct xfile *psutil_xfiles;
-static int psutil_nxfiles;
+#include "../../arch/all/init.h"
 
 
 static int
-psutil_populate_xfiles(void) {
-    size_t len;
+psutil_populate_xfiles(struct xfile **psutil_xfiles, int *psutil_nxfiles) {
+    struct xfile *new_psutil_xfiles;
+    size_t len = sizeof(struct xfile);
 
-    if ((psutil_xfiles = malloc(len = sizeof *psutil_xfiles)) == NULL) {
-        PyErr_NoMemory();
-        return 0;
-    }
-    while (sysctlbyname("kern.file", psutil_xfiles, &len, 0, 0) == -1) {
+    while (sysctlbyname("kern.file", *psutil_xfiles, &len, 0, 0) == -1) {
         if (errno != ENOMEM) {
-            PyErr_SetFromErrno(0);
-            return 0;
+            psutil_oserror();
+            return -1;
         }
         len *= 2;
-        if ((psutil_xfiles = realloc(psutil_xfiles, len)) == NULL) {
+        new_psutil_xfiles = realloc(*psutil_xfiles, len);
+        if (new_psutil_xfiles == NULL) {
             PyErr_NoMemory();
-            return 0;
+            return -1;
         }
+        *psutil_xfiles = new_psutil_xfiles;
     }
-    if (len > 0 && psutil_xfiles->xf_size != sizeof *psutil_xfiles) {
-        PyErr_Format(PyExc_RuntimeError, "struct xfile size mismatch");
-        return 0;
+    if (len > 0 && (*psutil_xfiles)->xf_size != sizeof(struct xfile)) {
+        psutil_runtime_error("struct xfile size mismatch");
+        return -1;
     }
-    psutil_nxfiles = len / sizeof *psutil_xfiles;
-    return 1;
+    *psutil_nxfiles = len / sizeof(struct xfile);
+    return 0;
 }
 
 
 static struct xfile *
-psutil_get_file_from_sock(kvaddr_t sock) {
+psutil_get_file_from_sock(
+    kvaddr_t sock, struct xfile *psutil_xfiles, int psutil_nxfiles
+) {
     struct xfile *xf;
     int n;
 
@@ -78,8 +72,12 @@ psutil_get_file_from_sock(kvaddr_t sock) {
 // https://github.com/freebsd/freebsd/blob/master/usr.bin/sockstat/sockstat.c
 static int
 psutil_gather_inet(
-        int proto, int include_v4, int include_v6, PyObject *py_retlist)
-{
+    int proto,
+    const psutil_conn_filters *filters,
+    PyObject *py_retlist,
+    struct xfile *psutil_xfiles,
+    int psutil_nxfiles
+) {
     struct xinpgen *xig, *exig;
     struct xinpcb *xip;
     struct xtcpcb *xtp;
@@ -95,7 +93,6 @@ psutil_gather_inet(
     int retry;
     int type;
 
-    PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
 
@@ -122,7 +119,7 @@ psutil_gather_inet(
             if (sysctlbyname(varname, buf, &len, NULL, 0) == 0)
                 break;
             if (errno != ENOMEM) {
-                PyErr_SetFromErrno(0);
+                psutil_oserror();
                 goto error;
             }
             bufsize *= 2;
@@ -130,7 +127,7 @@ psutil_gather_inet(
         xig = (struct xinpgen *)buf;
         exig = (struct xinpgen *)(void *)((char *)buf + len - sizeof *exig);
         if (xig->xig_len != sizeof *xig || exig->xig_len != sizeof *exig) {
-            PyErr_Format(PyExc_RuntimeError, "struct xinpgen size mismatch");
+            psutil_runtime_error("struct xinpgen size mismatch");
             goto error;
         }
     } while (xig->xig_gen != exig->xig_gen && retry--);
@@ -147,8 +144,7 @@ psutil_gather_inet(
             case IPPROTO_TCP:
                 xtp = (struct xtcpcb *)xig;
                 if (xtp->xt_len != sizeof *xtp) {
-                    PyErr_Format(PyExc_RuntimeError,
-                                 "struct xtcpcb size mismatch");
+                    psutil_runtime_error("struct xtcpcb size mismatch");
                     goto error;
                 }
                 inp = &xtp->xt_inp;
@@ -163,8 +159,7 @@ psutil_gather_inet(
             case IPPROTO_UDP:
                 xip = (struct xinpcb *)xig;
                 if (xip->xi_len != sizeof *xip) {
-                    PyErr_Format(PyExc_RuntimeError,
-                                 "struct xinpcb size mismatch");
+                    psutil_runtime_error("struct xinpcb size mismatch");
                     goto error;
                 }
 #if __FreeBSD_version >= 1200026
@@ -176,19 +171,21 @@ psutil_gather_inet(
                 status = PSUTIL_CONN_NONE;
                 break;
             default:
-                PyErr_Format(PyExc_RuntimeError, "invalid proto");
+                psutil_runtime_error("invalid proto");
                 goto error;
         }
 
         // filter
-        if ((inp->inp_vflag & INP_IPV4) && (include_v4 == 0))
+        if ((inp->inp_vflag & INP_IPV4) && !filters->v4)
             continue;
-        if ((inp->inp_vflag & INP_IPV6) && (include_v6 == 0))
+        if ((inp->inp_vflag & INP_IPV6) && !filters->v6)
             continue;
 
-        char lip[200], rip[200];
+        char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
 
-        xf = psutil_get_file_from_sock(so->xso_so);
+        xf = psutil_get_file_from_sock(
+            so->xso_so, psutil_xfiles, psutil_nxfiles
+        );
         if (xf == NULL)
             continue;
         lport = ntohs(inp->inp_lport);
@@ -215,41 +212,45 @@ psutil_gather_inet(
             py_raddr = Py_BuildValue("()");
         if (!py_raddr)
             goto error;
-        py_tuple = Py_BuildValue(
-            "iiiNNi" _Py_PARSE_PID,
-            xf->xf_fd, // fd
-            family,    // family
-            type,      // type
-            py_laddr,  // laddr
-            py_raddr,  // raddr
-            status,    // status
-            xf->xf_pid // pid
-        );
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "iiiNNi" _Py_PARSE_PID,
+                xf->xf_fd,  // fd
+                family,  // family
+                type,  // type
+                py_laddr,  // laddr
+                py_raddr,  // raddr
+                status,  // status
+                xf->xf_pid  // pid
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_CLEAR(py_tuple);
+        }
+        py_laddr = NULL;
+        py_raddr = NULL;
     }
 
     free(buf);
-    return 1;
+    return 0;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
     free(buf);
-    return 0;
+    return -1;
 }
 
 
 static int
-psutil_gather_unix(int proto, PyObject *py_retlist) {
+psutil_gather_unix(
+    int proto,
+    PyObject *py_retlist,
+    struct xfile *psutil_xfiles,
+    int psutil_nxfiles
+) {
     struct xunpgen *xug, *exug;
     struct xunpcb *xup;
     const char *varname = NULL;
-    const char *protoname = NULL;
     size_t len;
     size_t bufsize;
     void *buf;
@@ -257,17 +258,14 @@ psutil_gather_unix(int proto, PyObject *py_retlist) {
     struct sockaddr_un *sun;
     char path[PATH_MAX];
 
-    PyObject *py_tuple = NULL;
     PyObject *py_lpath = NULL;
 
     switch (proto) {
         case SOCK_STREAM:
             varname = "net.local.stream.pcblist";
-            protoname = "stream";
             break;
         case SOCK_DGRAM:
             varname = "net.local.dgram.pcblist";
-            protoname = "dgram";
             break;
     }
 
@@ -286,16 +284,15 @@ psutil_gather_unix(int proto, PyObject *py_retlist) {
             if (sysctlbyname(varname, buf, &len, NULL, 0) == 0)
                 break;
             if (errno != ENOMEM) {
-                PyErr_SetFromErrno(0);
+                psutil_oserror();
                 goto error;
             }
             bufsize *= 2;
         }
         xug = (struct xunpgen *)buf;
-        exug = (struct xunpgen *)(void *)
-            ((char *)buf + len - sizeof *exug);
+        exug = (struct xunpgen *)(void *)((char *)buf + len - sizeof *exug);
         if (xug->xug_len != sizeof *xug || exug->xug_len != sizeof *exug) {
-            PyErr_Format(PyExc_RuntimeError, "struct xinpgen size mismatch");
+            psutil_runtime_error("struct xinpgen size mismatch");
             goto error;
         }
     } while (xug->xug_gen != exug->xug_gen && retry--);
@@ -310,119 +307,126 @@ psutil_gather_unix(int proto, PyObject *py_retlist) {
         if (xup->xu_len != sizeof *xup)
             goto error;
 
-        xf = psutil_get_file_from_sock(xup->xu_socket.xso_so);
+        xf = psutil_get_file_from_sock(
+            xup->xu_socket.xso_so, psutil_xfiles, psutil_nxfiles
+        );
         if (xf == NULL)
             continue;
 
         sun = (struct sockaddr_un *)&xup->xu_addr;
-        snprintf(path, sizeof(path), "%.*s",
-                 (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
-                 sun->sun_path);
+        str_format(
+            path,
+            sizeof(path),
+            "%.*s",
+            (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
+            sun->sun_path
+        );
         py_lpath = PyUnicode_DecodeFSDefault(path);
-        if (! py_lpath)
+        if (!py_lpath)
             goto error;
 
-        py_tuple = Py_BuildValue("(iiiOsii)",
-            xf->xf_fd,         // fd
-            AF_UNIX,           // family
-            proto,             // type
-            py_lpath,          // lpath
-            "",                // rath
-            PSUTIL_CONN_NONE,  // status
-            xf->xf_pid);       // pid
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(iiiOsii)",
+                xf->xf_fd,  // fd
+                AF_UNIX,  // family
+                proto,  // type
+                py_lpath,  // lpath
+                "",  // rath
+                PSUTIL_CONN_NONE,  // status
+                xf->xf_pid  // pid
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_DECREF(py_lpath);
-        Py_DECREF(py_tuple);
+        py_lpath = NULL;
     }
 
     free(buf);
-    return 1;
+    return 0;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_lpath);
     free(buf);
-    return 0;
+    return -1;
 }
 
 
-static int
-psutil_int_in_seq(int value, PyObject *py_seq) {
-    int inseq;
-    PyObject *py_value;
-
-    py_value = PyLong_FromLong((long)value);
-    if (py_value == NULL)
-        return -1;
-    inseq = PySequence_Contains(py_seq, py_value);  // return -1 on failure
-    Py_DECREF(py_value);
-    return inseq;
-}
-
-
-PyObject*
-psutil_net_connections(PyObject* self, PyObject* args) {
-    int include_v4, include_v6, include_unix, include_tcp, include_udp;
+PyObject *
+psutil_net_connections(PyObject *self, PyObject *args) {
+    int psutil_nxfiles;
+    psutil_conn_filters filters;
+    struct xfile *psutil_xfiles;
     PyObject *py_af_filter = NULL;
     PyObject *py_type_filter = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "OO", &py_af_filter, &py_type_filter)) {
+    if (!PyArg_ParseTuple(args, "OO", &py_af_filter, &py_type_filter)) {
         goto error;
     }
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+    if (psutil_parse_conn_filters(py_af_filter, py_type_filter, &filters) != 0)
+        goto error;
+
+    psutil_xfiles = malloc(sizeof(struct xfile));
+    if (psutil_xfiles == NULL) {
+        PyErr_NoMemory();
         goto error;
     }
 
-    if ((include_v4 = psutil_int_in_seq(AF_INET, py_af_filter)) == -1)
-        goto error;
-    if ((include_v6 = psutil_int_in_seq(AF_INET6, py_af_filter)) == -1)
-        goto error;
-    if ((include_unix = psutil_int_in_seq(AF_UNIX, py_af_filter)) == -1)
-        goto error;
-    if ((include_tcp = psutil_int_in_seq(SOCK_STREAM, py_type_filter)) == -1)
-        goto error;
-    if ((include_udp = psutil_int_in_seq(SOCK_DGRAM, py_type_filter)) == -1)
-        goto error;
-
-    if (psutil_populate_xfiles() != 1)
-        goto error;
+    if (psutil_populate_xfiles(&psutil_xfiles, &psutil_nxfiles) != 0)
+        goto error_free_psutil_xfiles;
 
     // TCP
-    if (include_tcp == 1) {
+    if (filters.tcp) {
         if (psutil_gather_inet(
-                IPPROTO_TCP, include_v4, include_v6, py_retlist) == 0)
+                IPPROTO_TCP,
+                &filters,
+                py_retlist,
+                psutil_xfiles,
+                psutil_nxfiles
+            )
+            != 0)
         {
-            goto error;
+            goto error_free_psutil_xfiles;
         }
     }
     // UDP
-    if (include_udp == 1) {
+    if (filters.udp) {
         if (psutil_gather_inet(
-                IPPROTO_UDP, include_v4, include_v6, py_retlist) == 0)
+                IPPROTO_UDP,
+                &filters,
+                py_retlist,
+                psutil_xfiles,
+                psutil_nxfiles
+            )
+            != 0)
         {
-            goto error;
+            goto error_free_psutil_xfiles;
         }
     }
     // UNIX
-    if (include_unix == 1) {
-        if (psutil_gather_unix(SOCK_STREAM, py_retlist) == 0)
-           goto error;
-        if (psutil_gather_unix(SOCK_DGRAM, py_retlist) == 0)
-            goto error;
+    if (filters.unix_) {
+        if (psutil_gather_unix(
+                SOCK_STREAM, py_retlist, psutil_xfiles, psutil_nxfiles
+            )
+            != 0)
+            goto error_free_psutil_xfiles;
+        if (psutil_gather_unix(
+                SOCK_DGRAM, py_retlist, psutil_xfiles, psutil_nxfiles
+            )
+            != 0)
+            goto error_free_psutil_xfiles;
     }
 
     free(psutil_xfiles);
     return py_retlist;
 
+error_free_psutil_xfiles:
+    free(psutil_xfiles);
 error:
     Py_DECREF(py_retlist);
-    free(psutil_xfiles);
     return NULL;
 }

@@ -1,0 +1,599 @@
+#!/usr/bin/env python3
+
+# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+"""Iterate over all process PIDs and for each one of them invoke and
+test all psutil.Process() methods.
+"""
+
+import collections
+import enum
+import errno
+import os
+import stat
+import time
+import traceback
+
+import pytest
+
+import psutil
+from psutil import AIX
+from psutil import BSD
+from psutil import FREEBSD
+from psutil import LINUX
+from psutil import MACOS
+from psutil import NETBSD
+from psutil import OPENBSD
+from psutil import POSIX
+from psutil import WINDOWS
+
+from . import CI_TESTING
+from . import VALID_PROC_STATUSES
+from . import PsutilTestCase
+from . import assert_ntuple_of_nums
+from . import check_connection_ntuple
+from . import check_fun_type_hints
+from . import check_ntuple_type_hints
+from . import is_namedtuple
+from . import is_win_secure_system_proc
+from . import process_namespace
+
+API_DURATIONS = collections.Counter()
+PF_KTHREAD = 0x00200000  # include/linux/sched.h
+
+
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_makereport(item, call):
+    # Attach the timings to test_all's report, so they survive the
+    # trip from the xdist worker to the master.
+    report = yield
+    if call.when == "call" and item.nodeid.endswith("::test_all"):
+        if API_DURATIONS:
+            report.user_properties.append(
+                ("api_durations", API_DURATIONS.most_common())
+            )
+    return report
+
+
+def pytest_terminal_summary(terminalreporter):
+    """Show top slowest APIs in pytest summary."""
+    top_slowest = terminalreporter.config.getoption("durations")
+    if top_slowest is None:
+        # show them only if --durations was passed
+        return
+    for reports in terminalreporter.stats.values():
+        for report in reports:
+            for key, value in getattr(report, "user_properties", []):
+                if key == "api_durations":
+                    terminalreporter.write_sep(
+                        "=",
+                        f"test_all: slowest {top_slowest} APIs (cumulative)",
+                    )
+                    for fun_name, secs in value[:top_slowest]:
+                        line = f"{secs:.2f}s call     {fun_name}()"
+                        terminalreporter.write_line(line)
+
+
+class ProcInfo:
+    def __init__(self, pid):
+        self.pid = pid
+        self.proc = None
+        self.name = None
+        self.ppid = None
+        self.tcase = PsutilTestCase()
+
+    def is_kernel_thread(self):
+        # The kernel renames these continuously, e.g. "kworker/1:0-events"
+        # -> "kworker/1:0+events" -> "kworker/1:0-kblockd", so their name
+        # says nothing about whether it's still the same process.
+        if not LINUX:
+            return False
+        try:
+            with open(f"{psutil.PROCFS_PATH}/{self.pid}/stat", "rb") as f:
+                data = f.read()
+        except OSError:
+            return False  # process is gone; caller handles that
+        fields = data[data.rfind(b")") + 2 :].split()
+        return bool(int(fields[6]) & PF_KTHREAD)
+
+    def check_exception(self, exc):
+        assert exc.pid == self.pid
+        if (
+            exc.name is not None
+            and exc.name != self.name
+            and not self.is_kernel_thread()
+        ):
+            # The process may have renamed itself in the meantime.
+            try:
+                curname = psutil.Process(self.pid).name()
+            except psutil.Error:
+                curname = None
+            # if the name did not change then something else is wrong
+            assert curname != self.name
+        if isinstance(exc, psutil.ZombieProcess):
+            try:
+                self.tcase.assert_proc_zombie(self.proc)
+            except (psutil.NoSuchProcess, AssertionError):
+                # Prevent race conditions: if zombie disappears while
+                # assert_proc_zombie analyzes it we fail only if its
+                # PID still exists.
+                if self.pid in psutil.pids():
+                    raise
+
+            if exc.ppid is not None:
+                assert exc.ppid >= 0
+                assert exc.ppid == self.ppid
+        elif isinstance(exc, psutil.NoSuchProcess):
+            self.tcase.assert_proc_gone(self.proc)
+        str(exc)
+        repr(exc)
+
+    def safe_repr(self):
+        # repr() calls name() and status(), which may fail themselves.
+        if self.proc is None:
+            return f"pid {self.pid}"
+        try:
+            return repr(self.proc)
+        except Exception as exc:  # noqa: BLE001
+            return f"psutil.Process(pid={self.pid}, repr_error={exc!r})"
+
+    def check_wait(self):
+        if self.pid != 0:
+            try:
+                self.proc.wait(0)
+            except psutil.Error as exc:
+                self.check_exception(exc)
+
+    def call_getters(self):
+        info = {'pid': self.pid}
+        durations = {}
+        ns = process_namespace(self.proc)
+        # We don't use oneshot() because in order not to fool
+        # check_exception() in case of NSP.
+        for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
+            t = time.perf_counter()
+            try:
+                ret = fun()
+            except psutil.Error as exc:
+                self.check_exception(exc)
+                continue
+            else:
+                check_fun_type_hints(fun, ret)
+                if is_namedtuple(ret):
+                    check_ntuple_type_hints(ret)
+                info[fun_name] = ret
+            finally:
+                durations[fun_name] = time.perf_counter() - t
+        info["_durations"] = durations
+        info["_repr"] = self.safe_repr()
+        return info
+
+    def run(self):
+        try:
+            self.proc = psutil.Process(self.pid)
+        except psutil.NoSuchProcess:
+            self.tcase.assert_pid_gone(self.pid)
+            return {}
+
+        try:
+            d = self.proc.as_dict(['ppid', 'name'])
+        except psutil.NoSuchProcess:
+            self.tcase.assert_proc_gone(self.proc)
+            return {}
+
+        self.name, self.ppid = d['name'], d['ppid']
+        info = self.call_getters()
+        self.check_wait()
+        return info
+
+
+def proc_info(pid):
+    obj = ProcInfo(pid)
+    try:
+        return obj.run()
+    except Exception as exc:
+        # Attach the process repr (name + status) to any unexpected
+        # error, no matter which part of the collection raised it.
+        msg = f"proc: {obj.safe_repr()}"
+        if hasattr(exc, "add_note"):  # python 3.11+
+            exc.add_note(msg)
+            raise
+        raise RuntimeError(msg) from exc
+
+
+class TestFetchAllProcesses(PsutilTestCase):
+    """Test which iterates over all running processes and performs
+    some sanity checks against Process API's returned values.
+    Uses a process pool to get info about all processes.
+    """
+
+    def setUp(self):
+        psutil._set_debug(False)
+        if POSIX:
+            self.parent, self.zombie = self.spawn_zombie()
+
+    def tearDown(self):
+        if POSIX:
+            self.parent.terminate()
+            self.parent.wait()
+            self.zombie.wait()
+        psutil._set_debug(True)
+
+    def iter_proc_info(self):
+        ls = [proc_info(pid) for pid in psutil.pids()]
+        return ls
+
+    def test_all(self):
+        failures = []
+        durations = collections.Counter()
+        for info in self.iter_proc_info():
+            durations.update(info.pop("_durations", {}))
+            proc_repr = info.pop("_repr", None)
+            for name, value in info.items():
+                meth = getattr(self, name)
+                try:
+                    meth(value, info)
+                except Exception:  # noqa: BLE001
+                    s = '\n' + '=' * 70 + '\n'
+                    s += "FAIL: name=test_{}, pid={}, ret={}\n\n".format(
+                        name,
+                        info['pid'],
+                        repr(value),
+                    )
+                    s += f"proc={proc_repr}\n\n"
+                    s += '-' * 70
+                    s += f"\n{traceback.format_exc()}"
+                    s = "\n".join((" " * 4) + i for i in s.splitlines()) + "\n"
+                    failures.append(s)
+                else:
+                    if value not in (0, 0.0, [], None, '', {}):
+                        assert value, value
+
+        API_DURATIONS.update(durations)
+        if failures:
+            return pytest.fail(''.join(failures))
+
+    def cmdline(self, ret, info):
+        assert isinstance(ret, list)
+        for part in ret:
+            assert isinstance(part, str)
+
+    def exe(self, ret, info):
+        assert isinstance(ret, str)
+        assert ret.strip() == ret
+        if ret:
+            if WINDOWS and not ret.endswith('.exe'):
+                return  # May be "Registry", "MemCompression", ...
+            assert os.path.isabs(ret), ret
+            # Note: os.stat() may return False even if the file is there
+            # hence we skip the test, see:
+            # http://stackoverflow.com/questions/3112546/os-path-exists-lies
+            if POSIX and os.path.isfile(ret):
+                if hasattr(os, 'access') and hasattr(os, "X_OK"):
+                    # XXX: may fail on MACOS
+                    try:
+                        assert os.access(ret, os.X_OK)
+                    except AssertionError:
+                        if os.path.exists(ret) and not CI_TESTING:
+                            raise
+
+    def pid(self, ret, info):
+        assert isinstance(ret, int)
+        assert ret >= 0
+
+    def ppid(self, ret, info):
+        assert isinstance(ret, int)
+        assert ret >= 0
+        proc_info(ret)
+
+    def name(self, ret, info):
+        assert isinstance(ret, str)
+        if WINDOWS and not ret and is_win_secure_system_proc(info['pid']):
+            # https://github.com/giampaolo/psutil/issues/2338
+            return
+        # on AIX, "<exiting>" processes don't have names
+        if not AIX:
+            assert ret, repr(ret)
+
+    def create_time(self, ret, info):
+        assert isinstance(ret, float)
+        try:
+            assert ret >= 0
+        except AssertionError:
+            # XXX
+            if OPENBSD and info['status'] == psutil.STATUS_ZOMBIE:
+                pass
+            else:
+                raise
+        # this can't be taken for granted on all platforms
+        # assert ret >= psutil.boot_time())
+        # make sure returned value can be pretty printed
+        # with strftime
+        time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))
+
+    def uids(self, ret, info):
+        assert_ntuple_of_nums(ret, type_=int)
+
+    def gids(self, ret, info):
+        # note: testing all gids as above seems not to be reliable for
+        # gid == 30 (nodoby); not sure why.
+        for gid in ret:
+            assert isinstance(gid, int)
+            if not MACOS and not NETBSD:
+                assert gid >= 0
+
+    def username(self, ret, info):
+        assert isinstance(ret, str)
+        assert ret.strip() == ret
+        assert ret.strip()
+
+    def status(self, ret, info):
+        assert isinstance(ret, psutil.ProcessStatus)
+        assert ret, ret
+        assert ret != '?'  # XXX
+        assert ret in VALID_PROC_STATUSES
+
+    def io_counters(self, ret, info):
+        for field in ret:
+            assert isinstance(field, int)
+            if field != -1:
+                assert field >= 0
+
+    def ionice(self, ret, info):
+        if LINUX:
+            assert isinstance(ret.ioclass, psutil.ProcessIOPriority)
+            assert isinstance(ret.value, int)
+            assert ret.ioclass >= 0
+            assert ret.value >= 0
+        else:  # Windows, Cygwin
+            choices = [
+                psutil.IOPRIO_VERYLOW,
+                psutil.IOPRIO_LOW,
+                psutil.IOPRIO_NORMAL,
+                psutil.IOPRIO_HIGH,
+            ]
+            assert isinstance(ret, psutil.ProcessIOPriority)
+            assert ret >= 0
+            assert ret in choices
+
+    def num_threads(self, ret, info):
+        assert isinstance(ret, int)
+        if WINDOWS and ret == 0 and is_win_secure_system_proc(info['pid']):
+            # https://github.com/giampaolo/psutil/issues/2338
+            return
+        if POSIX and ret == 0 and info['pid'] == self.zombie.pid:
+            return
+        assert ret >= 1
+
+    def threads(self, ret, info):
+        assert isinstance(ret, list)
+        for t in ret:
+            assert_ntuple_of_nums(t, type_=(int, float))
+
+    def cpu_times(self, ret, info):
+        assert_ntuple_of_nums(ret)
+        # TODO: check ntuple fields
+
+    def cpu_num(self, ret, info):
+        assert isinstance(ret, int)
+        if FREEBSD and ret == -1:
+            return
+        assert ret >= 0
+        if psutil.cpu_count() == 1:
+            assert ret == 0
+        assert ret in list(range(psutil.cpu_count()))
+
+    def memory_info(self, ret, info):
+        self.check_proc_memory(ret)
+
+    def memory_extras(self, ret, info):
+        self.check_proc_memory(ret)
+
+    def memory_footprint(self, ret, info):
+        assert_ntuple_of_nums(ret, type_=int)
+
+    def open_files(self, ret, info):
+        assert isinstance(ret, list)
+        for f in ret:
+            assert isinstance(f.fd, int)
+            assert isinstance(f.path, str)
+            assert f.path.strip() == f.path
+            if WINDOWS:
+                assert f.fd == -1
+            elif LINUX:
+                assert isinstance(f.position, int)
+                assert isinstance(f.mode, str)
+                assert isinstance(f.flags, int)
+                assert f.position >= 0
+                assert f.mode in {'r', 'w', 'a', 'r+', 'a+'}
+                assert f.flags > 0
+            elif BSD and not f.path:
+                # XXX see: https://github.com/giampaolo/psutil/issues/595
+                continue
+            assert os.path.isabs(f.path), f
+            try:
+                st = os.stat(f.path)
+            except FileNotFoundError:
+                pass
+            else:
+                assert stat.S_ISREG(st.st_mode), f
+
+    def num_fds(self, ret, info):
+        assert isinstance(ret, int)
+        assert ret >= 0
+
+    def net_connections(self, ret, info):
+        assert len(ret) == len(set(ret))
+        for conn in ret:
+            check_connection_ntuple(conn)
+
+    def cwd(self, ret, info):
+        assert isinstance(ret, str)
+        assert ret.strip() == ret
+        if ret:
+            assert os.path.isabs(ret), ret
+            try:
+                st = os.stat(ret)
+            except OSError as err:
+                if WINDOWS and psutil._psplatform.is_permission_err(err):
+                    pass
+                # directory has been removed in mean time
+                elif err.errno != errno.ENOENT:
+                    raise
+            else:
+                assert stat.S_ISDIR(st.st_mode)
+
+    def cpu_affinity(self, ret, info):
+        assert isinstance(ret, list)
+        assert ret != []
+        cpus = list(range(psutil.cpu_count()))
+        for n in ret:
+            assert isinstance(n, int)
+            assert n in cpus
+
+    def terminal(self, ret, info):
+        assert isinstance(ret, (str, type(None)))
+        if ret is not None:
+            assert os.path.isabs(ret), ret
+            assert os.path.exists(ret), ret
+
+    def memory_maps(self, ret, info):
+        for nt in ret:
+            if hasattr(nt, "addr"):
+                assert isinstance(nt.addr, str)
+            if hasattr(nt, "perms"):
+                assert isinstance(nt.perms, str)
+            assert isinstance(nt.path, str)
+            for fname in nt._fields:
+                value = getattr(nt, fname)
+                if fname == 'path':
+                    if value.startswith(("[", "anon_inode:")):  # linux
+                        continue
+                    if BSD and value == "pvclock":  # seen on FreeBSD
+                        continue
+                    assert os.path.isabs(nt.path), nt.path
+                    # commented as on Linux we might get
+                    # '/foo/bar (deleted)'
+                    # assert os.path.exists(nt.path), nt.path
+                elif fname == 'addr':
+                    assert value, repr(value)
+                elif fname == 'perms':
+                    if not WINDOWS:
+                        assert value, repr(value)
+                else:
+                    assert isinstance(value, int)
+                    assert value >= 0
+
+    def num_handles(self, ret, info):
+        assert isinstance(ret, int)
+        assert ret >= 0
+
+    def page_faults(self, ret, info):
+        assert_ntuple_of_nums(ret, type_=int)
+
+    def nice(self, ret, info):
+        assert isinstance(ret, int)
+        if POSIX:
+            assert -20 <= ret <= 20, ret
+        else:
+            priorities = [
+                getattr(psutil, x)
+                for x in dir(psutil)
+                if x.endswith('_PRIORITY_CLASS')
+            ]
+            assert ret in priorities
+            assert isinstance(ret, enum.IntEnum)
+
+    def num_ctx_switches(self, ret, info):
+        assert_ntuple_of_nums(ret, type_=int)
+
+    def rlimit(self, ret, info):
+        assert isinstance(ret, tuple)
+        assert len(ret) == 2
+        assert ret[0] >= -1
+        assert ret[1] >= -1
+
+    def environ(self, ret, info):
+        assert isinstance(ret, dict)
+        for k, v in ret.items():
+            assert isinstance(k, str)
+            assert isinstance(v, str)
+
+
+class TestPidsRange(PsutilTestCase):
+    """Given pid_exists() return value for a range of PIDs which may or
+    may not exist, make sure that psutil.Process() and psutil.pids()
+    agree with pid_exists(). This guarantees that the 3 APIs are all
+    consistent with each other. See:
+    https://github.com/giampaolo/psutil/issues/2359
+
+    XXX - Note about Windows: it turns out there are some "hidden" PIDs
+    which are not returned by psutil.pids() and are also not revealed
+    by taskmgr.exe and ProcessHacker, still they can be instantiated by
+    psutil.Process() and queried. One of such PIDs is "conhost.exe".
+    Running as_dict() for it reveals that some Process() APIs
+    erroneously raise NoSuchProcess, so we know we have problem there.
+    Let's ignore this for now, since it's quite a corner case (who even
+    imagined hidden PIDs existed on Windows?).
+    """
+
+    def setUp(self):
+        psutil._set_debug(False)
+
+    def tearDown(self):
+        psutil._set_debug(True)
+
+    def test_it(self):
+        def is_linux_tid(pid):
+            try:
+                f = open(f"/proc/{pid}/status", "rb")  # noqa: SIM115
+            except FileNotFoundError:
+                return False
+            else:
+                with f:
+                    for line in f:
+                        if line.startswith(b"Tgid:"):
+                            tgid = int(line.split()[1])
+                            # If tgid and pid are different then we're
+                            # dealing with a process TID.
+                            return tgid != pid
+                    raise ValueError("'Tgid' line not found")
+
+        def check(pid):
+            # In case of failure retry up to 3 times in order to avoid
+            # race conditions, especially when running in a CI
+            # environment where PIDs may appear and disappear at any
+            # time.
+            x = 3
+            while True:
+                exists = psutil.pid_exists(pid)
+                try:
+                    if exists:
+                        psutil.Process(pid)
+                        if not WINDOWS:  # see docstring
+                            assert pid in psutil.pids()
+                    else:
+                        # On OpenBSD thread IDs can be instantiated,
+                        # and oneshot() succeeds, but other APIs fail
+                        # with EINVAL.
+                        if not OPENBSD:
+                            with pytest.raises(psutil.NoSuchProcess):
+                                psutil.Process(pid)
+                        if not WINDOWS:  # see docstring
+                            assert pid not in psutil.pids()
+                except (psutil.Error, AssertionError):
+                    x -= 1
+                    if x == 0:
+                        raise
+                else:
+                    return
+
+        for pid in range(1, 3000):
+            if LINUX and is_linux_tid(pid):
+                # On Linux a TID (thread ID) can be passed to the
+                # Process class and is querable like a PID (process
+                # ID). Skip it.
+                continue
+            check(pid)

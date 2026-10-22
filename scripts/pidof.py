@@ -11,7 +11,6 @@ $ pidof python
 1140 1138 1136 1134 1133 1129 1127 1125 1121 1120 1119
 """
 
-
 import sys
 
 import psutil
@@ -22,8 +21,8 @@ def pidof(pgname):
     return [
         str(proc.pid)
         for proc in psutil.process_iter(['name', 'cmdline'])
-        if proc.info["name"] == pgname
-        or (proc.info["cmdline"] and proc.info["cmdline"][0] == pgname)
+        if proc.snapshot.name == pgname
+        or (proc.snapshot.cmdline and proc.snapshot.cmdline[0] == pgname)
     ]
 
 

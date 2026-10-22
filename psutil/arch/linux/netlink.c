@@ -20,7 +20,7 @@
 #include <linux/netlink.h>
 #include <linux/cn_proc.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 #define RECV_BUF_SIZE 4096
@@ -37,7 +37,7 @@ psutil_netlink_proc_register(PyObject *self, PyObject *args) {
     struct cn_msg cn_msg;
     struct iovec iov[3];
 
-    if (! PyArg_ParseTuple(args, "i", &sockfd))
+    if (!PyArg_ParseTuple(args, "i", &sockfd))
         return NULL;
 
     memset(&nl_header, 0, sizeof(nl_header));
@@ -60,8 +60,7 @@ psutil_netlink_proc_register(PyObject *self, PyObject *args) {
 
     bytes_sent = writev(sockfd, iov, 3);
     if (bytes_sent == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("writev");
-        return NULL;
+        return psutil_oserror_wsyscall("writev");
     }
     if (bytes_sent != nl_header.nlmsg_len) {
         PyErr_SetString(PyExc_RuntimeError, "writev() len mismatch");
@@ -132,7 +131,8 @@ handle_message(struct cn_msg *cn_message) {
             pid = ev->event_data.exec.process_pid;
             tgid = ev->event_data.exec.process_tgid;
             break;
-        case PROC_EVENT_PTRACE:  // process via being traced via ptrace() (debug)
+        case PROC_EVENT_PTRACE:  // process via being traced via ptrace()
+                                 // (debug)
             pid = ev->event_data.exec.process_pid;
             tgid = ev->event_data.exec.process_tgid;
             break;
@@ -239,7 +239,7 @@ psutil_netlink_proc_read(PyObject *self, PyObject *args) {
 
     if (py_list == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "i", &sockfd))
+    if (!PyArg_ParseTuple(args, "i", &sockfd))
         goto error;
 
     // Receive data.
@@ -250,7 +250,7 @@ psutil_netlink_proc_read(PyObject *self, PyObject *args) {
             psutil_debug("ENOBUFS ignored");
             return py_list;
         }
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror_wsyscall("recv");
         goto error;
     }
 
@@ -258,8 +258,8 @@ psutil_netlink_proc_read(PyObject *self, PyObject *args) {
     while (NLMSG_OK(nlh, recv_len)) {
         cn_message = NLMSG_DATA(nlh);
 
-        if ((cn_message->id.idx != CN_IDX_PROC) ||
-            (cn_message->id.val != CN_VAL_PROC))
+        if ((cn_message->id.idx != CN_IDX_PROC)
+            || (cn_message->id.val != CN_VAL_PROC))
         {
             psutil_debug("CN_IDX_PROC | CN_VAL_PROC (skip)");
             continue;
@@ -271,8 +271,9 @@ psutil_netlink_proc_read(PyObject *self, PyObject *args) {
             continue;
         }
 
-        if ((nlh->nlmsg_type == NLMSG_ERROR) ||
-            (nlh->nlmsg_type == NLMSG_OVERRUN)) {
+        if ((nlh->nlmsg_type == NLMSG_ERROR)
+            || (nlh->nlmsg_type == NLMSG_OVERRUN))
+        {
             psutil_debug("NLMSG_ERROR || NLMSG_OVERRUN");
             break;
         }

@@ -9,7 +9,6 @@ psutil or third-party modules.
 """
 
 import collections
-import enum
 import functools
 import os
 import socket
@@ -17,11 +16,9 @@ import stat
 import sys
 import threading
 import warnings
-from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
-
 
 try:
     from socket import AF_INET6
@@ -34,6 +31,7 @@ except ImportError:
 
 
 PSUTIL_DEBUG = bool(os.getenv('PSUTIL_DEBUG'))
+PSUTIL_TESTING = bool(os.getenv('PSUTIL_TESTING'))
 _DEFAULT = object()
 
 # fmt: off
@@ -41,29 +39,14 @@ __all__ = [
     # OS constants
     'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'MACOS', 'OSX', 'POSIX',
     'SUNOS', 'WINDOWS',
-    # connection constants
-    'CONN_CLOSE', 'CONN_CLOSE_WAIT', 'CONN_CLOSING', 'CONN_ESTABLISHED',
-    'CONN_FIN_WAIT1', 'CONN_FIN_WAIT2', 'CONN_LAST_ACK', 'CONN_LISTEN',
-    'CONN_NONE', 'CONN_SYN_RECV', 'CONN_SYN_SENT', 'CONN_TIME_WAIT',
-    # net constants
-    'NIC_DUPLEX_FULL', 'NIC_DUPLEX_HALF', 'NIC_DUPLEX_UNKNOWN',  # noqa: F822
-    # process status constants
-    'STATUS_DEAD', 'STATUS_DISK_SLEEP', 'STATUS_IDLE', 'STATUS_LOCKED',
-    'STATUS_RUNNING', 'STATUS_SLEEPING', 'STATUS_STOPPED', 'STATUS_SUSPENDED',
-    'STATUS_TRACING_STOP', 'STATUS_WAITING', 'STATUS_WAKE_KILL',
-    'STATUS_WAKING', 'STATUS_ZOMBIE', 'STATUS_PARKED',
     # other constants
     'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
-    # named tuples
-    'pconn', 'pcputimes', 'pctxsw', 'pgids', 'pio', 'pionice', 'popenfile',
-    'pthread', 'puids', 'sconn', 'scpustats', 'sdiskio', 'sdiskpart',
-    'sdiskusage', 'snetio', 'snicaddr', 'snicstats', 'sswap', 'suser',
     # utility functions
-    'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
+    'conn_tmap', 'deprecated_method', 'isfile_strict',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
     'open_text', 'open_binary', 'cat', 'bcat',
-    'bytes2human', 'conn_to_ntuple', 'debug',
+    'bytes2human', 'conn_to_ntuple', 'debug', 'warn',
     # shell utils
     'hilite', 'term_supports_colors', 'print_color',
 ]
@@ -77,7 +60,7 @@ __all__ = [
 
 POSIX = os.name == "posix"
 WINDOWS = os.name == "nt"
-LINUX = sys.platform.startswith("linux")
+LINUX = sys.platform.startswith(("linux", "android"))
 MACOS = sys.platform.startswith("darwin")
 OSX = MACOS  # deprecated alias
 FREEBSD = sys.platform.startswith(("freebsd", "midnightbsd"))
@@ -87,144 +70,8 @@ BSD = FREEBSD or OPENBSD or NETBSD
 SUNOS = sys.platform.startswith(("sunos", "solaris"))
 AIX = sys.platform.startswith("aix")
 
-
-# ===================================================================
-# --- API constants
-# ===================================================================
-
-
-# Process.status()
-STATUS_RUNNING = "running"
-STATUS_SLEEPING = "sleeping"
-STATUS_DISK_SLEEP = "disk-sleep"
-STATUS_STOPPED = "stopped"
-STATUS_TRACING_STOP = "tracing-stop"
-STATUS_ZOMBIE = "zombie"
-STATUS_DEAD = "dead"
-STATUS_WAKE_KILL = "wake-kill"
-STATUS_WAKING = "waking"
-STATUS_IDLE = "idle"  # Linux, macOS, FreeBSD
-STATUS_LOCKED = "locked"  # FreeBSD
-STATUS_WAITING = "waiting"  # FreeBSD
-STATUS_SUSPENDED = "suspended"  # NetBSD
-STATUS_PARKED = "parked"  # Linux
-
-# Process.net_connections() and psutil.net_connections()
-CONN_ESTABLISHED = "ESTABLISHED"
-CONN_SYN_SENT = "SYN_SENT"
-CONN_SYN_RECV = "SYN_RECV"
-CONN_FIN_WAIT1 = "FIN_WAIT1"
-CONN_FIN_WAIT2 = "FIN_WAIT2"
-CONN_TIME_WAIT = "TIME_WAIT"
-CONN_CLOSE = "CLOSE"
-CONN_CLOSE_WAIT = "CLOSE_WAIT"
-CONN_LAST_ACK = "LAST_ACK"
-CONN_LISTEN = "LISTEN"
-CONN_CLOSING = "CLOSING"
-CONN_NONE = "NONE"
-
-
-# net_if_stats()
-class NicDuplex(enum.IntEnum):
-    NIC_DUPLEX_FULL = 2
-    NIC_DUPLEX_HALF = 1
-    NIC_DUPLEX_UNKNOWN = 0
-
-
-globals().update(NicDuplex.__members__)
-
-
-# sensors_battery()
-class BatteryTime(enum.IntEnum):
-    POWER_TIME_UNKNOWN = -1
-    POWER_TIME_UNLIMITED = -2
-
-
-globals().update(BatteryTime.__members__)
-
-# --- others
-
 ENCODING = sys.getfilesystemencoding()
 ENCODING_ERRS = sys.getfilesystemencodeerrors()
-
-
-# ===================================================================
-# --- namedtuples
-# ===================================================================
-
-# --- for system functions
-
-# fmt: off
-# psutil.swap_memory()
-sswap = namedtuple('sswap', ['total', 'used', 'free', 'percent', 'sin',
-                             'sout'])
-# psutil.disk_usage()
-sdiskusage = namedtuple('sdiskusage', ['total', 'used', 'free', 'percent'])
-# psutil.disk_io_counters()
-sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
-                                 'read_bytes', 'write_bytes',
-                                 'read_time', 'write_time'])
-# psutil.disk_partitions()
-sdiskpart = namedtuple('sdiskpart', ['device', 'mountpoint', 'fstype', 'opts'])
-# psutil.net_io_counters()
-snetio = namedtuple('snetio', ['bytes_sent', 'bytes_recv',
-                               'packets_sent', 'packets_recv',
-                               'errin', 'errout',
-                               'dropin', 'dropout'])
-# psutil.users()
-suser = namedtuple('suser', ['name', 'terminal', 'host', 'started', 'pid'])
-# psutil.net_connections()
-sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
-                             'status', 'pid'])
-# psutil.net_if_addrs()
-snicaddr = namedtuple('snicaddr',
-                      ['family', 'address', 'netmask', 'broadcast', 'ptp'])
-# psutil.net_if_stats()
-snicstats = namedtuple('snicstats',
-                       ['isup', 'duplex', 'speed', 'mtu', 'flags'])
-# psutil.cpu_stats()
-scpustats = namedtuple(
-    'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])
-# psutil.cpu_freq()
-scpufreq = namedtuple('scpufreq', ['current', 'min', 'max'])
-# psutil.sensors_temperatures()
-shwtemp = namedtuple(
-    'shwtemp', ['label', 'current', 'high', 'critical'])
-# psutil.sensors_battery()
-sbattery = namedtuple('sbattery', ['percent', 'secsleft', 'power_plugged'])
-# psutil.sensors_fans()
-sfan = namedtuple('sfan', ['label', 'current'])
-# fmt: on
-
-# --- for Process methods
-
-# psutil.Process.cpu_times()
-pcputimes = namedtuple(
-    'pcputimes', ['user', 'system', 'children_user', 'children_system']
-)
-# psutil.Process.open_files()
-popenfile = namedtuple('popenfile', ['path', 'fd'])
-# psutil.Process.threads()
-pthread = namedtuple('pthread', ['id', 'user_time', 'system_time'])
-# psutil.Process.uids()
-puids = namedtuple('puids', ['real', 'effective', 'saved'])
-# psutil.Process.gids()
-pgids = namedtuple('pgids', ['real', 'effective', 'saved'])
-# psutil.Process.io_counters()
-pio = namedtuple(
-    'pio', ['read_count', 'write_count', 'read_bytes', 'write_bytes']
-)
-# psutil.Process.ionice()
-pionice = namedtuple('pionice', ['ioclass', 'value'])
-# psutil.Process.ctx_switches()
-pctxsw = namedtuple('pctxsw', ['voluntary', 'involuntary'])
-# psutil.Process.net_connections()
-pconn = namedtuple(
-    'pconn', ['fd', 'family', 'type', 'laddr', 'raddr', 'status']
-)
-
-# psutil.net_connections() and psutil.Process.net_connections()
-addr = namedtuple('addr', ['ip', 'port'])
 
 
 # ===================================================================
@@ -266,7 +113,7 @@ class Error(Exception):
     __module__ = 'psutil'
 
     def _infodict(self, attrs):
-        info = collections.OrderedDict()
+        info = {}
         for name in attrs:
             value = getattr(self, name, None)
             if value or (name == "pid" and value == 0):
@@ -275,8 +122,7 @@ class Error(Exception):
 
     def __str__(self):
         # invoked on `raise Error`
-        info = self._infodict(("pid", "ppid", "name"))
-        if info:
+        if info := self._infodict(("pid", "ppid", "name")):
             details = "({})".format(
                 ", ".join([f"{k}={v!r}" for k, v in info.items()])
             )
@@ -377,49 +223,17 @@ def usage_percent(used, total, round_=None):
         return ret
 
 
-def memoize(fun):
-    """A simple memoize decorator for functions supporting (hashable)
-    positional arguments.
-    It also provides a cache_clear() function for clearing the cache:
+def cache_activate(proc):
+    """Make `memoize_when_activated` methods of *proc* start caching."""
+    proc._cache = {}
 
-    >>> @memoize
-    ... def foo()
-    ...     return 1
-        ...
-    >>> foo()
-    1
-    >>> foo.cache_clear()
-    >>>
 
-    It supports:
-     - functions
-     - classes (acts as a @singleton)
-     - staticmethods
-     - classmethods
-
-    It does NOT support:
-     - methods
-    """
-
-    @functools.wraps(fun)
-    def wrapper(*args, **kwargs):
-        key = (args, frozenset(sorted(kwargs.items())))
-        try:
-            return cache[key]
-        except KeyError:
-            try:
-                ret = cache[key] = fun(*args, **kwargs)
-            except Exception as err:  # noqa: BLE001
-                raise err from None
-            return ret
-
-    def cache_clear():
-        """Clear cache."""
-        cache.clear()
-
-    cache = {}
-    wrapper.cache_clear = cache_clear
-    return wrapper
+def cache_deactivate(proc):
+    """Stop caching and discard what was collected."""
+    try:
+        del proc._cache
+    except AttributeError:
+        pass
 
 
 def memoize_when_activated(fun):
@@ -429,7 +243,7 @@ def memoize_when_activated(fun):
     accepting no arguments.
 
     >>> class Foo:
-    ...     @memoize
+    ...     @memoize_when_activated
     ...     def foo()
     ...         print(1)
     ...
@@ -441,7 +255,7 @@ def memoize_when_activated(fun):
     1
     >>>
     >>> # activated
-    >>> foo.cache_activate(self)
+    >>> cache_activate(f)
     >>> foo()
     1
     >>> foo()
@@ -458,14 +272,14 @@ def memoize_when_activated(fun):
             # case 2: we never entered oneshot() ctx
             try:
                 return fun(self)
-            except Exception as err:  # noqa: BLE001
+            except Exception as err:
                 raise err from None
         except KeyError:
             # case 3: we entered oneshot() ctx but there's no cache
             # for this entry yet
             try:
                 ret = fun(self)
-            except Exception as err:  # noqa: BLE001
+            except Exception as err:
                 raise err from None
             try:
                 self._cache[fun] = ret
@@ -475,21 +289,6 @@ def memoize_when_activated(fun):
                 pass
         return ret
 
-    def cache_activate(proc):
-        """Activate cache. Expects a Process instance. Cache will be
-        stored as a "_cache" instance attribute.
-        """
-        proc._cache = {}
-
-    def cache_deactivate(proc):
-        """Deactivate and clear cache."""
-        try:
-            del proc._cache
-        except AttributeError:
-            pass
-
-    wrapper.cache_activate = cache_activate
-    wrapper.cache_deactivate = cache_deactivate
     return wrapper
 
 
@@ -523,7 +322,6 @@ def path_exists_strict(path):
         return True
 
 
-@memoize
 def supports_ipv6():
     """Return True if IPv6 is supported on this platform."""
     if not socket.has_ipv6 or AF_INET6 is None:
@@ -586,48 +384,53 @@ def socktype_to_enum(num):
 
 def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
     """Convert a raw connection tuple to a proper ntuple."""
+    from . import _ntuples as ntp
+    from ._enums import ConnectionStatus
+
     if fam in {socket.AF_INET, AF_INET6}:
         if laddr:
-            laddr = addr(*laddr)
+            laddr = ntp.addr(*laddr)
         if raddr:
-            raddr = addr(*raddr)
+            raddr = ntp.addr(*raddr)
     if type_ == socket.SOCK_STREAM and fam in {AF_INET, AF_INET6}:
-        status = status_map.get(status, CONN_NONE)
+        status = status_map.get(status, ConnectionStatus.CONN_NONE)
     else:
-        status = CONN_NONE  # ignore whatever C returned to us
+        status = ConnectionStatus.CONN_NONE  # ignore whatever C returned to us
     fam = sockfam_to_enum(fam)
     type_ = socktype_to_enum(type_)
     if pid is None:
-        return pconn(fd, fam, type_, laddr, raddr, status)
+        return ntp.pconn(fd, fam, type_, laddr, raddr, status)
     else:
-        return sconn(fd, fam, type_, laddr, raddr, status, pid)
+        return ntp.sconn(fd, fam, type_, laddr, raddr, status, pid)
 
 
 def broadcast_addr(addr):
     """Given the address ntuple returned by ``net_if_addrs()``
-    calculates the broadcast address.
+    calculates the broadcast address. Returns None for a single-host
+    network (/32 or /128), which has no broadcast address.
     """
     import ipaddress
 
     if not addr.address or not addr.netmask:
         return None
     if addr.family == socket.AF_INET:
-        return str(
-            ipaddress.IPv4Network(
-                f"{addr.address}/{addr.netmask}", strict=False
-            ).broadcast_address
+        net = ipaddress.IPv4Network(
+            f"{addr.address}/{addr.netmask}", strict=False
         )
-    if addr.family == socket.AF_INET6:
-        return str(
-            ipaddress.IPv6Network(
-                f"{addr.address}/{addr.netmask}", strict=False
-            ).broadcast_address
+    elif addr.family == socket.AF_INET6:
+        net = ipaddress.IPv6Network(
+            f"{addr.address}/{addr.netmask}", strict=False
         )
+    else:
+        return None
+    if net.prefixlen == net.max_prefixlen:
+        return None
+    return str(net.broadcast_address)
 
 
 def deprecated_method(replacement):
     """A decorator which can be used to mark a method as deprecated
-    'replcement' is the method name which will be called instead.
+    'replacement' is the method name which will be called instead.
     """
 
     def outer(fun):
@@ -672,7 +475,7 @@ class _WrapNumbers:
         disk disappears) this removes the entry from self.reminders.
         """
         old_dict = self.cache[name]
-        gone_keys = set(old_dict.keys()) - set(input_dict.keys())
+        gone_keys = set(old_dict) - set(input_dict)
         for gone_key in gone_keys:
             for remkey in self.reminder_keys[name][gone_key]:
                 del self.reminders[name][remkey]
@@ -814,8 +617,8 @@ def bcat(fname, fallback=_DEFAULT):
     return cat(fname, fallback=fallback, _open=open_binary)
 
 
-def bytes2human(n, format="%(value).1f%(symbol)s"):
-    """Used by various scripts. See: https://code.activestate.com/recipes/578019-bytes-to-human-human-to-bytes-converter/?in=user-4178764.
+def bytes2human(n):
+    """Convert n bytes to a human-readable string.
 
     >>> bytes2human(10000)
     '9.8K'
@@ -829,8 +632,8 @@ def bytes2human(n, format="%(value).1f%(symbol)s"):
     for symbol in reversed(symbols[1:]):
         if abs(n) >= prefix[symbol]:
             value = float(n) / prefix[symbol]
-            return format % locals()
-    return format % dict(symbol=symbols[0], value=n)
+            return f"{value:.1f}{symbol}"
+    return f"{float(n):.1f}{symbols[0]}"
 
 
 def get_procfs_path():
@@ -847,25 +650,24 @@ def decode(s):
 # =====================================================================
 
 
-@memoize
-def term_supports_colors(file=sys.stdout):  # pragma: no cover
-    if os.name == 'nt':
+@functools.lru_cache
+def term_supports_colors(force_color=False):
+    if WINDOWS:
+        return False
+    if force_color:
         return True
+    if not hasattr(sys.stdout, "isatty") or not sys.stdout.isatty():
+        return False
     try:
-        import curses
-
-        assert file.isatty()
-        curses.setupterm()
-        assert curses.tigetnum("colors") > 0
+        sys.stdout.fileno()
     except Exception:  # noqa: BLE001
         return False
-    else:
-        return True
+    return True
 
 
-def hilite(s, color=None, bold=False):  # pragma: no cover
+def hilite(s, color=None, bold=False, force_color=False):
     """Return an highlighted version of 'string'."""
-    if not term_supports_colors():
+    if not term_supports_colors(force_color=force_color):
         return s
     attr = []
     colors = dict(
@@ -875,7 +677,7 @@ def hilite(s, color=None, bold=False):  # pragma: no cover
         green='32',
         grey='37',
         lightblue='36',
-        red='91',
+        red='31',
         violet='35',
         yellow='93',
     )
@@ -883,7 +685,7 @@ def hilite(s, color=None, bold=False):  # pragma: no cover
     try:
         color = colors[color]
     except KeyError:
-        msg = f"invalid color {color!r}; choose amongst {list(colors.keys())}"
+        msg = f"invalid color {color!r}; choose amongst {list(colors)}"
         raise ValueError(msg) from None
     attr.append(color)
     if bold:
@@ -895,40 +697,9 @@ def print_color(
     s, color=None, bold=False, file=sys.stdout
 ):  # pragma: no cover
     """Print a colorized version of string."""
-    if not term_supports_colors():
-        print(s, file=file)
-    elif POSIX:
-        print(hilite(s, color, bold), file=file)
-    else:
-        import ctypes
-
-        DEFAULT_COLOR = 7
-        GetStdHandle = ctypes.windll.Kernel32.GetStdHandle
-        SetConsoleTextAttribute = (
-            ctypes.windll.Kernel32.SetConsoleTextAttribute
-        )
-
-        colors = dict(green=2, red=4, brown=6, yellow=6)
-        colors[None] = DEFAULT_COLOR
-        try:
-            color = colors[color]
-        except KeyError:
-            msg = (
-                f"invalid color {color!r}; choose between"
-                f" {list(colors.keys())!r}"
-            )
-            raise ValueError(msg) from None
-        if bold and color <= 7:
-            color += 8
-
-        handle_id = -12 if file is sys.stderr else -11
-        GetStdHandle.restype = ctypes.c_ulong
-        handle = GetStdHandle(handle_id)
-        SetConsoleTextAttribute(handle, color)
-        try:
-            print(s, file=file)
-        finally:
-            SetConsoleTextAttribute(handle, DEFAULT_COLOR)
+    if term_supports_colors():
+        s = hilite(s, color=color, bold=bold)
+    print(s, file=file, flush=True)
 
 
 def debug(msg):
@@ -948,3 +719,22 @@ def debug(msg):
         print(  # noqa: T201
             f"psutil-debug [{fname}:{lineno}]> {msg}", file=sys.stderr
         )
+
+
+def warn(msg):
+    """Emit a RuntimeWarning. Use it for events which are never
+    supposed to happen, and imply a psutil bug.
+    """
+    import inspect
+
+    fname, lineno, _, _lines, _index = inspect.getframeinfo(
+        inspect.currentframe().f_back
+    )
+    msg = f"{msg} (originated from {fname}:{lineno})"
+    if PSUTIL_TESTING:
+        msg = f"CRITICAL: {msg}"
+        raise RuntimeError(msg)
+    try:
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
+    except RuntimeWarning:
+        pass  # -W error: we never want to fail because of a warning

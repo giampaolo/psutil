@@ -1,0 +1,625 @@
+#!/usr/bin/env python3
+
+# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+"""POSIX specific tests."""
+
+import datetime
+import errno
+import os
+import re
+import subprocess
+import time
+from unittest import mock
+
+import psutil
+from psutil import AIX
+from psutil import BSD
+from psutil import LINUX
+from psutil import MACOS
+from psutil import OPENBSD
+from psutil import POSIX
+from psutil import SUNOS
+from psutil import _psposix
+from psutil import _psutil
+
+from . import AARCH64
+from . import HAS_NET_IO_COUNTERS
+from . import PYTHON_EXE
+from . import PsutilTestCase
+from . import df
+from . import is_busybox
+from . import isolated
+from . import pytest
+from . import requires_cli
+from . import retry_on_failure
+from . import sh
+from . import skip_on_access_denied
+from . import skipif
+from . import spawn_subproc
+from . import terminate
+
+if POSIX:
+    import mmap
+    import pty
+    import resource
+
+NO_UTMP = LINUX and not os.path.exists("/var/run/utmp")
+
+
+def ps(fmt, pid=None):
+    """Wrapper for calling the ps command with a little bit of cross-platform
+    support for a narrow range of features.
+    """
+    if is_busybox("ps"):
+        return pytest.skip("busybox ps lacks the needed options")
+
+    cmd = ['ps']
+
+    if LINUX:
+        cmd.append('--no-headers')
+
+    if pid is not None:
+        cmd.extend(['-p', str(pid)])
+    elif SUNOS or AIX:
+        cmd.append('-A')
+    else:
+        cmd.append('ax')
+
+    if SUNOS:
+        fmt = fmt.replace("start", "stime")
+
+    cmd.extend(['-o', fmt])
+
+    output = sh(cmd)
+
+    output = output.splitlines() if LINUX else output.splitlines()[1:]
+
+    all_output = []
+    for line in output:
+        line = line.strip()
+
+        try:
+            line = int(line)
+        except ValueError:
+            pass
+
+        all_output.append(line)
+
+    if pid is None:
+        return all_output
+    else:
+        return all_output[0]
+
+
+# ps "-o" field names differ wildly between platforms.
+# "comm" means "only executable name" but is not available on BSD platforms.
+# "args" means "command with all its arguments", and is also not available
+# on BSD platforms.
+# "command" is like "args" on most platforms, but like "comm" on AIX,
+# and not available on SUNOS.
+# so for the executable name we can use "comm" on Solaris and split "command"
+# on other platforms.
+# to get the cmdline (with args) we have to use "args" on AIX and
+# Solaris, and can use "command" on all others.
+
+
+def ps_name(pid):
+    field = "command"
+    if SUNOS:
+        field = "comm"
+    command = ps(field, pid).split()
+    return command[0]
+
+
+def ps_args(pid):
+    field = "command"
+    if AIX or SUNOS:
+        field = "args"
+    out = ps(field, pid)
+    # observed on BSD + Github CI: '/usr/local/bin/python3 -E -O (python3.9)'
+    out = re.sub(r"\(python.*?\)$", "", out)
+    return out.strip()
+
+
+def ps_rss(pid):
+    field = "rss"
+    if AIX:
+        field = "rssize"
+    return ps(field, pid)
+
+
+def ps_vsz(pid):
+    field = "vsz"
+    if AIX:
+        field = "vsize"
+    return ps(field, pid)
+
+
+def who():
+    cmd = "who -u"
+    if LINUX:
+        # psutil reads utmpx USER_PROCESS records directly. On Fedora,
+        # plain "who" can use systemd-logind and report extra records (#2653).
+        cmd += " /var/run/utmp"
+    return sh(cmd)
+
+
+@skipif(not POSIX, reason="POSIX only")
+class PosixTestCase(PsutilTestCase):
+    pass
+
+
+class TestProcessIdentity(PosixTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc(
+            [PYTHON_EXE, "-E", "-O"], stdin=subprocess.PIPE
+        ).pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
+
+    def test_ppid(self):
+        ppid_ps = ps('ppid', self.pid)
+        ppid_psutil = psutil.Process(self.pid).ppid()
+        assert ppid_ps == ppid_psutil
+
+    def test_name(self):
+        name_ps = ps_name(self.pid)
+        # remove path if there is any, from the command
+        name_ps = os.path.basename(name_ps).lower()
+        name_psutil = psutil.Process(self.pid).name().lower()
+        # ...because of how we calculate PYTHON_EXE; on MACOS this may
+        # be "pythonX.Y".
+        name_ps = re.sub(r"\d.\d", "", name_ps)
+        name_psutil = re.sub(r"\d.\d", "", name_psutil)
+        # ...may also be "python.X"
+        name_ps = re.sub(r"\d", "", name_ps)
+        name_psutil = re.sub(r"\d", "", name_psutil)
+        assert name_ps == name_psutil
+
+    def test_name_long(self):
+        # On UNIX the kernel truncates the name to the first 15
+        # characters. In such a case psutil tries to determine the
+        # full name from the cmdline.
+        name = "long-program-name"
+        cmdline = ["long-program-name-extended", "foo", "bar"]
+        with mock.patch("psutil._psplatform.Process.name", return_value=name):
+            with mock.patch(
+                "psutil._psplatform.Process.cmdline", return_value=cmdline
+            ):
+                p = psutil.Process()
+                assert p.name() == "long-program-name-extended"
+
+    def test_name_long_cmdline_ad_exc(self):
+        # Same as above but emulates a case where cmdline() raises
+        # AccessDenied in which case psutil is supposed to return
+        # the truncated name instead of crashing.
+        name = "long-program-name"
+        with mock.patch("psutil._psplatform.Process.name", return_value=name):
+            with mock.patch(
+                "psutil._psplatform.Process.cmdline",
+                side_effect=psutil.AccessDenied(0, ""),
+            ):
+                p = psutil.Process()
+                assert p.name() == "long-program-name"
+
+    def test_name_long_cmdline_nsp_exc(self):
+        # Same as above but emulates a case where cmdline() raises NSP
+        # which is supposed to propagate.
+        name = "long-program-name"
+        with mock.patch("psutil._psplatform.Process.name", return_value=name):
+            with mock.patch(
+                "psutil._psplatform.Process.cmdline",
+                side_effect=psutil.NoSuchProcess(0, ""),
+            ):
+                p = psutil.Process()
+                with pytest.raises(psutil.NoSuchProcess):
+                    p.name()
+
+    @skipif(MACOS or BSD, reason="ps -o start not available")
+    def test_create_time(self):
+        time_ps = ps('start', self.pid)
+        time_psutil = psutil.Process(self.pid).create_time()
+        time_psutil_tstamp = datetime.datetime.fromtimestamp(
+            time_psutil
+        ).strftime("%H:%M:%S")
+        # sometimes ps shows the time rounded up instead of down, so we check
+        # for both possible values
+        round_time_psutil = round(time_psutil)
+        round_time_psutil_tstamp = datetime.datetime.fromtimestamp(
+            round_time_psutil
+        ).strftime("%H:%M:%S")
+        assert time_ps in {time_psutil_tstamp, round_time_psutil_tstamp}
+
+    def test_exe(self):
+        ps_pathname = ps_name(self.pid)
+        psutil_pathname = psutil.Process(self.pid).exe()
+        try:
+            assert ps_pathname == psutil_pathname
+        except AssertionError:
+            # certain platforms such as BSD are more accurate returning:
+            # "/usr/local/bin/python3.7"
+            # ...instead of:
+            # "/usr/local/bin/python"
+            # We do not want to consider this difference in accuracy
+            # an error.
+            adjusted_psutil_pathname = psutil_pathname[: len(ps_pathname)]
+            assert ps_pathname == adjusted_psutil_pathname
+
+    # On macOS the official python installer exposes a python wrapper that
+    # executes a python executable hidden inside an application bundle inside
+    # the Python framework.
+    # There's a race condition between the ps call & the psutil call below
+    # depending on the completion of the execve call so let's retry on failure
+    @retry_on_failure
+    def test_cmdline(self):
+        ps_cmdline = ps_args(self.pid)
+        psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
+        if AARCH64 and len(ps_cmdline) < len(psutil_cmdline):
+            assert psutil_cmdline.startswith(ps_cmdline)
+        else:
+            assert ps_cmdline == psutil_cmdline
+
+    def test_terminal_pty_opened_later(self):
+        # A PTY opened after the map was cached must still resolve.
+        # See: https://github.com/giampaolo/psutil/issues/2830
+        _psposix._get_terminal_map()  # prime the cache
+        master, slave = pty.openpty()
+        self.addCleanup(os.close, master)
+        self.addCleanup(os.close, slave)
+        path = os.ttyname(slave)
+        assert _psposix.get_terminal(os.stat(path).st_rdev) == path
+
+    def test_terminal_skip_map(self):
+        # setsid() leaves the child without a controlling terminal.
+        # Such a process must not reach get_terminal().
+        p = self.spawn_psproc(start_new_session=True)
+        assert p.terminal() is None
+        with mock.patch.object(_psposix, "get_terminal") as m:
+            p.terminal()
+            assert not m.called
+
+
+class TestProcessCredentials(PosixTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc(
+            [PYTHON_EXE, "-E", "-O"], stdin=subprocess.PIPE
+        ).pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
+
+    def test_uid(self):
+        uid_ps = ps('uid', self.pid)
+        uid_psutil = psutil.Process(self.pid).uids().real
+        assert uid_ps == uid_psutil
+
+    def test_gid(self):
+        gid_ps = ps('rgid', self.pid)
+        gid_psutil = psutil.Process(self.pid).gids().real
+        assert gid_ps == gid_psutil
+
+    def test_username(self):
+        username_ps = ps('user', self.pid)
+        username_psutil = psutil.Process(self.pid).username()
+        assert username_ps == username_psutil
+
+    def test_username_no_resolution(self):
+        # Emulate a case where the system can't resolve the uid to
+        # a username in which case psutil is supposed to return
+        # the stringified uid.
+        p = psutil.Process()
+        with mock.patch("psutil.pwd.getpwuid", side_effect=KeyError) as fun:
+            assert p.username() == str(p.uids().real)
+            assert fun.called
+
+
+class TestProcessCpu(PosixTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc(
+            [PYTHON_EXE, "-E", "-O"], stdin=subprocess.PIPE
+        ).pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
+
+    # On SUNOS "ps" reads niceness /proc/pid/psinfo which returns an
+    # incorrect value (20); the real deal is getpriority(2) which
+    # returns 0; psutil relies on it, see:
+    # https://github.com/giampaolo/psutil/issues/1082
+    # AIX has the same issue
+    @skipif(SUNOS, reason="not reliable on SUNOS")
+    @skipif(AIX, reason="not reliable on AIX")
+    def test_nice(self):
+        ps_nice = ps('nice', self.pid)
+        psutil_nice = psutil.Process(self.pid).nice()
+        assert ps_nice == psutil_nice
+
+    def test_nice_pid_0(self):
+        own_nice = os.getpriority(os.PRIO_PROCESS, os.getpid())
+        with pytest.raises(PermissionError):
+            _psutil.proc_priority_get(0)
+        with pytest.raises(PermissionError):
+            _psutil.proc_priority_set(0, own_nice)
+        assert os.getpriority(os.PRIO_PROCESS, os.getpid()) == own_nice
+
+    @isolated
+    @retry_on_failure
+    def test_num_ctx_switches(self):
+        # getrusage() keeps counting threads which already exited, and
+        # /proc/pid/status only sees the live ones, so the totals drift
+        # apart for good. Compare how much each grows instead.
+        p = psutil.Process()
+        ru1 = resource.getrusage(resource.RUSAGE_SELF)
+        cws1 = p.num_ctx_switches()
+        for _ in range(100):
+            time.sleep(0.001)  # each sleep blocks, hence a switch
+        ru2 = resource.getrusage(resource.RUSAGE_SELF)
+        cws2 = p.num_ctx_switches()
+
+        tol = 50
+        if MACOS:
+            psutil_delta = (cws2.voluntary + cws2.involuntary) - (
+                cws1.voluntary + cws1.involuntary
+            )
+            ru_delta = (ru2.ru_nvcsw + ru2.ru_nivcsw) - (
+                ru1.ru_nvcsw + ru1.ru_nivcsw
+            )
+            assert psutil_delta == pytest.approx(ru_delta, abs=tol * 2)
+        else:
+            assert cws2.voluntary - cws1.voluntary == pytest.approx(
+                ru2.ru_nvcsw - ru1.ru_nvcsw, abs=tol
+            )
+            assert cws2.involuntary - cws1.involuntary == pytest.approx(
+                ru2.ru_nivcsw - ru1.ru_nivcsw, abs=tol
+            )
+
+    @retry_on_failure
+    def test_cpu_times(self):
+        ru = resource.getrusage(resource.RUSAGE_SELF)
+        cws = psutil.Process().cpu_times()
+        assert cws.user == pytest.approx(ru.ru_utime, abs=0.3)
+        assert cws.system == pytest.approx(ru.ru_stime, abs=0.3)
+
+
+class TestProcessMemory(PosixTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc(
+            [PYTHON_EXE, "-E", "-O"], stdin=subprocess.PIPE
+        ).pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
+
+    @skip_on_access_denied
+    @retry_on_failure
+    def test_rss_memory(self):
+        # give python interpreter some time to properly initialize
+        # so that the results are the same
+        time.sleep(0.1)
+        rss_ps = ps_rss(self.pid)
+        rss_psutil = psutil.Process(self.pid).memory_info()[0] / 1024
+        assert rss_ps == rss_psutil
+
+    @skip_on_access_denied
+    @retry_on_failure
+    def test_vsz_memory(self):
+        # give python interpreter some time to properly initialize
+        # so that the results are the same
+        time.sleep(0.1)
+        vsz_ps = ps_vsz(self.pid)
+        vsz_psutil = psutil.Process(self.pid).memory_info()[1] / 1024
+        assert vsz_ps == vsz_psutil
+
+    @retry_on_failure
+    @isolated
+    def test_page_faults(self):
+        ru = resource.getrusage(resource.RUSAGE_SELF)
+        pf = psutil.Process().page_faults()
+        # Minor faults may change between reads, and the kernel
+        # counters are not updated atomically, so allow some slack.
+        # Seen ~50 apart on OpenBSD.
+        assert pf.minor == pytest.approx(ru.ru_minflt, abs=100)
+        assert pf.major == pytest.approx(ru.ru_majflt, abs=5)
+
+    @skipif(not LINUX and not MACOS, reason="Linux, macOS only")
+    def test_page_faults_minor_increase(self):
+        # Access 200 new anonymous pages; each first access triggers a
+        # minor fault.
+        p = psutil.Process()
+        pf_before = p.page_faults()
+        with mmap.mmap(-1, 200 * mmap.PAGESIZE) as m:
+            for i in range(0, 200 * mmap.PAGESIZE, mmap.PAGESIZE):
+                m[i : i + 1] = b'\x00'
+        pf_after = p.page_faults()
+        assert pf_after.minor > pf_before.minor
+
+    def test_memory_peak_rss(self):
+        p = psutil.Process()
+        if LINUX:
+            rss = p.memory_info().rss
+            mem = p.memory_extras()
+        else:
+            mem = p.memory_info()
+            rss = mem.rss
+        if not hasattr(mem, "peak_rss"):
+            return pytest.skip("not supported")
+        assert mem.peak_rss >= rss
+        ru = resource.getrusage(resource.RUSAGE_SELF)
+        if LINUX:
+            # ru_maxrss is computed from the per-CPU RSS counters, which
+            # lag behind the exact value exposed as VmHWM. The gap is
+            # absolute (tens of MBs) and grows with the number of CPUs,
+            # so only compare the order of magnitude.
+            assert mem.peak_rss == pytest.approx(ru.ru_maxrss * 1024, rel=1)
+        else:
+            # ru_maxrss is in bytes on macOS, in KB everywhere else.
+            maxrss = ru.ru_maxrss if MACOS else ru.ru_maxrss * 1024
+            rss_diff = abs(mem.peak_rss - maxrss)
+            assert rss_diff <= mem.peak_rss * 0.05
+
+
+class TestSystemAPIs(PosixTestCase):
+    """Test some system APIs."""
+
+    @retry_on_failure
+    def test_pids(self):
+        # Note: this test might fail if the OS is starting/killing
+        # other processes in the meantime
+        before = set(psutil.pids())
+        pids_ps = set(ps("pid"))
+        after = set(psutil.pids())
+
+        # on MACOS and OPENBSD ps doesn't show pid 0
+        if MACOS or OPENBSD:
+            pids_ps.add(0)
+
+        only_ps = pids_ps - before - after
+        assert {x for x in only_ps if psutil._psposix.pid_exists(x)} == set()
+        assert (before & after) - pids_ps == set()
+
+    # for some reason ifconfig -a does not report all interfaces
+    # returned by psutil
+    @skipif(SUNOS, reason="unreliable on SUNOS")
+    @requires_cli("ifconfig")
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    def test_nic_names(self):
+        output = sh("ifconfig -a")
+        for nic in psutil.net_io_counters(pernic=True):
+            for line in output.split():
+                if line.startswith(nic):
+                    break
+            else:
+                return pytest.fail(
+                    f"couldn't find {nic} nic in 'ifconfig -a'"
+                    f" output\n{output}"
+                )
+
+    @skipif(is_busybox("who"), reason="busybox who has no -u option")
+    @skipif(NO_UTMP, reason="no /var/run/utmp file")
+    @retry_on_failure
+    def test_users(self):
+        out = who()
+        if not out.strip():
+            return pytest.skip("no users on this system")
+
+        susers = []
+        for line in out.splitlines():
+            user = line.split()[0]
+            terminal = line.split()[1]
+            if LINUX or MACOS:
+                pid = next(
+                    int(x) for x in reversed(line.split()) if x.isdigit()
+                )
+                susers.append((user, terminal, pid))
+            else:
+                susers.append((user, terminal))
+
+        if LINUX or MACOS:
+            pusers = [(u.name, u.terminal, u.pid) for u in psutil.users()]
+        else:
+            pusers = [(u.name, u.terminal) for u in psutil.users()]
+
+        assert len(susers) == len(pusers)
+        assert sorted(susers) == sorted(pusers)
+
+        for user in psutil.users():
+            if user.pid is not None:
+                assert user.pid > 0
+
+    @skipif(is_busybox("who"), reason="busybox who has no -u option")
+    @skipif(NO_UTMP, reason="no /var/run/utmp file")
+    @retry_on_failure
+    def test_users_started(self):
+        out = who()
+        if not out.strip():
+            return pytest.skip("no users on this system")
+        tstamp = None
+        # '2023-04-11 09:31' (Linux)
+        started = re.findall(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d", out)
+        if started:
+            tstamp = "%Y-%m-%d %H:%M"
+        else:
+            # 'Apr 10 22:27' (macOS)
+            started = re.findall(r"[A-Z][a-z][a-z] [ \d]\d \d\d:\d\d", out)
+            if started:
+                tstamp = "%b %e %H:%M"
+            else:
+                # 'Apr 10'
+                started = re.findall(r"[A-Z][a-z][a-z] [ \d]\d", out)
+                if started:
+                    tstamp = "%b %e"
+                else:
+                    # 'apr 10' (sunOS)
+                    started = re.findall(r"[a-z][a-z][a-z] [ \d]\d", out)
+                    if started:
+                        tstamp = "%b %e"
+                        started = [x.capitalize() for x in started]
+
+        if not tstamp:
+            return pytest.skip(f"cannot interpret tstamp in who output\n{out}")
+
+        for idx, u in enumerate(psutil.users()):
+            psutil_value = datetime.datetime.fromtimestamp(u.started).strftime(
+                tstamp
+            )
+            assert psutil_value == started[idx]
+
+    def test_pid_exists_let_raise(self):
+        # According to "man 2 kill" possible error values for kill
+        # are (EINVAL, EPERM, ESRCH). Test that any other errno
+        # results in an exception.
+        with mock.patch(
+            "psutil._psposix.os.kill", side_effect=OSError(errno.EBADF, "")
+        ) as m:
+            with pytest.raises(OSError):
+                psutil._psposix.pid_exists(os.getpid())
+            assert m.called
+
+    # AIX can return '-' in df output instead of numbers, e.g. for /proc
+    @skipif(AIX, reason="unreliable on AIX")
+    @retry_on_failure
+    def test_disk_usage(self):
+        tolerance = 4 * 1024 * 1024  # 4MB
+        for part in psutil.disk_partitions(all=False):
+            usage = psutil.disk_usage(part.mountpoint)
+            try:
+                _, sys_total, sys_used, sys_free, sys_percent = df(
+                    part.mountpoint
+                )
+            except RuntimeError as err:
+                # see:
+                # https://travis-ci.org/giampaolo/psutil/jobs/138338464
+                # https://travis-ci.org/giampaolo/psutil/jobs/138343361
+                err = str(err).lower()
+                if (
+                    "no such file or directory" in err
+                    or "raw devices not supported" in err
+                    or "permission denied" in err
+                ):
+                    continue
+                raise
+            else:
+                assert abs(usage.total - sys_total) < tolerance
+                assert abs(usage.used - sys_used) < tolerance
+                assert abs(usage.free - sys_free) < tolerance
+                assert abs(usage.percent - sys_percent) <= 1
+
+
+class TestMisc(PosixTestCase):
+    def test_getpagesize(self):
+        pagesize = _psutil.getpagesize()
+        assert pagesize > 0
+        assert pagesize == resource.getpagesize()
+        assert pagesize == mmap.PAGESIZE

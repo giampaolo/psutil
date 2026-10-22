@@ -1,0 +1,931 @@
+#!/usr/bin/env python3
+
+# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+"""Miscellaneous tests."""
+
+import collections
+import contextlib
+import copy
+import importlib
+import io
+import json
+import os
+import pickle
+import socket
+import subprocess
+import sys
+import textwrap
+import warnings
+from unittest import mock
+
+import psutil
+from psutil import POSIX
+from psutil import WINDOWS
+from psutil import _psutil
+from psutil._common import bcat
+from psutil._common import broadcast_addr
+from psutil._common import cache_activate
+from psutil._common import cache_deactivate
+from psutil._common import cat
+from psutil._common import debug
+from psutil._common import isfile_strict
+from psutil._common import memoize_when_activated
+from psutil._common import parse_environ_block
+from psutil._common import supports_ipv6
+from psutil._common import warn
+from psutil._common import wrap_numbers
+from psutil._ntuples import snicaddr
+
+from . import HAS_NET_IO_COUNTERS
+from . import ROOT_DIR
+from . import PsutilTestCase
+from . import import_module_by_path
+from . import process_namespace
+from . import pytest
+from . import skipif
+from . import system_namespace
+
+# ===================================================================
+# --- Test classes' repr(), str(), ...
+# ===================================================================
+
+
+class TestSpecialMethods(PsutilTestCase):
+    def test_process__repr__(self, func=repr):
+        p = psutil.Process(self.spawn_subproc().pid)
+        r = func(p)
+        assert "psutil.Process" in r
+        assert f"pid={p.pid}" in r
+        assert f"name='{p.name()}'" in r.replace("name=u'", "name='")
+        assert "status=" in r
+        assert "exitcode=" not in r
+        p.terminate()
+        p.wait()
+        r = func(p)
+        assert "status='terminated'" in r
+        assert "exitcode=" in r
+
+        with mock.patch.object(
+            psutil.Process,
+            "name",
+            side_effect=psutil.ZombieProcess(os.getpid()),
+        ):
+            p = psutil.Process()
+            r = func(p)
+            assert f"pid={p.pid}" in r
+            assert "status='zombie'" in r
+            assert "name=" not in r
+        with mock.patch.object(
+            psutil.Process,
+            "name",
+            side_effect=psutil.NoSuchProcess(os.getpid()),
+        ):
+            p = psutil.Process()
+            r = func(p)
+            assert f"pid={p.pid}" in r
+            assert "terminated" in r
+            assert "name=" not in r
+        with mock.patch.object(
+            psutil.Process,
+            "name",
+            side_effect=psutil.AccessDenied(os.getpid()),
+        ):
+            p = psutil.Process()
+            r = func(p)
+            assert f"pid={p.pid}" in r
+            assert "name=" not in r
+
+    def test_process__str__(self):
+        self.test_process__repr__(func=str)
+
+    def test_error__repr__(self):
+        assert repr(psutil.Error()) == "psutil.Error()"
+
+    def test_error__str__(self):
+        assert str(psutil.Error()) == ""
+
+    def test_no_such_process__repr__(self):
+        assert (
+            repr(psutil.NoSuchProcess(321))
+            == "psutil.NoSuchProcess(pid=321, msg='process no longer exists')"
+        )
+        assert (
+            repr(psutil.NoSuchProcess(321, name="name", msg="msg"))
+            == "psutil.NoSuchProcess(pid=321, name='name', msg='msg')"
+        )
+
+    def test_no_such_process__str__(self):
+        assert (
+            str(psutil.NoSuchProcess(321))
+            == "process no longer exists (pid=321)"
+        )
+        assert (
+            str(psutil.NoSuchProcess(321, name="name", msg="msg"))
+            == "msg (pid=321, name='name')"
+        )
+
+    def test_zombie_process__repr__(self):
+        assert (
+            repr(psutil.ZombieProcess(321))
+            == 'psutil.ZombieProcess(pid=321, msg="PID still '
+            'exists but it\'s a zombie")'
+        )
+        assert (
+            repr(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo"))
+            == "psutil.ZombieProcess(pid=321, ppid=320, name='name',"
+            " msg='foo')"
+        )
+
+    def test_zombie_process__str__(self):
+        assert (
+            str(psutil.ZombieProcess(321))
+            == "PID still exists but it's a zombie (pid=321)"
+        )
+        assert (
+            str(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo"))
+            == "foo (pid=321, ppid=320, name='name')"
+        )
+
+    def test_access_denied__repr__(self):
+        assert repr(psutil.AccessDenied(321)) == "psutil.AccessDenied(pid=321)"
+        assert (
+            repr(psutil.AccessDenied(321, name="name", msg="msg"))
+            == "psutil.AccessDenied(pid=321, name='name', msg='msg')"
+        )
+
+    def test_access_denied__str__(self):
+        assert str(psutil.AccessDenied(321)) == "(pid=321)"
+        assert (
+            str(psutil.AccessDenied(321, name="name", msg="msg"))
+            == "msg (pid=321, name='name')"
+        )
+
+    def test_timeout_expired__repr__(self):
+        assert (
+            repr(psutil.TimeoutExpired(5))
+            == "psutil.TimeoutExpired(seconds=5, msg='timeout after 5"
+            " seconds')"
+        )
+        assert (
+            repr(psutil.TimeoutExpired(5, pid=321, name="name"))
+            == "psutil.TimeoutExpired(pid=321, name='name', seconds=5, "
+            "msg='timeout after 5 seconds')"
+        )
+
+    def test_timeout_expired__str__(self):
+        assert str(psutil.TimeoutExpired(5)) == "timeout after 5 seconds"
+        assert (
+            str(psutil.TimeoutExpired(5, pid=321, name="name"))
+            == "timeout after 5 seconds (pid=321, name='name')"
+        )
+
+    def test_process_snapshot__repr__(self):
+        assert repr(psutil.ProcessSnapshot({})) == "ProcessSnapshot()"
+
+        # pid and name come first, the rest is sorted. Lists and
+        # namedtuples are cut after 4 items, strings to 60 chars.
+        nt5 = collections.namedtuple("nt5", "a b c d e")
+        snap = psutil.ProcessSnapshot({
+            "zzz": "x" * 100,
+            "name": "foo",
+            "cmdline": list(range(10)),
+            "pid": 1,
+            "memory_info": nt5(1, 2, 3, 4, 5),
+        })
+        assert repr(snap) == (
+            "ProcessSnapshot(pid=1, name='foo', cmdline=[0, 1, 2, 3, ...],"
+            " memory_info=nt5(a=1, b=2, c=3, d=4, ...),"
+            " zzz='"
+            + "x" * 27
+            + "..."
+            + "x" * 28
+            + "')"
+        )
+
+        # nesting stops at reprlib's default depth of 6
+        nt2 = collections.namedtuple("nt2", "a b")
+        nested = nt2(1, 2)
+        for _ in range(20):
+            nested = nt2(nested, 0)
+        assert repr(psutil.ProcessSnapshot({"x": nested})) == (
+            "ProcessSnapshot(x="
+            + "nt2(a=" * 6
+            + "nt2(...)"
+            + ", b=0)" * 6
+            + ")"
+        )
+
+
+# ===================================================================
+# --- Misc, generic, corner cases
+# ===================================================================
+
+
+class TestMisc(PsutilTestCase):
+    def test__all__(self):
+        dir_psutil = dir(psutil)
+        # assert there's no duplicates
+        assert len(dir_psutil) == len(set(dir_psutil))
+        for name in dir_psutil:
+            if name in {
+                'debug',
+                'warn',
+                'tests',
+                'test',
+                'PermissionError',
+                'ProcessLookupError',
+            }:
+                continue
+            if not name.startswith('_'):
+                try:
+                    __import__(name)
+                except ImportError:
+                    if name not in psutil.__all__:
+                        fun = getattr(psutil, name)
+                        if fun is None:
+                            continue
+                        if (
+                            fun.__doc__ is not None
+                            and 'deprecated' not in fun.__doc__.lower()
+                        ):
+                            return pytest.fail(
+                                f"{name!r} not in psutil.__all__"
+                            )
+
+        # Import 'star' will break if __all__ is inconsistent, see:
+        # https://github.com/giampaolo/psutil/issues/656
+        # Can't do `from psutil import *` as it won't work
+        # so we simply iterate over __all__.
+        for name in psutil.__all__:
+            assert name in dir_psutil
+
+    def test_version(self):
+        assert (
+            '.'.join([str(x) for x in psutil.version_info])
+            == psutil.__version__
+        )
+
+    def test_sanity_version_check(self):
+        # see: https://github.com/giampaolo/psutil/issues/564
+        with mock.patch.object(_psutil, "version", return_value="0.0.0"):
+            with pytest.raises(ImportError) as cm:
+                importlib.reload(psutil)
+            assert "version conflict" in str(cm.value).lower()
+
+    def test_reload_keeps_all(self):
+        # A reload reuses the module dict, so the enum constants are
+        # already there and used to not make it back into __all__.
+        before = sorted(psutil.__all__)
+        importlib.reload(psutil)
+        assert sorted(psutil.__all__) == before
+
+    def test_check_pid_range(self):
+        with pytest.raises(OverflowError):
+            _psutil.check_pid_range(2**128)
+        with pytest.raises(psutil.NoSuchProcess):
+            psutil.Process(2**128)
+
+
+# ===================================================================
+# --- Serialization
+# ===================================================================
+
+
+class TestSerialization(PsutilTestCase):
+    @staticmethod
+    def check(ret):
+        if isinstance(ret, Exception):
+            b = pickle.loads(pickle.dumps(ret))
+            assert type(b) is type(ret)
+            assert vars(b) == vars(ret)
+            return
+
+        json.loads(json.dumps(ret))
+
+        a = pickle.dumps(ret)
+        b = pickle.loads(a)
+        assert ret == b
+
+    def test_process_apis(self):
+        proc = psutil.Process()
+        self.check(psutil.Process().as_dict())
+
+        ns = process_namespace(proc)
+        for fun, name in ns.iter(ns.getters, clear_cache=True):
+            with self.subTest(proc=str(proc), name=name):
+                try:
+                    ret = fun()
+                except psutil.Error as err:
+                    self.check(err)
+                else:
+                    self.check(ret)
+
+    def test_system_apis(self):
+        ns = system_namespace()
+        for fun, name in ns.iter(ns.getters):
+            if name in {"win_service_iter", "win_service_get"}:
+                continue
+            with self.subTest(name=name):
+                try:
+                    ret = fun()
+                except psutil.AccessDenied as err:
+                    self.check(err)
+                else:
+                    self.check(ret)
+
+    def test_exceptions(self):
+        self.check(psutil.NoSuchProcess(pid=4567, name='name', msg='msg'))
+        self.check(
+            psutil.ZombieProcess(pid=4567, name='name', ppid=42, msg='msg')
+        )
+        self.check(psutil.AccessDenied(pid=123, name='name', msg='msg'))
+        self.check(psutil.TimeoutExpired(seconds=33, pid=4567, name='name'))
+
+    def test_process_snapshot(self):
+        snap = next(psutil.process_iter(attrs=["pid", "name"])).snapshot
+        json.loads(json.dumps(snap.as_dict()))
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            b = pickle.loads(pickle.dumps(snap, proto))
+            assert b == snap
+            assert vars(b) is not vars(snap)
+        for fun in (copy.copy, copy.deepcopy):
+            b = fun(snap)
+            assert b == snap
+            assert vars(b) is not vars(snap)
+
+
+# ===================================================================
+# --- C extension
+# ===================================================================
+
+
+class TestCExtension(PsutilTestCase):
+
+    def test_exceptions_survive_reimport(self):
+        # PEP 489 multi-phase init re-runs the C exec slot on re-import;
+        # the C exceptions are cached in process-global vars so their
+        # identity survives. Run in a subprocess: re-importing the
+        # module (del from sys.modules + import) mutates global state and
+        # would leak into other tests.
+        attrs = (
+            ["TimeoutExpired", "TimeoutAbandoned"]
+            if WINDOWS
+            else ["ZombieProcessError"]
+        )
+        code = textwrap.dedent(f"""
+            import importlib
+            import sys
+
+            from psutil import _psutil
+
+            attrs = {attrs!r}
+            before = {{a: getattr(_psutil, a) for a in attrs}}
+            del sys.modules[_psutil.__name__]
+            new = importlib.import_module(_psutil.__name__)
+            for a in attrs:
+                assert getattr(new, a) is before[a], a
+        """)
+        subprocess.check_output(
+            [sys.executable, "-c", code], stderr=subprocess.STDOUT
+        )
+
+
+# ===================================================================
+# --- psutil/_common.py utils
+# ===================================================================
+
+
+class TestCommonModule(PsutilTestCase):
+    def test_memoize_when_activated(self):
+        class Foo:
+            @memoize_when_activated
+            def foo(self):
+                calls.append(None)
+
+        f = Foo()
+        calls = []
+        f.foo()
+        f.foo()
+        assert len(calls) == 2
+
+        # activate
+        calls = []
+        cache_activate(f)
+        f.foo()
+        f.foo()
+        assert len(calls) == 1
+
+        # deactivate
+        calls = []
+        cache_deactivate(f)
+        f.foo()
+        f.foo()
+        assert len(calls) == 2
+
+    def test_parse_environ_block(self):
+        def k(s):
+            return s.upper() if WINDOWS else s
+
+        assert parse_environ_block("a=1\0") == {k("a"): "1"}
+        assert parse_environ_block("a=1\0b=2\0\0") == {
+            k("a"): "1",
+            k("b"): "2",
+        }
+        assert parse_environ_block("a=1\0b=\0\0") == {k("a"): "1", k("b"): ""}
+        # ignore everything after \0\0
+        assert parse_environ_block("a=1\0b=2\0\0c=3\0") == {
+            k("a"): "1",
+            k("b"): "2",
+        }
+        # ignore everything that is not an assignment
+        assert parse_environ_block("xxx\0a=1\0") == {k("a"): "1"}
+        assert parse_environ_block("a=1\0=b=2\0") == {k("a"): "1"}
+        # do not fail if the block is incomplete
+        assert parse_environ_block("a=1\0b=2") == {k("a"): "1"}
+
+    def test_supports_ipv6(self):
+        if supports_ipv6():
+            with mock.patch('psutil._common.socket') as s:
+                s.has_ipv6 = False
+                assert not supports_ipv6()
+
+            with mock.patch(
+                'psutil._common.socket.socket', side_effect=OSError
+            ) as s:
+                assert not supports_ipv6()
+                assert s.called
+
+            with mock.patch(
+                'psutil._common.socket.socket', side_effect=socket.gaierror
+            ) as s:
+                assert not supports_ipv6()
+                assert s.called
+
+            with mock.patch(
+                'psutil._common.socket.socket.bind',
+                side_effect=socket.gaierror,
+            ) as s:
+                assert not supports_ipv6()
+                assert s.called
+        else:
+            with pytest.raises(OSError):
+                sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+                try:
+                    sock.bind(("::1", 0))
+                finally:
+                    sock.close()
+
+    def test_isfile_strict(self):
+        this_file = os.path.abspath(__file__)
+        assert isfile_strict(this_file)
+        assert not isfile_strict(os.path.dirname(this_file))
+        with mock.patch('psutil._common.os.stat', side_effect=PermissionError):
+            with pytest.raises(OSError):
+                isfile_strict(this_file)
+        with mock.patch(
+            'psutil._common.os.stat', side_effect=FileNotFoundError
+        ):
+            assert not isfile_strict(this_file)
+        with mock.patch('psutil._common.stat.S_ISREG', return_value=False):
+            assert not isfile_strict(this_file)
+
+    def test_debug(self):
+        with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
+            with contextlib.redirect_stderr(io.StringIO()) as f:
+                debug("hello")
+                sys.stderr.flush()
+        msg = f.getvalue()
+        assert msg.startswith("psutil-debug"), msg
+        assert "hello" in msg
+        assert __file__.replace('.pyc', '.py') in msg
+
+        # supposed to use repr(exc)
+        with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
+            with contextlib.redirect_stderr(io.StringIO()) as f:
+                debug(ValueError("this is an error"))
+        msg = f.getvalue()
+        assert "ignoring ValueError" in msg
+        assert "'this is an error'" in msg
+
+        # supposed to use str(exc), because of extra info about file name
+        with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
+            with contextlib.redirect_stderr(io.StringIO()) as f:
+                exc = OSError(2, "no such file")
+                exc.filename = "/foo"
+                debug(exc)
+        msg = f.getvalue()
+        assert "no such file" in msg
+        assert "/foo" in msg
+
+    def test_warn(self):
+        with mock.patch.object(psutil._common, "PSUTIL_TESTING", True):
+            with pytest.raises(RuntimeError, match="CRITICAL: hello"):
+                warn("hello")
+
+        with mock.patch.object(psutil._common, "PSUTIL_TESTING", False):
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                warn("hello")
+        assert len(ws) == 1
+        assert ws[0].category is RuntimeWarning
+        assert "hello" in str(ws[0].message)
+        assert __file__.replace('.pyc', '.py') in str(ws[0].message)
+
+    def test_cat_bcat(self):
+        testfn = self.get_testfn()
+        with open(testfn, "w") as f:
+            f.write("foo")
+        assert cat(testfn) == "foo"
+        assert bcat(testfn) == b"foo"
+        with pytest.raises(FileNotFoundError):
+            cat(testfn + '-invalid')
+        with pytest.raises(FileNotFoundError):
+            bcat(testfn + '-invalid')
+        assert cat(testfn + '-invalid', fallback="bar") == "bar"
+        assert bcat(testfn + '-invalid', fallback="bar") == "bar"
+
+    def test_broadcast_addr(self):
+        def addr(address, netmask):
+            return snicaddr(socket.AF_INET, address, netmask, None, None)
+
+        assert (
+            broadcast_addr(addr("10.1.1.86", "255.255.255.0")) == "10.1.1.255"
+        )
+        assert (
+            broadcast_addr(addr("172.20.10.7", "255.255.255.240"))
+            == "172.20.10.15"
+        )
+
+    def test_broadcast_addr_single_host(self):
+        # A /32 is a single-host network, it has no broadcast address.
+        nt = snicaddr(
+            socket.AF_INET, "89.234.156.160", "255.255.255.255", None, None
+        )
+        assert broadcast_addr(nt) is None
+
+
+class TestBytes2Human(PsutilTestCase):
+
+    def test_basic(self):
+        assert psutil.bytes2human(0) == "0.0B"
+        assert psutil.bytes2human(1000) == "1000.0B"
+        assert psutil.bytes2human(10000) == "9.8K"
+        assert psutil.bytes2human(100001221) == "95.4M"
+        assert psutil.bytes2human(1099511627776) == "1.0T"
+
+
+# ===================================================================
+# --- Tests for wrap_numbers() function.
+# ===================================================================
+
+
+nt = collections.namedtuple('foo', 'a b c')
+
+
+class TestWrapNumbers(PsutilTestCase):
+    def setUp(self):
+        wrap_numbers.cache_clear()
+
+    tearDown = setUp
+
+    def test_first_call(self):
+        input = {'disk1': nt(5, 5, 5)}
+        assert wrap_numbers(input, 'disk_io') == input
+
+    def test_input_hasnt_changed(self):
+        input = {'disk1': nt(5, 5, 5)}
+        assert wrap_numbers(input, 'disk_io') == input
+        assert wrap_numbers(input, 'disk_io') == input
+
+    def test_increase_but_no_wrap(self):
+        input = {'disk1': nt(5, 5, 5)}
+        assert wrap_numbers(input, 'disk_io') == input
+        input = {'disk1': nt(10, 15, 20)}
+        assert wrap_numbers(input, 'disk_io') == input
+        input = {'disk1': nt(20, 25, 30)}
+        assert wrap_numbers(input, 'disk_io') == input
+        input = {'disk1': nt(20, 25, 30)}
+        assert wrap_numbers(input, 'disk_io') == input
+
+    def test_wrap(self):
+        # let's say 100 is the threshold
+        input = {'disk1': nt(100, 100, 100)}
+        assert wrap_numbers(input, 'disk_io') == input
+        # first wrap restarts from 10
+        input = {'disk1': nt(100, 100, 10)}
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(100, 100, 110)}
+        # then it remains the same
+        input = {'disk1': nt(100, 100, 10)}
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(100, 100, 110)}
+        # then it goes up
+        input = {'disk1': nt(100, 100, 90)}
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(100, 100, 190)}
+        # then it wraps again
+        input = {'disk1': nt(100, 100, 20)}
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(100, 100, 210)}
+        # and remains the same
+        input = {'disk1': nt(100, 100, 20)}
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(100, 100, 210)}
+        # now wrap another num
+        input = {'disk1': nt(50, 100, 20)}
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(150, 100, 210)}
+        # and again
+        input = {'disk1': nt(40, 100, 20)}
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(190, 100, 210)}
+        # keep it the same
+        input = {'disk1': nt(40, 100, 20)}
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(190, 100, 210)}
+
+    def test_changing_keys(self):
+        # Emulate a case where the second call to disk_io()
+        # (or whatever) provides a new disk, then the new disk
+        # disappears on the third call.
+        input = {'disk1': nt(5, 5, 5)}
+        assert wrap_numbers(input, 'disk_io') == input
+        input = {'disk1': nt(5, 5, 5), 'disk2': nt(7, 7, 7)}
+        assert wrap_numbers(input, 'disk_io') == input
+        input = {'disk1': nt(8, 8, 8)}
+        assert wrap_numbers(input, 'disk_io') == input
+
+    def test_changing_keys_w_wrap(self):
+        input = {'disk1': nt(50, 50, 50), 'disk2': nt(100, 100, 100)}
+        assert wrap_numbers(input, 'disk_io') == input
+        # disk 2 wraps
+        input = {'disk1': nt(50, 50, 50), 'disk2': nt(100, 100, 10)}
+        assert wrap_numbers(input, 'disk_io') == {
+            'disk1': nt(50, 50, 50),
+            'disk2': nt(100, 100, 110),
+        }
+        # disk 2 disappears
+        input = {'disk1': nt(50, 50, 50)}
+        assert wrap_numbers(input, 'disk_io') == input
+
+        # then it appears again; the old wrap is supposed to be
+        # gone.
+        input = {'disk1': nt(50, 50, 50), 'disk2': nt(100, 100, 100)}
+        assert wrap_numbers(input, 'disk_io') == input
+        # remains the same
+        input = {'disk1': nt(50, 50, 50), 'disk2': nt(100, 100, 100)}
+        assert wrap_numbers(input, 'disk_io') == input
+        # and then wraps again
+        input = {'disk1': nt(50, 50, 50), 'disk2': nt(100, 100, 10)}
+        assert wrap_numbers(input, 'disk_io') == {
+            'disk1': nt(50, 50, 50),
+            'disk2': nt(100, 100, 110),
+        }
+
+    def test_real_data(self):
+        d = {
+            'nvme0n1': (300, 508, 640, 1571, 5970, 1987, 2049, 451751, 47048),
+            'nvme0n1p1': (1171, 2, 5600256, 1024, 516, 0, 0, 0, 8),
+            'nvme0n1p2': (54, 54, 2396160, 5165056, 4, 24, 30, 1207, 28),
+            'nvme0n1p3': (2389, 4539, 5154, 150, 4828, 1844, 2019, 398, 348),
+        }
+        assert wrap_numbers(d, 'disk_io') == d
+        assert wrap_numbers(d, 'disk_io') == d
+        # decrease this   ↓
+        d = {
+            'nvme0n1': (100, 508, 640, 1571, 5970, 1987, 2049, 451751, 47048),
+            'nvme0n1p1': (1171, 2, 5600256, 1024, 516, 0, 0, 0, 8),
+            'nvme0n1p2': (54, 54, 2396160, 5165056, 4, 24, 30, 1207, 28),
+            'nvme0n1p3': (2389, 4539, 5154, 150, 4828, 1844, 2019, 398, 348),
+        }
+        out = wrap_numbers(d, 'disk_io')
+        assert out['nvme0n1'][0] == 400
+
+    # --- cache tests
+
+    def test_cache_first_call(self):
+        input = {'disk1': nt(5, 5, 5)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        assert cache[0] == {'disk_io': input}
+        assert cache[1] == {'disk_io': {}}
+        assert cache[2] == {'disk_io': {}}
+
+    def test_cache_call_twice(self):
+        input = {'disk1': nt(5, 5, 5)}
+        wrap_numbers(input, 'disk_io')
+        input = {'disk1': nt(10, 10, 10)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        assert cache[0] == {'disk_io': input}
+        assert cache[1] == {
+            'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 0}
+        }
+        assert cache[2] == {'disk_io': {}}
+
+    def test_cache_wrap(self):
+        # let's say 100 is the threshold
+        input = {'disk1': nt(100, 100, 100)}
+        wrap_numbers(input, 'disk_io')
+
+        # first wrap restarts from 10
+        input = {'disk1': nt(100, 100, 10)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        assert cache[0] == {'disk_io': input}
+        assert cache[1] == {
+            'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 100}
+        }
+        assert cache[2] == {'disk_io': {'disk1': {('disk1', 2)}}}
+
+        def check_cache_info():
+            cache = wrap_numbers.cache_info()
+            assert cache[1] == {
+                'disk_io': {
+                    ('disk1', 0): 0,
+                    ('disk1', 1): 0,
+                    ('disk1', 2): 100,
+                }
+            }
+            assert cache[2] == {'disk_io': {'disk1': {('disk1', 2)}}}
+
+        # then it remains the same
+        input = {'disk1': nt(100, 100, 10)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        assert cache[0] == {'disk_io': input}
+        check_cache_info()
+
+        # then it goes up
+        input = {'disk1': nt(100, 100, 90)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        assert cache[0] == {'disk_io': input}
+        check_cache_info()
+
+        # then it wraps again
+        input = {'disk1': nt(100, 100, 20)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        assert cache[0] == {'disk_io': input}
+        assert cache[1] == {
+            'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 190}
+        }
+        assert cache[2] == {'disk_io': {'disk1': {('disk1', 2)}}}
+
+    def test_cache_changing_keys(self):
+        input = {'disk1': nt(5, 5, 5)}
+        wrap_numbers(input, 'disk_io')
+        input = {'disk1': nt(5, 5, 5), 'disk2': nt(7, 7, 7)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        assert cache[0] == {'disk_io': input}
+        assert cache[1] == {
+            'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 0}
+        }
+        assert cache[2] == {'disk_io': {}}
+
+    def test_cache_clear(self):
+        input = {'disk1': nt(5, 5, 5)}
+        wrap_numbers(input, 'disk_io')
+        wrap_numbers(input, 'disk_io')
+        wrap_numbers.cache_clear('disk_io')
+        assert wrap_numbers.cache_info() == ({}, {}, {})
+        wrap_numbers.cache_clear('disk_io')
+        wrap_numbers.cache_clear('?!?')
+
+    @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    def test_cache_clear_public_apis(self):
+        if not psutil.disk_io_counters() or not psutil.net_io_counters():
+            return pytest.skip("no disks or NICs available")
+        psutil.disk_io_counters()
+        psutil.net_io_counters()
+        caches = wrap_numbers.cache_info()
+        for cache in caches:
+            assert 'psutil.disk_io_counters' in cache
+            assert 'psutil.net_io_counters' in cache
+
+        psutil.disk_io_counters.cache_clear()
+        caches = wrap_numbers.cache_info()
+        for cache in caches:
+            assert 'psutil.net_io_counters' in cache
+            assert 'psutil.disk_io_counters' not in cache
+
+        psutil.net_io_counters.cache_clear()
+        caches = wrap_numbers.cache_info()
+        assert caches == ({}, {}, {})
+
+    def check_nowrap_public_api(self, fun, platfun, ntuple):
+        def side_effect(*args, **kwargs):
+            return {"x": (next(values),) * len(ntuple._fields)}
+
+        values = iter([100, 10, 10])
+        with mock.patch(platfun, side_effect=side_effect):
+            assert [fun()[0] for _ in range(3)] == [100, 110, 110]
+        values = iter([100, 10, 10])
+        with mock.patch(platfun, side_effect=side_effect):
+            assert [fun(nowrap=False)[0] for _ in range(3)] == [100, 10, 10]
+
+    def test_disk_io_counters_nowrap(self):
+        self.check_nowrap_public_api(
+            psutil.disk_io_counters,
+            "psutil._psplatform.disk_io_counters",
+            psutil._ntp.sdiskio,
+        )
+
+    def test_net_io_counters_nowrap(self):
+        self.check_nowrap_public_api(
+            psutil.net_io_counters,
+            "psutil._psplatform.net_io_counters",
+            psutil._ntp.snetio,
+        )
+
+
+# ===================================================================
+# --- Test setup.py
+# ===================================================================
+
+
+@skipif(not POSIX, reason="POSIX only")
+class TestSetupPy(PsutilTestCase):
+    @staticmethod
+    def import_setup_py():
+        path = os.path.join(ROOT_DIR, "setup.py")
+        if not os.path.exists(path):
+            return pytest.skip("setup.py not available")
+        return import_module_by_path(path)
+
+    def test_num_cpus_env_var(self):
+        setup = self.import_setup_py()
+        with mock.patch.dict(os.environ, {"PSUTIL_BUILD_JOBS": "3"}):
+            assert setup.num_cpus() == 3
+        # Never return 0, else ThreadPoolExecutor() raises ValueError.
+        with mock.patch.dict(os.environ, {"PSUTIL_BUILD_JOBS": "0"}):
+            assert setup.num_cpus() == 1
+
+    def test_num_cpus_default(self):
+        setup = self.import_setup_py()
+        with mock.patch.dict(os.environ, clear=True):
+            assert setup.num_cpus() >= 1
+
+    def test_get_cc(self):
+        setup = self.import_setup_py()
+        with mock.patch.dict(os.environ, {"CC": "gcc -pthread"}):
+            assert setup.get_cc() == ["gcc", "-pthread"]
+
+    @staticmethod
+    def run_instructions(setup, **flags):
+        """Call print_install_instructions() and return what it wrote
+        to stderr.
+        """
+        with contextlib.ExitStack() as stack:
+            for name, value in flags.items():
+                stack.enter_context(mock.patch.object(setup, name, value))
+            f = stack.enter_context(contextlib.redirect_stderr(io.StringIO()))
+            setup.print_install_instructions()
+        return f.getvalue()
+
+    def test_instructions_are_silent_if_toolchain_is_ok(self):
+        # Else any unrelated build failure would wrongly blame the
+        # compiler or the headers.
+        setup = self.import_setup_py()
+        out = self.run_instructions(
+            setup, has_compiler=lambda: True, has_python_h=lambda: True
+        )
+        assert out == ""
+
+    def test_instructions_without_compiler(self):
+        setup = self.import_setup_py()
+        out = self.run_instructions(
+            setup,
+            has_compiler=lambda: False,
+            MACOS=False,
+            AIX=False,
+            PYPY=False,
+        )
+        assert "C compiler is not installed" in out
+        assert "install-sysdeps.sh" in out
+
+    def test_instructions_on_macos(self):
+        setup = self.import_setup_py()
+        out = self.run_instructions(
+            setup, has_compiler=lambda: False, MACOS=True
+        )
+        assert "xcode-select --install" in out
+        assert "install-sysdeps.sh" not in out
+
+    def test_instructions_without_headers(self):
+        # No command is suggested on platforms install-sysdeps.sh
+        # doesn't cover.
+        setup = self.import_setup_py()
+        out = self.run_instructions(
+            setup,
+            has_compiler=lambda: True,
+            has_python_h=lambda: False,
+            MACOS=False,
+            AIX=True,
+            PYPY=False,
+        )
+        assert "header files are not installed" in out
+        assert "Try running" not in out
+
+    def test_detection_without_compiler(self):
+        setup = self.import_setup_py()
+        with mock.patch.dict(os.environ, {"CC": "psutil-no-such-cc"}):
+            assert setup.has_compiler() is False
+            assert setup.has_python_h() is False

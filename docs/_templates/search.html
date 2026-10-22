@@ -1,0 +1,33 @@
+{%- extends "!search.html" %}
+
+{# Suppress basic theme's "Searching for multiple words…" line,
+   redundant once we have our own prominent input at the top. #}
+{% block searchtext %}{% endblock %}
+
+{# Replace the basic theme's tiny default form with our prominent
+   one. The hidden inputs preserve search semantics. #}
+{% block searchbox %}
+{# Empty action submits to the current URL, so this works under any
+   builder (dirhtml serves this page as /search/, not search.html). #}
+<form class="search-page-form" action="" method="get">
+  <i class="fa-solid fa-magnifying-glass search-page-icon" aria-hidden="true"></i>
+  <input type="text"
+         name="q"
+         class="search-page-input"
+         autofocus
+         autocomplete="off"
+         placeholder="{{ _('Search the docs…') }}"
+         aria-label="{{ _('Search the docs') }}">
+  <button type="submit" class="search-page-btn">{{ _('Search') }}</button>
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<script>
+  (function () {
+    const input = document.querySelector('.search-page-input');
+    if (!input) { return; }
+    const q = new URLSearchParams(window.location.search).get('q');
+    if (q) { input.value = q; }
+  })();
+</script>
+{% endblock %}

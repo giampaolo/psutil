@@ -16,7 +16,7 @@
 #include <IOKit/ps/IOPowerSources.h>
 #include <IOKit/ps/IOPSKeys.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 PyObject *
@@ -28,69 +28,88 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     CFNumberRef capacity_ref = NULL;
     CFNumberRef time_to_empty_ref = NULL;
     CFStringRef ps_state_ref = NULL;
-    uint32_t capacity;     /* units are percent */
-    int time_to_empty;     /* units are minutes */
+    uint32_t capacity;  // units are percent
+    int time_to_empty;  // units are minutes
     int is_power_plugged;
 
+    // Queries the power management stack (IPC + SMC).
+    Py_BEGIN_ALLOW_THREADS
     power_info = IOPSCopyPowerSourcesInfo();
-
+    Py_END_ALLOW_THREADS
     if (!power_info) {
-        PyErr_SetString(PyExc_RuntimeError,
-            "IOPSCopyPowerSourcesInfo() syscall failed");
+        psutil_runtime_error("IOPSCopyPowerSourcesInfo() syscall failed");
         goto error;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     power_sources_list = IOPSCopyPowerSourcesList(power_info);
+    Py_END_ALLOW_THREADS
     if (!power_sources_list) {
-        PyErr_SetString(PyExc_RuntimeError,
-            "IOPSCopyPowerSourcesList() syscall failed");
+        psutil_runtime_error("IOPSCopyPowerSourcesList() syscall failed");
         goto error;
     }
 
-    /* Should only get one source. But in practice, check for > 0 sources */
-    if (!CFArrayGetCount(power_sources_list)) {
+    if (CFArrayGetCount(power_sources_list) == 0) {
         PyErr_SetString(PyExc_NotImplementedError, "no battery");
         goto error;
     }
 
     power_sources_information = IOPSGetPowerSourceDescription(
-        power_info, CFArrayGetValueAtIndex(power_sources_list, 0));
-
-    capacity_ref = (CFNumberRef)  CFDictionaryGetValue(
-        power_sources_information, CFSTR(kIOPSCurrentCapacityKey));
-    if (!CFNumberGetValue(capacity_ref, kCFNumberSInt32Type, &capacity)) {
-        PyErr_SetString(PyExc_RuntimeError,
-            "No battery capacity information in power sources info");
+        power_info, CFArrayGetValueAtIndex(power_sources_list, 0)
+    );
+    if (!power_sources_information) {
+        psutil_runtime_error("Failed to get power source description");
         goto error;
     }
 
-    ps_state_ref = (CFStringRef) CFDictionaryGetValue(
-        power_sources_information, CFSTR(kIOPSPowerSourceStateKey));
-    is_power_plugged = CFStringCompare(
-        ps_state_ref, CFSTR(kIOPSACPowerValue), 0)
-        == kCFCompareEqualTo;
+    capacity_ref = (CFNumberRef)CFDictionaryGetValue(
+        power_sources_information, CFSTR(kIOPSCurrentCapacityKey)
+    );
+    if (!capacity_ref
+        || !CFNumberGetValue(capacity_ref, kCFNumberSInt32Type, &capacity))
+    {
+        psutil_runtime_error(
+            "No battery capacity information in power sources info"
+        );
+        goto error;
+    }
 
-    time_to_empty_ref = (CFNumberRef) CFDictionaryGetValue(
-        power_sources_information, CFSTR(kIOPSTimeToEmptyKey));
-    if (!CFNumberGetValue(time_to_empty_ref,
-                          kCFNumberIntType, &time_to_empty)) {
-        /* This value is recommended for non-Apple power sources, so it's not
-         * an error if it doesn't exist. We'll return -1 for "unknown" */
-        /* A value of -1 indicates "Still Calculating the Time" also for
-         * apple power source */
+    ps_state_ref = (CFStringRef)CFDictionaryGetValue(
+        power_sources_information, CFSTR(kIOPSPowerSourceStateKey)
+    );
+    if (!ps_state_ref) {
+        psutil_runtime_error("power source state info missing");
+        goto error;
+    }
+    is_power_plugged = CFStringCompare(
+                           ps_state_ref, CFSTR(kIOPSACPowerValue), 0
+                       )
+                       == kCFCompareEqualTo;
+
+    time_to_empty_ref = (CFNumberRef)CFDictionaryGetValue(
+        power_sources_information, CFSTR(kIOPSTimeToEmptyKey)
+    );
+    if (!time_to_empty_ref
+        || !CFNumberGetValue(
+            time_to_empty_ref, kCFNumberIntType, &time_to_empty
+        ))
+    {
+        // This value is recommended for non-Apple power sources, so
+        // it's not an error if it doesn't exist. We'll return -1 for
+        // "unknown" A value of -1 indicates "Still Calculating the
+        // Time" also for apple power source.
         time_to_empty = -1;
     }
 
-    py_tuple = Py_BuildValue("Iii",
-        capacity, time_to_empty, is_power_plugged);
-    if (!py_tuple) {
+    py_tuple = Py_BuildValue(
+        "dii", (double)capacity, time_to_empty, is_power_plugged
+    );
+    if (!py_tuple)
         goto error;
-    }
 
     CFRelease(power_info);
     CFRelease(power_sources_list);
-    /* Caller should NOT release power_sources_information */
-
+    // Caller should NOT release power_sources_information
     return py_tuple;
 
 error:

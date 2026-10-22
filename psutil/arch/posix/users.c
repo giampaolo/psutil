@@ -1,0 +1,108 @@
+/*
+ * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../../arch/all/init.h"
+
+#ifdef PSUTIL_HAS_POSIX_USERS
+#include <Python.h>
+#include <string.h>
+
+#include <utmpx.h>
+
+
+// The utmpx functions are not thread safe: there is one global
+// cursor per process, and each getutxent() call advances it. Two
+// threads iterating at the same time would each get only some of
+// the entries. The whole loop must run under a lock. On normal
+// builds the GIL acts as that lock, so this file must not release
+// it.
+static void
+setup() {
+    UTXENT_MUTEX_LOCK();
+    setutxent();
+}
+
+
+static void
+teardown() {
+    endutxent();
+    UTXENT_MUTEX_UNLOCK();
+}
+
+
+PyObject *
+psutil_users(PyObject *self, PyObject *args) {
+    struct utmpx *ut;
+    size_t host_len;
+    PyObject *py_username = NULL;
+    PyObject *py_tty = NULL;
+    PyObject *py_hostname = NULL;
+    PyObject *py_retlist = PyList_New(0);
+
+    if (py_retlist == NULL)
+        return NULL;
+
+    setup();
+
+    while ((ut = getutxent()) != NULL) {
+        if (ut->ut_type != USER_PROCESS)
+            continue;
+
+        py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
+        if (!py_username)
+            goto error;
+
+        py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
+        if (!py_tty)
+            goto error;
+
+        host_len = strnlen(ut->ut_host, sizeof(ut->ut_host));
+        if (host_len == 0 || (strcmp(ut->ut_host, ":0") == 0)
+            || (strcmp(ut->ut_host, ":0.0") == 0))
+        {
+            py_hostname = PyUnicode_DecodeFSDefault("localhost");
+        }
+        else {
+            // ut_host might not be null-terminated if the hostname is
+            // very long, so we do it. The extra byte is for the
+            // terminator, since host_len can be sizeof(ut_host).
+            char hostbuf[sizeof(ut->ut_host) + 1];
+            memcpy(hostbuf, ut->ut_host, host_len);
+            hostbuf[host_len] = '\0';
+            py_hostname = PyUnicode_DecodeFSDefault(hostbuf);
+        }
+        if (!py_hostname)
+            goto error;
+
+        if (!pylist_append_fmt(
+                py_retlist,
+                "OOOd" _Py_PARSE_PID,
+                py_username,  // username
+                py_tty,  // tty
+                py_hostname,  // hostname
+                (double)ut->ut_tv.tv_sec,  // tstamp
+                ut->ut_pid  // process id
+            ))
+        {
+            goto error;
+        }
+        Py_CLEAR(py_username);
+        Py_CLEAR(py_tty);
+        Py_CLEAR(py_hostname);
+    }
+
+    teardown();
+    return py_retlist;
+
+error:
+    teardown();
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tty);
+    Py_XDECREF(py_hostname);
+    Py_DECREF(py_retlist);
+    return NULL;
+}
+#endif  // PSUTIL_HAS_POSIX_USERS

@@ -9,16 +9,50 @@
 #include <sys/sysctl.h>
 #include <sys/sched.h>  // for CPUSTATES & CP_*
 
+#include "../../arch/all/init.h"
+
+
+PyObject *
+psutil_cpu_times(PyObject *self, PyObject *args) {
+    // KERN_CPTIME returns times averaged across CPUs, so we sum the
+    // per-CPU counters instead, like the other platforms do.
+    u_int64_t cpu_time[CPUSTATES] = {0};
+    u_int64_t percpu_time[CPUSTATES];
+    int mib[3];
+    int i, j, ncpu;
+
+    mib[0] = CTL_HW;
+    mib[1] = HW_NCPU;
+    if (psutil_sysctl(mib, 2, &ncpu, sizeof(ncpu)) != 0)
+        return NULL;
+
+    for (i = 0; i < ncpu; i++) {
+        mib[0] = CTL_KERN;
+        mib[1] = KERN_CPTIME2;
+        mib[2] = i;
+        if (psutil_sysctl(mib, 3, &percpu_time, sizeof(percpu_time)) != 0)
+            return NULL;
+        for (j = 0; j < CPUSTATES; j++)
+            cpu_time[j] += percpu_time[j];
+    }
+
+    return Py_BuildValue(
+        "(ddddd)",
+        (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
+        (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
+        (double)cpu_time[CP_SYS] / CLOCKS_PER_SEC,
+        (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC,
+        (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC
+    );
+}
+
 
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int mib[3];
     int ncpu;
-    size_t len;
-    size_t size;
     int i;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_cputime = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -26,41 +60,36 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // retrieve the number of cpus
     mib[0] = CTL_HW;
     mib[1] = HW_NCPU;
-    len = sizeof(ncpu);
-    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl(mib, 2, &ncpu, sizeof(ncpu)) != 0)
         goto error;
-    }
+
     uint64_t cpu_time[CPUSTATES];
 
     for (i = 0; i < ncpu; i++) {
         mib[0] = CTL_KERN;
         mib[1] = KERN_CPTIME2;
         mib[2] = i;
-        size = sizeof(cpu_time);
-        if (sysctl(mib, 3, &cpu_time, &size, NULL, 0) == -1) {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return NULL;
-        }
 
-        py_cputime = Py_BuildValue(
-            "(ddddd)",
-            (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_SYS] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC);
-        if (!py_cputime)
+        if (psutil_sysctl(mib, 3, &cpu_time, sizeof(cpu_time)) != 0)
             goto error;
-        if (PyList_Append(py_retlist, py_cputime))
+
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(ddddd)",
+                (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
+                (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
+                (double)cpu_time[CP_SYS] / CLOCKS_PER_SEC,
+                (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC,
+                (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC
+            ))
+        {
             goto error;
-        Py_DECREF(py_cputime);
+        }
     }
 
     return py_retlist;
 
 error:
-    Py_XDECREF(py_cputime);
     Py_DECREF(py_retlist);
     return NULL;
 }
@@ -68,15 +97,11 @@ error:
 
 PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
-    size_t size;
     struct uvmexp uv;
     int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
 
-    size = sizeof(uv);
-    if (sysctl(uvmexp_mib, 2, &uv, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl(uvmexp_mib, 2, &uv, sizeof(uv)) != 0)
         return NULL;
-    }
 
     return Py_BuildValue(
         "IIIIIII",
@@ -94,16 +119,12 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
     int freq;
-    size_t size;
     int mib[2] = {CTL_HW, HW_CPUSPEED};
 
     // On VirtualBox I get "sysctl hw.cpuspeed=2593" (never changing),
     // which appears to be expressed in Mhz.
-    size = sizeof(freq);
-    if (sysctl(mib, 2, &freq, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl(mib, 2, &freq, sizeof(freq)) != 0)
         return NULL;
-    }
 
     return Py_BuildValue("i", freq);
 }

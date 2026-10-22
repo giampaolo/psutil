@@ -10,10 +10,9 @@ import os
 import shlex
 import subprocess
 
-
-SKIP_EXTS = ('.png', '.jpg', '.jpeg', '.svg')
+SKIP_EXTS = ('.png', '.jpg', '.jpeg')
 SKIP_FILES = ()
-SKIP_PREFIXES = ('.ci/', '.github/')
+SKIP_PREFIXES = ('.github/', 'docs/')
 
 
 def sh(cmd):

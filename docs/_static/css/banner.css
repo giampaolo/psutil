@@ -1,0 +1,105 @@
+/* Full-width notice above the topbar (see _templates/banner.html).
+   Archived releases inject the same markup from build_versions.py. */
+
+.site-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 9px 44px 9px 14px;
+    position: relative;
+    background: #fff8e1;
+    border-bottom: 1px solid #f0d98c;
+    color: #6b5618;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    text-align: center;
+}
+
+html.site-banner-dismissed .site-banner {
+    display: none;
+}
+
+/* Archived releases are built from an old tag and have no
+   .header-stack; there the banner pins itself. */
+body > .site-banner {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+/* Sensible offset before (or without) js/banner.js, which replaces it
+   with the measured height. */
+html:has(.site-banner) {
+    --header-height: calc(var(--topbar-height) + 40px);
+}
+
+html.site-banner-dismissed {
+    --header-height: var(--topbar-height);
+}
+
+.site-banner-close::before {
+    content: "\00d7";
+    font-size: 19px;
+    line-height: 1;
+}
+
+.site-banner-close {
+    position: absolute;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.site-banner-close:hover {
+    background: rgba(0, 0, 0, 0.07);
+    opacity: 1;
+}
+
+.site-banner-close:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
+}
+
+[data-theme="dark"] .site-banner-close:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* Paired with :visited so the theme's visited-link rule can't leak
+   through and recolor it mid-sentence. */
+.site-banner a,
+.site-banner a:visited {
+    color: #8a6d1f;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.site-banner a:hover {
+    color: #5c470f;
+}
+
+[data-theme="dark"] .site-banner {
+    background: #2b2415;
+    border-bottom-color: #4a3c1d;
+    color: #ddcb98;
+}
+
+[data-theme="dark"] .site-banner a,
+[data-theme="dark"] .site-banner a:visited {
+    color: #f0d98c;
+}
+
+[data-theme="dark"] .site-banner a:hover {
+    color: #fbecc0;
+}

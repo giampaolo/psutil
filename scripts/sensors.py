@@ -27,7 +27,6 @@ Battery:
     plugged in: yes
 """
 
-
 import psutil
 
 

@@ -1,0 +1,68 @@
+# Re-adapted from: https://gist.github.com/JPHutchins/6ef33a52cc92fc4a71996b32b11724b4
+# clang-format doc: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+
+BasedOnStyle: Google
+AlignAfterOpenBracket: BlockIndent
+AlignTrailingComments: false
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: MultiLine
+  AfterEnum: false
+  AfterExternBlock: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterObjCDeclaration: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeCatch: false
+  BeforeElse: true
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyNamespace: false
+  SplitEmptyRecord: false
+BitFieldColonSpacing: After
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+BreakStringLiterals: true
+ColumnLimit: 79
+DerivePointerAlignment: false
+IndentCaseBlocks: true
+IndentCaseLabels: true
+IndentWidth: 4
+MaxEmptyLinesToKeep: 2
+PointerAlignment: Right
+SortIncludes: false
+SpaceBeforeParens: ControlStatementsExceptControlMacros
+UseTab: Never
+
+# Force fun return type and fun definition to stay on 2 different lines:
+#    static int
+#    foo() {
+#       printf();
+#    }
+AlwaysBreakAfterReturnType: TopLevelDefinitions
+
+# Prevents:
+#    foo =
+#        Bar(...)
+PenaltyBreakAssignment: 400
+PenaltyBreakBeforeFirstCallParameter: 0
+
+# Handle macros with no `;` at EOL, so that they don't include the next line
+# into them.
+StatementMacros:
+  - Py_BEGIN_ALLOW_THREADS
+  - Py_END_ALLOW_THREADS

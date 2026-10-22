@@ -25,7 +25,6 @@ from socket import SOCK_STREAM
 
 import psutil
 
-
 AD = "-"
 AF_INET6 = getattr(socket, 'AF_INET6', object())
 proto_map = {
@@ -49,12 +48,12 @@ def main():
     print(header)
     proc_names = {}
     for p in psutil.process_iter(['pid', 'name']):
-        proc_names[p.info['pid']] = p.info['name']
+        proc_names[p.snapshot.pid] = p.snapshot.name
     for c in psutil.net_connections(kind='inet'):
-        laddr = "{}:{}".format(*c.laddr)
+        laddr = f"{c.laddr[0]}:{c.laddr[1]}"
         raddr = ""
         if c.raddr:
-            raddr = "{}:{}".format(*c.raddr)
+            raddr = f"{c.raddr[0]}:{c.raddr[1]}"
         name = proc_names.get(c.pid, '?') or ''
         line = templ.format(
             proto_map[(c.family, c.type)],

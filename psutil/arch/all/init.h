@@ -1,0 +1,177 @@
+/*
+ * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+// Global names shared by all platforms.
+
+#include <Python.h>
+
+// We do this so that all .c files have to include only one header
+// (ourselves, init.h).
+
+// clang-format off
+#if defined(PSUTIL_POSIX)
+    #include "../../arch/posix/init.h"
+#endif
+#if defined(PSUTIL_BSD)
+    #include "../../arch/bsd/init.h"
+#endif
+
+#if defined(PSUTIL_LINUX)
+    #include "../../arch/linux/init.h"
+#elif defined(PSUTIL_WINDOWS)
+    #include "../../arch/windows/init.h"
+#elif defined(PSUTIL_OSX)
+    #include "../../arch/osx/init.h"
+#elif defined(PSUTIL_FREEBSD)
+    #include "../../arch/freebsd/init.h"
+#elif defined(PSUTIL_OPENBSD)
+    #include "../../arch/openbsd/init.h"
+#elif defined(PSUTIL_NETBSD)
+    #include "../../arch/netbsd/init.h"
+#elif defined(PSUTIL_SUNOS)
+    #include "../../arch/sunos/init.h"
+#endif
+
+// print debug messages when set to 1
+extern int PSUTIL_DEBUG;
+// a signaler for connections without an actual status
+extern int PSUTIL_CONN_NONE;
+extern int PSUTIL_TESTING;
+
+#ifdef Py_GIL_DISABLED
+    extern PyMutex utxent_lock;
+    #define UTXENT_MUTEX_LOCK() PyMutex_Lock(&utxent_lock)
+    #define UTXENT_MUTEX_UNLOCK() PyMutex_Unlock(&utxent_lock)
+#else
+    #define UTXENT_MUTEX_LOCK()
+    #define UTXENT_MUTEX_UNLOCK()
+#endif
+// clang-format on
+
+// Add an int constant to the module; return -1 on failure.
+#define PSUTIL_ADD_INT(mod, name, value)                     \
+    do {                                                     \
+        if (PyModule_AddIntConstant((mod), (name), (value))) \
+            return -1;                                       \
+    } while (0)
+
+
+// ====================================================================
+// --- Backward compatibility with missing Python.h APIs
+// ====================================================================
+
+// --- _Py_PARSE_PID
+
+// clang-format off
+// SIZEOF_INT|LONG is missing on Linux + PyPy (only?).
+// In this case we guess it from setup.py. It's not 100% bullet proof,
+// If wrong we'll probably get compiler warnings.
+// FWIW on all UNIX platforms I've seen pid_t is defined as an int.
+// _getpid() on Windows also returns an int.
+#if !defined(SIZEOF_INT)
+    #define SIZEOF_INT 4
+#endif
+#if !defined(SIZEOF_LONG)
+    #define SIZEOF_LONG 8
+#endif
+#if !defined(SIZEOF_PID_T)
+    #define SIZEOF_PID_T PSUTIL_SIZEOF_PID_T  // set as a macro in setup.py
+#endif
+
+// _Py_PARSE_PID was added in Python 3, but since it's private we make
+// sure it's always present.
+#ifndef _Py_PARSE_PID
+    #if SIZEOF_PID_T == SIZEOF_INT
+        #define _Py_PARSE_PID "i"
+    #elif SIZEOF_PID_T == SIZEOF_LONG
+        #define _Py_PARSE_PID "l"
+    #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
+        #define _Py_PARSE_PID "L"
+    #else
+        #error "_Py_PARSE_PID: sizeof(pid_t) is not int, long or long long"
+    #endif
+#endif
+
+// PyPy on Windows
+#ifndef PyLong_FromPid
+    #if ((SIZEOF_PID_T == SIZEOF_INT) || (SIZEOF_PID_T == SIZEOF_LONG))
+        #define PyLong_FromPid PyLong_FromLong
+    #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
+        #define PyLong_FromPid PyLong_FromLongLong
+    #else
+        #error "PyLong_FromPid: sizeof(pid_t) is not int, long or long long"
+    #endif
+#endif
+// clang-format on
+
+// ====================================================================
+// --- Internal utils
+// ====================================================================
+
+// Let gcc / clang check the args passed to str_format().
+#if defined(__GNUC__) || defined(__clang__)
+#define PSUTIL_PRINTF(fmt_idx, args_idx) \
+    __attribute__((format(printf, fmt_idx, args_idx)))
+#else
+#define PSUTIL_PRINTF(fmt_idx, args_idx)
+#endif
+
+void _psutil_debug_impl(const char *file, int line, const char *fmt, ...);
+// The check avoids evaluating the args when debug mode is off.
+#define psutil_debug(...)                                        \
+    do {                                                         \
+        if (PSUTIL_DEBUG)                                        \
+            _psutil_debug_impl(__FILE__, __LINE__, __VA_ARGS__); \
+    } while (0)
+
+void _psutil_warn_impl(const char *file, int line, const char *fmt, ...);
+#define psutil_warn(...) _psutil_warn_impl(__FILE__, __LINE__, __VA_ARGS__)
+
+PyObject *psutil_oserror(void);
+PyObject *psutil_oserror_ad(const char *msg);
+PyObject *psutil_oserror_nsp(const char *msg);
+PyObject *psutil_oserror_wsyscall(const char *syscall);
+PyObject *psutil_runtime_error(const char *msg, ...);
+
+int str_append(char *dst, size_t dst_size, const char *src);
+int str_copy(char *dst, size_t dst_size, const char *src);
+int str_format(char *buf, size_t size, const char *fmt, ...)
+    PSUTIL_PRINTF(3, 4);
+
+// The (af_filter, type_filter) args that the Python layer passes to
+// net_connections().
+typedef struct {
+    int v4;
+    int v6;
+    int unix_;  // can't be "unix": gcc predefines it as a macro
+    int tcp;
+    int udp;
+} psutil_conn_filters;
+
+int psutil_parse_conn_filters(
+    PyObject *py_af_filter, PyObject *py_type_filter, psutil_conn_filters *out
+);
+int pydict_add(PyObject *dict, const char *key, const char *fmt, ...);
+int pylist_append_fmt(PyObject *list, const char *fmt, ...);
+int pylist_append_obj(PyObject *list, PyObject *obj);
+
+int psutil_badargs(const char *funcname);
+int psutil_setup(void);
+int psutil_add_exceptions(PyObject *mod);
+PyObject *psutil_mod_init(
+    const char *name, PyMethodDef *methods, int (*exec)(PyObject *)
+);
+double psutil_usage_percent(double used, double total, int round_);
+
+// ====================================================================
+// --- Exposed to Python
+// ====================================================================
+
+#if defined(PSUTIL_WINDOWS) || defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
+PyObject *psutil_pids(PyObject *self, PyObject *args);
+#endif
+PyObject *psutil_set_debug(PyObject *self, PyObject *args);
+PyObject *psutil_check_pid_range(PyObject *self, PyObject *args);

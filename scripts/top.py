@@ -36,15 +36,13 @@ import datetime
 import sys
 import time
 
-
 try:
     import curses
 except ImportError:
     sys.exit('platform not supported')
 
 import psutil
-from psutil._common import bytes2human
-
+from psutil import bytes2human
 
 win = curses.initscr()
 lineno = 0
@@ -102,8 +100,9 @@ def poll(interval):
             procs.append(p)
 
     # return processes sorted by CPU percent usage
+    # (cpu_percent may be None, e.g. for zombie processes)
     processes = sorted(
-        procs, key=lambda p: p.dict['cpu_percent'], reverse=True
+        procs, key=lambda p: p.dict['cpu_percent'] or 0.0, reverse=True
     )
     return (processes, procs_status)
 

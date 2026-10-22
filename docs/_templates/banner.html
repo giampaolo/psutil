@@ -1,0 +1,13 @@
+{#-
+  Dismissal is remembered per data-banner-id. The message below is
+  TEMPORARY, the component isn't.
+-#}
+<div class="site-banner" role="note" data-banner-id="{{ banner_id }}">
+  <span>
+    You're reading the <strong>development</strong> version of the docs.
+    For the current release see <a href="https://psutil.readthedocs.io/stable/">psutil.readthedocs.io/stable</a>.
+  </span>
+  <button class="site-banner-close" type="button"
+          title="{{ _('Dismiss') }}"
+          aria-label="{{ _('Dismiss this notice') }}"></button>
+</div>

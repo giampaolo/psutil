@@ -1,0 +1,153 @@
+/* ---- Shared structure (defaults to Note) ---------------------------- */
+
+div.admonition {
+    position: relative;
+    margin: 10px 0;
+    padding: var(--adm-padding-y) 10px var(--adm-padding-y) 36px;
+    background-color: var(--adm-note-bg);
+    border: 1px solid var(--adm-note-border);
+    border-left: 4px solid var(--adm-note-accent-border);
+    border-radius: 4px;
+}
+
+div.admonition + div.admonition {
+    margin-top: 16px;
+}
+
+div.admonition p {
+    margin-bottom: var(--adm-padding-y);
+}
+
+/* ---- Per-type color overrides --------------------------------------- */
+
+div.warning {
+    background-color: var(--adm-warning-bg);
+    border-color: var(--adm-warning-border);
+    border-left-color: var(--adm-warning-border);
+}
+
+div.tip {
+    background-color: var(--adm-tip-bg);
+    border-color: var(--adm-tip-border);
+    border-left-color: var(--adm-tip-border);
+}
+
+div.important {
+    background-color: var(--adm-important-bg);
+    border-color: var(--adm-important-border);
+    border-left-color: var(--adm-important-border);
+}
+
+div.seealso {
+    background-color: var(--adm-seealso-bg);
+    border-color: var(--adm-seealso-border);
+    border-left-color: var(--adm-seealso-accent-border);
+}
+
+div.seealso a.reference {
+    color: var(--adm-seealso-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+div.seealso a.reference:has(code) {
+    text-decoration: none;
+}
+
+div.seealso a.reference:hover {
+    color: var(--adm-seealso-hover);
+}
+
+/* Same page icon as the sidebar */
+div.seealso ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+div.seealso a.reference.internal::before,
+div.seealso a.extlink-src[href*="/scripts/"]::before {
+    font-family: var(--doc-icon-font, var(--fa-family-classic));
+    font-weight: var(--doc-icon-weight, 900);
+    display: inline-block;
+    width: 1.3em;
+    margin-right: 0.3em;
+    font-size: 0.85em;
+    text-align: center;
+    content: var(--doc-icon, "\f0f6");
+}
+
+div.admonition a {
+    text-decoration: none;
+}
+
+/* ---- Title (inline with the first paragraph of content) ------------ */
+
+p.admonition-title,
+p.admonition-title + p {
+    display: inline;
+    margin: 0;
+    padding: 0;
+}
+
+p.admonition-title {
+    background: none;
+    color: var(--adm-title);
+    font-weight: 700;
+    margin-right: 0.4em;
+}
+
+p.admonition-title::after {
+    content: ":";
+}
+
+p.admonition-title::before {
+    content: "\f129";
+    position: absolute;
+    left: 10px;
+    top: calc(var(--adm-padding-y) + 3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--adm-note-accent-border);
+    border-radius: 50%;
+    font-family: "Font Awesome 7 Free";
+    font-weight: 900;
+    font-size: 10px;
+    line-height: 1;
+    color: var(--adm-note-accent-border);
+}
+
+div.tip p.admonition-title::before,
+div.warning p.admonition-title::before,
+div.important p.admonition-title::before,
+div.seealso p.admonition-title::before {
+    top: var(--adm-padding-y);
+    width: 16px;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    font-size: 15px;
+    line-height: inherit;
+}
+
+div.tip p.admonition-title::before {
+    content: "\f0eb";
+    color: var(--adm-tip-icon);
+}
+
+div.warning p.admonition-title::before {
+    content: "\f071";
+    color: var(--adm-warning-icon);
+}
+
+div.important p.admonition-title::before {
+    content: "\f06a";
+    color: var(--adm-important-icon);
+}
+
+div.seealso p.admonition-title::before {
+    content: "\f0c1";
+    color: var(--adm-seealso-accent-border);
+}

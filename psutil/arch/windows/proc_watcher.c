@@ -9,8 +9,7 @@
 #include <objbase.h>
 #include <stdio.h>
 
-#include "../../_psutil_common.h"
-#include "proc_watcher.h"
+#include "../../arch/all/init.h"
 
 #pragma comment(lib, "wbemuuid.lib")
 
@@ -26,14 +25,22 @@ convert_hr_error(const char *syscall, HRESULT hres) {
     char *errorMsg = NULL;
 
     FormatMessageA(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL, hres, 0, (LPSTR)&errorMsg, 0, NULL
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
+            | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        hres,
+        0,
+        (LPSTR)&errorMsg,
+        0,
+        NULL
     );
 
     snprintf(
         buffer,
-        sizeof(buffer), "%s failed. %s.",
-        syscall, errorMsg ? errorMsg : "unknown error"
+        sizeof(buffer),
+        "%s failed. %s.",
+        syscall,
+        errorMsg ? errorMsg : "unknown error"
     );
 
     if (errorMsg)
@@ -44,8 +51,7 @@ convert_hr_error(const char *syscall, HRESULT hres) {
 
 // class attributes
 typedef struct {
-    PyObject_HEAD
-    int closed;
+    PyObject_HEAD int closed;
     IWbemLocator *pLoc;
     IWbemServices *pSvc;
     IEnumWbemClassObject *pEnumerator;
@@ -68,10 +74,12 @@ ProcessWatcher_cleanup(ProcessWatcherObject *self) {
 
 
 static int
-ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) {
+ProcessWatcher_init(
+    ProcessWatcherObject *self, PyObject *args, PyObject *kwds
+) {
     HRESULT hres;
 
-   if (self->closed == 1) {
+    if (self->closed == 1) {
         PyErr_SetString(
             PyExc_ValueError, "can't reuse an already closed ProcessWatcher"
         );
@@ -91,8 +99,15 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
     }
 
     hres = CoInitializeSecurity(
-        NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT,
-        RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL
+        NULL,
+        -1,
+        NULL,
+        NULL,
+        RPC_C_AUTHN_LEVEL_DEFAULT,
+        RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL,
+        EOAC_NONE,
+        NULL
     );
     if (FAILED(hres)) {
         PyErr_SetString(
@@ -102,8 +117,11 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
     }
 
     hres = CoCreateInstance(
-        &CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, &IID_IWbemLocator,
-        (LPVOID *) &self->pLoc
+        &CLSID_WbemLocator,
+        0,
+        CLSCTX_INPROC_SERVER,
+        &IID_IWbemLocator,
+        (LPVOID *)&self->pLoc
     );
     if (FAILED(hres)) {
         PyErr_SetString(
@@ -118,7 +136,7 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
         NULL,  // user
         NULL,  // password
         NULL,  // locale
-        0,     // security flags
+        0,  // security flags
         NULL,  // authority
         NULL,  // context
         &self->pSvc  // namespace
@@ -131,8 +149,14 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
     }
 
     hres = CoSetProxyBlanket(
-        (IUnknown*)self->pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
-        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE
+        (IUnknown *)self->pSvc,
+        RPC_C_AUTHN_WINNT,
+        RPC_C_AUTHZ_NONE,
+        NULL,
+        RPC_C_AUTHN_LEVEL_CALL,
+        RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL,
+        EOAC_NONE
     );
     if (FAILED(hres)) {
         PyErr_SetString(
@@ -146,7 +170,8 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
         L"WQL",
         L"SELECT * FROM __InstanceOperationEvent WITHIN 1 "
         L"WHERE TargetInstance ISA 'Win32_Process' "
-        L"AND (__Class = '__InstanceCreationEvent' OR __Class = '__InstanceDeletionEvent')",
+        L"AND (__Class = '__InstanceCreationEvent' OR __Class = "
+        L"'__InstanceDeletionEvent')",
         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
         NULL,
         &self->pEnumerator
@@ -186,7 +211,9 @@ handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
     // https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-process
     pProcess->lpVtbl->Get(pProcess, L"ProcessId", 0, &varProcessId, 0, 0);
     pProcess->lpVtbl->Get(pProcess, L"Name", 0, &varName, 0, 0);
-    pProcess->lpVtbl->Get(pProcess, L"ParentProcessId", 0, &varParentProcessId, 0, 0);
+    pProcess->lpVtbl->Get(
+        pProcess, L"ParentProcessId", 0, &varParentProcessId, 0, 0
+    );
     pObj->lpVtbl->Get(pObj, L"__Class", 0, &varClass, 0, 0);
 
     if (wcscmp(varClass.bstrVal, L"__InstanceCreationEvent") == 0) {
@@ -244,13 +271,15 @@ error:
 
 
 static PyObject *
-ProcessWatcher_read(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) {
+ProcessWatcher_read(
+    ProcessWatcherObject *self, PyObject *args, PyObject *kwds
+) {
     static char *keywords[] = {"timeout", NULL};
     HRESULT hres;
     ULONG ret;
     IWbemClassObject *pObj = NULL;
     IWbemClassObject *pProcess = NULL;
-    IUnknown* pUnknown;
+    IUnknown *pUnknown;
     VARIANT var;
     PyObject *py_dict = NULL;
     PyObject *py_timeout = NULL;
@@ -258,7 +287,7 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
 
     if (py_list == NULL)
         return NULL;
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O", keywords, &py_timeout))
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", keywords, &py_timeout))
         return NULL;
 
     // Event loop
@@ -283,7 +312,7 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
             pProcess = NULL;
             pUnknown = V_UNKNOWN(&var);
             hres = pUnknown->lpVtbl->QueryInterface(
-                pUnknown, &IID_IWbemClassObject, (void**)&pProcess
+                pUnknown, &IID_IWbemClassObject, (void **)&pProcess
             );
 
             if (SUCCEEDED(hres) && pProcess) {
@@ -321,7 +350,9 @@ error:
 
 
 static PyObject *
-ProcessWatcher_close(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
+ProcessWatcher_close(
+    ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)
+) {
     ProcessWatcher_cleanup(self);
     Py_RETURN_NONE;
 }
@@ -332,7 +363,8 @@ ProcessWatcher_close(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
 
 // Define class methods.
 static PyMethodDef ProcessWatcher_methods[] = {
-    {"read", (PyCFunction)ProcessWatcher_read, METH_VARARGS | METH_KEYWORDS, ""},
+    {"read", (PyCFunction)ProcessWatcher_read, METH_VARARGS | METH_KEYWORDS, ""
+    },
     {"close", (PyCFunction)ProcessWatcher_close, METH_NOARGS, ""},
     {NULL}  // Sentinel
 };
@@ -344,7 +376,7 @@ static PyType_Slot ProcessWatcher_slots[] = {
 };
 
 PyType_Spec ProcessWatcher_spec = {
-    "_psutil_windows.ProcessWatcher",
+    "_psutil.ProcessWatcher",
     sizeof(ProcessWatcherObject),
     0,
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,

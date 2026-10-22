@@ -7,7 +7,10 @@
 #include <Python.h>
 #include <sys/sysctl.h>
 #include <sys/resource.h>
-#include <sys/sched.h>
+#include <sys/types.h>
+#include <sys/sched.h>  // CP_* on OpenBSD
+
+#include "../../arch/all/init.h"
 
 
 PyObject *
@@ -27,6 +30,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
 }
 
 
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
 PyObject *
 psutil_cpu_times(PyObject *self, PyObject *args) {
 #ifdef PSUTIL_NETBSD
@@ -34,22 +38,16 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 #else
     long cpu_time[CPUSTATES];
 #endif
-    size_t size = sizeof(cpu_time);
-    int ret;
 
-#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
-    ret = sysctlbyname("kern.cp_time", &cpu_time, &size, NULL, 0);
-#elif PSUTIL_OPENBSD
-    int mib[] = {CTL_KERN, KERN_CPTIME};
-    ret = sysctl(mib, 2, &cpu_time, &size, NULL, 0);
-#endif
-    if (ret == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
-    return Py_BuildValue("(ddddd)",
-                         (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
-                         (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
-                         (double)cpu_time[CP_SYS] / CLOCKS_PER_SEC,
-                         (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC,
-                         (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC
-                        );
+    if (psutil_sysctlbyname("kern.cp_time", &cpu_time, sizeof(cpu_time)) != 0)
+        return NULL;
+    return Py_BuildValue(
+        "(ddddd)",
+        (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
+        (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
+        (double)cpu_time[CP_SYS] / CLOCKS_PER_SEC,
+        (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC,
+        (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC
+    );
 }
+#endif

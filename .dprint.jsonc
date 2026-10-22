@@ -1,0 +1,60 @@
+{
+    "markdown": {
+        "lineWidth": 79,
+        "textWrap": "always",
+    },
+    "json": {
+        "indentWidth": 4,
+        "associations": [
+            "**/*.json",
+            "**/*.jsonc",
+        ],
+    },
+    "yaml": {
+        "printWidth": 120,
+        "associations": [
+            "**/*.yml",
+            "**/*.yaml",
+            "**/.clang-format",
+        ],
+    },
+    // js
+    "typescript": {
+        "indentWidth": 4,
+        "lineWidth": 79,
+        "quoteStyle": "preferDouble",
+        "useBraces": "always",
+        "singleBodyPosition": "nextLine",
+        "nextControlFlowPosition": "nextLine",
+        "operatorPosition": "sameLine",
+        "conditionalExpression.operatorPosition": "nextLine",
+        "functionExpression.spaceBeforeParentheses": true,
+        "trailingCommas": "onlyMultiLine",
+        "associations": [
+            "**/*.js",
+        ],
+    },
+    // css
+    "malva": {
+        "indentWidth": 4,
+        "printWidth": 79,
+        "associations": [
+            "**/*.css",
+        ],
+    },
+    "excludes": [
+        "**/*-lock.json",
+        "docs/_static/css/code.css",
+        "docs/_static/css/fonts.css",
+        ".github/ISSUE_TEMPLATE/bug.md",
+        ".github/ISSUE_TEMPLATE/enhancement.md",
+        ".github/PULL_REQUEST_TEMPLATE.md",
+    ],
+    "plugins": [
+        "npm:@dprint/markdown@0.26.0",
+        "npm:@dprint/json@0.25.2",
+        "npm:dprint-plugin-yaml@0.6.0",
+        "npm:@dprint/typescript@0.96.1",
+        "npm:dprint-plugin-malva@0.16.0",
+    ],
+}

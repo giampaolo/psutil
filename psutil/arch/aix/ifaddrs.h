@@ -16,14 +16,14 @@
 #include <sys/socket.h>
 #include <net/if.h>
 
-#undef  ifa_dstaddr
-#undef  ifa_broadaddr
+#undef ifa_dstaddr
+#undef ifa_broadaddr
 #define ifa_broadaddr ifa_dstaddr
 
 struct ifaddrs {
-    struct ifaddrs  *ifa_next;
-    char            *ifa_name;
-    unsigned int     ifa_flags;
+    struct ifaddrs *ifa_next;
+    char *ifa_name;
+    unsigned int ifa_flags;
     struct sockaddr *ifa_addr;
     struct sockaddr *ifa_netmask;
     struct sockaddr *ifa_dstaddr;

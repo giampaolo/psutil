@@ -1,0 +1,212 @@
+#!/usr/bin/env python3
+
+# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+"""Benchmark all API calls and print them from fastest to slowest.
+
+$ make print-api-speed
+SYSTEM APIS                NUM CALLS      SECONDS
+-------------------------------------------------
+getloadavg                       300      0.00013
+heap_info                        300      0.00028
+heap_trim                        300      0.00039
+cpu_count                        300      0.00061
+disk_usage                       300      0.00066
+pid_exists                       300      0.00235
+users                            300      0.00455
+net_io_counters                  300      0.00550
+cpu_times                        300      0.00667
+boot_time                        300      0.00700
+cpu_percent                      300      0.00766
+net_if_stats                     300      0.00783
+virtual_memory                   300      0.00834
+cpu_times_percent                300      0.00885
+net_if_addrs                     300      0.01157
+cpu_stats                        300      0.01208
+swap_memory                      300      0.01558
+disk_partitions                  300      0.01664
+disk_io_counters                 300      0.02204
+sensors_battery                  300      0.02995
+pids                             300      0.05295
+cpu_count (cores)                300      0.06943
+process_iter (all)               300      0.08486
+cpu_freq                         300      0.18987
+sensors_fans                     300      0.74027
+net_connections                  161      2.00690
+sensors_temperatures             100      2.00742
+
+PROCESS APIS               NUM CALLS      SECONDS
+-------------------------------------------------
+exe                              300      0.00017
+create_time                      300      0.00020
+nice                             300      0.00025
+ionice                           300      0.00041
+cwd                              300      0.00052
+cpu_affinity                     300      0.00059
+num_fds                          300      0.00097
+memory_info                      300      0.00201
+cmdline                          300      0.00222
+io_counters                      300      0.00226
+cpu_num                          300      0.00242
+status                           300      0.00242
+terminal                         300      0.00243
+name                             300      0.00249
+page_faults                      300      0.00258
+memory_percent                   300      0.00259
+cpu_times                        300      0.00272
+threads                          300      0.00278
+num_threads                      300      0.00278
+gids                             300      0.00296
+num_ctx_switches                 300      0.00299
+uids                             300      0.00311
+cpu_percent                      300      0.00346
+net_connections                  300      0.00373
+open_files                       300      0.00378
+memory_extras                    300      0.00398
+username                         300      0.00500
+ppid                             300      0.00556
+environ                          300      0.01176
+memory_footprint                 300      0.02218
+memory_maps                      300      0.27158
+"""
+
+import argparse
+import inspect
+import os
+import sys
+from timeit import default_timer as timer
+
+import psutil
+from psutil._common import print_color
+
+TIMES = 300
+PID = os.getpid()
+timings = []
+templ = "{:<25} {:>10}   {:>10}"
+
+
+def print_header(what):
+    s = templ.format(what, "NUM CALLS", "SECONDS")
+    print_color(s, color=None, bold=True)
+    print("-" * len(s))
+
+
+def print_timings():
+    timings.sort(key=lambda x: (x[1], -x[2]), reverse=True)
+    i = 0
+    while timings[:]:
+        title, times, elapsed = timings.pop(0)
+        s = templ.format(title, str(times), f"{elapsed:.5f}")
+        if i > len(timings) - 5:
+            print_color(s, color="red")
+        else:
+            print(s)
+
+
+def timecall(title, fun, *args, **kw):
+    print(f"{title:<50}", end="")
+    sys.stdout.flush()
+    t = timer()
+    for n in range(TIMES):
+        try:
+            fun(*args, **kw)
+        except psutil.AccessDenied:
+            return
+        else:
+            elapsed = timer() - t
+            if elapsed > 2:
+                break
+    print("\033[2K\r", end="")
+    sys.stdout.flush()
+    timings.append((title, n + 1, elapsed))
+
+
+def set_highest_priority():
+    """Set highest CPU and I/O priority (requires root)."""
+    p = psutil.Process()
+    if psutil.WINDOWS:
+        p.nice(psutil.HIGH_PRIORITY_CLASS)
+    else:
+        p.nice(-20)
+
+    if psutil.LINUX:
+        p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
+    elif psutil.WINDOWS:
+        p.ionice(psutil.IOPRIO_HIGH)
+
+
+def parse_cli():
+    global TIMES, PID
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser.add_argument('-t', '--times', type=int, default=TIMES)
+    parser.add_argument('-p', '--pid', type=int, default=PID)
+    args = parser.parse_args()
+    TIMES = args.times
+    PID = args.pid
+    assert TIMES > 1, TIMES
+
+
+def main():
+    parse_cli()
+
+    try:
+        set_highest_priority()
+    except psutil.AccessDenied:
+        prio_set = False
+    else:
+        prio_set = True
+
+    # --- system
+
+    public_apis = []
+    ignore = [
+        'bytes2human',
+        'wait_procs',
+        'process_iter',
+        'win_service_get',
+        'win_service_iter',
+    ]
+    if psutil.MACOS:
+        ignore.append('net_connections')  # raises AD
+    for name in psutil.__all__:
+        obj = getattr(psutil, name, None)
+        if inspect.isfunction(obj):
+            if name not in ignore:
+                public_apis.append(name)
+
+    print_header("SYSTEM APIS")
+    for name in public_apis:
+        fun = getattr(psutil, name)
+        args = ()
+        if name == 'pid_exists':
+            args = (PID,)
+        elif name == 'disk_usage':
+            args = (os.getcwd(),)
+        timecall(name, fun, *args)
+    timecall('cpu_count (cores)', psutil.cpu_count, logical=False)
+    timecall('process_iter (all)', lambda: list(psutil.process_iter()))
+    print_timings()
+
+    # --- process
+    print()
+    print_header("PROCESS APIS")
+    p = psutil.Process(PID)
+    for name in sorted(p.attrs):
+        fun = getattr(p, name)
+        if callable(fun):
+            timecall(name, fun)
+
+    print_timings()
+
+    if not prio_set:
+        msg = "\nWARN: couldn't set highest process priority "
+        msg += "(requires root)"
+        print_color(msg, "red")
+
+
+if __name__ == '__main__':
+    main()

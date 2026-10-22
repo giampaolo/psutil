@@ -2,48 +2,29 @@
  * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Windows platform-specific module methods for _psutil_windows.
- *
- * List of undocumented Windows NT APIs which are used in here and in
- * other modules:
- * - NtQuerySystemInformation
- * - NtQueryInformationProcess
- * - NtQueryObject
- * - NtSuspendProcess
- * - NtResumeProcess
  */
+
+// Windows module methods.
+//
+// List of undocumented Windows NT APIs which are used in here and in
+// other modules:
+// - NtQuerySystemInformation
+// - NtQueryInformationProcess
+// - NtQueryObject
+// - NtSuspendProcess
+// - NtResumeProcess
 
 #include <Python.h>
 #include <windows.h>
 
-#include "_psutil_common.h"
-#include "arch/windows/cpu.h"
-#include "arch/windows/disk.h"
-#include "arch/windows/mem.h"
-#include "arch/windows/net.h"
-#include "arch/windows/proc.h"
-#include "arch/windows/proc_handles.h"
-#include "arch/windows/proc_info.h"
-#include "arch/windows/proc_utils.h"
-#include "arch/windows/proc_watcher.h"
-#include "arch/windows/security.h"
-#include "arch/windows/sensors.h"
-#include "arch/windows/services.h"
-#include "arch/windows/socks.h"
-#include "arch/windows/sys.h"
-#include "arch/windows/wmi.h"
+#include "arch/all/init.h"
+#include "arch/windows/init.h"
 
 
-#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-
-
-// ------------------------ Python init ---------------------------
-
-static PyMethodDef
-PsutilMethods[] = {
+static PyMethodDef PsutilMethods[] = {
     // --- per-process functions
-    {"proc_cmdline", (PyCFunction)(void(*)(void))psutil_proc_cmdline,
+    {"proc_cmdline",
+     (PyCFunction)(void (*)(void))psutil_proc_cmdline,
      METH_VARARGS | METH_KEYWORDS},
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS},
@@ -53,13 +34,13 @@ PsutilMethods[] = {
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS},
     {"proc_io_priority_get", psutil_proc_io_priority_get, METH_VARARGS},
     {"proc_io_priority_set", psutil_proc_io_priority_set, METH_VARARGS},
-    {"proc_is_suspended", psutil_proc_is_suspended, METH_VARARGS},
     {"proc_kill", psutil_proc_kill, METH_VARARGS},
+    {"proc_memory_footprint", psutil_proc_memory_footprint, METH_VARARGS},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS},
-    {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS},
     {"proc_num_handles", psutil_proc_num_handles, METH_VARARGS},
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS},
+    {"proc_ppid", psutil_proc_ppid, METH_VARARGS},
     {"proc_priority_get", psutil_proc_priority_get, METH_VARARGS},
     {"proc_priority_set", psutil_proc_priority_set, METH_VARARGS},
     {"proc_suspend_or_resume", psutil_proc_suspend_or_resume, METH_VARARGS},
@@ -69,7 +50,7 @@ PsutilMethods[] = {
     {"proc_wait", psutil_proc_wait, METH_VARARGS},
 
     // --- alternative pinfo interface
-    {"proc_info", psutil_proc_info, METH_VARARGS},
+    {"proc_oneshot", psutil_proc_oneshot, METH_VARARGS},
 
     // --- system-related functions
     {"boot_time", psutil_boot_time, METH_VARARGS},
@@ -83,8 +64,12 @@ PsutilMethods[] = {
     {"disk_usage", psutil_disk_usage, METH_VARARGS},
     {"getloadavg", (PyCFunction)psutil_get_loadavg, METH_VARARGS},
     {"getpagesize", psutil_getpagesize, METH_VARARGS},
-    {"swap_percent", psutil_swap_percent, METH_VARARGS},
-    {"init_loadavg_counter", (PyCFunction)psutil_init_loadavg_counter, METH_VARARGS},
+    {"swap_percent", psutil_swap_percent, METH_NOARGS},
+    {"init_loadavg_counter",
+     (PyCFunction)psutil_init_loadavg_counter,
+     METH_NOARGS},
+    {"heap_info", psutil_heap_info, METH_VARARGS},
+    {"heap_trim", psutil_heap_trim, METH_VARARGS},
     {"net_connections", psutil_net_connections, METH_VARARGS},
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS},
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS},
@@ -95,7 +80,6 @@ PsutilMethods[] = {
     {"ppid_map", psutil_ppid_map, METH_VARARGS},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
     {"users", psutil_users, METH_VARARGS},
-    {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS},
@@ -105,7 +89,8 @@ PsutilMethods[] = {
     {"winservice_start", psutil_winservice_start, METH_VARARGS},
     {"winservice_stop", psutil_winservice_stop, METH_VARARGS},
 
-    // --- windows API bindings
+    // --- direct Windows APIs
+    {"GetPerformanceInfo", psutil_GetPerformanceInfo, METH_VARARGS},
     {"QueryDosDevice", psutil_QueryDosDevice, METH_VARARGS},
 
     // --- others
@@ -116,158 +101,111 @@ PsutilMethods[] = {
 };
 
 
-struct module_state {
-    PyObject *error;
-};
-
+static int module_loaded = 0;
 
 static int
-psutil_windows_traverse(PyObject *m, visitproc visit, void *arg) {
-    Py_VISIT(GETSTATE(m)->error);
+psutil_add_ulong(PyObject *mod, const char *name, unsigned long value) {
+    PyObject *v = PyLong_FromUnsignedLong(value);
+
+    if (v == NULL)
+        return -1;
+    if (PyModule_AddObject(mod, name, v)) {
+        Py_DECREF(v);
+        return -1;
+    }
     return 0;
 }
 
 static int
-psutil_windows_clear(PyObject *m) {
-    Py_CLEAR(GETSTATE(m)->error);
+psutil_add_proc_watcher(PyObject *mod) {
+    PyObject *type = PyType_FromSpec(&ProcessWatcher_spec);
+
+    if (type == NULL)
+        return -1;
+    if (PyModule_AddObject(mod, "ProcessWatcher", type)) {
+        Py_DECREF(type);
+        return -1;
+    }
     return 0;
 }
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "psutil_windows",
-    NULL,
-    sizeof(struct module_state),
-    PsutilMethods,
-    NULL,
-    psutil_windows_traverse,
-    psutil_windows_clear,
-    NULL
-};
-
-
-PyMODINIT_FUNC
-PyInit__psutil_windows(void) {
-    PyObject *mod = PyModule_Create(&moduledef);
-    PyObject *ProcessWatcher;
-
-    if (mod == NULL)
-        return NULL;
-
-#ifdef Py_GIL_DISABLED
-    if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
-        return NULL;
-#endif
-
-    if (psutil_setup() != 0)
-        return NULL;
-    if (psutil_set_se_debug() != 0)
-        return NULL;
-
-    // Exceptions
-    TimeoutExpired = PyErr_NewException(
-        "_psutil_windows.TimeoutExpired", NULL, NULL);
-    if (TimeoutExpired == NULL)
-        return NULL;
-    Py_INCREF(TimeoutExpired);
-    if (PyModule_AddObject(mod, "TimeoutExpired", TimeoutExpired))
-        return NULL;
-
-    TimeoutAbandoned = PyErr_NewException(
-        "_psutil_windows.TimeoutAbandoned", NULL, NULL);
-    if (TimeoutAbandoned == NULL)
-        return NULL;
-    Py_INCREF(TimeoutAbandoned);
-    if (PyModule_AddObject(mod, "TimeoutAbandoned", TimeoutAbandoned))
-        return NULL;
-
-    // ProcessWatcher class
-    ProcessWatcher = PyType_FromSpec(&ProcessWatcher_spec);
-    if (!ProcessWatcher)
-        return NULL;
-    Py_INCREF(ProcessWatcher);
-    if (PyModule_AddObject(mod, "ProcessWatcher", ProcessWatcher))
-        return NULL;
-
+static int
+psutil_add_constants(PyObject *mod) {
     // version constant
-    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
-        return NULL;
+    PSUTIL_ADD_INT(mod, "version", PSUTIL_VERSION);
 
     // process status constants
     // http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx
-    if (PyModule_AddIntConstant(mod, "ABOVE_NORMAL_PRIORITY_CLASS", ABOVE_NORMAL_PRIORITY_CLASS))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "BELOW_NORMAL_PRIORITY_CLASS", BELOW_NORMAL_PRIORITY_CLASS))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "HIGH_PRIORITY_CLASS", HIGH_PRIORITY_CLASS))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "IDLE_PRIORITY_CLASS", IDLE_PRIORITY_CLASS))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "NORMAL_PRIORITY_CLASS", NORMAL_PRIORITY_CLASS))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "REALTIME_PRIORITY_CLASS", REALTIME_PRIORITY_CLASS))
-        return NULL;
+    PSUTIL_ADD_INT(
+        mod, "ABOVE_NORMAL_PRIORITY_CLASS", ABOVE_NORMAL_PRIORITY_CLASS
+    );
+    PSUTIL_ADD_INT(
+        mod, "BELOW_NORMAL_PRIORITY_CLASS", BELOW_NORMAL_PRIORITY_CLASS
+    );
+    PSUTIL_ADD_INT(mod, "HIGH_PRIORITY_CLASS", HIGH_PRIORITY_CLASS);
+    PSUTIL_ADD_INT(mod, "IDLE_PRIORITY_CLASS", IDLE_PRIORITY_CLASS);
+    PSUTIL_ADD_INT(mod, "NORMAL_PRIORITY_CLASS", NORMAL_PRIORITY_CLASS);
+    PSUTIL_ADD_INT(mod, "REALTIME_PRIORITY_CLASS", REALTIME_PRIORITY_CLASS);
 
     // connection status constants
     // http://msdn.microsoft.com/en-us/library/cc669305.aspx
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_CLOSED", MIB_TCP_STATE_CLOSED))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_CLOSING", MIB_TCP_STATE_CLOSING))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_CLOSE_WAIT", MIB_TCP_STATE_CLOSE_WAIT))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_LISTEN", MIB_TCP_STATE_LISTEN))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_ESTAB", MIB_TCP_STATE_ESTAB))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_SYN_SENT", MIB_TCP_STATE_SYN_SENT))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_SYN_RCVD", MIB_TCP_STATE_SYN_RCVD))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_FIN_WAIT1", MIB_TCP_STATE_FIN_WAIT1))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_FIN_WAIT2", MIB_TCP_STATE_FIN_WAIT2))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_LAST_ACK", MIB_TCP_STATE_LAST_ACK))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_TIME_WAIT", MIB_TCP_STATE_TIME_WAIT))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_TIME_WAIT", MIB_TCP_STATE_TIME_WAIT))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "MIB_TCP_STATE_DELETE_TCB", MIB_TCP_STATE_DELETE_TCB))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE))
-        return NULL;
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_CLOSED", MIB_TCP_STATE_CLOSED);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_CLOSING", MIB_TCP_STATE_CLOSING);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_CLOSE_WAIT", MIB_TCP_STATE_CLOSE_WAIT);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_LISTEN", MIB_TCP_STATE_LISTEN);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_ESTAB", MIB_TCP_STATE_ESTAB);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_SYN_SENT", MIB_TCP_STATE_SYN_SENT);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_SYN_RCVD", MIB_TCP_STATE_SYN_RCVD);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_FIN_WAIT1", MIB_TCP_STATE_FIN_WAIT1);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_FIN_WAIT2", MIB_TCP_STATE_FIN_WAIT2);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_LAST_ACK", MIB_TCP_STATE_LAST_ACK);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_TIME_WAIT", MIB_TCP_STATE_TIME_WAIT);
+    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_DELETE_TCB", MIB_TCP_STATE_DELETE_TCB);
+    PSUTIL_ADD_INT(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
-    // process watcher constants
-    if (PyModule_Add(mod, "PROC_EVENT_FORK", PyLong_FromUnsignedLong(PROC_EVENT_FORK)))
-        return NULL;
-    if (PyModule_Add(mod, "PROC_EVENT_EXIT", PyLong_FromUnsignedLong(PROC_EVENT_EXIT)))
-        return NULL;
+    // process watcher constants (0x80000000 doesn't fit a 32-bit long)
+    if (psutil_add_ulong(mod, "PROC_EVENT_FORK", PROC_EVENT_FORK))
+        return -1;
+    if (psutil_add_ulong(mod, "PROC_EVENT_EXIT", PROC_EVENT_EXIT))
+        return -1;
 
     // ...for internal use in _psutil_windows.py
-    if (PyModule_AddIntConstant(mod, "INFINITE", INFINITE))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "ERROR_INVALID_NAME", ERROR_INVALID_NAME))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "ERROR_SERVICE_DOES_NOT_EXIST", ERROR_SERVICE_DOES_NOT_EXIST))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "ERROR_PRIVILEGE_NOT_HELD", ERROR_PRIVILEGE_NOT_HELD))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "WINVER", PSUTIL_WINVER))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "WINDOWS_VISTA", PSUTIL_WINDOWS_VISTA))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "WINDOWS_7", PSUTIL_WINDOWS_7))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "WINDOWS_8", PSUTIL_WINDOWS_8))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "WINDOWS_8_1", PSUTIL_WINDOWS_8_1))
-        return NULL;
-    if (PyModule_AddIntConstant(mod, "WINDOWS_10", PSUTIL_WINDOWS_10))
-        return NULL;
+    PSUTIL_ADD_INT(mod, "INFINITE", INFINITE);
+    PSUTIL_ADD_INT(mod, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED);
+    PSUTIL_ADD_INT(mod, "ERROR_INVALID_NAME", ERROR_INVALID_NAME);
+    PSUTIL_ADD_INT(
+        mod, "ERROR_SERVICE_DOES_NOT_EXIST", ERROR_SERVICE_DOES_NOT_EXIST
+    );
+    PSUTIL_ADD_INT(mod, "ERROR_PRIVILEGE_NOT_HELD", ERROR_PRIVILEGE_NOT_HELD);
 
-    return mod;
+    return 0;
+}
+
+
+static int
+psutil_exec(PyObject *mod) {
+    if (psutil_setup() != 0)
+        return -1;
+
+    // InitializeCriticalSection() (called by psutil_setup_windows) must
+    // run only once per lock, so guard the process-wide setup.
+    if (!module_loaded) {
+        if (psutil_setup_windows() != 0)
+            return -1;
+        if (psutil_set_se_debug() != 0)
+            return -1;
+        module_loaded = 1;
+    }
+    if (psutil_add_exceptions(mod) != 0)
+        return -1;
+    if (psutil_add_constants(mod) != 0)
+        return -1;
+    if (psutil_add_proc_watcher(mod) != 0)
+        return -1;
+    return 0;
+}
+
+PyMODINIT_FUNC
+PyInit__psutil(void) {
+    return psutil_mod_init("_psutil", PsutilMethods, psutil_exec);
 }

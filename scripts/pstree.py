@@ -27,7 +27,6 @@ $ python3 scripts/pstree.py
 ...
 """
 
-
 import collections
 import sys
 

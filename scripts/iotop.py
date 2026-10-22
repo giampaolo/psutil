@@ -32,15 +32,13 @@ Author: Giampaolo Rodola' <g.rodola@gmail.com>
 import sys
 import time
 
-
 try:
     import curses
 except ImportError:
     sys.exit('platform not supported')
 
 import psutil
-from psutil._common import bytes2human
-
+from psutil import bytes2human
 
 win = curses.initscr()
 lineno = 0
