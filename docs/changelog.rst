@@ -340,6 +340,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2611`: re-enable support for Android, which got broken on Python 3.13.
   Also include a working :func:`disk_partitions` which no longer raises
   ``PermissionError``.
+- :gh:`3082`, [Linux]: :meth:`Process.cmdline` and :meth:`Process.environ`
+  turned ``\r`` and ``\r\n`` into ``\n`` inside arguments and environment
+  variable values.
 
 **Bug fixes: Windows**
 

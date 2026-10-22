@@ -1776,8 +1776,8 @@ class Process:
 
     @wrap_exceptions
     def cmdline(self):
-        with open_text(f"{self._procfs_path}/{self.pid}/cmdline") as f:
-            data = f.read()
+        # not open_text(): it turns \r and \r\n into \n
+        data = decode(bcat(f"{self._procfs_path}/{self.pid}/cmdline"))
         if not data:
             # may happen in case of zombie process
             self._raise_if_zombie()
@@ -1802,8 +1802,8 @@ class Process:
 
     @wrap_exceptions
     def environ(self):
-        with open_text(f"{self._procfs_path}/{self.pid}/environ") as f:
-            data = f.read()
+        # not open_text(): it turns \r and \r\n into \n
+        data = decode(bcat(f"{self._procfs_path}/{self.pid}/environ"))
         return parse_environ_block(data)
 
     @wrap_exceptions

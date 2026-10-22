@@ -35,6 +35,9 @@ from . import AARCH64
 from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
+from . import PYTHON_EXE
+from . import PYTHON_EXE_ENV
+from . import PYTHON_SLEEP_CODE
 from . import TOLERANCE_DISK_USAGE
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
@@ -1919,7 +1922,7 @@ class TestProcessIdentity(LinuxTestCase):
 
     def check_cmdline(self, content, expected):
         path = f"/proc/{os.getpid()}/cmdline"
-        with mock_open_content({path: content}):
+        with mock_open_content({path: content.encode()}):
             assert psutil.Process().cmdline() == expected
 
     def test_cmdline_mocked(self):
@@ -1935,6 +1938,14 @@ class TestProcessIdentity(LinuxTestCase):
     def test_cmdline_mixed_separators(self):
         # https://github.com/giampaolo/psutil/issues/1179#issuecomment-552984549
         self.check_cmdline('foo\x20bar\x00', ['foo', 'bar'])
+
+    def test_cmdline_environ_carriage_return(self):
+        cmd = [PYTHON_EXE, "-c", PYTHON_SLEEP_CODE, "a\rb", "c\r\nd"]
+        env = PYTHON_EXE_ENV.copy()
+        env["PSUTIL_TEST_ENVIRON"] = "e\rf"
+        p = self.spawn_psproc(cmd, env=env)
+        assert p.cmdline() == cmd
+        assert p.environ()["PSUTIL_TEST_ENVIRON"] == "e\rf"
 
     def test_readlink_path_deleted_mocked(self):
         with mock.patch(
