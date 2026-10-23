@@ -82,7 +82,7 @@ A collection of ideas and notes about stuff to implement in future versions.
 - Python 3.3. exposed different sched.h functions:
   http://docs.python.org/dev/whatsnew/3.3.html#os
   http://bugs.python.org/issue12655
-  http://docs.python.org/dev/library/os.html#interface-to-the-scheduler It It
+  http://docs.python.org/dev/library/os.html#interface-to-the-scheduler It
   might be worth to take a look and figure out whether we can include some of
   those in psutil.
 
