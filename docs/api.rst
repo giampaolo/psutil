@@ -2677,7 +2677,7 @@ can be used in conjunction with :meth:`Process.ionice` (*ioclass* argument).
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Constants for getting or setting process resource limits, to be used in in
+Constants for getting or setting process resource limits, to be used in
 conjunction with :meth:`Process.rlimit`. The meaning of each constant is
 explained in :func:`resource.getrlimit` documentation.
 
