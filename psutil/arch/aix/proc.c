@@ -7,6 +7,7 @@
  */
 
 #include <Python.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <procinfo.h>
 #include <stdlib.h>
@@ -26,25 +27,39 @@
 int
 psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     int fd;
-    size_t nbytes;
+    int saved_errno;
+    ssize_t nbytes;
+
+    // errno is preserved on failure so that callers can inspect it.
     fd = open(path, O_RDONLY);
     if (fd == -1) {
+        saved_errno = errno;
         PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
+        errno = saved_errno;
         return 0;
     }
     nbytes = read(fd, fstruct, size);
-    if (nbytes <= 0) {
+    if (nbytes == -1) {
+        saved_errno = errno;
         close(fd);
-        psutil_oserror();
-        return 0;
-    }
-    if (nbytes != size) {
-        close(fd);
-        psutil_runtime_error("psutil_file_to_struct() size mismatch");
+        errno = saved_errno;
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
+        errno = saved_errno;
         return 0;
     }
     close(fd);
-    return nbytes;
+    if ((size_t)nbytes != size) {
+        errno = 0;
+        psutil_runtime_error(
+            "psutil_file_to_struct() size mismatch reading %s (read %zd, "
+            "expected %zu)",
+            path,
+            nbytes,
+            size
+        );
+        return 0;
+    }
+    return (int)nbytes;
 }
 
 
@@ -125,8 +140,22 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
     }
     else {
         str_format(path, sizeof(path), "%s/%i/status", procfs_path, pid);
-        if (!psutil_file_to_struct(path, (void *)&status, sizeof(status)))
-            return NULL;
+        if (!psutil_file_to_struct(path, (void *)&status, sizeof(status))) {
+            // The process may have started exiting after psinfo was read,
+            // in which case /proc/<pid>/status can't be opened or read
+            // anymore (EBUSY, EINVAL, EBADF, ENOENT, ESRCH). Treat it like
+            // the SEXIT case above.
+            if (PyErr_ExceptionMatches(PyExc_OSError)
+                && (errno == EBUSY || errno == EINVAL || errno == EBADF
+                    || errno == ENOENT || errno == ESRCH))
+            {
+                PyErr_Clear();
+                status.pr_stat = SACTIVE;
+            }
+            else {
+                return NULL;
+            }
+        }
     }
 
     return Py_BuildValue(
