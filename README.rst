@@ -13,7 +13,7 @@
     <br/>
 
     <div align="center">
-      <a href="https://clickpy.clickhouse.com/dashboard/psutil"><img src="https://static.pepy.tech/badge/psutil/month" alt="Downloads"></a>
+      <a href="https://clickpy.clickhouse.com/dashboard/psutil"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fsql-clickhouse.clickhouse.com%2F%3Fuser%3Dplay%26query%3DWITH%2B%2528SELECT%2Bmax%2528date%2529%2BFROM%2Bpypi.pypi_downloads_per_day%2BWHERE%2Bproject%253D%2527psutil%2527%2529%2BAS%2Bm%2BSELECT%2Bconcat%2528toString%2528round%2528sum%2528count%2529%2B%252F%2B1e6%2529%2529%252C%2B%2527M%2527%2529%2BAS%2Bn%2BFROM%2Bpypi.pypi_downloads_per_day%2BWHERE%2Bproject%253D%2527psutil%2527%2BAND%2Bdate%2B%253E%2Bm%2B-%2BtoIntervalMonth%25281%2529%2BAND%2Bdate%2B%253C%253D%2Bm%2BFORMAT%2BJSONEachRow&query=%24.n&label=downloads%2Fmonth&color=blue&cacheSeconds=86400" alt="Downloads"></a>
 
       <a href="https://repology.org/metapackage/python:psutil/versions"><img src="https://repology.org/badge/tiny-repos/python:psutil.svg" alt="Binary packages"></a>
 
@@ -53,7 +53,7 @@ Adoption
 
 psutil is among the
 `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__ most-downloaded
-packages on PyPI, with **280+ million** downloads per month and **790,000+**
+packages on PyPI, with **320+ million** downloads per month and **790,000+**
 `GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__
 using it. See also `adoptions <https://psutil.io/adoption/>`__ and
 `alternatives <https://psutil.io/alternatives/>`__.
