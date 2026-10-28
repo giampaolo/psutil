@@ -276,20 +276,21 @@
 /* Theme transition                                                       */
 /* ====================================================================== */
 
-body,
-.page,
-.article,
-.right-sidebar,
-.right-sidebar-title,
-.topbar,
-.footer,
-.search-page-form,
-ul.search > li,
-.shortcut-flyout-panel {
-    transition:
-        background-color var(--theme-transition),
-        color var(--theme-transition),
-        border-color var(--theme-transition);
+/* only during the switch (theme-toggle.js); no text color: it's
+   inherited and makes big pages (api, changelog) stutter */
+@media (prefers-reduced-motion: no-preference) {
+    html.theme-switching *,
+    html.theme-switching *::before,
+    html.theme-switching *::after {
+        transition:
+            background-color var(--theme-transition),
+            border-color var(--theme-transition) !important;
+    }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 0.25s;
 }
 
 .no-transition,

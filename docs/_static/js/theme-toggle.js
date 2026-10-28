@@ -27,8 +27,32 @@
         }
     }
 
-    function setTheme(dark) {
+    let switchTimer = null;
+
+    function switchTheme(dark) {
+        // crossfade two snapshots of the page: everything fades
+        // together, text included, whatever the page size
+        const reduce = window.matchMedia(
+            "(prefers-reduced-motion: reduce)"
+        ).matches;
+        if (document.startViewTransition && !reduce) {
+            html.classList.add("no-transition");
+            const vt = document.startViewTransition(() => applyTheme(dark));
+            vt.finished.finally(() => {
+                html.classList.remove("no-transition");
+            });
+            return;
+        }
+        html.classList.add("theme-switching");
         applyTheme(dark);
+        clearTimeout(switchTimer);
+        switchTimer = setTimeout(() => {
+            html.classList.remove("theme-switching");
+        }, 400);
+    }
+
+    function setTheme(dark) {
+        switchTheme(dark);
         try {
             localStorage.setItem(KEY, dark ? "dark" : "light");
         }
@@ -62,7 +86,7 @@
     // re-writing localStorage (would loop the storage event).
     window.addEventListener("storage", (e) => {
         if (e.key === KEY && e.newValue) {
-            applyTheme(e.newValue === "dark");
+            switchTheme(e.newValue === "dark");
         }
     });
 })();
