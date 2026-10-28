@@ -16,6 +16,14 @@
     text-align: center;
 }
 
+@media (max-width: 600px) {
+    .site-banner {
+        padding: 5px 40px 5px 12px;
+        font-size: 0.78rem;
+        line-height: 1.35;
+    }
+}
+
 html.site-banner-dismissed .site-banner {
     display: none;
 }

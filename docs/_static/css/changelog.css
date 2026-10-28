@@ -17,7 +17,7 @@
     vertical-align: 1px;
 }
 
-/* vertically center lables in changelog. */
+/* vertically center labels in changelog. */
 @supports (text-box: trim-both cap alphabetic) {
     .cl-label {
         padding: calc((1.7em - 1cap) / 2) 7px;
@@ -72,6 +72,14 @@
     font-size: 0.65em;
     font-weight: 400;
     color: var(--text-muted);
+}
+
+/* category labels ("New APIs", "Bug fixes", ...) */
+body[data-page="changelog"] .article p:has(> strong:only-child) {
+    margin: 1.8em 0 0.5em;
+    font-size: 0.8em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 /* Printers drop backgrounds, which would leave the white text of

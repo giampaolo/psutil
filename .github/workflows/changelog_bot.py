@@ -640,7 +640,7 @@ def check_entry_ordered(text, gh):
 
 
 def prepend_dev_block(lines, start):
-    header = "X.X.X (IN DEVELOPMENT)"
+    header = "X.X.X — unreleased"
     new = [header, "^" * len(header), ""]
     lines = lines[:start] + new + lines[start:]
     return lines, start, start + len(new)

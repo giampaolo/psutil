@@ -1010,7 +1010,7 @@ class TestDecisionPostRelease:
             RELEASED_TOP, decision, {10}
         )
         assert status == "inserted"
-        assert "X.X.X (IN DEVELOPMENT)" in out
+        assert "X.X.X — unreleased" in out
 
     def test_amend_rejected_when_top_block_released(self):
         # Amending released history is never allowed.
@@ -1040,12 +1040,12 @@ Changelog
 """
         out = cb.insert_entry(text, "Bug fixes", "- :gh:`300`: new bug.")
         lines = out.splitlines()
-        dev = lines.index("X.X.X (IN DEVELOPMENT)")
+        dev = lines.index("X.X.X — unreleased")
         released = lines.index("8.0.1 (2026-02-01)")
         new = lines.index("- :gh:`300`: new bug.")
         # New dev block sits above the released one, entry inside it.
         assert dev < new < released
-        assert lines[dev + 1] == "^" * len("X.X.X (IN DEVELOPMENT)")
+        assert lines[dev + 1] == "^" * len("X.X.X — unreleased")
 
 
 class TestGhRequest:

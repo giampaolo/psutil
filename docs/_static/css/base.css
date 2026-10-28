@@ -215,8 +215,8 @@
     --accent-ring: rgba(106, 176, 222, 0.35);
 
     /* API links + signature box. */
-    --links-api: #7ecfff;
-    --links-api-underline: #7ecfff;
+    --links-api: #6ab0de;
+    --links-api-underline: #6ab0de;
     --func-sig-bg: #2c2c2c;
     --func-sig-border: #7ecfff;
     --func-sig-text: #e0e0e0;

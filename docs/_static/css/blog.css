@@ -42,6 +42,13 @@
     margin-left: auto;
 }
 
+/* phones: drop the tagline so RSS stays on the title line */
+@media (max-width: 600px) {
+    .blog-section-subtitle {
+        display: none;
+    }
+}
+
 .blog-section-label {
     display: inline-flex;
     align-items: center;
@@ -120,6 +127,17 @@ a.blog-rss:hover {
     justify-content: space-between;
     gap: 1em;
     margin-bottom: 1.5em;
+}
+
+/* the "Blog" banner above already titles the main listing; keep
+   the h1 for screen readers only */
+.blog-listing-header-all {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .blog-listing-title {

@@ -5,9 +5,9 @@ div.admonition {
     margin: 10px 0;
     padding: var(--adm-padding-y) 10px var(--adm-padding-y) 36px;
     background-color: var(--adm-note-bg);
-    border: 1px solid var(--adm-note-border);
+    border: 0;
     border-left: 4px solid var(--adm-note-accent-border);
-    border-radius: 4px;
+    border-radius: 0 4px 4px 0;
 }
 
 div.admonition + div.admonition {

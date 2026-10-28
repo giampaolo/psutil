@@ -15,7 +15,7 @@
 
 {% block body %}
 <div class="blog-listing">
-  <div class="blog-listing-header">
+  <div class="blog-listing-header{% if pagename == ablog.blog_path %} blog-listing-header-all{% endif %}">
     <h1 class="blog-listing-title">
       {%- if pagename == ablog.blog_path -%}
       <span class="blog-listing-title-value">{{ _('All posts') }}</span>

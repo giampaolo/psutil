@@ -23,10 +23,6 @@ body[data-page="api"] .left-sidebar a.current {
 a[href*="faq/"],
 ul.search > li:has(> a[href*="faq/"]),
 body[data-page="faq"] .left-sidebar a.current {
-    --doc-icon: "\3f";
-}
-
-div.seealso a[href*="faq/"] {
     --doc-icon: "\f059";
     --doc-icon-weight: 400;
 }
@@ -61,7 +57,7 @@ body[data-page="stdlib-equivalents"] .left-sidebar a.current {
 a[href*="glossary/"],
 ul.search > li:has(> a[href*="glossary/"]),
 body[data-page="glossary"] .left-sidebar a.current {
-    --doc-icon: "\f031";
+    --doc-icon: "\f02d";
 }
 
 a[href*="platform/"],
