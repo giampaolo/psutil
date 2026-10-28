@@ -82,6 +82,14 @@
   {% include "banner.html" %}
   {% include "topbar.html" %}
 </div>
+{#- the banner wraps on narrow screens, so measure the header before
+    the first paint; banner.js keeps it in sync on resize -#}
+<script>
+  document.documentElement.style.setProperty(
+    "--header-height",
+    document.querySelector(".header-stack").offsetHeight + "px"
+  );
+</script>
 {% endblock %}
 
 {# Suppress basic's default top/bottom breadcrumb. #}
