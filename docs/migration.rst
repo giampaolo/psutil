@@ -210,8 +210,6 @@ Git tags were renamed from ``release-X.Y.Z`` to ``vX.Y.Z`` (e.g.
 your scripts or URLs reference psutil tags, update them to the new format. See
 :gh:`2788`.
 
--------------------------------------------------------------------------------
-
 .. _migration-7.0:
 
 Migrating to 7.0
@@ -240,8 +238,6 @@ Python 2.7 is no longer supported. The last release supporting it is psutil
 .. code-block:: bash
 
   pip2 install "psutil==6.1.*"
-
--------------------------------------------------------------------------------
 
 .. _migration-6.0:
 

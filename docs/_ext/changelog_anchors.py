@@ -15,6 +15,7 @@ import re
 from docutils import nodes
 
 VERSION_RE = re.compile(r"^(\d+\.\d+\.\d+)")
+DATED_RE = re.compile(r"^(\d+\.\d+\.\d+) — (.+)$")
 
 
 def add_version_anchors(app, doctree):
@@ -39,6 +40,16 @@ def add_version_anchors(app, doctree):
             if anchor not in labels:
                 labels[anchor] = ("changelog", anchor, text)
                 anonlabels[anchor] = ("changelog", anchor)
+
+            # wrap the date so CSS can style it apart from the version
+            m = DATED_RE.match(text)
+            if m:
+                title.children = []
+                title += nodes.Text(m.group(1))
+                title += nodes.inline(" — ", " — ", classes=["cl-sep"])
+                title += nodes.inline(
+                    m.group(2), m.group(2), classes=["cl-date"]
+                )
 
 
 def setup(app):

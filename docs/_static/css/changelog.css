@@ -17,6 +17,14 @@
     vertical-align: 1px;
 }
 
+/* vertically center lables in changelog. */
+@supports (text-box: trim-both cap alphabetic) {
+    .cl-label {
+        padding: calc((1.7em - 1cap) / 2) 7px;
+        text-box: trim-both cap alphabetic;
+    }
+}
+
 .cl-label-critical {
     background: var(--label-critical-bg);
     color: var(--label-critical-text);
@@ -39,6 +47,31 @@
     background: var(--label-memleak-bg);
     color: var(--label-memleak-text);
     border-color: var(--label-memleak-border);
+}
+
+/* Version headings: "7.2.2 — 2026-01-28" with the date muted. */
+.article h2:has(> .cl-date) {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    font-weight: 700;
+}
+
+.article .cl-sep {
+    display: none;
+}
+
+/* keep the ¶ link next to the version, not after the date */
+.article h2:has(> .cl-date) > .headerlink {
+    order: 1;
+}
+
+.article .cl-date {
+    order: 2;
+    margin-left: auto;
+    font-size: 0.65em;
+    font-weight: 400;
+    color: var(--text-muted);
 }
 
 /* Printers drop backgrounds, which would leave the white text of

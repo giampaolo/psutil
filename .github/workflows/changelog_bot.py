@@ -398,7 +398,7 @@ def find_dev_block(lines):
         len(lines),
     )
     header = lines[start]
-    is_dev = "(IN DEVELOPMENT)" in header or header.startswith("X.X.X")
+    is_dev = not re.search(r"\d{4}-\d{2}-\d{2}", header)
     return start, end, header, is_dev
 
 

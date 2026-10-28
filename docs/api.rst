@@ -917,8 +917,6 @@ Other system info
     nothing maintains it, e.g. on musl libc (Alpine Linux), which doesn't
     implement it. ``who`` is empty too in that case.
 
--------------------------------------------------------------------------------
-
 Processes
 ---------
 
@@ -2243,8 +2241,6 @@ ProcessSnapshot class
 
   .. versionadded:: 8.0.0
 
--------------------------------------------------------------------------------
-
 C heap introspection
 --------------------
 
@@ -2331,8 +2327,6 @@ that Python's memory tracking misses.
   .. availability:: Linux with glibc, Windows, macOS, FreeBSD, NetBSD
 
   .. versionadded:: 7.2.0
-
--------------------------------------------------------------------------------
 
 Windows services
 ----------------
@@ -2422,8 +2416,6 @@ Windows services
       'username': 'NT AUTHORITY\\LocalService'}
 
   .. availability:: Windows
-
--------------------------------------------------------------------------------
 
 Constants
 ---------

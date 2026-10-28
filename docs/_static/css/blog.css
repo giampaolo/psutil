@@ -213,6 +213,7 @@ ol.blog-cards > li.blog-card + li.blog-card {
     line-height: 1.3;
     margin: 0 0 0.4em 0;
     padding: 0;
+    border-bottom: none;
 }
 
 .blog-card-title a,
@@ -381,6 +382,8 @@ a.post-meta-featured:hover {
     line-height: 1.3;
     margin-top: 1.8em;
     padding-top: 0.5em;
+    padding-bottom: 2px;
+    border-bottom: none;
 }
 
 .article:has(.post-meta-banner) h3 {

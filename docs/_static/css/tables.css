@@ -75,22 +75,21 @@ div.deprecated p {
 }
 
 div.versionadded {
-    border-left-color: var(--versionadded-border);
+    border-left: 2px solid var(--versionadded-border);
 }
 div.versionchanged {
-    border-left-color: var(--versionchanged-border);
+    border-left: 2px solid var(--versionchanged-border);
 }
 div.deprecated {
     border-left-color: var(--deprecated-border);
 }
 
-div.versionadded .versionmodified {
-    color: var(--versionadded-color);
-    font-weight: 600;
-}
+/* Version history is reference info: keep it quiet. Deprecations
+   stay loud since they ask the reader to act. */
+div.versionadded .versionmodified,
 div.versionchanged .versionmodified {
-    color: var(--versionchanged-color);
-    font-weight: 600;
+    color: var(--text-muted);
+    font-weight: 500;
 }
 div.deprecated .versionmodified {
     color: var(--deprecated-color);

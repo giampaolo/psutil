@@ -61,6 +61,7 @@
 
     /* Borders. */
     --border: #dddddd;
+    --heading-rule: var(--border);
     --scrollbar-thumb: #c1c1c1;
     --border-radius: 6px;
     --border-radius-code: 3px;
@@ -105,9 +106,7 @@
 
     /* Version directives (versionadded / versionchanged / deprecated). */
     --versionadded-border: #4fc464;
-    --versionadded-color: #296433;
-    --versionchanged-border: #f4e34c;
-    --versionchanged-color: #854826;
+    --versionchanged-border: #d4a72c;
     --deprecated-border: #f44c4e;
     --deprecated-color: #9f3133;
 
@@ -208,6 +207,7 @@
 
     /* Borders. */
     --border: #2e2e2e;
+    --heading-rule: #3d3d3d;
     --scrollbar-thumb: #4a4a4a;
 
     /* Accent: lighter blue for sufficient contrast on dark. */
@@ -242,15 +242,13 @@
     --adm-important-bg: #2a200d;
     --adm-important-border: #6e5328;
     --adm-important-icon: #d4a23e;
-    --adm-seealso-bg: #1d2e40;
-    --adm-seealso-border: #2d5280;
-    --adm-seealso-accent-border: #5599cc;
+    --adm-seealso-bg: #1c232b;
+    --adm-seealso-border: #2a3a4d;
+    --adm-seealso-accent-border: #4a7fae;
     --adm-seealso-link: #90c8ee;
     --adm-seealso-hover: #8bbfe0;
 
     /* Version directives: dark mode overrides. */
-    --versionadded-color: #5ec46e;
-    --versionchanged-color: #b0873a;
     --deprecated-color: #d06060;
 
     /* Tables: dark mode overrides. */

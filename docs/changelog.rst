@@ -25,8 +25,8 @@
 Changelog
 =========
 
-8.0.0 (IN DEVELOPMENT)
-^^^^^^^^^^^^^^^^^^^^^^
+8.0.0 — unreleased
+^^^^^^^^^^^^^^^^^^
 
 .. note::
    psutil 8.0 introduces breaking API changes. See the

@@ -270,7 +270,8 @@
     margin: 1em 0em 1.5em;
 }
 
-.home-page .home-section-label:has(+ .home-stats) {
+.home-page .home-section-label:has(+ .home-stats),
+.home-page .home-section-label:has(+ #sponsors) {
     margin-top: 4em;
 }
 
@@ -425,36 +426,12 @@
 /* ================================================================== */
 
 .home-page #sponsors {
-    margin: 1.5rem -56px 20px;
-    padding: 1.5rem 56px 2rem;
+    margin: 0 0 20px;
+    padding: 1.5rem 24px 1.5rem;
     background: #f8f9fa;
-    border-top: 1px solid var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
     text-align: center;
-}
-
-/* Full-bleed band: on mobile .main's side padding shrinks, so match
-   the pull-out to it or the band overflows and the page drags
-   sideways. */
-@media (max-width: 1024px) {
-    .home-page #sponsors {
-        margin-left: -16px;
-        margin-right: -16px;
-        padding-left: 16px;
-        padding-right: 16px;
-    }
-}
-
-@media (max-width: 600px) {
-    .home-page #sponsors {
-        margin-left: -12px;
-        margin-right: -12px;
-        padding-left: 12px;
-        padding-right: 12px;
-    }
-}
-
-.home-page #sponsors > .home-section-label {
-    margin-top: 1.2em;
 }
 
 [data-theme="dark"] .home-page #sponsors {

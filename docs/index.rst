@@ -248,8 +248,8 @@
 
 .. raw:: html
 
+   <div class="home-section-label">Sponsors</div>
    <div id="sponsors">
-     <div class="home-section-label">Sponsors</div>
 
 .. raw:: html
    :file: _sponsors.html
