@@ -631,6 +631,24 @@ def _cpu_get_cpuinfo_freq():
     return ret
 
 
+def _cpufreq_bcat(path):
+    """Same as bcat(), but retry if reading fails with EBUSY. On RHEL 7
+    kernels cpufreq's show() returns EBUSY if it can't take the policy
+    lock within ~25 ms, e.g. while cpufreq_update_policy() holds it.
+    Use it only for files read without a fallback: on Linux >= 5.19
+    EBUSY means the policy is inactive (usually its CPUs are offline).
+    See:
+    https://github.com/giampaolo/psutil/issues/2261
+    """
+    for _ in range(10):
+        try:
+            return bcat(path)
+        except OSError as err:
+            if err.errno != errno.EBUSY:
+                raise
+    return bcat(path)
+
+
 if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
     "/sys/devices/system/cpu/cpu0/cpufreq"
 ):
@@ -683,8 +701,8 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                     msg = "can't find current frequency file"
                     raise NotImplementedError(msg)
             curr = int(curr) / 1000
-            max_ = int(bcat(pjoin(path, "scaling_max_freq"))) / 1000
-            min_ = int(bcat(pjoin(path, "scaling_min_freq"))) / 1000
+            max_ = int(_cpufreq_bcat(pjoin(path, "scaling_max_freq"))) / 1000
+            min_ = int(_cpufreq_bcat(pjoin(path, "scaling_min_freq"))) / 1000
             ret.append(ntp.scpufreq(curr, min_, max_))
         return ret
 
