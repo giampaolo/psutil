@@ -46,7 +46,8 @@
 
   {#- Page ----------------------------------------------------------------- #}
   {%- else %}
-  {{ toc }}
+  {#- drop the "()" after function names #}
+  {{ toc|replace("()</span></code>", "</span></code>") }}
   {%- endif %}
 </aside>
 {%- endif -%}

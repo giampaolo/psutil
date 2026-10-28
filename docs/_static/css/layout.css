@@ -22,6 +22,7 @@ html {
 }
 
 .topbar {
+    box-sizing: border-box;
     height: var(--topbar-height);
 }
 
@@ -68,6 +69,16 @@ html {
 
     .article-with-toc.no-toc {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .article-with-toc > .article-column {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .article-with-toc > .right-sidebar {
+        grid-column: 2;
+        grid-row: 1;
     }
 
     /* No-TOC pages get extra horizontal padding so prose isn't
