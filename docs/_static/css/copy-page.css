@@ -1,13 +1,8 @@
-/* "Copy page" button appended to the h1 by js/copy-page.js. */
+/* "Copy page" button. */
 
-.article h1:has(button.copy-page) {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.article h1 button.copy-page {
-    margin-left: auto;
+.article button.copy-page {
+    float: right;
+    margin: 12px 0 0 16px;
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -17,7 +12,7 @@
     background: transparent;
     color: var(--text-muted);
     font-family: inherit;
-    font-size: 0.34em;
+    font-size: 0.78rem;
     font-weight: 400;
     line-height: 1.5;
     letter-spacing: 0.01em;
@@ -31,16 +26,16 @@
         box-shadow 0.15s;
 }
 
-.article h1 button.copy-page:focus {
+.article button.copy-page:focus {
     outline: none;
 }
 
-.article h1 button.copy-page:focus-visible {
+.article button.copy-page:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
 
-.article h1 button.copy-page:hover {
+.article button.copy-page:hover {
     background: var(--bg-hover);
     border-color: var(--text-muted);
     color: var(--text);
@@ -97,11 +92,11 @@
 }
 
 @media (max-width: 600px) {
-    .article h1 button.copy-page .copy-page-labels {
+    .article button.copy-page .copy-page-labels {
         display: none;
     }
 
-    .article h1 button.copy-page {
+    .article button.copy-page {
         padding: 3px 6px;
     }
 }
