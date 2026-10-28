@@ -7,9 +7,8 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 16px;
-    margin-top: 1.5em;
+    margin-top: 2.5em;
     padding: 12px 0 4px;
-    border-top: 1px solid var(--border);
 }
 
 .prev-next-prev,
