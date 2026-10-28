@@ -96,7 +96,7 @@ div[class^="highlight-"] {
 /* Padding: applied to the wrapper, none on the inner pre so we don't
    double up margins or shrink the scrollbar area. */
 .highlight {
-    padding: 12px 14px;
+    padding: 14px 17px;
     overflow-x: auto;
 }
 
@@ -142,9 +142,12 @@ div[class^="highlight-"] {
 }
 
 .highlight .k      { font-weight:normal; font-style: normal !important;}  /* keyword */
+.highlight .kn     { font-weight:normal; }  /* import, from */
 .highlight .p      { font-weight:normal; }  /* (, [, ], )*/
 .highlight .mi     { font-weight:normal; }  /* numbers */
 .highlight .mf     { font-weight:normal; }  /* floats */
+.highlight .nf,
+.highlight .fn-call { font-weight: bold; }  /* functions */
 
 /* Avoiod != → ≠, <= → ≤, etc.. */
 .highlight,
@@ -159,7 +162,7 @@ tt {
 
 /* ----------------- REPL light theme ---------------- */
 
-[data-theme="light"] .highlight-pycon .pycon-number { color:  #204A87; }
+[data-theme="light"] .highlight-pycon .pycon-number { color: #6c50a0; }
 [data-theme="light"] .highlight-pycon .pycon-string { color: #8a5a2d; }
 [data-theme="light"] .highlight .s,
 [data-theme="light"] .highlight .s1,
@@ -175,7 +178,7 @@ tt {
 [data-theme="light"] .highlight .sr,
 [data-theme="light"] .highlight .ss,
 [data-theme="light"] .highlight .se   { color: #4f6b39; }  /* strings: muted olive */
-[data-theme="light"] .highlight-pycon .pycon-field  { color: #4d4d4d; background: #eff1f3}
+[data-theme="light"] .highlight-pycon .pycon-field  { color: #4a6283; }
 [data-theme="light"] .highlight .gp                 { color: #6a6a6a; }  /* >>> prompt: muted */
 [data-theme="light"] .highlight .c,
 [data-theme="light"] .highlight .ch,
@@ -198,11 +201,27 @@ tt {
 
 [data-theme="dark"] .highlight .k                 { color: #f56b8b}  /* keyword */
 [data-theme="dark"] .highlight .kn                 { color: #f56b8b}  /* keyword.namespace */
+[data-theme="dark"] .highlight .fn-call            { color: #79b8ff}  /* function calls (JS) */
 
 /* --------------------------------------------------- */
 
-[data-theme="light"] .highlight .mi                 { color: #204A87}  /* numbers */
-[data-theme="light"] .highlight .nf                 { color: #A31515}  /* functions */
+[data-theme="light"] .highlight .m,
+[data-theme="light"] .highlight .mb,
+[data-theme="light"] .highlight .mf,
+[data-theme="light"] .highlight .mh,
+[data-theme="light"] .highlight .mi,
+[data-theme="light"] .highlight .mo,
+[data-theme="light"] .highlight .il                 { color: #6f42c1}  /* numbers */
+[data-theme="light"] .highlight .k,
+[data-theme="light"] .highlight .kc,
+[data-theme="light"] .highlight .kd,
+[data-theme="light"] .highlight .kp,
+[data-theme="light"] .highlight .kr,
+[data-theme="light"] .highlight .kt,
+[data-theme="light"] .highlight .ow                 { color: #A31515}  /* keywords */
+[data-theme="light"] .highlight .kn                 { color: #204A87}  /* import, from */
+[data-theme="light"] .highlight .nf                 { color: #204A87}  /* functions */
+[data-theme="light"] .highlight .fn-call            { color: #204A87}  /* function calls (JS) */
 [data-theme="light"] .highlight .o                  { color: inherit; font-weight: normal; }  /* operators  */
 
 /* ================================================================== */

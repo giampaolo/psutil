@@ -19,12 +19,35 @@ document.querySelectorAll(".highlight-pycon .go").forEach((span) => {
         /\b([a-z_]\w*)=(?!")/g,
         '<span class="pycon-field">$1</span>=',
     );
-    // Highlight numbers after '=' or at the start of a line.
-    html = html.replace(
-        /(?<==)\d+\.?\d*|^\d+\.?\d*/gm,
-        '<span class="pycon-number">$&</span>',
-    );
+    // Highlight standalone numbers, skipping the ones inside strings.
+    html = html
+        .split(/(<span class="pycon-string">.*?<\/span>)/)
+        .map((part, i) => {
+            if (i % 2 === 1) {
+                return part;
+            }
+            return part.replace(
+                /(?<![\w.])\d+(?:\.\d+)?(?![\w.])/g,
+                '<span class="pycon-number">$&</span>',
+            );
+        })
+        .join("");
     span.innerHTML = html;
+});
+
+// Mark function calls (a name followed by "("). Pygments tokenizes
+// them as plain names. codeautolink wraps dotted names in an <a>.
+document.querySelectorAll(".highlight .p").forEach((p) => {
+    if (!p.textContent.startsWith("(")) {
+        return;
+    }
+    let prev = p.previousElementSibling;
+    if (prev && prev.tagName === "A") {
+        prev = prev.lastElementChild;
+    }
+    if (prev && prev.matches(".n, .nb")) {
+        prev.classList.add("fn-call");
+    }
 });
 
 // Disable title showing up on hover.
