@@ -540,7 +540,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2657`, :label:`breaking`: stop publishing prebuilt Linux and Windows
   wheels for 32-bit Python. 32-bit CPython is still supported, but psutil must
   now be built from source.
-- :gh:`2565`: produce wheels for free-thread cPython 3.13 and 3.14.
+- :gh:`2565`: produce wheels for free-threaded CPython 3.13 and 3.14.
 
 **Bug fixes**
 
@@ -582,25 +582,25 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **Dropped support**
 
-- :gh:`2571`, [FreeBSD], :label:`breaking`: Dropped support for FreeBSD 8 and
+- :gh:`2571`, [FreeBSD], :label:`breaking`: dropped support for FreeBSD 8 and
   earlier. FreeBSD 8 was maintained from 2009 to 2013.
 
 **Bug fixes**
 
-- :gh:`2545`, [SunOS], :label:`critical`: Fix handling of ``MIB2_UDP_ENTRY`` in
+- :gh:`2545`, [SunOS], :label:`critical`: fix handling of ``MIB2_UDP_ENTRY`` in
   :func:`net_connections`.
 - :gh:`2586`, [macOS], :label:`critical`: fixed different places in C code
   which can trigger a segfault.
 - :gh:`2610`, [macOS], :label:`critical`: fix :func:`cpu_freq` segfault on ARM
   architectures.
-- :gh:`2473`, [macOS], :label:`build-fail`: Fix build issue on macOS 11 and
+- :gh:`2473`, [macOS], :label:`build-fail`: fix build issue on macOS 11 and
   lower.
 - :gh:`2494`, [Windows]: :meth:`Process.memory_maps`, :meth:`Process.exe` and
   :meth:`Process.open_files` now properly handle UNC paths (e.g.
   ``\\??\\C:\\Windows\\Temp`` → ``C:\\Windows\\Temp``).
 - :gh:`2506`, [Windows]: Windows service APIs had issues with unicode services
   using special characters in their name.
-- :gh:`2514`, [Linux]: :meth:`Process.cwd` sometimes fail with
+- :gh:`2514`, [Linux]: :meth:`Process.cwd` sometimes fails with
   :exc:`FileNotFoundError` due to a race condition.
 - :gh:`2526`, [Linux]: :meth:`Process.create_time` now uses a monotonic clock,
   preventing :meth:`Process.is_running` from returning wrong results after
@@ -645,7 +645,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **Bug fixes**
 
-- :gh:`2496`, [Linux], :label:`critical`: Avoid segfault (a cPython bug) on
+- :gh:`2496`, [Linux], :label:`critical`: avoid segfault (a CPython bug) on
   :meth:`Process.memory_maps` for processes that use hundreds of GBs of memory.
 - :gh:`2502`, [macOS]: :func:`virtual_memory` now uses ``host_statistics64``
   (same as ``vm_stat``), more accurate.
@@ -724,7 +724,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2369`, [Windows], :label:`build-fail`: wheels failed to build. Fixed by
   upgrading ``cibuildwheel``.
 - :gh:`2375`, [macOS]: provide arm64 wheels.
-- :gh:`2401`, Support building with free-threaded CPython 3.13.
+- :gh:`2401`: support building with free-threaded CPython 3.13.
 - :gh:`2425`, [Linux]: provide aarch64 wheels.
 
 **Internals**
@@ -738,15 +738,15 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2365`, [macOS], :label:`build-fail`: can't compile on macOS < 10.9.
 - :gh:`2412`, [macOS], :label:`build-fail`: can't compile on macOS 10.4 PowerPC
   due to missing ``MNT_`` constants.
-- :gh:`2250`, [NetBSD]: :meth:`Process.cmdline` sometimes fail with ``EBUSY``
+- :gh:`2250`, [NetBSD]: :meth:`Process.cmdline` sometimes fails with ``EBUSY``
   for long cmdlines. Now retries up to 50 times, returning an empty list as
   last resort.
-- :gh:`2254`, [Linux]: offline cpus raise :exc:`NotImplementedError` in
-  :func:`cpu_freq`
-- :gh:`2272`: Add pickle support to psutil Exceptions.
+- :gh:`2254`, [Linux]: offline CPUs raise :exc:`NotImplementedError` in
+  :func:`cpu_freq`.
+- :gh:`2272`: add pickle support to psutil exceptions.
 - :gh:`2359`, [Windows]: :func:`pid_exists` disagrees with :class:`Process` on
   whether a pid exists when ``ERROR_ACCESS_DENIED``.
-- :gh:`2395`, [OpenBSD]: :func:`pid_exists` erroneously return True if the
+- :gh:`2395`, [OpenBSD]: :func:`pid_exists` erroneously returns ``True`` if the
   argument is a thread ID (TID) instead of a PID (process ID).
 
 5.9.8 — 2024-01-19
@@ -780,7 +780,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 **Internals**
 
 - :gh:`2324`: enforce Ruff rule ``raw-string-in-exception``, which helps
-  providing clearer tracebacks when exceptions are raised by psutil.
+  provide clearer tracebacks when exceptions are raised by psutil.
 
 **Bug fixes**
 
@@ -788,7 +788,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   ``#include <unistd.h>`` causes an implicit declaration of ``close()`` and
   ``syscall()``.
 - :gh:`2325`, [PyPy], :label:`build-fail`: psutil did not compile on PyPy due
-  to missing ``PyErr_SetExcFromWindowsErrWithFilenameObject`` cPython API.
+  to missing ``PyErr_SetExcFromWindowsErrWithFilenameObject`` CPython API.
 
 5.9.6 — 2023-10-15
 ^^^^^^^^^^^^^^^^^^
@@ -808,17 +808,17 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **Dropped support**
 
-- :gh:`2246`, :label:`breaking`: drop python 3.4 & 3.5 support.
+- :gh:`2246`, :label:`breaking`: drop Python 3.4 and 3.5 support.
 
 **Bug fixes**
 
-- :gh:`2241`, [NetBSD], :label:`build-fail`: can't compile On NetBSD
+- :gh:`2241`, [NetBSD], :label:`build-fail`: can't compile on NetBSD
   10.99.3/amd64.
 - :gh:`2195`, [Linux]: no longer print exception at import time in case
   :proc:`/proc/stat` can't be read due to permission error. Redirect it to
   :envvar:`PSUTIL_DEBUG` instead.
-- :gh:`2245`, [Windows]: fix var unbound error on possibly in
-  :func:`swap_memory`
+- :gh:`2245`, [Windows]: fix possibly unbound variable error in
+  :func:`swap_memory`.
 - :gh:`2268`: ``bytes2human()`` utility function was unable to properly
   represent negative values.
 - :gh:`2252`, [Windows]: :func:`disk_usage` fails on Python 3.12+.
@@ -826,16 +826,16 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   :exc:`ZombieProcess` if it's determined via ``/proc/pid/smaps_rollup``.
   Instead we now fallback on reading :proc:`/proc/pid/smaps`.
 - :gh:`2287`, [OpenBSD], [NetBSD]: :meth:`Process.is_running` erroneously
-  return ``False`` for zombie processes, because creation time cannot be
+  returns ``False`` for zombie processes, because creation time cannot be
   determined.
 - :gh:`2288`, [Linux]: correctly raise :exc:`ZombieProcess` on
   :meth:`Process.exe`, :meth:`Process.cmdline` and :meth:`Process.memory_maps`
   instead of returning a "null" value.
-- :gh:`2290`: differently from what stated in the doc, PID reuse is not
-  preemptively checked for :meth:`Process.nice` (set), :meth:`Process.ionice`,
-  (set), :meth:`Process.cpu_affinity` (set), :meth:`Process.rlimit` (set),
+- :gh:`2290`: contrary to what the doc stated, PID reuse is not preemptively
+  checked for :meth:`Process.nice` (set), :meth:`Process.ionice` (set),
+  :meth:`Process.cpu_affinity` (set), :meth:`Process.rlimit` (set),
   :meth:`Process.parent`.
-- :gh:`2308`, [OpenBSD]: :meth:`Process.threads` always fail with
+- :gh:`2308`, [OpenBSD]: :meth:`Process.threads` always fails with
   :exc:`AccessDenied` (also as root).
 
 5.9.5 — 2023-04-17
@@ -859,14 +859,14 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2217`: print the full traceback when a :exc:`DeprecationWarning` or
   :exc:`UserWarning` is raised.
 - :gh:`2240`, [NetBSD], [OpenBSD]: add CI testing on every commit for NetBSD
-  and OpenBSD platforms (python 3 only).
+  and OpenBSD platforms (Python 3 only).
 
 **Bug fixes**
 
 - :gh:`2164`, [Linux], :label:`build-fail`: compilation fails on kernels <
   2.6.27 (e.g. CentOS 5).
 - :gh:`2186`, [FreeBSD], :label:`build-fail`: compilation fails with Clang 15.
-- :gh:`1043`, [OpenBSD] :func:`net_connections` returns duplicate entries.
+- :gh:`1043`, [OpenBSD]: :func:`net_connections` returns duplicate entries.
 - :gh:`1915`, [Linux]: on certain kernels, ``"MemAvailable"`` field from
   :proc:`/proc/meminfo` returns ``0`` (possibly a kernel bug), in which case we
   calculate an approximation for :field:`available` memory which matches "free"
@@ -874,7 +874,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2191`, [Linux]: :func:`disk_partitions`: do not unnecessarily read
   :proc:`/proc/filesystems` and raise :exc:`AccessDenied` unless user specified
   ``all=False`` argument.
-- :gh:`2216`, [Windows]: fix tests when running in a virtual environment
+- :gh:`2216`, [Windows]: fix tests when running in a virtual environment.
 - :gh:`2225`, [POSIX]: :func:`users` loses precision for :field:`started` field
   (off by 1 minute).
 - :gh:`2229`, [OpenBSD]: unable to properly recognize zombie processes.
@@ -902,9 +902,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 - :gh:`2156`, [Linux], :label:`build-fail`: compilation may fail on very old
   gcc compilers due to missing ``SPEED_UNKNOWN`` definition.
-- :gh:`2010`, [macOS], :label:`build-fail`: on MacOS, arm64 ``IFM_1000_TX`` and
+- :gh:`2010`, [macOS], :label:`build-fail`: on macOS, arm64 ``IFM_1000_TX`` and
   ``IFM_1000_T`` are the same value, causing a build failure.
-- :gh:`2077`, [Windows]: Use system-level values for :func:`virtual_memory`.
+- :gh:`2077`, [Windows]: use system-level values for :func:`virtual_memory`.
 - :gh:`2160`, [Windows]: get :func:`swap_memory` :field:`percent` usage from
   performance counters.
 
@@ -917,7 +917,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **Internals**
 
-- :gh:`2153`, [macOS] Fix race condition in
+- :gh:`2153`, [macOS]: fix race condition in
   ``test_posix.TestProcess.test_cmdline``.
 
 **Bug fixes**
@@ -927,10 +927,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2138`, [Linux], :label:`build-fail`: can't compile psutil on Android due
   to undefined ``ethtool_cmd_speed`` symbol.
 - :gh:`2116`, [macOS]: :func:`net_connections` fails with :exc:`RuntimeError`.
-- :gh:`2142`, [POSIX]: :func:`net_if_stats` 's :field:`flags` on Python 2
-  returned unicode instead of str.
-- :gh:`2147`, [macOS] Fix disk usage report on macOS 12+.
-- :gh:`2150`, [Linux] :meth:`Process.threads` may raise :exc:`NoSuchProcess`.
+- :gh:`2142`, [POSIX]: :func:`net_if_stats` :field:`flags` on Python 2 returned
+  unicode instead of str.
+- :gh:`2147`, [macOS]: fix disk usage report on macOS 12+.
+- :gh:`2150`, [Linux]: :meth:`Process.threads` may raise :exc:`NoSuchProcess`.
   Fix race condition.
 
 5.9.2 — 2022-09-04
@@ -973,7 +973,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2049`, [Linux]: :func:`cpu_freq` erroneously returns :field:`current`
   value in GHz while :field:`min` and :field:`max` are in MHz.
 - :gh:`2050`, [Linux]: :func:`virtual_memory` may raise :exc:`ValueError` if
-  running in a LCX container.
+  running in an LXC container.
 
 5.9.0 — 2021-12-29
 ^^^^^^^^^^^^^^^^^^
@@ -1034,7 +1034,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`1940`, [Linux]: psutil does not handle ``ENAMETOOLONG`` when accessing
   process file descriptors in procfs.
 - :gh:`1948`: ``memoize_when_activated`` decorator is not thread-safe.
-- :gh:`1980`, [Windows]: 32bit / WoW64 processes fails to read
+- :gh:`1980`, [Windows]: 32bit / WoW64 processes fail to read
   :meth:`Process.name` longer than 128 characters.
 - :gh:`1991`: :func:`process_iter` is not thread safe and can raise
   :exc:`TypeError` if invoked from multiple threads.
@@ -1057,7 +1057,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **Build and packaging**
 
-- :gh:`1879`: provide pre-compiled wheels for Linux and macOS (yey!).
+- :gh:`1879`: provide pre-compiled wheels for Linux and macOS (yay!).
 
 **Internals**
 
@@ -1066,7 +1066,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **Bug fixes**
 
-- :gh:`1708`, [Linux]: get rid of :func:`sensors_temperatures` duplicates..
+- :gh:`1708`, [Linux]: get rid of :func:`sensors_temperatures` duplicates.
 - :gh:`1839`, [Windows]: always raise :exc:`AccessDenied` instead of
   :exc:`WindowsError` when failing to query 64 processes from 32 bit ones by
   using ``NtWoW64`` APIs.
@@ -1081,7 +1081,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`1886`, [macOS]: ``EIO`` error may be raised on :meth:`Process.cmdline`
   and :meth:`Process.environ`. Now it gets translated into :exc:`AccessDenied`.
 - :gh:`1887`, [Windows]: ``OpenProcess`` may fail with "[WinError 0] The
-  operation completed successfully"." Turn it into :exc:`AccessDenied` or
+  operation completed successfully". Turn it into :exc:`AccessDenied` or
   :exc:`NoSuchProcess` depending on whether the PID is alive.
 - :gh:`1891`, [macOS]: get rid of deprecated ``getpagesize()``.
 
@@ -1091,14 +1091,14 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 **New APIs**
 
 - :gh:`809`, [FreeBSD]: add support for :meth:`Process.rlimit`.
-- :gh:`893`, [BSD]: add support for :meth:`Process.environ`
+- :gh:`893`, [BSD]: add support for :meth:`Process.environ`.
 
 **API changes**
 
 - :gh:`1830`, [POSIX]: :func:`net_if_stats` :field:`isup` also checks whether
   the :term:`NIC` is running (meaning Wi-Fi or ethernet cable is connected).
 - :gh:`1837`, [Linux]: improved battery detection and charge :field:`secsleft`
-  calculation
+  calculation.
 
 **Bug fixes**
 
@@ -1131,7 +1131,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 **API changes**
 
 - :gh:`1747`: :meth:`Process.wait` return value is cached so that the exit code
-  can be retrieved on then next call.
+  can be retrieved on the next call.
 - :gh:`1747`, [POSIX]: :meth:`Process.wait` on POSIX now returns an enum,
   showing the negative signal which was used to terminate the process. It
   returns something like ``<Negsignal.SIGTERM: -15>``.
@@ -1276,14 +1276,14 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   now gets translated to :exc:`AccessDenied`.
 - :gh:`1535`: :field:`type` and :field:`family` fields returned by
   :func:`net_connections` are not always turned into enums.
-- :gh:`1536`, [NetBSD]: :meth:`Process.cmdline` erroneously raise
+- :gh:`1536`, [NetBSD]: :meth:`Process.cmdline` erroneously raises
   :exc:`ZombieProcess` error if cmdline has non encodable chars.
 - :gh:`1546`: usage percent may be rounded to 0 on Python 2.
 - :gh:`1552`, [Windows]: :func:`getloadavg` math for calculating 5 and 15 mins
   values is incorrect.
 - :gh:`1568`, [Linux]: use CC compiler env var if defined.
 - :gh:`1570`, [Windows]: ``NtWow64*`` syscalls fail to raise the proper error
-  code
+  code.
 - :gh:`1585`, [macOS]: avoid calling ``close()`` (in C) on possible negative
   integers.
 
@@ -1328,7 +1328,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`1458`: provide coloured test output. Also show failures on
   ``KeyboardInterrupt``.
 - :gh:`1478`: add make command to re-run tests failed on last run.
-- :gh:`1462`, [Linux]: (tests) make tests invariant to ``LANG`` setting
+- :gh:`1462`, [Linux]: (tests) make tests invariant to ``LANG`` setting.
 - :gh:`1463`: :src:`scripts/cpu_distribution.py` was broken.
 
 **Bug fixes**
@@ -1345,8 +1345,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   ``/etc/mtab`` doesn't exist.
 - :gh:`1471`, [SunOS]: :meth:`Process.name` and :meth:`Process.cmdline` can
   return :exc:`SystemError`.
-- :gh:`1472`, [Linux]: :func:`cpu_freq` does not return all CPUs on
-  Raspberry-pi 3.
+- :gh:`1472`, [Linux]: :func:`cpu_freq` does not return all CPUs on Raspberry
+  Pi 3.
 - :gh:`1474`: fix formatting of ``psutil.tests()`` which mimics ``ps aux``
   output.
 - :gh:`1475`, [Windows]: :attr:`OSError.winerror` attribute wasn't properly
@@ -1355,7 +1355,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`1477`, [Windows]: wrong or absent error handling for private
   ``NTSTATUS`` Windows APIs. Different process methods were affected by this.
 - :gh:`1486`, [AIX], [SunOS]: :exc:`AttributeError` when interacting with
-  :class:`Process` methods involved into :meth:`Process.oneshot` context.
+  :class:`Process` methods involved in :meth:`Process.oneshot` context.
 - :gh:`1493`, [Linux]: :func:`cpu_freq`: handle the case where
   ``/sys/devices/system/cpu/cpufreq/`` exists but it's empty.
 
@@ -1525,11 +1525,11 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`1209`, [macOS]: :meth:`Process.memory_maps` may fail with ``EINVAL`` due
   to poor ``task_for_pid()`` syscall. :exc:`AccessDenied` is now raised
   instead.
-- :gh:`1278`, [macOS]: :meth:`Process.threads` incorrectly return microseconds
+- :gh:`1278`, [macOS]: :meth:`Process.threads` incorrectly returns microseconds
   instead of seconds.
 - :gh:`1279`, [Linux], [macOS], [BSD]: :func:`net_if_stats` may return
   ``ENODEV``.
-- :gh:`1294`, [Windows]: :meth:`Process.connections` may sometime fail with
+- :gh:`1294`, [Windows]: :meth:`Process.connections` may sometimes fail with
   :exc:`MemoryError`.
 - :gh:`1305`, [Linux]: :func:`disk_io_counters` may report inflated r/w bytes
   values.
@@ -1584,9 +1584,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`694`, [SunOS]: :meth:`Process.cmdline` could be truncated at the 15th
   character when reading it from ``/proc``. An extra effort is made by reading
   it from process address space first.
-- :gh:`771`, [Windows]: :func:`cpu_count` (both logical and cores) return a
+- :gh:`771`, [Windows]: :func:`cpu_count` (both logical and cores) returns a
   wrong (smaller) number on systems using process groups (> 64 cores).
-- :gh:`771`, [Windows]: :func:`cpu_times` with ``percpu=True`` return fewer
+- :gh:`771`, [Windows]: :func:`cpu_times` with ``percpu=True`` returns fewer
   CPUs on systems using process groups (> 64 cores).
 - :gh:`771`, [Windows]: :func:`cpu_stats` and :func:`cpu_freq` may return
   incorrect results on systems using process groups (> 64 cores).
@@ -1598,7 +1598,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   and warnings.
 - :gh:`1210`, [Linux]: :func:`cpu_percent` steal time may remain stuck at 100%
   due to Linux erroneously reporting a decreased steal time between calls.
-- :gh:`1216`, [Windows]: fix compatibility with Python 2.6
+- :gh:`1216`, [Windows]: fix compatibility with Python 2.6.
 - :gh:`1222`, [Linux]: :meth:`Process.memory_full_info` was erroneously summing
   "Swap:" and "SwapPss:". Same for "Pss:" and "SwapPss". Not anymore.
 - :gh:`1224`, [Windows]: :meth:`Process.wait` may erroneously raise
@@ -1617,7 +1617,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **API changes**
 
-- :gh:`775`, [Windows]: :func:`disk_partitions` return mount points.
+- :gh:`775`, [Windows]: :func:`disk_partitions` returns mount points.
 
 **Bug fixes**
 
@@ -1665,7 +1665,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **Internals**
 
-- :gh:`1151`: ``python -m psutil.tests`` fail.
+- :gh:`1151`: ``python -m psutil.tests`` fails.
 
 **Dropped support**
 
@@ -1677,8 +1677,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`1154`, [AIX], :label:`build-fail`: psutil won't compile on AIX 6.1.0.
 - :gh:`1150`, [Windows]: when a process is terminated now the exit code is set
   to ``SIGTERM`` instead of ``0``.
-- :gh:`1167`, [Windows]: :func:`net_io_counters` packets count now include also
-  non-unicast packets.
+- :gh:`1167`, [Windows]: :func:`net_io_counters` packets count now also
+  includes non-unicast packets.
 
 5.4.0 — 2017-10-12
 ^^^^^^^^^^^^^^^^^^
@@ -1713,7 +1713,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **Documentation**
 
-- :gh:`1124`: documentation moved to http://psutil.readthedocs.io
+- :gh:`1124`: documentation moved to http://psutil.readthedocs.io.
 
 **Bug fixes**
 
@@ -1803,7 +1803,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   :exc:`AccessDenied` for zombie processes.
 - :gh:`1046`, [Windows]: :func:`disk_partitions` on Windows overrides user's
   ``SetErrorMode``.
-- :gh:`1048`, [Windows]: :func:`users`'s :field:`host` field report an invalid
+- :gh:`1048`, [Windows]: :func:`users`'s :field:`host` field reports an invalid
   IP address.
 - :gh:`1055`: :func:`cpu_count` is no longer cached (CPUs can be disabled at
   runtime on Linux). :meth:`Process.cpu_percent` also affected.
@@ -1827,7 +1827,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   sockets.
 - :gh:`1085`: :func:`cpu_count` return value is now checked and forced to
   ``None`` if <= 1.
-- :gh:`1087`: :meth:`Process.cpu_percent` guard against :func:`cpu_count`
+- :gh:`1087`: :meth:`Process.cpu_percent` guards against :func:`cpu_count`
   returning ``None`` and assumes 1 instead.
 - :gh:`1093`, [SunOS]: :meth:`Process.memory_maps` shows wrong 64 bit
   addresses.
@@ -1849,8 +1849,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   Solaris versions.
 - :gh:`1004`, [Linux]: :meth:`Process.io_counters` may raise :exc:`ValueError`.
 - :gh:`1006`, [Linux]: :func:`cpu_freq` may return ``None`` on some Linux
-  versions does not support the function. Let's not make the function available
-  instead.
+  versions that do not support the function. Let's not make the function
+  available instead.
 - :gh:`1009`, [Linux]: :func:`sensors_temperatures` may raise :exc:`OSError`.
 - :gh:`1010`, [Linux]: :func:`virtual_memory` may raise :exc:`ValueError` on
   Ubuntu 14.04.
@@ -1873,7 +1873,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **New APIs**
 
-- :gh:`974`, [Linux]: Add :func:`sensors_fans` function.
+- :gh:`974`, [Linux]: add :func:`sensors_fans` function.
 - :gh:`976`, [Windows]: :meth:`Process.io_counters` has 2 new fields:
   :field:`other_count` and :field:`other_bytes`.
 - :gh:`976`, [Linux]: :meth:`Process.io_counters` has 2 new fields:
@@ -1881,7 +1881,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **Bug fixes**
 
-- :gh:`985`, [Windows], :label:`critical`: Fix a crash in
+- :gh:`985`, [Windows], :label:`critical`: fix a crash in
   :meth:`Process.open_files` when the worker thread for ``NtQueryObject`` times
   out.
 - :gh:`872`, [Linux], :label:`build-fail`: can now compile on Linux by using
@@ -1920,7 +1920,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 **Bug fixes**
 
 - :gh:`964`, [Windows]: :meth:`Process.username` and :func:`users` may return
-  badly decoded character on Python 3.
+  badly decoded characters on Python 3.
 - :gh:`965`, [Linux]: :func:`disk_io_counters` may miscalculate sector size and
   report the wrong number of bytes read and written.
 - :gh:`966`, [Linux]: :func:`sensors_battery` may fail with
@@ -1968,7 +1968,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`936`, [Windows], :label:`build-fail`: fix compilation error on VS 2013.
 - :gh:`811`, [Windows]: provide a more meaningful error message if trying to
   use psutil on unsupported Windows XP.
-- :gh:`940`, [Linux]: :func:`cpu_percent` and :func:`cpu_times_percent` was
+- :gh:`940`, [Linux]: :func:`cpu_percent` and :func:`cpu_times_percent` were
   calculated incorrectly as :field:`iowait`, :field:`guest` and
   :field:`guest_nice` times were not properly taken into account.
 - :gh:`944`, [OpenBSD]: :func:`pids` was omitting PID 0.
@@ -2033,7 +2033,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   unicode string.
 - :gh:`783`, [macOS]: :meth:`Process.status` may erroneously return
   :data:`STATUS_RUNNING` for zombie processes.
-- :gh:`798`, [Windows]: :meth:`Process.open_files` returns and empty list on
+- :gh:`798`, [Windows]: :meth:`Process.open_files` returns an empty list on
   Windows 10.
 - :gh:`825`, [Linux]: :meth:`Process.cpu_affinity`: fix possible double close
   and use of unopened socket.
@@ -2047,7 +2047,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   returned.
 - :gh:`907`, [FreeBSD]: :meth:`Process.exe` may fail with :exc:`OSError`
   ``ENOENT``.
-- :gh:`908`, [macOS], [BSD]: different process methods could errounesuly mask
+- :gh:`908`, [macOS], [BSD]: different process methods could erroneously mask
   the real error for high-privileged PIDs and raise :exc:`NoSuchProcess` and
   :exc:`AccessDenied` instead of :exc:`OSError` and :exc:`RuntimeError`.
 - :gh:`909`, [macOS]: :meth:`Process.open_files` and
@@ -2117,19 +2117,19 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`797`, [Linux]: :func:`net_if_stats` may raise :exc:`OSError` for certain
   NIC cards.
 - :gh:`813`: :meth:`Process.as_dict` should ignore extraneous attribute names
-  which gets attached to the :class:`Process` instance.
+  which get attached to the :class:`Process` instance.
 
 4.1.0 — 2016-03-12
 ^^^^^^^^^^^^^^^^^^
 
 **New APIs**
 
-- :gh:`777`, [Linux]: :meth:`Process.open_files` on Linux return 3 new fields:
+- :gh:`777`, [Linux]: :meth:`Process.open_files` on Linux returns 3 new fields:
   :field:`position`, :field:`mode` and :field:`flags`.
 - :gh:`779`: :meth:`Process.cpu_times` returns two new fields,
   :field:`children_user` and :field:`children_system` (always set to 0 on macOS
   and Windows).
-- :gh:`789`, [Windows]: :func:`cpu_times` return two new fields:
+- :gh:`789`, [Windows]: :func:`cpu_times` returns two new fields:
   :field:`interrupt` and :field:`dpc`. Same for :func:`cpu_times_percent`.
 - :gh:`792`: new :func:`cpu_stats` function returning number of CPU
   :field:`ctx_switches`, :field:`interrupts`, :field:`soft_interrupts` and
@@ -2153,14 +2153,14 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **New APIs**
 
-- :gh:`523`, [Linux], [FreeBSD]: :func:`disk_io_counters` return a new
+- :gh:`523`, [Linux], [FreeBSD]: :func:`disk_io_counters` returns a new
   :field:`busy_time` field.
 - :gh:`732`: :meth:`Process.environ`.
 - :gh:`753`, [Linux], [macOS], [Windows]: process :term:`USS` and :term:`PSS`
   (Linux) "real" memory stats.
 - :gh:`755`: :meth:`Process.memory_percent` ``memtype`` parameter.
 - :gh:`760`: expose OS constants (:data:`LINUX`, :data:`OSX`, etc.)
-- :gh:`756`, [Linux]: :func:`disk_io_counters` return 2 new fields:
+- :gh:`756`, [Linux]: :func:`disk_io_counters` returns 2 new fields:
   :field:`read_merged_count` and :field:`write_merged_count`.
 
 **Build and packaging**
@@ -2236,11 +2236,11 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 **Bug fixes**
 
 - :gh:`715`, :label:`critical`: don't crash at import time if :func:`cpu_times`
-  fail for some reason.
+  fails for some reason.
 - :gh:`714`, [OpenBSD]: :func:`virtual_memory` :field:`cached` value was always
   set to 0.
-- :gh:`717`, [Linux]: :meth:`Process.open_files` fails if deleted files still
-  visible.
+- :gh:`717`, [Linux]: :meth:`Process.open_files` fails if deleted files are
+  still visible.
 - :gh:`722`, [Linux]: :func:`swap_memory` no longer crashes if :field:`sin` /
   :field:`sout` can't be determined due to missing :proc:`/proc/vmstat`.
 - :gh:`724`, [FreeBSD]: :func:`virtual_memory` :field:`total` is slightly
@@ -2268,7 +2268,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **Bug fixes**
 
-- :gh:`610`, [SunOS], :label:`build-fail`: fix build and tests on Solaris 10
+- :gh:`610`, [SunOS], :label:`build-fail`: fix build and tests on Solaris 10.
 - :gh:`678`, [Linux], :label:`build-fail`: can't install psutil due to bug in
   setup.py.
 - :gh:`688`, [Windows], :label:`build-fail`: compilation fails with MSVC 2015,
@@ -2277,10 +2277,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   which enforces the C++11 rule forbidding duplicate values in an unscoped
   enum.
 - :gh:`517`, [SunOS]: :func:`net_io_counters` failed to detect network
-  interfaces correctly on Solaris 10
+  interfaces correctly on Solaris 10.
 - :gh:`541`, [FreeBSD]: :func:`disk_io_counters` r/w times were expressed in
   seconds instead of milliseconds.
-- :gh:`623`, [Linux]: process or system connections raises :exc:`ValueError` if
+- :gh:`623`, [Linux]: process or system connections raise :exc:`ValueError` if
   IPv6 is not supported by the system.
 
 3.2.1 — 2015-09-03
@@ -2319,7 +2319,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`664`, [Linux], :label:`build-fail`: compilation error on Alpine Linux.
 - :gh:`672`, [Windows], :label:`build-fail`: compilation fails if using Windows
   SDK v8.0.
-- :gh:`513`, [Linux]: fixed integer overflow for :data:`RLIM_INFINITY`
+- :gh:`513`, [Linux]: fixed integer overflow for :data:`RLIM_INFINITY`.
 - :gh:`641`, [Windows]: fixed many compilation warnings.
 - :gh:`652`, [Windows]: :func:`net_if_addrs` :exc:`UnicodeDecodeError` in case
   of non-ASCII NIC names.
@@ -2348,13 +2348,13 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 **Documentation**
 
 - :gh:`647`: new dev guide:
-  https://github.com/giampaolo/psutil/blob/master/docs/devguide.rst
+  https://github.com/giampaolo/psutil/blob/master/docs/devguide.rst.
 
 **Internals**
 
 - :gh:`646`, [Windows]: continuous tests integration for Windows with
   https://ci.appveyor.com/project/giampaolo/psutil.
-- :gh:`651`: continuous code quality test integration with scrutinizer-ci.com
+- :gh:`651`: continuous code quality test integration with scrutinizer-ci.com.
 
 **Bug fixes**
 
@@ -2362,7 +2362,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   hangs (uses a thread with timeout).
 - :gh:`627`, [Windows]: :meth:`Process.name` no longer raises
   :exc:`AccessDenied` for pids owned by another user.
-- :gh:`636`, [Windows]: :meth:`Process.memory_info` raise :exc:`AccessDenied`.
+- :gh:`636`, [Windows]: :meth:`Process.memory_info` raises :exc:`AccessDenied`.
 - :commit:`5ae30c79`, [POSIX]: raise exception if trying to send signal to PID
   0 as it will affect :func:`os.getpid` 's process group and not PID 0.
 - :gh:`639`, [Linux]: :meth:`Process.cmdline` can be truncated.
@@ -2438,8 +2438,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`585`, [FreeBSD]: :func:`net_connections` may raise :exc:`KeyError`.
 - :gh:`606`: :meth:`Process.parent` may swallow :exc:`NoSuchProcess`
   exceptions.
-- :gh:`611`, [SunOS]: :func:`net_io_counters` has send and received swapped
-- :gh:`614`, [Linux]:: :func:`cpu_count` with ``logical=False`` return the
+- :gh:`611`, [SunOS]: :func:`net_io_counters` has the sent and received
+  counters swapped.
+- :gh:`614`, [Linux]: :func:`cpu_count` with ``logical=False`` returns the
   number of sockets instead of cores.
 - :gh:`618`, [SunOS]: swap tests fail on Solaris when run as normal user.
 - :gh:`628`, [Linux]: :meth:`Process.name` truncates string in case it contains
@@ -2521,13 +2522,13 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`503`, [Linux]: in rare conditions :meth:`Process.exe`,
   :meth:`Process.open_files` and :meth:`Process.connections` can raise
   ``OSError(ESRCH)`` instead of :exc:`NoSuchProcess`.
-- :gh:`504`, [Linux]: can't build RPM packages via setup.py
+- :gh:`504`, [Linux]: can't build RPM packages via setup.py.
 - :gh:`506`, [Linux]: Python 2.4 support was broken.
 - :gh:`522`, [Linux]: :meth:`Process.cpu_affinity` might return ``EINVAL``.
 - :gh:`529`, [Windows]: :meth:`Process.exe` may raise unhandled
   :exc:`WindowsError` exception for PIDs 0 and 4.
 - :gh:`530`, [Linux]: :func:`disk_io_counters` may crash on old Linux distros
-  (< 2.6.5)
+  (< 2.6.5).
 - :gh:`533`, [Linux]: :meth:`Process.memory_maps` may raise :exc:`TypeError` on
   old Linux distros.
 
@@ -2553,7 +2554,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 - :gh:`421`, [SunOS], :label:`build-fail`: psutil does not compile on SunOS
   5.10.
-- :gh:`489`, [Linux]: :func:`disk_partitions` return an empty list.
+- :gh:`489`, [Linux]: :func:`disk_partitions` returns an empty list.
 
 2.0.0 — 2014-03-10
 ^^^^^^^^^^^^^^^^^^
@@ -2572,7 +2573,7 @@ For the sake of consistency a lot of psutil APIs have been renamed. In most
 cases accessing the old names will work but it will cause a
 :exc:`DeprecationWarning`.
 
-- ``psutil.*`` module level constants have being replaced by functions:
+- ``psutil.*`` module level constants have been replaced by functions:
 
   +-----------------------+----------------------------------+
   | Old name              | Replacement                      |
@@ -2658,7 +2659,7 @@ cases accessing the old names will work but it will cause a
   +----------------------+---------------------------------+
 
 - Except for ``pid``, all :class:`Process` class properties have been turned
-  into methods. This is the only case which there are no aliases. Assuming
+  into methods. This is the only case in which there are no aliases. Assuming
   ``p = psutil.Process()``:
 
   +---------------+-----------------+
@@ -2770,7 +2771,7 @@ cases accessing the old names will work but it will cause a
 **Bug fixes**
 
 - :gh:`442`, [Linux], :label:`build-fail`: psutil won't compile on certain
-  version of Linux because of missing :manpage:`prlimit(2)` syscall.
+  versions of Linux because of missing :manpage:`prlimit(2)` syscall.
 
 1.1.2 — 2013-10-22
 ^^^^^^^^^^^^^^^^^^
@@ -2823,9 +2824,9 @@ cases accessing the old names will work but it will cause a
 - :gh:`414`, [Windows]: :meth:`Process.exe` on Windows XP may raise
   ``ERROR_INVALID_PARAMETER``.
 - :gh:`416`: :func:`disk_usage` doesn't work well with unicode path names.
-- :gh:`430`, [Linux]: :meth:`Process.io_counters` report wrong number of r/w
+- :gh:`430`, [Linux]: :meth:`Process.io_counters` reports wrong number of r/w
   syscalls.
-- :gh:`435`, [Linux]: :func:`net_io_counters` might report erreneous NIC names.
+- :gh:`435`, [Linux]: :func:`net_io_counters` might report erroneous NIC names.
 - :gh:`436`, [Linux]: :func:`net_io_counters` reports a wrong ``dropin`` value.
 
 1.0.1 — 2013-07-12
@@ -2907,7 +2908,7 @@ cases accessing the old names will work but it will cause a
   unretrievable stats to ``0`` and raise :exc:`RuntimeWarning` instead.
 - :gh:`341`, [Linux], :label:`critical`: psutil might crash on import due to
   error in retrieving system terminals map.
-- :gh:`333`, [macOS], :label:`memleak`: leak of Mach ports
+- :gh:`333`, [macOS], :label:`memleak`: leak of Mach ports.
 - :gh:`339`, [FreeBSD], :label:`memleak`: ``get_pid_list()`` can allocate all
   the memory on system.
 - :gh:`234`, [Windows]: :func:`disk_io_counters` fails to list certain disks.
@@ -2984,12 +2985,12 @@ cases accessing the old names will work but it will cause a
   :meth:`Process.memory_percent`, :meth:`Process.num_handles`,
   :meth:`Process.io_counters` no longer raise :exc:`AccessDenied` for other
   users' processes.
-- ``psutil.phymem_usage()`` is deprecated (use :func:`virtual_memory`)
-- ``psutil.virtmem_usage()`` is deprecated (use :func:`swap_memory`)
+- ``psutil.phymem_usage()`` is deprecated (use :func:`virtual_memory`).
+- ``psutil.virtmem_usage()`` is deprecated (use :func:`swap_memory`).
 - [Linux]: ``psutil.phymem_buffers()`` is deprecated (use
-  :func:`virtual_memory`)
+  :func:`virtual_memory`).
 - [Linux]: ``psutil.cached_phymem()`` is deprecated (use
-  :func:`virtual_memory`)
+  :func:`virtual_memory`).
 
 **Performance**
 
@@ -3094,7 +3095,7 @@ cases accessing the old names will work but it will cause a
 - :gh:`244`, [POSIX]: :meth:`Process.wait` can hog CPU resources if called
   against a process which is not our children.
 - :gh:`248`, [Linux]: :func:`net_io_counters` might return erroneous NIC names.
-- :gh:`252`, [Windows]: :meth:`Process.cwd` erroneously raise
+- :gh:`252`, [Windows]: :meth:`Process.cwd` erroneously raises
   :exc:`NoSuchProcess` for processes owned by another user. It now raises
   :exc:`AccessDenied` instead.
 - :gh:`266`, [Windows]: ``psutil.get_pid_list()`` only shows 1024 processes.
@@ -3102,7 +3103,7 @@ cases accessing the old names will work but it will cause a
 - :gh:`272`, [Linux]: :meth:`Process.open_files` potential race condition can
   lead to unexpected :exc:`NoSuchProcess` exception. Also, we can get incorrect
   reports of not absolutized path names.
-- :gh:`275`, [Linux]: :meth:`Process.io_counters` erroneously raise
+- :gh:`275`, [Linux]: :meth:`Process.io_counters` erroneously raises
   :exc:`NoSuchProcess` on old Linux versions. Where not available it now raises
   :exc:`NotImplementedError`.
 - :gh:`286`: :meth:`Process.is_running` doesn't actually check whether PID has
@@ -3128,9 +3129,9 @@ cases accessing the old names will work but it will cause a
 
 **New APIs**
 
-- :gh:`150`: add :func:`net_io_counters`
+- :gh:`150`: add :func:`net_io_counters`.
 - :gh:`154`, [FreeBSD]: add support for :meth:`Process.cwd`.
-- :gh:`206`: add :func:`disk_io_counters`).
+- :gh:`206`: add :func:`disk_io_counters`.
 - :gh:`217`: :meth:`Process.connections` now has a *kind* argument to filter
   for connections with different criteria.
 
@@ -3189,7 +3190,7 @@ cases accessing the old names will work but it will cause a
 
 **Build and packaging**
 
-- :gh:`179`: setuptools is now used in setup.py
+- :gh:`179`: setuptools is now used in setup.py.
 
 **Bug fixes**
 
@@ -3238,10 +3239,10 @@ cases accessing the old names will work but it will cause a
 
 **Bug fixes**
 
-- :gh:`83`, [macOS]:  :meth:`Process.cmdline` is empty on macOS 64-bit.
+- :gh:`83`, [macOS]: :meth:`Process.cmdline` is empty on macOS 64-bit.
 - :gh:`130`, [Linux]: a race condition can cause :exc:`IOError` exception be
-  raised on if process disappears between ``open()`` and the subsequent
-  ``read()`` call.
+  raised if process disappears between ``open()`` and the subsequent ``read()``
+  call.
 - :gh:`145`, [Windows]: :exc:`WindowsError` was raised instead of
   :exc:`AccessDenied` when using :meth:`Process.resume` or
   :meth:`Process.suspend`.
@@ -3285,7 +3286,7 @@ cases accessing the old names will work but it will cause a
 - :meth:`Process.kill`: *signal* argument was removed - to send a signal to the
   process use :meth:`Process.send_signal` method instead.
 - :func:`cpu_times` returns a named tuple instead of a tuple.
-- :meth:`Process.cpu_percent` and :func:`cpu_percent` no longer returns
+- :meth:`Process.cpu_percent` and :func:`cpu_percent` no longer return
   immediately by default (see :gh:`123`).
 
 **Performance**
@@ -3340,7 +3341,7 @@ cases accessing the old names will work but it will cause a
 - :gh:`62`, [Windows], :label:`memleak`: :meth:`Process.cwd` leaked a string
   object on every call.
 - :gh:`36`: :meth:`Process.cpu_times` and :meth:`Process.memory_info` functions
-  succeeded. also for dead processes while a :exc:`NoSuchProcess` exception is
+  succeeded also for dead processes while a :exc:`NoSuchProcess` exception is
   supposed to be raised.
 - :gh:`48`, [FreeBSD]: incorrect size for MIB array defined in ``getcmdargs``.
 - :gh:`50`, [macOS]: fixed ``getcmdargs()`` memory fragmentation.
@@ -3365,9 +3366,9 @@ cases accessing the old names will work but it will cause a
 - :gh:`38`: add :meth:`Process.memory_info`.
 - :gh:`41`: add :meth:`Process.memory_percent`.
 - :gh:`39`: add :func:`boot_time`.
-- :gh:`43`: Total system virtual memory.
-- :gh:`46`: Total system physical memory.
-- :gh:`44`: Total system used/free virtual and physical memory.
+- :gh:`43`: total system virtual memory.
+- :gh:`46`: total system physical memory.
+- :gh:`44`: total system used/free virtual and physical memory.
 
 **Bug fixes**
 
@@ -3407,7 +3408,7 @@ cases accessing the old names will work but it will cause a
 
 **Bug fixes**
 
-- :gh:`16`, [Windows]: Special case for "System Idle Process" (PID 0) which
+- :gh:`16`, [Windows]: special case for "System Idle Process" (PID 0) which
   otherwise would return an "invalid parameter" exception.
 - :gh:`17`: ``get_process_list()`` ignores :exc:`NoSuchProcess` and
   :exc:`AccessDenied` exceptions during building of the list.
