@@ -2573,8 +2573,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_WAKING
 
-   (Linux only) A transient state right before the process becomes runnable
-   (:data:`STATUS_RUNNING`).
+   (Linux, OpenBSD, NetBSD) A transient state right before the process becomes
+   runnable (:data:`STATUS_RUNNING`).
 
 .. data:: STATUS_PARKED
 
@@ -2584,7 +2584,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_IDLE
 
-   (Linux, macOS, FreeBSD) A sleep for kernel threads waiting for work.
+   (Linux, macOS, FreeBSD, OpenBSD, NetBSD, Solaris, AIX) A sleep for kernel
+   threads waiting for work.
 
 .. data:: STATUS_LOCKED
 
@@ -2593,8 +2594,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_WAITING
 
-   (FreeBSD only) The process is waiting in a kernel sleep queue for a specific
-   system event to occur.
+   (FreeBSD, Solaris) The process is waiting in a kernel sleep queue for a
+   specific system event to occur.
 
 .. data:: STATUS_SUSPENDED
 
