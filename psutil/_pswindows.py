@@ -947,7 +947,7 @@ class Process:
     def open_files(self):
         if self.pid in {0, 4}:
             return []
-        # Filenames come in in native format like:
+        # Filenames come in native format like:
         # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
         # Convert the first part in the corresponding drive letter
         # (e.g. "C:\") by using Windows's QueryDosDevice(). Directories
