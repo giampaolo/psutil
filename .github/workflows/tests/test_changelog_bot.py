@@ -12,6 +12,7 @@ validation gate against small RST fixtures; no network or API is used.
 import importlib.util
 import io
 import pathlib
+import re
 
 import pytest
 
@@ -61,6 +62,14 @@ class TestContext:
         # The released block below must not be included.
         assert "7.2.2" not in block
         assert ":gh:`50`" not in block
+
+
+class TestSections:
+    def test_match_changelog_comment(self):
+        path = BOT_PATH.parents[2] / "docs" / "changelog.rst"
+        head = path.read_text().split("\nChangelog\n")[0]
+        listed = re.findall(r"^   - (.+?) \[", head, re.MULTILINE)
+        assert tuple(listed) == cb.SECTIONS
 
 
 class TestInsert:
@@ -324,6 +333,27 @@ Changelog
             cb.bugfix_section(CHANGELOG, "- :gh:`40`, [Windows]: x.")
             == "Bug fixes"
         )
+
+    def test_insert_drops_tag_repeating_section(self):
+        decision = {
+            "action": "insert",
+            "section": "Bug fixes",
+            "entry_text": "- :gh:`40`, [Windows], :label:`critical`: x.",
+        }
+        out, _, _ = cb.apply_changelog_decision(self.SPLIT, decision, {40})
+        win = out.split("**Bug fixes: Windows**")[1]
+        assert "- :gh:`40`, :label:`critical`: x." in win
+        assert decision["entry_text"] == "- :gh:`40`, :label:`critical`: x."
+
+    def test_amend_drops_tag_repeating_section(self):
+        decision = {
+            "action": "amend",
+            "amend_gh": 20,
+            "entry_text": "- :gh:`20`, [Windows]: win bug, extended.",
+        }
+        out, _, _ = cb.apply_changelog_decision(self.SPLIT, decision, set())
+        assert "- :gh:`20`: win bug, extended." in out
+        assert "[Windows]" not in out
 
 
 class TestOrderCheck:

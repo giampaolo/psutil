@@ -96,7 +96,10 @@ STYLE
 - Write concise entries (1-2 sentences max).
 - Focus on the user-visible behavior change.
 - Avoid implementation details unless relevant.
-- Prefer imperative verbs: "fix", "add", "improve", "avoid", "detect".
+- Bug fixes describe the bug in the past tense ("X could crash", "X
+  returned wrong values"), not "fix X".
+- Don't repeat the section title: under Dropped support write "Python
+  3.7 (minimum is now 3.8).", not "Drop support for Python 3.7.".
 - Do not repeat the PR title verbatim.
 - Do not mention "PR" in the text.
 - Wrap lines around ~79 characters.
@@ -106,17 +109,17 @@ CLASSIFICATION
 Choose the section for an insert, from the vocabulary the changelog
 uses (listed in the order sections appear in a release):
 
+- New platforms: support for a new OS, architecture or interpreter.
 - New APIs: a new function, argument or field, or an existing one now
   working where it didn't.
-- New platforms: support for a new OS, architecture or interpreter.
 - API changes: an existing API changed, was deprecated or was removed.
+- Dropped support: a platform, OS or Python version is no longer
+  supported.
 - Performance: something got faster.
 - Build and packaging: wheels, the sdist, what gets installed.
 - Documentation: docs/ only.
 - Internals: psutil's own machinery: CI, tests, scripts, debug output.
   Nothing user-facing.
-- Dropped support: a platform, OS or Python version is no longer
-  supported.
 - Bug fixes: crashes, wrong results, leaks, build failures.
 
 PLATFORM TAGS
@@ -133,7 +136,9 @@ when one is named; [BSD] only when the change is about the BSDs as a
 family, [POSIX] for shared POSIX behavior where no single OS fits.
 Only add platform tags if the change clearly affects specific OSes.
 The script checks every tag against the issue's labels on the bug
-tracker and rejects the entry when a tag isn't backed by one.
+tracker and rejects the entry when a tag isn't backed by one. Tag the
+entry even when entries in a "Bug fixes: <platform>" section have no
+tag: the script routes by tag, then drops the one the header repeats.
 
 BADGE LABELS
 
@@ -162,7 +167,7 @@ Continuation lines are indented by two spaces. End with a period.
 EXAMPLES
 
 - :gh:`2708`, [macOS]: :meth:`Process.cmdline` and
-  :meth:`Process.environ` may fail with ``OSError: [Errno 0]``. They
+  :meth:`Process.environ` could fail with ``OSError: [Errno 0]``. They
   now raise :exc:`AccessDenied` instead.
 
 - :gh:`2674`, [Windows]: :func:`disk_usage` could truncate values on
@@ -189,14 +194,14 @@ SUBMIT_TOOL = {
             "section": {
                 "type": ["string", "null"],
                 "enum": [
-                    "New APIs",
                     "New platforms",
+                    "New APIs",
                     "API changes",
+                    "Dropped support",
                     "Performance",
                     "Build and packaging",
                     "Documentation",
                     "Internals",
-                    "Dropped support",
                     "Bug fixes",
                     None,
                 ],
@@ -329,14 +334,14 @@ VERSION_RE = re.compile(r"^(\d+\.\d+\.\d+|X\.X\.X)\b")
 
 # The section vocabulary, in the order sections appear in a release.
 SECTIONS = (
-    "New APIs",
     "New platforms",
+    "New APIs",
     "API changes",
+    "Dropped support",
     "Performance",
     "Build and packaging",
     "Documentation",
     "Internals",
-    "Dropped support",
     "Bug fixes",
 )
 
@@ -361,7 +366,6 @@ TAG2LABEL = {
     "SunOS": "sunos",
     "AIX": "aix",
     "BSD": "bsd",
-    "UNIX": "posix",
     "POSIX": "posix",
     "PyPy": "pypy",
 }
@@ -769,6 +773,29 @@ def bugfix_section(text, entry_text):
     return "Bug fixes"
 
 
+def entry_section(text, gh):
+    """Header of the dev-block section holding :gh:`gh`, or None."""
+    section = None
+    for ln in changelog_context(text).splitlines():
+        if ln.startswith("**") and ln.rstrip().endswith("**"):
+            section = ln.strip().strip("*")
+        elif ln.startswith(f"- :gh:`{gh}`"):
+            return section
+    return None
+
+
+def strip_section_tag(entry_text, section):
+    """Drop a lone [Linux] tag under "Bug fixes: Linux", where the
+    header already says it.
+    """
+    flat = " ".join(ln.strip() for ln in entry_text.splitlines())
+    tags = entry_tags(flat)
+    if len(tags) != 1 or section != f"Bug fixes: {tags[0]}":
+        return entry_text
+    m = ENTRY_PREFIX_RE.match(flat)
+    return wrap_entry(flat[: m.start(1)] + flat[m.end(1) :])
+
+
 def apply_changelog_decision(text, decision, allowed_issues):
     """Validate and apply the LLM decision to the changelog text.
 
@@ -801,6 +828,9 @@ def apply_changelog_decision(text, decision, allowed_issues):
             raise ValidationError(f"invalid section {section!r}")
         if section == "Bug fixes":
             section = bugfix_section(text, entry_text)
+            entry_text = strip_section_tag(entry_text, section)
+            # in place, so the PR comment shows what was written
+            decision["entry_text"] = entry_text
         # Only dedup against a real in-development block; after a
         # release the top block is history, and a new entry belongs in
         # a fresh dev block regardless of what shipped.
@@ -826,6 +856,8 @@ def apply_changelog_decision(text, decision, allowed_issues):
             raise ValidationError(
                 f"amended entry must keep :gh:`{amend_gh}`, got :gh:`{gh}`"
             )
+        entry_text = strip_section_tag(entry_text, entry_section(text, gh))
+        decision["entry_text"] = entry_text
         return amend_entry(text, amend_gh, entry_text), "amended", gh
 
     raise ValidationError(f"unknown action {action!r}")
