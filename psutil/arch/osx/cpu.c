@@ -40,8 +40,12 @@ PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     int num;
 
-    if (psutil_sysctlbyname("hw.logicalcpu", &num, sizeof(num)) != 0)
+    if (psutil_sysctlbyname("hw.logicalcpu", &num, sizeof(num)) != 0) {
+        // Mimic os.cpu_count(): undeterminable -> None. Clear the
+        // exception set by psutil_sysctlbyname (see #3087).
+        PyErr_Clear();
         Py_RETURN_NONE;
+    }
     return Py_BuildValue("i", num);
 }
 
@@ -50,8 +54,12 @@ PyObject *
 psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     int num;
 
-    if (psutil_sysctlbyname("hw.physicalcpu", &num, sizeof(num)) != 0)
+    if (psutil_sysctlbyname("hw.physicalcpu", &num, sizeof(num)) != 0) {
+        // Mimic os.cpu_count(): undeterminable -> None. Clear the
+        // exception set by psutil_sysctlbyname (see #3087).
+        PyErr_Clear();
         Py_RETURN_NONE;
+    }
     return Py_BuildValue("i", num);
 }
 
