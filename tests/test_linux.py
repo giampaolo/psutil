@@ -2187,6 +2187,23 @@ class TestProcessThreads(LinuxTestCase):
             with pytest.raises(psutil.AccessDenied):
                 psutil.Process().threads()
 
+    def test_threads_name_with_parentheses(self):
+        # The thread name may contain ")", e.g. Python 3.14 names OS
+        # threads "Thread-1 (run)" after threading.Thread.name.
+        content = (
+            b"1234 (Thread-1 (run)) S 1 1 1 0 -1 4194368 4 0 0 0 300 150"
+            b" 0 0 20 0 2 0 1695 0 0 18446744073709551615 0 0 0 0 0 0 0"
+            b" 0 0 0 0 0 -1 3 0 0 0 0 0"
+        )
+        task = f"/proc/{os.getpid()}/task/*/stat"
+        with mock_open_content({task: content}) as m:
+            threads = psutil.Process().threads()
+            assert m.called
+        assert threads
+        for t in threads:
+            assert t.user_time == 300 / CLOCK_TICKS
+            assert t.system_time == 150 / CLOCK_TICKS
+
     @retry_on_failure
     @isolated
     def test_issue_687(self):
