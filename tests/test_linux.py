@@ -2024,6 +2024,23 @@ class TestProcessCpu(LinuxTestCase):
 
 
 class TestProcessMemory(LinuxTestCase):
+    def test_memory_maps_trailing_whitespace(self):
+        for suffix in (" ", "  ", "\t", "\r", ""):
+            with self.subTest(suffix=suffix):
+                path = self.get_testfn(suffix=suffix)
+                with open(path, "w+b") as f:
+                    f.write(b"x" * mmap.PAGESIZE)
+                    f.flush()
+                    with mmap.mmap(f.fileno(), mmap.PAGESIZE):
+                        for grouped in (False, True):
+                            paths = {
+                                item.path
+                                for item in psutil.Process().memory_maps(
+                                    grouped=grouped
+                                )
+                            }
+                            assert path in paths
+
     @retry_on_failure
     def test_parse_smaps_vs_memory_maps(self):
         sproc = self.spawn_subproc()

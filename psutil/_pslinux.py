@@ -2061,7 +2061,6 @@ class Process:
                     path = '[anon]'
                 else:
                     path = decode(path)
-                    path = path.strip()
                     if path.endswith(' (deleted)') and not path_exists_strict(
                         path
                     ):
