@@ -1077,7 +1077,7 @@ Exceptions
   .. seealso::
     - :ref:`faq_access_denied`
 
-.. exception:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
+.. exception:: TimeoutExpired(seconds, pid=None, name=None)
 
   Raised by :meth:`Process.wait` method if timeout expires and the process is
   still alive. *name* attribute is set if :meth:`Process.name` was previously
