@@ -319,10 +319,18 @@ What is the difference between psutil, os, and multiprocessing cpu_count()?
   ``psutil.cpu_count(logical=True)``, but psutil does not honour
   :envvar:`PYTHON_CPU_COUNT` environment variable introduced in Python 3.13.
 - :func:`os.process_cpu_count` (Python 3.13+) returns the number of CPUs the
-  calling process is **allowed to use** (respects :term:`CPU affinity` and
-  cgroups). The psutil equivalent is ``len(psutil.Process().cpu_affinity())``.
+  calling process is **allowed to run on**, i.e. the size of its
+  :term:`CPU affinity` mask (this includes restrictions set via cgroup cpusets,
+  e.g. ``docker run --cpuset-cpus``). The psutil equivalent is
+  ``len(psutil.Process().cpu_affinity())``.
 - :func:`multiprocessing.cpu_count` returns the same value as
-  :func:`os.process_cpu_count` (Python 3.13+).
+  :func:`os.cpu_count`, not :func:`os.process_cpu_count`.
+- None of the above take a Linux cgroup CPU bandwidth limit into account
+  (``cpu.max`` on cgroup v2, ``cpu.cfs_quota_us`` on v1), which is what
+  ``docker run --cpus=2``, Kubernetes CPU limits and systemd ``CPUQuota=`` set.
+  A process limited this way to 2 CPUs worth of time on a 20 CPU machine still
+  sees 20 from all of them. To size a worker pool in that case, read the quota
+  from the process's own cgroup (see ``/proc/self/cgroup``).
 - :func:`psutil.cpu_count` with ``logical=False`` returns the number of
   :term:`physical cores <physical CPU>`, which has no stdlib equivalent.
 
