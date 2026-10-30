@@ -1290,6 +1290,18 @@ class TestNetConnections(LinuxTestCase):
             psutil.net_connections(kind='unix')
             assert m.called
 
+    def test_unix_path_with_spaces(self):
+        # A UNIX socket path may contain spaces; it must not be dropped.
+        content = textwrap.dedent("""\
+            Num RefCount Protocol Flags Type St Inode Path
+            0: 00000002 00000000 00010000 0001 01 12345 /tmp/my sock/a b
+            0: 00000003 00000000 00000000 0001 03 12346
+            """)
+        with mock_open_content({"/proc/net/unix": content}):
+            paths = [c.laddr for c in psutil.net_connections(kind='unix')]
+        assert "/tmp/my sock/a b" in paths
+        assert "" in paths
+
     @serial
     @requires_cli("ss")
     @retry_on_failure

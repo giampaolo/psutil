@@ -886,7 +886,8 @@ class NetConnections:
         with open_text(file) as f:
             f.readline()  # skip the first line
             for line in f:
-                tokens = line.split()
+                # The path is the last field and may contain spaces.
+                tokens = line.split(None, 7)
                 try:
                     _, _, _, _, type_, _, inode = tokens[0:7]
                 except ValueError:
@@ -907,7 +908,9 @@ class NetConnections:
                     if filter_pid is not None and filter_pid != pid:
                         continue
                     else:
-                        path = tokens[-1] if len(tokens) == 8 else ''
+                        path = ''
+                        if len(tokens) == 8:
+                            path = tokens[7].rstrip('\n')
                         type_ = socktype_to_enum(int(type_))
                         # XXX: determining the remote endpoint of a
                         # UNIX socket on Linux is not possible, see:
