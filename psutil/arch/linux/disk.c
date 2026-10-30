@@ -16,6 +16,8 @@ PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file = NULL;
     struct mntent *entry;
+    struct mntent ent;
+    char buf[16384];
     char *mtab_path;
     PyObject *py_dev = NULL;
     PyObject *py_mountp = NULL;
@@ -37,9 +39,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // NOTE: getmntent() is MT-Unsafe (it returns a pointer to a static
-    // buffer), so we can't release the GIL around it.
-    while ((entry = getmntent(file)) != NULL) {
+    // getmntent() returns a pointer to a static buffer shared by all
+    // threads, which free-threaded builds don't serialize. Use our own.
+    while ((entry = getmntent_r(file, &ent, buf, sizeof(buf))) != NULL) {
         py_dev = PyUnicode_DecodeFSDefault(entry->mnt_fsname);
         if (!py_dev)
             goto error;
