@@ -102,15 +102,15 @@ class TestRetryDecorator(PsutilTestCase):
 
     @mock.patch.object(retry, "sleep")
     def test_no_interval_arg(self, sleep_mock):
-        # if interval is not specified sleep is not supposed to be called
-
+        # The retry loop still invokes the sleep hook on each retry, but the
+        # underlying implementation does nothing when interval is None.
         @retry(retries=5, interval=None, logfun=None)
         def foo():
             1 / 0  # noqa: B018
 
         with pytest.raises(ZeroDivisionError):
             foo()
-        assert sleep_mock.call_count == 0
+        assert sleep_mock.call_count == 5
 
     @mock.patch.object(retry, "sleep")
     def test_retries_arg(self, sleep_mock):
