@@ -34,11 +34,11 @@
 
 ## Pull Requests
 
+- If you wish to implement a new feature it's mandatory to **discuss it first**
+  on the issue tracker.
 - In order to get acquainted with the code base and tooling, take a look at the
   **[Development Guide](https://psutil.io/devguide/)**.
 - The PR system is for fixing bugs or make enhancements related to the
   **program code**.
-- If you wish to implement a new feature it's mandatory to **discuss it first**
-  on the issue tracker.
 - No need to touch the changelog or credits files. A bot automatically adds
   those entries for you before merging.

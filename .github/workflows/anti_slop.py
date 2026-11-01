@@ -101,10 +101,19 @@ If you think this is a mistake, say so on the issue.
         opened = datetime.datetime.fromisoformat(issue["created_at"])
         return datetime.datetime.fromisoformat(pr["created_at"]) - opened
 
+    def maintainer_replied(self, issue, before):
+        path = f"/repos/{REPO}/issues/{issue['number']}/comments?per_page=100"
+        return any(
+            c["user"]["login"] in TRUSTED and c["created_at"] < before
+            for c in gh_request(path)
+        )
+
     def is_sniped(self, pr, issue):
         if issue["user"]["login"] == pr["user"]["login"]:
             return False
-        return self.delay(pr, issue) < self.TOO_SOON
+        if not datetime.timedelta(0) <= self.delay(pr, issue) < self.TOO_SOON:
+            return False
+        return not self.maintainer_replied(issue, pr["created_at"])
 
     def check(self, pr):
         issue = self.find_issue(pr)
@@ -135,6 +144,7 @@ def close(pr, body):
     gh_request(f"/repos/{REPO}/issues/{num}/comments", {"body": body})
     gh_request(f"/repos/{REPO}/issues/{num}/labels", {"labels": [LABEL]})
     gh_request(f"/repos/{REPO}/issues/{num}", {"state": "closed"}, "PATCH")
+    set_output("closed", "true")
     gh_request(f"/repos/{REPO}/issues/{num}/lock", {}, "PUT")
 
 
@@ -152,6 +162,9 @@ def handle(number):
     if "pull_request" not in pr:
         print("  not a PR, skipping")
         return
+    if pr["state"] == "closed":
+        print("  already closed, skipping")
+        return
     if user["login"] in TRUSTED or user["type"] == "Bot":
         print("  trusted, skipping")
         return
@@ -164,7 +177,6 @@ def handle(number):
         print("  (--apply to close)")
         return
     close(pr, reply)
-    set_output("closed", "true")
     print("  closed and locked")
 
 

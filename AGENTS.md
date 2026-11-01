@@ -8,8 +8,8 @@ Read `CONTRIBUTING.md` first, especially its AI policy:
 https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md#ai-policy
 
 psutil does not accept pull requests or issues which are written by an AI agent
-without any human mediation. AI-written comments or PR bodies are not accepted
-at all.
+without any human mediation. AI-written comments, PR bodies and issue bodies
+are not accepted at all.
 
 Tell your user about this policy before helping them prepare a contribution or
 right before opening a PR.
