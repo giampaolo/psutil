@@ -61,7 +61,7 @@ from . import wait_for_pid
 
 class TestRetryDecorator(PsutilTestCase):
     @mock.patch('time.sleep')
-    def test_retry_success(self, sleep):
+    def test_retry_success(self, sleep_mock):
         # Fail 3 times out of 5; make sure the decorated fun returns.
 
         @retry(retries=5, interval=1, logfun=None)
@@ -73,10 +73,10 @@ class TestRetryDecorator(PsutilTestCase):
 
         queue = list(range(3))
         assert foo() == 1
-        assert sleep.call_count == 3
+        assert sleep_mock.call_count == 3
 
     @mock.patch('time.sleep')
-    def test_retry_failure(self, sleep):
+    def test_retry_failure(self, sleep_mock):
         # Fail 6 times out of 5; th function is supposed to raise exc.
         @retry(retries=5, interval=1, logfun=None)
         def foo():
@@ -88,20 +88,20 @@ class TestRetryDecorator(PsutilTestCase):
         queue = list(range(6))
         with pytest.raises(ZeroDivisionError):
             foo()
-        assert sleep.call_count == 5
+        assert sleep_mock.call_count == 5
 
     @mock.patch('time.sleep')
-    def test_exception_arg(self, sleep):
+    def test_exception_arg(self, sleep_mock):
         @retry(exception=ValueError, interval=1)
         def foo():
             raise TypeError
 
         with pytest.raises(TypeError):
             foo()
-        assert sleep.call_count == 0
+        assert sleep_mock.call_count == 0
 
     @mock.patch('time.sleep')
-    def test_no_interval_arg(self, sleep):
+    def test_no_interval_arg(self, sleep_mock):
         # if interval is not specified sleep is not supposed to be called
 
         @retry(retries=5, interval=None, logfun=None)
@@ -110,20 +110,20 @@ class TestRetryDecorator(PsutilTestCase):
 
         with pytest.raises(ZeroDivisionError):
             foo()
-        assert sleep.call_count == 0
+        assert sleep_mock.call_count == 0
 
     @mock.patch('time.sleep')
-    def test_retries_arg(self, sleep):
+    def test_retries_arg(self, sleep_mock):
         @retry(retries=5, interval=1, logfun=None)
         def foo():
             1 / 0  # noqa: B018
 
         with pytest.raises(ZeroDivisionError):
             foo()
-        assert sleep.call_count == 5
+        assert sleep_mock.call_count == 5
 
     @mock.patch('time.sleep')
-    def test_retries_and_timeout_args(self, sleep):
+    def test_retries_and_timeout_args(self, sleep_mock):
         with pytest.raises(ValueError):
             retry(retries=5, timeout=1)
 
