@@ -666,6 +666,24 @@ class TestCpuAPIs(PsutilTestCase):
                 )
             )
 
+    @skipif(not WINDOWS, reason="Windows-specific cpu_times accounting")
+    def test_cpu_times_irq_dpc_are_part_of_system(self):
+        # On Windows "system" is (kernel - idle) from GetSystemTimes(), and
+        # kernel time already includes the IRQ / DPC time exposed as the
+        # "irq" and "dpc" fields, so they must not be added on top of it.
+        # https://github.com/giampaolo/psutil/issues/3092
+        fields = psutil.cpu_times()._fields
+        times = psutil.cpu_times()._make([10.0, 20.0, 60.0, 4.0, 6.0])
+        assert fields == ("user", "system", "idle", "irq", "dpc")
+        # total elapsed CPU time == user + system + idle
+        assert psutil._cpu_tot_time(times) == 90.0
+        assert psutil._cpu_busy_time(times) == 30.0
+        # same invariant on a real sample
+        times = psutil.cpu_times()
+        assert psutil._cpu_busy_time(times) == pytest.approx(
+            times.user + times.system
+        )
+
     def test_cpu_percent(self):
         last = psutil.cpu_percent(interval=0.001)
         for _ in range(100):

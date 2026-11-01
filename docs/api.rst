@@ -67,6 +67,13 @@ CPU
     (DPCs); DPCs are interrupts that run at a lower priority than standard
     interrupts.
 
+  .. note::
+     Windows: :field:`system` is obtained from ``GetSystemTimes()`` as
+     ``kernel - idle``, and the kernel time **already includes** the
+     :field:`irq` and :field:`dpc` time. These two fields are therefore not
+     additive: the total elapsed CPU time is
+     ``user + system + idle``.
+
   When *percpu* is ``True`` return a list for each :term:`logical CPU` on the
   system. The list is ordered by CPU index. The order of the list is consistent
   across calls.

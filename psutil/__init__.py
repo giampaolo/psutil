@@ -2129,6 +2129,16 @@ def _cpu_tot_time(times):
         # https://github.com/torvalds/linux/blob/447976ef4/kernel/sched/cputime.c#L158
         tot -= times.guest
         tot -= times.guest_nice
+    elif WINDOWS:
+        # On Windows "system" is calculated as (kernel - idle) out of
+        # GetSystemTimes(), and the kernel time already accounts for the
+        # time spent servicing interrupts and DPCs, which are also exposed
+        # as the "irq" and "dpc" fields. Summing every field counts that
+        # time twice, so subtract it to keep "user + system + idle" as the
+        # total elapsed CPU time.
+        # Reference: psutil/arch/windows/cpu.c
+        tot -= times.irq
+        tot -= times.dpc
     return tot
 
 
