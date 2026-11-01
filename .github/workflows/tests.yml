@@ -44,6 +44,7 @@ jobs:
           - { os: macos-15-intel, osname: macos, arch: x86_64, python: "3.13" } # py 3.9 install is too slow
           - { os: windows-2025, osname: win, arch: AMD64, python: "3.10", memleaks: true }
           - { os: windows-11-arm, osname: win, arch: ARM64, python: "3.14" }
+          - { os: windows-latest, osname: win, arch: AMD64, python: "3.15t", memleaks: true }
     steps:
       - uses: actions/checkout@v7
 
