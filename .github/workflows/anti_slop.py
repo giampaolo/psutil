@@ -78,12 +78,11 @@ If you think this is a mistake, say so on the issue.
         return datetime.datetime.fromisoformat(pr["created_at"]) - opened
 
     def maintainer_replied(self, issue, before):
-        num = issue["number"]
-        path = f"/repos/{ghlib.REPO}/issues/{num}/comments?per_page=100"
+        path = f"/repos/{ghlib.REPO}/issues/{issue['number']}/comments"
         return any(
             c["user"]["login"] in ghlib.MAINTAINERS
             and c["created_at"] < before
-            for c in ghlib.request(path)
+            for c in ghlib.request_all(path)
         )
 
     def is_sniped(self, pr, issue):

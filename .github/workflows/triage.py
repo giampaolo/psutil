@@ -76,8 +76,8 @@ def log(msg):
 def on_new_pr(issue):
     if issue["user"]["login"] in ghlib.MAINTAINERS:
         return
-    path = f"/repos/{ghlib.REPO}/pulls/{issue['number']}/files?per_page=100"
-    files = [x["filename"] for x in ghlib.request(path)]
+    path = f"/repos/{ghlib.REPO}/pulls/{issue['number']}/files"
+    files = [x["filename"] for x in ghlib.request_all(path)]
 
     # changelog.rst / credits.rst are maintainer-owned; ask to drop them.
     owned = ("docs/changelog.rst", "docs/credits.rst")

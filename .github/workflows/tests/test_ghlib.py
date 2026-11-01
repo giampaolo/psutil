@@ -52,3 +52,21 @@ class TestRequest:
                 self._call(err)
         finally:
             err.close()
+
+
+class TestRequestAll:
+    def test_follows_pages(self):
+        pages = [list(range(100)), [100]]
+        paths = []
+
+        def fake_request(path):
+            paths.append(path)
+            return pages[len(paths) - 1]
+
+        orig_request = ghlib.request
+        ghlib.request = fake_request
+        try:
+            assert ghlib.request_all("/x") == list(range(101))
+        finally:
+            ghlib.request = orig_request
+        assert paths == ["/x?per_page=100&page=1", "/x?per_page=100&page=2"]

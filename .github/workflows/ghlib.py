@@ -17,6 +17,7 @@ import urllib.request
 REPO = "giampaolo/psutil"
 MAINTAINERS = {"giampaolo"}
 TIMEOUT = 30
+PER_PAGE = 100
 ACCEPT_JSON = "application/vnd.github+json"
 
 # Set by load_token().
@@ -53,3 +54,14 @@ def request(path, post=None, method=None, accept=ACCEPT_JSON):
     if accept != ACCEPT_JSON:
         return data.decode("utf-8", errors="replace")
     return json.loads(data) if data else None
+
+
+def request_all(path):
+    items = []
+    page = 1
+    while True:
+        batch = request(f"{path}?per_page={PER_PAGE}&page={page}")
+        items.extend(batch)
+        if len(batch) < PER_PAGE:
+            return items
+        page += 1
