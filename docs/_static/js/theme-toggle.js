@@ -33,7 +33,7 @@
         // crossfade two snapshots of the page: everything fades
         // together, text included, whatever the page size
         const reduce = window.matchMedia(
-            "(prefers-reduced-motion: reduce)"
+            "(prefers-reduced-motion: reduce)",
         ).matches;
         if (document.startViewTransition && !reduce) {
             html.classList.add("no-transition");
