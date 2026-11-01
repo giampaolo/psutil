@@ -119,7 +119,7 @@ class PRFarm:
     usually a known dev doing some cleanup across the ecosystem.
     """
 
-    CLOSE = False  # label only, until we see who it catches
+    CLOSE = True
     WINDOW = datetime.timedelta(days=60)
     MIN_REPOS = 60
     MAX_FOLLOWERS = 1000
