@@ -167,6 +167,7 @@ ignore = [
     "TRY300",  # Consider moving this statement to an `else` block
     "TRY301",  # Abstract `raise` to an inner function
     "UP032",  # [*] Use f-string instead of `format` call
+    "shared-clock-mock",  # Changing `time.sleep` may affect unrelated threads
 ]
 
 [tool.ruff.lint.per-file-ignores]
