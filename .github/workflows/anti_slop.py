@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+
+# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+"""Bot that closes and locks contributed PRs that break AI slop rules.
+
+Usage:
+    python3 .github/workflows/anti_slop.py 3093
+    python3 .github/workflows/anti_slop.py 3093 --apply
+"""
+
+import argparse
+import datetime
+import json
+import os
+import re
+import sys
+import urllib.error
+import urllib.request
+
+REPO = "giampaolo/psutil"
+TRUSTED = {"giampaolo"}
+LABEL = "ai-slop"
+
+# Set by parse_cli().
+TOKEN = ""
+NUMBERS = []
+APPLY = False
+
+
+def gh_request(path, post=None, method=None):
+    req = urllib.request.Request(
+        f"https://api.github.com{path}",
+        data=json.dumps(post).encode() if post is not None else None,
+        headers={
+            "Authorization": f"Bearer {TOKEN}",
+            "Content-Type": "application/json",
+        },
+        method=method,
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = resp.read()
+            return json.loads(data) if data else None
+    except urllib.error.HTTPError as err:
+        body = err.read().decode("utf-8", errors="replace")
+        sys.exit(f"GitHub API {err.code} for {path}: {body}")
+
+
+def humantime(delta):
+    secs = int(delta.total_seconds())
+    if secs < 60:
+        n, unit = secs, "second"
+    elif secs < 3600:
+        n, unit = secs // 60, "minute"
+    elif secs < 86400:
+        n, unit = secs // 3600, "hour"
+    else:
+        n, unit = secs // 86400, "day"
+    return f"{n} {unit}" if n == 1 else f"{n} {unit}s"
+
+
+# =====================================================================
+# --- rules
+# =====================================================================
+
+
+class IssueHunters:
+    """Look for those a$$holes who subscribe to psutil tracker just to
+    receive notifications when a new issue is opened, and create an
+    AI-generated PR 5 minutes later for prestige.
+    """
+
+    TOO_SOON = datetime.timedelta(hours=24)
+    FIXES_RE = re.compile(
+        r"\b(?:fix|fixes|fixed|close|closes|closed|resolve|resolves|"
+        r"resolved):?\s+(?:https://github\.com/giampaolo/psutil/issues/|#)"
+        r"(\d+)",
+        re.IGNORECASE,
+    )
+    REPLY = """\
+## Anti AI slop bot
+
+This PR was closed automatically, because it was opened {delay} \
+after #{issue}, an issue opened by someone else. See \
+https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md#ai-policy. \
+If you think this is a mistake, say so on the issue.
+"""
+
+    def find_issue(self, pr):
+        text = pr["title"] + "\n" + (pr["body"] or "")
+        for num in self.FIXES_RE.findall(text):
+            issue = gh_request(f"/repos/{REPO}/issues/{num}")
+            if "pull_request" not in issue:
+                return issue
+        return None
+
+    def delay(self, pr, issue):
+        opened = datetime.datetime.fromisoformat(issue["created_at"])
+        return datetime.datetime.fromisoformat(pr["created_at"]) - opened
+
+    def is_sniped(self, pr, issue):
+        if issue["user"]["login"] == pr["user"]["login"]:
+            return False
+        return self.delay(pr, issue) < self.TOO_SOON
+
+    def check(self, pr):
+        issue = self.find_issue(pr)
+        if issue and self.is_sniped(pr, issue):
+            delay = humantime(self.delay(pr, issue))
+            return self.REPLY.format(issue=issue["number"], delay=delay)
+        return None
+
+
+RULES = [IssueHunters()]
+
+
+# =====================================================================
+# --- main
+# =====================================================================
+
+
+def check(pr):
+    for rule in RULES:
+        reply = rule.check(pr)
+        if reply:
+            return reply
+    return None
+
+
+def close(pr, body):
+    num = pr["number"]
+    gh_request(f"/repos/{REPO}/issues/{num}/comments", {"body": body})
+    gh_request(f"/repos/{REPO}/issues/{num}/labels", {"labels": [LABEL]})
+    gh_request(f"/repos/{REPO}/issues/{num}", {"state": "closed"}, "PATCH")
+    gh_request(f"/repos/{REPO}/issues/{num}/lock", {}, "PUT")
+
+
+def set_output(name, value):
+    path = os.environ.get("GITHUB_OUTPUT")
+    if path:
+        with open(path, "a") as f:
+            f.write(f"{name}={value}\n")
+
+
+def handle(number):
+    pr = gh_request(f"/repos/{REPO}/issues/{number}")
+    user = pr["user"]
+    print(f"#{number} by {user['login']}: {pr['title']}")
+    if "pull_request" not in pr:
+        print("  not a PR, skipping")
+        return
+    if user["login"] in TRUSTED or user["type"] == "Bot":
+        print("  trusted, skipping")
+        return
+    reply = check(pr)
+    if not reply:
+        print("  looks fine")
+        return
+    print(f"  {reply.strip()}")
+    if not APPLY:
+        print("  (--apply to close)")
+        return
+    close(pr, reply)
+    set_output("closed", "true")
+    print("  closed and locked")
+
+
+def parse_cli():
+    global TOKEN, NUMBERS, APPLY
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("numbers", nargs="+", type=int, help="PR numbers")
+    p.add_argument(
+        "--apply",
+        action="store_true",
+        help="close on GitHub; without this nothing is written",
+    )
+    args = p.parse_args()
+    TOKEN = os.environ.get("GITHUB_TOKEN", "").strip()
+    if not TOKEN:
+        with open(os.path.expanduser("~/.github.api.key")) as f:
+            TOKEN = f.read().strip()
+    NUMBERS = args.numbers
+    APPLY = args.apply
+
+
+def main():
+    parse_cli()
+    for number in NUMBERS:
+        handle(number)
+
+
+if __name__ == "__main__":
+    main()

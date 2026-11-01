@@ -23,16 +23,28 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Close AI agent PRs
+        id: anti_slop
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+        run: |
+          PYTHONUNBUFFERED=1 python3 .github/workflows/anti_slop.py "$NUMBER" --apply
+
       - name: Install deps
+        if: steps.anti_slop.outputs.closed != 'true'
         run: python3 -m pip install PyGithub anthropic
 
       - name: Reply
+        if: steps.anti_slop.outputs.closed != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PYTHONUNBUFFERED=1 PYTHONWARNINGS=always python3 .github/workflows/triage.py
 
       - name: Label
+        if: steps.anti_slop.outputs.closed != 'true'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
