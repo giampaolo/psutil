@@ -13,40 +13,16 @@ Usage:
 
 import argparse
 import datetime
-import json
 import os
 import re
-import sys
-import urllib.error
-import urllib.request
 
-REPO = "giampaolo/psutil"
-TRUSTED = {"giampaolo"}
+import ghlib
+
 LABEL = "ai-slop"
 
 # Set by parse_cli().
-TOKEN = ""
 NUMBERS = []
 APPLY = False
-
-
-def gh_request(path, post=None, method=None):
-    req = urllib.request.Request(
-        f"https://api.github.com{path}",
-        data=json.dumps(post).encode() if post is not None else None,
-        headers={
-            "Authorization": f"Bearer {TOKEN}",
-            "Content-Type": "application/json",
-        },
-        method=method,
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = resp.read()
-            return json.loads(data) if data else None
-    except urllib.error.HTTPError as err:
-        body = err.read().decode("utf-8", errors="replace")
-        sys.exit(f"GitHub API {err.code} for {path}: {body}")
 
 
 def humantime(delta):
@@ -92,7 +68,7 @@ If you think this is a mistake, say so on the issue.
     def find_issue(self, pr):
         text = pr["title"] + "\n" + (pr["body"] or "")
         for num in self.FIXES_RE.findall(text):
-            issue = gh_request(f"/repos/{REPO}/issues/{num}")
+            issue = ghlib.request(f"/repos/{ghlib.REPO}/issues/{num}")
             if "pull_request" not in issue:
                 return issue
         return None
@@ -102,10 +78,12 @@ If you think this is a mistake, say so on the issue.
         return datetime.datetime.fromisoformat(pr["created_at"]) - opened
 
     def maintainer_replied(self, issue, before):
-        path = f"/repos/{REPO}/issues/{issue['number']}/comments?per_page=100"
+        num = issue["number"]
+        path = f"/repos/{ghlib.REPO}/issues/{num}/comments?per_page=100"
         return any(
-            c["user"]["login"] in TRUSTED and c["created_at"] < before
-            for c in gh_request(path)
+            c["user"]["login"] in ghlib.MAINTAINERS
+            and c["created_at"] < before
+            for c in ghlib.request(path)
         )
 
     def is_sniped(self, pr, issue):
@@ -140,12 +118,12 @@ def check(pr):
 
 
 def close(pr, body):
-    num = pr["number"]
-    gh_request(f"/repos/{REPO}/issues/{num}/comments", {"body": body})
-    gh_request(f"/repos/{REPO}/issues/{num}/labels", {"labels": [LABEL]})
-    gh_request(f"/repos/{REPO}/issues/{num}", {"state": "closed"}, "PATCH")
+    path = f"/repos/{ghlib.REPO}/issues/{pr['number']}"
+    ghlib.request(f"{path}/comments", {"body": body})
+    ghlib.request(f"{path}/labels", {"labels": [LABEL]})
+    ghlib.request(path, {"state": "closed"}, "PATCH")
     set_output("closed", "true")
-    gh_request(f"/repos/{REPO}/issues/{num}/lock", {}, "PUT")
+    ghlib.request(f"{path}/lock", {}, "PUT")
 
 
 def set_output(name, value):
@@ -156,7 +134,7 @@ def set_output(name, value):
 
 
 def handle(number):
-    pr = gh_request(f"/repos/{REPO}/issues/{number}")
+    pr = ghlib.request(f"/repos/{ghlib.REPO}/issues/{number}")
     user = pr["user"]
     print(f"#{number} by {user['login']}: {pr['title']}")
     if "pull_request" not in pr:
@@ -165,7 +143,7 @@ def handle(number):
     if pr["state"] == "closed":
         print("  already closed, skipping")
         return
-    if user["login"] in TRUSTED or user["type"] == "Bot":
+    if user["login"] in ghlib.MAINTAINERS or user["type"] == "Bot":
         print("  trusted, skipping")
         return
     reply = check(pr)
@@ -181,7 +159,7 @@ def handle(number):
 
 
 def parse_cli():
-    global TOKEN, NUMBERS, APPLY
+    global NUMBERS, APPLY
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("numbers", nargs="+", type=int, help="PR numbers")
     p.add_argument(
@@ -190,10 +168,7 @@ def parse_cli():
         help="close on GitHub; without this nothing is written",
     )
     args = p.parse_args()
-    TOKEN = os.environ.get("GITHUB_TOKEN", "").strip()
-    if not TOKEN:
-        with open(os.path.expanduser("~/.github.api.key")) as f:
-            TOKEN = f.read().strip()
+    ghlib.load_token()
     NUMBERS = args.numbers
     APPLY = args.apply
 
