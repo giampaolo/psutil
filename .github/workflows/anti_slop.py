@@ -68,7 +68,13 @@ If you think this is a mistake, say so on the issue.
     def find_issue(self, pr):
         text = pr["title"] + "\n" + (pr["body"] or "")
         for num in self.FIXES_RE.findall(text):
-            issue = ghlib.request(f"/repos/{ghlib.REPO}/issues/{num}")
+            try:
+                issue = ghlib.request(f"/repos/{ghlib.REPO}/issues/{num}")
+            except ghlib.GitHubError as err:
+                if err.code != 404:
+                    raise
+                print(f"  #{num} not found, skipping")
+                continue
             if "pull_request" not in issue:
                 return issue
         return None

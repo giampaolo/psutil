@@ -48,7 +48,7 @@ class TestRequest:
             "http://x", 404, "err", {}, io.BytesIO(b"<html>boom</html>")
         )
         try:
-            with pytest.raises(SystemExit, match="boom"):
+            with pytest.raises(ghlib.GitHubError, match="boom"):
                 self._call(err)
         finally:
             err.close()

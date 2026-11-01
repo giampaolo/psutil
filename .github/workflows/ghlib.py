@@ -10,7 +10,6 @@ puts the script's own dir on sys.path.
 
 import json
 import os
-import sys
 import urllib.error
 import urllib.request
 
@@ -22,6 +21,12 @@ ACCEPT_JSON = "application/vnd.github+json"
 
 # Set by load_token().
 TOKEN = ""
+
+
+class GitHubError(Exception):
+    def __init__(self, code, path, body):
+        super().__init__(f"GitHub API {code} for {path}: {body}")
+        self.code = code
 
 
 def load_token(path="~/.github.api.key"):
@@ -50,7 +55,7 @@ def request(path, post=None, method=None, accept=ACCEPT_JSON):
     except urllib.error.HTTPError as err:
         # Surface GitHub's error body; a bare "HTTP Error 404" hides it.
         body = err.read().decode("utf-8", errors="replace")
-        sys.exit(f"GitHub API {err.code} for {path}: {body}")
+        raise GitHubError(err.code, path, body) from None
     if accept != ACCEPT_JSON:
         return data.decode("utf-8", errors="replace")
     return json.loads(data) if data else None
