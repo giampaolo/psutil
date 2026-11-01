@@ -500,8 +500,9 @@ def fetch_item(number):
         "by_bot": (raw.get("user") or {}).get("type") == "Bot",
     }
     if item["is_pr"]:
-        files = ghlib.request(f"/repos/{ghlib.REPO}/pulls/{number}/files")
-        item["files"] = [f["filename"] for f in files][:MAX_FILES]
+        path = f"/repos/{ghlib.REPO}/pulls/{number}/files"
+        files = ghlib.request(f"{path}?per_page={MAX_FILES}")
+        item["files"] = [f["filename"] for f in files]
     return item
 
 

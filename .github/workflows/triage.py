@@ -12,12 +12,9 @@ created. Replies to common mistakes. Labelling is
 import functools
 import json
 import os
-import pathlib
 from pprint import pprint as pp
 
 import ghlib
-
-ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 
 # --- replies
 
