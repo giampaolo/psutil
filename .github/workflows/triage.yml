@@ -34,7 +34,7 @@ jobs:
 
       - name: Install deps
         if: steps.anti_slop.outputs.closed != 'true'
-        run: python3 -m pip install PyGithub anthropic
+        run: python3 -m pip install anthropic
 
       - name: Reply
         if: steps.anti_slop.outputs.closed != 'true'
