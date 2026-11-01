@@ -21,13 +21,12 @@ import json
 import os
 import re
 import sys
-import urllib.error
-import urllib.request
+
+import ghlib
 
 # CLI args
 PR_NUMBER = None
 REPO = None
-TOKEN = None
 COMMENT_FILE = None
 ERROR_FILE = None
 
@@ -37,7 +36,6 @@ MODEL = "claude-sonnet-5"
 MAX_DIFF_CHARS = 20_000
 COMPARE_MAX_FILES = 300
 MAX_TOKENS = 4096  # thinking tokens count against this too
-HTTP_TIMEOUT = 30
 
 PROMPT = """\
 You are helping maintain the official changelog for psutil, a Python
@@ -238,30 +236,11 @@ SUBMIT_TOOL = {
 }
 
 
-def gh_request(path, accept="application/vnd.github+json"):
-    url = f"https://api.github.com{path}"
-    req = urllib.request.Request(
-        url,
-        headers={
-            "Authorization": f"Bearer {TOKEN}",
-            "Accept": accept,
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
-            return resp.read()
-    except urllib.error.HTTPError as err:
-        # Surface GitHub's error body; a bare "HTTP Error 404" hides it.
-        body = err.read().decode("utf-8", errors="replace")
-        sys.exit(f"GitHub API {err.code} for {path}: {body}")
-
-
 def fetch_pr_metadata():
-    pr = json.loads(gh_request(f"/repos/{REPO}/pulls/{PR_NUMBER}"))
+    pr = ghlib.request(f"/repos/{REPO}/pulls/{PR_NUMBER}")
     author = pr["user"]["login"]
     # Fetch the user profile to get the full name.
-    user = json.loads(gh_request(f"/users/{author}"))
+    user = ghlib.request(f"/users/{author}")
     author_name = user.get("name") or author
     return {
         "number": pr["number"],
@@ -274,10 +253,10 @@ def fetch_pr_metadata():
 
 
 def fetch_pr_diff():
-    return gh_request(
+    return ghlib.request(
         f"/repos/{REPO}/pulls/{PR_NUMBER}",
         accept="application/vnd.github.v3.diff",
-    ).decode("utf-8", errors="replace")
+    )
 
 
 def stale_reason(head_sha):
@@ -285,7 +264,7 @@ def stale_reason(head_sha):
     We commit on top of the PR head, so an entry written against a
     stale copy of the docs makes the PR unmergeable.
     """
-    data = json.loads(gh_request(f"/repos/{REPO}/compare/{head_sha}...master"))
+    data = ghlib.request(f"/repos/{REPO}/compare/{head_sha}...master")
     files = [f["filename"] for f in data.get("files", [])]
     stale = [f for f in (CHANGELOG_FILE, CREDITS_FILE) if f in files]
     if stale:
@@ -1082,7 +1061,7 @@ def write_file(path, body):
 
 
 def parse_cli():
-    global PR_NUMBER, REPO, TOKEN, COMMENT_FILE, ERROR_FILE
+    global PR_NUMBER, REPO, COMMENT_FILE, ERROR_FILE
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--pr-number", type=int, required=True)
     p.add_argument(
@@ -1104,7 +1083,7 @@ def parse_cli():
     args = p.parse_args()
     PR_NUMBER = args.pr_number
     REPO = args.repo
-    TOKEN = args.token
+    ghlib.TOKEN = args.token
     COMMENT_FILE = args.comment_file
     ERROR_FILE = args.error_file
 
@@ -1134,7 +1113,7 @@ def build_comment(cl_status, cr_status, decision, gh, author):
 
 
 def fetch_issue_labels(number):
-    raw = json.loads(gh_request(f"/repos/{REPO}/issues/{number}"))
+    raw = ghlib.request(f"/repos/{REPO}/issues/{number}")
     return sorted(x["name"] for x in raw["labels"])
 
 

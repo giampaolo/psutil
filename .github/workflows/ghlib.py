@@ -17,6 +17,7 @@ import urllib.request
 REPO = "giampaolo/psutil"
 MAINTAINERS = {"giampaolo"}
 TIMEOUT = 30
+ACCEPT_JSON = "application/vnd.github+json"
 
 # Set by load_token().
 TOKEN = ""
@@ -30,14 +31,14 @@ def load_token(path="~/.github.api.key"):
             TOKEN = f.read().strip()
 
 
-def request(path, post=None, method=None):
+def request(path, post=None, method=None, accept=ACCEPT_JSON):
     req = urllib.request.Request(
         f"https://api.github.com{path}",
         data=json.dumps(post).encode() if post is not None else None,
         method=method,
         headers={
             "Authorization": f"Bearer {TOKEN}",
-            "Accept": "application/vnd.github+json",
+            "Accept": accept,
             "Content-Type": "application/json",
             "X-GitHub-Api-Version": "2022-11-28",
         },
@@ -45,7 +46,10 @@ def request(path, post=None, method=None):
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             data = resp.read()
-            return json.loads(data) if data else None
     except urllib.error.HTTPError as err:
+        # Surface GitHub's error body; a bare "HTTP Error 404" hides it.
         body = err.read().decode("utf-8", errors="replace")
         sys.exit(f"GitHub API {err.code} for {path}: {body}")
+    if accept != ACCEPT_JSON:
+        return data.decode("utf-8", errors="replace")
+    return json.loads(data) if data else None

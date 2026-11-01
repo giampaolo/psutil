@@ -10,7 +10,6 @@ validation gate against small RST fixtures; no network or API is used.
 """
 
 import importlib.util
-import io
 import pathlib
 import re
 
@@ -1076,49 +1075,3 @@ Changelog
         # New dev block sits above the released one, entry inside it.
         assert dev < new < released
         assert lines[dev + 1] == "^" * len("X.X.X — unreleased")
-
-
-class TestGhRequest:
-    class _Resp:
-        def __init__(self, body):
-            self.body = body
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *a):
-            return False
-
-        def read(self):
-            return self.body
-
-    def _call(self, result):
-        def fake_urlopen(req, timeout=None):
-            if isinstance(result, Exception):
-                raise result
-            return self._Resp(result)
-
-        orig_open = cb.urllib.request.urlopen
-        cb.urllib.request.urlopen = fake_urlopen
-        cb.TOKEN = "x"
-        try:
-            return cb.gh_request("/x")
-        finally:
-            cb.urllib.request.urlopen = orig_open
-
-    def _http_error(self, code):
-        return cb.urllib.error.HTTPError(
-            "http://x", code, "err", {}, io.BytesIO(b"<html>boom</html>")
-        )
-
-    def test_returns_body(self):
-        assert self._call(b"ok") == b"ok"
-
-    def test_error_includes_github_body(self):
-        # A bare "HTTP Error 404" hides why GitHub refused.
-        err = self._http_error(404)
-        try:
-            with pytest.raises(SystemExit, match="boom"):
-                self._call(err)
-        finally:
-            err.close()
