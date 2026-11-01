@@ -7,8 +7,12 @@
 """Bot that closes and locks contributed PRs that break AI slop rules.
 
 Usage:
+    # dry run, nothing is written
     python3 .github/workflows/anti_slop.py 3093
+    # close / label as you, with ~/.github.api.key
     python3 .github/workflows/anti_slop.py 3093 --apply
+    # close / label as github-actions[bot], via triage.yml
+    gh workflow run triage.yml -f numbers="3093 3094"
 """
 
 import argparse
@@ -49,6 +53,7 @@ class IssueHunters:
     AI-generated PR 5 minutes later for prestige.
     """
 
+    CLOSE = True
     TOO_SOON = datetime.timedelta(hours=24)
     FIXES_RE = re.compile(
         r"\b(?:fix|fixes|fixed|close|closes|closed|resolve|resolves|"
@@ -106,7 +111,60 @@ If you think this is a mistake, say so on the issue.
         return None
 
 
-RULES = [IssueHunters()]
+class PRFarm:
+    """Catch accounts that spam AI-generated PRs over lots of repos.
+    Count the repos the author opened PRs in during the WINDOW before
+    this PR, own repos included. MIN_REPOS or more looks like a farm.
+    The exception is accounts with MAX_FOLLOWERS or more: that's
+    usually a known dev doing some cleanup across the ecosystem.
+    """
+
+    CLOSE = False  # label only, until we see who it catches
+    WINDOW = datetime.timedelta(days=60)
+    MIN_REPOS = 60
+    MAX_FOLLOWERS = 1000
+    QUERY = """\
+query($login: String!, $from: DateTime!, $to: DateTime!) {
+  user(login: $login) {
+    followers { totalCount }
+    contributionsCollection(from: $from, to: $to) {
+      totalRepositoriesWithContributedPullRequests
+    }
+  }
+}
+"""
+    REPLY = """\
+## Anti AI slop bot
+
+This PR was closed automatically, because in the {days} days before \
+it this account opened PRs in {repos} repositories. See \
+https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md#ai-policy.
+"""
+
+    def account(self, pr):
+        until = datetime.datetime.fromisoformat(pr["created_at"])
+        variables = {
+            "login": pr["user"]["login"],
+            "from": (until - self.WINDOW).isoformat(),
+            "to": until.isoformat(),
+        }
+        user = ghlib.graphql(self.QUERY, variables)["user"]
+        cc = user["contributionsCollection"]
+        repos = cc["totalRepositoriesWithContributedPullRequests"]
+        return user["followers"]["totalCount"], repos
+
+    def check(self, pr):
+        followers, repos = self.account(pr)
+        print(
+            f"  PRs in {repos} repos in {self.WINDOW.days} days, "
+            f"{followers} followers"
+        )
+        if repos >= self.MIN_REPOS and followers < self.MAX_FOLLOWERS:
+            return self.REPLY.format(days=self.WINDOW.days, repos=repos)
+        return None
+
+
+RULES = [IssueHunters(), PRFarm()]
 
 
 # =====================================================================
@@ -118,14 +176,19 @@ def check(pr):
     for rule in RULES:
         reply = rule.check(pr)
         if reply:
-            return reply
-    return None
+            return rule, reply
+    return None, None
+
+
+def add_label(pr):
+    path = f"/repos/{ghlib.REPO}/issues/{pr['number']}/labels"
+    ghlib.request(path, {"labels": [LABEL]})
 
 
 def close(pr, body):
     path = f"/repos/{ghlib.REPO}/issues/{pr['number']}"
     ghlib.request(f"{path}/comments", {"body": body})
-    ghlib.request(f"{path}/labels", {"labels": [LABEL]})
+    add_label(pr)
     ghlib.request(path, {"state": "closed"}, "PATCH")
     set_output("closed", "true")
     ghlib.request(f"{path}/lock", {}, "PUT")
@@ -151,16 +214,20 @@ def handle(number):
     if user["login"] in ghlib.MAINTAINERS or user["type"] == "Bot":
         print("  trusted, skipping")
         return
-    reply = check(pr)
+    rule, reply = check(pr)
     if not reply:
         print("  looks fine")
         return
     print(f"  {reply.strip()}")
     if not APPLY:
-        print("  (--apply to close)")
+        print("  (--apply to act)")
         return
-    close(pr, reply)
-    print("  closed and locked")
+    if rule.CLOSE:
+        close(pr, reply)
+        print("  closed and locked")
+    else:
+        add_label(pr)
+        print("  labelled only")
 
 
 def parse_cli():
@@ -170,7 +237,7 @@ def parse_cli():
     p.add_argument(
         "--apply",
         action="store_true",
-        help="close on GitHub; without this nothing is written",
+        help="close or label on GitHub; without this nothing is written",
     )
     args = p.parse_args()
     ghlib.load_token()

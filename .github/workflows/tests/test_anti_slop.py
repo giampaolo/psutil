@@ -46,3 +46,15 @@ class TestIsSniped:
         assert rule.is_sniped(pr, ISSUE)
         pr = make_pr("bob", "2026-11-02T10:05:00Z")
         assert not rule.is_sniped(pr, ISSUE)
+
+
+class TestPRFarm:
+    def test_check(self):
+        rule = bot.PRFarm()
+        pr = make_pr("bob", "2026-11-01T10:05:00Z")
+        rule.account = lambda *_: (10, 60)
+        assert rule.check(pr)
+        rule.account = lambda *_: (10, 59)
+        assert not rule.check(pr)
+        rule.account = lambda *_: (1000, 100)
+        assert not rule.check(pr)
