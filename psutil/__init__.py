@@ -275,35 +275,7 @@ if LINUX or FREEBSD:
     _export_enum(ProcessRlimit)
 
 if LINUX or SUNOS or AIX:
-
     PROCFS_PATH = "/proc"
-
-    def set_procfs_path(path: str) -> None:
-        """Set PROCFS_PATH, the path where the /proc filesystem is
-        mounted (e.g. "/host/proc" inside a container).
-
-        *path* must be an existing directory, else OSError is raised.
-        Prefer this over assigning PROCFS_PATH directly, as it also
-        resets internal caches that depend on it.
-        """
-        global PROCFS_PATH, _TOTAL_PHYMEM
-        path = os.fspath(path)  # accept a pathlib path
-        if not isinstance(path, str):
-            msg = f"path must be a str (got {type(path)})"
-            raise TypeError(msg)
-        os.scandir(path).close()  # raise if not an existing directory
-        # drop trailing slashes, keeping "/" as is
-        PROCFS_PATH = path.rstrip("/") or "/"
-
-        # clear caches
-        _TOTAL_PHYMEM = None
-        process_iter.cache_clear()
-        _wrap_numbers.cache_clear()
-        _last_cpu_times.clear()
-        _last_per_cpu_times.clear()
-        _last_cpu_times_2.clear()
-        _last_per_cpu_times_2.clear()
-
     __all__.extend(["PROCFS_PATH", "set_procfs_path"])
 
 
@@ -2868,6 +2840,39 @@ if hasattr(_psplatform, "heap_info"):
 
 
 # =====================================================================
+# --- configuration
+# =====================================================================
+
+if LINUX or SUNOS or AIX:
+
+    def set_procfs_path(path: str) -> None:
+        """Set PROCFS_PATH, the path where the /proc filesystem is
+        mounted (e.g. "/host/proc" inside a container).
+
+        *path* must be an existing directory, else OSError is raised.
+        Prefer this over assigning PROCFS_PATH directly, as it also
+        resets internal caches that depend on it.
+        """
+        global PROCFS_PATH, _TOTAL_PHYMEM
+        path = os.fspath(path)  # accept a pathlib path
+        if not isinstance(path, str):
+            msg = f"path must be a str (got {type(path)})"
+            raise TypeError(msg)
+        os.scandir(path).close()  # raise if not an existing directory
+        # drop trailing slashes, keeping "/" as is
+        PROCFS_PATH = path.rstrip("/") or "/"
+
+        # clear caches
+        _TOTAL_PHYMEM = None
+        process_iter.cache_clear()
+        _wrap_numbers.cache_clear()
+        _last_cpu_times.clear()
+        _last_per_cpu_times.clear()
+        _last_cpu_times_2.clear()
+        _last_per_cpu_times_2.clear()
+
+    if os.environ.get("PSUTIL_PROCFS_PATH"):
+        set_procfs_path(os.environ["PSUTIL_PROCFS_PATH"])
 
 
 def _set_debug(value):
@@ -2880,9 +2885,6 @@ def _set_debug(value):
     _psutil.set_debug(bool(value))
 
 
-# down here as it clears caches defined above
-if (LINUX or SUNOS or AIX) and os.environ.get("PSUTIL_PROCFS_PATH"):
-    set_procfs_path(os.environ["PSUTIL_PROCFS_PATH"])
-
+# ---
 
 del memoize_when_activated
