@@ -636,11 +636,6 @@ def bytes2human(n):
     return f"{float(n):.1f}{symbols[0]}"
 
 
-def get_procfs_path():
-    """Return updated psutil.PROCFS_PATH constant."""
-    return sys.modules['psutil'].PROCFS_PATH
-
-
 def decode(s):
     return s.decode(encoding=ENCODING, errors=ENCODING_ERRS)
 

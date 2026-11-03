@@ -16,6 +16,7 @@ import importlib
 import io
 import mmap
 import os
+import pathlib
 import platform
 import re
 import shutil
@@ -1587,6 +1588,100 @@ class TestRootFsDeviceFinder(LinuxTestCase):
 
 
 # =====================================================================
+# --- procfs path
+# =====================================================================
+
+
+class TestProcfsPath(LinuxTestCase):
+    def test_set_procfs_path(self):
+        tdir = self.get_testfn()
+        os.mkdir(tdir)
+        self.addCleanup(psutil.set_procfs_path, "/proc")
+
+        psutil.set_procfs_path(tdir + "/")
+        assert tdir == psutil.PROCFS_PATH
+
+        with pytest.raises(FileNotFoundError):
+            psutil.virtual_memory()
+        with pytest.raises(FileNotFoundError):
+            psutil.cpu_times()
+        with pytest.raises(FileNotFoundError):
+            psutil.cpu_times(percpu=True)
+        with pytest.raises(FileNotFoundError):
+            psutil.boot_time()
+        with pytest.raises(FileNotFoundError):
+            psutil.net_connections()
+        with pytest.raises(FileNotFoundError):
+            psutil.net_io_counters()
+        with pytest.raises(FileNotFoundError):
+            psutil.net_if_stats()
+        with pytest.raises(FileNotFoundError):
+            psutil.disk_partitions()
+        with pytest.raises(psutil.NoSuchProcess):
+            psutil.Process()
+
+        with pytest.raises(FileNotFoundError):
+            psutil.set_procfs_path(tdir + "/nonexistent")
+        assert tdir == psutil.PROCFS_PATH
+
+        # not a dir
+        tfile = self.get_testfn()
+        pathlib.Path(tfile).touch()
+        with pytest.raises(NotADirectoryError):
+            psutil.set_procfs_path(tfile)
+        assert tdir == psutil.PROCFS_PATH
+
+        with pytest.raises(TypeError, match="must be a str"):
+            psutil.set_procfs_path(b"/proc")
+        assert tdir == psutil.PROCFS_PATH
+
+        psutil.set_procfs_path(pathlib.Path(tdir))
+        assert tdir == psutil.PROCFS_PATH
+
+        # a relative path is stored as absolute
+        self.addCleanup(os.chdir, os.getcwd())
+        os.chdir(os.path.dirname(tdir))
+        psutil.set_procfs_path(os.path.basename(tdir))
+        assert tdir == psutil.PROCFS_PATH
+
+    def test_set_procfs_path_clears_caches(self):
+        list(psutil.process_iter())
+        psutil.net_io_counters()
+        psutil.disk_io_counters()
+        psutil.cpu_percent()
+        psutil.cpu_percent(percpu=True)
+        psutil.cpu_times_percent()
+        psutil.cpu_times_percent(percpu=True)
+        psutil.virtual_memory()
+        psutil.pids()
+
+        psutil.set_procfs_path("/proc")
+        assert psutil._pmap == {}
+        assert psutil._wrap_numbers.cache_info() == ({}, {}, {})
+        assert psutil._last_cpu_times == {}
+        assert psutil._last_per_cpu_times == {}
+        assert psutil._last_cpu_times_2 == {}
+        assert psutil._last_per_cpu_times_2 == {}
+        assert psutil._TOTAL_PHYMEM is None
+        assert psutil._LOWEST_PID is None
+
+    def test_env_var(self):
+        tdir = self.get_testfn()
+        os.mkdir(tdir)
+        env = PYTHON_EXE_ENV.copy()
+        env["PSUTIL_PROCFS_PATH"] = tdir
+        cmd = [PYTHON_EXE, "-c", "import psutil; print(psutil.PROCFS_PATH)"]
+        assert sh(cmd, env=env) == tdir
+        env["PSUTIL_PROCFS_PATH"] = tdir + "/"
+        assert sh(cmd, env=env) == tdir
+        env["PSUTIL_PROCFS_PATH"] = ""
+        assert sh(cmd, env=env) == "/proc"
+        env["PSUTIL_PROCFS_PATH"] = tdir + "/nonexistent"
+        with pytest.raises(RuntimeError, match="FileNotFoundError"):
+            sh(cmd, env=env)
+
+
+# =====================================================================
 # --- misc
 # =====================================================================
 
@@ -1649,32 +1744,6 @@ class TestMisc(LinuxTestCase):
             importlib.reload(psutil)
 
         assert psutil.PROCFS_PATH == '/proc'
-
-    def test_procfs_path(self):
-        tdir = self.get_testfn()
-        os.mkdir(tdir)
-        try:
-            psutil.PROCFS_PATH = tdir
-            with pytest.raises(OSError):
-                psutil.virtual_memory()
-            with pytest.raises(OSError):
-                psutil.cpu_times()
-            with pytest.raises(OSError):
-                psutil.cpu_times(percpu=True)
-            with pytest.raises(OSError):
-                psutil.boot_time()
-            with pytest.raises(OSError):
-                psutil.net_connections()
-            with pytest.raises(OSError):
-                psutil.net_io_counters()
-            with pytest.raises(OSError):
-                psutil.net_if_stats()
-            with pytest.raises(OSError):
-                psutil.disk_partitions()
-            with pytest.raises(psutil.NoSuchProcess):
-                psutil.Process()
-        finally:
-            psutil.PROCFS_PATH = "/proc"
 
     def test_pid_exists_no_proc_status(self):
         # Internally pid_exists relies on /proc/{pid}/status.

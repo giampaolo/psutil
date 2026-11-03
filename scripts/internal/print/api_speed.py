@@ -165,6 +165,7 @@ def main():
     public_apis = []
     ignore = [
         'bytes2human',
+        'set_procfs_path',
         'wait_procs',
         'process_iter',
         'win_service_get',

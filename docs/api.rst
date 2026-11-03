@@ -2775,26 +2775,6 @@ Hardware constants
   Whether the remaining time of a battery cannot be determined or is unlimited.
   May be assigned to :func:`psutil.sensors_battery`'s :field:`secsleft` field.
 
-Other constants
-^^^^^^^^^^^^^^^
-
-.. _const-procfs_path:
-
-.. data:: PROCFS_PATH
-
-  The path of the ``/proc`` filesystem on Linux, Solaris and AIX (defaults to
-  ``'/proc'``). You may want to re-set this constant right after importing
-  psutil in case ``/proc`` is mounted elsewhere, or if you want to retrieve
-  information about Linux containers such as Docker, Heroku or LXC (see
-  `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`_
-  for more info).
-
-  It must be noted that this trick works only for APIs which rely on ``/proc``
-  filesystem (e.g. memory-related APIs and many (but not all) :class:`Process`
-  class methods).
-
-  .. availability:: Linux, SunOS, AIX
-
 Utilities
 ---------
 
@@ -2824,6 +2804,35 @@ Utilities
      >>> if psutil.version_info >= (4, 5):
      ...    pass
 
+Configuration
+-------------
+
+.. function:: set_procfs_path(path)
+
+  Set the path where ``/proc`` is mounted, typically when you want to read the
+  host's ``/proc`` from inside a container such as Docker. Only the APIs that
+  read ``/proc`` are affected (e.g. memory APIs and many :class:`Process`
+  methods). *path* must be an existing directory. This also resets internal
+  caches that depend on ``/proc``. :class:`Process` instances created before
+  the call keep reading the old path.
+
+  .. availability:: Linux, SunOS, AIX
+
+  .. versionadded:: 8.0.0
+
+.. _const-procfs_path:
+
+.. data:: PROCFS_PATH
+
+  The current ``/proc`` path. Defaults to ``'/proc'``, or to
+  :envvar:`PSUTIL_PROCFS_PATH` when set. Treat it as read-only, and use
+  :func:`set_procfs_path` to change it.
+
+  .. availability:: Linux, SunOS, AIX
+
+  .. versionchanged:: 8.0.0
+     the :envvar:`PSUTIL_PROCFS_PATH` environment variable is honored.
+
 Environment variables
 ---------------------
 
@@ -2838,6 +2847,14 @@ Environment variables
   .. code-block:: bash
 
      $ PSUTIL_DEBUG=1 python3 script.py
+
+.. envvar:: PSUTIL_PROCFS_PATH
+
+  If set, psutil uses it as :data:`PROCFS_PATH` instead of ``'/proc'``. It is
+  read once at import time and must be an existing directory. To change the
+  path later, use :func:`set_procfs_path`.
+
+  .. versionadded:: 8.0.0
 
 .. envvar:: PSUTIL_BUILD_JOBS
 

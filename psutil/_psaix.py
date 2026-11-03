@@ -13,6 +13,8 @@ import re
 import subprocess
 import sys
 
+import psutil
+
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil
@@ -23,14 +25,13 @@ from ._common import cache_activate
 from ._common import cache_deactivate
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
-from ._common import get_procfs_path
 from ._common import memoize_when_activated
 from ._common import usage_percent
 from ._enums import ConnectionStatus
 from ._enums import NicDuplex
 from ._enums import ProcessStatus
 
-__extra__all__ = ["PROCFS_PATH"]
+__extra__all__ = []
 
 
 # =====================================================================
@@ -288,12 +289,12 @@ def users():
 
 def pids():
     """Returns a list of PIDs currently running on the system."""
-    return [int(x) for x in os.listdir(get_procfs_path()) if x.isdigit()]
+    return [int(x) for x in os.listdir(psutil.PROCFS_PATH) if x.isdigit()]
 
 
 def pid_exists(pid):
     """Check for the existence of a unix pid."""
-    return os.path.exists(os.path.join(get_procfs_path(), str(pid), "psinfo"))
+    return os.path.exists(os.path.join(psutil.PROCFS_PATH, str(pid), "psinfo"))
 
 
 def wrap_exceptions(fun):
@@ -328,7 +329,7 @@ class Process:
         self.pid = pid
         self._name = None
         self._ppid = None
-        self._procfs_path = get_procfs_path()
+        self._procfs_path = psutil.PROCFS_PATH
 
     def oneshot_enter(self):
         cache_activate(self)

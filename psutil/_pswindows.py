@@ -56,7 +56,7 @@ except ImportError as err:
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
-__extra__all__ = ["win_service_iter", "win_service_get", "AF_LINK"]
+__extra__all__ = ["win_service_iter", "win_service_get"]
 
 
 # =====================================================================
