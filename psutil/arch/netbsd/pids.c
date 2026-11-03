@@ -17,7 +17,6 @@ int
 _psutil_pids(pid_t **pids_array, int *pids_count) {
     char errbuf[_POSIX2_LINE_MAX];
     kvm_t *kd;
-    struct kinfo_proc2 *proc_list = NULL;
     struct kinfo_proc2 *result;
     int cnt;
     size_t i;

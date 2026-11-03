@@ -23,5 +23,5 @@ convert_kvm_err(const char *syscall, char *errbuf) {
     else if (strstr(errbuf, "Operation not permitted") != NULL)
         psutil_oserror_ad(fullmsg);
     else
-        psutil_runtime_error(fullmsg);
+        psutil_runtime_error("%s", fullmsg);
 }

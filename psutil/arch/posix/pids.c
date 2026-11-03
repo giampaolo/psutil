@@ -4,6 +4,7 @@
  * found in the LICENSE file.
  */
 
+#include <Python.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <errno.h>

@@ -111,6 +111,14 @@ extern int PSUTIL_TESTING;
 // --- Internal utils
 // ====================================================================
 
+// Let gcc / clang check the args passed to str_format().
+#if defined(__GNUC__) || defined(__clang__)
+#define PSUTIL_PRINTF(fmt_idx, args_idx) \
+    __attribute__((format(printf, fmt_idx, args_idx)))
+#else
+#define PSUTIL_PRINTF(fmt_idx, args_idx)
+#endif
+
 void _psutil_debug_impl(const char *file, int line, const char *fmt, ...);
 // The check avoids evaluating the args when debug mode is off.
 #define psutil_debug(...)                                        \
@@ -130,7 +138,8 @@ PyObject *psutil_runtime_error(const char *msg, ...);
 
 int str_append(char *dst, size_t dst_size, const char *src);
 int str_copy(char *dst, size_t dst_size, const char *src);
-int str_format(char *buf, size_t size, const char *fmt, ...);
+int str_format(char *buf, size_t size, const char *fmt, ...)
+    PSUTIL_PRINTF(3, 4);
 
 // The (af_filter, type_filter) args that the Python layer passes to
 // net_connections().

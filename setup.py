@@ -155,6 +155,46 @@ def unix_can_compile(c_code, extra_args=()):
         return ret == 0
 
 
+def get_extra_compile_args():
+    """Enable compiler warnings for all builds. PSUTIL_WERROR=1 makes
+    them fatal (Makefile does this), so CI catches new warnings without
+    breaking normal pip source installs.
+    """
+    if WINDOWS:
+        args = [
+            # /the highest useful warning level (/Wall is too noisy)
+            "/W4",
+            # disable unused "self" parameter
+            "/wd4100",
+        ]
+        if os.getenv("PSUTIL_WERROR"):
+            args.append("/WX")
+        return args
+    # Check flags individually, as some compilers (xlc, Sun cc) may
+    # not support all of them.
+    args = []
+    for flag in [
+        # unused vars, uninitialized use, wrong printf args, missing
+        # return, etc.
+        "-Wall",
+        # signed/unsigned compares, "size_t < 0" tests that can never
+        # be true, set but unused vars, empty bodies
+        "-Wextra",
+        # suppress warnings for unused C API "self" arg
+        "-Wno-unused-parameter",
+        # allow initializers like {0}
+        "-Wno-missing-field-initializers",
+    ]:
+        if unix_can_compile("int main(void) { return 0; }", [flag]):
+            args.append(flag)
+    if os.getenv("PSUTIL_WERROR"):
+        args.append("-Werror")
+    return args
+
+
+extra_compile_args = get_extra_compile_args()
+
+
 if WINDOWS:
 
     def get_winver():
@@ -198,7 +238,7 @@ if WINDOWS:
             "shell32",
             "ws2_32",
         ],
-        # extra_compile_args=["/W 4"],
+        extra_compile_args=extra_compile_args,
         # extra_link_args=["/DEBUG"],
         **py_limited_api,
     )
@@ -219,6 +259,7 @@ elif MACOS:
             '-framework',
             'IOKit',
         ],
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -235,6 +276,7 @@ elif FREEBSD:
         ),
         define_macros=macros,
         libraries=["devstat"],
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -251,6 +293,7 @@ elif OPENBSD:
         ),
         define_macros=macros,
         libraries=["kvm"],
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -267,6 +310,7 @@ elif NETBSD:
         ),
         define_macros=macros,
         libraries=["kvm", "jemalloc"],
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -284,6 +328,7 @@ elif LINUX:
             + glob.glob("psutil/arch/linux/*.c")
         ),
         define_macros=macros,
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -299,6 +344,7 @@ elif SUNOS:
         ),
         define_macros=macros,
         libraries=["kstat", "nsl", "socket"],
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -314,6 +360,7 @@ elif AIX:
         ),
         libraries=["perfstat"],
         define_macros=macros,
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 

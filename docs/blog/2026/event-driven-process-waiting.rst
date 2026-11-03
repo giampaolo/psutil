@@ -156,8 +156,8 @@ seconds without terminating:
 
 .. code-block:: python
 
-   # test.py
    import psutil, os
+
    try:
        psutil.Process(os.getpid()).wait(timeout=10)
    except psutil.TimeoutExpired:

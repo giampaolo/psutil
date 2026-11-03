@@ -25,6 +25,7 @@ import contextlib
 import datetime
 import functools
 import os
+import reprlib
 import signal
 import socket
 import subprocess
@@ -234,7 +235,7 @@ __all__ = [
     "SUNOS", "WINDOWS", "AIX",
 
     # classes
-    "Process", "Popen",
+    "Process", "ProcessSnapshot", "Popen",
 
     # functions
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
@@ -365,26 +366,118 @@ def _check_conn_kind(kind):
 # =====================================================================
 
 
-def _use_prefetch(method):
-    """Decorator returning cached values from `process_iter(attrs=...)`.
+class ProcessSnapshot:
+    """A read-only view of the process attributes collected by
+    `process_iter(attrs=...)`, available as `Process.snapshot`.
 
-    When `process_iter()` is called with an *attrs* argument, it
-    pre-fetches the requested attributes via `as_dict()` and stores
-    them in `Process._prefetch`.  This decorator makes the decorated
-    method return the cached value (if present) instead of issuing
-    a new system call.
+    Each requested attribute holds the value returned by its
+    corresponding `Process` method during the scan. `as_dict()`
+    returns them as a dict.
     """
 
-    @functools.wraps(method)
-    def wrapper(self, *args, **kwargs):
-        if not args and not kwargs:
-            try:
-                return self._prefetch[method.__name__]
-            except KeyError:
-                pass
-        return method(self, *args, **kwargs)
+    cmdline: list[str]
+    cpu_affinity: list[int]
+    cpu_num: int
+    cpu_percent: float
+    cpu_times: pcputimes
+    create_time: float
+    cwd: str
+    environ: dict[str, str]
+    exe: str
+    gids: pgids
+    io_counters: pio
+    ionice: pionice | ProcessIOPriority
+    memory_extras: pmem_extras
+    memory_footprint: pfootprint
+    memory_info: pmem
+    memory_maps: list[pmmap_grouped] | list[pmmap_ext]
+    memory_percent: float
+    name: str
+    net_connections: list[pconn]
+    nice: int
+    num_ctx_switches: pctxsw
+    num_fds: int
+    num_handles: int
+    num_threads: int
+    open_files: list[popenfile]
+    page_faults: ppagefaults
+    pid: int
+    ppid: int
+    status: ProcessStatus | str
+    terminal: str | None
+    threads: list[pthread]
+    uids: puids
+    username: str
 
-    return wrapper
+    def __init__(self, data):
+        # Copied so the caller can't change the snapshot by updating
+        # the passed dict.
+        object.__setattr__(self, "__dict__", dict(data))
+
+    def __getattr__(self, name):
+        # called only when regular attribute lookup fails
+        if name in Process.attrs:
+            msg = f"{name!r} was not requested in process_iter(attrs=...)"
+        else:
+            msg = f"{name!r} is not a valid Process attribute"
+        raise AttributeError(msg)
+
+    def __setattr__(self, name, value):
+        msg = f"{self.__class__.__name__} is read-only"
+        raise AttributeError(msg)
+
+    def __delattr__(self, name):
+        msg = f"{self.__class__.__name__} is read-only"
+        raise AttributeError(msg)
+
+    def __eq__(self, other):
+        if not isinstance(other, ProcessSnapshot):
+            return NotImplemented
+        return self.__dict__ == other.__dict__
+
+    # unhashable: values can be lists or dicts
+    __hash__ = None
+
+    def __bool__(self):
+        return bool(self.__dict__)
+
+    def __repr__(self):
+        # Truncate long values (memory_maps, environ, ...).
+        class SnapshotRepr(reprlib.Repr):
+            def repr_instance(self, x, level):
+                # reprlib dispatches on the type name, so namedtuples
+                # end up in this fallback and get cut mid-string. Print
+                # them field by field instead.
+                if isinstance(x, tuple) and hasattr(x, "_fields"):
+                    # depth limit, as reprlib does for tuples. Literal
+                    # "..." because Repr.fillvalue only exists in 3.11+.
+                    if level <= 0 and x:
+                        return f"{type(x).__name__}(...)"
+                    fields = x._fields[: self.maxtuple]
+                    s = ", ".join(
+                        f"{f}={self.repr1(getattr(x, f), level - 1)}"
+                        for f in fields
+                    )
+                    if len(x._fields) > self.maxtuple:
+                        s += ", ..."
+                    return f"{type(x).__name__}({s})"
+                return super().repr_instance(x, level)
+
+        r = SnapshotRepr()
+        r.maxlist = r.maxtuple = 4
+        r.maxdict = 3
+        r.maxstring = r.maxother = 60
+        # as_dict() order is not deterministic
+        d = self.__dict__
+        first = ("pid", "name", "status")
+        keys = [k for k in first if k in d]
+        keys.extend(sorted(k for k in d if k not in first))
+        items = [f"{k}={r.repr(d[k])}" for k in keys]
+        return f"{self.__class__.__name__}({', '.join(items)})"
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a dict representation of the snapshot."""
+        return dict(self.__dict__)
 
 
 class Process:
@@ -423,6 +516,9 @@ class Process:
                 raise NoSuchProcess(pid, msg=msg) from err
 
         self._pid = pid
+        # None would be better, but then type checkers (pyright) go crazy.
+        self._snapshot = ProcessSnapshot({})
+        self._info = _SENTINEL
         self._name = None
         self._exe = None
         self._create_time = None
@@ -438,8 +534,6 @@ class Process:
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
         self._exitcode = _SENTINEL
-        self._prefetch = {}
-        self._ad_value = _SENTINEL
         self._ident = (self.pid, None)
         try:
             self._ident = self._get_ident()
@@ -457,12 +551,6 @@ class Process:
                 msg = "process PID not found"
                 raise NoSuchProcess(pid, msg=msg) from None
             self._gone = True
-
-    def _is_ad_value(self, value):
-        """Whether `value` is the `ad_value` that process_iter(attrs=...)
-        stored in place of a getter which raised AccessDenied.
-        """
-        return self._ad_value is not _SENTINEL and value is self._ad_value
 
     def _get_ident(self):
         """Return a `(pid, uid)` tuple which is supposed to identify a
@@ -562,9 +650,6 @@ class Process:
             return NotImplemented
         return self._cmp_idents(self._ident, other._ident) != "different"
 
-    def __ne__(self, other):
-        return not self == other
-
     def __hash__(self):
         # PID only: __eq__ can match idents with different ctimes, and
         # equal objects must hash the same.
@@ -608,25 +693,39 @@ class Process:
             raise NoSuchProcess(self.pid, self._name, msg=msg)
 
     @property
+    def snapshot(self) -> ProcessSnapshot:
+        """The attributes collected by `process_iter(attrs=...)` as a
+        read-only `ProcessSnapshot`, or an empty one.
+        """
+        return self._snapshot
+
+    @property
+    def info(self) -> dict[str, Any]:
+        """The attributes collected by `process_iter(attrs=...)` as a
+        dict, or an empty dict.
+
+        DEPRECATED in 8.0.0. Use `snapshot.as_dict()` instead.
+        """
+        msg = (
+            "Process.info is deprecated; use Process.snapshot.as_dict()"
+            " instead"
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        # cached so in-place edits stick, like the 7.x plain attribute
+        if self._info is _SENTINEL:
+            self._info = self._snapshot.as_dict()
+        return self._info
+
+    @info.setter
+    def info(self, value: dict[str, Any]) -> None:
+        msg = "setting Process.info is deprecated"
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        self._info = value
+
+    @property
     def pid(self) -> int:
         """The process PID."""
         return self._pid
-
-    # DEPRECATED
-    @property
-    def info(self) -> dict:
-        """Return pre-fetched `process_iter()` info dict.
-
-        Deprecated: use method calls instead (e.g. `p.name()`).
-        """
-        msg = (
-            "Process.info is deprecated; use method calls instead"
-            " (e.g. p.name() instead of p.info['name'])"
-        )
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        # Return a copy to prevent the user from mutating the dict and
-        # corrupting the prefetch cache.
-        return self._prefetch.copy()
 
     # --- utility methods
 
@@ -805,7 +904,6 @@ class Process:
 
     # --- actual API
 
-    @_use_prefetch
     @memoize_when_activated
     def ppid(self) -> int:
         """The process parent PID.
@@ -822,9 +920,10 @@ class Process:
             self._ppid = self._ppid or self._proc.ppid()
             return self._ppid
 
-    @_use_prefetch
     def name(self) -> str:
-        """The process name. The return value is cached after first call."""
+        """The process name.
+        On Windows the return value is cached after first call.
+        """
         # Process name is only cached on Windows as on POSIX it may
         # change, see:
         # https://github.com/giampaolo/psutil/issues/692
@@ -854,7 +953,6 @@ class Process:
         self._proc._name = name
         return name
 
-    @_use_prefetch
     def exe(self) -> str:
         """The process executable as an absolute path.
 
@@ -898,12 +996,10 @@ class Process:
                 self._exe = exe
         return self._exe
 
-    @_use_prefetch
     def cmdline(self) -> list[str]:
         """The command line this process has been called with."""
         return self._proc.cmdline()
 
-    @_use_prefetch
     def status(self) -> ProcessStatus | str:
         """The process current status as a `STATUS_` constant."""
         try:
@@ -911,7 +1007,6 @@ class Process:
         except ZombieProcess:
             return ProcessStatus.STATUS_ZOMBIE
 
-    @_use_prefetch
     def username(self) -> str:
         """The name of the user that owns the process.
 
@@ -922,10 +1017,7 @@ class Process:
                 # might happen if python was installed from sources
                 msg = "requires pwd module shipped with standard python"
                 raise ImportError(msg)
-            uids = self.uids()
-            if self._is_ad_value(uids):
-                return uids
-            real_uid = uids.real
+            real_uid = self.uids().real
             try:
                 return pwd.getpwuid(real_uid).pw_name
             except KeyError:
@@ -934,7 +1026,6 @@ class Process:
         else:
             return self._proc.username()
 
-    @_use_prefetch
     def create_time(self) -> float:
         """The process creation time as a floating point number
         expressed in seconds since the epoch (seconds since January 1,
@@ -948,12 +1039,10 @@ class Process:
             self._create_time = self._proc.create_time()
         return self._create_time
 
-    @_use_prefetch
     def cwd(self) -> str:
         """Process current working directory as an absolute path."""
         return self._proc.cwd()
 
-    @_use_prefetch
     def nice(self, value: int | None = None) -> int | None:
         """Get or set process niceness (priority)."""
         if value is None:
@@ -964,7 +1053,6 @@ class Process:
 
     if POSIX:
 
-        @_use_prefetch
         @memoize_when_activated
         def uids(self) -> puids:
             """Return process UIDs as a `(real, effective, saved)`
@@ -972,21 +1060,18 @@ class Process:
             """
             return self._proc.uids()
 
-        @_use_prefetch
         def gids(self) -> pgids:
             """Return process GIDs as a `(real, effective, saved)`
             named tuple.
             """
             return self._proc.gids()
 
-        @_use_prefetch
         def terminal(self) -> str | None:
             """The terminal associated with this process, if any,
             else None.
             """
             return self._proc.terminal()
 
-        @_use_prefetch
         def num_fds(self) -> int:
             """Return the number of file descriptors opened by this
             process (POSIX only).
@@ -995,7 +1080,6 @@ class Process:
 
     if hasattr(_psplatform.Process, "io_counters"):
 
-        @_use_prefetch
         def io_counters(self) -> pio:
             """Return process I/O statistics (primarily read and
             written bytes).
@@ -1006,7 +1090,6 @@ class Process:
 
     if hasattr(_psplatform.Process, "ionice_get"):
 
-        @_use_prefetch
         def ionice(
             self, ioclass: int | None = None, value: int | None = None
         ) -> pionice | ProcessIOPriority | None:
@@ -1053,7 +1136,6 @@ class Process:
 
     if hasattr(_psplatform.Process, "cpu_affinity_get"):
 
-        @_use_prefetch
         def cpu_affinity(
             self, cpus: list[int] | None = None
         ) -> list[int] | None:
@@ -1079,7 +1161,6 @@ class Process:
     # Linux, FreeBSD, SunOS
     if hasattr(_psplatform.Process, "cpu_num"):
 
-        @_use_prefetch
         def cpu_num(self) -> int:
             """Return what CPU this process is currently running on.
 
@@ -1090,7 +1171,6 @@ class Process:
     # All platforms has it, but maybe not in the future.
     if hasattr(_psplatform.Process, "environ"):
 
-        @_use_prefetch
         def environ(self) -> dict[str, str]:
             """The environment variables of the process as a dict.
 
@@ -1101,7 +1181,6 @@ class Process:
 
     if WINDOWS:
 
-        @_use_prefetch
         def num_handles(self) -> int:
             """Return the number of handles opened by this process
 
@@ -1109,21 +1188,18 @@ class Process:
             """
             return self._proc.num_handles()
 
-    @_use_prefetch
     def num_ctx_switches(self) -> pctxsw:
         """Return the number of voluntary and involuntary context
         switches performed by this process.
         """
         return self._proc.num_ctx_switches()
 
-    @_use_prefetch
     def num_threads(self) -> int:
         """Return the number of threads used by this process."""
         return self._proc.num_threads()
 
     if hasattr(_psplatform.Process, "threads"):
 
-        @_use_prefetch
         def threads(self) -> list[pthread]:
             """Return threads opened by process as a list of
             `(id, user_time, system_time)` named tuples.
@@ -1207,7 +1283,6 @@ class Process:
                         pass
         return ret
 
-    @_use_prefetch
     def cpu_percent(self, interval: float | None = None) -> float:
         """Return a float representing the current process CPU
         utilization as a percentage.
@@ -1301,7 +1376,6 @@ class Process:
             single_cpu_percent = overall_cpus_percent * num_cpus
             return round(single_cpu_percent, 1)
 
-    @_use_prefetch
     @memoize_when_activated
     def cpu_times(self) -> pcputimes:
         """Return a `(user, system, children_user, children_system)`
@@ -1315,7 +1389,6 @@ class Process:
         """
         return self._proc.cpu_times()
 
-    @_use_prefetch
     @memoize_when_activated
     def memory_info(self) -> pmem:
         """Return a named tuple with variable fields depending on the
@@ -1330,7 +1403,6 @@ class Process:
     # Linux, macOS, Windows
     if hasattr(_psplatform.Process, "memory_extras"):
 
-        @_use_prefetch
         def memory_extras(self) -> pmem_extras:
             """Return a named tuple with extra platform-specific memory
             metrics, complementing `memory_info()`.
@@ -1342,7 +1414,6 @@ class Process:
     # Linux, macOS, Windows
     if hasattr(_psplatform.Process, "memory_footprint"):
 
-        @_use_prefetch
         def memory_footprint(self) -> pfootprint:
             """Return a named tuple with USS and shared memory, and
             on Linux also PSS and swap.
@@ -1363,8 +1434,10 @@ class Process:
     # DEPRECATED
     def memory_full_info(self) -> pfullmem:
         """Return the same information as `memory_info()` plus
-        `memory_footprint()`'s `uss`, `pss` and `swap` fields in a
-        single named tuple.
+        `memory_footprint()`'s `uss` field, and on Linux also `pss`
+        and `swap`, in a single named tuple. On BSD, SunOS and AIX
+        no footprint field is added, so the result is just
+        `memory_info()`'s.
 
         DEPRECATED in 8.0.0. Use `memory_footprint()` instead.
         """
@@ -1373,17 +1446,12 @@ class Process:
         )
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         basic_mem = self.memory_info()
-        if self._is_ad_value(basic_mem):
-            return basic_mem
         if hasattr(self, "memory_footprint"):
             fp = self.memory_footprint()
-            if self._is_ad_value(fp):
-                return fp
             names = _ntp.pfullmem._fields[len(basic_mem) :]
             return _ntp.pfullmem(*basic_mem, *[getattr(fp, x) for x in names])
-        return _ntp.pfullmem(*basic_mem)
+        return basic_mem
 
-    @_use_prefetch
     def memory_percent(self, memtype: str = "rss") -> float:
         """Compare process memory to total physical system memory and
         calculate process memory utilization as a percentage.
@@ -1421,8 +1489,6 @@ class Process:
             fun = self.memory_footprint
 
         metrics = fun()
-        if self._is_ad_value(metrics):
-            return metrics
         value = getattr(metrics, memtype)
 
         # use cached value if available
@@ -1438,7 +1504,6 @@ class Process:
 
     if hasattr(_psplatform.Process, "memory_maps"):
 
-        @_use_prefetch
         def memory_maps(
             self, grouped: bool = True
         ) -> list[pmmap_grouped] | list[pmmap_ext]:
@@ -1467,7 +1532,6 @@ class Process:
             else:
                 return [_ntp.pmmap_ext(*x) for x in it]
 
-    @_use_prefetch
     def page_faults(self) -> ppagefaults:
         """Return the number of page faults for this process as a
         `(minor, major)` named tuple.
@@ -1486,7 +1550,6 @@ class Process:
         """
         return self._proc.page_faults()
 
-    @_use_prefetch
     def open_files(self) -> list[popenfile]:
         """Return files opened by process as a list of `(path, fd)`
         named tuples including the absolute file name and file
@@ -1497,7 +1560,6 @@ class Process:
         """
         return self._proc.open_files()
 
-    @_use_prefetch
     def net_connections(self, kind: str = "inet") -> list[pconn]:
         """Return socket connections opened by process as a list of
         `(fd, family, type, laddr, raddr, status)` named tuples.
@@ -1667,7 +1729,8 @@ Process.attrs = frozenset(
     x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'connections', 'memory_full_info', 'oneshot', 'info', 'attrs'}
+      'connections', 'memory_full_info', 'oneshot', 'attrs', 'snapshot',
+      'info'}
 )
 # fmt: on
 
@@ -1678,7 +1741,7 @@ Process.attrs = frozenset(
 
 
 class Popen(Process):
-    """Same as `subprocess.Popen`, but in addition it provides all
+    r"""Same as `subprocess.Popen`, but in addition it provides all
     `Process` methods in a single class.
 
     For the following methods which are common to both classes, psutil
@@ -1693,16 +1756,15 @@ class Popen(Process):
 
       >>> import psutil
       >>> from subprocess import PIPE
-      >>> p = psutil.Popen(["python", "-c", "print 'hi'"], stdout=PIPE)
+      >>> p = psutil.Popen(["python3", "-c", "print('hi')"], stdout=PIPE)
       >>> p.name()
       'python3'
       >>> p.uids()
-      user(real=1000, effective=1000, saved=1000)
+      puids(real=1000, effective=1000, saved=1000)
       >>> p.username()
       'giampaolo'
       >>> p.communicate()
-      ('hi', None)
-      >>> p.terminate()
+      (b'hi\n', None)
       >>> p.wait(timeout=2)
       0
       >>>
@@ -1810,12 +1872,9 @@ def process_iter(
     `Process.as_dict()`.
 
     If *attrs* is specified, `Process.as_dict()` is called and the
-    results are cached, so that subsequent method calls (e.g.
-    `p.name()`) return cached values. Use `attrs=Process.attrs` to
-    retrieve all process info (slow).
-
-    If a method raises `AccessDenied` during pre-fetch, it will return
-    *ad_value* (default None) instead of raising.
+    result is made available as `Process.snapshot`, a read-only
+    `ProcessSnapshot` with one attribute per requested name. Use
+    `attrs=Process.attrs` to retrieve all process info (slow).
     """
     global _pmap
 
@@ -1861,13 +1920,15 @@ def process_iter(
             try:
                 if proc is None:  # new process
                     proc = add(pid)
-                proc._prefetch = {}  # clear cache
-                proc._ad_value = _SENTINEL
+
                 if attrs is not None:
-                    proc._prefetch = proc.as_dict(
-                        attrs=attrs, ad_value=ad_value
-                    )
-                    proc._ad_value = ad_value
+                    data = proc.as_dict(attrs=attrs, ad_value=ad_value)
+                    proc._snapshot = ProcessSnapshot(data)
+                elif proc._snapshot:  # left over from a scan with attrs
+                    proc._snapshot = ProcessSnapshot({})
+
+                # invalidate the deprecated info cache on every scan
+                proc._info = _SENTINEL
                 yield proc
             except ZombieProcess:
                 if proc is not None:
@@ -1992,11 +2053,6 @@ def cpu_count(logical: bool = True) -> int | None:
     (e.g. hyper thread CPUs are excluded).
 
     Return None if undetermined.
-
-    The return value is cached after first call.
-    If desired cache can be cleared like this:
-
-    >>> psutil.cpu_count.cache_clear()
     """
     if logical:
         ret = _psplatform.cpu_count_logical()
@@ -2016,9 +2072,9 @@ def cpu_times(percpu: bool = False) -> scputimes | list[scputimes]:
     - `user`
     - `system`
     - `idle`
-    - `nice` (UNIX)
-    - `iowait` (Linux)
-    - `irq` (Linux, FreeBSD)
+    - `nice` (Linux, macOS, BSD)
+    - `iowait` (Linux, SunOS, AIX)
+    - `irq` (Linux, Windows, BSD)
     - `softirq` (Linux)
     - `steal` (Linux)
     - `guest` (Linux)
@@ -2197,8 +2253,8 @@ def cpu_times_percent(
     For instance, on Linux we'll get:
 
       >>> cpu_times_percent()
-      cpupercent(user=4.8, nice=0.0, system=4.8, idle=90.5, iowait=0.0,
-                 irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+      scputimes(user=4.8, system=4.8, idle=90.5, nice=0.0, iowait=0.0,
+                irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
       >>>
 
     *interval* and *percpu* arguments have the same meaning as in
@@ -2470,7 +2526,7 @@ def net_io_counters(
      - errout:       total number of errors while sending
      - dropin:       total number of incoming packets which were dropped
      - dropout:      total number of outgoing packets which were dropped
-                     (always 0 on macOS and BSD)
+                     (always 0 on macOS and NetBSD)
 
     If *pernic* is True return the same information for every
     network interface as a dictionary with interface names as the
@@ -2545,7 +2601,8 @@ def net_if_addrs() -> dict[str, list[snicaddr]]:
       unconfigured NIC).
     - address: the primary NIC address
     - netmask: the netmask address
-    - broadcast: the broadcast address; always None on Windows
+    - broadcast: the broadcast address; on Windows it is calculated from
+      the netmask
     - ptp: a "point to point" address (typically a VPN); always None on
       Windows
     """
@@ -2605,7 +2662,7 @@ def net_if_stats() -> dict[str, snicstats]:
      - isup: whether the interface is up (bool)
      - duplex: can be either `NIC_DUPLEX_FULL`, `NIC_DUPLEX_HALF` or
                `NIC_DUPLEX_UNKNOWN`
-     - speed: the NIC speed expressed in mega bits (MB); if it can't
+     - speed: the NIC speed expressed in megabits (Mbps); if it can't
               be determined (e.g. 'localhost') it will be set to 0.
      - mtu: the maximum transmission unit expressed in bytes.
      - flags: a string of comma-separated flags on the interface.
@@ -2618,7 +2675,7 @@ def net_if_stats() -> dict[str, snicstats]:
 # =====================================================================
 
 
-# Linux, macOS
+# Linux, FreeBSD
 if hasattr(_psplatform, "sensors_temperatures"):
 
     def sensors_temperatures(
@@ -2711,7 +2768,7 @@ def users() -> list[suser]:
     """Return users currently connected on the system as a list of
     named tuples including the following fields:
 
-     - user: the name of the user
+     - name: the name of the user
      - terminal: the tty or pseudo-tty associated with the user, if any.
      - host: the host name associated with the entry, if any.
      - started: the creation time as a floating point number expressed in

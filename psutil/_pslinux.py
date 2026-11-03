@@ -454,7 +454,7 @@ def cpu_times():
             return lst[idx]
         except IndexError:
             debug(f"can't get {field_name} CPU time; set it to 0")
-            return 0
+            return 0.0
 
     procfs_path = psutil.PROCFS_PATH
     with open_binary(f"{procfs_path}/stat") as f:
@@ -1238,11 +1238,16 @@ def disk_partitions(all=False):
     def fstypes_from_mountinfo():
         with open_text(f"{procfs_path}/self/mountinfo") as f:
             for line in f:
-                line = line.strip().split()
-                if len(line) > 1:
-                    for i in range(len(line) - 1):
-                        if line[i] == "-":
-                            fstypes.add(line[i + 1])
+                fields = line.split()
+                try:
+                    i = fields.index("-")
+                    fstype, source = fields[i + 1], fields[i + 2]
+                except (ValueError, IndexError):
+                    continue
+                # A /dev/ source is the equivalent of a non "nodev"
+                # entry in /proc/filesystems.
+                if source.startswith("/dev/") or fstype == "zfs":
+                    fstypes.add(fstype)
         return fstypes
 
     if not all:
@@ -1772,8 +1777,8 @@ class Process:
 
     @wrap_exceptions
     def cmdline(self):
-        with open_text(f"{self._procfs_path}/{self.pid}/cmdline") as f:
-            data = f.read()
+        # not open_text(): it turns \r and \r\n into \n
+        data = decode(bcat(f"{self._procfs_path}/{self.pid}/cmdline"))
         if not data:
             # may happen in case of zombie process
             self._raise_if_zombie()
@@ -1798,8 +1803,8 @@ class Process:
 
     @wrap_exceptions
     def environ(self):
-        with open_text(f"{self._procfs_path}/{self.pid}/environ") as f:
-            data = f.read()
+        # not open_text(): it turns \r and \r\n into \n
+        data = decode(bcat(f"{self._procfs_path}/{self.pid}/environ"))
         return parse_environ_block(data)
 
     @wrap_exceptions

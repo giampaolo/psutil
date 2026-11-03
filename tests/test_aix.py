@@ -19,7 +19,11 @@ from . import skipif
 
 
 @skipif(not AIX, reason="AIX only")
-class AIXSpecificTestCase(PsutilTestCase):
+class AIXTestCase(PsutilTestCase):
+    pass
+
+
+class TestAIXMemory(AIXTestCase):
     def test_virtual_memory(self):
         out = sh('/usr/bin/svmon -O unit=KB')
         re_pattern = r"memory\s*"
@@ -77,6 +81,8 @@ class AIXSpecificTestCase(PsutilTestCase):
         # MB because lsps may round down, so we round down too
         assert int(psutil_result.total / MB) == total_mb
 
+
+class TestAIXCpu(AIXTestCase):
     def test_cpu_stats(self):
         out = sh('/usr/bin/mpstat -a')
 
@@ -136,6 +142,8 @@ class AIXSpecificTestCase(PsutilTestCase):
         psutil_lcpu = psutil.cpu_count(logical=True)
         assert mpstat_lcpu == psutil_lcpu
 
+
+class TestAIXNetwork(AIXTestCase):
     def test_net_if_addrs_names(self):
         out = sh('/etc/ifconfig -l')
         ifconfig_names = set(out.split())

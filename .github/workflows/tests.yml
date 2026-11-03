@@ -66,7 +66,7 @@ jobs:
   # Run linters + bots tests
   linters:
     if: *skip_same_repo_pr
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # clang-format 18, same as local
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7

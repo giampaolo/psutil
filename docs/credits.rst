@@ -176,6 +176,7 @@ Code contributors by year
 * :user:`Matthieu Darbois <mayeut>` - :gh:`2211`, :gh:`2216`, :gh:`2246`,
   :gh:`2247`, :gh:`2252`, :gh:`2269`, :gh:`2270`, :gh:`2315`
 * :user:`Po-Chuan Hsieh <sunpoet>` - :gh:`2186`, :gh:`1646`
+* :user:`student_2333 <lgc2333>` - :gh:`2245`
 * :user:`Thomas Klausner <0-wiz-0>` - :gh:`2241`
 * :user:`Xuehai Pan <XuehaiPan>` - :gh:`2266`
 
@@ -195,6 +196,7 @@ Code contributors by year
 * :user:`Matthieu Darbois <mayeut>` - :gh:`1954`, :gh:`2021`, :gh:`2039`,
   :gh:`2040`, :gh:`2102`, :gh:`2111`, :gh:`2142`, :gh:`2145`, :gh:`2146`,
   :gh:`2147`, :gh:`2153`, :gh:`2155`, :gh:`2168`
+* :user:`Peter Jeremy <peterjeremy>` - :gh:`2113`
 * :user:`Steve Dower <zooba>` - :gh:`2080`
 * :user:`Thomas Klausner <0-wiz-0>` - :gh:`2088`, :gh:`2128`
 * :user:`Torsten Blum <Torsten-B>` - :gh:`2114`
@@ -239,7 +241,7 @@ Code contributors by year
 2019
 ~~~~
 
-* :user:`qcha0 <qcha0>` - :gh:`1491`
+* :user:`Agnewee` - :gh:`1491`
 * :user:`Alex Manuskin <amanusk>` - :gh:`1487`
 * :user:`Ammar Askar <ammaraskar>` - :gh:`1485` (:func:`getloadavg` on Windows)
 * :user:`Arnon Yaari <wiggin15>` - :gh:`607`, :gh:`1349`, :gh:`1409`,
@@ -268,6 +270,7 @@ Code contributors by year
 * :user:`Arnon Yaari <wiggin15>` - :gh:`1214`
 * :user:`Dan Vinakovsky <hexaclock>` - :gh:`1216`
 * :user:`Denis Krienbühl <href>` - :gh:`1260`
+* :user:`Georg Sauthoff <gsauthof>` - :gh:`694`, :gh:`1193`, :gh:`1194`
 * :user:`Ilya Yanok <yanok>` - :gh:`1332`
 * :user:`janderbrain <janderbrain>` - :gh:`1169`
 * :user:`Jaime Fullaondo <truthbk>` - :gh:`1320`
@@ -299,6 +302,7 @@ Code contributors by year
 * :user:`Oleksii Shevchuk <alxchk>` - :gh:`1091`, :gh:`1093`, :gh:`1220`,
   :gh:`1346`
 * :user:`Pierre Fersing <PierreF>` - :gh:`950`
+* Prodesire - :gh:`1138`
 * :user:`Sebastian Saip <ssaip>` - :gh:`1141`
 * :user:`Thiago Borges Abdnur <bolaum>` - :gh:`959`
 * :user:`Yannick Gingras <ygingras>` - :gh:`1057`
@@ -323,12 +327,14 @@ Code contributors by year
 * :user:`Patrick Welche <prlw1>` - :gh:`812`
 * :user:`Syohei YOSHIDA <syohex>` - :gh:`730`
 * :user:`Timmy Konick <tijko>` - :gh:`751`
+* :user:`wxwright` - :gh:`776`
 * :user:`Yago Jesus <YJesus>` - :gh:`798`
 
 2015
 ~~~~
 
 * :user:`Arnon Yaari <wiggin15>` - :gh:`680`, :gh:`679`, :gh:`610`
+* :user:`Bart van Kleef <bkleef>` - :gh:`664`
 * :user:`Bruno Binet <bbinet>` - :gh:`572`
 * :user:`Denis <denis-sumin>` - :gh:`541`
 * :user:`Fabian Groffen <fabian>` - :gh:`611`, :gh:`618`
@@ -338,6 +344,7 @@ Code contributors by year
 * :user:`karthik <karthikrev>` - :gh:`568`
 * :user:`Landry Breuil <landryb>` - :gh:`713`, :gh:`709` (OpenBSD
   implementation)
+* :user:`maozguttman` - :gh:`659`
 * :user:`Mike Sarahan <msarahan>` - :gh:`690`
 * :user:`Sebastian-Gabriel Brestin <bsebi>` - :gh:`704`
 * :user:`sk6249 <sk6249>` - :gh:`670`
@@ -352,27 +359,34 @@ Code contributors by year
 2014
 ~~~~
 
+* alex@mroja.net - :gh:`471`
 * :user:`Alexander Grothe <agrethe>` - :gh:`497`
 * :user:`Anders Chrigström <anders-chrigstrom>` - :gh:`548`
 * Francois Charron - :gh:`474`
+* Gautam Singh - :gh:`466`
 * :user:`Guido Imperiale <crusaderky>` - :gh:`470`, :gh:`477`
 * :user:`Jeff Tang <mrjefftang>` - :gh:`340`, :gh:`519`, :gh:`529`, :gh:`654`
 * :user:`Marc Abramowitz <msabramo>` - :gh:`492`
 * Naveed Roudsari - :gh:`421`
+* :user:`Szigeti Gabor Niif <gszigeti>` - :gh:`446`
 * :user:`Yaolong Huang <airekans>` - :gh:`530`
 
 2013
 ~~~~
 
 * :user:`Arfrever.FTA <Arfrever>` - :gh:`404`
+* Curtin1060 - :gh:`337`
 * :user:`Daniel Fox <danudey>` - :gh:`386`
+* floppymaster - :gh:`380`
 * Jason Kirtland - backward compatible implementation of
   collections.defaultdict
+* :user:`Jean Sebastien <JeanSebTr>` - :gh:`344`
 * :user:`John Baldwin <bsdjhb>` - :gh:`370`
 * John Pankov - :gh:`435`
 * :user:`Josiah Carlson <josiahcarlson>` - :gh:`451`, :gh:`452`
 * m.malycha - :gh:`351`
 * :user:`Matt Good <mgood>` - :gh:`438`
+* :user:`rsesek` - :gh:`333`
 * :user:`Thomas Klausner <0-wiz-0>` - :gh:`557` (NetBSD implementation)
 * Ulrich Klank - :gh:`448`
 
@@ -382,7 +396,7 @@ Code contributors by year
 * :user:`Amoser` - :gh:`266`, :gh:`267`, :gh:`340`
 * :user:`Florent Xicluna <florentx>` - :gh:`319`
 * :user:`Gregory Szorc <indygreg>` - :gh:`323`
-* :user:`Jan Beich <jbeich>` - :gh:`344`
+* :user:`Jan Beich <jbeich>` - :gh:`325`
 * Youngsik Kim - :gh:`317`
 
 2011
@@ -391,6 +405,7 @@ Code contributors by year
 * :user:`Jeremy Whitlock <whitlockjc>` - :gh:`125`, :gh:`150`, :gh:`206`,
   :gh:`217`, :gh:`260` (:func:`net_io_counters` and :func:`disk_io_counters` on
   macOS)
+* :user:`Philip Roberts <latentflip>` - :gh:`168`
 
 2010
 ~~~~

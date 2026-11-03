@@ -512,6 +512,28 @@ class TestRightToc:
 
 
 @pytest.mark.usefixtures("build_html")
+class TestPrevNext:
+
+    def links(self, file):
+        html = read_html(file)
+        return dict(
+            re.findall(r'href="\.\./([^"/]+)/" rel="(prev|next)"', html)
+        )
+
+    def test_pages_outside_sphinx_relations(self, subtests):
+        # blog (ablog) and genindex don't get Sphinx's prev/next;
+        # conf.py fills them in from the root toctree order.
+        expected = {
+            "blog.html": {"credits": "prev", "changelog": "next"},
+            "devguide.html": {"timeline": "prev", "genindex": "next"},
+            "genindex.html": {"devguide": "prev"},
+        }
+        for file, links in expected.items():
+            with subtests.test(file=file):
+                assert self.links(file) == links
+
+
+@pytest.mark.usefixtures("build_html")
 class TestCodeAutoLink:
     """Checks sphinx-codeautolink integration."""
 

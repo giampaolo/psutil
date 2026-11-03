@@ -83,17 +83,17 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     used = (active + wired + cached);
     percent = psutil_usage_percent((double)(total - avail), (double)total, 1);
 
-    if (!(pydict_add(dict, "total", "K", total)
-          | pydict_add(dict, "available", "K", avail)
-          | pydict_add(dict, "percent", "d", percent)
-          | pydict_add(dict, "used", "K", used)
-          | pydict_add(dict, "free", "K", free)
-          | pydict_add(dict, "active", "K", active)
-          | pydict_add(dict, "inactive", "K", inactive)
-          | pydict_add(dict, "buffers", "K", buffers)
-          | pydict_add(dict, "cached", "K", cached)
-          | pydict_add(dict, "shared", "K", shared)
-          | pydict_add(dict, "wired", "K", wired)))
+    if (!pydict_add(dict, "total", "K", total)
+        || !pydict_add(dict, "available", "K", avail)
+        || !pydict_add(dict, "percent", "d", percent)
+        || !pydict_add(dict, "used", "K", used)
+        || !pydict_add(dict, "free", "K", free)
+        || !pydict_add(dict, "active", "K", active)
+        || !pydict_add(dict, "inactive", "K", inactive)
+        || !pydict_add(dict, "buffers", "K", buffers)
+        || !pydict_add(dict, "cached", "K", cached)
+        || !pydict_add(dict, "shared", "K", shared)
+        || !pydict_add(dict, "wired", "K", wired))
         goto error;
 
     return dict;
@@ -147,12 +147,12 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
            * pagesize;
     percent = psutil_usage_percent((double)used, (double)total, 1);
 
-    if (!(pydict_add(dict, "total", "K", total)
-          | pydict_add(dict, "used", "K", used)
-          | pydict_add(dict, "free", "K", free)
-          | pydict_add(dict, "percent", "d", percent)
-          | pydict_add(dict, "sin", "I", swapin + swapout)
-          | pydict_add(dict, "sout", "I", nodein + nodeout)))
+    if (!pydict_add(dict, "total", "K", total)
+        || !pydict_add(dict, "used", "K", used)
+        || !pydict_add(dict, "free", "K", free)
+        || !pydict_add(dict, "percent", "d", percent)
+        || !pydict_add(dict, "sin", "I", swapin + swapout)
+        || !pydict_add(dict, "sout", "I", nodein + nodeout))
         goto error;
 
     return dict;

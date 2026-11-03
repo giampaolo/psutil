@@ -407,8 +407,7 @@ class TestModuleFunctions(MemoryLeakTestCase):
     @skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     @skipif(LINUX, reason="too slow on LINUX")
     def test_sensors_temperatures(self):
-        times = FEW_TIMES if LINUX else self.times
-        self.execute(psutil.sensors_temperatures, times=times)
+        self.execute(psutil.sensors_temperatures)
 
     @skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_sensors_fans(self):
@@ -519,7 +518,7 @@ def cext_has(name):
 
 
 class TestBadargs2(MemoryLeakTestCase):
-    """Like TestBadargsMemleaks, but for the error paths reached
+    """Like TestBadargs, but for the error paths reached
     *after* `PyArg_ParseTuple` succeeds, by passing an invalid arg like
     a negative PID, a bogus NIC name etc., making the C function fail
     deeper.

@@ -114,7 +114,7 @@ def virtual_memory():
 
 def swap_memory():
     """System swap memory as a (total, used, free, percent, sin, sout)
-    named tuple. sin and sout are always 0 on OpenBSD
+    named tuple.
     """
     d = _psutil.swap_mem()
     return ntp.sswap(**d)

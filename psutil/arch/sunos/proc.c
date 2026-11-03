@@ -57,7 +57,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
-        "ikkdiiikIIII",
+        "ikkdiiilIIII",
         info.pr_ppid,  // parent pid
         info.pr_rssize,  // rss
         info.pr_size,  // vms
@@ -65,7 +65,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
         info.pr_lwp.pr_nice - NZERO,  // nice
         info.pr_nlwp,  // no. of threads
         info.pr_lwp.pr_state,  // status code
-        info.pr_ttydev,  // tty nr
+        (long)info.pr_ttydev,  // tty nr, PRNODEV becomes -1
         info.pr_uid,  // real user id
         info.pr_euid,  // effective user id
         info.pr_gid,  // real group id
@@ -468,7 +468,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     prxmap_t *xmap = NULL, *p;
     off_t size;
-    size_t nread;
+    ssize_t nread;
     int nmap;
     uintptr_t pr_addr_sz;
     uintptr_t stk_base_sz, brk_base_sz;
@@ -511,6 +511,10 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     Py_BEGIN_ALLOW_THREADS
     nread = pread(fd, xmap, size, 0);
     Py_END_ALLOW_THREADS
+    if (nread == -1) {
+        psutil_oserror();
+        goto error;
+    }
     nmap = nread / sizeof(prxmap_t);
     p = xmap;
 

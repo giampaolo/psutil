@@ -14,7 +14,6 @@ import socket
 
 import psutil
 from psutil import AIX
-from psutil import BSD
 from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
@@ -34,10 +33,10 @@ from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import SKIP_SYSCONS
 from . import PsutilTestCase
+from . import assert_ntuple_of_nums
 from . import create_sockets
 from . import enum
 from . import is_namedtuple
-from . import kernel_version
 from . import pytest
 from . import serial
 from . import skipif
@@ -175,8 +174,8 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             assert sorted(
                 psutil.ProcessIOPriority.__members__.keys()
             ) == sorted(names)
-        else:
-            not hasattr(psutil, "ProcessIOPriority")
+        elif not WINDOWS:
+            assert not hasattr(psutil, "ProcessIOPriority")
 
     def test_proc_ioprio_value_windows(self):
         names = (
@@ -206,7 +205,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
                 names
             )
         else:
-            not hasattr(psutil, "ProcessPriority")
+            assert not hasattr(psutil, "ProcessPriority")
 
     def test_rlimit(self):
         names = (
@@ -228,20 +227,20 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             ("RLIMIT_SWAP", "RLIMIT_SBSIZE", "RLIMIT_NPTS"), FREEBSD
         )
 
-        if POSIX:
-            if kernel_version() >= (2, 6, 8):
-                self.check_constants(("RLIMIT_MSGQUEUE",), LINUX)
-            if kernel_version() >= (2, 6, 12):
-                self.check_constants(("RLIMIT_NICE", "RLIMIT_RTPRIO"), LINUX)
-            if kernel_version() >= (2, 6, 25):
-                self.check_constants(("RLIMIT_RTTIME",), LINUX)
-            if kernel_version() >= (2, 6, 8):
-                self.check_constants(("RLIMIT_SIGPENDING",), LINUX)
+        names = (
+            "RLIMIT_MSGQUEUE",
+            "RLIMIT_NICE",
+            "RLIMIT_RTPRIO",
+            "RLIMIT_RTTIME",
+            "RLIMIT_SIGPENDING",
+        )
+        self.check_constants(names, LINUX)
 
     def test_enum_containers(self):
         self.check_constants(("ProcessStatus",), True)
         self.check_constants(("ProcessPriority",), WINDOWS)
         self.check_constants(("ProcessIOPriority",), LINUX or WINDOWS)
+        self.check_constants(("ProcessRlimit",), LINUX or FREEBSD)
         self.check_constants(("ConnectionStatus",), True)
         self.check_constants(("NicDuplex",), True)
         self.check_constants(("BatteryTime",), True)
@@ -275,14 +274,14 @@ class TestAvailSystemAPIs(PsutilTestCase):
         if LINUX:
             assert hasit == (platform.libc_ver()[0] == "glibc")
         else:
-            assert hasit == MACOS or WINDOWS or BSD
+            assert hasit == (MACOS or WINDOWS or FREEBSD or NETBSD)
 
     def test_heap_trim(self):
         hasit = hasattr(psutil, "heap_trim")
         if LINUX:
             assert hasit == (platform.libc_ver()[0] == "glibc")
         else:
-            assert hasit == MACOS or WINDOWS or BSD
+            assert hasit == (MACOS or WINDOWS or FREEBSD or NETBSD)
 
 
 class TestAvailProcessAPIs(PsutilTestCase):
@@ -302,7 +301,7 @@ class TestAvailProcessAPIs(PsutilTestCase):
         assert hasattr(psutil.Process, "uids") == POSIX
 
     def test_gids(self):
-        assert hasattr(psutil.Process, "uids") == POSIX
+        assert hasattr(psutil.Process, "gids") == POSIX
 
     def test_terminal(self):
         assert hasattr(psutil.Process, "terminal") == POSIX
@@ -356,29 +355,18 @@ class TestSystemAPITypes(PsutilTestCase):
     https://github.com/giampaolo/psutil/issues/1039.
     """
 
-    @classmethod
-    def setUpClass(cls):
-        cls.proc = psutil.Process()
-
-    def assert_ntuple_of_nums(self, nt, type_=float, gezero=True):
-        assert is_namedtuple(nt)
-        for n in nt:
-            assert isinstance(n, type_)
-            if gezero:
-                assert n >= 0
-
     def test_cpu_times(self):
-        self.assert_ntuple_of_nums(psutil.cpu_times())
+        assert_ntuple_of_nums(psutil.cpu_times())
         for nt in psutil.cpu_times(percpu=True):
-            self.assert_ntuple_of_nums(nt)
+            assert_ntuple_of_nums(nt)
 
     def test_cpu_percent(self):
         assert isinstance(psutil.cpu_percent(interval=None), float)
         assert isinstance(psutil.cpu_percent(interval=0.00001), float)
 
     def test_cpu_times_percent(self):
-        self.assert_ntuple_of_nums(psutil.cpu_times_percent(interval=None))
-        self.assert_ntuple_of_nums(psutil.cpu_times_percent(interval=0.0001))
+        assert_ntuple_of_nums(psutil.cpu_times_percent(interval=None))
+        assert_ntuple_of_nums(psutil.cpu_times_percent(interval=0.0001))
 
     def test_cpu_count(self):
         assert isinstance(psutil.cpu_count(), int)
@@ -387,13 +375,13 @@ class TestSystemAPITypes(PsutilTestCase):
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
             return pytest.skip("cpu_freq() returns None")
-        self.assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int))
+        assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int))
 
     def test_disk_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
         for k, v in psutil.disk_io_counters(perdisk=True).items():
             assert isinstance(k, str)
-            self.assert_ntuple_of_nums(v, type_=int)
+            assert_ntuple_of_nums(v, type_=int)
 
     def test_disk_partitions(self):
         # Duplicate of test_system.py. Keep it anyway.
