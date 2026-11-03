@@ -289,7 +289,15 @@ if LINUX or SUNOS or AIX:
         path = os.fspath(path)
         os.listdir(path)
         PROCFS_PATH = path.rstrip("/") or "/"
+
+        # clear caches
         _TOTAL_PHYMEM = None
+        process_iter.cache_clear()
+        _wrap_numbers.cache_clear()
+        _last_cpu_times.clear()
+        _last_per_cpu_times.clear()
+        _last_cpu_times_2.clear()
+        _last_per_cpu_times_2.clear()
 
 
 del _globals, _export_enum

@@ -1690,6 +1690,19 @@ class TestMisc(LinuxTestCase):
         finally:
             psutil.set_procfs_path("/proc")
 
+    def test_set_procfs_path_clears_caches(self):
+        list(psutil.process_iter())
+        psutil.net_io_counters()
+        psutil.cpu_percent(percpu=True)
+        psutil.cpu_times_percent(percpu=True)
+        psutil.set_procfs_path("/proc")
+        assert psutil._pmap == {}
+        assert psutil._wrap_numbers.cache_info() == ({}, {}, {})
+        assert psutil._last_cpu_times == {}
+        assert psutil._last_per_cpu_times == {}
+        assert psutil._last_cpu_times_2 == {}
+        assert psutil._last_per_cpu_times_2 == {}
+
     def test_procfs_path_env_var(self):
         tdir = self.get_testfn()
         os.mkdir(tdir)
