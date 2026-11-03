@@ -61,6 +61,14 @@ def request(path, post=None, method=None, accept=ACCEPT_JSON):
     return json.loads(data) if data else None
 
 
+def graphql(query, variables):
+    ret = request("/graphql", {"query": query, "variables": variables})
+    # errors come back with a 200, e.g. NOT_FOUND for a hidden account
+    if ret.get("errors"):
+        raise GitHubError(200, "/graphql", ret["errors"])
+    return ret["data"]
+
+
 def request_all(path):
     items = []
     page = 1

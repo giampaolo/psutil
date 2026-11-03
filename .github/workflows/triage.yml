@@ -1,4 +1,7 @@
-# Fired by Github Actions every time an issue or PR is created.
+# Fired by Github Actions every time an issue or PR is created. It can
+# also run anti_slop.py by hand on existing PRs, as github-actions[bot]:
+#
+#   gh workflow run triage.yml -f numbers="3007 3090"
 
 name: triage
 on:
@@ -6,6 +9,11 @@ on:
     types: [opened]
   pull_request_target:
     types: [opened]
+  workflow_dispatch:
+    inputs:
+      numbers:
+        description: "PR numbers to run anti_slop.py on, space separated"
+        required: true
 permissions:
   issues: write
   pull-requests: write
@@ -28,16 +36,17 @@ jobs:
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          NUMBERS: ${{ inputs.numbers || github.event.issue.number || github.event.pull_request.number }}
         run: |
-          PYTHONUNBUFFERED=1 python3 .github/workflows/anti_slop.py "$NUMBER" --apply
+          # unquoted on purpose: one arg per PR number
+          PYTHONUNBUFFERED=1 python3 .github/workflows/anti_slop.py $NUMBERS --apply
 
       - name: Install deps
-        if: steps.anti_slop.outputs.closed != 'true'
+        if: github.event_name != 'workflow_dispatch' && steps.anti_slop.outputs.closed != 'true'
         run: python3 -m pip install anthropic
 
       - name: Reply
-        if: steps.anti_slop.outputs.closed != 'true'
+        if: github.event_name != 'workflow_dispatch' && steps.anti_slop.outputs.closed != 'true'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,7 +54,7 @@ jobs:
           PYTHONUNBUFFERED=1 PYTHONWARNINGS=always python3 .github/workflows/triage.py
 
       - name: Label
-        if: steps.anti_slop.outputs.closed != 'true'
+        if: github.event_name != 'workflow_dispatch' && steps.anti_slop.outputs.closed != 'true'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
