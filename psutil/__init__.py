@@ -278,6 +278,13 @@ if LINUX or SUNOS or AIX:
     __all__.extend(["PROCFS_PATH", "set_procfs_path"])
 
     def set_procfs_path(path: str) -> None:
+        """Set PROCFS_PATH, the path where the /proc filesystem is
+        mounted (e.g. "/host/proc" inside a container).
+
+        *path* must be an existing directory, else OSError is raised.
+        Prefer this over assigning PROCFS_PATH directly, as it also
+        resets internal caches that depend on it.
+        """
         global PROCFS_PATH, _TOTAL_PHYMEM
         path = os.fspath(path)
         os.listdir(path)
