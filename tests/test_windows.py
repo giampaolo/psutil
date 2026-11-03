@@ -541,6 +541,10 @@ class TestProcessIdentity(WindowsTestCase):
     def test_special_pid(self):
         p = psutil.Process(4)
         assert p.name() == 'System'
+        # The image name of kernel-created processes comes from the
+        # system process table and must not be empty, see:
+        # https://github.com/giampaolo/psutil/issues/2338
+        assert p.exe()
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
         str(p)

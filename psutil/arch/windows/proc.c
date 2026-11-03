@@ -294,6 +294,34 @@ psutil_proc_times(PyObject *self, PyObject *args) {
 }
 
 
+// Return the image name of the given PID as found in the system process
+// table. It matches the name displayed by tasklist.exe and works for the
+// special / kernel-created processes (e.g. PID 4, "Secure System",
+// "Registry", "Memory Compression") for which
+// NtQuerySystemInformation(SystemProcessIdInformation) returns no image
+// name. Return a new reference, or NULL with an exception set.
+static PyObject *
+get_proc_image_name_from_table(DWORD pid) {
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    PyObject *py_name;
+
+    if (psutil_proc_table_entry(pid, &process, &buffer) != 0)
+        return NULL;
+
+    if (process->ImageName.Buffer == NULL || process->ImageName.Length == 0) {
+        py_name = PyUnicode_FromString("");
+    }
+    else {
+        py_name = PyUnicode_FromWideChar(
+            process->ImageName.Buffer, process->ImageName.Length / 2
+        );
+    }
+    free(buffer);
+    return py_name;
+}
+
+
 // Return process executable path. Works for all processes regardless
 // of privilege. NtQuerySystemInformation has some sort of internal
 // cache, since it succeeds even when a process is gone (but not if a
@@ -392,16 +420,28 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         );
     }
 
-    if (processIdInfo.ImageName.Buffer == NULL) {
-        // Happens for PID 4.
-        py_exe = PyUnicode_FromString("");
+    if (processIdInfo.ImageName.Buffer == NULL
+        || processIdInfo.ImageName.Length == 0)
+    {
+        // Happens for special / kernel-created processes such as PID 4
+        // and "Secure System" (VBS). Fall back on the system process
+        // table; see:
+        // https://github.com/giampaolo/psutil/issues/2338
+        FREE(buffer);
+        py_exe = get_proc_image_name_from_table(pid);
+        if (py_exe == NULL) {
+            // the process may be gone by now (race); preserve the
+            // former behavior in that case
+            PyErr_Clear();
+            py_exe = PyUnicode_FromString("");
+        }
     }
     else {
         py_exe = PyUnicode_FromWideChar(
             processIdInfo.ImageName.Buffer, processIdInfo.ImageName.Length / 2
         );
+        FREE(buffer);
     }
-    FREE(buffer);
     return py_exe;
 }
 
