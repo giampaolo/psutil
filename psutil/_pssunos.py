@@ -19,7 +19,6 @@ from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil
 from ._common import AF_INET6
-from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
@@ -299,7 +298,7 @@ def users():
 
 def pids():
     """Returns a list of PIDs currently running on the system."""
-    path = psutil.PROCFS_PATH.encode(ENCODING)
+    path = os.fsencode(psutil.PROCFS_PATH)
     return [int(x) for x in os.listdir(path) if x.isdigit()]
 
 

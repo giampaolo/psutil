@@ -1619,12 +1619,12 @@ class TestProcfsPath(LinuxTestCase):
         with pytest.raises(psutil.NoSuchProcess):
             psutil.Process()
 
-        # a bytes path is converted internally to str
-        psutil.set_procfs_path(os.fsencode(tdir))
-        assert tdir == psutil.PROCFS_PATH
-
         with pytest.raises(FileNotFoundError):
             psutil.set_procfs_path(tdir + "/nonexistent")
+        assert tdir == psutil.PROCFS_PATH
+
+        with pytest.raises(TypeError, match="must be a str"):
+            psutil.set_procfs_path(b"/proc")
         assert tdir == psutil.PROCFS_PATH
 
     def test_set_procfs_path_clears_caches(self):
