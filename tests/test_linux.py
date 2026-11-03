@@ -1653,6 +1653,7 @@ class TestProcfsPath(LinuxTestCase):
 
     def test_env_var(self):
         tdir = self.get_testfn()
+        os.mkdir(tdir)
         env = PYTHON_EXE_ENV.copy()
         env["PSUTIL_PROCFS_PATH"] = tdir
         cmd = [PYTHON_EXE, "-c", "import psutil; print(psutil.PROCFS_PATH)"]
@@ -1661,6 +1662,9 @@ class TestProcfsPath(LinuxTestCase):
         assert sh(cmd, env=env) == tdir
         env["PSUTIL_PROCFS_PATH"] = ""
         assert sh(cmd, env=env) == "/proc"
+        env["PSUTIL_PROCFS_PATH"] = tdir + "/nonexistent"
+        with pytest.raises(RuntimeError, match="FileNotFoundError"):
+            sh(cmd, env=env)
 
 
 # =====================================================================

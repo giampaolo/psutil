@@ -276,8 +276,7 @@ if LINUX or FREEBSD:
 
 if LINUX or SUNOS or AIX:
 
-    PROCFS_PATH = os.environ.get("PSUTIL_PROCFS_PATH") or "/proc"
-    PROCFS_PATH = PROCFS_PATH.rstrip("/") or "/"
+    PROCFS_PATH = "/proc"
 
     def set_procfs_path(path: str) -> None:
         """Set PROCFS_PATH, the path where the /proc filesystem is
@@ -2879,6 +2878,11 @@ def _set_debug(value):
 
     psutil._common.PSUTIL_DEBUG = bool(value)
     _psutil.set_debug(bool(value))
+
+
+# down here as it clears caches defined above
+if (LINUX or SUNOS or AIX) and os.environ.get("PSUTIL_PROCFS_PATH"):
+    set_procfs_path(os.environ["PSUTIL_PROCFS_PATH"])
 
 
 del memoize_when_activated

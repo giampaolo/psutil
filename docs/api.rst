@@ -2850,8 +2850,8 @@ Environment variables
 .. envvar:: PSUTIL_PROCFS_PATH
 
   If set, psutil uses it as :data:`PROCFS_PATH` instead of ``'/proc'``. It is
-  read once at import time. To change the path later, use
-  :func:`set_procfs_path`.
+  read once at import time and must be an existing directory. To change the
+  path later, use :func:`set_procfs_path`.
 
   .. versionadded:: 8.0.0
 
