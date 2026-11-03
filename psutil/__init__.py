@@ -286,7 +286,7 @@ if LINUX or SUNOS or AIX:
         resets internal caches that depend on it.
         """
         global PROCFS_PATH, _TOTAL_PHYMEM
-        path = os.fspath(path)
+        path = os.fsdecode(path)
         os.listdir(path)
         PROCFS_PATH = path.rstrip("/") or "/"
 

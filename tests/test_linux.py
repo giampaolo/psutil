@@ -1684,6 +1684,8 @@ class TestMisc(LinuxTestCase):
             assert tdir == psutil.PROCFS_PATH
             with pytest.raises(OSError):
                 psutil.virtual_memory()
+            psutil.set_procfs_path(os.fsencode(tdir))
+            assert tdir == psutil.PROCFS_PATH
             with pytest.raises(FileNotFoundError):
                 psutil.set_procfs_path(tdir + "/nonexistent")
             assert tdir == psutil.PROCFS_PATH
