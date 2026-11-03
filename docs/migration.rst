@@ -195,7 +195,6 @@ New set_procfs_path() function
 Assigning :data:`PROCFS_PATH` directly still works but leaves internal caches
 stale. Use :func:`set_procfs_path` instead:
 
-.. autolink-skip::
 .. code-block:: python
 
   # before
