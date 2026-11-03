@@ -24,6 +24,7 @@ import psutil
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil
+from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
@@ -1553,7 +1554,7 @@ def boot_time():
 
 def pids():
     """Returns a list of PIDs currently running on the system."""
-    path = os.fsencode(psutil.PROCFS_PATH)
+    path = psutil.PROCFS_PATH.encode(ENCODING)
     return [int(x) for x in os.listdir(path) if x.isdigit()]
 
 
