@@ -1638,6 +1638,12 @@ class TestProcfsPath(LinuxTestCase):
         psutil.set_procfs_path(pathlib.Path(tdir))
         assert tdir == psutil.PROCFS_PATH
 
+        # a relative path is stored as absolute
+        self.addCleanup(os.chdir, os.getcwd())
+        os.chdir(os.path.dirname(tdir))
+        psutil.set_procfs_path(os.path.basename(tdir))
+        assert tdir == psutil.PROCFS_PATH
+
     def test_set_procfs_path_clears_caches(self):
         list(psutil.process_iter())
         psutil.net_io_counters()

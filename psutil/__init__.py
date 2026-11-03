@@ -2859,8 +2859,10 @@ if LINUX or SUNOS or AIX:
             msg = f"path must be a str (got {type(path)})"
             raise TypeError(msg)
         os.scandir(path).close()  # raise if not an existing directory
-        # drop trailing slashes, keeping "/" as is
-        PROCFS_PATH = path.rstrip("/") or "/"
+        # Store path as absolute in case it's relative (e.g. foo ->
+        # $cwd/foo), so that a later chdir() can't break reads. This
+        # also drops trailing slashes.
+        PROCFS_PATH = os.path.abspath(path)
 
         # clear caches
         _TOTAL_PHYMEM = None
