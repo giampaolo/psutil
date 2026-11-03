@@ -288,6 +288,8 @@ if LINUX or SUNOS or AIX:
         resets internal caches that depend on it.
         """
         global PROCFS_PATH, _TOTAL_PHYMEM
+
+        path = os.fspath(path)  # accept a pathlib path
         if not isinstance(path, str):
             msg = f"path must be a str (got {type(path)})"
             raise TypeError(msg)

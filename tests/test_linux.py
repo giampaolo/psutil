@@ -16,6 +16,7 @@ import importlib
 import io
 import mmap
 import os
+import pathlib
 import platform
 import re
 import shutil
@@ -1625,6 +1626,9 @@ class TestProcfsPath(LinuxTestCase):
 
         with pytest.raises(TypeError, match="must be a str"):
             psutil.set_procfs_path(b"/proc")
+        assert tdir == psutil.PROCFS_PATH
+
+        psutil.set_procfs_path(pathlib.Path(tdir))
         assert tdir == psutil.PROCFS_PATH
 
     def test_set_procfs_path_clears_caches(self):
