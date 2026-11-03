@@ -1657,6 +1657,8 @@ class TestProcfsPath(LinuxTestCase):
         env["PSUTIL_PROCFS_PATH"] = tdir
         cmd = [PYTHON_EXE, "-c", "import psutil; print(psutil.PROCFS_PATH)"]
         assert sh(cmd, env=env) == tdir
+        env["PSUTIL_PROCFS_PATH"] = tdir + "/"
+        assert sh(cmd, env=env) == tdir
         env["PSUTIL_PROCFS_PATH"] = ""
         assert sh(cmd, env=env) == "/proc"
 

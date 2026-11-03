@@ -277,7 +277,7 @@ if LINUX or FREEBSD:
 if LINUX or SUNOS or AIX:
 
     PROCFS_PATH = os.environ.get("PSUTIL_PROCFS_PATH") or "/proc"
-    __all__.extend(["PROCFS_PATH", "set_procfs_path"])
+    PROCFS_PATH = PROCFS_PATH.rstrip("/") or "/"
 
     def set_procfs_path(path: str) -> None:
         """Set PROCFS_PATH, the path where the /proc filesystem is
@@ -304,6 +304,8 @@ if LINUX or SUNOS or AIX:
         _last_per_cpu_times.clear()
         _last_cpu_times_2.clear()
         _last_per_cpu_times_2.clear()
+
+    __all__.extend(["PROCFS_PATH", "set_procfs_path"])
 
 
 del _globals, _export_enum
