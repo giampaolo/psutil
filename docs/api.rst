@@ -2813,7 +2813,8 @@ Configuration
   host's ``/proc`` from inside a container such as Docker. Only the APIs that
   read ``/proc`` are affected (e.g. memory APIs and many :class:`Process`
   methods). *path* must be an existing directory. This also resets internal
-  caches that depend on ``/proc``.
+  caches that depend on ``/proc``. :class:`Process` instances created before
+  the call keep reading the old path.
 
   .. availability:: Linux, SunOS, AIX
 
