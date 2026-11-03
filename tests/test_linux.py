@@ -1592,11 +1592,12 @@ class TestRootFsDeviceFinder(LinuxTestCase):
 
 
 class TestProcfsPath(LinuxTestCase):
-    def test_procfs_path(self):
+    def test_set_procfs_path(self):
         tdir = self.get_testfn()
         os.mkdir(tdir)
         try:
-            psutil.PROCFS_PATH = tdir
+            psutil.set_procfs_path(tdir + "/")
+            assert tdir == psutil.PROCFS_PATH
             with pytest.raises(OSError):
                 psutil.virtual_memory()
             with pytest.raises(OSError):
@@ -1615,17 +1616,6 @@ class TestProcfsPath(LinuxTestCase):
                 psutil.disk_partitions()
             with pytest.raises(psutil.NoSuchProcess):
                 psutil.Process()
-        finally:
-            psutil.PROCFS_PATH = "/proc"
-
-    def test_set_procfs_path(self):
-        tdir = self.get_testfn()
-        os.mkdir(tdir)
-        try:
-            psutil.set_procfs_path(tdir + "/")
-            assert tdir == psutil.PROCFS_PATH
-            with pytest.raises(OSError):
-                psutil.virtual_memory()
             psutil.set_procfs_path(os.fsencode(tdir))
             assert tdir == psutil.PROCFS_PATH
             with pytest.raises(FileNotFoundError):
@@ -1647,7 +1637,7 @@ class TestProcfsPath(LinuxTestCase):
         assert psutil._last_cpu_times_2 == {}
         assert psutil._last_per_cpu_times_2 == {}
 
-    def test_procfs_path_env_var(self):
+    def test_env_var(self):
         tdir = self.get_testfn()
         env = PYTHON_EXE_ENV.copy()
         env["PSUTIL_PROCFS_PATH"] = tdir
