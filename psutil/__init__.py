@@ -273,7 +273,9 @@ if WINDOWS:
     _export_enum(ProcessPriority)
 if LINUX or FREEBSD:
     _export_enum(ProcessRlimit)
+
 if LINUX or SUNOS or AIX:
+
     PROCFS_PATH = os.environ.get("PSUTIL_PROCFS_PATH", "/proc")
     __all__.extend(["PROCFS_PATH", "set_procfs_path"])
 

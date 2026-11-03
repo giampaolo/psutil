@@ -1707,14 +1707,10 @@ class TestMisc(LinuxTestCase):
 
     def test_procfs_path_env_var(self):
         tdir = self.get_testfn()
-        os.mkdir(tdir)
-        try:
-            with mock.patch.dict(os.environ, {"PSUTIL_PROCFS_PATH": tdir}):
-                importlib.reload(psutil)
-            assert tdir == psutil.PROCFS_PATH
-        finally:
-            importlib.reload(psutil)
-        assert psutil.PROCFS_PATH == "/proc"
+        env = PYTHON_EXE_ENV.copy()
+        env["PSUTIL_PROCFS_PATH"] = tdir
+        cmd = [PYTHON_EXE, "-c", "import psutil; print(psutil.PROCFS_PATH)"]
+        assert sh(cmd, env=env) == tdir
 
     def test_pid_exists_no_proc_status(self):
         # Internally pid_exists relies on /proc/{pid}/status.
