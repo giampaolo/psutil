@@ -276,7 +276,7 @@ if LINUX or FREEBSD:
 
 if LINUX or SUNOS or AIX:
 
-    PROCFS_PATH = os.environ.get("PSUTIL_PROCFS_PATH", "/proc")
+    PROCFS_PATH = os.environ.get("PSUTIL_PROCFS_PATH") or "/proc"
     __all__.extend(["PROCFS_PATH", "set_procfs_path"])
 
     def set_procfs_path(path: str) -> None:
