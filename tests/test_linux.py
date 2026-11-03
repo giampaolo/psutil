@@ -1601,21 +1601,21 @@ class TestProcfsPath(LinuxTestCase):
         psutil.set_procfs_path(tdir + "/")
         assert tdir == psutil.PROCFS_PATH
 
-        with pytest.raises(OSError):
+        with pytest.raises(FileNotFoundError):
             psutil.virtual_memory()
-        with pytest.raises(OSError):
+        with pytest.raises(FileNotFoundError):
             psutil.cpu_times()
-        with pytest.raises(OSError):
+        with pytest.raises(FileNotFoundError):
             psutil.cpu_times(percpu=True)
-        with pytest.raises(OSError):
+        with pytest.raises(FileNotFoundError):
             psutil.boot_time()
-        with pytest.raises(OSError):
+        with pytest.raises(FileNotFoundError):
             psutil.net_connections()
-        with pytest.raises(OSError):
+        with pytest.raises(FileNotFoundError):
             psutil.net_io_counters()
-        with pytest.raises(OSError):
+        with pytest.raises(FileNotFoundError):
             psutil.net_if_stats()
-        with pytest.raises(OSError):
+        with pytest.raises(FileNotFoundError):
             psutil.disk_partitions()
         with pytest.raises(psutil.NoSuchProcess):
             psutil.Process()
