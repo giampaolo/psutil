@@ -48,6 +48,7 @@ static PyMethodDef mod_methods[] = {
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
     {"pids", psutil_pids, METH_VARARGS},
+    {"ppid_map", psutil_ppid_map, METH_VARARGS},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
     {"swap_mem", psutil_swap_mem, METH_VARARGS},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
