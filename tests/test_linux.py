@@ -1595,34 +1595,37 @@ class TestProcfsPath(LinuxTestCase):
     def test_set_procfs_path(self):
         tdir = self.get_testfn()
         os.mkdir(tdir)
-        try:
-            psutil.set_procfs_path(tdir + "/")
-            assert tdir == psutil.PROCFS_PATH
-            with pytest.raises(OSError):
-                psutil.virtual_memory()
-            with pytest.raises(OSError):
-                psutil.cpu_times()
-            with pytest.raises(OSError):
-                psutil.cpu_times(percpu=True)
-            with pytest.raises(OSError):
-                psutil.boot_time()
-            with pytest.raises(OSError):
-                psutil.net_connections()
-            with pytest.raises(OSError):
-                psutil.net_io_counters()
-            with pytest.raises(OSError):
-                psutil.net_if_stats()
-            with pytest.raises(OSError):
-                psutil.disk_partitions()
-            with pytest.raises(psutil.NoSuchProcess):
-                psutil.Process()
-            psutil.set_procfs_path(os.fsencode(tdir))
-            assert tdir == psutil.PROCFS_PATH
-            with pytest.raises(FileNotFoundError):
-                psutil.set_procfs_path(tdir + "/nonexistent")
-            assert tdir == psutil.PROCFS_PATH
-        finally:
-            psutil.set_procfs_path("/proc")
+        self.addCleanup(psutil.set_procfs_path, "/proc")
+
+        psutil.set_procfs_path(tdir + "/")
+        assert tdir == psutil.PROCFS_PATH
+
+        with pytest.raises(OSError):
+            psutil.virtual_memory()
+        with pytest.raises(OSError):
+            psutil.cpu_times()
+        with pytest.raises(OSError):
+            psutil.cpu_times(percpu=True)
+        with pytest.raises(OSError):
+            psutil.boot_time()
+        with pytest.raises(OSError):
+            psutil.net_connections()
+        with pytest.raises(OSError):
+            psutil.net_io_counters()
+        with pytest.raises(OSError):
+            psutil.net_if_stats()
+        with pytest.raises(OSError):
+            psutil.disk_partitions()
+        with pytest.raises(psutil.NoSuchProcess):
+            psutil.Process()
+
+        # a bytes path is converted internally to str
+        psutil.set_procfs_path(os.fsencode(tdir))
+        assert tdir == psutil.PROCFS_PATH
+
+        with pytest.raises(FileNotFoundError):
+            psutil.set_procfs_path(tdir + "/nonexistent")
+        assert tdir == psutil.PROCFS_PATH
 
     def test_set_procfs_path_clears_caches(self):
         list(psutil.process_iter())
