@@ -2809,15 +2809,11 @@ Configuration
 
 .. function:: set_procfs_path(path)
 
-  Set the path where the ``/proc`` filesystem is mounted on Linux, Solaris and
-  AIX. Use it when ``/proc`` lives elsewhere, typically to read the host's
-  ``/proc`` from inside a Linux container such as Docker or Heroku. *path* must
-  be an existing directory. This also resets the internal caches that depend on
-  it.
-
-  It must be noted that this trick works only for APIs which rely on ``/proc``
-  filesystem (e.g. memory-related APIs and many (but not all) :class:`Process`
-  class methods).
+  Set the path where ``/proc`` is mounted, typically when you want to read the
+  host's ``/proc`` from inside a container such as Docker. Only the APIs that
+  read ``/proc`` are affected (e.g. memory APIs and many :class:`Process`
+  methods). *path* must be an existing directory. This also resets internal
+  caches that depend on ``/proc``.
 
   .. availability:: Linux, SunOS, AIX
 
@@ -2827,11 +2823,9 @@ Configuration
 
 .. data:: PROCFS_PATH
 
-  The current path of the ``/proc`` filesystem, as set by
-  :func:`set_procfs_path`. Defaults to ``'/proc'``, or to the
-  :envvar:`PSUTIL_PROCFS_PATH` environment variable when set. Treat it as
-  read-only: assigning it directly still works, but skips the path check and
-  the cache reset.
+  The current ``/proc`` path. Defaults to ``'/proc'``, or to
+  :envvar:`PSUTIL_PROCFS_PATH` when set. Treat it as read-only, and use
+  :func:`set_procfs_path` to change it.
 
   .. availability:: Linux, SunOS, AIX
 
