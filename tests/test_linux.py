@@ -1649,7 +1649,9 @@ class TestProcfsPath(LinuxTestCase):
         psutil.net_io_counters()
         psutil.cpu_percent(percpu=True)
         psutil.cpu_times_percent(percpu=True)
+        psutil.pids()
         psutil.set_procfs_path("/proc")
+        assert psutil._LOWEST_PID is None
         assert psutil._pmap == {}
         assert psutil._wrap_numbers.cache_info() == ({}, {}, {})
         assert psutil._last_cpu_times == {}

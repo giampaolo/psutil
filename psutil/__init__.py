@@ -2853,7 +2853,7 @@ if LINUX or SUNOS or AIX:
         Prefer this over assigning PROCFS_PATH directly, as it also
         resets internal caches that depend on it.
         """
-        global PROCFS_PATH, _TOTAL_PHYMEM
+        global PROCFS_PATH, _TOTAL_PHYMEM, _LOWEST_PID
         path = os.fspath(path)  # accept a pathlib path
         if not isinstance(path, str):
             msg = f"path must be a str (got {type(path)})"
@@ -2866,6 +2866,7 @@ if LINUX or SUNOS or AIX:
 
         # clear caches
         _TOTAL_PHYMEM = None
+        _LOWEST_PID = None
         process_iter.cache_clear()
         _wrap_numbers.cache_clear()
         _last_cpu_times.clear()
