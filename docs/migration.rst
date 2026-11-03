@@ -27,6 +27,8 @@ Key breaking changes in 8.0:
 - New :attr:`Process.snapshot`: a read-only :class:`ProcessSnapshot` holding
   the attributes collected by :func:`process_iter`; ``Process.info`` is
   deprecated.
+- New :func:`set_procfs_path` function to relocate ``/proc``. Use this instead
+  of setting :data:`PROCFS_PATH`.
 - Python 3.6 and 3.7 dropped.
 - Windows < 10 dropped.
 - macOS 10.7 and 10.8 dropped.
@@ -184,6 +186,26 @@ platform-specific memory metrics which complement :meth:`Process.memory_info`:
 - Windows: :field:`virtual`, :field:`peak_virtual`, :field:`paged_pool`,
   :field:`nonpaged_pool`, :field:`peak_paged_pool`,
   :field:`peak_nonpaged_pool`.
+
+.. _migration-8.0-procfs-path:
+
+New set_procfs_path() function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Assigning :data:`PROCFS_PATH` directly still works but leaves internal caches
+stale. Use :func:`set_procfs_path` instead:
+
+.. autolink-skip::
+.. code-block:: python
+
+  # before
+  psutil.PROCFS_PATH = "/host/proc"
+
+  # after
+  psutil.set_procfs_path("/host/proc")
+
+The :envvar:`PSUTIL_PROCFS_PATH` environment variable does the same from
+outside the process.
 
 Python 3.6 and 3.7 dropped
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
