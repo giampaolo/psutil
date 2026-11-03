@@ -70,3 +70,17 @@ class TestRequestAll:
         finally:
             ghlib.request = orig_request
         assert paths == ["/x?per_page=100&page=1", "/x?per_page=100&page=2"]
+
+
+class TestGraphql:
+    def test_errors_raise(self):
+        def fake_request(path, post):
+            return {"data": {"user": None}, "errors": [{"type": "NOT_FOUND"}]}
+
+        orig_request = ghlib.request
+        ghlib.request = fake_request
+        try:
+            with pytest.raises(ghlib.GitHubError, match="NOT_FOUND"):
+                ghlib.graphql("query", {})
+        finally:
+            ghlib.request = orig_request
