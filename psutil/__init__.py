@@ -294,6 +294,7 @@ if LINUX or SUNOS or AIX:
             msg = f"path must be a str (got {type(path)})"
             raise TypeError(msg)
         os.listdir(path)
+        # drop trailing slashes, keeping "/" as is
         PROCFS_PATH = path.rstrip("/") or "/"
 
         # clear caches
