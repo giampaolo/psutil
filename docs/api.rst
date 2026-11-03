@@ -2807,17 +2807,13 @@ Utilities
 Configuration
 -------------
 
-.. _const-procfs_path:
+.. function:: set_procfs_path(path)
 
-.. data:: PROCFS_PATH
-
-  The path of the ``/proc`` filesystem on Linux, Solaris and AIX. Defaults to
-  ``'/proc'``, or to the :envvar:`PSUTIL_PROCFS_PATH` environment variable when
-  set. Change it with :func:`set_procfs_path` when ``/proc`` is mounted
-  elsewhere, typically to read the host's ``/proc`` from inside a Linux
-  container such as Docker, Heroku or LXC (see
-  `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`_
-  for more info).
+  Set the path where the ``/proc`` filesystem is mounted on Linux, Solaris and
+  AIX. Use it when ``/proc`` lives elsewhere, typically to read the host's
+  ``/proc`` from inside a Linux container such as Docker or Heroku. *path* must
+  be an existing directory. This also resets the internal caches that depend on
+  it.
 
   It must be noted that this trick works only for APIs which rely on ``/proc``
   filesystem (e.g. memory-related APIs and many (but not all) :class:`Process`
@@ -2825,18 +2821,22 @@ Configuration
 
   .. availability:: Linux, SunOS, AIX
 
-  .. versionchanged:: 8.0.0
-     the :envvar:`PSUTIL_PROCFS_PATH` environment variable is honored.
+  .. versionadded:: 8.0.0
 
-.. function:: set_procfs_path(path)
+.. _const-procfs_path:
 
-  Set :data:`PROCFS_PATH`. *path* must be an existing directory. Prefer this
-  over assigning the constant directly: it validates the path and resets the
-  internal caches that depend on it.
+.. data:: PROCFS_PATH
+
+  The current path of the ``/proc`` filesystem, as set by
+  :func:`set_procfs_path`. Defaults to ``'/proc'``, or to the
+  :envvar:`PSUTIL_PROCFS_PATH` environment variable when set. Treat it as
+  read-only: assigning it directly still works, but skips the path check and
+  the cache reset.
 
   .. availability:: Linux, SunOS, AIX
 
-  .. versionadded:: 8.0.0
+  .. versionchanged:: 8.0.0
+     the :envvar:`PSUTIL_PROCFS_PATH` environment variable is honored.
 
 Environment variables
 ---------------------
