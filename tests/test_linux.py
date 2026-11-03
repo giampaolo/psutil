@@ -1624,6 +1624,13 @@ class TestProcfsPath(LinuxTestCase):
             psutil.set_procfs_path(tdir + "/nonexistent")
         assert tdir == psutil.PROCFS_PATH
 
+        # not a dir
+        tfile = self.get_testfn()
+        pathlib.Path(tfile).touch()
+        with pytest.raises(NotADirectoryError):
+            psutil.set_procfs_path(tfile)
+        assert tdir == psutil.PROCFS_PATH
+
         with pytest.raises(TypeError, match="must be a str"):
             psutil.set_procfs_path(b"/proc")
         assert tdir == psutil.PROCFS_PATH

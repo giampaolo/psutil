@@ -293,7 +293,7 @@ if LINUX or SUNOS or AIX:
         if not isinstance(path, str):
             msg = f"path must be a str (got {type(path)})"
             raise TypeError(msg)
-        os.listdir(path)
+        os.scandir(path).close()  # raise if not an existing directory
         # drop trailing slashes, keeping "/" as is
         PROCFS_PATH = path.rstrip("/") or "/"
 
