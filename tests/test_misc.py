@@ -229,6 +229,7 @@ class TestMisc(PsutilTestCase):
         dir_psutil = dir(psutil)
         # assert there's no duplicates
         assert len(dir_psutil) == len(set(dir_psutil))
+        assert len(psutil.__all__) == len(set(psutil.__all__))
         for name in dir_psutil:
             if name in {
                 'debug',

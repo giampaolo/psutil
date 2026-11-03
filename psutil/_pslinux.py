@@ -49,7 +49,7 @@ from ._enums import NicDuplex
 from ._enums import ProcessIOPriority
 from ._enums import ProcessStatus
 
-__extra__all__ = ['PROCFS_PATH']
+__extra__all__ = []
 
 
 # =====================================================================
