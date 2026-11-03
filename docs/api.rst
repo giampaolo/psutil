@@ -2775,8 +2775,37 @@ Hardware constants
   Whether the remaining time of a battery cannot be determined or is unlimited.
   May be assigned to :func:`psutil.sensors_battery`'s :field:`secsleft` field.
 
-Other constants
-^^^^^^^^^^^^^^^
+Utilities
+---------
+
+.. function:: bytes2human(n)
+
+  Convert *n* bytes to a human-readable string.
+
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.bytes2human(10000)
+     '9.8K'
+     >>> psutil.bytes2human(100001221)
+     '95.4M'
+
+  .. versionadded:: 8.0.0
+
+.. _const-version-info:
+
+.. data:: version_info
+
+  A tuple to check psutil installed version.
+
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> if psutil.version_info >= (4, 5):
+     ...    pass
+
+Configuration
+-------------
 
 .. _const-procfs_path:
 
@@ -2809,35 +2838,6 @@ Other constants
 
   .. versionadded:: 8.0.0
 
-Utilities
----------
-
-.. function:: bytes2human(n)
-
-  Convert *n* bytes to a human-readable string.
-
-  .. code-block:: pycon
-
-     >>> import psutil
-     >>> psutil.bytes2human(10000)
-     '9.8K'
-     >>> psutil.bytes2human(100001221)
-     '95.4M'
-
-  .. versionadded:: 8.0.0
-
-.. _const-version-info:
-
-.. data:: version_info
-
-  A tuple to check psutil installed version.
-
-  .. code-block:: pycon
-
-     >>> import psutil
-     >>> if psutil.version_info >= (4, 5):
-     ...    pass
-
 Environment variables
 ---------------------
 
@@ -2849,15 +2849,17 @@ Environment variables
   Python layer and the underlying C extension modules. It can also be toggled
   programmatically at runtime via ``psutil._set_debug(True)``.
 
-.. envvar:: PSUTIL_PROCFS_PATH
-
-  The initial value of :data:`PROCFS_PATH`, checked at import time.
-
-  .. versionadded:: 8.0.0
-
   .. code-block:: bash
 
      $ PSUTIL_DEBUG=1 python3 script.py
+
+.. envvar:: PSUTIL_PROCFS_PATH
+
+  If set, psutil uses it as :data:`PROCFS_PATH` instead of ``'/proc'``. It is
+  read once at import time. To change the path later, use
+  :func:`set_procfs_path`.
+
+  .. versionadded:: 8.0.0
 
 .. envvar:: PSUTIL_BUILD_JOBS
 

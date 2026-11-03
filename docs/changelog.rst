@@ -64,7 +64,7 @@ Changelog
 - :gh:`1452`, :gh:`2993`, [Linux], [macOS], [Windows]:
   :meth:`Process.memory_footprint` returns a new :field:`shared` field:
   resident memory shared with other processes.
-- [Linux, SunOS, AIX]: new :func:`set_procfs_path` function to relocate
+- [Linux], [SunOS], [AIX]: new :func:`set_procfs_path` function to relocate
   ``/proc``, and :data:`PROCFS_PATH` now defaults to the
   :envvar:`PSUTIL_PROCFS_PATH` environment variable when set.
 
