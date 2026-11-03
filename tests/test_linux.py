@@ -1587,69 +1587,11 @@ class TestRootFsDeviceFinder(LinuxTestCase):
 
 
 # =====================================================================
-# --- misc
+# --- procfs path
 # =====================================================================
 
 
-class TestMisc(LinuxTestCase):
-    def test_no_procfs_on_import(self):
-        my_procfs = self.get_testfn()
-        os.mkdir(my_procfs)
-
-        with open(os.path.join(my_procfs, 'stat'), 'w') as f:
-            f.write('cpu   0 0 0 0 0 0 0 0 0 0\n')
-            f.write('cpu0  0 0 0 0 0 0 0 0 0 0\n')
-            f.write('cpu1  0 0 0 0 0 0 0 0 0 0\n')
-
-        try:
-            with mock_open_content({"/proc*": FileNotFoundError}):
-                importlib.reload(psutil)
-
-                with pytest.raises(OSError):
-                    psutil.cpu_times()
-                with pytest.raises(OSError):
-                    psutil.cpu_times(percpu=True)
-                with pytest.raises(OSError):
-                    psutil.cpu_percent()
-                with pytest.raises(OSError):
-                    psutil.cpu_percent(percpu=True)
-                with pytest.raises(OSError):
-                    psutil.cpu_times_percent()
-                with pytest.raises(OSError):
-                    psutil.cpu_times_percent(percpu=True)
-
-                psutil.PROCFS_PATH = my_procfs
-
-                assert psutil.cpu_percent() == 0
-                assert sum(psutil.cpu_times_percent()) == 0
-
-                # since we don't know the number of CPUs at import time,
-                # we awkwardly say there are none until the second call
-                per_cpu_percent = psutil.cpu_percent(percpu=True)
-                assert sum(per_cpu_percent) == 0
-
-                # ditto awkward length
-                per_cpu_times_percent = psutil.cpu_times_percent(percpu=True)
-                assert sum(map(sum, per_cpu_times_percent)) == 0
-
-                # much user, very busy
-                with open(os.path.join(my_procfs, 'stat'), 'w') as f:
-                    f.write('cpu   1 0 0 0 0 0 0 0 0 0\n')
-                    f.write('cpu0  1 0 0 0 0 0 0 0 0 0\n')
-                    f.write('cpu1  1 0 0 0 0 0 0 0 0 0\n')
-
-                assert psutil.cpu_percent() != 0
-                assert sum(psutil.cpu_percent(percpu=True)) != 0
-                assert sum(psutil.cpu_times_percent()) != 0
-                assert (
-                    sum(map(sum, psutil.cpu_times_percent(percpu=True))) != 0
-                )
-        finally:
-            shutil.rmtree(my_procfs)
-            importlib.reload(psutil)
-
-        assert psutil.PROCFS_PATH == '/proc'
-
+class TestProcfsPath(LinuxTestCase):
     def test_procfs_path(self):
         tdir = self.get_testfn()
         os.mkdir(tdir)
@@ -1713,6 +1655,71 @@ class TestMisc(LinuxTestCase):
         assert sh(cmd, env=env) == tdir
         env["PSUTIL_PROCFS_PATH"] = ""
         assert sh(cmd, env=env) == "/proc"
+
+
+# =====================================================================
+# --- misc
+# =====================================================================
+
+
+class TestMisc(LinuxTestCase):
+    def test_no_procfs_on_import(self):
+        my_procfs = self.get_testfn()
+        os.mkdir(my_procfs)
+
+        with open(os.path.join(my_procfs, 'stat'), 'w') as f:
+            f.write('cpu   0 0 0 0 0 0 0 0 0 0\n')
+            f.write('cpu0  0 0 0 0 0 0 0 0 0 0\n')
+            f.write('cpu1  0 0 0 0 0 0 0 0 0 0\n')
+
+        try:
+            with mock_open_content({"/proc*": FileNotFoundError}):
+                importlib.reload(psutil)
+
+                with pytest.raises(OSError):
+                    psutil.cpu_times()
+                with pytest.raises(OSError):
+                    psutil.cpu_times(percpu=True)
+                with pytest.raises(OSError):
+                    psutil.cpu_percent()
+                with pytest.raises(OSError):
+                    psutil.cpu_percent(percpu=True)
+                with pytest.raises(OSError):
+                    psutil.cpu_times_percent()
+                with pytest.raises(OSError):
+                    psutil.cpu_times_percent(percpu=True)
+
+                psutil.PROCFS_PATH = my_procfs
+
+                assert psutil.cpu_percent() == 0
+                assert sum(psutil.cpu_times_percent()) == 0
+
+                # since we don't know the number of CPUs at import time,
+                # we awkwardly say there are none until the second call
+                per_cpu_percent = psutil.cpu_percent(percpu=True)
+                assert sum(per_cpu_percent) == 0
+
+                # ditto awkward length
+                per_cpu_times_percent = psutil.cpu_times_percent(percpu=True)
+                assert sum(map(sum, per_cpu_times_percent)) == 0
+
+                # much user, very busy
+                with open(os.path.join(my_procfs, 'stat'), 'w') as f:
+                    f.write('cpu   1 0 0 0 0 0 0 0 0 0\n')
+                    f.write('cpu0  1 0 0 0 0 0 0 0 0 0\n')
+                    f.write('cpu1  1 0 0 0 0 0 0 0 0 0\n')
+
+                assert psutil.cpu_percent() != 0
+                assert sum(psutil.cpu_percent(percpu=True)) != 0
+                assert sum(psutil.cpu_times_percent()) != 0
+                assert (
+                    sum(map(sum, psutil.cpu_times_percent(percpu=True))) != 0
+                )
+        finally:
+            shutil.rmtree(my_procfs)
+            importlib.reload(psutil)
+
+        assert psutil.PROCFS_PATH == '/proc'
 
     def test_pid_exists_no_proc_status(self):
         # Internally pid_exists relies on /proc/{pid}/status.
