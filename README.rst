@@ -18,10 +18,11 @@
       <a href="https://repology.org/metapackage/python:psutil/versions"><img src="https://repology.org/badge/tiny-repos/python:psutil.svg" alt="Binary packages"></a>
 
       <a href="https://pypi.org/project/psutil"><img src="https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=yellowgreen" alt="Latest version"></a>
+
     </div>
 
     <div align="center">
-      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Atests"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/tests.yml.svg?label=Linux%2C%20macOS%2C%20Win" alt="Linux, macOS, Windows"></a>
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Atests"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/tests.yml.svg?label=Linux%2C%20Windows%2C%20macOS" alt="Linux, Windows, macOS"></a>
 
       <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Absd"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=BSD" alt="FreeBSD, NetBSD, OpenBSD"></a>
 
