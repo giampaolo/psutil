@@ -117,7 +117,8 @@ def post_title(rst):
     lines = rst.read_text().splitlines()
     for i in range(1, len(lines)):
         if re.fullmatch(r"=+", lines[i].strip()):
-            return lines[i - 1].strip()
+            title = lines[i - 1].strip()
+            return re.sub(r":(?:func|meth):`([^`]+)`", r"\1()", title)
     raise ValueError(f"no RST H1 found in {rst}")
 
 
