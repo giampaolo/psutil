@@ -117,7 +117,8 @@ def post_title(rst):
     lines = rst.read_text().splitlines()
     for i in range(1, len(lines)):
         if re.fullmatch(r"=+", lines[i].strip()):
-            return lines[i - 1].strip()
+            title = lines[i - 1].strip()
+            return re.sub(r":(?:func|meth):`([^`]+)`", r"\1()", title)
     raise ValueError(f"no RST H1 found in {rst}")
 
 
@@ -509,6 +510,28 @@ class TestRightToc:
         terms = re.findall(r'<a href="#term-[^"]*">([^<]+)</a>', m.group(1))
         assert terms
         assert terms == sorted(terms, key=str.lower)
+
+
+@pytest.mark.usefixtures("build_html")
+class TestPrevNext:
+
+    def links(self, file):
+        html = read_html(file)
+        return dict(
+            re.findall(r'href="\.\./([^"/]+)/" rel="(prev|next)"', html)
+        )
+
+    def test_pages_outside_sphinx_relations(self, subtests):
+        # blog (ablog) and genindex don't get Sphinx's prev/next;
+        # conf.py fills them in from the root toctree order.
+        expected = {
+            "blog.html": {"credits": "prev", "changelog": "next"},
+            "devguide.html": {"timeline": "prev", "genindex": "next"},
+            "genindex.html": {"devguide": "prev"},
+        }
+        for file, links in expected.items():
+            with subtests.test(file=file):
+                assert self.links(file) == links
 
 
 @pytest.mark.usefixtures("build_html")

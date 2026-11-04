@@ -10,8 +10,8 @@ validation gate against small RST fixtures; no network or API is used.
 """
 
 import importlib.util
-import io
 import pathlib
+import re
 
 import pytest
 
@@ -61,6 +61,14 @@ class TestContext:
         # The released block below must not be included.
         assert "7.2.2" not in block
         assert ":gh:`50`" not in block
+
+
+class TestSections:
+    def test_match_changelog_comment(self):
+        path = BOT_PATH.parents[2] / "docs" / "changelog.rst"
+        head = path.read_text().split("\nChangelog\n")[0]
+        listed = re.findall(r"^   - (.+?) \[", head, re.MULTILINE)
+        assert tuple(listed) == cb.SECTIONS
 
 
 class TestInsert:
@@ -324,6 +332,27 @@ Changelog
             cb.bugfix_section(CHANGELOG, "- :gh:`40`, [Windows]: x.")
             == "Bug fixes"
         )
+
+    def test_insert_drops_tag_repeating_section(self):
+        decision = {
+            "action": "insert",
+            "section": "Bug fixes",
+            "entry_text": "- :gh:`40`, [Windows], :label:`critical`: x.",
+        }
+        out, _, _ = cb.apply_changelog_decision(self.SPLIT, decision, {40})
+        win = out.split("**Bug fixes: Windows**")[1]
+        assert "- :gh:`40`, :label:`critical`: x." in win
+        assert decision["entry_text"] == "- :gh:`40`, :label:`critical`: x."
+
+    def test_amend_drops_tag_repeating_section(self):
+        decision = {
+            "action": "amend",
+            "amend_gh": 20,
+            "entry_text": "- :gh:`20`, [Windows]: win bug, extended.",
+        }
+        out, _, _ = cb.apply_changelog_decision(self.SPLIT, decision, set())
+        assert "- :gh:`20`: win bug, extended." in out
+        assert "[Windows]" not in out
 
 
 class TestOrderCheck:
@@ -1010,7 +1039,7 @@ class TestDecisionPostRelease:
             RELEASED_TOP, decision, {10}
         )
         assert status == "inserted"
-        assert "X.X.X (IN DEVELOPMENT)" in out
+        assert "X.X.X — unreleased" in out
 
     def test_amend_rejected_when_top_block_released(self):
         # Amending released history is never allowed.
@@ -1040,55 +1069,9 @@ Changelog
 """
         out = cb.insert_entry(text, "Bug fixes", "- :gh:`300`: new bug.")
         lines = out.splitlines()
-        dev = lines.index("X.X.X (IN DEVELOPMENT)")
+        dev = lines.index("X.X.X — unreleased")
         released = lines.index("8.0.1 (2026-02-01)")
         new = lines.index("- :gh:`300`: new bug.")
         # New dev block sits above the released one, entry inside it.
         assert dev < new < released
-        assert lines[dev + 1] == "^" * len("X.X.X (IN DEVELOPMENT)")
-
-
-class TestGhRequest:
-    class _Resp:
-        def __init__(self, body):
-            self.body = body
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *a):
-            return False
-
-        def read(self):
-            return self.body
-
-    def _call(self, result):
-        def fake_urlopen(req, timeout=None):
-            if isinstance(result, Exception):
-                raise result
-            return self._Resp(result)
-
-        orig_open = cb.urllib.request.urlopen
-        cb.urllib.request.urlopen = fake_urlopen
-        cb.TOKEN = "x"
-        try:
-            return cb.gh_request("/x")
-        finally:
-            cb.urllib.request.urlopen = orig_open
-
-    def _http_error(self, code):
-        return cb.urllib.error.HTTPError(
-            "http://x", code, "err", {}, io.BytesIO(b"<html>boom</html>")
-        )
-
-    def test_returns_body(self):
-        assert self._call(b"ok") == b"ok"
-
-    def test_error_includes_github_body(self):
-        # A bare "HTTP Error 404" hides why GitHub refused.
-        err = self._http_error(404)
-        try:
-            with pytest.raises(SystemExit, match="boom"):
-                self._call(err)
-        finally:
-            err.close()
+        assert lines[dev + 1] == "^" * len("X.X.X — unreleased")

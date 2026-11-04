@@ -12,8 +12,8 @@ psutil 5.6.0 is out. Highlights: a new :meth:`Process.parents` method, several
 important Windows improvements, and the removal of :meth:`Process.memory_maps`
 on macOS.
 
-Process parents()
------------------
+:meth:`Process.parents`
+-----------------------
 
 The new method returns the parents of a process as a list of :class:`Process`
 instances. If no parents are known, an empty list is returned.
@@ -51,8 +51,8 @@ can query processes owned by other users (Administrator, Local System), meaning
 fewer :exc:`AccessDenied` exceptions for low-PID processes. The code setting it
 had presumably been broken for years and is now finally fixed in :pr:`1429`.
 
-Removal of Process.memory_maps() on macOS
------------------------------------------
+Removal of :meth:`Process.memory_maps` on macOS
+-----------------------------------------------
 
 :meth:`Process.memory_maps` is gone on macOS (:gh:`1291`). The underlying Apple
 API would randomly raise ``EINVAL`` or segfault the host process, and no amount

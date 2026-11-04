@@ -248,8 +248,8 @@
 
 .. raw:: html
 
+   <div class="home-section-label">Sponsors</div>
    <div id="sponsors">
-     <div class="home-section-label">Sponsors</div>
 
 .. raw:: html
    :file: _sponsors.html
@@ -268,7 +268,7 @@
 
    Install <install>
    API overview <api-overview>
-   API Reference <api>
+   API reference <api>
    FAQ <faq>
    Performance <performance>
    Recipes <recipes>
@@ -301,4 +301,4 @@
    Changelog <changelog>
    Timeline <timeline>
    Development guide <devguide>
-   General Index <genindex>
+   General index <genindex>

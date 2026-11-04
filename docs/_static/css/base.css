@@ -61,6 +61,7 @@
 
     /* Borders. */
     --border: #dddddd;
+    --heading-rule: var(--border);
     --scrollbar-thumb: #c1c1c1;
     --border-radius: 6px;
     --border-radius-code: 3px;
@@ -105,9 +106,7 @@
 
     /* Version directives (versionadded / versionchanged / deprecated). */
     --versionadded-border: #4fc464;
-    --versionadded-color: #296433;
-    --versionchanged-border: #f4e34c;
-    --versionchanged-color: #854826;
+    --versionchanged-border: #d4a72c;
     --deprecated-border: #f44c4e;
     --deprecated-color: #9f3133;
 
@@ -119,18 +118,10 @@
     --table-border: var(--border);
 
     /* Changelog labels. */
-    --label-critical-bg: #fdeaea;
     --label-critical-text: #a3161a;
-    --label-critical-border: #f3c6c7;
-    --label-build-fail-bg: #fdf2ea;
     --label-build-fail-text: #933e06;
-    --label-build-fail-border: #f4d3bd;
-    --label-memleak-bg: #fdf5d8;
     --label-memleak-text: #7d5e00;
-    --label-memleak-border: #f2dc9c;
-    --label-breaking-bg: #f4eefe;
     --label-breaking-text: #5c3fa3;
-    --label-breaking-border: #e0d4fa;
 
     /* ================================================================== */
     /* Fonts                                                              */
@@ -208,6 +199,7 @@
 
     /* Borders. */
     --border: #2e2e2e;
+    --heading-rule: #3d3d3d;
     --scrollbar-thumb: #4a4a4a;
 
     /* Accent: lighter blue for sufficient contrast on dark. */
@@ -215,8 +207,8 @@
     --accent-ring: rgba(106, 176, 222, 0.35);
 
     /* API links + signature box. */
-    --links-api: #7ecfff;
-    --links-api-underline: #7ecfff;
+    --links-api: #6ab0de;
+    --links-api-underline: #6ab0de;
     --func-sig-bg: #2c2c2c;
     --func-sig-border: #7ecfff;
     --func-sig-text: #e0e0e0;
@@ -242,15 +234,13 @@
     --adm-important-bg: #2a200d;
     --adm-important-border: #6e5328;
     --adm-important-icon: #d4a23e;
-    --adm-seealso-bg: #1d2e40;
-    --adm-seealso-border: #2d5280;
-    --adm-seealso-accent-border: #5599cc;
+    --adm-seealso-bg: #1c232b;
+    --adm-seealso-border: #2a3a4d;
+    --adm-seealso-accent-border: #4a7fae;
     --adm-seealso-link: #90c8ee;
     --adm-seealso-hover: #8bbfe0;
 
     /* Version directives: dark mode overrides. */
-    --versionadded-color: #5ec46e;
-    --versionchanged-color: #b0873a;
     --deprecated-color: #d06060;
 
     /* Tables: dark mode overrides. */
@@ -260,38 +250,31 @@
     --table-border: #424242;
 
     /* Changelog labels. */
-    --label-critical-bg: rgba(225, 29, 33, 0.16);
     --label-critical-text: #ff8a8c;
-    --label-critical-border: rgba(225, 29, 33, 0.45);
-    --label-build-fail-bg: rgba(245, 104, 10, 0.14);
     --label-build-fail-text: #f79f64;
-    --label-build-fail-border: rgba(245, 104, 10, 0.4);
-    --label-memleak-bg: rgba(251, 202, 4, 0.14);
     --label-memleak-text: #e5b833;
-    --label-memleak-border: rgba(251, 202, 4, 0.4);
-    --label-breaking-bg: rgba(212, 197, 249, 0.14);
     --label-breaking-text: #cbb9f7;
-    --label-breaking-border: rgba(212, 197, 249, 0.4);
 }
 
 /* ====================================================================== */
 /* Theme transition                                                       */
 /* ====================================================================== */
 
-body,
-.page,
-.article,
-.right-sidebar,
-.right-sidebar-title,
-.topbar,
-.footer,
-.search-page-form,
-ul.search > li,
-.shortcut-flyout-panel {
-    transition:
-        background-color var(--theme-transition),
-        color var(--theme-transition),
-        border-color var(--theme-transition);
+/* only during the switch (theme-toggle.js); no text color: it's
+   inherited and makes big pages (api, changelog) stutter */
+@media (prefers-reduced-motion: no-preference) {
+    html.theme-switching *,
+    html.theme-switching *::before,
+    html.theme-switching *::after {
+        transition:
+            background-color var(--theme-transition),
+            border-color var(--theme-transition) !important;
+    }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 0.25s;
 }
 
 .no-transition,

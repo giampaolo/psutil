@@ -190,10 +190,6 @@ if _TYPE_CHECKING:
 
 
 if LINUX:
-    # This is public API and it will be retrieved from _pslinux.py
-    # via sys.modules.
-    PROCFS_PATH = "/proc"
-
     from . import _pslinux as _psplatform
     from ._enums import ProcessIOPriority
     from ._enums import ProcessRlimit
@@ -215,16 +211,8 @@ elif BSD:
 elif SUNOS:
     from . import _pssunos as _psplatform
 
-    # This is public writable API which is read from _pslinux.py and
-    # _pssunos.py via sys.modules.
-    PROCFS_PATH = "/proc"
-
 elif AIX:
     from . import _psaix as _psplatform
-
-    # This is public API and it will be retrieved from _pslinux.py
-    # via sys.modules.
-    PROCFS_PATH = "/proc"
 
 else:  # pragma: no cover
     msg = f"platform {sys.platform} is not supported"
@@ -285,8 +273,11 @@ if WINDOWS:
     _export_enum(ProcessPriority)
 if LINUX or FREEBSD:
     _export_enum(ProcessRlimit)
+
 if LINUX or SUNOS or AIX:
-    __all__.append("PROCFS_PATH")
+    PROCFS_PATH = "/proc"
+    __all__.extend(["PROCFS_PATH", "set_procfs_path"])
+
 
 del _globals, _export_enum
 
@@ -2056,11 +2047,6 @@ def cpu_count(logical: bool = True) -> int | None:
     (e.g. hyper thread CPUs are excluded).
 
     Return None if undetermined.
-
-    The return value is cached after first call.
-    If desired cache can be cleared like this:
-
-    >>> psutil.cpu_count.cache_clear()
     """
     if logical:
         ret = _psplatform.cpu_count_logical()
@@ -2854,6 +2840,42 @@ if hasattr(_psplatform, "heap_info"):
 
 
 # =====================================================================
+# --- configuration
+# =====================================================================
+
+if LINUX or SUNOS or AIX:
+
+    def set_procfs_path(path: str) -> None:
+        """Set PROCFS_PATH, the path where the /proc filesystem is
+        mounted (e.g. "/host/proc" inside a container).
+
+        *path* must be an existing directory, else OSError is raised.
+        Prefer this over assigning PROCFS_PATH directly, as it also
+        resets internal caches that depend on it.
+        """
+        global PROCFS_PATH, _TOTAL_PHYMEM, _LOWEST_PID
+        path = os.fspath(path)  # accept a pathlib path
+        if not isinstance(path, str):
+            msg = f"path must be a str (got {type(path)})"
+            raise TypeError(msg)
+        os.scandir(path).close()  # raise if not an existing directory
+        # Store path as absolute in case it's relative (e.g. foo ->
+        # $cwd/foo), so that a later chdir() can't break reads. This
+        # also drops trailing slashes.
+        PROCFS_PATH = os.path.abspath(path)
+
+        # clear caches
+        _TOTAL_PHYMEM = None
+        _LOWEST_PID = None
+        process_iter.cache_clear()
+        _wrap_numbers.cache_clear()
+        _last_cpu_times.clear()
+        _last_per_cpu_times.clear()
+        _last_cpu_times_2.clear()
+        _last_per_cpu_times_2.clear()
+
+    if os.environ.get("PSUTIL_PROCFS_PATH"):
+        set_procfs_path(os.environ["PSUTIL_PROCFS_PATH"])
 
 
 def _set_debug(value):
@@ -2865,5 +2887,7 @@ def _set_debug(value):
     psutil._common.PSUTIL_DEBUG = bool(value)
     _psutil.set_debug(bool(value))
 
+
+# ---
 
 del memoize_when_activated

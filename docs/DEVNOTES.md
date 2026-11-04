@@ -4,8 +4,6 @@ A collection of ideas and notes about stuff to implement in future versions.
 
 (the "too late" section)
 
-- `PROCFS_PATH` should have been `set_procfs_path()`.
-
 - `virtual_memory()` should have been `memory_virtual()`.
 
 - `swap_memory()` should have been `memory_swap()`.

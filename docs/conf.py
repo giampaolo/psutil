@@ -326,3 +326,23 @@ def setup(app):
         context["has_rst_source"] = path.is_file()
 
     app.connect("html-page-context", set_has_rst_source)
+
+    # ablog's blog page and genindex don't get Sphinx's prev/next, and
+    # devguide has no next because genindex isn't a real document.
+    def set_prev_next(app, pagename, templatename, context, doctree):
+        order = app.env.toctree_includes.get(app.config.root_doc, [])
+        if pagename not in order:
+            return
+        i = order.index(pagename)
+        for key, j in (("prev", i - 1), ("next", i + 1)):
+            if context.get(key) or not 0 <= j < len(order):
+                continue
+            doc = order[j]
+            title = (
+                app.env.titles[doc].astext()
+                if doc in app.env.titles
+                else "Index"
+            )
+            context[key] = {"link": context["pathto"](doc), "title": title}
+
+    app.connect("html-page-context", set_prev_next)

@@ -27,6 +27,8 @@ Key breaking changes in 8.0:
 - New :attr:`Process.snapshot`: a read-only :class:`ProcessSnapshot` holding
   the attributes collected by :func:`process_iter`; ``Process.info`` is
   deprecated.
+- New :func:`set_procfs_path` function to relocate ``/proc``. Use this instead
+  of setting :data:`PROCFS_PATH`.
 - Python 3.6 and 3.7 dropped.
 - Windows < 10 dropped.
 - macOS 10.7 and 10.8 dropped.
@@ -78,8 +80,8 @@ Named tuple field order changed
 
 .. _migration-8.0-snapshot:
 
-Process.info is deprecated
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+:attr:`Process.info` is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The attributes collected by :func:`process_iter(attrs=...) <process_iter>` are
 now exposed as a read-only :class:`ProcessSnapshot` via
@@ -106,8 +108,8 @@ instead of :exc:`KeyError`. If you need a dict, use
 
 .. _migration-8.0-attrs:
 
-New Process.attrs class attribute
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+New :attr:`Process.attrs` class attribute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :attr:`Process.attrs` is a new :class:`frozenset` containing the valid
 attribute names accepted by :meth:`Process.as_dict` and :func:`process_iter`.
@@ -133,8 +135,8 @@ It also makes it easy to pass all or a subset of attributes.
   # all except connections
   psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
 
-cpu_times() interrupt renamed to irq on Windows
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:func:`cpu_times` :field:`interrupt` renamed to :field:`irq` on Windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The :field:`interrupt` field of :func:`cpu_times` on Windows was renamed to
 :field:`irq` to match Linux and BSD. The old name still works but raises
@@ -162,8 +164,8 @@ working. Only code inspecting :func:`repr` or :class:`type` needs updating.
 
 .. _migration-8.0-memory-full-info:
 
-memory_full_info() is deprecated
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:meth:`~Process.memory_full_info` is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`Process.memory_full_info` is deprecated. Use
 :meth:`Process.memory_footprint` instead; it returns the footprint fields
@@ -172,8 +174,8 @@ memory_full_info() is deprecated
 
 .. _migration-8.0-memory-extras:
 
-New memory_extras() method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+New :meth:`~Process.memory_extras` method
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 8.0 introduces a new :meth:`Process.memory_extras` method, returning extra
 platform-specific memory metrics which complement :meth:`Process.memory_info`:
@@ -184,6 +186,25 @@ platform-specific memory metrics which complement :meth:`Process.memory_info`:
 - Windows: :field:`virtual`, :field:`peak_virtual`, :field:`paged_pool`,
   :field:`nonpaged_pool`, :field:`peak_paged_pool`,
   :field:`peak_nonpaged_pool`.
+
+.. _migration-8.0-procfs-path:
+
+New :func:`set_procfs_path` function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Assigning :data:`PROCFS_PATH` directly still works but leaves internal caches
+stale. Use :func:`set_procfs_path` instead:
+
+.. code-block:: python
+
+  # before
+  psutil.PROCFS_PATH = "/host/proc"
+
+  # after
+  psutil.set_procfs_path("/host/proc")
+
+The :envvar:`PSUTIL_PROCFS_PATH` environment variable does the same from
+outside the process.
 
 Python 3.6 and 3.7 dropped
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -210,15 +231,13 @@ Git tags were renamed from ``release-X.Y.Z`` to ``vX.Y.Z`` (e.g.
 your scripts or URLs reference psutil tags, update them to the new format. See
 :gh:`2788`.
 
--------------------------------------------------------------------------------
-
 .. _migration-7.0:
 
 Migrating to 7.0
 -----------------
 
-Process.memory_info_ex() removed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``Process.memory_info_ex()`` removed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``Process.memory_info_ex()``, deprecated since 4.0.0 in 2016, was removed. Use
 :meth:`Process.memory_full_info` instead.
@@ -241,15 +260,13 @@ Python 2.7 is no longer supported. The last release supporting it is psutil
 
   pip2 install "psutil==6.1.*"
 
--------------------------------------------------------------------------------
-
 .. _migration-6.0:
 
 Migrating to 6.0
 -----------------
 
-Process.connections() renamed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:meth:`Process.connections` renamed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`Process.connections` was renamed to :meth:`Process.net_connections` for
 consistency with the system-level :func:`net_connections`. The old name raises
@@ -265,8 +282,8 @@ consistency with the system-level :func:`net_connections`. The old name raises
   p.net_connections()
   p.net_connections(kind="tcp")
 
-disk_partitions() lost two fields
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:func:`disk_partitions` lost two fields
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The :field:`maxfile` and :field:`maxpath` fields were removed from the named
 tuple returned by :func:`disk_partitions`. Positional unpacking will break:
@@ -281,8 +298,8 @@ tuple returned by :func:`disk_partitions`. Positional unpacking will break:
       part.device, part.mountpoint, part.fstype, part.opts
   )
 
-process_iter() no longer checks for PID reuse
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:func:`process_iter` no longer checks for PID reuse
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :func:`process_iter` no longer preemptively checks whether yielded PIDs have
 been reused, making it ~20× faster. To verify that a process object is still
