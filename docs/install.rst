@@ -7,14 +7,14 @@ Linux, Windows, macOS (wheels)
 Prebuilt wheels are distributed for these platforms, so a C compiler is not
 required. Install psutil with:
 
-.. code-block:: none
+.. code-block:: bash
 
     pip install psutil
 
 Inside a virtual environment you can also use
 `uv <https://docs.astral.sh/uv/>`_:
 
-.. code-block:: none
+.. code-block:: bash
 
     uv pip install psutil
 
@@ -30,9 +30,10 @@ Building psutil from source requires a C compiler and the Python development
 headers. On Linux, FreeBSD, NetBSD, OpenBSD and Solaris, the
 `install-sysdeps.sh`_ script can install them for you:
 
-.. code-block:: none
+.. code-block:: bash
 
-    curl -fsSL https://raw.githubusercontent.com/giampaolo/psutil/master/scripts/internal/install-sysdeps.sh | sh
+    curl -fsSL \
+        https://raw.githubusercontent.com/giampaolo/psutil/master/scripts/internal/install-sysdeps.sh | sh
 
 Alternatively, install them manually as described below.
 
@@ -41,31 +42,31 @@ Linux
 
 Debian / Ubuntu:
 
-.. code-block:: none
+.. code-block:: bash
 
     sudo apt-get install gcc python3-dev
 
 Red Hat / CentOS:
 
-.. code-block:: none
+.. code-block:: bash
 
     sudo yum install gcc python3-devel
 
 Fedora:
 
-.. code-block:: none
+.. code-block:: bash
 
     sudo dnf install gcc python3-devel
 
 Arch:
 
-.. code-block:: none
+.. code-block:: bash
 
     sudo pacman -S gcc python
 
 Alpine:
 
-.. code-block:: none
+.. code-block:: bash
 
     sudo apk add gcc python3-dev musl-dev linux-headers
 
@@ -76,13 +77,13 @@ Windows
 
 - To build psutil from source, install
   `Microsoft C++ Build Tools <https://visualstudio.microsoft.com/visual-cpp-build-tools/>`_
-  with the **Desktop development with C++** option selected.
+  with the "Desktop development with C++" option selected.
 - MinGW is not supported.
 - To clone psutil's Git repository and build or develop it locally, first
   install `Git for Windows`_ and GNU Make. To install GNU Make, open PowerShell
   and run:
 
-  .. code-block:: none
+  .. code-block:: powershell
 
       winget install --exact --id ezwinports.make
 
@@ -93,32 +94,30 @@ macOS
 
 Install the Xcode command line tools:
 
-.. code-block:: none
+.. code-block:: bash
 
     xcode-select --install
 
-FreeBSD
-^^^^^^^
+BSD
+^^^
 
-.. code-block:: none
+FreeBSD:
+
+.. code-block:: bash
 
     pkg install python3
 
-OpenBSD
-^^^^^^^
+OpenBSD:
 
-.. code-block:: none
+.. code-block:: bash
 
     export PKG_PATH=https://cdn.openbsd.org/pub/OpenBSD/`uname -r`/packages/`uname -m`/
     pkg_add -v python%3
 
-NetBSD
-^^^^^^
+NetBSD: pkgsrc has no version-agnostic python3 package, so choose one of the
+available Python 3 versions. For example:
 
-pkgsrc has no version-agnostic python3 package, so choose one of the available
-Python 3 versions. For example:
-
-.. code-block:: none
+.. code-block:: bash
 
     export PKG_PATH="https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/`uname -m`/`uname -r`/All"
     pkg_add -v pkgin
@@ -128,7 +127,7 @@ Python 3 versions. For example:
 Solaris
 ^^^^^^^
 
-.. code-block:: none
+.. code-block:: bash
 
     pkg install developer/gcc
 
@@ -148,7 +147,7 @@ Build and install
 
 To build and install psutil from a Git checkout:
 
-.. code-block:: none
+.. code-block:: bash
 
     git clone https://github.com/giampaolo/psutil.git
     cd psutil
@@ -170,14 +169,14 @@ Install pip
 
 Python installations normally include pip. If it is missing, first try:
 
-.. code-block:: none
+.. code-block:: bash
 
     python3 -m ensurepip --upgrade
 
 Some OS-packaged Python installations do not include ``ensurepip``. There,
 either install the pip package or download `get-pip.py`_ and run:
 
-.. code-block:: none
+.. code-block:: bash
 
     python3 get-pip.py
 
@@ -187,11 +186,23 @@ Permission errors
 If you encounter permission errors, install psutil inside a virtual environment
 instead of modifying the system Python installation:
 
-.. code-block:: none
+.. tab-set::
 
-    python3 -m venv .venv
-    source .venv/bin/activate
-    python -m pip install psutil
+   .. tab-item:: Unix
+
+      .. code-block:: bash
+
+          python3 -m venv .venv
+          source .venv/bin/activate
+          python -m pip install psutil
+
+   .. tab-item:: Windows
+
+      .. code-block:: powershell
+
+          py -m venv .venv
+          .venv\Scripts\Activate.ps1
+          python -m pip install psutil
 
 .. _`AIX Toolbox`: https://www.ibm.com/support/pages/aix-toolbox-open-source-software-downloads-alpha
 .. _`get-pip.py`: https://bootstrap.pypa.io/get-pip.py

@@ -513,9 +513,20 @@ a.sponsor-cta:hover {
     margin: 0;
 }
 
-.home-page .home-quickstart .sd-tab-content {
-    padding: 0.5rem 0 0;
-    box-shadow: 0 -0.0625rem var(--border);
+/* louder than the docs default in tabs.css */
+.home-quickstart {
+    --sd-color-tabs-label-active: var(--links);
+    --sd-color-tabs-underline-active: var(--links);
+    --sd-fontsize-tabs-label: 1rem;
+}
+
+.home-quickstart .sd-tab-set > label {
+    padding: 1em 1.25em 0.5em;
+    margin-right: 0;
+}
+
+.home-quickstart .sd-tab-set > input:checked + label {
+    font-weight: 700;
 }
 
 /* "See more →" link below each tab's code block. */
@@ -540,25 +551,6 @@ a.sponsor-cta:hover {
 .home-quickstart .home-tab-more a:hover {
     color: var(--links);
     text-decoration: underline;
-}
-
-/* Inactive tabs: lighter than default so the current tab pops. */
-.home-quickstart .sd-tab-label {
-    color: var(--text-muted);
-    font-weight: 500;
-    transition: opacity 0.15s, color 0.15s;
-}
-
-.home-quickstart .sd-tab-label:hover {
-    opacity: 1;
-    color: var(--content-text);
-}
-
-/* Active tab: bolder weight + full opacity so it carries the page. */
-.home-quickstart input:checked + .sd-tab-label {
-    color: var(--links);
-    opacity: 1;
-    font-weight: 700;
 }
 
 /* ================================================================== */

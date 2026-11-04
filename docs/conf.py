@@ -72,6 +72,7 @@ _local_exts = [  # defined in the _ext/ folder
     "api_symbols",
     "availability",
     "changelog_anchors",
+    "check_literal_blocks",
     "check_python_syntax",
     "field_role",
     "genindex_filter",
@@ -149,7 +150,7 @@ toc_object_entries_show_parents = "hide"
 # Plugins
 # =====================================================================
 
-copybutton_exclude = ".linenos, .gp"
+copybutton_exclude = ".linenos, .gp, .go"
 
 # =====================================================================
 # Theming

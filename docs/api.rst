@@ -2846,7 +2846,7 @@ Environment variables
 
   .. code-block:: bash
 
-     $ PSUTIL_DEBUG=1 python3 script.py
+     PSUTIL_DEBUG=1 python3 script.py
 
 .. envvar:: PSUTIL_PROCFS_PATH
 
@@ -2864,7 +2864,7 @@ Environment variables
 
   .. code-block:: bash
 
-     $ PSUTIL_BUILD_JOBS=1 python3 -m pip install --no-binary=psutil psutil
+     PSUTIL_BUILD_JOBS=1 python3 -m pip install --no-binary=psutil psutil
 
   .. versionadded:: 8.0.0
 

@@ -174,7 +174,7 @@ Measuring :meth:`~Process.oneshot` speedup
 speedup. It also shows which APIs share the same internal kernel routines. E.g.
 on Linux:
 
-.. code-block:: none
+.. code-block:: console
 
   $ python3 scripts/internal/bench_oneshot.py --times 10000
   17 methods pre-fetched by oneshot() on platform 'linux' (10,000 times, psutil 8.0.0):
@@ -210,7 +210,7 @@ Measuring APIs speed
 call. This helps you understand which operations are more expensive. E.g. on
 Linux:
 
-.. code-block:: none
+.. code-block:: console
 
   $ python3 scripts/internal/print/api_speed.py
   SYSTEM APIS                NUM CALLS      SECONDS

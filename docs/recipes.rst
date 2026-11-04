@@ -272,7 +272,9 @@ On Unix, if you started the subprocess with ``subprocess.Popen`` you can often
 use the stdlib ``os.killpg()`` instead of this recipe. Create the process with
 ``process_group=0`` so that it gets its own process group, then call
 ``os.killpg(pgid, sig)``. This is simpler, does not require psutil, and still
-cleans up all descendants even when an intermediate process has exited::
+cleans up all descendants even when an intermediate process has exited:
+
+.. code-block:: python
 
     import os
     import signal

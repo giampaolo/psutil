@@ -197,6 +197,9 @@ tt {
 [data-theme="dark"]  .highlight .gp                 { color: #888888; }  /* >>> prompt */
 [data-theme="dark"]  .highlight .go                 { color: #6c7a88; }  /* output dimmer than code */
 
+/* shell output is plain text (no colored values), so dim it less */
+div.highlight-console .highlight .go                { color: var(--text-muted); }
+
 /* ----------------- syntax highlight ---------------- */
 
 [data-theme="dark"] .highlight .k                 { color: #f56b8b}  /* keyword */

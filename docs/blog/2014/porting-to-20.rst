@@ -222,7 +222,7 @@ instead of the deprecated API, as long as you start the interpreter with the
 `silenced in Python 2.7 <http://bugs.python.org/issue7319>`__ (IMHO, from a
 developer standpoint this was a bad decision).
 
-::
+.. code-block:: pycon
 
     giampaolo@ubuntu:/tmp$ python -Wd
     Python 2.7.3 (default, Sep 26 2013, 20:03:06)
