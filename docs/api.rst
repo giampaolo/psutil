@@ -176,7 +176,9 @@ CPU
 
   Note that this may differ from the number of CPUs the current process can
   actually use (e.g. due to :term:`CPU affinity`, cgroups, or Windows processor
-  groups). The number of usable CPUs can be obtained with:
+  groups). The number of CPUs the current process is allowed to run on can be
+  obtained with the following (note that this does not reflect a cgroup CPU
+  bandwidth limit such as ``docker run --cpus``, see :ref:`faq_cpu_count`):
 
   .. code-block:: pycon
 
