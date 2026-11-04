@@ -134,6 +134,12 @@
     color: inherit;
 }
 
+/* Only API entries stay monospace. */
+.right-sidebar a:not([href^="#psutil."]) code {
+    font-family: inherit;
+    font-size: inherit;
+}
+
 /* H2 entries are emphasized; H3 styled as quiet group captions; H4 as items. */
 .right-sidebar > ul > li:first-child > ul > li > a {
     font-size: 0.92rem;

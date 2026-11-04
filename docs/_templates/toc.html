@@ -46,8 +46,16 @@
 
   {#- Page ----------------------------------------------------------------- #}
   {%- else %}
-  {#- drop the "()" after function names #}
-  {{ toc|replace("()</span></code>", "</span></code>") }}
+  {#- drop the "()" after function names (API entries, not headings) #}
+  {%- set toc_links = [] %}
+  {%- for link in toc.split("</a>") %}
+    {%- if 'href="#psutil.' in link %}
+      {%- set _ = toc_links.append(link|replace("()</span></code>", "</span></code>")) %}
+    {%- else %}
+      {%- set _ = toc_links.append(link) %}
+    {%- endif %}
+  {%- endfor %}
+  {{ toc_links|join("</a>") }}
   {%- endif %}
 </aside>
 {%- endif -%}

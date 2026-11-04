@@ -191,6 +191,36 @@ code {
     overflow-wrap: break-word;
 }
 
+.article h1 code,
+.article h2 code,
+.article h3 code,
+.article h4 code,
+.article h1 a.reference code,
+.article h2 a.reference code,
+.article h3 a.reference code,
+.article h4 a.reference code {
+    font-size: 92%;
+    font-weight: inherit;
+    color: var(--headings);
+    background: var(--inline-code-bg);
+    padding: 0 0.1em;
+    text-decoration: none;
+}
+
+.article h1 a.reference:hover code,
+.article h2 a.reference:hover code,
+.article h3 a.reference:hover code,
+.article h4 a.reference:hover code {
+    color: var(--links-api);
+}
+
+.article h1 a.reference.external:not([href^="#"])::after,
+.article h2 a.reference.external:not([href^="#"])::after,
+.article h3 a.reference.external:not([href^="#"])::after,
+.article h4 a.reference.external:not([href^="#"])::after {
+    content: none;
+}
+
 pre code {
     background: transparent;
     padding: 0;

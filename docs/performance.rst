@@ -5,8 +5,8 @@ This page describes how to use psutil efficiently.
 
 .. _perf-oneshot:
 
-Use oneshot() when reading multiple process attributes
-------------------------------------------------------
+Use :meth:`~Process.oneshot` when reading multiple process attributes
+---------------------------------------------------------------------
 
 If you're dealing with a single :class:`Process` instance and need to retrieve
 multiple process attributes, use :meth:`Process.oneshot`. Each method call
@@ -45,8 +45,8 @@ process, use :meth:`Process.oneshot`.
 
 .. _perf-process-iter:
 
-Use process_iter() with an attrs list
---------------------------------------
+Use :func:`process_iter` with an ``attrs`` list
+-----------------------------------------------
 
 If you iterate over multiple PIDs, always use :func:`process_iter`. It accepts
 an ``attrs`` argument that pre-fetches only the requested attributes in a
@@ -90,8 +90,8 @@ slow ones (see :ref:`perf-api-speed` table below):
 
 .. _perf-oneshot-methods:
 
-Methods sped up by oneshot()
-----------------------------
+Methods sped up by :meth:`~Process.oneshot`
+-------------------------------------------
 
 Here's a list of method groups for each platform which can benefit from
 :meth:`Process.oneshot`. Methods in each group (in the same comma-separated
@@ -167,8 +167,8 @@ BSD
 
 .. _perf-oneshot-bench:
 
-Measuring oneshot() speedup
----------------------------
+Measuring :meth:`~Process.oneshot` speedup
+------------------------------------------
 
 :src:`scripts/internal/bench_oneshot.py` measures :meth:`Process.oneshot`
 speedup. It also shows which APIs share the same internal kernel routines. E.g.

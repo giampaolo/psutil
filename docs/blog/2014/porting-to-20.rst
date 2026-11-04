@@ -65,8 +65,8 @@ Renamed module functions
 They were the only module-level functions with a ``get_`` prefix. None of the
 others had one.
 
-Renamed Process class methods
------------------------------
+Renamed :class:`Process` class methods
+--------------------------------------
 
 All methods lost their ``get_`` and ``set_`` prefixes. A single method can now
 be used for both getting and setting (if a value is passed). Assuming
