@@ -32,6 +32,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     char *procargs = NULL;
     size_t size = 0;
     size_t pos = 0;
+    size_t len;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -52,11 +53,17 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     // separator
     if (size > 0) {
         while (pos < size) {
+            // The process can set its own args via sysctl() with no
+            // trailing NUL, so don't read past the end of the buffer.
+            len = strnlen(&procargs[pos], size - pos);
             if (!pylist_append_obj(
-                    py_retlist, PyUnicode_DecodeFSDefault(&procargs[pos])
+                    py_retlist,
+                    PyUnicode_DecodeFSDefaultAndSize(
+                        &procargs[pos], (Py_ssize_t)len
+                    )
                 ))
                 goto error;
-            pos += strlen(&procargs[pos]) + 1;
+            pos += len + 1;
         }
     }
 
