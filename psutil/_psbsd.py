@@ -189,6 +189,8 @@ if FREEBSD:
         """
         ret = []
         num_cpus = cpu_count_logical()
+        if num_cpus is None:
+            return ret
         for cpu in range(num_cpus):
             try:
                 current, available_freq = _psutil.cpu_freq(cpu)
@@ -314,6 +316,8 @@ if FREEBSD:
         """Return CPU cores temperatures if available, else an empty dict."""
         ret = defaultdict(list)
         num_cpus = cpu_count_logical()
+        if num_cpus is None:
+            return ret
         for cpu in range(num_cpus):
             try:
                 current, high = _psutil.sensors_cpu_temperature(cpu)
