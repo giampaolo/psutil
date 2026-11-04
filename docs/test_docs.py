@@ -335,10 +335,9 @@ class TestHtmlBuild:
                 assert m.group(1) == expected
 
     def test_footer_github_links_resolve(self, subtests):
-        # ablog and codeautolink generate pages with no .rst behind
-        # them (blog/tag/*, blog/2025, _modules/*). Their footer
-        # links used to be built from the page name anyway, so they
-        # 404ed on GitHub.
+        # ablog generates pages with no .rst behind them (blog/tag/*,
+        # blog/2025). Their footer links used to be built from the
+        # page name anyway, so they 404ed on GitHub.
         pat = re.compile(
             r'github\.com/giampaolo/psutil/(?:edit|commits)/master/(\S+?)"'
         )

@@ -146,8 +146,10 @@ body {
     text-decoration: none;
 }
 
-/* External links get a small "↗" FontAwesome icon after the text. */
-.article a.reference.external:not(:has(img)):not([href^="#"])::after {
+/* External links (except "[source]") get a small "↗" FontAwesome icon
+   after the text. */
+.article
+    a.reference.external:not(:has(img, .viewcode-link)):not([href^="#"])::after {
     content: "\f08e";
     font-family: "Font Awesome 7 Free";
     font-weight: 900;
