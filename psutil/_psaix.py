@@ -86,15 +86,15 @@ proc_info_map = dict(
 # =====================================================================
 
 
-def virtual_memory():
-    total, avail, free, _pinned, inuse = _psutil.virtual_mem()
+def memory_physical():
+    total, avail, free, _pinned, inuse = _psutil.memory_physical()
     percent = usage_percent((total - avail), total, round_=1)
     return ntp.smem(total, avail, percent, inuse, free)
 
 
-def swap_memory():
+def memory_swap():
     """Swap memory as a (total, used, free, percent, sin, sout) tuple."""
-    total, free, sin, sout = _psutil.swap_mem()
+    total, free, sin, sout = _psutil.memory_swap()
     used = total - free
     percent = usage_percent(used, total, round_=1)
     return ntp.sswap(total, used, free, percent, sin, sout)

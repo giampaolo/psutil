@@ -27,7 +27,7 @@ sbn(const char *name, void *oldp, size_t oldlen) {
 
 
 PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
+psutil_memory_physical(PyObject *self, PyObject *args) {
     unsigned long _total;
     long _buffers;
     unsigned int _active, _inactive, _wired, _cached, _free;
@@ -105,7 +105,7 @@ error:
 
 
 PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
+psutil_memory_swap(PyObject *self, PyObject *args) {
     // Return swap memory stats (see 'swapinfo' cmdline tool)
     kvm_t *kd;
     struct kvm_swap kvmsw[1];

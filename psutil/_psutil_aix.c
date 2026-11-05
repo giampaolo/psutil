@@ -55,9 +55,9 @@ static PyMethodDef mod_methods[] = {
     {"boot_time", psutil_boot_time, METH_VARARGS},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"memory_physical", psutil_memory_physical, METH_VARARGS},
+    {"memory_swap", psutil_memory_swap, METH_VARARGS},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
-    {"swap_mem", psutil_swap_mem, METH_VARARGS},
-    {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 #if defined(CURR_VERSION_NETINTERFACE) && CURR_VERSION_NETINTERFACE >= 3
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
 #endif

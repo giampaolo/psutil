@@ -13,7 +13,7 @@
 
 
 PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
+psutil_memory_swap(PyObject *self, PyObject *args) {
     // XXX (arghhh!)
     // total/free swap mem: commented out as for some reason I can't
     // manage to get the same results shown by "swap -l", despite the

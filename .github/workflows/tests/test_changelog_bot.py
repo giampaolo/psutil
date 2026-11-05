@@ -209,7 +209,7 @@ class TestLabels:
     def test_inject_in_badge_order_and_wrapped(self):
         entry = (
             "- :gh:`300`, [NetBSD]: a fairly long entry describing a"
-            " double free\n  in :func:`swap_memory` on some systems."
+            " double free\n  in :func:`memory_swap` on some systems."
         )
         out = cb.inject_labels(entry, ["bug", "critical", "memleak", "netbsd"])
         first = out.splitlines()[0]

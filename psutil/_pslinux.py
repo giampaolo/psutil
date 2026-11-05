@@ -250,8 +250,8 @@ def calculate_avail_vmem(mems):
     return int(avail)
 
 
-def virtual_memory():
-    """Report virtual memory stats.
+def memory_physical():
+    """Report physical memory stats.
     This implementation mimics procps-ng-3.3.12, aka "free" CLI tool:
     https://gitlab.com/procps-ng/procps/blob/
         24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L778-791
@@ -377,7 +377,7 @@ def virtual_memory():
     )
 
 
-def swap_memory():
+def memory_swap():
     """Return swap memory metrics."""
     mems = {}
     with open_binary(f"{psutil.PROCFS_PATH}/meminfo") as f:

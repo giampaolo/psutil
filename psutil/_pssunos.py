@@ -97,8 +97,8 @@ proc_info_map = dict(
 # =====================================================================
 
 
-def virtual_memory():
-    """Report virtual memory metrics."""
+def memory_physical():
+    """Report physical memory metrics."""
     # we could have done this with kstat, but IMHO this is good enough
     total = os.sysconf('SC_PHYS_PAGES') * PAGE_SIZE
     # note: there's no difference on Solaris
@@ -108,9 +108,9 @@ def virtual_memory():
     return ntp.smem(total, avail, percent, used, free)
 
 
-def swap_memory():
+def memory_swap():
     """Report swap memory metrics."""
-    sin, sout = _psutil.swap_mem()
+    sin, sout = _psutil.memory_swap()
     # XXX
     # we are supposed to get total/free by doing so:
     # http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/cmd/swap/swap.c

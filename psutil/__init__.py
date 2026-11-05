@@ -2404,7 +2404,7 @@ def memory_physical() -> smem:
     On Windows `available` and `free` are the same.
     """
     global _TOTAL_PHYMEM
-    ret = _psplatform.virtual_memory()
+    ret = _psplatform.memory_physical()
     # cached for later use in Process.memory_percent()
     _TOTAL_PHYMEM = ret.total
     return ret
@@ -2423,7 +2423,7 @@ def memory_swap() -> sswap:
 
     `sin` and `sout` on Windows are meaningless and always set to 0.
     """
-    return _psplatform.swap_memory()
+    return _psplatform.memory_swap()
 
 
 # Soft deprecated aliases.
