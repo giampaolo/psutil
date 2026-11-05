@@ -49,22 +49,22 @@ def main():
                        "STATUS", "START", "TIME", "CMDLINE"))
     # fmt: on
     for p in psutil.process_iter(attrs, ad_value=None):
-        if p.create_time():
-            ctime = datetime.datetime.fromtimestamp(p.create_time())
+        if p.snapshot.create_time:
+            ctime = datetime.datetime.fromtimestamp(p.snapshot.create_time)
             if ctime.date() == today_day:
                 ctime = ctime.strftime("%H:%M")
             else:
                 ctime = ctime.strftime("%b%d")
         else:
             ctime = ''
-        if p.cpu_times():
+        if p.snapshot.cpu_times:
             cputime = time.strftime(
-                "%M:%S", time.localtime(sum(p.cpu_times()))
+                "%M:%S", time.localtime(sum(p.snapshot.cpu_times))
             )
         else:
             cputime = ''
 
-        user = p.username()
+        user = p.snapshot.username
         if not user and psutil.POSIX:
             try:
                 user = p.uids()[0]
@@ -76,30 +76,30 @@ def main():
             user = ''
         user = user[:9]
         vms = (
-            bytes2human(p.memory_info().vms)
-            if p.memory_info() is not None
+            bytes2human(p.snapshot.memory_info.vms)
+            if p.snapshot.memory_info is not None
             else ''
         )
         rss = (
-            bytes2human(p.memory_info().rss)
-            if p.memory_info() is not None
+            bytes2human(p.snapshot.memory_info.rss)
+            if p.snapshot.memory_info is not None
             else ''
         )
         memp = (
-            round(p.memory_percent(), 1)
-            if p.memory_percent() is not None
+            round(p.snapshot.memory_percent, 1)
+            if p.snapshot.memory_percent is not None
             else ''
         )
-        nice = int(p.nice()) if p.nice() else ''
-        if p.cmdline():  # noqa: SIM108
-            cmdline = ' '.join(p.cmdline())
+        nice = int(p.snapshot.nice) if p.snapshot.nice else ''
+        if p.snapshot.cmdline:
+            cmdline = ' '.join(p.snapshot.cmdline)
         else:
-            cmdline = p.name()
-        status = p.status()[:5] if p.status() else ''
+            cmdline = p.snapshot.name
+        status = p.snapshot.status[:5] if p.snapshot.status else ''
 
         line = templ.format(
             user,
-            p.pid,
+            p.snapshot.pid,
             memp,
             vms,
             rss,

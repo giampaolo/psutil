@@ -145,7 +145,7 @@ CPU
   Similar to :func:`cpu_percent`, but provides utilization percentages for each
   specific CPU time. *interval* and *percpu* arguments have the same meaning as
   in :func:`cpu_percent`. On Linux, :field:`guest` and :field:`guest_nice`
-  percentages are not accounted in :field:`user` and :field:`user_nice`.
+  percentages are not accounted in :field:`user` and :field:`nice`.
 
   .. seealso::
     - :ref:`faq_cpu_percent`
@@ -502,7 +502,7 @@ Disks
 
   Return disk usage statistics for the partition containing *path*. Values are
   expressed in bytes and include :field:`total`, :field:`used` and
-  :field:`free` space, plus the :field:`percentage` usage. On UNIX, *path* must
+  :field:`free` space, plus the :field:`percent` usage. On UNIX, *path* must
   point to a path within a **mounted** filesystem partition. This function was
   later incorporated in Python 3.3 as :func:`shutil.disk_usage` (see
   :bpo:`12442`).
@@ -595,7 +595,7 @@ Network
     :term:`NIC` level. Unlike :field:`errin`, drops indicate the interface or
     kernel buffer was overwhelmed.
   - :field:`dropout`: total number of outgoing packets dropped (always 0 on
-    macOS and BSD). A non-zero and growing count is a sign of network
+    macOS and NetBSD). A non-zero and growing count is a sign of network
     saturation.
 
   If *pernic* is ``True``, return the same information for every network
@@ -622,6 +622,9 @@ Network
   .. seealso::
     - :src:`scripts/nettop.py`
     - :src:`scripts/ifconfig.py`
+
+  .. versionchanged:: 8.0.0
+     FreeBSD, OpenBSD: :field:`dropout` is no longer always ``0``.
 
 .. function:: net_connections(kind="inet")
 
@@ -679,10 +682,10 @@ Network
 
      >>> import psutil
      >>> psutil.net_connections()
-     [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=1254),
-      pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>, pid=2987),
-      pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=None),
-      pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>, pid=None)
+     [sconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=1254),
+      sconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>, pid=2987),
+      sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=None),
+      sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>, pid=None)
       ...]
 
   .. warning::
@@ -722,7 +725,8 @@ Network
     unconfigured NIC), or :data:`AF_LINK` (a MAC address).
   - :field:`address`: the primary NIC address.
   - :field:`netmask`: the netmask address.
-  - :field:`broadcast`: the broadcast address; always ``None`` on Windows.
+  - :field:`broadcast`: the broadcast address; on Windows it is calculated from
+    the netmask.
   - :field:`ptp`: a "point to point" address (typically a VPN); always ``None``
     on Windows.
 
@@ -913,8 +917,6 @@ Other system info
     nothing maintains it, e.g. on musl libc (Alpine Linux), which doesn't
     implement it. ``who`` is empty too in that case.
 
--------------------------------------------------------------------------------
-
 Processes
 ---------
 
@@ -948,13 +950,10 @@ Functions
 
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict`.
 
-  If *attrs* is specified, :meth:`Process.as_dict` is called internally, and
-  the results are cached so that subsequent method calls (e.g. ``p.name()``,
-  ``p.status()``) return the cached values instead of issuing new system calls.
-  See :attr:`Process.attrs` for a list of valid *attrs* names.
-
-  If a method raises :exc:`AccessDenied` during pre-fetch, it will return
-  *ad_value* (default ``None``) instead of raising.
+  If *attrs* is specified, the collected values are exposed as a
+  :class:`ProcessSnapshot` via the :attr:`Process.snapshot` attribute of the
+  returned :class:`Process` instances. See :attr:`Process.attrs` for a list of
+  valid *attrs* names.
 
   Processes are returned sorted by PID.
 
@@ -962,7 +961,7 @@ Functions
 
      >>> import psutil
      >>> for proc in psutil.process_iter(['pid', 'name', 'username']):
-     ...     print(proc.pid, proc.name(), proc.username())  # return cached values, never raise
+     ...     print(proc.snapshot.pid, proc.snapshot.name, proc.snapshot.username)
      ...
      1 systemd root
      2 kthreadd root
@@ -982,12 +981,6 @@ Functions
 
      >>> psutil.process_iter.cache_clear()
 
-  .. note::
-
-    since :class:`Process` instances are reused across calls, a subsequent
-    :func:`process_iter` call will overwrite or clear any previously
-    pre-fetched values. Do not rely on cached values from a prior iteration.
-
   .. seealso::
     - :ref:`perf-process-iter`
 
@@ -998,11 +991,8 @@ Functions
 
   .. versionchanged:: 8.0.0
 
-     - When *attrs* is specified, the pre-fetched values are cached directly on
-       the :class:`Process` instance, so that subsequent method calls (e.g.
-       ``p.name()``, ``p.status()``) return the cached values instead of making
-       new system calls. The :attr:`Process.info` dict is deprecated in favor
-       of this new approach.
+     - Collected attributes are exposed via :attr:`Process.snapshot`;
+       ``Process.info`` is deprecated.
      - Passing an empty list (``attrs=[]``) to mean "all attributes" is
        deprecated; use :attr:`Process.attrs` instead.
 
@@ -1087,14 +1077,14 @@ Exceptions
   .. seealso::
     - :ref:`faq_access_denied`
 
-.. exception:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
+.. exception:: TimeoutExpired(seconds, pid=None, name=None)
 
   Raised by :meth:`Process.wait` method if timeout expires and the process is
   still alive. *name* attribute is set if :meth:`Process.name` was previously
   called.
 
-Process class
-^^^^^^^^^^^^^
+:class:`Process` class
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. class:: Process(pid=None)
 
@@ -1133,6 +1123,24 @@ Process class
 
     The process PID as a read-only property.
 
+  .. attribute:: snapshot
+
+    A :class:`ProcessSnapshot` holding the attributes collected by the last
+    :func:`process_iter(attrs=...) <psutil.process_iter>` call. It is empty for
+    a :class:`Process` created directly or yielded by :func:`process_iter`
+    without *attrs*.
+
+    .. versionadded:: 8.0.0
+
+  .. attribute:: info
+
+    The attributes collected by
+    :func:`process_iter(attrs=...) <psutil.process_iter>` as a dictionary.
+
+    .. deprecated:: 8.0.0
+       use :meth:`snapshot.as_dict() <ProcessSnapshot.as_dict>` instead. See
+       :ref:`migration guide <migration-8.0-snapshot>`.
+
   .. attribute:: attrs
 
     A :class:`frozenset` of strings representing the valid attribute names
@@ -1151,19 +1159,6 @@ Process class
        >>> psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
 
     .. versionadded:: 8.0.0
-
-  .. attribute:: info
-
-    A dict containing pre-fetched process info, set by :func:`process_iter`
-    when called with ``attrs`` argument. Accessing this attribute is deprecated
-    and raises :exc:`DeprecationWarning`. Use method calls instead (e.g.
-    ``p.name()`` instead of ``p.info['name']``) or :func:`process_iter` +
-    :meth:`Process.as_dict` if you need a dict structure.
-
-    .. seealso::
-      - :ref:`migration guide <migration-8.0>`
-
-    .. deprecated:: 8.0.0
 
   .. method:: oneshot()
 
@@ -1346,7 +1341,7 @@ Process class
     process as a named tuple. This is the same as :func:`os.getresuid`, but can
     be used for any process PID.
 
-    .. availability:: UNIX
+    .. availability:: POSIX
 
   .. method:: gids()
 
@@ -1354,14 +1349,14 @@ Process class
     process as a named tuple. This is the same as :func:`os.getresgid`, but can
     be used for any process PID.
 
-    .. availability:: UNIX
+    .. availability:: POSIX
 
   .. method:: terminal()
 
     The terminal associated with this process, if any, else ``None``. This is
     similar to ``tty`` command but can be used for any process PID.
 
-    .. availability:: UNIX
+    .. availability:: POSIX
 
   .. method:: nice(value=None)
 
@@ -1503,7 +1498,7 @@ Process class
     The number of :term:`file descriptors <file descriptor>` currently opened
     by this process (non cumulative).
 
-    .. availability:: UNIX
+    .. availability:: POSIX
 
   .. method:: num_handles()
 
@@ -1836,8 +1831,10 @@ Process class
   .. method:: memory_full_info()
 
     This deprecated method returns the same information as :meth:`memory_info`
-    plus :meth:`memory_footprint`'s :field:`uss`, :field:`pss` and
-    :field:`swap` in a single named tuple.
+    plus :meth:`memory_footprint`'s :field:`uss` (and, on Linux, also
+    :field:`pss` and :field:`swap`) in a single named tuple. On BSD, SunOS and
+    AIX no footprint field is added, so the result is just
+    :meth:`memory_info`'s.
 
     .. deprecated:: 8.0.0
        use :meth:`memory_footprint` instead. See
@@ -2175,8 +2172,8 @@ Process class
 
 -------------------------------------------------------------------------------
 
-Popen class
-^^^^^^^^^^^
+:class:`Popen` class
+^^^^^^^^^^^^^^^^^^^^
 
 .. class:: Popen(*args, **kwargs)
 
@@ -2206,15 +2203,53 @@ Popen class
 
 -------------------------------------------------------------------------------
 
+:class:`ProcessSnapshot` class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. class:: ProcessSnapshot
+
+  A read-only object holding the process attributes collected by
+  :func:`process_iter(attrs=...) <psutil.process_iter>`, available as
+  :attr:`Process.snapshot`. It is not supposed to be instantiated directly.
+
+  Each requested attribute is exposed as a plain attribute named after the
+  corresponding :class:`Process` method, holding the value it returned when the
+  process was scanned (or *ad_value* if it raised :exc:`AccessDenied`).
+  Accessing an attribute that was not requested raises :exc:`AttributeError`.
+  Values are never refreshed: call the :class:`Process` method to get a live
+  one.
+
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> for p in psutil.process_iter(["pid", "name", "cpu_percent"]):
+     ...     if p.snapshot.cpu_percent > 50:
+     ...         print(p.snapshot)
+     ...
+     ProcessSnapshot(pid=4821, name='python3', cpu_percent=72.3)
+     >>> p.snapshot.exe
+     Traceback (most recent call last):
+       ...
+     AttributeError: 'exe' was not requested in process_iter(attrs=...)
+
+  Snapshots support ``==``, are false when empty, and can be pickled and
+  copied.
+
+  .. method:: as_dict()
+
+    Return the collected attributes as a new dictionary.
+
+  .. versionadded:: 8.0.0
+
 C heap introspection
 --------------------
 
 The following functions provide direct access to the platform's native
 :term:`heap` allocator (such as glibc's ``malloc`` on Linux or ``jemalloc`` on
-BSD). They are low-level interfaces intended for detecting memory leaks in C
-extensions, which are usually not revealed via standard :term:`RSS` /
-:term:`VMS` metrics. These functions do not reflect Python object memory; they
-operate solely on allocations made in C via :manpage:`malloc(3)`,
+FreeBSD and NetBSD). They are low-level interfaces intended for detecting
+memory leaks in C extensions, which are usually not revealed via standard
+:term:`RSS` / :term:`VMS` metrics. These functions do not reflect Python object
+memory; they operate solely on allocations made in C via :manpage:`malloc(3)`,
 :manpage:`free(3)`, and related calls.
 
 The general idea behind these functions is straightforward: capture the state
@@ -2293,8 +2328,6 @@ that Python's memory tracking misses.
 
   .. versionadded:: 7.2.0
 
--------------------------------------------------------------------------------
-
 Windows services
 ----------------
 
@@ -2340,7 +2373,7 @@ Windows services
 
   .. method:: start_type()
 
-    A string which can either be either ``'automatic'``, ``'manual'`` or
+    A string which can either be ``'automatic'``, ``'manual'`` or
     ``'disabled'``.
 
   .. method:: pid()
@@ -2383,8 +2416,6 @@ Windows services
       'username': 'NT AUTHORITY\\LocalService'}
 
   .. availability:: Windows
-
--------------------------------------------------------------------------------
 
 Constants
 ---------
@@ -2463,18 +2494,26 @@ Operating system constants
 platform, ``False`` otherwise.
 
 .. data:: POSIX
+
+  ``True`` on all supported platforms except Windows. Throughout this
+  documentation, "Availability: POSIX" refers to these platforms.
+
+.. data:: BSD
+
+  ``True`` on FreeBSD, NetBSD, and OpenBSD. Throughout this documentation,
+  "Availability: BSD" refers to these platforms.
+
 .. data:: LINUX
 .. data:: WINDOWS
 .. data:: MACOS
 .. data:: FREEBSD
 .. data:: NETBSD
 .. data:: OPENBSD
-.. data:: BSD
 .. data:: SUNOS
 .. data:: AIX
 .. data:: OSX
 
-  Alias for :data:`MACOS`.
+  Alias for :data:`MACOS`, retained for backward compatibility.
 
   .. deprecated:: 5.4.7
      use :data:`MACOS` instead.
@@ -2534,8 +2573,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_WAKING
 
-   (Linux only) A transient state right before the process becomes runnable
-   (:data:`STATUS_RUNNING`).
+   (Linux, OpenBSD, NetBSD) A transient state right before the process becomes
+   runnable (:data:`STATUS_RUNNING`).
 
 .. data:: STATUS_PARKED
 
@@ -2545,7 +2584,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_IDLE
 
-   (Linux, macOS, FreeBSD) A sleep for kernel threads waiting for work.
+   (Linux, macOS, FreeBSD, OpenBSD, NetBSD, Solaris, AIX) A sleep for kernel
+   threads waiting for work.
 
 .. data:: STATUS_LOCKED
 
@@ -2554,8 +2594,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_WAITING
 
-   (FreeBSD only) The process is waiting in a kernel sleep queue for a specific
-   system event to occur.
+   (FreeBSD, Solaris) The process is waiting in a kernel sleep queue for a
+   specific system event to occur.
 
 .. data:: STATUS_SUSPENDED
 
@@ -2630,7 +2670,7 @@ can be used in conjunction with :meth:`Process.ionice` (*ioclass* argument).
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Constants for getting or setting process resource limits, to be used in in
+Constants for getting or setting process resource limits, to be used in
 conjunction with :meth:`Process.rlimit`. The meaning of each constant is
 explained in :func:`resource.getrlimit` documentation.
 
@@ -2735,26 +2775,6 @@ Hardware constants
   Whether the remaining time of a battery cannot be determined or is unlimited.
   May be assigned to :func:`psutil.sensors_battery`'s :field:`secsleft` field.
 
-Other constants
-^^^^^^^^^^^^^^^
-
-.. _const-procfs_path:
-
-.. data:: PROCFS_PATH
-
-  The path of the ``/proc`` filesystem on Linux, Solaris and AIX (defaults to
-  ``'/proc'``). You may want to re-set this constant right after importing
-  psutil in case ``/proc`` is mounted elsewhere, or if you want to retrieve
-  information about Linux containers such as Docker, Heroku or LXC (see
-  `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`_
-  for more info).
-
-  It must be noted that this trick works only for APIs which rely on ``/proc``
-  filesystem (e.g. memory-related APIs and many (but not all) :class:`Process`
-  class methods).
-
-  .. availability:: Linux, SunOS, AIX
-
 Utilities
 ---------
 
@@ -2784,6 +2804,35 @@ Utilities
      >>> if psutil.version_info >= (4, 5):
      ...    pass
 
+Configuration
+-------------
+
+.. function:: set_procfs_path(path)
+
+  Set the path where ``/proc`` is mounted, typically when you want to read the
+  host's ``/proc`` from inside a container such as Docker. Only the APIs that
+  read ``/proc`` are affected (e.g. memory APIs and many :class:`Process`
+  methods). *path* must be an existing directory. This also resets internal
+  caches that depend on ``/proc``. :class:`Process` instances created before
+  the call keep reading the old path.
+
+  .. availability:: Linux, SunOS, AIX
+
+  .. versionadded:: 8.0.0
+
+.. _const-procfs_path:
+
+.. data:: PROCFS_PATH
+
+  The current ``/proc`` path. Defaults to ``'/proc'``, or to
+  :envvar:`PSUTIL_PROCFS_PATH` when set. Treat it as read-only, and use
+  :func:`set_procfs_path` to change it.
+
+  .. availability:: Linux, SunOS, AIX
+
+  .. versionchanged:: 8.0.0
+     the :envvar:`PSUTIL_PROCFS_PATH` environment variable is honored.
+
 Environment variables
 ---------------------
 
@@ -2797,7 +2846,15 @@ Environment variables
 
   .. code-block:: bash
 
-     $ PSUTIL_DEBUG=1 python3 script.py
+     PSUTIL_DEBUG=1 python3 script.py
+
+.. envvar:: PSUTIL_PROCFS_PATH
+
+  If set, psutil uses it as :data:`PROCFS_PATH` instead of ``'/proc'``. It is
+  read once at import time and must be an existing directory. To change the
+  path later, use :func:`set_procfs_path`.
+
+  .. versionadded:: 8.0.0
 
 .. envvar:: PSUTIL_BUILD_JOBS
 
@@ -2807,7 +2864,7 @@ Environment variables
 
   .. code-block:: bash
 
-     $ PSUTIL_BUILD_JOBS=1 python3 -m pip install --no-binary=psutil psutil
+     PSUTIL_BUILD_JOBS=1 python3 -m pip install --no-binary=psutil psutil
 
   .. versionadded:: 8.0.0
 

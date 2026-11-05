@@ -20,7 +20,6 @@
 PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     pid_t pid;
-    int i;
     int cnt;
     int state;
     int lport;
@@ -32,9 +31,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     char errbuf[_POSIX2_LINE_MAX];
     kvm_t *kd = NULL;
 
-    struct kinfo_file *kif;
     struct kinfo_file *ikf;
-    struct in6_addr laddr6;
 
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_laddr = NULL;
@@ -127,7 +124,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             // populate tuple and list
             if (!pylist_append_fmt(
                     py_retlist,
-                    "(iiiNNil)",
+                    "(iiiNNii)",
                     kif->fd_fd,
                     kif->so_family,
                     kif->so_type,
@@ -150,7 +147,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
             if (!pylist_append_fmt(
                     py_retlist,
-                    "(iiiOsil)",
+                    "(iiiOsii)",
                     kif->fd_fd,
                     kif->so_family,
                     kif->so_type,

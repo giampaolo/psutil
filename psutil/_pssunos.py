@@ -13,6 +13,8 @@ import sys
 from collections import namedtuple
 from socket import AF_INET
 
+import psutil
+
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil
@@ -21,9 +23,10 @@ from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
+from ._common import cache_activate
+from ._common import cache_deactivate
 from ._common import conn_tmap
 from ._common import debug
-from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import sockfam_to_enum
@@ -33,7 +36,7 @@ from ._enums import ConnectionStatus
 from ._enums import NicDuplex
 from ._enums import ProcessStatus
 
-__extra__all__ = ["PROCFS_PATH"]
+__extra__all__ = []
 
 
 # =====================================================================
@@ -296,7 +299,7 @@ def users():
 
 def pids():
     """Returns a list of PIDs currently running on the system."""
-    path = get_procfs_path().encode(ENCODING)
+    path = psutil.PROCFS_PATH.encode(ENCODING)
     return [int(x) for x in os.listdir(path) if x.isdigit()]
 
 
@@ -343,7 +346,7 @@ class Process:
         self.pid = pid
         self._name = None
         self._ppid = None
-        self._procfs_path = get_procfs_path()
+        self._procfs_path = psutil.PROCFS_PATH
 
     def _assert_alive(self):
         """Raise NSP if the process disappeared on us."""
@@ -352,14 +355,10 @@ class Process:
         os.stat(f"{self._procfs_path}/{self.pid}")
 
     def oneshot_enter(self):
-        self._oneshot.cache_activate(self)
-        self._proc_name_and_args.cache_activate(self)
-        self._proc_cred.cache_activate(self)
+        cache_activate(self)
 
     def oneshot_exit(self):
-        self._oneshot.cache_deactivate(self)
-        self._proc_name_and_args.cache_deactivate(self)
-        self._proc_cred.cache_deactivate(self)
+        cache_deactivate(self)
 
     @wrap_exceptions
     @memoize_when_activated
@@ -483,7 +482,7 @@ class Process:
     def terminal(self):
         procfs_path = self._procfs_path
         hit_enoent = False
-        tty = wrap_exceptions(self._oneshot()[proc_info_map['ttynr']])
+        tty = self._oneshot()[proc_info_map['ttynr']]
         if tty != _psutil.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:

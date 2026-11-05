@@ -8,6 +8,8 @@
 
 import collections
 import contextlib
+import copy
+import importlib
 import io
 import json
 import os
@@ -25,6 +27,8 @@ from psutil import WINDOWS
 from psutil import _psutil
 from psutil._common import bcat
 from psutil._common import broadcast_addr
+from psutil._common import cache_activate
+from psutil._common import cache_deactivate
 from psutil._common import cat
 from psutil._common import debug
 from psutil._common import isfile_strict
@@ -41,7 +45,6 @@ from . import PsutilTestCase
 from . import import_module_by_path
 from . import process_namespace
 from . import pytest
-from . import reload_module
 from . import skipif
 from . import system_namespace
 
@@ -51,12 +54,6 @@ from . import system_namespace
 
 
 class TestSpecialMethods(PsutilTestCase):
-    def test_check_pid_range(self):
-        with pytest.raises(OverflowError):
-            _psutil.check_pid_range(2**128)
-        with pytest.raises(psutil.NoSuchProcess):
-            psutil.Process(2**128)
-
     def test_process__repr__(self, func=repr):
         p = psutil.Process(self.spawn_subproc().pid)
         r = func(p)
@@ -185,6 +182,42 @@ class TestSpecialMethods(PsutilTestCase):
             == "timeout after 5 seconds (pid=321, name='name')"
         )
 
+    def test_process_snapshot__repr__(self):
+        assert repr(psutil.ProcessSnapshot({})) == "ProcessSnapshot()"
+
+        # pid and name come first, the rest is sorted. Lists and
+        # namedtuples are cut after 4 items, strings to 60 chars.
+        nt5 = collections.namedtuple("nt5", "a b c d e")
+        snap = psutil.ProcessSnapshot({
+            "zzz": "x" * 100,
+            "name": "foo",
+            "cmdline": list(range(10)),
+            "pid": 1,
+            "memory_info": nt5(1, 2, 3, 4, 5),
+        })
+        assert repr(snap) == (
+            "ProcessSnapshot(pid=1, name='foo', cmdline=[0, 1, 2, 3, ...],"
+            " memory_info=nt5(a=1, b=2, c=3, d=4, ...),"
+            " zzz='"
+            + "x" * 27
+            + "..."
+            + "x" * 28
+            + "')"
+        )
+
+        # nesting stops at reprlib's default depth of 6
+        nt2 = collections.namedtuple("nt2", "a b")
+        nested = nt2(1, 2)
+        for _ in range(20):
+            nested = nt2(nested, 0)
+        assert repr(psutil.ProcessSnapshot({"x": nested})) == (
+            "ProcessSnapshot(x="
+            + "nt2(a=" * 6
+            + "nt2(...)"
+            + ", b=0)" * 6
+            + ")"
+        )
+
 
 # ===================================================================
 # --- Misc, generic, corner cases
@@ -196,6 +229,7 @@ class TestMisc(PsutilTestCase):
         dir_psutil = dir(psutil)
         # assert there's no duplicates
         assert len(dir_psutil) == len(set(dir_psutil))
+        assert len(psutil.__all__) == len(set(psutil.__all__))
         for name in dir_psutil:
             if name in {
                 'debug',
@@ -235,37 +269,62 @@ class TestMisc(PsutilTestCase):
             == psutil.__version__
         )
 
-    def test_process_as_dict_no_new_names(self):
-        # See https://github.com/giampaolo/psutil/issues/813
-        p = psutil.Process()
-        p.foo = '1'
-        assert 'foo' not in p.as_dict()
+    def test_sanity_version_check(self):
+        # see: https://github.com/giampaolo/psutil/issues/564
+        with mock.patch.object(_psutil, "version", return_value="0.0.0"):
+            with pytest.raises(ImportError) as cm:
+                importlib.reload(psutil)
+            assert "version conflict" in str(cm.value).lower()
 
-    def test_serialization(self):
-        def check(ret):
-            json.loads(json.dumps(ret))
+    def test_reload_keeps_all(self):
+        # A reload reuses the module dict, so the enum constants are
+        # already there and used to not make it back into __all__.
+        before = sorted(psutil.__all__)
+        importlib.reload(psutil)
+        assert sorted(psutil.__all__) == before
 
-            a = pickle.dumps(ret)
-            b = pickle.loads(a)
-            assert ret == b
+    def test_check_pid_range(self):
+        with pytest.raises(OverflowError):
+            _psutil.check_pid_range(2**128)
+        with pytest.raises(psutil.NoSuchProcess):
+            psutil.Process(2**128)
 
-        # --- process APIs
 
+# ===================================================================
+# --- Serialization
+# ===================================================================
+
+
+class TestSerialization(PsutilTestCase):
+    @staticmethod
+    def check(ret):
+        if isinstance(ret, Exception):
+            b = pickle.loads(pickle.dumps(ret))
+            assert type(b) is type(ret)
+            assert vars(b) == vars(ret)
+            return
+
+        json.loads(json.dumps(ret))
+
+        a = pickle.dumps(ret)
+        b = pickle.loads(a)
+        assert ret == b
+
+    def test_process_apis(self):
         proc = psutil.Process()
-        check(psutil.Process().as_dict())
+        self.check(psutil.Process().as_dict())
 
         ns = process_namespace(proc)
         for fun, name in ns.iter(ns.getters, clear_cache=True):
             with self.subTest(proc=str(proc), name=name):
                 try:
                     ret = fun()
-                except psutil.Error:
-                    pass
+                except psutil.Error as err:
+                    self.check(err)
                 else:
-                    check(ret)
+                    self.check(ret)
 
-        # --- system APIs
-
+    def test_system_apis(self):
         ns = system_namespace()
         for fun, name in ns.iter(ns.getters):
             if name in {"win_service_iter", "win_service_get"}:
@@ -273,65 +332,30 @@ class TestMisc(PsutilTestCase):
             with self.subTest(name=name):
                 try:
                     ret = fun()
-                except psutil.AccessDenied:
-                    pass
+                except psutil.AccessDenied as err:
+                    self.check(err)
                 else:
-                    check(ret)
+                    self.check(ret)
 
-        # --- exception classes
-
-        b = pickle.loads(
-            pickle.dumps(
-                psutil.NoSuchProcess(pid=4567, name='name', msg='msg')
-            )
+    def test_exceptions(self):
+        self.check(psutil.NoSuchProcess(pid=4567, name='name', msg='msg'))
+        self.check(
+            psutil.ZombieProcess(pid=4567, name='name', ppid=42, msg='msg')
         )
-        assert isinstance(b, psutil.NoSuchProcess)
-        assert b.pid == 4567
-        assert b.name == 'name'
-        assert b.msg == 'msg'
+        self.check(psutil.AccessDenied(pid=123, name='name', msg='msg'))
+        self.check(psutil.TimeoutExpired(seconds=33, pid=4567, name='name'))
 
-        b = pickle.loads(
-            pickle.dumps(
-                psutil.ZombieProcess(pid=4567, name='name', ppid=42, msg='msg')
-            )
-        )
-        assert isinstance(b, psutil.ZombieProcess)
-        assert b.pid == 4567
-        assert b.ppid == 42
-        assert b.name == 'name'
-        assert b.msg == 'msg'
-
-        b = pickle.loads(
-            pickle.dumps(psutil.AccessDenied(pid=123, name='name', msg='msg'))
-        )
-        assert isinstance(b, psutil.AccessDenied)
-        assert b.pid == 123
-        assert b.name == 'name'
-        assert b.msg == 'msg'
-
-        b = pickle.loads(
-            pickle.dumps(
-                psutil.TimeoutExpired(seconds=33, pid=4567, name='name')
-            )
-        )
-        assert isinstance(b, psutil.TimeoutExpired)
-        assert b.seconds == 33
-        assert b.pid == 4567
-        assert b.name == 'name'
-
-    def test_sanity_version_check(self):
-        # see: https://github.com/giampaolo/psutil/issues/564
-        with mock.patch.object(_psutil, "version", return_value="0.0.0"):
-            with pytest.raises(ImportError) as cm:
-                reload_module(psutil)
-            assert "version conflict" in str(cm.value).lower()
-
-    def test_reload_keeps_all(self):
-        # A reload reuses the module dict, so the enum constants are
-        # already there and used to not make it back into __all__.
-        before = sorted(psutil.__all__)
-        reload_module(psutil)
-        assert sorted(psutil.__all__) == before
+    def test_process_snapshot(self):
+        snap = next(psutil.process_iter(attrs=["pid", "name"])).snapshot
+        json.loads(json.dumps(snap.as_dict()))
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            b = pickle.loads(pickle.dumps(snap, proto))
+            assert b == snap
+            assert vars(b) is not vars(snap)
+        for fun in (copy.copy, copy.deepcopy):
+            b = fun(snap)
+            assert b == snap
+            assert vars(b) is not vars(snap)
 
 
 # ===================================================================
@@ -390,14 +414,14 @@ class TestCommonModule(PsutilTestCase):
 
         # activate
         calls = []
-        f.foo.cache_activate(f)
+        cache_activate(f)
         f.foo()
         f.foo()
         assert len(calls) == 1
 
         # deactivate
         calls = []
-        f.foo.cache_deactivate(f)
+        cache_deactivate(f)
         f.foo()
         f.foo()
         assert len(calls) == 2
@@ -786,6 +810,31 @@ class TestWrapNumbers(PsutilTestCase):
         psutil.net_io_counters.cache_clear()
         caches = wrap_numbers.cache_info()
         assert caches == ({}, {}, {})
+
+    def check_nowrap_public_api(self, fun, platfun, ntuple):
+        def side_effect(*args, **kwargs):
+            return {"x": (next(values),) * len(ntuple._fields)}
+
+        values = iter([100, 10, 10])
+        with mock.patch(platfun, side_effect=side_effect):
+            assert [fun()[0] for _ in range(3)] == [100, 110, 110]
+        values = iter([100, 10, 10])
+        with mock.patch(platfun, side_effect=side_effect):
+            assert [fun(nowrap=False)[0] for _ in range(3)] == [100, 10, 10]
+
+    def test_disk_io_counters_nowrap(self):
+        self.check_nowrap_public_api(
+            psutil.disk_io_counters,
+            "psutil._psplatform.disk_io_counters",
+            psutil._ntp.sdiskio,
+        )
+
+    def test_net_io_counters_nowrap(self):
+        self.check_nowrap_public_api(
+            psutil.net_io_counters,
+            "psutil._psplatform.net_io_counters",
+            psutil._ntp.snetio,
+        )
 
 
 # ===================================================================

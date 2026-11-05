@@ -47,7 +47,7 @@ Build, setup and test
 
 - To run a specific test:
 
-  .. code-block:: none
+  .. code-block:: bash
 
      make test ARGS=tests/test_system.py
 
@@ -60,7 +60,7 @@ Build, setup and test
 - To target a specific Python version, pass ``PYTHON`` to every step, so that
   the extension is built by the same interpreter that runs the tests:
 
-  .. code-block:: none
+  .. code-block:: bash
 
      make install-pydeps-dev PYTHON=python3.13
      make build PYTHON=python3.13
@@ -91,7 +91,7 @@ conditions that are ignored instead of causing a crash. Unit tests
 automatically run with debug mode enabled. To enable debug mode in UNIX (or on
 Windows + Bash):
 
-.. code-block:: none
+.. code-block:: console
 
   $ PSUTIL_DEBUG=1 python3 test_script.py
   psutil-debug [psutil/_psutil_linux.c:150]> setmntent() failed (ignored)
@@ -145,7 +145,7 @@ platform-specific layers. Linux is used here as an example:
 
 Where things live:
 
-.. code-block:: bash
+.. code-block:: text
 
    psutil/__init__.py                   # Public API ("import psutil")
    psutil/_common.py                    # Generic utilities

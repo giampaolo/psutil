@@ -117,10 +117,10 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
     struct tcpcb *tp;
     struct inpcb *inp;
 #endif
-    struct xinpgen *xig, *oxig;
+    struct xinpgen *xig;
     struct xsocket *so;
 
-    oxig = xig = (struct xinpgen *)buf;
+    xig = (struct xinpgen *)buf;
     for (xig = (struct xinpgen *)((char *)xig + xig->xig_len);
          xig->xig_len > sizeof(struct xinpgen);
          xig = (struct xinpgen *)((char *)xig + xig->xig_len))

@@ -82,6 +82,14 @@
   {% include "banner.html" %}
   {% include "topbar.html" %}
 </div>
+{#- the banner wraps on narrow screens, so measure the header before
+    the first paint; banner.js keeps it in sync on resize -#}
+<script>
+  document.documentElement.style.setProperty(
+    "--header-height",
+    document.querySelector(".header-stack").offsetHeight + "px"
+  );
+</script>
 {% endblock %}
 
 {# Suppress basic's default top/bottom breadcrumb. #}
@@ -94,7 +102,7 @@
 
 {# Pages that don't get a right-side TOC. The article column expands
    to fill the row. #}
-{% set _no_toc_pages = ['index', 'search', 'genindex'] %}
+{% set _no_toc_pages = ['index', 'search', 'genindex', 'adoption'] %}
 {% set _has_toc = pagename not in _no_toc_pages %}
 
 {% block content %}
@@ -103,15 +111,31 @@
   <main class="main" id="main-content" role="main">
     {% include "breadcrumbs.html" %}
     <div class="article-with-toc{% if not _has_toc %} no-toc{% endif %}">
+      {% if _has_toc %}{% include "toc.html" %}{% endif %}
       <div class="article-column">
         <article class="article">
+          {%- if has_rst_source and pagename not in ['index', '404', 'blog'] %}
+          <button type="button" class="copy-page" title="Copy this page as reStructuredText">
+            <span class="copy-page-icons">
+              <svg class="copy-page-icon-copy" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <svg class="copy-page-icon-check" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 12.5l5.5 5.5L20 6"></path>
+              </svg>
+            </span>
+            <span class="copy-page-labels">
+              <span class="copy-page-label-copy">Copy page</span>
+              <span class="copy-page-label-done">Copied</span>
+            </span>
+          </button>
+          {%- endif %}
           {% block body %}{% endblock %}
         </article>
         {% include "prev-next.html" %}
         {% include "comments.html" %}
       </div>
-
-      {% if _has_toc %}{% include "toc.html" %}{% endif %}
     </div>
   </main>
 

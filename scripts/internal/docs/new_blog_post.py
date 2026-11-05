@@ -13,8 +13,7 @@ import datetime
 import pathlib
 import sys
 
-HERE = pathlib.Path(__file__).resolve().parent
-REPO_ROOT = HERE.parent.parent.parent
+ROOT_DIR = pathlib.Path(__file__).resolve().parents[3]
 AUTHOR = "Giampaolo Rodola"
 
 SLUG = ""
@@ -72,7 +71,7 @@ Body.
 def main():
     parse_cli()
     today = datetime.date.today()
-    year_dir = REPO_ROOT / "docs" / "blog" / str(today.year)
+    year_dir = ROOT_DIR / "docs" / "blog" / str(today.year)
     year_dir.mkdir(parents=True, exist_ok=True)
     path = year_dir / f"{SLUG}.rst"
     if path.exists():

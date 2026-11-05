@@ -5,8 +5,8 @@ This page describes how to use psutil efficiently.
 
 .. _perf-oneshot:
 
-Use oneshot() when reading multiple process attributes
-------------------------------------------------------
+Use :meth:`~Process.oneshot` when reading multiple process attributes
+---------------------------------------------------------------------
 
 If you're dealing with a single :class:`Process` instance and need to retrieve
 multiple process attributes, use :meth:`Process.oneshot`. Each method call
@@ -45,8 +45,8 @@ process, use :meth:`Process.oneshot`.
 
 .. _perf-process-iter:
 
-Use process_iter() with an attrs list
---------------------------------------
+Use :func:`process_iter` with an ``attrs`` list
+-----------------------------------------------
 
 If you iterate over multiple PIDs, always use :func:`process_iter`. It accepts
 an ``attrs`` argument that pre-fetches only the requested attributes in a
@@ -72,7 +72,7 @@ Fast:
   import psutil
 
   for p in psutil.process_iter(["name", "status"]):
-      print(p.pid, p.name(), p.status())  # return cached values, never raise
+      print(p.pid, p.snapshot.name, p.snapshot.status)  # no try/except needed
 
 :func:`process_iter(attrs=...) <psutil.process_iter>` is effectively equivalent
 to using :meth:`Process.oneshot` on each process. Using :func:`process_iter`
@@ -90,8 +90,8 @@ slow ones (see :ref:`perf-api-speed` table below):
 
 .. _perf-oneshot-methods:
 
-Methods sped up by oneshot()
-----------------------------
+Methods sped up by :meth:`~Process.oneshot`
+-------------------------------------------
 
 Here's a list of method groups for each platform which can benefit from
 :meth:`Process.oneshot`. Methods in each group (in the same comma-separated
@@ -167,14 +167,14 @@ BSD
 
 .. _perf-oneshot-bench:
 
-Measuring oneshot() speedup
----------------------------
+Measuring :meth:`~Process.oneshot` speedup
+------------------------------------------
 
 :src:`scripts/internal/bench_oneshot.py` measures :meth:`Process.oneshot`
 speedup. It also shows which APIs share the same internal kernel routines. E.g.
 on Linux:
 
-.. code-block:: none
+.. code-block:: console
 
   $ python3 scripts/internal/bench_oneshot.py --times 10000
   17 methods pre-fetched by oneshot() on platform 'linux' (10,000 times, psutil 8.0.0):
@@ -206,13 +206,13 @@ on Linux:
 Measuring APIs speed
 --------------------
 
-:src:`scripts/internal/print_api_speed.py` shows the relative cost of each API
+:src:`scripts/internal/print/api_speed.py` shows the relative cost of each API
 call. This helps you understand which operations are more expensive. E.g. on
 Linux:
 
-.. code-block:: none
+.. code-block:: console
 
-  $ python3 scripts/internal/print_api_speed.py
+  $ python3 scripts/internal/print/api_speed.py
   SYSTEM APIS                NUM CALLS      SECONDS
   -------------------------------------------------
   getloadavg                       300      0.00013

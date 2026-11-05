@@ -270,6 +270,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     int i, cnt;
     char addr[1000];
     char perms[4];
+    char named[PATH_MAX + 3];
     char *path;
     struct kinfo_proc kp;
     struct kinfo_vmentry *freep = NULL;
@@ -357,6 +358,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                     path = "[?]";
                     break;
             }
+        }
+        else if (kve->kve_path[0] != '/') {
+            // Anonymous mappings (sys:vm_anon, rtld:bss,
+            // jemalloc:extent, ...). Bracket them like the pseudo
+            // paths above.
+            str_format(named, sizeof(named), "[%s]", kve->kve_path);
+            path = named;
         }
         else {
             path = kve->kve_path;

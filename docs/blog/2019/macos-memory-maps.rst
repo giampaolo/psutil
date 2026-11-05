@@ -5,8 +5,8 @@
 
    A segfault I couldn't fix, and the API removal that followed
 
-Removing Process.memory_maps() on macOS
-=======================================
+Removing :meth:`Process.memory_maps` on macOS
+=============================================
 
 This is part of the psutil 5.6.0 release (see the full
 :doc:`release notes </blog/2019/announcing-560>`).

@@ -51,7 +51,6 @@ PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int mib[3];
     int ncpu;
-    size_t len;
     int i;
     PyObject *py_retlist = PyList_New(0);
 

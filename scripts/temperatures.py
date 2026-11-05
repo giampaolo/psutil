@@ -6,7 +6,7 @@
 
 """A clone of 'sensors' utility on Linux printing hardware temperatures.
 
-$ python3 scripts/sensors.py
+$ python3 scripts/temperatures.py
 asus
     asus                 47.0 °C (high = None °C, critical = None °C)
 

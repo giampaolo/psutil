@@ -15,8 +15,6 @@ Migrating to 8.0
 
 Key breaking changes in 8.0:
 
-- :func:`process_iter` now pre-fetches values.
-- :attr:`Process.info` is deprecated: use direct methods instead.
 - Named tuple field order changed: use attribute access instead of positional
   unpacking.
 - Some return types are now enums instead of strings.
@@ -26,6 +24,11 @@ Key breaking changes in 8.0:
   memory metrics.
 - New :attr:`Process.attrs`: :class:`frozenset` of valid attribute names;
   ``process_iter(attrs=[])`` is deprecated.
+- New :attr:`Process.snapshot`: a read-only :class:`ProcessSnapshot` holding
+  the attributes collected by :func:`process_iter`; ``Process.info`` is
+  deprecated.
+- New :func:`set_procfs_path` function to relocate ``/proc``. Use this instead
+  of setting :data:`PROCFS_PATH`.
 - Python 3.6 and 3.7 dropped.
 - Windows < 10 dropped.
 - macOS 10.7 and 10.8 dropped.
@@ -34,52 +37,6 @@ Key breaking changes in 8.0:
 
   Do not rely on positional unpacking of named tuples. Always use attribute
   access (e.g. ``t.rss``).
-
-.. _migration-8.0-process-iter:
-
-process_iter(): p.info is deprecated
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-:func:`process_iter` now caches pre-fetched values internally, so normal method
-calls can return them without using the :attr:`Process.info` dict. ``p.info``
-still works, but raises :exc:`DeprecationWarning`.
-
-.. code-block:: python
-
-  import psutil
-
-  # before
-  for p in psutil.process_iter(attrs=["name", "status"]):
-      print(p.info["name"], p.info["status"])
-
-  # after
-  for p in psutil.process_iter(attrs=["name", "status"]):
-      print(p.name(), p.status())  # return cached values, never raise
-
-When ``attrs`` are specified, the corresponding method calls return cached
-values without extra syscalls. :exc:`AccessDenied` / :exc:`ZombieProcess` are
-handled transparently by returning ``ad_value``.
-
-If you need a dict, use :meth:`Process.as_dict` instead of
-:attr:`Process.info`.
-
-.. code-block:: python
-
-  import psutil
-
-  # before
-  for p in psutil.process_iter(attrs=["name", "status"]):
-      print(p.info)
-
-  # after
-  attrs = ["name", "status"]
-  for p in psutil.process_iter(attrs=attrs):
-      print(p.as_dict(attrs))  # return cached values, never raise
-
-.. note::
-  If ``"name"`` was pre-fetched via ``attrs``, ``p.name()`` returns
-  ``ad_value`` instead of raising :exc:`AccessDenied`. If you need the
-  exception, do not include the method in ``attrs``.
 
 .. _migration-8.0-namedtuples:
 
@@ -121,8 +78,65 @@ Named tuple field order changed
 - :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired`
   fields were added.
 
-cpu_times() interrupt renamed to irq on Windows
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _migration-8.0-snapshot:
+
+:attr:`Process.info` is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The attributes collected by :func:`process_iter(attrs=...) <process_iter>` are
+now exposed as a read-only :class:`ProcessSnapshot` via
+:attr:`Process.snapshot`, with one attribute per requested name. The ``info``
+dict is deprecated and still works, but raises :exc:`DeprecationWarning`.
+
+Before:
+
+.. code-block:: python
+
+  for p in psutil.process_iter(["name", "username"]):
+      print(p.info["name"], p.info["username"])
+
+After:
+
+.. code-block:: python
+
+  for p in psutil.process_iter(["name", "username"]):
+      print(p.snapshot.name, p.snapshot.username)
+
+Accessing an attribute that was not requested raises :exc:`AttributeError`
+instead of :exc:`KeyError`. If you need a dict, use
+:meth:`p.snapshot.as_dict() <ProcessSnapshot.as_dict>`.
+
+.. _migration-8.0-attrs:
+
+New :attr:`Process.attrs` class attribute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:attr:`Process.attrs` is a new :class:`frozenset` containing the valid
+attribute names accepted by :meth:`Process.as_dict` and :func:`process_iter`.
+It avoids creating a throwaway process just to discover them:
+
+.. code-block:: python
+
+  # before
+  attrs = list(psutil.Process().as_dict().keys())
+
+  # after
+  attrs = psutil.Process.attrs
+
+It also makes it easy to pass all or a subset of attributes.
+``process_iter(attrs=[])`` (empty list meaning "all") is now deprecated; use
+:attr:`Process.attrs` instead:
+
+.. code-block:: python
+
+  # all attrs
+  psutil.process_iter(attrs=psutil.Process.attrs)
+
+  # all except connections
+  psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
+
+:func:`cpu_times` :field:`interrupt` renamed to :field:`irq` on Windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The :field:`interrupt` field of :func:`cpu_times` on Windows was renamed to
 :field:`irq` to match Linux and BSD. The old name still works but raises
@@ -150,18 +164,18 @@ working. Only code inspecting :func:`repr` or :class:`type` needs updating.
 
 .. _migration-8.0-memory-full-info:
 
-memory_full_info() is deprecated
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:meth:`~Process.memory_full_info` is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`Process.memory_full_info` is deprecated. Use
-:meth:`Process.memory_footprint` instead; it returns the same fields
-(:field:`uss`, :field:`pss` and :field:`swap`), plus a new :field:`shared`
-field.
+:meth:`Process.memory_footprint` instead; it returns the footprint fields
+(:field:`uss`, plus :field:`pss` and :field:`swap` on Linux) and adds a new
+:field:`shared` field.
 
 .. _migration-8.0-memory-extras:
 
-New memory_extras() method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+New :meth:`~Process.memory_extras` method
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 8.0 introduces a new :meth:`Process.memory_extras` method, returning extra
 platform-specific memory metrics which complement :meth:`Process.memory_info`:
@@ -173,34 +187,24 @@ platform-specific memory metrics which complement :meth:`Process.memory_info`:
   :field:`nonpaged_pool`, :field:`peak_paged_pool`,
   :field:`peak_nonpaged_pool`.
 
-.. _migration-8.0-attrs:
+.. _migration-8.0-procfs-path:
 
-New Process.attrs class attribute
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+New :func:`set_procfs_path` function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:attr:`Process.attrs` is a new :class:`frozenset` containing the valid
-attribute names accepted by :meth:`Process.as_dict` and :func:`process_iter`.
-It avoids creating a throwaway process just to discover them:
+Assigning :data:`PROCFS_PATH` directly still works but leaves internal caches
+stale. Use :func:`set_procfs_path` instead:
 
 .. code-block:: python
 
   # before
-  attrs = list(psutil.Process().as_dict().keys())
+  psutil.PROCFS_PATH = "/host/proc"
 
   # after
-  attrs = psutil.Process.attrs
+  psutil.set_procfs_path("/host/proc")
 
-It also makes it easy to pass all or a subset of attributes.
-``process_iter(attrs=[])`` (empty list meaning "all") is now deprecated; use
-:attr:`Process.attrs` instead:
-
-.. code-block:: python
-
-  # all attrs
-  psutil.process_iter(attrs=psutil.Process.attrs)
-
-  # all except connections
-  psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
+The :envvar:`PSUTIL_PROCFS_PATH` environment variable does the same from
+outside the process.
 
 Python 3.6 and 3.7 dropped
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -227,15 +231,13 @@ Git tags were renamed from ``release-X.Y.Z`` to ``vX.Y.Z`` (e.g.
 your scripts or URLs reference psutil tags, update them to the new format. See
 :gh:`2788`.
 
--------------------------------------------------------------------------------
-
 .. _migration-7.0:
 
 Migrating to 7.0
 -----------------
 
-Process.memory_info_ex() removed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``Process.memory_info_ex()`` removed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``Process.memory_info_ex()``, deprecated since 4.0.0 in 2016, was removed. Use
 :meth:`Process.memory_full_info` instead.
@@ -258,15 +260,13 @@ Python 2.7 is no longer supported. The last release supporting it is psutil
 
   pip2 install "psutil==6.1.*"
 
--------------------------------------------------------------------------------
-
 .. _migration-6.0:
 
 Migrating to 6.0
 -----------------
 
-Process.connections() renamed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:meth:`Process.connections` renamed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`Process.connections` was renamed to :meth:`Process.net_connections` for
 consistency with the system-level :func:`net_connections`. The old name raises
@@ -282,8 +282,8 @@ consistency with the system-level :func:`net_connections`. The old name raises
   p.net_connections()
   p.net_connections(kind="tcp")
 
-disk_partitions() lost two fields
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:func:`disk_partitions` lost two fields
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The :field:`maxfile` and :field:`maxpath` fields were removed from the named
 tuple returned by :func:`disk_partitions`. Positional unpacking will break:
@@ -298,8 +298,8 @@ tuple returned by :func:`disk_partitions`. Positional unpacking will break:
       part.device, part.mountpoint, part.fstype, part.opts
   )
 
-process_iter() no longer checks for PID reuse
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:func:`process_iter` no longer checks for PID reuse
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :func:`process_iter` no longer preemptively checks whether yielded PIDs have
 been reused, making it ~20× faster. To verify that a process object is still
@@ -310,4 +310,4 @@ explicitly:
 
   for p in psutil.process_iter(["name"]):
       if p.is_running():
-          print(p.pid, p.name())
+          print(p.pid, p.snapshot.name)

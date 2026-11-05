@@ -50,7 +50,7 @@ psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall) {
 
 
 // A wrapper around GetModuleHandle and GetProcAddress.
-PVOID
+FARPROC
 psutil_GetProcAddress(LPCSTR libname, LPCSTR apiname) {
     HMODULE mod;
     FARPROC addr;
@@ -72,7 +72,7 @@ psutil_GetProcAddress(LPCSTR libname, LPCSTR apiname) {
 
 
 // A wrapper around LoadLibrary and GetProcAddress.
-PVOID
+FARPROC
 psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR apiname) {
     HMODULE mod;
     FARPROC addr;
@@ -138,58 +138,58 @@ psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
 
 static int
 psutil_loadlibs() {
+    // clang-format off
     // --- Mandatory. ntdll is loaded in every process, so
     // GetModuleHandle is enough.
-    NtQuerySystemInformation = psutil_GetProcAddress(
-        "ntdll.dll", "NtQuerySystemInformation"
-    );
+    NtQuerySystemInformation = (_NtQuerySystemInformation)
+        psutil_GetProcAddress("ntdll.dll", "NtQuerySystemInformation");
     if (!NtQuerySystemInformation)
         return -1;
-    NtQueryInformationProcess = psutil_GetProcAddress(
-        "ntdll.dll", "NtQueryInformationProcess"
-    );
+    NtQueryInformationProcess = (_NtQueryInformationProcess)
+        psutil_GetProcAddress("ntdll.dll", "NtQueryInformationProcess");
     if (!NtQueryInformationProcess)
         return -1;
-    NtSetInformationProcess = psutil_GetProcAddress(
-        "ntdll.dll", "NtSetInformationProcess"
-    );
+    NtSetInformationProcess = (_NtSetInformationProcess)
+        psutil_GetProcAddress("ntdll.dll", "NtSetInformationProcess");
     if (!NtSetInformationProcess)
         return -1;
-    NtQueryObject = psutil_GetProcAddress("ntdll.dll", "NtQueryObject");
+    NtQueryObject = (_NtQueryObject)
+        psutil_GetProcAddress("ntdll.dll", "NtQueryObject");
     if (!NtQueryObject)
         return -1;
-    RtlGetVersion = psutil_GetProcAddress("ntdll.dll", "RtlGetVersion");
+    RtlGetVersion = (_RtlGetVersion)
+        psutil_GetProcAddress("ntdll.dll", "RtlGetVersion");
     if (!RtlGetVersion)
         return -1;
-    NtSuspendProcess = psutil_GetProcAddress("ntdll.dll", "NtSuspendProcess");
+    NtSuspendProcess = (_NtSuspendProcess)
+        psutil_GetProcAddress("ntdll.dll", "NtSuspendProcess");
     if (!NtSuspendProcess)
         return -1;
-    NtResumeProcess = psutil_GetProcAddress("ntdll.dll", "NtResumeProcess");
+    NtResumeProcess = (_NtResumeProcess)
+        psutil_GetProcAddress("ntdll.dll", "NtResumeProcess");
     if (!NtResumeProcess)
         return -1;
-    NtQueryVirtualMemory = psutil_GetProcAddress(
-        "ntdll.dll", "NtQueryVirtualMemory"
-    );
+    NtQueryVirtualMemory = (_NtQueryVirtualMemory)
+        psutil_GetProcAddress("ntdll.dll", "NtQueryVirtualMemory");
     if (!NtQueryVirtualMemory)
         return -1;
-    RtlNtStatusToDosErrorNoTeb = psutil_GetProcAddress(
-        "ntdll.dll", "RtlNtStatusToDosErrorNoTeb"
-    );
+    RtlNtStatusToDosErrorNoTeb = (_RtlNtStatusToDosErrorNoTeb)
+        psutil_GetProcAddress("ntdll.dll", "RtlNtStatusToDosErrorNoTeb");
     if (!RtlNtStatusToDosErrorNoTeb)
         return -1;
 
     // --- Optional
 
     // minimum requirements: Windows Server Core
-    WTSEnumerateSessionsW = psutil_GetProcAddressFromLib(
-        "wtsapi32.dll", "WTSEnumerateSessionsW"
-    );
-    WTSQuerySessionInformationW = psutil_GetProcAddressFromLib(
-        "wtsapi32.dll", "WTSQuerySessionInformationW"
-    );
-    WTSFreeMemory = psutil_GetProcAddressFromLib(
-        "wtsapi32.dll", "WTSFreeMemory"
-    );
+    WTSEnumerateSessionsW = (_WTSEnumerateSessionsW)
+        psutil_GetProcAddressFromLib("wtsapi32.dll", "WTSEnumerateSessionsW");
+    WTSQuerySessionInformationW = (_WTSQuerySessionInformationW)
+        psutil_GetProcAddressFromLib(
+            "wtsapi32.dll", "WTSQuerySessionInformationW"
+        );
+    WTSFreeMemory = (_WTSFreeMemory)
+        psutil_GetProcAddressFromLib("wtsapi32.dll", "WTSFreeMemory");
+    // clang-format on
 
     PyErr_Clear();
     return 0;

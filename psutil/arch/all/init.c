@@ -98,7 +98,7 @@ psutil_mod_init(
 ) {
     static PyModuleDef_Slot slots[] = {
         {Py_mod_exec, NULL},  // platform exec, filled below
-#ifdef Py_mod_gil
+#ifdef Py_MOD_GIL_NOT_USED
         {Py_mod_gil, Py_MOD_GIL_NOT_USED},
 #endif
         {0, NULL}

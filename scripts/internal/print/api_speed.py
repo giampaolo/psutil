@@ -6,7 +6,7 @@
 
 """Benchmark all API calls and print them from fastest to slowest.
 
-$ make print_api_speed
+$ make print-api-speed
 SYSTEM APIS                NUM CALLS      SECONDS
 -------------------------------------------------
 getloadavg                       300      0.00013
@@ -165,6 +165,7 @@ def main():
     public_apis = []
     ignore = [
         'bytes2human',
+        'set_procfs_path',
         'wait_procs',
         'process_iter',
         'win_service_get',

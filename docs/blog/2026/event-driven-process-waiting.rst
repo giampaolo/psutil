@@ -156,8 +156,8 @@ seconds without terminating:
 
 .. code-block:: python
 
-   # test.py
    import psutil, os
+
    try:
        psutil.Process(os.getpid()).wait(timeout=10)
    except psutil.TimeoutExpired:
@@ -166,7 +166,7 @@ seconds without terminating:
 We can measure the CPU context switching using ``/usr/bin/time -v``. Before the
 patch (the busy-loop):
 
-::
+.. code-block:: console
 
    $ /usr/bin/time -v python3 test.py 2>&1 | grep context
        Voluntary context switches: 258
@@ -174,7 +174,7 @@ patch (the busy-loop):
 
 After the patch (the event-driven approach):
 
-::
+.. code-block:: console
 
    $ /usr/bin/time -v python3 test.py 2>&1 | grep context
        Voluntary context switches: 2
@@ -198,7 +198,7 @@ foreground”.
 
 -  :func:`time.sleep`:
 
-::
+.. code-block:: console
 
    $ (python3 -c 'import time; time.sleep(10)' & pid=$!; sleep 0.3; ps -o pid,stat,comm -p $pid) && fg &>/dev/null
        PID STAT COMMAND
@@ -206,7 +206,7 @@ foreground”.
 
 -  :func:`select.poll`:
 
-::
+.. code-block:: console
 
    $ (python3 -c 'import os,select; fd = os.pidfd_open(os.getpid(),0); p = select.poll(); p.register(fd,select.POLLIN); p.poll(10_000)' & pid=$!; sleep 0.3; ps -o pid,stat,comm -p $pid) && fg &>/dev/null
        PID STAT COMMAND
