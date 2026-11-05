@@ -2428,7 +2428,7 @@ def memory_swap() -> sswap:
 
 
 def virtual_memory() -> svmem:
-    """Alias of memory_physical()."""
+    """Deprecated: use memory_physical() instead."""
     global _TOTAL_PHYMEM
     ret = _psplatform.virtual_memory()
     # cached for later use in Process.memory_percent()
@@ -2437,7 +2437,7 @@ def virtual_memory() -> svmem:
 
 
 def swap_memory() -> sswap:
-    """Alias of memory_swap()."""
+    """Deprecated: use memory_swap() instead."""
     return _psplatform.swap_memory()
 
 

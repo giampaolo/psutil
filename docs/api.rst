@@ -271,10 +271,10 @@ CPU
 Memory
 ^^^^^^
 
-.. function:: virtual_memory()
+.. function:: memory_physical()
 
-  Return statistics about system memory usage. All values are expressed in
-  bytes.
+  Return statistics about system memory (RAM) usage. All values are expressed
+  in bytes.
 
   - :field:`total`: total physical RAM.
   - :field:`available`: memory that can be given instantly to processes without
@@ -391,7 +391,7 @@ Memory
   .. code-block:: pycon
 
      >>> import psutil
-     >>> mem = psutil.virtual_memory()
+     >>> mem = psutil.memory_physical()
      >>> mem
      svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304, slab=199348224)
      >>>
@@ -421,10 +421,12 @@ Memory
     - :ref:`faq_virtual_memory_available`
     - :ref:`faq_used_plus_free`
 
+  .. versionadded:: 8.0.0
+
   .. versionchanged:: 8.0.0
      Windows: added :field:`cached` and :field:`wired` fields.
 
-.. function:: swap_memory()
+.. function:: memory_swap()
 
   Return system :term:`swap memory` statistics:
 
@@ -449,15 +451,35 @@ Memory
   .. code-block:: pycon
 
      >>> import psutil
-     >>> psutil.swap_memory()
+     >>> psutil.memory_swap()
      sswap(total=2097147904, used=886620160, free=1210527744, percent=42.3, sin=1050411008, sout=1906720768)
 
   .. seealso::
     - :src:`scripts/meminfo.py`
     - :ref:`Swap activity recipe <recipe_swap_activity>`
 
+  .. versionadded:: 8.0.0
+
   .. versionchanged:: 8.0.0
      OpenBSD: :field:`sin` / :field:`sout` are no longer set to ``0``.
+
+.. function:: virtual_memory()
+
+  Same as :func:`memory_physical` (deprecated).
+
+  .. deprecated:: 8.0.0
+     use :func:`memory_physical` instead. No warning is raised and there are no
+     plans to remove it. See
+     :ref:`migration guide <migration-8.0-memory-names>`.
+
+.. function:: swap_memory()
+
+  Same as :func:`memory_swap` (deprecated).
+
+  .. deprecated:: 8.0.0
+     use :func:`memory_swap` instead. No warning is raised and there are no
+     plans to remove it. See
+     :ref:`migration guide <migration-8.0-memory-names>`.
 
 Disks
 ^^^^^
@@ -1847,7 +1869,7 @@ Exceptions
 
     .. code-block:: python
 
-       Process().memory_info().rss / virtual_memory().total * 100
+       Process().memory_info().rss / memory_physical().total * 100
 
     *memtype* selects which memory field to use and can be any attribute from
     :meth:`memory_info`, :meth:`memory_extras`, or :meth:`memory_footprint`

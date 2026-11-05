@@ -331,10 +331,10 @@ Process memory
 
 .. _faq_virtual_memory_available:
 
-What is the difference between :func:`virtual_memory` :field:`available` and :field:`free`?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What is the difference between :func:`memory_physical` :field:`available` and :field:`free`?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:func:`virtual_memory` returns both :field:`free` and :field:`available`, but
+:func:`memory_physical` returns both :field:`free` and :field:`available`, but
 they measure different things:
 
 - :field:`free`: memory that is not being used at all.
@@ -416,8 +416,8 @@ System memory
 
 .. _faq_used_plus_free:
 
-Why does :func:`virtual_memory` :field:`used` + :field:`free` != :field:`total`?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why does :func:`memory_physical` :field:`used` + :field:`free` != :field:`total`?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Because some memory (like :term:`page cache` and :term:`buffers`) is
 reclaimable and accounted separately:
@@ -425,7 +425,7 @@ reclaimable and accounted separately:
 .. code-block:: pycon
 
   >>> import psutil
-  >>> m = psutil.virtual_memory()
+  >>> m = psutil.memory_physical()
   >>> m.used + m.free == m.total
   False
 

@@ -74,7 +74,7 @@ Memory
 
     >>> import psutil
     >>>
-    >>> psutil.virtual_memory()
+    >>> psutil.memory_physical()
     svmem(total=10367352832,
           available=6472179712,
           percent=37.6,
@@ -86,7 +86,7 @@ Memory
           cached=3500347392,
           shared=787554304)
     >>>
-    >>> psutil.swap_memory()
+    >>> psutil.memory_swap()
     sswap(total=2097147904,
           used=296128512,
           free=1801019392,
