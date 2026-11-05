@@ -42,8 +42,8 @@ Changelog
   and :func:`process_iter`. Passing ``attrs=[]`` to :func:`process_iter` to
   mean "retrieve all attributes" is deprecated. See
   :ref:`migration guide <migration-8.0-attrs>`.
-- :gh:`2776`, [Windows], :label:`breaking`: :func:`memory_physical` now
-  includes :field:`cached` and :field:`wired` fields.
+- :gh:`2776`, [Windows], :label:`breaking`: :func:`virtual_memory` now includes
+  :field:`cached` and :field:`wired` fields.
 - :gh:`3052`: new :attr:`Process.snapshot` attribute, a read-only
   :class:`ProcessSnapshot` exposing the attributes collected by
   :func:`process_iter` (``p.snapshot.name`` instead of ``p.info["name"]``).

@@ -423,9 +423,6 @@ Memory
 
   .. versionadded:: 8.0.0
 
-  .. versionchanged:: 8.0.0
-     Windows: added :field:`cached` and :field:`wired` fields.
-
 .. function:: memory_swap()
 
   Return system :term:`swap memory` statistics:
@@ -460,12 +457,12 @@ Memory
 
   .. versionadded:: 8.0.0
 
-  .. versionchanged:: 8.0.0
-     OpenBSD: :field:`sin` / :field:`sout` are no longer set to ``0``.
-
 .. function:: virtual_memory()
 
   Same as :func:`memory_physical` (soft deprecated).
+
+  .. versionchanged:: 8.0.0
+     Windows: added :field:`cached` and :field:`wired` fields.
 
   .. soft-deprecated:: 8.0.0
      use :func:`memory_physical` instead. No warning is raised and there are no
@@ -475,6 +472,9 @@ Memory
 .. function:: swap_memory()
 
   Same as :func:`memory_swap` (soft deprecated).
+
+  .. versionchanged:: 8.0.0
+     OpenBSD: :field:`sin` / :field:`sout` are no longer set to ``0``.
 
   .. soft-deprecated:: 8.0.0
      use :func:`memory_swap` instead. No warning is raised and there are no

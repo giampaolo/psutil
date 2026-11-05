@@ -77,7 +77,7 @@ Named tuple field order changed
     :field:`peak_nonpaged_pool` moved to :meth:`Process.memory_extras`.
   - BSD: a new :field:`peak_rss` field was added.
 
-- :func:`memory_physical`: on Windows, new :field:`cached` and :field:`wired`
+- :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired`
   fields were added.
 
 .. _migration-8.0-memory-names:
