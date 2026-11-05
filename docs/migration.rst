@@ -20,7 +20,7 @@ Key breaking changes in 8.0:
 - Some return types are now enums instead of strings.
 - :meth:`Process.memory_full_info` is deprecated: use
   :meth:`Process.memory_footprint`.
-- :func:`virtual_memory` and :func:`swap_memory` are deprecated: use
+- :func:`virtual_memory` and :func:`swap_memory` are soft deprecated: use
   :func:`memory_physical` and :func:`memory_swap`. No warning is raised.
 - New :meth:`Process.memory_extras` method, returning extra platform-specific
   memory metrics.
@@ -82,17 +82,15 @@ Named tuple field order changed
 
 .. _migration-8.0-memory-names:
 
-:func:`virtual_memory` and :func:`swap_memory` are deprecated
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:func:`virtual_memory` and :func:`swap_memory` are soft deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:func:`virtual_memory` and :func:`swap_memory` are deprecated in favor of
-:func:`memory_physical` and :func:`memory_swap`. The new functions group them
-under a ``memory_`` prefix, like ``cpu_*``, ``disk_*`` and ``net_*``, and drop
-"virtual", since the function returns physical RAM, not virtual memory.
+:func:`virtual_memory` and :func:`swap_memory` are turned into
+:term:`soft deprecated` aliases in favor of :func:`memory_physical` and
+:func:`memory_swap`.
 
-The deprecated functions don't raise :exc:`DeprecationWarning` and there are no
-plans to remove them, so existing code keeps working. New code should use the
-new functions:
+The old functions don't raise :exc:`DeprecationWarning` (for now) and there are
+no plans to remove them, so existing code keeps working.
 
 .. code-block:: python
 
@@ -103,9 +101,6 @@ new functions:
   # after
   psutil.memory_physical()
   psutil.memory_swap()
-
-Code that overrides or mocks ``psutil.virtual_memory`` or
-``psutil.swap_memory`` affects the new functions too.
 
 .. _migration-8.0-snapshot:
 

@@ -83,6 +83,7 @@ _local_exts = [  # defined in the _ext/ folder
     "opengraph_override",
     "post_banner",
     "proc_role",
+    "soft_deprecated",
     "source_links",  # "[source]" links to GitHub
     "substitutions",
 ]

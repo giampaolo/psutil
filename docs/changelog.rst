@@ -128,10 +128,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2947`: psutil now emits a :exc:`RuntimeWarning` when it returns
   incomplete or approximated results (e.g. a failed sanity check on kernel
   data). Before, these were only visible with :envvar:`PSUTIL_DEBUG`.
-- :gh:`XXXX`: :func:`virtual_memory` and :func:`swap_memory` are deprecated in
-  favor of :func:`memory_physical` and :func:`memory_swap`. No warning is
-  raised and there are no plans to remove them. See
-  :ref:`migration guide <migration-8.0-memory-names>`.
+- :gh:`XXXX`: :func:`virtual_memory` and :func:`swap_memory` are
+  :term:`soft deprecated` in favor of :func:`memory_physical` and
+  :func:`memory_swap`. No warning is raised and there are no plans to remove
+  them. See :ref:`migration guide <migration-8.0-memory-names>`.
 
 **Dropped support**
 

@@ -465,18 +465,18 @@ Memory
 
 .. function:: virtual_memory()
 
-  Same as :func:`memory_physical` (deprecated).
+  Same as :func:`memory_physical` (soft deprecated).
 
-  .. deprecated:: 8.0.0
+  .. soft-deprecated:: 8.0.0
      use :func:`memory_physical` instead. No warning is raised and there are no
      plans to remove it. See
      :ref:`migration guide <migration-8.0-memory-names>`.
 
 .. function:: swap_memory()
 
-  Same as :func:`memory_swap` (deprecated).
+  Same as :func:`memory_swap` (soft deprecated).
 
-  .. deprecated:: 8.0.0
+  .. soft-deprecated:: 8.0.0
      use :func:`memory_swap` instead. No warning is raised and there are no
      plans to remove it. See
      :ref:`migration guide <migration-8.0-memory-names>`.

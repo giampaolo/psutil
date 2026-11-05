@@ -261,6 +261,14 @@ Glossary
       process that maps it.
       See :meth:`Process.memory_info`.
 
+   soft deprecated
+
+      An API that new code shouldn't use, but that keeps working: it doesn't
+      raise :exc:`DeprecationWarning` and there are no plans to remove it. This
+      is the same policy CPython follows (:pep:`PEP 387 <387#soft-deprecation>`).
+      In psutil, :func:`virtual_memory` and :func:`swap_memory` are soft
+      deprecated in favor of :func:`memory_physical` and :func:`memory_swap`.
+
    soft interrupt
 
       Deferred work scheduled by a :term:`hardware interrupt` handler to
