@@ -105,7 +105,7 @@ def virtual_memory():
     free = avail = os.sysconf('SC_AVPHYS_PAGES') * PAGE_SIZE
     used = total - free
     percent = usage_percent(used, total, round_=1)
-    return ntp.svmem(total, avail, percent, used, free)
+    return ntp.smem(total, avail, percent, used, free)
 
 
 def swap_memory():

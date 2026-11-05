@@ -109,7 +109,7 @@ HAS_PROC_NUM_THREADS = hasattr(_psutil, "proc_num_threads")
 
 def virtual_memory():
     d = _psutil.virtual_mem()
-    return ntp.svmem(**d)
+    return ntp.smem(**d)
 
 
 def swap_memory():

@@ -362,7 +362,7 @@ def virtual_memory():
         )
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
-    return ntp.svmem(
+    return ntp.smem(
         total,
         avail,
         percent,

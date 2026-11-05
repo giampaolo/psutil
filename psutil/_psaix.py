@@ -89,7 +89,7 @@ proc_info_map = dict(
 def virtual_memory():
     total, avail, free, _pinned, inuse = _psutil.virtual_mem()
     percent = usage_percent((total - avail), total, round_=1)
-    return ntp.svmem(total, avail, percent, inuse, free)
+    return ntp.smem(total, avail, percent, inuse, free)
 
 
 def swap_memory():

@@ -122,7 +122,7 @@ For the full API with more examples, see the
 .. code-block:: python
 
     >>> psutil.memory_physical()
-    svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, ...)
+    smem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, ...)
     >>> psutil.memory_swap()
     sswap(total=2097147904, used=296128512, free=1801019392, percent=14.1, sin=304193536, sout=677842944)
 

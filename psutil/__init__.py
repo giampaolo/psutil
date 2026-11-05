@@ -104,12 +104,12 @@ if _TYPE_CHECKING:
     from ._ntuples import sdiskusage
     from ._ntuples import sfan
     from ._ntuples import shwtemp
+    from ._ntuples import smem
     from ._ntuples import snetio
     from ._ntuples import snicaddr
     from ._ntuples import snicstats
     from ._ntuples import sswap
     from ._ntuples import suser
-    from ._ntuples import svmem
     from ._pswindows import WindowsService
 
     # _export_enum() puts these in the module namespace at run time.
@@ -2371,7 +2371,7 @@ def getloadavg() -> tuple[float, float, float]:
 # =====================================================================
 
 
-def memory_physical() -> svmem:
+def memory_physical() -> smem:
     """Return statistics about system memory usage as a named tuple.
 
     The fields vary by platform (see official doc), but the following

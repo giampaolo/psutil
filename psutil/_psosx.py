@@ -75,7 +75,7 @@ def virtual_memory():
     d["percent"] = usage_percent(
         (d["total"] - d["available"]), d["total"], round_=1
     )
-    return ntp.svmem(**d)
+    return ntp.smem(**d)
 
 
 def swap_memory():
