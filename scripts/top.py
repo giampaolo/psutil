@@ -134,7 +134,7 @@ def print_header(procs_status, num_procs):
         printl(line, color=get_color(perc))
 
     # memory usage
-    mem = psutil.virtual_memory()
+    mem = psutil.memory_physical()
     dashes, empty_dashes = get_dashes(mem.percent)
     line = " Mem   [{}{}] {:>5}% {:>6} / {}".format(
         dashes,
@@ -146,7 +146,7 @@ def print_header(procs_status, num_procs):
     printl(line, color=get_color(mem.percent))
 
     # swap usage
-    swap = psutil.swap_memory()
+    swap = psutil.memory_swap()
     dashes, empty_dashes = get_dashes(swap.percent)
     line = " Swap  [{}{}] {:>5}% {:>6} / {}".format(
         dashes,

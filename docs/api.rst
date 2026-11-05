@@ -418,7 +418,7 @@ Memory
 
   .. seealso::
     - :src:`scripts/meminfo.py`
-    - :ref:`faq_virtual_memory_available`
+    - :ref:`faq_memory_physical_available`
     - :ref:`faq_used_plus_free`
 
   .. versionadded:: 8.0.0

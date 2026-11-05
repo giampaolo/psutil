@@ -227,11 +227,11 @@ Linux:
   boot_time                        300      0.00700
   cpu_percent                      300      0.00766
   net_if_stats                     300      0.00783
-  virtual_memory                   300      0.00834
+  memory_physical                  300      0.00834
   cpu_times_percent                300      0.00885
   net_if_addrs                     300      0.01157
   cpu_stats                        300      0.01208
-  swap_memory                      300      0.01558
+  memory_swap                      300      0.01558
   disk_partitions                  300      0.01664
   disk_io_counters                 300      0.02204
   sensors_battery                  300      0.02995

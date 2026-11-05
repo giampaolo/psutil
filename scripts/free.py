@@ -16,8 +16,8 @@ import psutil
 
 
 def main():
-    virt = psutil.virtual_memory()
-    swap = psutil.swap_memory()
+    virt = psutil.memory_physical()
+    swap = psutil.memory_swap()
     templ = "{:<7} {:>10} {:>10} {:>10} {:>10} {:>10} {:>10}"
     print(
         templ.format("", "total", "used", "free", "shared", "buffers", "cache")

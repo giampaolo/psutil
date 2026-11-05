@@ -340,13 +340,13 @@ class TestModuleFunctions(MemoryLeakTestCase):
 
     # --- mem
 
-    def test_virtual_memory(self):
-        self.execute(psutil.virtual_memory)
+    def test_memory_physical(self):
+        self.execute(psutil.memory_physical)
 
     # TODO: remove this skip when this gets fixed
     @skipif(SUNOS, reason="worthless on SUNOS (uses a subprocess)")
-    def test_swap_memory(self):
-        self.execute(psutil.swap_memory)
+    def test_memory_swap(self):
+        self.execute(psutil.memory_swap)
 
     def test_pid_exists(self):
         times = FEW_TIMES if POSIX else self.times

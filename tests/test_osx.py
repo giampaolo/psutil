@@ -83,38 +83,38 @@ class TestProcess(MacosTestCase):
 # =====================================================================
 
 
-class TestVirtualMemory(MacosTestCase):
+class TestMemoryPhysical(MacosTestCase):
 
     def test_total(self):
         sysctl_hwphymem = sysctl('hw.memsize')
-        assert sysctl_hwphymem == psutil.virtual_memory().total
+        assert sysctl_hwphymem == psutil.memory_physical().total
 
     @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_free(self):
         vmstat_val = vm_stat("free")
-        psutil_val = psutil.virtual_memory().free
+        psutil_val = psutil.memory_physical().free
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 5
 
     @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_active(self):
         vmstat_val = vm_stat("active")
-        psutil_val = psutil.virtual_memory().active
+        psutil_val = psutil.memory_physical().active
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 5
 
     @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_inactive(self):
         vmstat_val = vm_stat("inactive")
-        psutil_val = psutil.virtual_memory().inactive
+        psutil_val = psutil.memory_physical().inactive
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 5
 
     @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_wired(self):
         vmstat_val = vm_stat("wired")
-        psutil_val = psutil.virtual_memory().wired
+        psutil_val = psutil.memory_physical().wired
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM * 5
 
 
-class TestSwapMemory(MacosTestCase):
+class TestMemorySwap(MacosTestCase):
 
     @staticmethod
     def parse_swapusage(out):
@@ -131,30 +131,30 @@ class TestSwapMemory(MacosTestCase):
         out = sh("sysctl vm.swapusage")
         sysctl_val = self.parse_swapusage(out)["total"]
         # 0.01M display precision = ~10KB rounding
-        assert abs(psutil.swap_memory().total - sysctl_val) < 100 * 1024
+        assert abs(psutil.memory_swap().total - sysctl_val) < 100 * 1024
 
     @retry_on_failure
     def test_used(self):
         out = sh("sysctl vm.swapusage")
         sysctl_val = self.parse_swapusage(out)["used"]
-        assert abs(psutil.swap_memory().used - sysctl_val) < TOLERANCE_SYS_MEM
+        assert abs(psutil.memory_swap().used - sysctl_val) < TOLERANCE_SYS_MEM
 
     @retry_on_failure
     def test_free(self):
         out = sh("sysctl vm.swapusage")
         sysctl_val = self.parse_swapusage(out)["free"]
-        assert abs(psutil.swap_memory().free - sysctl_val) < TOLERANCE_SYS_MEM
+        assert abs(psutil.memory_swap().free - sysctl_val) < TOLERANCE_SYS_MEM
 
     @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_sin(self):
         vmstat_val = vm_stat("Pageins")
-        psutil_val = psutil.swap_memory().sin
+        psutil_val = psutil.memory_swap().sin
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
     @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_sout(self):
         vmstat_val = vm_stat("Pageout")
-        psutil_val = psutil.swap_memory().sout
+        psutil_val = psutil.memory_swap().sout
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
 

@@ -329,7 +329,7 @@ What is the difference between psutil, os, and multiprocessing ``cpu_count()``?
 Process memory
 --------------
 
-.. _faq_virtual_memory_available:
+.. _faq_memory_physical_available:
 
 What is the difference between :func:`memory_physical` :field:`available` and :field:`free`?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -430,4 +430,5 @@ reclaimable and accounted separately:
   False
 
 The :field:`available` field already includes this reclaimable memory and is
-the best indicator of memory pressure. See :ref:`faq_virtual_memory_available`.
+the best indicator of memory pressure. See
+:ref:`faq_memory_physical_available`.
