@@ -16,7 +16,7 @@ import psutil
 
 
 def main():
-    virt = psutil.memory_physical()
+    mem = psutil.memory_physical()
     swap = psutil.memory_swap()
     templ = "{:<7} {:>10} {:>10} {:>10} {:>10} {:>10} {:>10}"
     print(
@@ -24,12 +24,12 @@ def main():
     )
     sect = templ.format(
         'Mem:',
-        int(virt.total / 1024),
-        int(virt.used / 1024),
-        int(virt.free / 1024),
-        int(getattr(virt, 'shared', 0) / 1024),
-        int(getattr(virt, 'buffers', 0) / 1024),
-        int(getattr(virt, 'cached', 0) / 1024),
+        int(mem.total / 1024),
+        int(mem.used / 1024),
+        int(mem.free / 1024),
+        int(getattr(mem, 'shared', 0) / 1024),
+        int(getattr(mem, 'buffers', 0) / 1024),
+        int(getattr(mem, 'cached', 0) / 1024),
     )
     print(sect)
     sect = templ.format(

@@ -83,7 +83,7 @@ class TestSystemAPIs(BSDTestCase):
         assert psutil.cpu_count(logical=True) == syst
 
     # On NetBSD total is UVM's managed pages, which is less than
-    # physical RAM. TestNetBSDMemory.test_vmem_total covers it instead.
+    # physical RAM. TestNetBSDMemory.test_mem_total covers it instead.
     @requires_cli("sysctl")
     @skipif(NETBSD, reason="hw.physmem is not what psutil reports")
     def test_memory_physical_total(self):
@@ -136,22 +136,22 @@ class TestVmstat(BSDTestCase):
 
     # --- memory_physical()
 
-    def test_vmem_free(self):
+    def test_mem_free(self):
         vmstat_value = vmstat(['pages free']) * PAGESIZE
         psutil_value = psutil.memory_physical().free
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    def test_vmem_active(self):
+    def test_mem_active(self):
         vmstat_value = vmstat(['pages active']) * PAGESIZE
         psutil_value = psutil.memory_physical().active
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    def test_vmem_inactive(self):
+    def test_mem_inactive(self):
         vmstat_value = vmstat(['pages inactive']) * PAGESIZE
         psutil_value = psutil.memory_physical().inactive
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    def test_vmem_cached(self):
+    def test_mem_cached(self):
         # NetBSD / OpenBSD
         vmstat_value = (
             vmstat(['cached file pages']) + vmstat(['cached executable pages'])
@@ -159,13 +159,13 @@ class TestVmstat(BSDTestCase):
         psutil_value = psutil.memory_physical().cached
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    def test_vmem_wired(self):
+    def test_mem_wired(self):
         vmstat_value = vmstat(['pages wired', 'pages wired down']) * PAGESIZE
         psutil_value = psutil.memory_physical().wired
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @skipif(not (OPENBSD or NETBSD), reason="NETBSD / OPENBSD only")
-    def test_vmem_shared(self):
+    def test_mem_shared(self):
         out = sh("vmstat -t")
         if "vm-sh" not in out:
             return pytest.skip("can't find 'vm-sh' in vmstat output")
@@ -427,46 +427,46 @@ class TestFreeBSDMemory(FreeBSDTestCase):
         return total, used, free
 
     @retry_on_failure
-    def test_vmem_active(self):
+    def test_mem_active(self):
         syst = sysctl("vm.stats.vm.v_active_count") * PAGESIZE
         assert abs(psutil.memory_physical().active - syst) < TOLERANCE_SYS_MEM
 
     @retry_on_failure
-    def test_vmem_inactive(self):
+    def test_mem_inactive(self):
         syst = sysctl("vm.stats.vm.v_inactive_count") * PAGESIZE
         assert (
             abs(psutil.memory_physical().inactive - syst) < TOLERANCE_SYS_MEM
         )
 
     @retry_on_failure
-    def test_vmem_wired(self):
+    def test_mem_wired(self):
         syst = sysctl("vm.stats.vm.v_wire_count") * PAGESIZE
         assert abs(psutil.memory_physical().wired - syst) < TOLERANCE_SYS_MEM
 
     @retry_on_failure
-    def test_vmem_cached(self):
+    def test_mem_cached(self):
         syst = sysctl("vm.stats.vm.v_cache_count") * PAGESIZE
         assert abs(psutil.memory_physical().cached - syst) < TOLERANCE_SYS_MEM
 
     @retry_on_failure
-    def test_vmem_free(self):
+    def test_mem_free(self):
         syst = sysctl("vm.stats.vm.v_free_count") * PAGESIZE
         assert abs(psutil.memory_physical().free - syst) < TOLERANCE_SYS_MEM
 
     @retry_on_failure
-    def test_vmem_buffers(self):
+    def test_mem_buffers(self):
         syst = sysctl("vfs.bufspace")
         assert abs(psutil.memory_physical().buffers - syst) < TOLERANCE_SYS_MEM
 
-    def test_swapmem_free(self):
+    def test_swap_free(self):
         _total, _used, free = self.parse_swapinfo()
         assert abs(psutil.memory_swap().free - free) < TOLERANCE_SYS_MEM
 
-    def test_swapmem_used(self):
+    def test_swap_used(self):
         _total, used, _free = self.parse_swapinfo()
         assert abs(psutil.memory_swap().used - used) < TOLERANCE_SYS_MEM
 
-    def test_swapmem_total(self):
+    def test_swap_total(self):
         total, _used, _free = self.parse_swapinfo()
         assert abs(psutil.memory_swap().total - total) < TOLERANCE_SYS_MEM
 
@@ -609,12 +609,12 @@ class TestNetBSDProcess(NetBSDTestCase):
 
 
 class TestNetBSDMemory(NetBSDTestCase):
-    def test_vmem_total(self):
+    def test_mem_total(self):
         num = vmstat(["pages managed"])
         assert num * PAGESIZE == psutil.memory_physical().total
 
     @retry_on_failure
-    def test_vmem_buffers(self):
+    def test_mem_buffers(self):
         # uv.filepages: file-backed pages excluding executable mappings
         assert (
             abs(

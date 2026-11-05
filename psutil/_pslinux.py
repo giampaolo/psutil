@@ -188,7 +188,7 @@ def is_storage_device(name):
 # =====================================================================
 
 
-def calculate_avail_vmem(mems):
+def calculate_avail_mem(mems):
     """Fallback for kernels < 3.14 where /proc/meminfo does not provide
     "MemAvailable", see:
     https://blog.famzah.net/2014/09/24/.
@@ -331,14 +331,14 @@ def memory_physical():
     try:
         avail = mems[b'MemAvailable:']
     except KeyError:
-        avail = calculate_avail_vmem(mems)
+        avail = calculate_avail_mem(mems)
     else:
         if avail == 0:
             # Yes, it can happen (probably a kernel bug):
             # https://github.com/giampaolo/psutil/issues/1915
             # In this case "free" CLI tool makes an estimate. We do the same,
             # and it matches "free" CLI tool.
-            avail = calculate_avail_vmem(mems)
+            avail = calculate_avail_mem(mems)
 
     if avail < 0:
         avail = 0

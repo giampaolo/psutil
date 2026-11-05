@@ -61,7 +61,7 @@ if LINUX:
     from psutil._pslinux import RootFsDeviceFinder
     from psutil._pslinux import _cpu_get_cpuinfo_freq
     from psutil._pslinux import _parse_cpulist
-    from psutil._pslinux import calculate_avail_vmem
+    from psutil._pslinux import calculate_avail_mem
     from psutil._pslinux import open_binary
 
 
@@ -449,7 +449,7 @@ class TestMemoryPhysicalMocks(LinuxTestCase):
                 fields = line.split()
                 mems[fields[0]] = int(fields[1]) * 1024
 
-        a = calculate_avail_vmem(mems)
+        a = calculate_avail_mem(mems)
         if b'MemAvailable:' in mems:
             b = mems[b'MemAvailable:']
             diff_percent = abs(a - b) / a * 100
