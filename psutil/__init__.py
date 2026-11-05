@@ -2403,11 +2403,8 @@ def memory_physical() -> svmem:
 
     On Windows `available` and `free` are the same.
     """
-    global _TOTAL_PHYMEM
-    ret = _psplatform.virtual_memory()
-    # cached for later use in Process.memory_percent()
-    _TOTAL_PHYMEM = ret.total
-    return ret
+    # go through the old name, so user overrides of it still apply
+    return virtual_memory()
 
 
 def memory_swap() -> sswap:
@@ -2423,12 +2420,25 @@ def memory_swap() -> sswap:
 
     `sin` and `sout` on Windows are meaningless and always set to 0.
     """
+    # go through the old name, so user overrides of it still apply
+    return swap_memory()
+
+
+# --- deprecated names
+
+
+def virtual_memory() -> svmem:
+    """Alias of memory_physical()."""
+    global _TOTAL_PHYMEM
+    ret = _psplatform.virtual_memory()
+    # cached for later use in Process.memory_percent()
+    _TOTAL_PHYMEM = ret.total
+    return ret
+
+
+def swap_memory() -> sswap:
+    """Alias of memory_swap()."""
     return _psplatform.swap_memory()
-
-
-# Deprecated aliases.
-virtual_memory = memory_physical
-swap_memory = memory_swap
 
 
 # =====================================================================
