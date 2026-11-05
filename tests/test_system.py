@@ -530,6 +530,8 @@ class TestMemoryAPIs(PsutilTestCase):
         assert mem.sout >= 0, mem
 
     def test_aliases(self):
+        assert psutil.virtual_memory is psutil.memory_physical
+        assert psutil.swap_memory is psutil.memory_swap
         for name in (
             "memory_physical",
             "memory_swap",
@@ -537,17 +539,6 @@ class TestMemoryAPIs(PsutilTestCase):
             "swap_memory",
         ):
             assert name in psutil.__all__
-
-    def test_old_names_overridable(self):
-        # overriding the old names must affect the new ones
-        orig = psutil.virtual_memory
-        with mock.patch("psutil.virtual_memory", side_effect=orig) as m:
-            psutil.memory_physical()
-        assert m.called
-        orig = psutil.swap_memory
-        with mock.patch("psutil.swap_memory", side_effect=orig) as m:
-            psutil.memory_swap()
-        assert m.called
 
 
 class TestCpuAPIs(PsutilTestCase):
