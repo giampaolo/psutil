@@ -338,9 +338,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   4 GiB or larger.
 - :gh:`3022`: :meth:`Process.wait` returned exit codes with the high bit set
   (e.g. ``0xC0000005``) as negative numbers.
-- :gh:`3107`: :func:`disk_partitions` changed the error mode of the whole
-  process while running. Called from multiple threads, it could leave the
-  process with the wrong mode.
+- :gh:`3107`: :func:`disk_partitions` was not thread-safe.
 - :gh:`3108`: :func:`disk_partitions` gave volumes mounted in a folder the
   :field:`device`, :field:`fstype` and :field:`opts` of the drive holding the
   folder.
