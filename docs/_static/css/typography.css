@@ -179,6 +179,10 @@ body {
     text-underline-offset: 4px;
 }
 
+.article a.pep strong {
+    font-weight: inherit;
+}
+
 /* ---- Inline code (`literals`) ------------------------------------- */
 
 code {

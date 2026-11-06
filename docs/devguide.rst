@@ -109,8 +109,8 @@ Coding style
 All style and formatting checks are enforced locally on each ``git commit`` and
 via a GitHub Actions pipeline.
 
-- Python: follows `PEP-8`_, formatted and linted with ``black`` and ``ruff``.
-- C: generally follows `PEP-7`_, formatted with ``clang-format``.
+- Python: follows :pep:`8`, formatted and linted with ``black`` and ``ruff``.
+- C: generally follows :pep:`7`, formatted with ``clang-format``.
 - Other files (``.rst``, ``.toml``, ``.md``, ``.yml``): validated by linters.
 
 The pipeline re-runs all checks for consistency (``make lint-all``).
@@ -216,6 +216,4 @@ For project maintainers:
 - Git tags use the ``vX.Y.Z`` format (e.g. ``v7.2.2``).
 - The version string is defined in :src:`psutil/__init__.py` (``__version__``).
 
-.. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/
-.. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/
 .. _`PyPI`: https://pypi.org/project/psutil/
