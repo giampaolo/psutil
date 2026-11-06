@@ -2116,6 +2116,12 @@ def _cpu_tot_time(times):
         # https://github.com/torvalds/linux/blob/447976ef4/kernel/sched/cputime.c#L158
         tot -= times.guest
         tot -= times.guest_nice
+    if WINDOWS:
+        # On Windows "system" time (kernel time minus idle time) already
+        # includes interrupt and DPC time, so adding those fields again
+        # would count them twice.
+        tot -= times.irq
+        tot -= times.dpc
     return tot
 
 
