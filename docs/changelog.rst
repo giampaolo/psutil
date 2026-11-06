@@ -37,6 +37,10 @@ Changelog
 
 **New APIs**
 
+- :gh:`3102`, :label:`breaking`: new :func:`memory_physical` and
+  :func:`memory_swap` functions. :func:`virtual_memory` and :func:`swap_memory`
+  still work, but are :term:`soft deprecated`. See
+  :ref:`migration guide <migration-8.0-memory-names>`.
 - :gh:`2798`, :label:`breaking`: new :attr:`Process.attrs` class attribute, a
   :class:`frozenset` of the attribute names accepted by :meth:`Process.as_dict`
   and :func:`process_iter`. Passing ``attrs=[]`` to :func:`process_iter` to
@@ -67,10 +71,6 @@ Changelog
 - :gh:`3100`, [Linux], [SunOS], [AIX]: new :func:`set_procfs_path` function to
   relocate ``/proc``, and :data:`PROCFS_PATH` now defaults to the
   :envvar:`PSUTIL_PROCFS_PATH` environment variable when set.
-- :gh:`XXXX`: new :func:`memory_physical` and :func:`memory_swap` functions.
-  :func:`virtual_memory` and :func:`swap_memory` still work, but are
-  :term:`soft deprecated`. See
-  :ref:`migration guide <migration-8.0-memory-names>`.
 
 Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 :gh:`2988`).
