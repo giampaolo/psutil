@@ -887,9 +887,13 @@ class NetConnections:
         with open_text(file) as f:
             f.readline()  # skip the first line
             for line in f:
-                tokens = line.split()
+                # The path is the last field. It may contain spaces,
+                # including leading ones, so only split off the first
+                # six fields and take whatever follows the single space
+                # after the inode as is.
+                tokens = line.split(None, 6)
                 try:
-                    _, _, _, _, type_, _, inode = tokens[0:7]
+                    _, _, _, _, type_, _, rest = tokens
                 except ValueError:
                     if ' ' not in line:
                         # see: https://github.com/giampaolo/psutil/issues/766
@@ -898,6 +902,7 @@ class NetConnections:
                         f"error while parsing {file}; malformed line {line!r}"
                     )
                     raise RuntimeError(msg)  # noqa: B904
+                inode, _, path = rest.rstrip('\n').partition(' ')
                 if inode in inodes:  # noqa: SIM108
                     # With UNIX sockets we can have a single inode
                     # referencing many file descriptors.
@@ -908,7 +913,6 @@ class NetConnections:
                     if filter_pid is not None and filter_pid != pid:
                         continue
                     else:
-                        path = tokens[-1] if len(tokens) == 8 else ''
                         type_ = socktype_to_enum(int(type_))
                         # XXX: determining the remote endpoint of a
                         # UNIX socket on Linux is not possible, see:
