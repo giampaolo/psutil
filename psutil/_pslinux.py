@@ -14,6 +14,7 @@ import os
 import re
 import resource
 import socket
+import stat
 import struct
 import sys
 import warnings
@@ -1169,11 +1170,11 @@ class RootFsDeviceFinder:
                 try:
                     i = fields.index("-")
                     source = fields[i + 2]
+                    major, minor = map(int, fields[2].split(":"))
                 except (ValueError, IndexError):
                     continue
                 if source == "/dev/root":
-                    major, minor = fields[2].split(":")
-                    return int(major), int(minor)
+                    return major, minor
         return None, None
 
     def ask_proc_partitions(self):
@@ -1232,10 +1233,18 @@ class RootFsDeviceFinder:
                 path = self.ask_sys_class_block()
             except OSError as err:
                 debug(err)
-        # We use exists() because the "/dev/*" part of the path is hard
-        # coded, so we want to be sure.
-        if path is not None and os.path.exists(path):
-            return path
+
+        # The "/dev/*" part of the path is hard coded, so make sure it's
+        # the same block device, like libmount does.
+        if path is not None:
+            try:
+                st = os.stat(path)
+            except OSError as err:
+                debug(err)
+            else:
+                devno = os.makedev(self.major, self.minor)
+                if stat.S_ISBLK(st.st_mode) and st.st_rdev == devno:
+                    return path
 
 
 # NOTE: this function should follow libmount implementation as much

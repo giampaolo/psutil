@@ -21,6 +21,7 @@ import platform
 import re
 import shutil
 import socket
+import stat
 import struct
 import sys
 import textwrap
@@ -235,6 +236,21 @@ def mock_open_content(pairs):
 
 def mock_open_exception(for_path, exc):
     return mock_open_content({for_path: exc})
+
+
+@contextlib.contextmanager
+def mock_blkdev(devs):
+    # make {path: (major, minor)} look like block device nodes
+    orig_stat = os.stat
+
+    def stat_mock(path, *args, **kwargs):
+        if path in devs:
+            rdev = os.makedev(*devs[path])
+            return mock.Mock(st_mode=stat.S_IFBLK | 0o660, st_rdev=rdev)
+        return orig_stat(path, *args, **kwargs)
+
+    with mock.patch("os.stat", side_effect=stat_mock) as m:
+        yield m
 
 
 @contextlib.contextmanager
@@ -1558,13 +1574,36 @@ class TestRootFsDeviceFinder(LinuxTestCase):
             "/sys/class/block/sda1/dev": "8:1\n",
         }
         dev_files = ["/sys/class/block/sda/dev", "/sys/class/block/sda1/dev"]
-        with mock.patch("os.path.exists", return_value=True):
+        with mock_blkdev({"/dev/sdb1": (8, 1), "/dev/sda1": (8, 1)}):
             with mock.patch("glob.iglob", return_value=dev_files):
                 with mock_open_content(files):
                     assert finder.find() == "/dev/sdb1"
                 files["/sys/dev/block/8:1/uevent"] = FileNotFoundError
                 with mock_open_content(files):
                     assert finder.find() == "/dev/sda1"
+
+    def test_find_major_minor_bad_line(self):
+        files = {
+            "/proc/self/mountinfo": (
+                "- ext4 /dev/root rw\n26 1 8:1 / / rw - ext4 /dev/root rw\n"
+            )
+        }
+        with mock_open_content(files):
+            finder = RootFsDeviceFinder()
+        assert (finder.major, finder.minor) == (8, 1)
+
+    def test_find_other_device_node(self):
+        # /dev/sdb1 is another device here, e.g. a chroot's stale /dev
+        finder = RootFsDeviceFinder()
+        finder.major = 8
+        finder.minor = 1
+        files = {
+            "/proc/partitions": FileNotFoundError,
+            "/sys/dev/block/8:1/uevent": "MAJOR=8\nDEVNAME=sdb1\n",
+        }
+        with mock_open_content(files):
+            with mock_blkdev({"/dev/sdb1": (8, 17)}):
+                assert finder.find() is None
 
     @requires_cli("findmnt")
     @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
@@ -1600,7 +1639,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
             _psutil, "disk_partitions", return_value=mounts
         ):
             with mock_open_content(files):
-                with mock.patch("os.path.exists", return_value=True):
+                with mock_blkdev({"/dev/vda2": (254, 2)}):
                     parts = psutil.disk_partitions(all=True)
         assert [x.device for x in parts] == ["/dev/loop0", "/dev/vda2"]
 
