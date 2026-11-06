@@ -69,18 +69,18 @@ PROC_STATUSES = {
 # =====================================================================
 
 
-def virtual_memory():
-    """System virtual memory as a named tuple."""
-    d = _psutil.virtual_mem()
+def memory_physical():
+    """System physical memory as a named tuple."""
+    d = _psutil.memory_physical()
     d["percent"] = usage_percent(
         (d["total"] - d["available"]), d["total"], round_=1
     )
-    return ntp.svmem(**d)
+    return ntp.smem(**d)
 
 
-def swap_memory():
+def memory_swap():
     """Swap memory as a (total, used, free, percent, sin, sout) tuple."""
-    d = _psutil.swap_mem()
+    d = _psutil.memory_swap()
     d["percent"] = usage_percent(d["used"], d["total"], round_=1)
     return ntp.sswap(**d)
 

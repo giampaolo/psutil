@@ -19,6 +19,8 @@ import sys
 import warnings
 from collections import defaultdict
 
+import psutil
+
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil
@@ -32,7 +34,6 @@ from ._common import cache_deactivate
 from ._common import cat
 from ._common import debug
 from ._common import decode
-from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import open_binary
@@ -48,7 +49,7 @@ from ._enums import NicDuplex
 from ._enums import ProcessIOPriority
 from ._enums import ProcessStatus
 
-__extra__all__ = ['PROCFS_PATH']
+__extra__all__ = []
 
 
 # =====================================================================
@@ -187,7 +188,7 @@ def is_storage_device(name):
 # =====================================================================
 
 
-def calculate_avail_vmem(mems):
+def calculate_avail_mem(mems):
     """Fallback for kernels < 3.14 where /proc/meminfo does not provide
     "MemAvailable", see:
     https://blog.famzah.net/2014/09/24/.
@@ -229,7 +230,7 @@ def calculate_avail_vmem(mems):
         )
         return fallback
     try:
-        f = open_binary(f"{get_procfs_path()}/zoneinfo")
+        f = open_binary(f"{psutil.PROCFS_PATH}/zoneinfo")
     except OSError:
         return fallback  # kernel 2.6.13
 
@@ -249,8 +250,8 @@ def calculate_avail_vmem(mems):
     return int(avail)
 
 
-def virtual_memory():
-    """Report virtual memory stats.
+def memory_physical():
+    """Report physical memory stats.
     This implementation mimics procps-ng-3.3.12, aka "free" CLI tool:
     https://gitlab.com/procps-ng/procps/blob/
         24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L778-791
@@ -259,7 +260,7 @@ def virtual_memory():
     """
     missing_fields = []
     mems = {}
-    with open_binary(f"{get_procfs_path()}/meminfo") as f:
+    with open_binary(f"{psutil.PROCFS_PATH}/meminfo") as f:
         for line in f:
             key, value = line.split(b':', 1)
             mems[key + b':'] = int(value.split()[0]) * 1024
@@ -330,14 +331,14 @@ def virtual_memory():
     try:
         avail = mems[b'MemAvailable:']
     except KeyError:
-        avail = calculate_avail_vmem(mems)
+        avail = calculate_avail_mem(mems)
     else:
         if avail == 0:
             # Yes, it can happen (probably a kernel bug):
             # https://github.com/giampaolo/psutil/issues/1915
             # In this case "free" CLI tool makes an estimate. We do the same,
             # and it matches "free" CLI tool.
-            avail = calculate_avail_vmem(mems)
+            avail = calculate_avail_mem(mems)
 
     if avail < 0:
         avail = 0
@@ -361,7 +362,7 @@ def virtual_memory():
         )
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
-    return ntp.svmem(
+    return ntp.smem(
         total,
         avail,
         percent,
@@ -376,10 +377,10 @@ def virtual_memory():
     )
 
 
-def swap_memory():
+def memory_swap():
     """Return swap memory metrics."""
     mems = {}
-    with open_binary(f"{get_procfs_path()}/meminfo") as f:
+    with open_binary(f"{psutil.PROCFS_PATH}/meminfo") as f:
         for line in f:
             # Note: some fields (e.g. "ShadowCallStack:10373888 kB")
             # may not have a space after the colon, see:
@@ -402,7 +403,7 @@ def swap_memory():
     percent = usage_percent(used, total, round_=1)
     # get pgin/pgouts
     try:
-        f = open_binary(f"{get_procfs_path()}/vmstat")
+        f = open_binary(f"{psutil.PROCFS_PATH}/vmstat")
     except OSError as err:
         # see https://github.com/giampaolo/psutil/issues/722
         msg = (
@@ -455,7 +456,7 @@ def cpu_times():
             debug(f"can't get {field_name} CPU time; set it to 0")
             return 0.0
 
-    procfs_path = get_procfs_path()
+    procfs_path = psutil.PROCFS_PATH
     with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()
     nfields = len(ntp.scputimes._fields)
@@ -479,7 +480,7 @@ def per_cpu_times():
     """Return a list of named tuples representing the CPU times
     for every CPU available on the system.
     """
-    procfs_path = get_procfs_path()
+    procfs_path = psutil.PROCFS_PATH
     cpus = []
     nfields = len(ntp.scputimes._fields)
     with open_binary(f"{procfs_path}/stat") as f:
@@ -525,7 +526,7 @@ def cpu_count_logical():
     except ValueError:
         # as a second fallback we try to parse /proc/cpuinfo
         num = 0
-        with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
+        with open_binary(f"{psutil.PROCFS_PATH}/cpuinfo") as f:
             for line in f:
                 if line.lower().startswith(b'processor'):
                     num += 1
@@ -535,7 +536,7 @@ def cpu_count_logical():
         # try to parse /proc/stat as a last resort
         if num == 0:
             search = re.compile(r'cpu\d')
-            with open_text(f"{get_procfs_path()}/stat") as f:
+            with open_text(f"{psutil.PROCFS_PATH}/stat") as f:
                 for line in f:
                     line = line.split(' ')[0]
                     if search.match(line):
@@ -568,7 +569,7 @@ def cpu_count_cores():
     # Method #2
     mapping = {}
     current_info = {}
-    with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
+    with open_binary(f"{psutil.PROCFS_PATH}/cpuinfo") as f:
         for line in f:
             line = line.strip().lower()
             if not line:
@@ -591,7 +592,7 @@ def cpu_count_cores():
 
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
-    with open_binary(f"{get_procfs_path()}/stat") as f:
+    with open_binary(f"{psutil.PROCFS_PATH}/stat") as f:
         ctx_switches = None
         interrupts = None
         soft_interrupts = None
@@ -615,7 +616,7 @@ def cpu_stats():
 def _cpu_get_cpuinfo_freq():
     """Return current CPU frequency from cpuinfo if available."""
     ret = []
-    with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
+    with open_binary(f"{psutil.PROCFS_PATH}/cpuinfo") as f:
         for line in f:
             key, _, value = line.partition(b':')
             key = key.strip().lower()
@@ -917,7 +918,7 @@ class NetConnections:
                         yield (fd, family, type_, path, raddr, status, pid)
 
     def retrieve(self, kind, pid=None):
-        self._procfs_path = get_procfs_path()
+        self._procfs_path = psutil.PROCFS_PATH
         if pid is not None:
             inodes = self.get_proc_inodes(pid)
             if not inodes:
@@ -957,7 +958,7 @@ def net_io_counters():
     """Return network I/O statistics for every network interface
     installed on the system as a dict of raw tuples.
     """
-    with open_text(f"{get_procfs_path()}/net/dev") as f:
+    with open_text(f"{psutil.PROCFS_PATH}/net/dev") as f:
         lines = f.readlines()
     retdict = {}
     for line in lines[2:]:
@@ -1058,7 +1059,7 @@ def disk_io_counters(perdisk=False):
         # See:
         # https://www.kernel.org/doc/Documentation/iostats.txt
         # https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
-        with open_text(f"{get_procfs_path()}/diskstats") as f:
+        with open_text(f"{psutil.PROCFS_PATH}/diskstats") as f:
             lines = f.readlines()
         for line in lines:
             fields = line.split()
@@ -1102,13 +1103,13 @@ def disk_io_counters(perdisk=False):
                        wtime, reads_merged, writes_merged, busy_time)
                 # fmt: on
 
-    if os.path.exists(f"{get_procfs_path()}/diskstats"):
+    if os.path.exists(f"{psutil.PROCFS_PATH}/diskstats"):
         gen = read_procfs()
     elif os.path.exists('/sys/block'):
         gen = read_sysfs()
     else:
         msg = (
-            f"{get_procfs_path()}/diskstats nor /sys/block are available on"
+            f"{psutil.PROCFS_PATH}/diskstats nor /sys/block are available on"
             " this system"
         )
         raise NotImplementedError(msg)
@@ -1157,7 +1158,7 @@ class RootFsDeviceFinder:
         self.minor = os.minor(dev)
 
     def ask_proc_partitions(self):
-        with open_text(f"{get_procfs_path()}/partitions") as f:
+        with open_text(f"{psutil.PROCFS_PATH}/partitions") as f:
             for line in f.readlines()[2:]:
                 fields = line.split()
                 if len(fields) < 4:  # just for extra safety
@@ -1219,7 +1220,7 @@ class RootFsDeviceFinder:
 def disk_partitions(all=False):
     """Return mounted disk partitions as a list of named tuples."""
     fstypes = set()
-    procfs_path = get_procfs_path()
+    procfs_path = psutil.PROCFS_PATH
 
     def fstypes_from_filesystems():
         with open_text(f"{procfs_path}/filesystems") as f:
@@ -1537,7 +1538,7 @@ def users():
 
 def boot_time():
     """Return the system boot time expressed in seconds since the epoch."""
-    path = f"{get_procfs_path()}/stat"
+    path = f"{psutil.PROCFS_PATH}/stat"
     with open_binary(path) as f:
         for line in f:
             if line.startswith(b'btime'):
@@ -1553,7 +1554,7 @@ def boot_time():
 
 def pids():
     """Returns a list of PIDs currently running on the system."""
-    path = get_procfs_path().encode(ENCODING)
+    path = psutil.PROCFS_PATH.encode(ENCODING)
     return [int(x) for x in os.listdir(path) if x.isdigit()]
 
 
@@ -1576,7 +1577,7 @@ def pid_exists(pid):
             # Note: already checked that this is faster than using a
             # regular expr. Also (a lot) faster than doing
             # 'return pid in pids()'
-            path = f"{get_procfs_path()}/{pid}/status"
+            path = f"{psutil.PROCFS_PATH}/{pid}/status"
             with open_binary(path) as f:
                 for line in f:
                     if line.startswith(b"Tgid:"):
@@ -1595,7 +1596,7 @@ def ppid_map():
     one shot. Used to speed up Process.children().
     """
     ret = {}
-    procfs_path = get_procfs_path()
+    procfs_path = psutil.PROCFS_PATH
     for pid in pids():
         try:
             with open_binary(f"{procfs_path}/{pid}/stat") as f:
@@ -1656,7 +1657,7 @@ class Process:
         self._name = None
         self._ppid = None
         self._ctime = None
-        self._procfs_path = get_procfs_path()
+        self._procfs_path = psutil.PROCFS_PATH
 
     def _is_zombie(self):
         # Note: most of the times Linux is able to return info about the

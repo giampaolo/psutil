@@ -1466,6 +1466,8 @@ class system_namespace:
         ('disk_partitions', (), {'all': True}),
         ('disk_usage', (os.getcwd(),), {}),
         ('getloadavg', (), {}),
+        ('memory_physical', (), {}),
+        ('memory_swap', (), {}),
         ('net_connections', (), {'kind': 'all'}),
         ('net_if_addrs', (), {}),
         ('net_if_stats', (), {}),
@@ -1473,9 +1475,7 @@ class system_namespace:
         ('net_io_counters', (), {'pernic': True}),
         ('pid_exists', (os.getpid(),), {}),
         ('pids', (), {}),
-        ('swap_memory', (), {}),
         ('users', (), {}),
-        ('virtual_memory', (), {}),
     ]
 
     if HAS_CPU_FREQ:
@@ -1928,7 +1928,7 @@ class TypeHintsChecker:
         """Get the 'return' type hint for a psutil API function or
         method. Resolves annotation strings using a combined namespace
         of psutil globals (Any, Generator, Process, ...) and ntuple
-        types (scputimes, svmem, pmem, ...). Returns None if hints
+        types (scputimes, smem, pmem, ...). Returns None if hints
         cannot be resolved or there is no return annotation.
         """
         while hasattr(fun, 'func'):

@@ -1,5 +1,19 @@
 # Contributing to psutil project
 
+## AI policy
+
+- psutil does not accept pull requests or issues which are written by an AI
+  agent without any human mediation. You must review the code you submit,
+  **write the PR or issue text in your own words**, and post it yourself.
+- **No AI in comments.** Comments on issues and PRs must be written by you, not
+  by an AI tool.
+- Purely AI-generated contributions are closed without review, and accounts
+  that keep sending them are blocked.
+- **Don't open a PR for an issue opened by someone else**, unless `giampaolo`
+  asked for one on that issue. These PRs are closed. This rule is mostly there
+  to stop AI slop. If you want to fix it, say so on the issue.
+- If an AI agent helps you, it must follow [AGENTS.md](AGENTS.md).
+
 ## Issues
 
 - The issue tracker is for reporting problems or proposing enhancements related
@@ -20,12 +34,11 @@
 
 ## Pull Requests
 
+- If you wish to implement a new feature it's mandatory to **discuss it first**
+  on the issue tracker.
 - In order to get acquainted with the code base and tooling, take a look at the
   **[Development Guide](https://psutil.io/devguide/)**.
 - The PR system is for fixing bugs or make enhancements related to the
   **program code**.
-- If you wish to implement a new feature or add support for a new platform it's
-  better to **discuss it first**, either on the issue tracker, the forum or via
-  private email.
 - No need to touch the changelog or credits files. A bot automatically adds
   those entries for you before merging.

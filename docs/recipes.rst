@@ -272,7 +272,9 @@ On Unix, if you started the subprocess with ``subprocess.Popen`` you can often
 use the stdlib ``os.killpg()`` instead of this recipe. Create the process with
 ``process_group=0`` so that it gets its own process group, then call
 ``os.killpg(pgid, sig)``. This is simpler, does not require psutil, and still
-cleans up all descendants even when an intermediate process has exited::
+cleans up all descendants even when an intermediate process has exited:
+
+.. code-block:: python
 
     import os
     import signal
@@ -422,10 +424,10 @@ it just means the system is moving previously evicted pages back into RAM. High
   import psutil, time
 
   def swap_activity(interval=1):
-      before = psutil.swap_memory()
+      before = psutil.memory_swap()
       while True:
           time.sleep(interval)
-          after = psutil.swap_memory()
+          after = psutil.memory_swap()
           sin  = after.sin  - before.sin
           sout = after.sout - before.sout
           print("swap-in={}/s  swap-out={}/s  used={}%".format(

@@ -24,7 +24,7 @@ class AIXTestCase(PsutilTestCase):
 
 
 class TestAIXMemory(AIXTestCase):
-    def test_virtual_memory(self):
+    def test_memory_physical(self):
         out = sh('/usr/bin/svmon -O unit=KB')
         re_pattern = r"memory\s*"
         for field in [
@@ -47,7 +47,7 @@ class TestAIXMemory(AIXTestCase):
         used = int(matchobj.group("inuse")) * KB
         free = int(matchobj.group("free")) * KB
 
-        psutil_result = psutil.virtual_memory()
+        psutil_result = psutil.memory_physical()
 
         # TOLERANCE_SYS_MEM is not enough. For some reason we're seeing
         # differences of ~1.2 MB. 2 MB is still a good tolerance when
@@ -58,7 +58,7 @@ class TestAIXMemory(AIXTestCase):
         assert abs(psutil_result.available - available) < TOLERANCE_SYS_MEM
         assert abs(psutil_result.free - free) < TOLERANCE_SYS_MEM
 
-    def test_swap_memory(self):
+    def test_memory_swap(self):
         out = sh('/usr/sbin/lsps -a')
         # From the man page, "The size is given in megabytes" so we assume
         # we'll always have 'MB' in the result
@@ -76,7 +76,7 @@ class TestAIXMemory(AIXTestCase):
 
         total_mb = int(matchobj.group("size"))
         MB = 1024**2
-        psutil_result = psutil.swap_memory()
+        psutil_result = psutil.memory_swap()
         # we divide our result by MB instead of multiplying the lsps value by
         # MB because lsps may round down, so we round down too
         assert int(psutil_result.total / MB) == total_mb

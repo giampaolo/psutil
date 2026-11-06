@@ -135,9 +135,9 @@
          .. code-block:: pycon
 
             >>> import psutil
-            >>> psutil.virtual_memory()
-            svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, ...)
-            >>> psutil.swap_memory()
+            >>> psutil.memory_physical()
+            smem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, ...)
+            >>> psutil.memory_swap()
             sswap(total=2097147904, used=296128512, free=1801019392, percent=14.1, sin=304193536, sout=677842944)
 
          .. container:: home-tab-more
@@ -229,7 +229,7 @@
    <div class="home-section-label">Stats</div>
    <div class="home-stats">
      <a class="home-stat" href="https://clickpy.clickhouse.com/dashboard/psutil">
-       <span class="home-stat-num">280+ million</span>
+       <span class="home-stat-num">320+ million</span>
        <span class="home-stat-label">downloads per month</span>
      </a>
      <a class="home-stat" href="https://github.com/giampaolo/psutil/network/dependents">
@@ -248,8 +248,8 @@
 
 .. raw:: html
 
+   <div class="home-section-label">Sponsors</div>
    <div id="sponsors">
-     <div class="home-section-label">Sponsors</div>
 
 .. raw:: html
    :file: _sponsors.html
@@ -268,7 +268,7 @@
 
    Install <install>
    API overview <api-overview>
-   API Reference <api>
+   API reference <api>
    FAQ <faq>
    Performance <performance>
    Recipes <recipes>
@@ -301,4 +301,4 @@
    Changelog <changelog>
    Timeline <timeline>
    Development guide <devguide>
-   General Index <genindex>
+   General index <genindex>

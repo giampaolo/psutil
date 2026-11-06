@@ -271,10 +271,10 @@ CPU
 Memory
 ^^^^^^
 
-.. function:: virtual_memory()
+.. function:: memory_physical()
 
-  Return statistics about system memory usage. All values are expressed in
-  bytes.
+  Return statistics about system memory (RAM) usage. All values are expressed
+  in bytes.
 
   - :field:`total`: total physical RAM.
   - :field:`available`: memory that can be given instantly to processes without
@@ -391,9 +391,9 @@ Memory
   .. code-block:: pycon
 
      >>> import psutil
-     >>> mem = psutil.virtual_memory()
+     >>> mem = psutil.memory_physical()
      >>> mem
-     svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304, slab=199348224)
+     smem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304, slab=199348224)
      >>>
      >>> THRESHOLD = 500 * 1024 * 1024  # 500MB
      >>> if mem.available <= THRESHOLD:
@@ -418,13 +418,12 @@ Memory
 
   .. seealso::
     - :src:`scripts/meminfo.py`
-    - :ref:`faq_virtual_memory_available`
+    - :ref:`faq_memory_physical_available`
     - :ref:`faq_used_plus_free`
 
-  .. versionchanged:: 8.0.0
-     Windows: added :field:`cached` and :field:`wired` fields.
+  .. versionadded:: 8.0.0
 
-.. function:: swap_memory()
+.. function:: memory_swap()
 
   Return system :term:`swap memory` statistics:
 
@@ -449,15 +448,38 @@ Memory
   .. code-block:: pycon
 
      >>> import psutil
-     >>> psutil.swap_memory()
+     >>> psutil.memory_swap()
      sswap(total=2097147904, used=886620160, free=1210527744, percent=42.3, sin=1050411008, sout=1906720768)
 
   .. seealso::
     - :src:`scripts/meminfo.py`
     - :ref:`Swap activity recipe <recipe_swap_activity>`
 
+  .. versionadded:: 8.0.0
+
+.. function:: virtual_memory()
+
+  Same as :func:`memory_physical` (soft deprecated).
+
+  .. versionchanged:: 8.0.0
+     Windows: added :field:`cached` and :field:`wired` fields.
+
+  .. soft-deprecated:: 8.0.0
+     use :func:`memory_physical` instead. No warning is raised and there are no
+     plans to remove it. See
+     :ref:`migration guide <migration-8.0-memory-names>`.
+
+.. function:: swap_memory()
+
+  Same as :func:`memory_swap` (soft deprecated).
+
   .. versionchanged:: 8.0.0
      OpenBSD: :field:`sin` / :field:`sout` are no longer set to ``0``.
+
+  .. soft-deprecated:: 8.0.0
+     use :func:`memory_swap` instead. No warning is raised and there are no
+     plans to remove it. See
+     :ref:`migration guide <migration-8.0-memory-names>`.
 
 Disks
 ^^^^^
@@ -917,8 +939,6 @@ Other system info
     nothing maintains it, e.g. on musl libc (Alpine Linux), which doesn't
     implement it. ``who`` is empty too in that case.
 
--------------------------------------------------------------------------------
-
 Processes
 ---------
 
@@ -1079,14 +1099,14 @@ Exceptions
   .. seealso::
     - :ref:`faq_access_denied`
 
-.. exception:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
+.. exception:: TimeoutExpired(seconds, pid=None, name=None)
 
   Raised by :meth:`Process.wait` method if timeout expires and the process is
   still alive. *name* attribute is set if :meth:`Process.name` was previously
   called.
 
-Process class
-^^^^^^^^^^^^^
+:class:`Process` class
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. class:: Process(pid=None)
 
@@ -1849,7 +1869,7 @@ Process class
 
     .. code-block:: python
 
-       Process().memory_info().rss / virtual_memory().total * 100
+       Process().memory_info().rss / memory_physical().total * 100
 
     *memtype* selects which memory field to use and can be any attribute from
     :meth:`memory_info`, :meth:`memory_extras`, or :meth:`memory_footprint`
@@ -2174,8 +2194,8 @@ Process class
 
 -------------------------------------------------------------------------------
 
-Popen class
-^^^^^^^^^^^
+:class:`Popen` class
+^^^^^^^^^^^^^^^^^^^^
 
 .. class:: Popen(*args, **kwargs)
 
@@ -2205,8 +2225,8 @@ Popen class
 
 -------------------------------------------------------------------------------
 
-ProcessSnapshot class
-^^^^^^^^^^^^^^^^^^^^^
+:class:`ProcessSnapshot` class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. class:: ProcessSnapshot
 
@@ -2242,8 +2262,6 @@ ProcessSnapshot class
     Return the collected attributes as a new dictionary.
 
   .. versionadded:: 8.0.0
-
--------------------------------------------------------------------------------
 
 C heap introspection
 --------------------
@@ -2331,8 +2349,6 @@ that Python's memory tracking misses.
   .. availability:: Linux with glibc, Windows, macOS, FreeBSD, NetBSD
 
   .. versionadded:: 7.2.0
-
--------------------------------------------------------------------------------
 
 Windows services
 ----------------
@@ -2422,8 +2438,6 @@ Windows services
       'username': 'NT AUTHORITY\\LocalService'}
 
   .. availability:: Windows
-
--------------------------------------------------------------------------------
 
 Constants
 ---------
@@ -2581,8 +2595,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_WAKING
 
-   (Linux only) A transient state right before the process becomes runnable
-   (:data:`STATUS_RUNNING`).
+   (Linux, OpenBSD, NetBSD) A transient state right before the process becomes
+   runnable (:data:`STATUS_RUNNING`).
 
 .. data:: STATUS_PARKED
 
@@ -2592,7 +2606,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_IDLE
 
-   (Linux, macOS, FreeBSD) A sleep for kernel threads waiting for work.
+   (Linux, macOS, FreeBSD, OpenBSD, NetBSD, Solaris, AIX) A sleep for kernel
+   threads waiting for work.
 
 .. data:: STATUS_LOCKED
 
@@ -2601,8 +2616,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_WAITING
 
-   (FreeBSD only) The process is waiting in a kernel sleep queue for a specific
-   system event to occur.
+   (FreeBSD, Solaris) The process is waiting in a kernel sleep queue for a
+   specific system event to occur.
 
 .. data:: STATUS_SUSPENDED
 
@@ -2677,7 +2692,7 @@ can be used in conjunction with :meth:`Process.ionice` (*ioclass* argument).
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Constants for getting or setting process resource limits, to be used in in
+Constants for getting or setting process resource limits, to be used in
 conjunction with :meth:`Process.rlimit`. The meaning of each constant is
 explained in :func:`resource.getrlimit` documentation.
 
@@ -2782,26 +2797,6 @@ Hardware constants
   Whether the remaining time of a battery cannot be determined or is unlimited.
   May be assigned to :func:`psutil.sensors_battery`'s :field:`secsleft` field.
 
-Other constants
-^^^^^^^^^^^^^^^
-
-.. _const-procfs_path:
-
-.. data:: PROCFS_PATH
-
-  The path of the ``/proc`` filesystem on Linux, Solaris and AIX (defaults to
-  ``'/proc'``). You may want to re-set this constant right after importing
-  psutil in case ``/proc`` is mounted elsewhere, or if you want to retrieve
-  information about Linux containers such as Docker, Heroku or LXC (see
-  `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`_
-  for more info).
-
-  It must be noted that this trick works only for APIs which rely on ``/proc``
-  filesystem (e.g. memory-related APIs and many (but not all) :class:`Process`
-  class methods).
-
-  .. availability:: Linux, SunOS, AIX
-
 Utilities
 ---------
 
@@ -2831,6 +2826,35 @@ Utilities
      >>> if psutil.version_info >= (4, 5):
      ...    pass
 
+Configuration
+-------------
+
+.. function:: set_procfs_path(path)
+
+  Set the path where ``/proc`` is mounted, typically when you want to read the
+  host's ``/proc`` from inside a container such as Docker. Only the APIs that
+  read ``/proc`` are affected (e.g. memory APIs and many :class:`Process`
+  methods). *path* must be an existing directory. This also resets internal
+  caches that depend on ``/proc``. :class:`Process` instances created before
+  the call keep reading the old path.
+
+  .. availability:: Linux, SunOS, AIX
+
+  .. versionadded:: 8.0.0
+
+.. _const-procfs_path:
+
+.. data:: PROCFS_PATH
+
+  The current ``/proc`` path. Defaults to ``'/proc'``, or to
+  :envvar:`PSUTIL_PROCFS_PATH` when set. Treat it as read-only, and use
+  :func:`set_procfs_path` to change it.
+
+  .. availability:: Linux, SunOS, AIX
+
+  .. versionchanged:: 8.0.0
+     the :envvar:`PSUTIL_PROCFS_PATH` environment variable is honored.
+
 Environment variables
 ---------------------
 
@@ -2844,7 +2868,15 @@ Environment variables
 
   .. code-block:: bash
 
-     $ PSUTIL_DEBUG=1 python3 script.py
+     PSUTIL_DEBUG=1 python3 script.py
+
+.. envvar:: PSUTIL_PROCFS_PATH
+
+  If set, psutil uses it as :data:`PROCFS_PATH` instead of ``'/proc'``. It is
+  read once at import time and must be an existing directory. To change the
+  path later, use :func:`set_procfs_path`.
+
+  .. versionadded:: 8.0.0
 
 .. envvar:: PSUTIL_BUILD_JOBS
 
@@ -2854,7 +2886,7 @@ Environment variables
 
   .. code-block:: bash
 
-     $ PSUTIL_BUILD_JOBS=1 python3 -m pip install --no-binary=psutil psutil
+     PSUTIL_BUILD_JOBS=1 python3 -m pip install --no-binary=psutil psutil
 
   .. versionadded:: 8.0.0
 

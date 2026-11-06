@@ -110,13 +110,13 @@ def main():
     info['loadavg'] = (
         f"{loadavg[0]:.1f}%, {loadavg[1]:.1f}%, {loadavg[2]:.1f}%"
     )
-    mem = psutil.virtual_memory()
+    mem = psutil.memory_physical()
     info['memory'] = "{}%%, used={}, total={}".format(
         int(mem.percent),
         bytes2human(mem.used),
         bytes2human(mem.total),
     )
-    swap = psutil.swap_memory()
+    swap = psutil.memory_swap()
     info['swap'] = "{}%%, used={}, total={}".format(
         int(swap.percent),
         bytes2human(swap.used),

@@ -87,12 +87,12 @@ Memory
      - macOS
      - BSD
      - Windows
-   * - :func:`virtual_memory`
+   * - :func:`memory_physical`
      - ``free``, ``vmstat``, ``cat /proc/meminfo``
      - ``vm_stat``
      - ``vmstat -s``, ``sysctl vm.stats``
      - ``systeminfo``
-   * - :func:`swap_memory`
+   * - :func:`memory_swap`
      - ``free``, ``vmstat``, ``swapon``
      - ``sysctl vm.swapusage``
      - ``vmstat -s``, ``swapinfo``

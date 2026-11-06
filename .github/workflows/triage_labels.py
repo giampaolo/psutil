@@ -13,22 +13,18 @@ Usage:
 """
 
 import argparse
-import json
 import os
 import re
 import sys
-import urllib.error
 import urllib.parse
-import urllib.request
 
-REPO = "giampaolo/psutil"
-HTTP_TIMEOUT = 30
+import ghlib
+
 MAX_BODY_CHARS = 6000
 MAX_FILES = 100
 MAX_TOKENS = 2048
 
 # Set by parse_cli().
-TOKEN = ""
 MODEL = ""
 NUMBERS = []
 APPLY = False
@@ -491,29 +487,9 @@ SUBMIT_TOOL = {
 # --- github
 
 
-def gh_request(path, post=None, method=None):
-    req = urllib.request.Request(
-        f"https://api.github.com{path}",
-        data=json.dumps(post).encode() if post else None,
-        method=method,
-        headers={
-            "Authorization": f"Bearer {TOKEN}",
-            "Accept": "application/vnd.github+json",
-            "Content-Type": "application/json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
-            return json.loads(resp.read())
-    except urllib.error.HTTPError as err:
-        body = err.read().decode("utf-8", errors="replace")
-        sys.exit(f"GitHub API {err.code} for {path}: {body}")
-
-
 def fetch_item(number):
     """One issue or PR, in the shape classify() wants."""
-    raw = gh_request(f"/repos/{REPO}/issues/{number}")
+    raw = ghlib.request(f"/repos/{ghlib.REPO}/issues/{number}")
     item = {
         "number": raw["number"],
         "title": raw["title"],
@@ -524,8 +500,9 @@ def fetch_item(number):
         "by_bot": (raw.get("user") or {}).get("type") == "Bot",
     }
     if item["is_pr"]:
-        files = gh_request(f"/repos/{REPO}/pulls/{number}/files")
-        item["files"] = [f["filename"] for f in files][:MAX_FILES]
+        path = f"/repos/{ghlib.REPO}/pulls/{number}/files"
+        files = ghlib.request(f"{path}?per_page={MAX_FILES}")
+        item["files"] = [f["filename"] for f in files]
     return item
 
 
@@ -569,14 +546,17 @@ def inherit_from_closed(labels, issue_labels):
 
 def add_labels(number, labels):
     """Add labels to a ticket. This endpoint never removes any."""
-    gh_request(
-        f"/repos/{REPO}/issues/{number}/labels", {"labels": sorted(labels)}
+    ghlib.request(
+        f"/repos/{ghlib.REPO}/issues/{number}/labels",
+        {"labels": sorted(labels)},
     )
 
 
 def remove_label(number, label):
     path = urllib.parse.quote(label)
-    gh_request(f"/repos/{REPO}/issues/{number}/labels/{path}", method="DELETE")
+    ghlib.request(
+        f"/repos/{ghlib.REPO}/issues/{number}/labels/{path}", method="DELETE"
+    )
 
 
 def fresh_labels(decision):
@@ -759,7 +739,7 @@ def report(item, decision):
 
 
 def parse_cli():
-    global TOKEN, MODEL, NUMBERS, APPLY
+    global MODEL, NUMBERS, APPLY
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("numbers", nargs="+", type=int, help="issue or PR numbers")
     p.add_argument(
@@ -774,10 +754,7 @@ def parse_cli():
         help="add the labels on GitHub; without this nothing is written",
     )
     args = p.parse_args()
-    TOKEN = os.environ.get("GITHUB_TOKEN", "").strip()
-    if not TOKEN:
-        with open(os.path.expanduser(args.token)) as f:
-            TOKEN = f.read().strip()
+    ghlib.load_token(args.token)
     MODEL = args.model
     NUMBERS = args.numbers
     APPLY = args.apply

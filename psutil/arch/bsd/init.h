@@ -48,5 +48,5 @@ PyObject *psutil_proc_name(PyObject *self, PyObject *args);
 PyObject *psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args);
 PyObject *psutil_proc_open_files(PyObject *self, PyObject *args);
 #if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-PyObject *psutil_swap_mem(PyObject *self, PyObject *args);
+PyObject *psutil_memory_swap(PyObject *self, PyObject *args);
 #endif

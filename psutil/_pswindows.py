@@ -56,7 +56,7 @@ except ImportError as err:
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
-__extra__all__ = ["win_service_iter", "win_service_get", "AF_LINK"]
+__extra__all__ = ["win_service_iter", "win_service_get"]
 
 
 # =====================================================================
@@ -123,8 +123,8 @@ def getpagesize():
 # =====================================================================
 
 
-def virtual_memory():
-    """System virtual memory as a named tuple."""
+def memory_physical():
+    """System physical memory as a named tuple."""
     info = _psutil.GetPerformanceInfo()
     pagesize = info["PageSize"]
     total = info["PhysicalTotal"] * pagesize
@@ -134,10 +134,10 @@ def virtual_memory():
     free = avail
     used = total - avail
     percent = usage_percent((total - avail), total, round_=1)
-    return ntp.svmem(total, avail, percent, used, free, cached, wired)
+    return ntp.smem(total, avail, percent, used, free, cached, wired)
 
 
-def swap_memory():
+def memory_swap():
     """Swap memory as a (total, used, free, percent, sin, sout) tuple."""
     info = _psutil.GetPerformanceInfo()
     pagesize = info["PageSize"]
