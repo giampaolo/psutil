@@ -277,6 +277,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   :func:`disk_partitions` no longer raises :exc:`PermissionError` there.
 - :gh:`3082`: :meth:`Process.cmdline` and :meth:`Process.environ` turned ``\r``
   and ``\r\n`` into ``\n`` inside arguments and environment variable values.
+- :gh:`3084`: :func:`disk_partitions` could return mixed-up entries when called
+  from multiple threads on free-threaded Python.
 
 **Bug fixes: Windows**
 
