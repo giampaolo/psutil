@@ -38,6 +38,7 @@ PyObject *psutil_memory_physical(PyObject *self, PyObject *args);
 PyObject *psutil_memory_swap(PyObject *self, PyObject *args);
 PyObject *psutil_net_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_per_cpu_times(PyObject *self, PyObject *args);
+PyObject *psutil_ppid_map(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cmdline(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
 PyObject *psutil_proc_environ(PyObject *self, PyObject *args);
