@@ -1516,37 +1516,41 @@ class TestRootFsDeviceFinder(LinuxTestCase):
         dev = os.stat("/").st_dev
         self.major = os.major(dev)
         self.minor = os.minor(dev)
+        # test the strategies on the device of "/"
+        self.finder = RootFsDeviceFinder()
+        self.finder.major = self.major
+        self.finder.minor = self.minor
 
     def test_call_methods(self):
-        finder = RootFsDeviceFinder(self.major, self.minor)
         if os.path.exists("/proc/partitions"):
-            finder.ask_proc_partitions()
+            self.finder.ask_proc_partitions()
         else:
             with pytest.raises(FileNotFoundError):
-                finder.ask_proc_partitions()
+                self.finder.ask_proc_partitions()
         if os.path.exists(f"/sys/dev/block/{self.major}:{self.minor}/uevent"):
-            finder.ask_sys_dev_block()
+            self.finder.ask_sys_dev_block()
         else:
             with pytest.raises(FileNotFoundError):
-                finder.ask_sys_dev_block()
-        finder.ask_sys_class_block()
+                self.finder.ask_sys_dev_block()
+        self.finder.ask_sys_class_block()
 
     @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
     def test_comparisons(self):
-        finder = RootFsDeviceFinder(self.major, self.minor)
-        assert finder.find() is not None
+        assert self.finder.find() is not None
 
         a = b = c = None
         if os.path.exists("/proc/partitions"):
-            a = finder.ask_proc_partitions()
+            a = self.finder.ask_proc_partitions()
         if os.path.exists(f"/sys/dev/block/{self.major}:{self.minor}/uevent"):
-            b = finder.ask_sys_dev_block()
-        c = finder.ask_sys_class_block()
+            b = self.finder.ask_sys_dev_block()
+        c = self.finder.ask_sys_class_block()
 
-        assert {x for x in (a, b, c) if x} == {finder.find()}
+        assert {x for x in (a, b, c) if x} == {self.finder.find()}
 
     def test_find_fallbacks(self):
-        finder = RootFsDeviceFinder(8, 1)
+        finder = RootFsDeviceFinder()
+        finder.major = 8
+        finder.minor = 1
         files = {
             "/proc/partitions": FileNotFoundError,
             "/sys/dev/block/8:1/uevent": "MAJOR=8\nDEVNAME=sdb1\n",
@@ -1565,7 +1569,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
     @requires_cli("findmnt")
     @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
     def test_against_findmnt(self):
-        psutil_value = RootFsDeviceFinder(self.major, self.minor).find()
+        psutil_value = self.finder.find()
         findmnt_value = sh("findmnt -o SOURCE -rn /")
         # findmnt prints the friendly alias (e.g. /dev/mapper/vg-root),
         # psutil the kernel name it points to (e.g. /dev/dm-0).
