@@ -14,28 +14,6 @@
 #define _ARRAYSIZE(a) (sizeof(a) / sizeof(a[0]))
 #endif
 
-static char *
-psutil_get_drive_type(int type) {
-    switch (type) {
-        case DRIVE_FIXED:
-            return "fixed";
-        case DRIVE_CDROM:
-            return "cdrom";
-        case DRIVE_REMOVABLE:
-            return "removable";
-        case DRIVE_UNKNOWN:
-            return "unknown";
-        case DRIVE_NO_ROOT_DIR:
-            return "unmounted";
-        case DRIVE_REMOTE:
-            return "remote";
-        case DRIVE_RAMDISK:
-            return "ramdisk";
-        default:
-            return "?";
-    }
-}
-
 
 PyObject *
 psutil_disk_usage(PyObject *self, PyObject *args) {
@@ -217,6 +195,89 @@ error:
     return NULL;
 }
 
+// ---  disk_partitions()
+
+static char *
+get_drive_type(int type) {
+    switch (type) {
+        case DRIVE_FIXED:
+            return "fixed";
+        case DRIVE_CDROM:
+            return "cdrom";
+        case DRIVE_REMOVABLE:
+            return "removable";
+        case DRIVE_UNKNOWN:
+            return "unknown";
+        case DRIVE_NO_ROOT_DIR:
+            return "unmounted";
+        case DRIVE_REMOTE:
+            return "remote";
+        case DRIVE_RAMDISK:
+            return "ramdisk";
+        default:
+            return "?";
+    }
+}
+
+
+// Fill fs_type (e.g. "NTFS") and opts (e.g. "rw,fixed") of the volume
+// at root (e.g. "C:\"). Return the volume flags, or 0 on failure.
+static DWORD
+get_volume_info(
+    const wchar_t *root,
+    int type,
+    wchar_t *fs_type,
+    DWORD fs_type_size,
+    char *opts,
+    size_t opts_size
+) {
+    BOOL ret;
+    DWORD pflags = 0;
+
+    fs_type[0] = 0;
+    opts[0] = 0;
+
+    // May spin up a removable drive or go over the wire for a
+    // network one, so do it without the GIL.
+    Py_BEGIN_ALLOW_THREADS
+    ret = GetVolumeInformationW(
+        root,
+        NULL,  // we don't want the volume name
+        0,
+        NULL,
+        NULL,
+        &pflags,
+        fs_type,
+        fs_type_size
+    );
+    Py_END_ALLOW_THREADS
+
+    if (ret == 0) {
+        // We might get here in case of a floppy hard drive, in
+        // which case the error is (21, "device not ready").
+        // Let's pretend it didn't happen as we already have
+        // the drive name and type ('removable'). opts is left
+        // empty.
+        SetLastError(0);
+        pflags = 0;
+    }
+    else {
+        if (pflags & FILE_READ_ONLY_VOLUME)
+            str_append(opts, opts_size, "ro");
+        else
+            str_append(opts, opts_size, "rw");
+        if (pflags & FILE_VOLUME_IS_COMPRESSED)
+            str_append(opts, opts_size, ",compressed");
+        if (pflags & FILE_READ_ONLY_VOLUME)
+            str_append(opts, opts_size, ",readonly");
+    }
+
+    if (strlen(opts) > 0)
+        str_append(opts, opts_size, ",");
+    str_append(opts, opts_size, get_drive_type(type));
+    return pflags;
+}
+
 
 PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
@@ -227,18 +288,12 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     wchar_t mp_path[MAX_PATH];
     int all = 0;
     int type;
-    int ret;
     unsigned int old_mode = 0;
     char opts[50];
     HANDLE mp_h;
     BOOL mp_flag = TRUE;
     wchar_t fs_type[MAX_PATH + 1] = {0};
     DWORD pflags = 0;
-    DWORD lpMaximumComponentLength = 0;  // max file name
-    PyObject *py_drive = NULL;
-    PyObject *py_mount = NULL;
-    PyObject *py_fs = NULL;
-    PyObject *py_opts = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL) {
@@ -262,9 +317,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     }
 
     while (*drive_letter != 0) {
-        opts[0] = 0;
-        fs_type[0] = 0;
-
         Py_BEGIN_ALLOW_THREADS
         type = GetDriveTypeW(drive_letter);
         Py_END_ALLOW_THREADS
@@ -285,59 +337,18 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             }
         }
 
-        // May spin up a removable drive or go over the wire for a
-        // network one, so do it without the GIL.
-        Py_BEGIN_ALLOW_THREADS
-        ret = GetVolumeInformationW(
+        pflags = get_volume_info(
             drive_letter,
-            NULL,  // we don't want the volume name
-            0,
-            NULL,
-            &lpMaximumComponentLength,
-            &pflags,
+            type,
             fs_type,
-            _ARRAYSIZE(fs_type)
+            _ARRAYSIZE(fs_type),
+            opts,
+            sizeof(opts)
         );
-        Py_END_ALLOW_THREADS
-
-        if (ret == 0) {
-            // We might get here in case of a floppy hard drive, in
-            // which case the error is (21, "device not ready").
-            // Let's pretend it didn't happen as we already have
-            // the drive name and type ('removable'). opts is left
-            // empty.
-            SetLastError(0);
-        }
-        else {
-            if (pflags & FILE_READ_ONLY_VOLUME)
-                str_append(opts, sizeof(opts), "ro");
-            else
-                str_append(opts, sizeof(opts), "rw");
-            if (pflags & FILE_VOLUME_IS_COMPRESSED)
-                str_append(opts, sizeof(opts), ",compressed");
-            if (pflags & FILE_READ_ONLY_VOLUME)
-                str_append(opts, sizeof(opts), ",readonly");
-        }
-
-        if (strlen(opts) > 0)
-            str_append(opts, sizeof(opts), ",");
-        str_append(opts, sizeof(opts), psutil_get_drive_type(type));
-
-        // Convert the strings which will go into the result tuples.
-        py_drive = PyUnicode_FromWideChar(drive_letter, wcslen(drive_letter));
-        if (py_drive == NULL)
-            goto error;
-        py_fs = PyUnicode_FromWideChar(fs_type, wcslen(fs_type));
-        if (py_fs == NULL)
-            goto error;
-        // opts holds pure ASCII, so plain UTF-8 decoding is safe.
-        py_opts = PyUnicode_FromString(opts);
-        if (py_opts == NULL)
-            goto error;
 
         // Check for mount points on this volume and add/get info
         // (checks first to know if we can even have mount points)
-        if ((ret != 0) && (pflags & FILE_SUPPORTS_REPARSE_POINTS)) {
+        if (pflags & FILE_SUPPORTS_REPARSE_POINTS) {
             Py_BEGIN_ALLOW_THREADS
             mp_h = FindFirstVolumeMountPointW(drive_letter, mp_buf, MAX_PATH);
             Py_END_ALLOW_THREADS
@@ -354,27 +365,18 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                         _ARRAYSIZE(mp_path) - wcslen(mp_path) - 1
                     );
 
-                    py_mount = PyUnicode_FromWideChar(
-                        mp_path, wcslen(mp_path)
-                    );
-                    if (py_mount == NULL) {
-                        FindVolumeMountPointClose(mp_h);
-                        goto error;
-                    }
-
                     if (!pylist_append_fmt(
                             py_retlist,
-                            "(OOOO)",
-                            py_drive,
-                            py_mount,
-                            py_fs,  // typically "NTFS"
-                            py_opts
+                            "(uuus)",
+                            drive_letter,
+                            mp_path,
+                            fs_type,  // typically "NTFS"
+                            opts
                         ))
                     {
                         FindVolumeMountPointClose(mp_h);
                         goto error;
                     }
-                    Py_CLEAR(py_mount);
 
                     // Continue looking for more mount points
                     Py_BEGIN_ALLOW_THREADS
@@ -389,22 +391,17 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
         if (!pylist_append_fmt(
                 py_retlist,
-                "(OOOO)",
-                py_drive,
-                py_drive,
-                py_fs,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
-                py_opts
+                "(uuus)",
+                drive_letter,
+                drive_letter,
+                fs_type,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
+                opts
             ))
         {
             goto error;
         }
-        goto next;
 
     next:
-        Py_CLEAR(py_opts);
-        Py_CLEAR(py_fs);
-        Py_CLEAR(py_mount);
-        Py_CLEAR(py_drive);
         drive_letter = wcschr(drive_letter, 0) + 1;
     }
 
@@ -412,10 +409,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_opts);
-    Py_XDECREF(py_fs);
-    Py_XDECREF(py_mount);
-    Py_XDECREF(py_drive);
     SetErrorMode(old_mode);
     Py_DECREF(py_retlist);
     return NULL;
