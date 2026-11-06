@@ -53,7 +53,7 @@ Changelog
   ``(minor, major)`` named tuple.
 - :gh:`2780`, [Windows]: :func:`disk_usage` now accepts a file path, not only a
   directory.
-- :gh:`2816`, [OpenBSD]: :func:`memory_swap` :field:`sin` and :field:`sout` are
+- :gh:`2816`, [OpenBSD]: :func:`swap_memory` :field:`sin` and :field:`sout` are
   no longer set to ``0``.
 - :gh:`3023`, [FreeBSD], [OpenBSD]: :func:`net_io_counters` :field:`dropout` is
   no longer always ``0``.
