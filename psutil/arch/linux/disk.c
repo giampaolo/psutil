@@ -41,7 +41,16 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
     // getmntent() returns a pointer to a static buffer shared by all
     // threads, which free-threaded builds don't serialize. Use our own.
-    while ((entry = getmntent_r(file, &ent, buf, sizeof(buf))) != NULL) {
+    // Don't release the GIL per entry: re-taking it on every line
+    // stalls for the switch interval when other threads are busy.
+    while (1) {
+        entry = getmntent_r(file, &ent, buf, sizeof(buf));
+        if (entry == NULL) {
+            // musl returns NULL on a line longer than buf
+            if (!feof(file) && !ferror(file))
+                continue;
+            break;
+        }
         py_dev = PyUnicode_DecodeFSDefault(entry->mnt_fsname);
         if (!py_dev)
             goto error;
