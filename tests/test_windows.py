@@ -44,6 +44,7 @@ if WINDOWS and not PYPY:
         warnings.simplefilter("ignore")
         import win32api  # requires "pip install pywin32"
         import win32con
+        import win32file
         import win32process
         import wmi  # requires "pip install wmi" / "make install-pydeps-test"
 
@@ -332,6 +333,8 @@ class TestDiskApis(WindowsTestCase):
         ps_parts = psutil.disk_partitions(all=True)
         wmi_parts = wmi.WMI().Win32_LogicalDisk()
         for ps_part in ps_parts:
+            if len(ps_part.device) > 3:
+                continue  # no drive letter, so not in Win32_LogicalDisk
             for wmi_part in wmi_parts:
                 if ps_part.device.replace('\\', '') == wmi_part.DeviceID:
                     if not ps_part.mountpoint:
@@ -366,9 +369,29 @@ class TestDiskApis(WindowsTestCase):
         ps = [
             x.mountpoint
             for x in psutil.disk_partitions(all=True)
-            if not x.mountpoint.startswith('A:')
+            if not x.mountpoint.startswith('A:') and len(x.mountpoint) == 3
         ]
         assert win == ps
+
+    def test_disk_partitions_folder_mounts(self):
+        parts = [
+            x
+            for x in psutil.disk_partitions(all=True)
+            if len(x.mountpoint) > 3
+        ]
+        if not parts:
+            return pytest.skip("no volume mounted in a folder")
+        for part in parts:
+            vol = win32file.GetVolumeNameForVolumeMountPoint(part.mountpoint)
+            if len(part.device) == 3:
+                assert (
+                    win32file.GetVolumeNameForVolumeMountPoint(part.device)
+                    == vol
+                )
+            else:
+                # no drive letter
+                assert part.device == part.mountpoint
+            assert part.fstype == win32api.GetVolumeInformation(vol)[4]
 
     @retry_on_failure
     def test_disk_usage(self):

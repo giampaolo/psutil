@@ -496,9 +496,11 @@ Disks
   BSD, *all* is ignored and all partitions are always returned.
 
   * :field:`device`: the device path (e.g. "/dev/hda1"). On Windows this is the
-    drive letter (e.g. "C:\\").
+    volume's drive letter (e.g. "C:\\"), or the folder it is mounted in if it
+    has none.
   * :field:`mountpoint`: the mount point path (e.g. "/"). On Windows this is
-    the drive letter (e.g. "C:\\").
+    the drive letter (e.g. "C:\\"), or the folder the volume is mounted in
+    (e.g. "C:\\mnt\\data\\").
   * :field:`fstype`: the partition filesystem (e.g. "ext3" on UNIX or "NTFS" on
     Windows).
   * :field:`opts`: a comma-separated string indicating different mount options
