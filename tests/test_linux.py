@@ -1518,7 +1518,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
         self.minor = os.minor(dev)
 
     def test_call_methods(self):
-        finder = RootFsDeviceFinder()
+        finder = RootFsDeviceFinder(self.major, self.minor)
         if os.path.exists("/proc/partitions"):
             finder.ask_proc_partitions()
         else:
@@ -1533,7 +1533,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
 
     @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
     def test_comparisons(self):
-        finder = RootFsDeviceFinder()
+        finder = RootFsDeviceFinder(self.major, self.minor)
         assert finder.find() is not None
 
         a = b = c = None
@@ -1546,9 +1546,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
         assert {x for x in (a, b, c) if x} == {finder.find()}
 
     def test_find_fallbacks(self):
-        finder = RootFsDeviceFinder()
-        finder.major = 8
-        finder.minor = 1
+        finder = RootFsDeviceFinder(8, 1)
         files = {
             "/proc/partitions": FileNotFoundError,
             "/sys/dev/block/8:1/uevent": "MAJOR=8\nDEVNAME=sdb1\n",
@@ -1567,7 +1565,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
     @requires_cli("findmnt")
     @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
     def test_against_findmnt(self):
-        psutil_value = RootFsDeviceFinder().find()
+        psutil_value = RootFsDeviceFinder(self.major, self.minor).find()
         findmnt_value = sh("findmnt -o SOURCE -rn /")
         # findmnt prints the friendly alias (e.g. /dev/mapper/vg-root),
         # psutil the kernel name it points to (e.g. /dev/dm-0).
@@ -1575,16 +1573,32 @@ class TestRootFsDeviceFinder(LinuxTestCase):
             findmnt_value
         )
 
-    def test_disk_partitions_mocked(self):
+    def test_disk_partitions_chroot(self):
+        # chroot on /dev/loop0, host's /usr/src bind-mounted in it, see
+        # https://github.com/giampaolo/psutil/issues/2347
+        mounts = [
+            ("/dev/loop0", "/", "ext4", "rw,relatime"),
+            ("/dev/root", "/usr/src", "ext4", "ro,noatime"),
+        ]
+        files = {
+            "/proc/self/mountinfo": textwrap.dedent("""\
+                54 57 7:0 / / rw,relatime - ext4 /dev/loop0 rw
+                67 54 254:2 /usr/src /usr/src ro,noatime - ext4 /dev/root rw
+                """),
+            "/proc/partitions": textwrap.dedent("""\
+                major minor  #blocks  name
+
+                   7        0   20049624 loop0
+                 254        2  131522564 vda2
+                """),
+        }
         with mock.patch.object(
-            _psutil,
-            'disk_partitions',
-            return_value=[('/dev/root', '/', 'ext4', 'rw')],
-        ) as m:
-            part = psutil.disk_partitions(all=True)[0]
-            assert m.called
-            assert part.device != "/dev/root"
-            assert part.device == RootFsDeviceFinder().find()
+            _psutil, "disk_partitions", return_value=mounts
+        ):
+            with mock_open_content(files):
+                with mock.patch("os.path.exists", return_value=True):
+                    parts = psutil.disk_partitions(all=True)
+        assert [x.device for x in parts] == ["/dev/loop0", "/dev/vda2"]
 
 
 # =====================================================================
