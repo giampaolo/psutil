@@ -385,7 +385,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     wchar_t *drive_letter = drive_strings;
     int all = 0;
     int type;
-    unsigned int old_mode = 0;
+    DWORD old_mode = 0;
     char opts[50];
     wchar_t fs_type[MAX_PATH + 1] = {0};
     PyObject *py_retlist = PyList_New(0);
@@ -396,7 +396,11 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
     // avoid to visualize a message box in case something goes wrong
     // see https://github.com/giampaolo/psutil/issues/264
-    old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
+    if (!SetThreadErrorMode(SEM_FAILCRITICALERRORS, &old_mode)) {
+        psutil_oserror_wsyscall("SetThreadErrorMode");
+        Py_DECREF(py_retlist);
+        return NULL;
+    }
 
     if (!PyArg_ParseTuple(args, "p", &all))
         goto error;
@@ -459,11 +463,11 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     if (append_folder_mounts(py_retlist, all) != 0)
         goto error;
 
-    SetErrorMode(old_mode);
+    SetThreadErrorMode(old_mode, NULL);
     return py_retlist;
 
 error:
-    SetErrorMode(old_mode);
+    SetThreadErrorMode(old_mode, NULL);
     Py_DECREF(py_retlist);
     return NULL;
 }
