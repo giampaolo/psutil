@@ -14,6 +14,7 @@ import os
 import re
 import resource
 import socket
+import stat
 import struct
 import sys
 import warnings
@@ -1143,19 +1144,38 @@ def disk_io_counters(perdisk=False):
 
 
 class RootFsDeviceFinder:
-    """disk_partitions() may return partitions with device == "/dev/root"
-    or "rootfs". This container class uses different strategies to try to
-    obtain the real device path. Resources:
+    """disk_partitions() may return partitions with device == "/dev/root".
+    This container class uses different strategies to try to obtain the
+    real device path. Resources:
     https://bootlin.com/blog/find-root-device/
-    https://www.systutorials.com/how-to-find-the-disk-where-root-is-on-in-bash-on-linux/.
+    https://www.systutorials.com/how-to-find-the-disk-where-root-is-on-in-bash-on-linux/
     """
 
     __slots__ = ['major', 'minor']
 
     def __init__(self):
-        dev = os.stat("/").st_dev
-        self.major = os.major(dev)
-        self.minor = os.minor(dev)
+        self.major, self.minor = self.find_major_minor()
+
+    def find_major_minor(self):
+        # Every "/dev/root" mount is on the boot device, so take the
+        # first one, like libmount. os.stat("/") is wrong in a chroot.
+        try:
+            f = open_text(f"{psutil.PROCFS_PATH}/self/mountinfo")
+        except OSError as err:
+            debug(err)
+            return None, None
+        with f:
+            for line in f:
+                fields = line.split()
+                try:
+                    i = fields.index("-")
+                    source = fields[i + 2]
+                    major, minor = map(int, fields[2].split(":"))
+                except (ValueError, IndexError):
+                    continue
+                if source == "/dev/root":
+                    return major, minor
+        return None, None
 
     def ask_proc_partitions(self):
         with open_text(f"{psutil.PROCFS_PATH}/partitions") as f:
@@ -1195,6 +1215,8 @@ class RootFsDeviceFinder:
                         return f"/dev/{name}"
 
     def find(self):
+        if self.major is None:  # no "/dev/root" mount
+            return None
         path = None
         if path is None:
             try:
@@ -1211,12 +1233,22 @@ class RootFsDeviceFinder:
                 path = self.ask_sys_class_block()
             except OSError as err:
                 debug(err)
-        # We use exists() because the "/dev/*" part of the path is hard
-        # coded, so we want to be sure.
-        if path is not None and os.path.exists(path):
-            return path
+
+        # The "/dev/*" part of the path is hard coded, so make sure it's
+        # the same block device, like libmount does.
+        if path is not None:
+            try:
+                st = os.stat(path)
+            except OSError as err:
+                debug(err)
+            else:
+                devno = os.makedev(self.major, self.minor)
+                if stat.S_ISBLK(st.st_mode) and st.st_rdev == devno:
+                    return path
 
 
+# NOTE: this function should follow libmount implementation as much
+# as possible.
 def disk_partitions(all=False):
     """Return mounted disk partitions as a list of named tuples."""
     fstypes = set()
@@ -1263,13 +1295,16 @@ def disk_partitions(all=False):
         mounts_path = os.path.realpath(f"{procfs_path}/self/mounts")
 
     retlist = []
+    root_device = None
     partitions = _psutil.disk_partitions(mounts_path)
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
             device = ''
-        if device in {"/dev/root", "rootfs"}:
-            device = RootFsDeviceFinder().find() or device
+        if device == "/dev/root":
+            if root_device is None:
+                root_device = RootFsDeviceFinder().find() or device
+            device = root_device
         if not all:
             if not device or fstype not in fstypes:
                 continue

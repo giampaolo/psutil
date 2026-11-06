@@ -279,6 +279,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   and ``\r\n`` into ``\n`` inside arguments and environment variable values.
 - :gh:`3084`: :func:`disk_partitions` could return mixed-up entries when called
   from multiple threads on free-threaded Python.
+- :gh:`2347`: :func:`disk_partitions` gave ``/dev/root`` mounts the device of
+  ``/``, which is a different one inside a chroot (e.g. a host directory bind
+  mounted into it).
 
 **Bug fixes: Windows**
 

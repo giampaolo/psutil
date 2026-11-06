@@ -21,6 +21,7 @@ import platform
 import re
 import shutil
 import socket
+import stat
 import struct
 import sys
 import textwrap
@@ -235,6 +236,21 @@ def mock_open_content(pairs):
 
 def mock_open_exception(for_path, exc):
     return mock_open_content({for_path: exc})
+
+
+@contextlib.contextmanager
+def mock_blkdev(devs):
+    # make {path: (major, minor)} look like block device nodes
+    orig_stat = os.stat
+
+    def stat_mock(path, *args, **kwargs):
+        if path in devs:
+            rdev = os.makedev(*devs[path])
+            return mock.Mock(st_mode=stat.S_IFBLK | 0o660, st_rdev=rdev)
+        return orig_stat(path, *args, **kwargs)
+
+    with mock.patch("os.stat", side_effect=stat_mock) as m:
+        yield m
 
 
 @contextlib.contextmanager
@@ -1516,34 +1532,36 @@ class TestRootFsDeviceFinder(LinuxTestCase):
         dev = os.stat("/").st_dev
         self.major = os.major(dev)
         self.minor = os.minor(dev)
+        # test the strategies on the device of "/"
+        self.finder = RootFsDeviceFinder()
+        self.finder.major = self.major
+        self.finder.minor = self.minor
 
     def test_call_methods(self):
-        finder = RootFsDeviceFinder()
         if os.path.exists("/proc/partitions"):
-            finder.ask_proc_partitions()
+            self.finder.ask_proc_partitions()
         else:
             with pytest.raises(FileNotFoundError):
-                finder.ask_proc_partitions()
+                self.finder.ask_proc_partitions()
         if os.path.exists(f"/sys/dev/block/{self.major}:{self.minor}/uevent"):
-            finder.ask_sys_dev_block()
+            self.finder.ask_sys_dev_block()
         else:
             with pytest.raises(FileNotFoundError):
-                finder.ask_sys_dev_block()
-        finder.ask_sys_class_block()
+                self.finder.ask_sys_dev_block()
+        self.finder.ask_sys_class_block()
 
     @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
     def test_comparisons(self):
-        finder = RootFsDeviceFinder()
-        assert finder.find() is not None
+        assert self.finder.find() is not None
 
         a = b = c = None
         if os.path.exists("/proc/partitions"):
-            a = finder.ask_proc_partitions()
+            a = self.finder.ask_proc_partitions()
         if os.path.exists(f"/sys/dev/block/{self.major}:{self.minor}/uevent"):
-            b = finder.ask_sys_dev_block()
-        c = finder.ask_sys_class_block()
+            b = self.finder.ask_sys_dev_block()
+        c = self.finder.ask_sys_class_block()
 
-        assert {x for x in (a, b, c) if x} == {finder.find()}
+        assert {x for x in (a, b, c) if x} == {self.finder.find()}
 
     def test_find_fallbacks(self):
         finder = RootFsDeviceFinder()
@@ -1556,7 +1574,7 @@ class TestRootFsDeviceFinder(LinuxTestCase):
             "/sys/class/block/sda1/dev": "8:1\n",
         }
         dev_files = ["/sys/class/block/sda/dev", "/sys/class/block/sda1/dev"]
-        with mock.patch("os.path.exists", return_value=True):
+        with mock_blkdev({"/dev/sdb1": (8, 1), "/dev/sda1": (8, 1)}):
             with mock.patch("glob.iglob", return_value=dev_files):
                 with mock_open_content(files):
                     assert finder.find() == "/dev/sdb1"
@@ -1564,10 +1582,33 @@ class TestRootFsDeviceFinder(LinuxTestCase):
                 with mock_open_content(files):
                     assert finder.find() == "/dev/sda1"
 
+    def test_find_major_minor_bad_line(self):
+        files = {
+            "/proc/self/mountinfo": (
+                "- ext4 /dev/root rw\n26 1 8:1 / / rw - ext4 /dev/root rw\n"
+            )
+        }
+        with mock_open_content(files):
+            finder = RootFsDeviceFinder()
+        assert (finder.major, finder.minor) == (8, 1)
+
+    def test_find_other_device_node(self):
+        # /dev/sdb1 is another device here, e.g. a chroot's stale /dev
+        finder = RootFsDeviceFinder()
+        finder.major = 8
+        finder.minor = 1
+        files = {
+            "/proc/partitions": FileNotFoundError,
+            "/sys/dev/block/8:1/uevent": "MAJOR=8\nDEVNAME=sdb1\n",
+        }
+        with mock_open_content(files):
+            with mock_blkdev({"/dev/sdb1": (8, 17)}):
+                assert finder.find() is None
+
     @requires_cli("findmnt")
     @skipif(not ROOTFS_ON_BLOCK_DEV, reason="/ is not on a block device")
     def test_against_findmnt(self):
-        psutil_value = RootFsDeviceFinder().find()
+        psutil_value = self.finder.find()
         findmnt_value = sh("findmnt -o SOURCE -rn /")
         # findmnt prints the friendly alias (e.g. /dev/mapper/vg-root),
         # psutil the kernel name it points to (e.g. /dev/dm-0).
@@ -1575,16 +1616,32 @@ class TestRootFsDeviceFinder(LinuxTestCase):
             findmnt_value
         )
 
-    def test_disk_partitions_mocked(self):
+    def test_disk_partitions_chroot(self):
+        # chroot on /dev/loop0, host's /usr/src bind-mounted in it, see
+        # https://github.com/giampaolo/psutil/issues/2347
+        mounts = [
+            ("/dev/loop0", "/", "ext4", "rw,relatime"),
+            ("/dev/root", "/usr/src", "ext4", "ro,noatime"),
+        ]
+        files = {
+            "/proc/self/mountinfo": textwrap.dedent("""\
+                54 57 7:0 / / rw,relatime - ext4 /dev/loop0 rw
+                67 54 254:2 /usr/src /usr/src ro,noatime - ext4 /dev/root rw
+                """),
+            "/proc/partitions": textwrap.dedent("""\
+                major minor  #blocks  name
+
+                   7        0   20049624 loop0
+                 254        2  131522564 vda2
+                """),
+        }
         with mock.patch.object(
-            _psutil,
-            'disk_partitions',
-            return_value=[('/dev/root', '/', 'ext4', 'rw')],
-        ) as m:
-            part = psutil.disk_partitions(all=True)[0]
-            assert m.called
-            assert part.device != "/dev/root"
-            assert part.device == RootFsDeviceFinder().find()
+            _psutil, "disk_partitions", return_value=mounts
+        ):
+            with mock_open_content(files):
+                with mock_blkdev({"/dev/vda2": (254, 2)}):
+                    parts = psutil.disk_partitions(all=True)
+        assert [x.device for x in parts] == ["/dev/loop0", "/dev/vda2"]
 
 
 # =====================================================================
