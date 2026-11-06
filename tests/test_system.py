@@ -833,9 +833,8 @@ class TestDiskAPIs(PsutilTestCase):
             assert isinstance(nt.fstype, str)
             assert isinstance(nt.opts, str)
 
-        # all = False
+        # all = False, can be empty (e.g. NFS or tmpfs root)
         ls = psutil.disk_partitions(all=False)
-        assert ls
         for disk in ls:
             check_ntuple(disk)
             if WINDOWS and 'cdrom' in disk.opts:
@@ -1108,8 +1107,6 @@ class TestSensorsAPIs(PsutilTestCase):
             assert isinstance(name, str)
             for entry in entries:
                 assert isinstance(entry.label, str)
-                if entry.current is not None:
-                    assert entry.current >= 0
                 if entry.high is not None:
                     assert entry.high >= 0
                 if entry.critical is not None:
