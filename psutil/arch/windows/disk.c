@@ -221,8 +221,8 @@ get_drive_type(int type) {
 
 
 // Fill fs_type (e.g. "NTFS") and opts (e.g. "rw,fixed") of the volume
-// at root (e.g. "C:\"). Return the volume flags, or 0 on failure.
-static DWORD
+// at root (e.g. "C:\" or "\\?\Volume{...}\").
+static void
 get_volume_info(
     const wchar_t *root,
     int type,
@@ -259,7 +259,6 @@ get_volume_info(
         // the drive name and type ('removable'). opts is left
         // empty.
         SetLastError(0);
-        pflags = 0;
     }
     else {
         if (pflags & FILE_READ_ONLY_VOLUME)
@@ -275,7 +274,107 @@ get_volume_info(
     if (strlen(opts) > 0)
         str_append(opts, opts_size, ",");
     str_append(opts, opts_size, get_drive_type(type));
-    return pflags;
+}
+
+
+// Volumes mounted in a folder (e.g. "C:\mnt\data\"). Go through all
+// volumes because FindFirstVolumeMountPointW() needs admin rights,
+// see https://github.com/giampaolo/psutil/issues/1986.
+static int
+append_folder_mounts(PyObject *py_retlist, int all) {
+    wchar_t volume[MAX_PATH];
+    wchar_t fs_type[MAX_PATH + 1];
+    wchar_t *paths = NULL;
+    wchar_t *path;
+    wchar_t *device;
+    char opts[50];
+    DWORD size = MAX_PATH + 1;
+    DWORD needed;
+    BOOL has_folder;
+    HANDLE h;
+    int type;
+    int ret = -1;
+
+    h = FindFirstVolumeW(volume, _ARRAYSIZE(volume));
+    if (h == INVALID_HANDLE_VALUE) {
+        psutil_debug("FindFirstVolumeW failed (err=%lu)", GetLastError());
+        return 0;
+    }
+    paths = malloc(size * sizeof(wchar_t));
+    if (paths == NULL) {
+        PyErr_NoMemory();
+        goto done;
+    }
+
+    do {
+        // the drive letters and folders the volume is mounted in
+        while (!GetVolumePathNamesForVolumeNameW(volume, paths, size, &needed))
+        {
+            if (GetLastError() != ERROR_MORE_DATA) {
+                psutil_debug("GetVolumePathNamesForVolumeNameW failed");
+                paths[0] = 0;
+                break;
+            }
+            free(paths);
+            size = needed;
+            paths = malloc(size * sizeof(wchar_t));
+            if (paths == NULL) {
+                PyErr_NoMemory();
+                goto done;
+            }
+        }
+
+        // the volume's drive letter, or the folder if it has none
+        device = NULL;
+        has_folder = FALSE;
+        for (path = paths; *path != 0; path += wcslen(path) + 1) {
+            if (wcslen(path) == 3)  // "C:\"
+                device = path;
+            else
+                has_folder = TRUE;
+        }
+        if (!has_folder)
+            continue;
+
+        Py_BEGIN_ALLOW_THREADS
+        type = GetDriveTypeW(volume);
+        Py_END_ALLOW_THREADS
+
+        // by default we only show hard drives and cd-roms
+        if (!all && (type != DRIVE_FIXED) && (type != DRIVE_REMOVABLE)
+            && (type != DRIVE_CDROM))
+        {
+            continue;
+        }
+        get_volume_info(
+            volume, type, fs_type, _ARRAYSIZE(fs_type), opts, sizeof(opts)
+        );
+
+        for (path = paths; *path != 0; path += wcslen(path) + 1) {
+            if (wcslen(path) == 3)
+                continue;
+            if (!pylist_append_fmt(
+                    py_retlist,
+                    "(uuus)",
+                    device ? device : path,
+                    path,
+                    fs_type,
+                    opts
+                ))
+            {
+                goto done;
+            }
+        }
+    } while (FindNextVolumeW(h, volume, _ARRAYSIZE(volume)));
+
+    if (GetLastError() != ERROR_NO_MORE_FILES)
+        psutil_debug("FindNextVolumeW failed (err=%lu)", GetLastError());
+    ret = 0;
+
+done:
+    free(paths);
+    FindVolumeClose(h);
+    return ret;
 }
 
 
@@ -284,16 +383,11 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     DWORD num_chars;
     wchar_t drive_strings[255];
     wchar_t *drive_letter = drive_strings;
-    wchar_t mp_buf[MAX_PATH];
-    wchar_t mp_path[MAX_PATH];
     int all = 0;
     int type;
     unsigned int old_mode = 0;
     char opts[50];
-    HANDLE mp_h;
-    BOOL mp_flag = TRUE;
     wchar_t fs_type[MAX_PATH + 1] = {0};
-    DWORD pflags = 0;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL) {
@@ -337,7 +431,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             }
         }
 
-        pflags = get_volume_info(
+        get_volume_info(
             drive_letter,
             type,
             fs_type,
@@ -345,49 +439,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             opts,
             sizeof(opts)
         );
-
-        // Check for mount points on this volume and add/get info
-        // (checks first to know if we can even have mount points)
-        if (pflags & FILE_SUPPORTS_REPARSE_POINTS) {
-            Py_BEGIN_ALLOW_THREADS
-            mp_h = FindFirstVolumeMountPointW(drive_letter, mp_buf, MAX_PATH);
-            Py_END_ALLOW_THREADS
-
-            if (mp_h != INVALID_HANDLE_VALUE) {
-                mp_flag = TRUE;
-                while (mp_flag) {
-                    // Append full mount path with drive letter.
-                    mp_path[0] = L'\0';
-                    wcsncat(mp_path, drive_letter, _ARRAYSIZE(mp_path) - 1);
-                    wcsncat(
-                        mp_path,
-                        mp_buf,
-                        _ARRAYSIZE(mp_path) - wcslen(mp_path) - 1
-                    );
-
-                    if (!pylist_append_fmt(
-                            py_retlist,
-                            "(uuus)",
-                            drive_letter,
-                            mp_path,
-                            fs_type,  // typically "NTFS"
-                            opts
-                        ))
-                    {
-                        FindVolumeMountPointClose(mp_h);
-                        goto error;
-                    }
-
-                    // Continue looking for more mount points
-                    Py_BEGIN_ALLOW_THREADS
-                    mp_flag = FindNextVolumeMountPointW(
-                        mp_h, mp_buf, MAX_PATH
-                    );
-                    Py_END_ALLOW_THREADS
-                }
-                FindVolumeMountPointClose(mp_h);
-            }
-        }
 
         if (!pylist_append_fmt(
                 py_retlist,
@@ -404,6 +455,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     next:
         drive_letter = wcschr(drive_letter, 0) + 1;
     }
+
+    if (append_folder_mounts(py_retlist, all) != 0)
+        goto error;
 
     SetErrorMode(old_mode);
     return py_retlist;

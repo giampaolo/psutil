@@ -314,6 +314,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   processes.
 - :gh:`1959`: :func:`disk_partitions` could raise :exc:`UnicodeDecodeError` on
   non-UTF-8 ANSI code pages (e.g. cp1251).
+- :gh:`1986`: :func:`disk_partitions` listed volumes mounted in a folder (e.g.
+  ``C:\mnt\data``) only when running as administrator.
 - :gh:`2383`: :meth:`WindowsService.description` (and
   :meth:`WindowsService.as_dict`) could fail with ``ERROR_FILE_NOT_FOUND`` when
   the description points to a missing resource (e.g. ``WaaSMedicSvc``). It now
@@ -336,6 +338,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   4 GiB or larger.
 - :gh:`3022`: :meth:`Process.wait` returned exit codes with the high bit set
   (e.g. ``0xC0000005``) as negative numbers.
+- :gh:`3108`: :func:`disk_partitions` gave volumes mounted in a folder the
+  :field:`device`, :field:`fstype` and :field:`opts` of the drive holding the
+  folder.
 
 **Bug fixes: macOS**
 
