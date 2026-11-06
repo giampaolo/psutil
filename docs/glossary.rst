@@ -25,7 +25,7 @@ Glossary
       because the OS keeps recently freed pages as reclaimable cache; those pages
       are counted in :field:`available` but not in :field:`free`.
       A monitoring alert should fire on :field:`available` (or :field:`percent`)
-      falling below a threshold, not on :field:`free`. See :func:`virtual_memory`.
+      falling below a threshold, not on :field:`free`. See :func:`memory_physical`.
 
    buffers
 
@@ -34,7 +34,7 @@ Glossary
       :term:`page cache`, which caches file *contents*.
       Like the page cache, buffer memory is reclaimable: the OS can
       free it under memory pressure.
-      Reported as the :field:`buffers` field of :func:`virtual_memory`
+      Reported as the :field:`buffers` field of :func:`memory_physical`
       (Linux, BSD).
 
    busy_time
@@ -183,7 +183,7 @@ Glossary
       disk. Subsequent reads or writes can be served from RAM without disk I/O,
       making access fast. The OS reclaims page cache automatically under memory
       pressure, so a large cache is healthy. Shown as the :field:`cached` field
-      of :func:`virtual_memory` on Linux/BSD.
+      of :func:`memory_physical` on Linux/BSD.
 
    page fault
 
@@ -261,6 +261,14 @@ Glossary
       process that maps it.
       See :meth:`Process.memory_info`.
 
+   soft deprecated
+
+      An API that new code shouldn't use, but that keeps working: it doesn't
+      raise :exc:`DeprecationWarning` and there are no plans to remove it. This
+      is the same policy CPython follows (:pep:`PEP 387 <387#soft-deprecation>`).
+      In psutil, :func:`virtual_memory` and :func:`swap_memory` are soft
+      deprecated in favor of :func:`memory_physical` and :func:`memory_swap`.
+
    soft interrupt
 
       Deferred work scheduled by a :term:`hardware interrupt` handler to
@@ -281,7 +289,7 @@ Glossary
       shared page proportionally among the processes that use it.
       See also :term:`private memory`.
 
-      Exposed by psutil as the :field:`shared` field of :func:`virtual_memory`
+      Exposed by psutil as the :field:`shared` field of :func:`memory_physical`
       and :meth:`Process.memory_info` (Linux; shareable resident memory,
       mapped by others or not), the :field:`shared` field of
       :meth:`Process.memory_footprint` (pages mapped more than once,
@@ -294,7 +302,7 @@ Glossary
 
       Memory moved from disk (:term:`swap <swap memory>`) back into RAM.
       Reported as the :field:`sin` :term:`cumulative counter` of
-      :func:`swap_memory`. A non-zero :field:`sin` rate usually means the system
+      :func:`memory_swap`. A non-zero :field:`sin` rate usually means the system
       is bringing memory back into RAM for processes to use. See also
       :term:`swap-out`.
 
@@ -302,7 +310,7 @@ Glossary
 
       Memory moved from RAM to disk (:term:`swap <swap memory>`).
       Reported as the :field:`sout` :term:`cumulative counter` of
-      :func:`swap_memory`.  A non-zero :field:`sout` rate indicates memory
+      :func:`memory_swap`.  A non-zero :field:`sout` rate indicates memory
       pressure: the system is running low on RAM and must move data to disk,
       which can slow performance. See also :term:`swap-in`.
 
@@ -317,7 +325,7 @@ Glossary
       it back into RAM (:term:`swap-in`) when a process needs it. If RAM is
       full, the OS may first swap out other pages to make room. Swap prevents
       out-of-memory crashes, but is much slower than RAM, so heavy swapping can
-      significantly degrade performance. See :func:`swap_memory` and
+      significantly degrade performance. See :func:`memory_swap` and
       :ref:`swap activity recipe <recipe_swap_activity>`. Per-process swap
       usage is exposed by :meth:`Process.memory_footprint` (:field:`swap`,
       includes swapped shmem) and :meth:`Process.memory_extras`
@@ -329,7 +337,7 @@ Glossary
       A condition where the system spends more time moving memory between RAM
       and disk (:term:`swap <swap memory>`) than doing actual work, because memory
       demand exceeds available RAM. The symptom is high and sustained rates on
-      both :field:`sin` and :field:`sout` from :func:`swap_memory`.
+      both :field:`sin` and :field:`sout` from :func:`memory_swap`.
       As a result, the system becomes very slow or unresponsive. CPU utilization
       may look low while everything is waiting on disk I/O.
 

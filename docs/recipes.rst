@@ -424,10 +424,10 @@ it just means the system is moving previously evicted pages back into RAM. High
   import psutil, time
 
   def swap_activity(interval=1):
-      before = psutil.swap_memory()
+      before = psutil.memory_swap()
       while True:
           time.sleep(interval)
-          after = psutil.swap_memory()
+          after = psutil.memory_swap()
           sin  = after.sin  - before.sin
           sout = after.sout - before.sout
           print("swap-in={}/s  swap-out={}/s  used={}%".format(

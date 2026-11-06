@@ -22,7 +22,7 @@ class SunOSTestCase(PsutilTestCase):
 
 
 class TestSunOSMemory(SunOSTestCase):
-    def test_swap_memory(self):
+    def test_memory_swap(self):
         out = sh(f"env PATH=/usr/sbin:/sbin:{os.environ['PATH']} swap -l")
         lines = out.strip().split('\n')[1:]
         if not lines:
@@ -34,7 +34,7 @@ class TestSunOSMemory(SunOSTestCase):
             free += int(fields[4]) * 512
         used = total - free
 
-        psutil_swap = psutil.swap_memory()
+        psutil_swap = psutil.memory_swap()
         assert psutil_swap.total == total
         assert psutil_swap.used == used
         assert psutil_swap.free == free

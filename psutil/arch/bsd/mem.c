@@ -16,7 +16,7 @@
 
 
 PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
+psutil_memory_swap(PyObject *self, PyObject *args) {
     uint64_t swap_total = 0;
     uint64_t swap_free = 0;
     uint64_t swap_used = 0;

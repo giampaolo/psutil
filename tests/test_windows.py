@@ -181,17 +181,17 @@ class TestCpuStats(WindowsTestCase):
         assert psutil.cpu_stats().soft_interrupts == 0
 
 
-class TestVirtualMemory(WindowsTestCase):
+class TestMemoryPhysical(WindowsTestCase):
 
     def test_total(self):
         w = wmi.WMI().Win32_ComputerSystem()[0]
-        assert int(w.TotalPhysicalMemory) == psutil.virtual_memory().total
+        assert int(w.TotalPhysicalMemory) == psutil.memory_physical().total
 
     @retry_on_failure
     def test_free(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
-            abs(int(w.AvailableBytes) - psutil.virtual_memory().free)
+            abs(int(w.AvailableBytes) - psutil.memory_physical().free)
             < TOLERANCE_SYS_MEM
         )
 
@@ -199,7 +199,7 @@ class TestVirtualMemory(WindowsTestCase):
     def test_wired(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
-            abs(int(w.PoolNonpagedBytes) - psutil.virtual_memory().wired)
+            abs(int(w.PoolNonpagedBytes) - psutil.memory_physical().wired)
             < TOLERANCE_SYS_MEM
         )
 
@@ -207,40 +207,42 @@ class TestVirtualMemory(WindowsTestCase):
     def test_available(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
-            abs(int(w.AvailableBytes) - psutil.virtual_memory().available)
+            abs(int(w.AvailableBytes) - psutil.memory_physical().available)
             < TOLERANCE_SYS_MEM
         )
 
     @retry_on_failure
     def test_used(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
-        total = psutil.virtual_memory().total
+        total = psutil.memory_physical().total
         wmi_used = total - int(w.AvailableBytes)
-        assert abs(psutil.virtual_memory().used - wmi_used) < TOLERANCE_SYS_MEM
+        assert (
+            abs(psutil.memory_physical().used - wmi_used) < TOLERANCE_SYS_MEM
+        )
 
 
-class TestSwapMemory(WindowsTestCase):
+class TestMemorySwap(WindowsTestCase):
 
     def test_total(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
-            int(w.CommitLimit) - psutil.virtual_memory().total
-            == psutil.swap_memory().total
+            int(w.CommitLimit) - psutil.memory_physical().total
+            == psutil.memory_swap().total
         )
-        if psutil.swap_memory().total == 0:
-            assert psutil.swap_memory().free == 0
-            assert psutil.swap_memory().used == 0
+        if psutil.memory_swap().total == 0:
+            assert psutil.memory_swap().free == 0
+            assert psutil.memory_swap().used == 0
 
     def test_percent(self):
-        if psutil.swap_memory().total > 0:
+        if psutil.memory_swap().total > 0:
             w = wmi.WMI().Win32_PerfRawData_PerfOS_PagingFile(Name="_Total")[0]
             # calculate swap usage to percent
             percentSwap = int(w.PercentUsage) * 100 / int(w.PercentUsage_Base)
             # exact percent may change but should be reasonable
             # assert within +/- 5% and between 0 and 100%
-            assert psutil.swap_memory().percent >= 0
-            assert abs(psutil.swap_memory().percent - percentSwap) < 5
-            assert psutil.swap_memory().percent <= 100
+            assert psutil.memory_swap().percent >= 0
+            assert abs(psutil.memory_swap().percent - percentSwap) < 5
+            assert psutil.memory_swap().percent <= 100
 
 
 class TestNetAPIs(WindowsTestCase):

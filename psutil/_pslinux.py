@@ -188,7 +188,7 @@ def is_storage_device(name):
 # =====================================================================
 
 
-def calculate_avail_vmem(mems):
+def calculate_avail_mem(mems):
     """Fallback for kernels < 3.14 where /proc/meminfo does not provide
     "MemAvailable", see:
     https://blog.famzah.net/2014/09/24/.
@@ -250,8 +250,8 @@ def calculate_avail_vmem(mems):
     return int(avail)
 
 
-def virtual_memory():
-    """Report virtual memory stats.
+def memory_physical():
+    """Report physical memory stats.
     This implementation mimics procps-ng-3.3.12, aka "free" CLI tool:
     https://gitlab.com/procps-ng/procps/blob/
         24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L778-791
@@ -331,14 +331,14 @@ def virtual_memory():
     try:
         avail = mems[b'MemAvailable:']
     except KeyError:
-        avail = calculate_avail_vmem(mems)
+        avail = calculate_avail_mem(mems)
     else:
         if avail == 0:
             # Yes, it can happen (probably a kernel bug):
             # https://github.com/giampaolo/psutil/issues/1915
             # In this case "free" CLI tool makes an estimate. We do the same,
             # and it matches "free" CLI tool.
-            avail = calculate_avail_vmem(mems)
+            avail = calculate_avail_mem(mems)
 
     if avail < 0:
         avail = 0
@@ -362,7 +362,7 @@ def virtual_memory():
         )
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
-    return ntp.svmem(
+    return ntp.smem(
         total,
         avail,
         percent,
@@ -377,7 +377,7 @@ def virtual_memory():
     )
 
 
-def swap_memory():
+def memory_swap():
     """Return swap memory metrics."""
     mems = {}
     with open_binary(f"{psutil.PROCFS_PATH}/meminfo") as f:

@@ -37,6 +37,10 @@ Changelog
 
 **New APIs**
 
+- :gh:`3102`, :label:`breaking`: new :func:`memory_physical` and
+  :func:`memory_swap` functions. :func:`virtual_memory` and :func:`swap_memory`
+  still work, but are :term:`soft deprecated`. See
+  :ref:`migration guide <migration-8.0-memory-names>`.
 - :gh:`2798`, :label:`breaking`: new :attr:`Process.attrs` class attribute, a
   :class:`frozenset` of the attribute names accepted by :meth:`Process.as_dict`
   and :func:`process_iter`. Passing ``attrs=[]`` to :func:`process_iter` to
@@ -121,8 +125,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   all systems, not only Linux.
 - :gh:`2799`: :meth:`Process.as_dict` now returns a dict with keys sorted
   alphabetically when *attrs* is not specified.
-- :gh:`2805`, [BSD]: on NetBSD, :func:`cpu_stats` and :func:`virtual_memory` no
-  longer depend on ``procfs``.
+- :gh:`2805`, [BSD]: on NetBSD, :func:`cpu_stats` and :func:`memory_physical`
+  no longer depend on ``procfs``.
 - :gh:`2947`: psutil now emits a :exc:`RuntimeWarning` when it returns
   incomplete or approximated results (e.g. a failed sanity check on kernel
   data). Before, these were only visible with :envvar:`PSUTIL_DEBUG`.
@@ -259,7 +263,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   ``ioctl(SIOCETHTOOL)``.
 - :gh:`2770`: :func:`cpu_count` (``logical=False``) raised :exc:`ValueError` on
   s390x.
-- :gh:`2809`: :func:`swap_memory` and :func:`virtual_memory` raised
+- :gh:`2809`: :func:`memory_swap` and :func:`memory_physical` raised
   :exc:`ValueError` on arm64 when a :proc:`/proc/meminfo` field had no space
   after the colon (e.g. ``ShadowCallStack:10373888 kB``).
 - :gh:`2871`: on Python 3.15+ :meth:`Process.rlimit` returned ``RLIM_INFINITY``
@@ -345,7 +349,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   number.
 - :gh:`2841`: :func:`cpu_freq` could raise :exc:`SystemError` when frequency
   data is missing (e.g. Apple M5). It now returns ``None``.
-- :gh:`2853`: :func:`virtual_memory` and :func:`swap_memory` could raise
+- :gh:`2853`: :func:`memory_physical` and :func:`memory_swap` could raise
   :exc:`RuntimeError` (``(ipc/mig) array not large enough``) on newer macOS
   versions.
 - :gh:`2854`: :meth:`Process.cmdline` and :meth:`Process.environ` could raise
@@ -354,7 +358,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 **Bug fixes: BSD**
 
 - :gh:`2744`, [NetBSD], :label:`critical`: fix possible double ``free()`` in
-  :func:`swap_memory`.
+  :func:`memory_swap`.
 - :gh:`2848`, :label:`critical`: :func:`net_io_counters` could overflow a stack
   buffer on unusually long interface names.
 - :gh:`3071`, [OpenBSD], :label:`critical`: :func:`users` crashed if
@@ -373,10 +377,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   bytes than the buffer size (normal for variable-length data).
 - :gh:`2795`, [FreeBSD]: :func:`cpu_freq` could raise :exc:`RuntimeError`
   (``size mismatch``) on some systems.
-- :gh:`2811`, :gh:`2813`, [OpenBSD]: :func:`virtual_memory` :field:`shared` was
-  in pages instead of bytes, and overvalued. :field:`buffers` was always 0; it
-  now equals :field:`cached`.
-- :gh:`2814`, :gh:`2815`, [NetBSD]: :func:`virtual_memory` :field:`cached`
+- :gh:`2811`, :gh:`2813`, [OpenBSD]: :func:`memory_physical` :field:`shared`
+  was in pages instead of bytes, and overvalued. :field:`buffers` was always 0;
+  it now equals :field:`cached`.
+- :gh:`2814`, :gh:`2815`, [NetBSD]: :func:`memory_physical` :field:`cached`
   (included anonymous pages) and :field:`shared` were overvalued.
 - :gh:`2822`: :meth:`Process.cmdline` on NetBSD could raise
   ``OSError: [Errno 14] Bad address`` instead of :exc:`NoSuchProcess` for an

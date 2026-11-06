@@ -451,8 +451,8 @@ class TestHeapAPIs(PsutilTestCase):
 
 
 class TestMemoryAPIs(PsutilTestCase):
-    def test_virtual_memory(self):
-        mem = psutil.virtual_memory()
+    def test_memory_physical(self):
+        mem = psutil.memory_physical()
         assert mem.total > 0, mem
         assert mem.available > 0, mem
         assert 0 <= mem.percent <= 100, mem
@@ -470,8 +470,8 @@ class TestMemoryAPIs(PsutilTestCase):
                         f"{name!r} > total (total={mem.total}, {name}={value})"
                     )
 
-    def test_virtual_memory_fields_order(self):
-        mem = psutil.virtual_memory()
+    def test_memory_physical_fields_order(self):
+        mem = psutil.memory_physical()
         common = ("total", "available", "percent", "used", "free")
         assert mem._fields[:5] == common
         if LINUX:
@@ -506,8 +506,8 @@ class TestMemoryAPIs(PsutilTestCase):
         elif SUNOS or AIX:
             assert mem._fields[5:] == ()
 
-    def test_swap_memory(self):
-        mem = psutil.swap_memory()
+    def test_memory_swap(self):
+        mem = psutil.memory_swap()
         assert mem._fields == (
             'total',
             'used',
@@ -528,6 +528,17 @@ class TestMemoryAPIs(PsutilTestCase):
         assert 0 <= mem.percent <= 100, mem
         assert mem.sin >= 0, mem
         assert mem.sout >= 0, mem
+
+    def test_aliases(self):
+        assert psutil.virtual_memory is psutil.memory_physical
+        assert psutil.swap_memory is psutil.memory_swap
+        for name in (
+            "memory_physical",
+            "memory_swap",
+            "virtual_memory",
+            "swap_memory",
+        ):
+            assert name in psutil.__all__
 
 
 class TestCpuAPIs(PsutilTestCase):

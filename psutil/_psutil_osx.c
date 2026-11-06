@@ -45,12 +45,12 @@ static PyMethodDef mod_methods[] = {
     {"disk_usage_used", psutil_disk_usage_used, METH_VARARGS},
     {"heap_info", psutil_heap_info, METH_VARARGS},
     {"heap_trim", psutil_heap_trim, METH_VARARGS},
+    {"memory_physical", psutil_memory_physical, METH_VARARGS},
+    {"memory_swap", psutil_memory_swap, METH_VARARGS},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
     {"pids", psutil_pids, METH_VARARGS},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
-    {"swap_mem", psutil_swap_mem, METH_VARARGS},
-    {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 
     // --- others
     {"check_pid_range", psutil_check_pid_range, METH_VARARGS},

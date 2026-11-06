@@ -43,9 +43,9 @@ def pprint_ntuple(nt):
 
 def main():
     print('MEMORY\n------')
-    pprint_ntuple(psutil.virtual_memory())
+    pprint_ntuple(psutil.memory_physical())
     print('\nSWAP\n----')
-    pprint_ntuple(psutil.swap_memory())
+    pprint_ntuple(psutil.memory_swap())
 
 
 if __name__ == '__main__':

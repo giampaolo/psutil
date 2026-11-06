@@ -23,7 +23,7 @@
 //   https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/openbsd/memory.c
 
 PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
+psutil_memory_physical(PyObject *self, PyObject *args) {
     int64_t _total;
     unsigned long long free, active, inactive, wired, cached, shared;
     unsigned long long total, avail, used, buffers;

@@ -95,3 +95,6 @@ div.deprecated .versionmodified {
     color: var(--deprecated-color);
     font-weight: 600;
 }
+div.deprecated .versionmodified a {
+    color: inherit;
+}

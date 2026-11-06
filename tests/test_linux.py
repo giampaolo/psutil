@@ -61,7 +61,7 @@ if LINUX:
     from psutil._pslinux import RootFsDeviceFinder
     from psutil._pslinux import _cpu_get_cpuinfo_freq
     from psutil._pslinux import _parse_cpulist
-    from psutil._pslinux import calculate_avail_vmem
+    from psutil._pslinux import calculate_avail_mem
     from psutil._pslinux import open_binary
 
 
@@ -266,14 +266,14 @@ def mock_cpufreq_sysfs(files, num_policies):
 
 
 # =====================================================================
-# --- system virtual memory
+# --- system physical memory
 # =====================================================================
 
 
-class TestVirtualMemoryAgainstFree(LinuxTestCase):
+class TestMemoryPhysicalAgainstFree(LinuxTestCase):
     def test_total(self):
         cli_value = free_physmem().total
-        psutil_value = psutil.virtual_memory().total
+        psutil_value = psutil.memory_physical().total
         assert cli_value == psutil_value
 
     @retry_on_failure
@@ -287,13 +287,13 @@ class TestVirtualMemoryAgainstFree(LinuxTestCase):
         if get_free_version_info() < (4, 0, 1):
             return pytest.skip("free version too old")
         cli_value = free_physmem().used
-        psutil_value = psutil.virtual_memory().used
+        psutil_value = psutil.memory_physical().used
         assert abs(cli_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure
     def test_free(self):
         cli_value = free_physmem().free
-        psutil_value = psutil.virtual_memory().free
+        psutil_value = psutil.memory_physical().free
         assert abs(cli_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure
@@ -302,7 +302,7 @@ class TestVirtualMemoryAgainstFree(LinuxTestCase):
         free_value = free.shared
         if free_value == 0:
             return pytest.skip("free does not support 'shared' column")
-        psutil_value = psutil.virtual_memory().shared
+        psutil_value = psutil.memory_physical().shared
         assert (
             abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
         ), f"{free_value} {psutil_value} \n{free.output}"
@@ -316,14 +316,14 @@ class TestVirtualMemoryAgainstFree(LinuxTestCase):
         if 'available' not in lines[0]:
             return pytest.skip("free does not support 'available' column")
         free_value = int(lines[1].split()[-1])
-        psutil_value = psutil.virtual_memory().available
+        psutil_value = psutil.memory_physical().available
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
 
-class TestVirtualMemoryAgainstVmstat(LinuxTestCase):
+class TestMemoryPhysicalAgainstVmstat(LinuxTestCase):
     def check_vmstat(self, stat, field):
         vmstat_value = vmstat(stat) * 1024
-        psutil_value = getattr(psutil.virtual_memory(), field)
+        psutil_value = getattr(psutil.memory_physical(), field)
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
     def test_total(self):
@@ -358,7 +358,7 @@ class TestVirtualMemoryAgainstVmstat(LinuxTestCase):
         self.check_vmstat("inactive memory", "inactive")
 
 
-class TestVirtualMemoryAgainstMeminfo(LinuxTestCase):
+class TestMemoryPhysicalAgainstMeminfo(LinuxTestCase):
     @staticmethod
     def read_meminfo():
         mems = {}
@@ -372,7 +372,7 @@ class TestVirtualMemoryAgainstMeminfo(LinuxTestCase):
     @retry_on_failure
     def test_buffers(self):
         proc_value = self.read_meminfo()["Buffers:"]
-        psutil_value = psutil.virtual_memory().buffers
+        psutil_value = psutil.memory_physical().buffers
         assert abs(psutil_value - proc_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure
@@ -380,11 +380,11 @@ class TestVirtualMemoryAgainstMeminfo(LinuxTestCase):
         # psutil cached = Cached + SReclaimable
         mems = self.read_meminfo()
         proc_value = mems["Cached:"] + mems.get("SReclaimable:", 0)
-        psutil_value = psutil.virtual_memory().cached
+        psutil_value = psutil.memory_physical().cached
         assert abs(psutil_value - proc_value) < TOLERANCE_SYS_MEM
 
 
-class TestVirtualMemoryMocks(LinuxTestCase):
+class TestMemoryPhysicalMocks(LinuxTestCase):
     MEMINFO_NO_AVAIL = textwrap.dedent("""\
         Active:          9444728 kB
         Active(anon):    6145416 kB
@@ -399,11 +399,11 @@ class TestVirtualMemoryMocks(LinuxTestCase):
         SReclaimable:     346648 kB
         """)
 
-    def mocked_virtual_memory(self, files):
+    def mocked_memory_physical(self, files):
         with mock_open_content(files) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
-                ret = psutil.virtual_memory()
+                ret = psutil.memory_physical()
         assert m.called
         return ret, [str(w.message) for w in ws]
 
@@ -421,7 +421,7 @@ class TestVirtualMemoryMocks(LinuxTestCase):
             MemTotal:       16325648 kB
             SReclaimable:     346648 kB
             """).encode()
-        ret, ws = self.mocked_virtual_memory({"/proc/meminfo": content})
+        ret, ws = self.mocked_memory_physical({"/proc/meminfo": content})
         assert len(ws) == 1
         msg = ws[0]
         assert "memory stats couldn't be determined" in msg
@@ -449,7 +449,7 @@ class TestVirtualMemoryMocks(LinuxTestCase):
                 fields = line.split()
                 mems[fields[0]] = int(fields[1]) * 1024
 
-        a = calculate_avail_vmem(mems)
+        a = calculate_avail_mem(mems)
         if b'MemAvailable:' in mems:
             b = mems[b'MemAvailable:']
             diff_percent = abs(a - b) / a * 100
@@ -459,7 +459,7 @@ class TestVirtualMemoryMocks(LinuxTestCase):
         # Make sure "MemAvailable:" coluimn is used instead of relying
         # on our internal algorithm to calculate avail mem.
         content = self.MEMINFO_NO_AVAIL + "MemAvailable:    6574984 kB\n"
-        ret, ws = self.mocked_virtual_memory(
+        ret, ws = self.mocked_memory_physical(
             {"/proc/meminfo": content.encode()}
         )
         assert ret.available == 6574984 * 1024
@@ -475,7 +475,7 @@ class TestVirtualMemoryMocks(LinuxTestCase):
             for line in self.MEMINFO_NO_AVAIL.splitlines(keepends=True)
             if not line.startswith(removed)
         )
-        ret, ws = self.mocked_virtual_memory(
+        ret, ws = self.mocked_memory_physical(
             {"/proc/meminfo": content.encode()}
         )
         assert ret.available == 2057400 * 1024 + 4818144 * 1024
@@ -484,14 +484,14 @@ class TestVirtualMemoryMocks(LinuxTestCase):
     def test_avail_old_missing_zoneinfo(self):
         # Remove /proc/zoneinfo file. Make sure fallback is used
         # (free + cached).
-        ret, ws = self.mocked_virtual_memory({
+        ret, ws = self.mocked_memory_physical({
             "/proc/meminfo": self.MEMINFO_NO_AVAIL.encode(),
             "/proc/zoneinfo": FileNotFoundError,
         })
         assert ret.available == 2057400 * 1024 + 4818144 * 1024
         assert "inactive memory stats couldn't be determined" in ws[0]
 
-    def test_virtual_memory_mocked(self):
+    def test_memory_physical_mocked(self):
         # Emulate /proc/meminfo because neither vmstat nor free return slab.
         content = textwrap.dedent("""\
             MemTotal:              100 kB
@@ -544,7 +544,7 @@ class TestVirtualMemoryMocks(LinuxTestCase):
             DirectMap48G:          48 kB
             """).encode()
         with mock_open_content({"/proc/meminfo": content}) as m:
-            mem = psutil.virtual_memory()
+            mem = psutil.memory_physical()
             assert m.called
             assert mem.total == 100 * 1024
             assert mem.free == 2 * 1024
@@ -557,7 +557,7 @@ class TestVirtualMemoryMocks(LinuxTestCase):
             assert mem.slab == 22 * 1024
             assert mem.available == 3 * 1024
 
-    def test_virtual_memory_no_space_after_colon(self):
+    def test_memory_physical_no_space_after_colon(self):
         """Some Linux meminfo fields may not have a space after the colon:
         https://github.com/torvalds/linux/blob/8356a5a3b078ca89c526dd6d71e9a76fec571c37/fs/proc/meminfo.c#L113-L116
         """
@@ -574,7 +574,7 @@ class TestVirtualMemoryMocks(LinuxTestCase):
             ShadowCallStack:10373888 kB
             """).encode()
         with mock_open_content({"/proc/meminfo": content}) as m:
-            mem = psutil.virtual_memory()
+            mem = psutil.memory_physical()
             assert m.called
             assert mem.total == 100 * 1024
 
@@ -584,7 +584,7 @@ class TestVirtualMemoryMocks(LinuxTestCase):
 # =====================================================================
 
 
-class TestSwapMemory(LinuxTestCase):
+class TestMemorySwap(LinuxTestCase):
     @staticmethod
     def meminfo_has_swap_info():
         """Return True if /proc/meminfo provides swap metrics."""
@@ -594,19 +594,19 @@ class TestSwapMemory(LinuxTestCase):
 
     def test_total(self):
         free_value = free_swap().total
-        psutil_value = psutil.swap_memory().total
+        psutil_value = psutil.memory_swap().total
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure
     def test_used(self):
         free_value = free_swap().used
-        psutil_value = psutil.swap_memory().used
+        psutil_value = psutil.memory_swap().used
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure
     def test_free(self):
         free_value = free_swap().free
-        psutil_value = psutil.swap_memory().free
+        psutil_value = psutil.memory_swap().free
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure
@@ -618,7 +618,7 @@ class TestSwapMemory(LinuxTestCase):
             vmstat = dict(line.split() for line in f if line.split())
         sin = int(vmstat["pswpin"]) * PAGE_SIZE
         sout = int(vmstat["pswpout"]) * PAGE_SIZE
-        swap = psutil.swap_memory()
+        swap = psutil.memory_swap()
         assert swap.sin == sin
         assert swap.sout == sout
 
@@ -626,7 +626,7 @@ class TestSwapMemory(LinuxTestCase):
         with mock.patch('psutil._common.open', create=True) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
-                ret = psutil.swap_memory()
+                ret = psutil.memory_swap()
                 assert m.called
                 assert len(ws) == 1
                 w = ws[0]
@@ -642,7 +642,7 @@ class TestSwapMemory(LinuxTestCase):
         with mock_open_exception("/proc/vmstat", FileNotFoundError) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
-                ret = psutil.swap_memory()
+                ret = psutil.memory_swap()
                 assert m.called
                 assert len(ws) == 1
                 w = ws[0]
@@ -661,7 +661,7 @@ class TestSwapMemory(LinuxTestCase):
         if not self.meminfo_has_swap_info():
             return pytest.skip("/proc/meminfo has no swap metrics")
         with mock.patch.object(_psutil, 'linux_sysinfo') as m:
-            swap = psutil.swap_memory()
+            swap = psutil.memory_swap()
         assert not m.called
 
         _, _, _, _, total, free, unit_multiplier = _psutil.linux_sysinfo()
@@ -675,7 +675,7 @@ class TestSwapMemory(LinuxTestCase):
         # in which case sysinfo() syscall is supposed to be used
         # as a fallback.
         with mock_open_content({"/proc/meminfo": b""}) as m:
-            psutil.swap_memory()
+            psutil.memory_swap()
             assert m.called
 
     def test_no_space_after_colon(self):
@@ -690,7 +690,7 @@ class TestSwapMemory(LinuxTestCase):
             ShadowCallStack:10373888 kB
             """).encode()
         with mock_open_content({"/proc/meminfo": content}) as m:
-            swap = psutil.swap_memory()
+            swap = psutil.memory_swap()
             assert m.called
             assert swap.total == 15 * 1024
             assert swap.free == 14 * 1024
@@ -1602,7 +1602,7 @@ class TestProcfsPath(LinuxTestCase):
         assert tdir == psutil.PROCFS_PATH
 
         with pytest.raises(FileNotFoundError):
-            psutil.virtual_memory()
+            psutil.memory_physical()
         with pytest.raises(FileNotFoundError):
             psutil.cpu_times()
         with pytest.raises(FileNotFoundError):
@@ -1652,7 +1652,7 @@ class TestProcfsPath(LinuxTestCase):
         psutil.cpu_percent(percpu=True)
         psutil.cpu_times_percent()
         psutil.cpu_times_percent(percpu=True)
-        psutil.virtual_memory()
+        psutil.memory_physical()
         psutil.pids()
 
         psutil.set_procfs_path("/proc")

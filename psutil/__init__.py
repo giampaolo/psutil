@@ -104,12 +104,12 @@ if _TYPE_CHECKING:
     from ._ntuples import sdiskusage
     from ._ntuples import sfan
     from ._ntuples import shwtemp
+    from ._ntuples import smem
     from ._ntuples import snetio
     from ._ntuples import snicaddr
     from ._ntuples import snicstats
     from ._ntuples import sswap
     from ._ntuples import suser
-    from ._ntuples import svmem
     from ._pswindows import WindowsService
 
     # _export_enum() puts these in the module namespace at run time.
@@ -239,7 +239,8 @@ __all__ = [
 
     # functions
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
-    "virtual_memory", "swap_memory",                                # memory
+    "memory_physical", "memory_swap",                               # memory
+    "virtual_memory", "swap_memory",
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
     "cpu_stats", "getloadavg",  # "cpu_freq",
     "net_io_counters", "net_connections", "net_if_addrs",           # network
@@ -1486,7 +1487,7 @@ class Process:
         value = getattr(metrics, memtype)
 
         # use cached value if available
-        total_phymem = _TOTAL_PHYMEM or virtual_memory().total
+        total_phymem = _TOTAL_PHYMEM or memory_physical().total
         if not total_phymem > 0:
             # we should never get here
             msg = (
@@ -2370,7 +2371,7 @@ def getloadavg() -> tuple[float, float, float]:
 # =====================================================================
 
 
-def virtual_memory() -> svmem:
+def memory_physical() -> smem:
     """Return statistics about system memory usage as a named tuple.
 
     The fields vary by platform (see official doc), but the following
@@ -2403,13 +2404,13 @@ def virtual_memory() -> svmem:
     On Windows `available` and `free` are the same.
     """
     global _TOTAL_PHYMEM
-    ret = _psplatform.virtual_memory()
+    ret = _psplatform.memory_physical()
     # cached for later use in Process.memory_percent()
     _TOTAL_PHYMEM = ret.total
     return ret
 
 
-def swap_memory() -> sswap:
+def memory_swap() -> sswap:
     """Return system swap memory statistics as a named tuple including
     the following fields:
 
@@ -2422,7 +2423,12 @@ def swap_memory() -> sswap:
 
     `sin` and `sout` on Windows are meaningless and always set to 0.
     """
-    return _psplatform.swap_memory()
+    return _psplatform.memory_swap()
+
+
+# Soft deprecated aliases.
+virtual_memory = memory_physical
+swap_memory = memory_swap
 
 
 # =====================================================================
