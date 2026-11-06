@@ -9,7 +9,6 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 
 import datetime
-import gc
 import importlib.util
 import json
 import locale
@@ -85,6 +84,7 @@ _local_exts = [  # defined in the _ext/ folder
     "proc_role",
     "soft_deprecated",
     "source_links",  # "[source]" links to GitHub
+    "speedups",
     "substitutions",
 ]
 
@@ -312,11 +312,6 @@ codeautolink_global_preface = "import psutil"
 
 
 def setup(app):
-    # Faster HTML build: with the default threshold (700) GC eats ~20%
-    # of the build, see:
-    # https://github.com/sphinx-doc/sphinx/pull/14816/
-    gc.set_threshold(50_000, *gc.get_threshold()[1:])
-
     # sphinx-codeautolink needs `import psutil` to resolve things like
     # `p.name()` in code blocks. It imports psutil itself internally,
     # but silently passes if it can't, so we do it here to crash
