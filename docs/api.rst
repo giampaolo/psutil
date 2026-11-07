@@ -570,8 +570,10 @@ Disks
   - :field:`write_merged_count` (*Linux*): number of merged writes (see
     `iostats doc`_).
 
-  If *perdisk* is ``True``, return the same information for every physical disk
-  as a dictionary with partition names as the keys.
+  If *perdisk* is ``True``, return the same information per device, as a
+  dictionary with device names as the keys. On Linux this includes partitions
+  and virtual devices (e.g. ``sda1``, ``dm-0``, ``loop0``); on Windows and
+  macOS only whole disks.
 
   If *nowrap* is ``True`` (default), counters that overflow and wrap to zero
   are automatically adjusted so they never decrease (this can happen on very
