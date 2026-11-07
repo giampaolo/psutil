@@ -2445,14 +2445,14 @@ def disk_usage(path: str) -> sdiskusage:
 
 
 def disk_partitions(all: bool = False) -> list[sdiskpart]:
-    """Return mounted partitions as a list of
-    (device, mountpoint, fstype, opts) named tuple.
+    """Return mounted filesystems as a list of
+    (device, mountpoint, fstype, opts) named tuple, one per mount.
 
     `opts` field is a raw string separated by commas indicating mount
     options which may vary depending on the platform.
 
-    If *all* parameter is False return physical devices only and ignore
-    all others.
+    If *all* parameter is False try to skip virtual filesystems such as
+    tmpfs and sysfs.
     """
     return _psplatform.disk_partitions(all)
 

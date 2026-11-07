@@ -486,14 +486,13 @@ Disks
 
 .. function:: disk_partitions(all=False)
 
-  Return mounted disk partitions as a list. This is similar to the ``df``
-  command on UNIX. When *all* is ``False``, virtual/pseudo filesystems (tmpfs,
-  sysfs, devtmpfs, cgroup, etc.) are excluded, keeping only physical devices
-  (e.g., hard disks, CD-ROM drives, USB keys). The filtering logic varies by
-  platform: on Linux, it checks :proc:`/proc/filesystems` for ``nodev``-flagged
-  types (ZFS is always included); on macOS, it checks whether the device path
-  exists; on SunOS and AIX, it excludes filesystems with zero total size. On
-  BSD, *all* is ignored and all partitions are always returned.
+  Return mounted filesystems as a list, one entry per mount. Despite the name,
+  these are mounts, not partitions: a partition that isn't mounted is not
+  listed, and a filesystem mounted in two places (e.g. a bind mount) is listed
+  twice. This is similar to the ``mount`` command on UNIX.
+
+  When *all* is ``False``, psutil tries to skip virtual filesystems such as
+  tmpfs and sysfs. On BSD, *all* is ignored.
 
   * :field:`device`: the device path (e.g. "/dev/hda1"). On Windows this is the
     volume's drive letter (e.g. "C:\\"), or the folder it is mounted in if it
@@ -501,10 +500,10 @@ Disks
   * :field:`mountpoint`: the mount point path (e.g. "/"). On Windows this is
     the drive letter (e.g. "C:\\"), or the folder the volume is mounted in
     (e.g. "C:\\mnt\\data\\").
-  * :field:`fstype`: the partition filesystem (e.g. "ext3" on UNIX or "NTFS" on
+  * :field:`fstype`: the filesystem type (e.g. "ext3" on UNIX or "NTFS" on
     Windows).
-  * :field:`opts`: a comma-separated string indicating different mount options
-    for the drive/partition. Platform-dependent.
+  * :field:`opts`: a comma-separated string indicating different mount options.
+    Platform-dependent.
 
   .. code-block:: pycon
 
