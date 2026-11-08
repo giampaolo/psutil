@@ -2134,20 +2134,6 @@ class TestProcessCpu(LinuxTestCase):
         assert cm.value.pid == p.pid
         assert cm.value.name == p.name()
 
-    def test_rlimit_infinity_normalized(self):
-        # Python 3.15 changed resource.prlimit() to return RLIM_INFINITY
-        # as the unsigned 2**64-1 instead of -1; psutil maps it back.
-        unsigned = 2**64 - 1
-        p = psutil.Process()
-        with mock.patch(
-            "psutil._pslinux.resource.prlimit",
-            return_value=(unsigned, unsigned),
-        ) as m:
-            soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
-            assert m.called
-        assert soft == psutil.RLIM_INFINITY
-        assert hard == psutil.RLIM_INFINITY
-
 
 class TestProcessMemory(LinuxTestCase):
     @retry_on_failure

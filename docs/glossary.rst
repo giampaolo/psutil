@@ -244,11 +244,11 @@ Glossary
    resource limit
 
       A per-process cap on a system resource enforced by the kernel (POSIX
-      :data:`RLIMIT_* <psutil.RLIM_INFINITY>` constants).
+      :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>` constants).
       Each limit has a *soft* value (the current enforcement threshold, which
       the process may raise up to the hard limit) and a *hard* value
       (the ceiling, settable only by root).
-      Common limits include :data:`RLIM_INFINITY` (open file descriptors),
+      Common limits include :data:`RLIMIT_NOFILE` (open file descriptors),
       :data:`RLIMIT_AS` (virtual address space), and :data:`RLIMIT_CPU`
       (CPU time in seconds). See :meth:`Process.rlimit`.
 

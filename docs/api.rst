@@ -2707,7 +2707,6 @@ explained in :func:`resource.getrlimit` documentation.
 
 - Linux / FreeBSD:
 
-  .. data:: RLIM_INFINITY
   .. data:: RLIMIT_AS
   .. data:: RLIMIT_CORE
   .. data:: RLIMIT_CPU
@@ -2742,6 +2741,11 @@ explained in :func:`resource.getrlimit` documentation.
   .. data:: RLIMIT_NPTS
 
     .. versionadded:: 5.7.3
+
+.. data:: RLIM_INFINITY
+
+  The value meaning "no limit", returned or passed as the *soft* or *hard*
+  value of :meth:`Process.rlimit`. Same as :data:`resource.RLIM_INFINITY`.
 
 .. _const-conn:
 
