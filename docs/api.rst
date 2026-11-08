@@ -1449,9 +1449,9 @@ Exceptions
     Get or set process :term:`resource limits <resource limit>`. *resource*
     must be one of the :ref:`RLIMIT_* <const-proc-rlimit>` constants. *limits*
     is an optional ``(soft, hard)`` tuple. If provided, the method sets the
-    limits; if omitted, it returns the current ``(soft, hard)`` tuple. This is
-    the same as stdlib :func:`resource.getrlimit` and
-    :func:`resource.setrlimit`, but can be used for any process PID.
+    limits. If omitted, it returns the current ``(soft, hard)`` tuple. Same as
+    stdlib :func:`resource.prlimit`, which is Linux only; psutil also supports
+    FreeBSD.
 
     .. code-block:: pycon
 
@@ -2696,8 +2696,7 @@ Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Constants for getting or setting process resource limits, to be used in
-conjunction with :meth:`Process.rlimit`. The meaning of each constant is
-explained in :func:`resource.getrlimit` documentation.
+conjunction with :meth:`Process.rlimit`.
 
 .. availability:: Linux, FreeBSD
 
@@ -2708,37 +2707,93 @@ explained in :func:`resource.getrlimit` documentation.
 - Linux / FreeBSD:
 
   .. data:: RLIMIT_AS
+
+    Max virtual memory in bytes. Past it, allocations fail with
+    :exc:`MemoryError`.
+
   .. data:: RLIMIT_CORE
+
+    Max core dump size in bytes. Past it, the dump is truncated. 0 disables
+    core dumps.
+
   .. data:: RLIMIT_CPU
+
+    Max CPU time in seconds. Past it, the process receives ``SIGXCPU`` signal.
+
   .. data:: RLIMIT_DATA
+
+    Max heap size in bytes. Past it, allocations fail with :exc:`MemoryError`.
+
   .. data:: RLIMIT_FSIZE
+
+    Max size of the files the process can write, in bytes. Past it, the process
+    receives ``SIGXFSZ`` signal.
+
   .. data:: RLIMIT_MEMLOCK
+
+    Max memory in bytes locked into RAM via :manpage:`mlock(2)`.
+
   .. data:: RLIMIT_NOFILE
+
+    Max open file descriptors. Past it, opening one fails with ``EMFILE`` ("Too
+    many open files").
+
   .. data:: RLIMIT_NPROC
+
+    Max processes (threads on Linux) for the user. Past it, :manpage:`fork(2)`
+    fails with ``EAGAIN``.
+
   .. data:: RLIMIT_RSS
+
+    Max resident memory in bytes. Ignored on Linux.
+
   .. data:: RLIMIT_STACK
+
+    Max stack size in bytes. Past it, the process crashes with ``SIGSEGV``.
 
 - Linux specific:
 
   .. data:: RLIMIT_LOCKS
+
+    Max :manpage:`flock(2)` locks and leases. No effect since Linux 2.4.25.
+
   .. data:: RLIMIT_MSGQUEUE
+
+    Max bytes of POSIX message queues for the user (:manpage:`mq_open(3)`).
+
   .. data:: RLIMIT_NICE
+
+    How low the process can set its nice value.
+
   .. data:: RLIMIT_RTPRIO
+
+    Max real-time priority the process can set.
+
   .. data:: RLIMIT_RTTIME
+
+    Max CPU time in microseconds a real-time process can use without blocking.
+
   .. data:: RLIMIT_SIGPENDING
+
+    Max queued signals for the user.
 
 - FreeBSD specific:
 
   .. data:: RLIMIT_SWAP
 
+    Max swap in bytes for the user.
+
     .. versionadded:: 5.7.3
 
-
   .. data:: RLIMIT_SBSIZE
+
+    Max socket buffer memory in bytes for the user.
 
     .. versionadded:: 5.7.3
 
   .. data:: RLIMIT_NPTS
+
+    Max pseudo-terminals for the user.
 
     .. versionadded:: 5.7.3
 
