@@ -140,6 +140,6 @@ if LINUX or FREEBSD:
         (
             (name, getattr(_psutil, name))
             for name in dir(_psutil)
-            if name.startswith("RLIM") and name.isupper()
+            if name.startswith("RLIMIT_") and name.isupper()
         ),
     )

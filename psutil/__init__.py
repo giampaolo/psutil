@@ -186,7 +186,6 @@ if _TYPE_CHECKING:
     RLIMIT_SIGPENDING: ProcessRlimit  # Linux
     RLIMIT_STACK: ProcessRlimit  # Linux, FreeBSD
     RLIMIT_SWAP: ProcessRlimit  # FreeBSD
-    RLIM_INFINITY: ProcessRlimit  # Linux, FreeBSD
 
 
 if LINUX:
@@ -274,6 +273,8 @@ if WINDOWS:
     _export_enum(ProcessPriority)
 if LINUX or FREEBSD:
     _export_enum(ProcessRlimit)
+    RLIM_INFINITY = _psutil.RLIM_INFINITY
+    __all__.append("RLIM_INFINITY")
 
 if LINUX or SUNOS or AIX:
     PROCFS_PATH = "/proc"

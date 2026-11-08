@@ -696,6 +696,14 @@ class TestProcessCpu(PsutilTestCase):
                 assert ret[1] >= -1
 
     @skipif(not HAS_PROC_RLIMIT, reason="not supported")
+    def test_rlimit_enum(self):
+        p = psutil.Process()
+        for res in psutil.ProcessRlimit:
+            assert res.name.startswith("RLIMIT_")
+            p.rlimit(res)
+        assert type(psutil.RLIM_INFINITY) is int
+
+    @skipif(not HAS_PROC_RLIMIT, reason="not supported")
     def test_rlimit_set(self):
         p = self.spawn_psproc()
         p.rlimit(psutil.RLIMIT_NOFILE, (5, 5))
