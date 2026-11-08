@@ -2745,7 +2745,7 @@ explained in :func:`resource.getrlimit` documentation.
 .. data:: RLIM_INFINITY
 
   The value meaning "no limit", returned or passed as the *soft* or *hard*
-  value of :meth:`Process.rlimit`.
+  value of :meth:`Process.rlimit`. Same as :data:`resource.RLIM_INFINITY`.
 
 .. _const-conn:
 

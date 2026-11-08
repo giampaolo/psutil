@@ -266,8 +266,6 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2809`: :func:`memory_swap` and :func:`memory_physical` raised
   :exc:`ValueError` on arm64 when a :proc:`/proc/meminfo` field had no space
   after the colon (e.g. ``ShadowCallStack:10373888 kB``).
-- :gh:`2871`: on Python 3.15+ :meth:`Process.rlimit` returned ``RLIM_INFINITY``
-  as ``2**64-1`` instead of ``-1``.
 - :gh:`2967`: :func:`cpu_freq` returned ``None`` on ppc machines without
   cpufreq sysfs, and reported twice as many CPUs on s390x.
 - :gh:`2512`: :func:`cpu_freq` with ``percpu=True`` returned one entry per
@@ -282,6 +280,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2347`: :func:`disk_partitions` gave ``/dev/root`` mounts the device of
   ``/``, which is a different one inside a chroot (e.g. a host directory bind
   mounted into it).
+- :gh:`3110`: on Python 3.15+ :data:`RLIM_INFINITY` is now ``2**64-1``, like
+  :data:`resource.RLIM_INFINITY`.
 
 **Bug fixes: Windows**
 

@@ -272,8 +272,10 @@ if LINUX or WINDOWS:
 if WINDOWS:
     _export_enum(ProcessPriority)
 if LINUX or FREEBSD:
+    import resource
+
     _export_enum(ProcessRlimit)
-    RLIM_INFINITY = _psutil.RLIM_INFINITY
+    RLIM_INFINITY = resource.RLIM_INFINITY
     __all__.append("RLIM_INFINITY")
 
 if LINUX or SUNOS or AIX:

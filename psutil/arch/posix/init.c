@@ -95,8 +95,6 @@ psutil_posix_add_constants(PyObject *mod) {
 #endif
 
 #if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
-    PyObject *v;
-
 #ifdef RLIMIT_AS
     PSUTIL_ADD_INT(mod, "RLIMIT_AS", RLIMIT_AS);
 #endif
@@ -160,20 +158,6 @@ psutil_posix_add_constants(PyObject *mod) {
 #ifdef RLIMIT_NPTS
     PSUTIL_ADD_INT(mod, "RLIMIT_NPTS", RLIMIT_NPTS);
 #endif
-
-#if defined(HAVE_LONG_LONG)
-    if (sizeof(RLIM_INFINITY) > sizeof(long)) {
-        v = PyLong_FromLongLong((PY_LONG_LONG)RLIM_INFINITY);
-    }
-    else
-#endif
-    {
-        v = PyLong_FromLong((long)RLIM_INFINITY);
-    }
-    if (v) {
-        if (PyModule_AddObject(mod, "RLIM_INFINITY", v))
-            return -1;
-    }
 #endif  // defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
 
     return 0;

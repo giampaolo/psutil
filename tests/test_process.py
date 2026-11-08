@@ -25,6 +25,7 @@ import subprocess
 import sys
 import textwrap
 import time
+import warnings
 from unittest import mock
 
 import psutil
@@ -743,12 +744,21 @@ class TestProcessCpu(PsutilTestCase):
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
         try:
             p.rlimit(psutil.RLIMIT_FSIZE, (1024, hard))
-            p.rlimit(psutil.RLIMIT_FSIZE, (psutil.RLIM_INFINITY, hard))
+            # Python 3.15 deprecates negative limits
+            with warnings.catch_warnings():
+                warnings.simplefilter("error")
+                p.rlimit(psutil.RLIMIT_FSIZE, (psutil.RLIM_INFINITY, hard))
             with open(self.get_testfn(), "wb") as f:
                 f.write(b"X" * 2048)
         finally:
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             assert p.rlimit(psutil.RLIMIT_FSIZE) == (soft, hard)
+
+    @skipif(not HAS_PROC_RLIMIT, reason="not supported")
+    def test_rlimit_infinity_matches_resource(self):
+        import resource
+
+        assert psutil.RLIM_INFINITY == resource.RLIM_INFINITY
 
     def test_nice(self):
         p = self.spawn_psproc()
