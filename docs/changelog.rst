@@ -370,7 +370,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   versions.
 - :gh:`2854`: :meth:`Process.cmdline` and :meth:`Process.environ` could raise
   :exc:`SystemError` instead of :exc:`AccessDenied`.
-- :gh:`XXXX`: :func:`cpu_stats` returned memory page counts instead of CPU
+- :gh:`3115`: :func:`cpu_stats` returned memory page counts instead of CPU
   statistics. All fields are now ``0``, since macOS doesn't keep these
   counters.
 
