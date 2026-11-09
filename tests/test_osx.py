@@ -168,6 +168,9 @@ class TestCpuAPIs(MacosTestCase):
         num = sysctl("hw.physicalcpu")
         assert num == psutil.cpu_count(logical=False)
 
+    def test_cpu_stats(self):
+        assert psutil.cpu_stats() == (0, 0, 0, 0)
+
     # On Apple Silicon cpu_freq() reads IOKit, and there's no sysctl
     # (or any other CLI tool) to compare it against.
     @skipif(AARCH64, reason="no hw.cpufrequency sysctl on Apple Silicon")
