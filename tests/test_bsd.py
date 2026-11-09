@@ -12,7 +12,6 @@
 import datetime
 import os
 import re
-import resource
 import time
 from unittest import mock
 
@@ -135,6 +134,8 @@ class TestProcessAPIs(BSDTestCase):
 
     @skipif(not (OPENBSD or NETBSD), reason="NETBSD / OPENBSD only")
     def test_cpu_times_children(self):
+        import resource
+
         sh([PYTHON_EXE, "-c", "for x in range(3_000_000): pass"])
         ru = resource.getrusage(resource.RUSAGE_CHILDREN)
         times = psutil.Process().cpu_times()
