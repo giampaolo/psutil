@@ -122,10 +122,8 @@ def cpu_count_cores():
 
 
 def cpu_stats():
-    ctx_switches, interrupts, soft_interrupts, syscalls, _traps = (
-        _psutil.cpu_stats()
-    )
-    return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
+    # macOS doesn't keep these counters
+    return ntp.scpustats(0, 0, 0, 0)
 
 
 def cpu_freq():
