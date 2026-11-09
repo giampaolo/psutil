@@ -353,6 +353,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   folder.
 - :gh:`3118`: :func:`memory_swap` returned a negative :field:`total` and
   :field:`free` on systems with no page file. They are now ``0``.
+- :gh:`3121`: :meth:`Process.exe`, :meth:`Process.memory_maps` and
+  :meth:`Process.open_files` returned paths without a drive (e.g.
+  ``\Windows\x.dll``) for volumes with no drive letter.
 
 **Bug fixes: macOS**
 
