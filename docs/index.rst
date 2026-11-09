@@ -118,7 +118,7 @@
 
             >>> import psutil
             >>> psutil.cpu_times()
-            scputimes(user=3961.46, nice=169.72, system=2150.65, idle=16900.54, iowait=629.59, ...)
+            scputimes(user=3961.46, system=2150.65, idle=16900.54, nice=169.72, iowait=629.59, ...)
             >>> psutil.cpu_percent(interval=1)
             4.0
             >>> psutil.cpu_count(logical=False)
@@ -135,9 +135,9 @@
          .. code-block:: pycon
 
             >>> import psutil
-            >>> psutil.virtual_memory()
-            svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, ...)
-            >>> psutil.swap_memory()
+            >>> psutil.memory_physical()
+            smem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, ...)
+            >>> psutil.memory_swap()
             sswap(total=2097147904, used=296128512, free=1801019392, percent=14.1, sin=304193536, sout=677842944)
 
          .. container:: home-tab-more
@@ -167,14 +167,14 @@
 
             >>> import psutil
             >>> psutil.net_io_counters(pernic=True)
-            {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, ...),
-             'lo':   netio(bytes_sent=2838627,   bytes_recv=2838627,   ...)}
+            {'eth0': snetio(bytes_sent=485291293, bytes_recv=6004858642, ...),
+             'lo':   snetio(bytes_sent=2838627,   bytes_recv=2838627,   ...)}
             >>> psutil.net_connections(kind='tcp')
-            [sconn(family=2, type=1, laddr=addr('10.0.0.1', 48776), raddr=addr('93.186.135.91', 80), status='ESTABLISHED', pid=1254), ...]
+            [sconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=1254), ...]
             >>> psutil.net_if_addrs()['wlan0']
-            [snicaddr(family=2,  address='192.168.1.3', netmask='255.255.255.0', ...), ...]
+            [snicaddr(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255', ptp=None), ...]
             >>> psutil.net_if_stats()['wlan0']
-            snicstats(isup=True, duplex=2, speed=100, mtu=1500, flags='up,broadcast,running')
+            snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500, flags='up,broadcast,running')
 
          .. container:: home-tab-more
 
@@ -229,11 +229,11 @@
    <div class="home-section-label">Stats</div>
    <div class="home-stats">
      <a class="home-stat" href="https://clickpy.clickhouse.com/dashboard/psutil">
-       <span class="home-stat-num">390+ million</span>
+       <span class="home-stat-num">320+ million</span>
        <span class="home-stat-label">downloads per month</span>
      </a>
      <a class="home-stat" href="https://github.com/giampaolo/psutil/network/dependents">
-       <span class="home-stat-num">780,000+</span>
+       <span class="home-stat-num">790,000+</span>
        <span class="home-stat-label">GitHub repositories</span>
      </a>
      <a class="home-stat" href="timeline/">
@@ -248,8 +248,8 @@
 
 .. raw:: html
 
+   <div class="home-section-label">Sponsors</div>
    <div id="sponsors">
-     <div class="home-section-label">Sponsors</div>
 
 .. raw:: html
    :file: _sponsors.html
@@ -268,7 +268,7 @@
 
    Install <install>
    API overview <api-overview>
-   API Reference <api>
+   API reference <api>
    FAQ <faq>
    Performance <performance>
    Recipes <recipes>
@@ -301,4 +301,4 @@
    Changelog <changelog>
    Timeline <timeline>
    Development guide <devguide>
-   General Index <genindex>
+   General index <genindex>

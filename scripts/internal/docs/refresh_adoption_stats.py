@@ -15,19 +15,28 @@ import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
-ROOT = pathlib.Path(__file__).resolve().parents[3]
+ROOT_DIR = pathlib.Path(__file__).resolve().parents[3]
 TIMEOUT = 5
 RETRIES = 3
 BACKOFF = 5
 TARGETS = [
-    ROOT / "docs/adoption.rst",
-    ROOT / "docs/index.rst",
-    ROOT / "README.rst",
+    ROOT_DIR / "docs/adoption.rst",
+    ROOT_DIR / "docs/index.rst",
+    ROOT_DIR / "README.rst",
 ]
 DEPENDENTS_URL = "https://github.com/giampaolo/psutil/network/dependents"
-DOWNLOADS_URL = "https://pypistats.org/api/packages/psutil/recent"
+DOWNLOADS_URL = "https://sql-clickhouse.clickhouse.com/"
+# clickpy's "last month", same as the README badge
+DOWNLOADS_QUERY = (
+    "WITH (SELECT max(date) FROM pypi.pypi_downloads_per_day "
+    "WHERE project = 'psutil') AS m "
+    "SELECT sum(count) AS n FROM pypi.pypi_downloads_per_day "
+    "WHERE project = 'psutil' AND date > m - toIntervalMonth(1) "
+    "AND date <= m FORMAT JSONEachRow"
+)
 
 
 def fetch(url, accept="text/html"):
@@ -68,8 +77,10 @@ def floor_to(n, bucket):
 
 
 def fetch_monthly_downloads():
-    data = json.loads(fetch(DOWNLOADS_URL, accept="application/json"))
-    return data["data"]["last_month"]
+    params = urllib.parse.urlencode({"user": "play", "query": DOWNLOADS_QUERY})
+    url = f"{DOWNLOADS_URL}?{params}"
+    data = json.loads(fetch(url, accept="application/json"))
+    return int(data["n"])
 
 
 def fetch_github_dependents():
@@ -137,10 +148,10 @@ def main():
             new_text, n = pat.subn(repl, new_text)
             totals[i] += n
         if new_text == text:
-            print(f"  {path.relative_to(ROOT)}: already current")
+            print(f"  {path.relative_to(ROOT_DIR)}: already current")
         else:
             path.write_text(new_text)
-            print(f"  {path.relative_to(ROOT)}: updated")
+            print(f"  {path.relative_to(ROOT_DIR)}: updated")
 
     for i, (pat, _) in enumerate(subs):
         if totals[i] == 0:

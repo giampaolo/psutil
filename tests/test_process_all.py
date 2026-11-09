@@ -32,6 +32,7 @@ from psutil import WINDOWS
 from . import CI_TESTING
 from . import VALID_PROC_STATUSES
 from . import PsutilTestCase
+from . import assert_ntuple_of_nums
 from . import check_connection_ntuple
 from . import check_fun_type_hints
 from . import check_ntuple_type_hints
@@ -313,9 +314,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))
 
     def uids(self, ret, info):
-        for uid in ret:
-            assert isinstance(uid, int)
-            assert uid >= 0
+        assert_ntuple_of_nums(ret, type_=int)
 
     def gids(self, ret, info):
         # note: testing all gids as above seems not to be reliable for
@@ -331,7 +330,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret.strip()
 
     def status(self, ret, info):
-        assert isinstance(ret, str)
+        assert isinstance(ret, psutil.ProcessStatus)
         assert ret, ret
         assert ret != '?'  # XXX
         assert ret in VALID_PROC_STATUSES
@@ -344,7 +343,7 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def ionice(self, ret, info):
         if LINUX:
-            assert isinstance(ret.ioclass, int)
+            assert isinstance(ret.ioclass, psutil.ProcessIOPriority)
             assert isinstance(ret.value, int)
             assert ret.ioclass >= 0
             assert ret.value >= 0
@@ -355,7 +354,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                 psutil.IOPRIO_NORMAL,
                 psutil.IOPRIO_HIGH,
             ]
-            assert isinstance(ret, int)
+            assert isinstance(ret, psutil.ProcessIOPriority)
             assert ret >= 0
             assert ret in choices
 
@@ -371,16 +370,10 @@ class TestFetchAllProcesses(PsutilTestCase):
     def threads(self, ret, info):
         assert isinstance(ret, list)
         for t in ret:
-            assert t.id >= 0
-            assert t.user_time >= 0
-            assert t.system_time >= 0
-            for field in t:
-                assert isinstance(field, (int, float))
+            assert_ntuple_of_nums(t, type_=(int, float))
 
     def cpu_times(self, ret, info):
-        for n in ret:
-            assert isinstance(n, float)
-            assert n >= 0
+        assert_ntuple_of_nums(ret)
         # TODO: check ntuple fields
 
     def cpu_num(self, ret, info):
@@ -399,10 +392,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         self.check_proc_memory(ret)
 
     def memory_footprint(self, ret, info):
-        for name in ret._fields:
-            value = getattr(ret, name)
-            assert isinstance(value, int)
-            assert value >= 0
+        assert_ntuple_of_nums(ret, type_=int)
 
     def open_files(self, ret, info):
         assert isinstance(ret, list)
@@ -501,10 +491,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret >= 0
 
     def page_faults(self, ret, info):
-        assert isinstance(ret.minor, int)
-        assert isinstance(ret.major, int)
-        assert ret.minor >= 0
-        assert ret.major >= 0
+        assert_ntuple_of_nums(ret, type_=int)
 
     def nice(self, ret, info):
         assert isinstance(ret, int)
@@ -520,9 +507,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             assert isinstance(ret, enum.IntEnum)
 
     def num_ctx_switches(self, ret, info):
-        for value in ret:
-            assert isinstance(value, int)
-            assert value >= 0
+        assert_ntuple_of_nums(ret, type_=int)
 
     def rlimit(self, ret, info):
         assert isinstance(ret, tuple)

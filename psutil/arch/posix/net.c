@@ -121,7 +121,8 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
 // TODO: on Solaris we won't get any MAC address.
 PyObject *
 psutil_net_if_addrs(PyObject *self, PyObject *args) {
-    struct ifaddrs *ifaddr, *ifa;
+    struct ifaddrs *ifaddr = NULL;
+    struct ifaddrs *ifa;
     int family;
     int ret;
 

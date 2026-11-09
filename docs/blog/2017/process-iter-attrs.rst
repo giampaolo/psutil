@@ -6,8 +6,8 @@
    5.3.0 adds ``attrs`` and ``ad_value`` parameters to
    :func:`~psutil.process_iter`, letting you pre-fetch attributes in one shot
 
-Improved process_iter()
-=======================
+Improved :func:`process_iter`
+=============================
 
 This is part of the psutil 5.3.0 release (see the :ref:`changelog <530>` for
 the full list of changes).

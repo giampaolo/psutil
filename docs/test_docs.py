@@ -20,8 +20,8 @@ from datetime import timezone
 import pytest
 
 HERE = pathlib.Path(__file__).resolve().parent
-ROOT = HERE.parent
-DOCS = ROOT / "docs"
+ROOT_DIR = HERE.parent
+DOCS = ROOT_DIR / "docs"
 BLOG = DOCS / "blog"
 
 VALID_BLOG_TAGS = frozenset({
@@ -117,7 +117,8 @@ def post_title(rst):
     lines = rst.read_text().splitlines()
     for i in range(1, len(lines)):
         if re.fullmatch(r"=+", lines[i].strip()):
-            return lines[i - 1].strip()
+            title = lines[i - 1].strip()
+            return re.sub(r":(?:func|meth):`([^`]+)`", r"\1()", title)
     raise ValueError(f"no RST H1 found in {rst}")
 
 
@@ -176,14 +177,14 @@ class TestSourceRefs:
                 m = re.search(r"<([^>]+)>", target)
                 if m:
                     target = m.group(1)
-                with subtests.test(rst=rst.relative_to(ROOT), ref=target):
-                    assert (ROOT / target).exists()
+                with subtests.test(rst=rst.relative_to(ROOT_DIR), ref=target):
+                    assert (ROOT_DIR / target).exists()
 
     def test_first_commit_date(self):
         # _ext/substitutions.py hardcodes it to keep git out of the
         # build. Check it against the real history.
         cmd = ["git", "log", "--reverse", "--format=%ct"]
-        out = subprocess.check_output(cmd, cwd=ROOT).split(b"\n", 1)[0]
+        out = subprocess.check_output(cmd, cwd=ROOT_DIR).split(b"\n", 1)[0]
         first = datetime.fromtimestamp(int(out), tz=timezone.utc)
         assert first.date() == substitutions.FIRST_COMMIT
 
@@ -198,7 +199,7 @@ class TestBlogPostFiles:
                 k for k in (".. post::", ":author:", ":tags:") if k not in text
             ]
             if missed:
-                rel = p.relative_to(ROOT)
+                rel = p.relative_to(ROOT_DIR)
                 missing.append(f"{rel}: missing {missed}")
         assert missing == []
 
@@ -207,7 +208,7 @@ class TestBlogPostFiles:
         for p in blog_posts():
             m = re.search(r"\.\. post:: (\d{4})-", p.read_text())
             if m and m.group(1) != p.parent.name:
-                rel = p.relative_to(ROOT)
+                rel = p.relative_to(ROOT_DIR)
                 mismatches.append(
                     f"{rel}: date-year={m.group(1)} dir={p.parent.name}"
                 )
@@ -218,7 +219,7 @@ class TestBlogPostFiles:
         for p in blog_posts():
             bad = [t for t in post_tags(p) if t not in VALID_BLOG_TAGS]
             if bad:
-                invalid[str(p.relative_to(ROOT))] = bad
+                invalid[str(p.relative_to(ROOT_DIR))] = bad
         assert not invalid, f"invalid tags: {invalid}"
 
 
@@ -334,10 +335,9 @@ class TestHtmlBuild:
                 assert m.group(1) == expected
 
     def test_footer_github_links_resolve(self, subtests):
-        # ablog and codeautolink generate pages with no .rst behind
-        # them (blog/tag/*, blog/2025, _modules/*). Their footer
-        # links used to be built from the page name anyway, so they
-        # 404ed on GitHub.
+        # ablog generates pages with no .rst behind them (blog/tag/*,
+        # blog/2025). Their footer links used to be built from the
+        # page name anyway, so they 404ed on GitHub.
         pat = re.compile(
             r'github\.com/giampaolo/psutil/(?:edit|commits)/master/(\S+?)"'
         )
@@ -345,7 +345,7 @@ class TestHtmlBuild:
             html = page.read_text(encoding="utf-8", errors="replace")
             for target in set(pat.findall(html)):
                 with subtests.test(page=page.relative_to(HTML_DIR)):
-                    assert (ROOT / target).is_file()
+                    assert (ROOT_DIR / target).is_file()
 
 
 @pytest.mark.usefixtures("build_html")
@@ -509,6 +509,28 @@ class TestRightToc:
         terms = re.findall(r'<a href="#term-[^"]*">([^<]+)</a>', m.group(1))
         assert terms
         assert terms == sorted(terms, key=str.lower)
+
+
+@pytest.mark.usefixtures("build_html")
+class TestPrevNext:
+
+    def links(self, file):
+        html = read_html(file)
+        return dict(
+            re.findall(r'href="\.\./([^"/]+)/" rel="(prev|next)"', html)
+        )
+
+    def test_pages_outside_sphinx_relations(self, subtests):
+        # blog (ablog) and genindex don't get Sphinx's prev/next;
+        # conf.py fills them in from the root toctree order.
+        expected = {
+            "blog.html": {"credits": "prev", "changelog": "next"},
+            "devguide.html": {"timeline": "prev", "genindex": "next"},
+            "genindex.html": {"devguide": "prev"},
+        }
+        for file, links in expected.items():
+            with subtests.test(file=file):
+                assert self.links(file) == links
 
 
 @pytest.mark.usefixtures("build_html")
@@ -820,7 +842,7 @@ class TestNoIndex:
     def test_past_releases_noindex(self):
         # Past releases must never compete with the current docs in
         # search results.
-        path = ROOT / "scripts" / "internal" / "docs" / "build_versions.py"
+        path = ROOT_DIR / "scripts" / "internal" / "docs" / "build_versions.py"
         spec = importlib.util.spec_from_file_location("build_versions", path)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)

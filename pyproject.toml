@@ -19,7 +19,7 @@ test = [
     "pytest>=9 ; python_version >= '3.10'",
     "pywin32 ; os_name == 'nt' and implementation_name != 'pypy'",
     "wmi ; os_name == 'nt' and implementation_name != 'pypy'",
-    {include-group = "build"},
+    { include-group = "build" },
 ]
 lint = [
     "black",
@@ -45,19 +45,19 @@ dev = [
     "virtualenv",
     "vulture",
     "wheel",
-    {include-group = "build"},
-    {include-group = "lint"},
-    {include-group = "test"},
+    { include-group = "build" },
+    { include-group = "lint" },
+    { include-group = "test" },
 ]
 docs = [
     "ablog==0.11.13",
-    "matplotlib==3.10.8",
+    "matplotlib==3.10.9",
     "sphinx-autobuild",
-    "sphinx-codeautolink==0.18.1",
+    "sphinx-codeautolink==0.19.0",
     "sphinx-last-updated-by-git==0.3.8",
     "sphinx-notfound-page==1.1.0",
     "sphinx-sitemap==2.9.0",
-    "sphinx==9.1.0",
+    "sphinx==9.1.1",
     "sphinx_copybutton==0.5.2",
     "sphinx_design==0.7.0",
     "sphinxext-opengraph==0.13.0",
@@ -119,6 +119,7 @@ ignore = [
     "FURB116",  # [*] Replace `hex` call with `f"{start:x}"`
     "FURB118",  # [*] Use `operator.add` instead of defining a lambda
     "FURB140",  # [*] Use `itertools.starmap` instead of the generator
+    "ICN001",  # `datetime` should be imported as `dt`
     "INP",  # flake8-no-pep420
     "N801",  # Class name `async_chat` should use CapWords convention (ASYNCORE COMPAT)
     "N802",  # Function name X should be lowercase.
@@ -166,6 +167,7 @@ ignore = [
     "TRY300",  # Consider moving this statement to an `else` block
     "TRY301",  # Abstract `raise` to an inner function
     "UP032",  # [*] Use f-string instead of `format` call
+    "shared-clock-mock",  # Changing `time.sleep` may affect unrelated threads
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -304,7 +306,8 @@ strict_markers = true
 verbosity_subtests = "0"
 verbosity_assertions = "2"
 testpaths = ["tests/"]
-python_files = ["test_*.py"]
+# __init__.py: so that pytest rewrites the asserts in its helpers
+python_files = ["test_*.py", "tests/__init__.py"]
 markers = [
     "isolated: run in a separate serial pytest phase, not under -n auto",
 ]

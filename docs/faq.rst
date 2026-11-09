@@ -33,8 +33,8 @@ Exceptions
 
 .. _faq_access_denied:
 
-Why do I get AccessDenied?
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why do I get :exc:`AccessDenied`?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :exc:`AccessDenied` is raised when the OS refuses to return information about a
 process because the calling user does not have sufficient privileges. This is
@@ -61,21 +61,22 @@ You have two options to deal with it.
 
 - Option 2: use :func:`process_iter` with a list of attribute names to
   pre-fetch. Both :exc:`AccessDenied` and :exc:`NoSuchProcess` are handled
-  internally: the corresponding method returns ``None`` (or ``ad_value``)
-  instead of raising. This also avoids the race condition where a process
-  disappears between iteration and method call:
+  internally: if fetching an attribute raises :exc:`AccessDenied`, its value in
+  ``p.snapshot`` is set to ``None`` (or to the ``ad_value`` argument, if
+  specified). This also avoids the race condition where a process disappears
+  between iteration and method call:
 
   .. code-block:: python
 
     import psutil
 
     for p in psutil.process_iter(["name", "username"], ad_value="N/A"):
-        print(p.name(), p.username())  # no try/except needed
+        print(p.snapshot.name, p.snapshot.username)  # no try/except needed
 
 .. _faq_no_such_process:
 
-Why do I get NoSuchProcess?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why do I get :exc:`NoSuchProcess`?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :exc:`NoSuchProcess` is raised when a process no longer exists. The most common
 cause is a race condition: a process can die between the moment its PID is
@@ -107,7 +108,7 @@ iteration:
   import psutil
 
   for p in psutil.process_iter(["name"]):
-      print(p.name())
+      print(p.snapshot.name)
 
 If you have a specific PID (e.g. a known child process), wrap the call in a
 try/except:
@@ -219,7 +220,7 @@ subclass of :exc:`NoSuchProcess`.
   import psutil
 
   for p in psutil.process_iter(["status"]):
-      if p.status() == psutil.STATUS_ZOMBIE:
+      if p.snapshot.status == psutil.STATUS_ZOMBIE:
           print(f"zombie: pid={p.pid}")
 
 **How to get rid of a zombie:**
@@ -230,8 +231,8 @@ re-parented to ``init`` / ``systemd``, which will reap it automatically.
 
 .. _faq_open_files_windows:
 
-Why does open_files() not return all files on Windows?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why does :meth:`~Process.open_files` not return all files on Windows?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`Process.open_files` on Windows is not guaranteed to enumerate all
 regular file handles. The underlying Windows API may hang when retrieving
@@ -242,8 +243,8 @@ Hacker (see `issue 597 <https://github.com/giampaolo/psutil/pull/597>`_).
 
 .. _faq_pid_exists_vs_isrunning:
 
-What is the difference between pid_exists() and Process.is_running()?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What is the difference between :func:`pid_exists` and :meth:`Process.is_running`?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :func:`pid_exists` checks whether a PID is present in the process list.
 :meth:`Process.is_running` does the same, but also detects
@@ -258,8 +259,8 @@ CPU
 
 .. _faq_cpu_percent:
 
-Why does cpu_percent() return 0.0 on first call?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why does :func:`cpu_percent` return 0.0 on first call?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :func:`cpu_percent` (and :meth:`Process.cpu_percent`) measures CPU usage
 *between two calls*. The very first call has no prior sample to compare
@@ -293,8 +294,8 @@ The same applies to :meth:`Process.cpu_percent`:
 
 .. _faq_cpu_percent_gt_100:
 
-Can Process.cpu_percent() return a value higher than 100%?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Can :meth:`Process.cpu_percent` return a value higher than 100%?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Yes. On a multi-core system a process can run threads on several CPUs at the
 same time. The maximum value is ``psutil.cpu_count() * 100``. For example, on a
@@ -310,8 +311,8 @@ that: ``p.cpu_percent() / psutil.cpu_count()``.
 
 .. _faq_cpu_count:
 
-What is the difference between psutil, os, and multiprocessing cpu_count()?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What is the difference between psutil, os, and multiprocessing ``cpu_count()``?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - :func:`os.cpu_count` returns the number of :term:`logical CPUs <logical CPU>`
   (including hyperthreads). It is the same as
@@ -328,12 +329,12 @@ What is the difference between psutil, os, and multiprocessing cpu_count()?
 Process memory
 --------------
 
-.. _faq_virtual_memory_available:
+.. _faq_memory_physical_available:
 
-What is the difference between virtual_memory() available and free?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What is the difference between :func:`memory_physical` :field:`available` and :field:`free`?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:func:`virtual_memory` returns both :field:`free` and :field:`available`, but
+:func:`memory_physical` returns both :field:`free` and :field:`available`, but
 they measure different things:
 
 - :field:`free`: memory that is not being used at all.
@@ -368,8 +369,8 @@ returned by :meth:`Process.memory_info`.
 
 .. _faq_memory_footprint:
 
-When should I use memory_footprint() vs memory_info()?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+When should I use :meth:`~Process.memory_footprint` vs :meth:`~Process.memory_info`?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`Process.memory_info` returns :field:`rss`
 (:term:`Resident Set Size <RSS>`), which includes
@@ -387,8 +388,8 @@ on Linux :field:`pss` (:term:`Proportional Set Size <PSS>`) and
 
 .. _faq_memory_shared:
 
-Why do memory_info() and memory_footprint() report different shared values?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why do :meth:`~Process.memory_info` and :meth:`~Process.memory_footprint` report different :field:`shared` values?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Because they measure different things. :meth:`Process.memory_info`'s
 :field:`shared` counts resident memory that *could* be shared, meaning
@@ -401,8 +402,8 @@ that regard, but slower.
 
 .. _faq_memory_swap:
 
-Why do swap_anon and memory_footprint()'s swap differ?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why do :field:`swap_anon` and :meth:`~Process.memory_footprint`'s :field:`swap` differ?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`Process.memory_extras`'s :field:`swap_anon` counts swapped-out
 :term:`anonymous memory` only, so it misses swapped shmem / tmpfs memory.
@@ -415,8 +416,8 @@ System memory
 
 .. _faq_used_plus_free:
 
-Why does virtual_memory() used + free != total?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why does :func:`memory_physical` :field:`used` + :field:`free` != :field:`total`?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Because some memory (like :term:`page cache` and :term:`buffers`) is
 reclaimable and accounted separately:
@@ -424,9 +425,10 @@ reclaimable and accounted separately:
 .. code-block:: pycon
 
   >>> import psutil
-  >>> m = psutil.virtual_memory()
+  >>> m = psutil.memory_physical()
   >>> m.used + m.free == m.total
   False
 
 The :field:`available` field already includes this reclaimable memory and is
-the best indicator of memory pressure. See :ref:`faq_virtual_memory_available`.
+the best indicator of memory pressure. See
+:ref:`faq_memory_physical_available`.

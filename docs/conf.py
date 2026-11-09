@@ -59,7 +59,6 @@ _third_party_exts = [
     "sphinx.ext.extlinks",
     "sphinx.ext.githubpages",  # writes .nojekyll + CNAME from html_baseurl
     "sphinx.ext.intersphinx",
-    "sphinx.ext.viewcode",
     "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_design",  # tabbed code examples on the home page
@@ -72,6 +71,7 @@ _local_exts = [  # defined in the _ext/ folder
     "api_symbols",
     "availability",
     "changelog_anchors",
+    "check_literal_blocks",
     "check_python_syntax",
     "field_role",
     "genindex_filter",
@@ -82,6 +82,9 @@ _local_exts = [  # defined in the _ext/ folder
     "opengraph_override",
     "post_banner",
     "proc_role",
+    "soft_deprecated",
+    "source_links",  # "[source]" links to GitHub
+    "speedups",
     "substitutions",
 ]
 
@@ -149,7 +152,7 @@ toc_object_entries_show_parents = "hide"
 # Plugins
 # =====================================================================
 
-copybutton_exclude = ".linenos, .gp"
+copybutton_exclude = ".linenos, .gp, .go"
 
 # =====================================================================
 # Theming
@@ -271,7 +274,6 @@ sitemap_excludes = [
     "genindex/",
     "py-modindex/",
     "404/",
-    "_modules/*",
     "blog/archive/",
     "blog/drafts/",
     "blog/tag/",
@@ -317,12 +319,31 @@ def setup(app):
     # collection of docs/test_docs.py doesn't hit it.
     import psutil  # noqa: F401
 
-    # ablog and sphinx-codeautolink synthesize pages (blog/tag/*,
-    # blog/2025, _modules/*) with no .rst behind them. The footer's
-    # "Edit on GitHub" / "Updated" links would point at files that
-    # don't exist.
+    # ablog synthesizes pages (blog/tag/*, blog/2025) with no .rst
+    # behind them. The footer's "Edit on GitHub" / "Updated" links
+    # would point at files that don't exist.
     def set_has_rst_source(app, pagename, templatename, context, doctree):
         path = pathlib.Path(app.env.doc2path(pagename))
         context["has_rst_source"] = path.is_file()
 
     app.connect("html-page-context", set_has_rst_source)
+
+    # ablog's blog page and genindex don't get Sphinx's prev/next, and
+    # devguide has no next because genindex isn't a real document.
+    def set_prev_next(app, pagename, templatename, context, doctree):
+        order = app.env.toctree_includes.get(app.config.root_doc, [])
+        if pagename not in order:
+            return
+        i = order.index(pagename)
+        for key, j in (("prev", i - 1), ("next", i + 1)):
+            if context.get(key) or not 0 <= j < len(order):
+                continue
+            doc = order[j]
+            title = (
+                app.env.titles[doc].astext()
+                if doc in app.env.titles
+                else "Index"
+            )
+            context[key] = {"link": context["pathto"](doc), "title": title}
+
+    app.connect("html-page-context", set_prev_next)

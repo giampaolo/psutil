@@ -51,7 +51,7 @@ class ScriptsTestCase(PsutilTestCase):
             out = sh(cmd, env=env).strip()
         except RuntimeError as err:
             if 'AccessDenied' in str(err):
-                return str(err)
+                return pytest.skip(str(err))
             else:
                 raise
         assert out, out
@@ -194,34 +194,38 @@ class TestInternalScripts(ScriptsTestCase):
     scripts_dir = INTERNAL_SCRIPTS_DIR
 
     @staticmethod
-    def ls():
+    def walk():
         for root, dirs, files in os.walk(INTERNAL_SCRIPTS_DIR):
             for file in files:
                 if file.endswith(".py"):
                     yield os.path.join(root, file)
 
     def test_syntax_all(self):
-        for path in self.ls():
+        for path in self.walk():
             with open(path, encoding="utf8") as f:
                 data = f.read()
             ast.parse(data)
 
-    # don't care about other platforms, this is really just for myself
     @skipif(not LINUX, reason="not on LINUX")
-    @skipif(CI_TESTING, reason="not on CI")
-    def test_import_all(self):
-        for path in self.ls():
+    def test_root_dir(self):
+        root = pathlib.Path(ROOT_DIR).resolve()
+        for path in self.walk():
             try:
-                import_module_by_path(path)
+                mod = import_module_by_path(path)
             except SystemExit:
-                pass
+                continue
             except ImportError as err:
                 if "pyperf" in str(err) or "requests" in str(err):
                     continue
                 raise
+            value = getattr(mod, "ROOT_DIR", None)
+            if value is not None and pathlib.Path(value).resolve() != root:
+                return pytest.fail(
+                    f"ROOT_DIR in {path!r} is {value!r}, expected {root!r}"
+                )
 
     def test_print_api_speed(self):
-        self.assert_stdout("print_api_speed.py", "-t", "2")
+        self.assert_stdout("print/api_speed.py", "-t", "2")
 
     def test_print_sysinfo(self):
-        self.assert_stdout("print_sysinfo.py")
+        self.assert_stdout("print/sysinfo.py")

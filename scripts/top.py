@@ -100,8 +100,9 @@ def poll(interval):
             procs.append(p)
 
     # return processes sorted by CPU percent usage
+    # (cpu_percent may be None, e.g. for zombie processes)
     processes = sorted(
-        procs, key=lambda p: p.dict['cpu_percent'], reverse=True
+        procs, key=lambda p: p.dict['cpu_percent'] or 0.0, reverse=True
     )
     return (processes, procs_status)
 
@@ -133,7 +134,7 @@ def print_header(procs_status, num_procs):
         printl(line, color=get_color(perc))
 
     # memory usage
-    mem = psutil.virtual_memory()
+    mem = psutil.memory_physical()
     dashes, empty_dashes = get_dashes(mem.percent)
     line = " Mem   [{}{}] {:>5}% {:>6} / {}".format(
         dashes,
@@ -145,7 +146,7 @@ def print_header(procs_status, num_procs):
     printl(line, color=get_color(mem.percent))
 
     # swap usage
-    swap = psutil.swap_memory()
+    swap = psutil.memory_swap()
     dashes, empty_dashes = get_dashes(swap.percent)
     line = " Swap  [{}{}] {:>5}% {:>6} / {}".format(
         dashes,

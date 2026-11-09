@@ -81,14 +81,17 @@ from . import HAS_NET_CONNECTIONS_UNIX
 from . import HAS_PROC_ENVIRON
 from . import HAS_PROC_MEMORY_MAPS
 from . import INVALID_UNICODE_SUFFIX
+from . import PYTHON_SLEEP_CODE
 from . import TESTFN_PREFIX
 from . import UNICODE_SUFFIX
 from . import PsutilTestCase
 from . import bind_unix_socket
 from . import chdir
 from . import copyload_shared_lib
+from . import create_c_exe
 from . import create_py_exe
 from . import get_testfn
+from . import py_exe_copy_runs
 from . import pytest
 from . import safe_mkdir
 from . import safe_rmpath
@@ -97,6 +100,17 @@ from . import skip_on_access_denied
 from . import skipif
 from . import spawn_subproc
 from . import terminate
+
+
+def create_funky_exe(path):
+    """Create a long lived executable at *path*. A copy of the running
+    interpreter where that works, else a compiled C program: macOS
+    framework builds load their libs relative to @executable_path, so
+    a copy placed elsewhere aborts in dyld.
+    """
+    if py_exe_copy_runs():
+        return create_py_exe(path)
+    return create_c_exe(path)
 
 
 def try_unicode(suffix):
@@ -147,7 +161,7 @@ class BaseUnicodeTest(PsutilTestCase):
                 cls.skip_tests = True
             else:
                 cls.funky_name = get_testfn(suffix=cls.funky_suffix)
-                create_py_exe(cls.funky_name)
+                create_funky_exe(cls.funky_name)
 
     def setUp(self):
         super().setUp()
@@ -173,7 +187,7 @@ class TestFSAPIs(BaseUnicodeTest):
         cmd = [
             self.funky_name,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)]",
+            PYTHON_SLEEP_CODE,
         ]
         subp = self.spawn_subproc(cmd)
         p = psutil.Process(subp.pid)
@@ -186,7 +200,7 @@ class TestFSAPIs(BaseUnicodeTest):
         cmd = [
             self.funky_name,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)]",
+            PYTHON_SLEEP_CODE,
         ]
         subp = self.spawn_subproc(cmd)
         name = psutil.Process(subp.pid).name()
@@ -198,7 +212,7 @@ class TestFSAPIs(BaseUnicodeTest):
         cmd = [
             self.funky_name,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)]",
+            PYTHON_SLEEP_CODE,
         ]
         subp = self.spawn_subproc(cmd)
         p = psutil.Process(subp.pid)
@@ -215,7 +229,7 @@ class TestFSAPIs(BaseUnicodeTest):
         with chdir(dname):
             p = psutil.Process()
             cwd = p.cwd()
-        assert isinstance(p.cwd(), str)
+        assert isinstance(cwd, str)
         if self.expect_exact_path_match():
             assert cwd == dname
 

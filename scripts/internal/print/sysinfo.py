@@ -30,7 +30,7 @@ except ImportError:
     wheel = None
 
 
-ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
+ROOT_DIR = pathlib.Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT_DIR))
 from _bootstrap import load_module  # noqa: E402
 
@@ -110,13 +110,13 @@ def main():
     info['loadavg'] = (
         f"{loadavg[0]:.1f}%, {loadavg[1]:.1f}%, {loadavg[2]:.1f}%"
     )
-    mem = psutil.virtual_memory()
+    mem = psutil.memory_physical()
     info['memory'] = "{}%%, used={}, total={}".format(
         int(mem.percent),
         bytes2human(mem.used),
         bytes2human(mem.total),
     )
-    swap = psutil.swap_memory()
+    swap = psutil.memory_swap()
     info['swap'] = "{}%%, used={}, total={}".format(
         int(swap.percent),
         bytes2human(swap.used),

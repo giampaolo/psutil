@@ -18,6 +18,8 @@ from ._common import OPENBSD
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
+from ._common import cache_activate
+from ._common import cache_deactivate
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import debug
@@ -105,16 +107,16 @@ HAS_PROC_NUM_THREADS = hasattr(_psutil, "proc_num_threads")
 # =====================================================================
 
 
-def virtual_memory():
-    d = _psutil.virtual_mem()
-    return ntp.svmem(**d)
+def memory_physical():
+    d = _psutil.memory_physical()
+    return ntp.smem(**d)
 
 
-def swap_memory():
+def memory_swap():
     """System swap memory as a (total, used, free, percent, sin, sout)
-    named tuple. sin and sout are always 0 on OpenBSD
+    named tuple.
     """
-    d = _psutil.swap_mem()
+    d = _psutil.memory_swap()
     return ntp.sswap(**d)
 
 
@@ -475,10 +477,10 @@ class Process:
         return _psutil.proc_oneshot_kinfo(self.pid)
 
     def oneshot_enter(self):
-        self.oneshot.cache_activate(self)
+        cache_activate(self)
 
     def oneshot_exit(self):
-        self.oneshot.cache_deactivate(self)
+        cache_deactivate(self)
 
     @wrap_exceptions
     def name(self):
@@ -688,12 +690,16 @@ class Process:
     @wrap_exceptions
     def open_files(self):
         """Return files opened by process as a list of named tuples."""
+        if NETBSD and self.pid == 0:
+            return []
         rawlist = _psutil.proc_open_files(self.pid)
         return [ntp.popenfile(path, fd) for path, fd in rawlist]
 
     @wrap_exceptions
     def num_fds(self):
         """Return the number of file descriptors opened by this process."""
+        if NETBSD and self.pid == 0:
+            return 0
         ret = _psutil.proc_num_fds(self.pid)
         if NETBSD:
             self._assert_alive()

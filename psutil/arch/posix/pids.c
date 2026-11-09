@@ -4,6 +4,7 @@
  * found in the LICENSE file.
  */
 
+#include <Python.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <errno.h>
@@ -13,7 +14,7 @@
 
 static int
 has_pid_zero(void) {
-#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
+#if defined(PSUTIL_LINUX)
     return 0;
 #else
     return 1;

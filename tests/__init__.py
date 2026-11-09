@@ -66,21 +66,23 @@ if POSIX:
 __all__ = [
     # constants
     'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
-    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR',
+    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'PYTHON_SLEEP_CODE', 'ROOT_DIR',
     'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE',
+    'GITHUB_ACTIONS', 'AF_UNIX', 'ASCII_FS', 'SKIP_SYSCONS',
     "HAS_PROC_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_PROC_ENVIRON",
     "HAS_PROC_IO_COUNTERS", "HAS_PROC_IONICE",
     "HAS_PROC_MEMORY_EXTRAS", "HAS_PROC_MEMORY_FOOTPRINT",
     "HAS_PROC_MEMORY_MAPS",
-    "HAS_PROC_CPU_NUM", "HAS_PROC_RLIMIT", "HAS_SENSORS_BATTERY",
+    "HAS_PROC_CPU_NUM", "HAS_PROC_RLIMIT", "HAS_PROC_THREADS",
+    "HAS_SENSORS_BATTERY", "HAS_HEAP_INFO", "HAS_NET_IO_COUNTERS",
     "HAS_BATTERY", "HAS_SENSORS_FANS", "HAS_SENSORS_TEMPERATURES",
     "HAS_NET_CONNECTIONS_UNIX", "HAS_PROC_OPEN_FILES_PATH",
-    "MACOS_11PLUS", "MACOS_12PLUS", "COVERAGE",
+    "MACOS_12PLUS",
     "AARCH64", "PYTEST_PARALLEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_subproc', 'spawn_zombie',
-    'spawn_children_pair', 'filter_alien_children',
+    'spawn_children_pair', 'filter_alien_children', 'sh', 'df', 'sysctl',
     # threads
     'ThreadTask',
     # test utils
@@ -91,19 +93,22 @@ __all__ = [
     # type hints
     'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
-    'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
+    'chdir', 'safe_rmpath', 'safe_mkdir', 'create_py_exe', 'create_c_exe',
+    'get_testfn', 'py_exe_copy_runs',
     # os
-    'get_winver', 'kernel_version', 'is_busybox',
+    'is_busybox',
     # sync primitives
-    'call_until', 'wait_for_pid', 'wait_for_file', 'wait_for_file_subproc',
+    'retry', 'call_until', 'wait_for_pid', 'wait_for_file',
+    'wait_for_file_subproc',
     # network
-    'check_net_address', 'filter_proc_net_connections',
+    'check_net_address', 'check_connection_ntuple',
+    'filter_proc_net_connections',
     'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
     'unix_socketpair', 'create_sockets',
-    # compat
-    'reload_module', 'import_module_by_path',
+    # import utils
+    'import_module_by_path',
     # others
-    'warn', 'copyload_shared_lib', 'is_namedtuple'
+    'warn', 'copyload_shared_lib', 'is_namedtuple', 'assert_ntuple_of_nums',
 ]
 # fmt: on
 
@@ -115,15 +120,12 @@ __all__ = [
 # --- platforms
 
 PYPY = '__pypy__' in sys.builtin_module_names
-FREE_THREADED = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 # whether we're running this test suite on a Continuous Integration service
 GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
 CI_TESTING = GITHUB_ACTIONS
-COVERAGE = 'COVERAGE_RUN' in os.environ
 PYTEST_PARALLEL = "PYTEST_XDIST_WORKER" in os.environ  # `make test-parallel`
 # apparently they're the same
 AARCH64 = platform.machine().lower() in {"aarch64", "arm64"}
-RISCV64 = platform.machine() == "riscv64"
 
 
 @functools.lru_cache
@@ -147,12 +149,7 @@ def macos_version():
     return version
 
 
-if MACOS:
-    MACOS_11PLUS = macos_version() > (10, 15)
-    MACOS_12PLUS = macos_version() >= (12, 0)
-else:
-    MACOS_11PLUS = False
-    MACOS_12PLUS = False
+MACOS_12PLUS = macos_version() >= (12, 0) if MACOS else False
 
 
 # --- configurable defaults
@@ -226,11 +223,13 @@ except Exception:  # noqa: BLE001
 
 def _get_py_exe():
     def attempt(exe):
+        if not exe:
+            return None
         try:
             subprocess.check_call(
                 [exe, "-V"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-        except subprocess.CalledProcessError:
+        except (OSError, subprocess.CalledProcessError):
             return None
         else:
             return exe
@@ -271,13 +270,20 @@ def _get_py_exe():
     elif GITHUB_ACTIONS:
         return sys.executable, env
     elif MACOS:
+        # Framework interpreters are reached through a chain of symlinks
+        # and rewrite argv[0] to the real binary inside the bundle, so
+        # prefer the path the kernel itself reports.
+        try:
+            own_exe = psutil.Process().exe()
+        except psutil.Error:
+            own_exe = None
         exe = (
-            attempt(sys.executable)
+            attempt(own_exe)
+            or attempt(sys.executable)
             or attempt(os.path.realpath(sys.executable))
             or attempt(
                 shutil.which("python{}.{}".format(*sys.version_info[:2]))
             )
-            or attempt(psutil.Process().exe())
         )
         if not exe:
             raise ValueError("can't find python exe real abspath")
@@ -289,6 +295,7 @@ def _get_py_exe():
 
 
 PYTHON_EXE, PYTHON_EXE_ENV = _get_py_exe()
+PYTHON_SLEEP_CODE = "import time; [time.sleep(0.1) for x in range(100)]"
 DEVNULL = open(os.devnull, 'r+')  # noqa: SIM115
 atexit.register(DEVNULL.close)
 
@@ -398,11 +405,7 @@ def spawn_subproc(cmd=None, **kwds):
         testfn = get_testfn(dir=os.getcwd())
         try:
             safe_rmpath(testfn)
-            pyline = (
-                "import time;"
-                f"open(r'{testfn}', 'w').close();"
-                "[time.sleep(0.1) for x in range(100)];"  # 10 secs
-            )
+            pyline = f"open(r'{testfn}', 'w').close(); {PYTHON_SLEEP_CODE}"
             cmd = [PYTHON_EXE, "-c", pyline]
             kwds.setdefault("stderr", subprocess.PIPE)
             sproc = subprocess.Popen(cmd, **kwds)
@@ -520,7 +523,7 @@ def pyrun(src, **kwds):
 
 
 @_reap_children_on_err
-def sh(cmd, **kwds):
+def sh(cmd, timeout=GLOBAL_TIMEOUT, **kwds):
     """Run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
@@ -532,11 +535,18 @@ def sh(cmd, **kwds):
     kwds.setdefault("encoding", ENCODING)
     kwds.setdefault("errors", ENCODING_ERRS)
     kwds.setdefault("creationflags", flags)
+
+    # Tests parse the output of these commands, so decimal separators
+    # and month names must not depend on the user's locale.
+    env = dict(os.environ, LC_NUMERIC="C", LC_TIME="C")
+    env.pop("LC_ALL", None)
+    kwds.setdefault("env", env)
+
     if isinstance(cmd, str):
         cmd = shlex.split(cmd)
     p = subprocess.Popen(cmd, **kwds)
     _subprocesses_started.add(p)
-    stdout, stderr = p.communicate(timeout=GLOBAL_TIMEOUT)
+    stdout, stderr = p.communicate(timeout=timeout)
     if p.returncode != 0:
         raise RuntimeError(stdout + stderr)
     if stderr:
@@ -544,6 +554,42 @@ def sh(cmd, **kwds):
     if stdout.endswith('\n'):
         stdout = stdout[:-1]
     return stdout
+
+
+def df(path):
+    """A wrapper around df command on POSIX."""
+    if LINUX:
+        cmd = f'df -P -B 1 "{path}"'
+        unit = 1
+    else:
+        cmd = f'df -k "{path}"'
+        unit = 1024
+    try:
+        out = sh(cmd).strip()
+    except RuntimeError as err:
+        if "device busy" in str(err).lower():
+            return pytest.skip("df returned EBUSY")
+        raise
+    fields = out.split("\n")[1].split()
+    dev = "" if fields[0] == "none" else fields[0]
+    total = int(fields[1]) * unit
+    used = int(fields[2]) * unit
+    free = int(fields[3]) * unit
+    percent = float(fields[4].replace("%", ""))
+    return (dev, total, used, free, percent)
+
+
+def sysctl(name):
+    """A wrapper around sysctl command on POSIX."""
+    out = sh(f"sysctl {name}")
+    if OPENBSD or NETBSD:
+        result = out[out.find("=") + 1 :]
+    else:
+        result = out[out.find(": ") + 2 :]
+    try:
+        return int(result)
+    except ValueError:
+        return result
 
 
 def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
@@ -582,9 +628,8 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         except ProcessLookupError:
             pass
         except OSError as err:
-            if WINDOWS and err.winerror == 6:  # "invalid handle"
-                pass
-            raise
+            if not (WINDOWS and err.winerror == 6):  # "invalid handle"
+                raise
         return wait(proc, timeout)
 
     def term_psutil_proc(proc, timeout):
@@ -689,38 +734,6 @@ def reap_children(recursive=False):
 # ===================================================================
 # --- OS
 # ===================================================================
-
-
-def kernel_version():
-    """Return a tuple such as (2, 6, 36)."""
-    if not POSIX:
-        raise NotImplementedError("not POSIX")
-    s = ""
-    uname = os.uname()[2]
-    for c in uname:
-        if c.isdigit() or c == '.':
-            s += c
-        else:
-            break
-    if not s:
-        raise ValueError(f"can't parse {uname!r}")
-    minor = 0
-    micro = 0
-    nums = s.split('.')
-    major = int(nums[0])
-    if len(nums) >= 2:
-        minor = int(nums[1])
-    if len(nums) >= 3:
-        micro = int(nums[2])
-    return (major, minor, micro)
-
-
-def get_winver():
-    if not WINDOWS:
-        raise NotImplementedError("not WINDOWS")
-    wv = sys.getwindowsversion()
-    sp = wv.service_pack_major or 0
-    return (wv[0], wv[1], sp)
 
 
 @functools.lru_cache
@@ -892,7 +905,9 @@ def safe_rmpath(path):
             try:
                 return fun()
             except FileNotFoundError:
-                pass
+                # rmtree() also raises it for an entry gone mid-walk
+                if not os.path.exists(path):
+                    return None
             except OSError as _:
                 err = _
                 warn(f"ignoring {err}")
@@ -943,29 +958,72 @@ def create_py_exe(path):
     return path
 
 
+@functools.lru_cache(maxsize=None)
+def py_exe_copy_runs():
+    """Whether a copy of PYTHON_EXE is still runnable. It isn't for
+    macOS framework interpreters: they load their libs relative to
+    @executable_path, so a copy placed elsewhere aborts in dyld.
+    """
+    path = get_testfn()
+    try:
+        create_py_exe(path)
+        subprocess.check_output(
+            [path, "-c", "pass"],
+            stderr=subprocess.STDOUT,
+            timeout=GLOBAL_TIMEOUT,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    else:
+        return True
+    finally:
+        safe_rmpath(path)
+
+
 def create_c_exe(path, c_code=None):
     """Create a compiled C executable in the given location."""
     assert not os.path.exists(path), path
-    if not shutil.which("gcc"):
-        return pytest.skip("gcc is not installed")
+    if WINDOWS:
+        cc = shutil.which("cl")
+        if not cc:
+            return pytest.skip("cl.exe is not available (run vcvarsall)")
+    else:
+        cc = shutil.which("gcc") or shutil.which("cc")
+        if not cc:
+            return pytest.skip("no C compiler installed")
     if c_code is None:
-        c_code = textwrap.dedent("""
-            #include <unistd.h>
-            int main() {
-                pause();
-                return 1;
-            }
-            """)
+        if WINDOWS:
+            c_code = textwrap.dedent("""
+                #include <windows.h>
+                int main() {
+                    Sleep(INFINITE);
+                    return 1;
+                }
+                """)
+        else:
+            c_code = textwrap.dedent("""
+                #include <unistd.h>
+                int main() {
+                    pause();
+                    return 1;
+                }
+                """)
     else:
         assert isinstance(c_code, str), c_code
 
     atexit.register(safe_rmpath, path)
     with open(get_testfn(suffix='.c'), "w") as f:
         f.write(c_code)
+    obj = get_testfn(suffix='.obj')
     try:
-        subprocess.check_call(["gcc", f.name, "-o", path])
+        if WINDOWS:
+            cmd = [cc, "/nologo", f.name, f"/Fe:{path}", f"/Fo:{obj}"]
+        else:
+            cmd = [cc, f.name, "-o", path]
+        subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
     finally:
         safe_rmpath(f.name)
+        safe_rmpath(obj)
     return path
 
 
@@ -1033,11 +1091,8 @@ class PsutilTestCase(unittest.TestCase):
     # run, similar to pytest output. Used only when running tests with
     # the unittest runner.
     def __str__(self):
-        fqmod = self.__class__.__module__
-        if not fqmod.startswith('psutil.'):
-            fqmod = 'tests.' + fqmod
         return "{}.{}.{}".format(
-            fqmod,
+            self.__class__.__module__,
             self.__class__.__name__,
             self._testMethodName,
         )
@@ -1082,8 +1137,8 @@ class PsutilTestCase(unittest.TestCase):
         assert isinstance(exc, psutil.Error)
         assert exc.pid == proc.pid
         assert exc.name == proc._name
-        if exc.name:
-            assert exc.name
+        if exc.name is not None:
+            assert isinstance(exc.name, str)
         if isinstance(exc, psutil.ZombieProcess):
             assert exc.ppid == proc._ppid
             if exc.ppid is not None:
@@ -1214,20 +1269,22 @@ class PsutilTestCase(unittest.TestCase):
                 assert diff <= nt.rss * 0.05
 
 
+# "Secure System" starts at boot, so one snapshot is enough.
+@functools.lru_cache
+def _win_tasklist():
+    ret = {}
+    out = sh("tasklist.exe /NH /FO csv")
+    for line in out.splitlines()[1:]:
+        bits = [x.replace('"', "") for x in line.split(",")]
+        name, pid = bits[0], int(bits[1])
+        ret[pid] = name
+    return ret
+
+
 def is_win_secure_system_proc(pid):
     # see: https://github.com/giampaolo/psutil/issues/2338
-    @functools.lru_cache
-    def get_procs():
-        ret = {}
-        out = sh("tasklist.exe /NH /FO csv")
-        for line in out.splitlines()[1:]:
-            bits = [x.replace('"', "") for x in line.split(",")]
-            name, pid = bits[0], int(bits[1])
-            ret[pid] = name
-        return ret
-
     try:
-        return get_procs()[pid] == "Secure System"
+        return _win_tasklist()[pid] == "Secure System"
     except KeyError:
         return False
 
@@ -1258,13 +1315,14 @@ class process_namespace:
         ('attrs', (), {}),
         ('children', (), {'recursive': True}),
         ('connections', (), {}),  # deprecated
-        ('info', (), {}),
+        ('info', (), {}),  # deprecated
         ('is_running', (), {}),
         ('memory_full_info', (), {}),  # deprecated
         ('oneshot', (), {}),
         ('parent', (), {}),
         ('parents', (), {}),
         ('pid', (), {}),
+        ('snapshot', (), {}),
         ('wait', (0,), {}),
     ]
 
@@ -1408,6 +1466,8 @@ class system_namespace:
         ('disk_partitions', (), {'all': True}),
         ('disk_usage', (os.getcwd(),), {}),
         ('getloadavg', (), {}),
+        ('memory_physical', (), {}),
+        ('memory_swap', (), {}),
         ('net_connections', (), {'kind': 'all'}),
         ('net_if_addrs', (), {}),
         ('net_if_stats', (), {}),
@@ -1415,9 +1475,7 @@ class system_namespace:
         ('net_io_counters', (), {'pernic': True}),
         ('pid_exists', (os.getpid(),), {}),
         ('pids', (), {}),
-        ('swap_memory', (), {}),
         ('users', (), {}),
-        ('virtual_memory', (), {}),
     ]
 
     if HAS_CPU_FREQ:
@@ -1461,7 +1519,9 @@ class system_namespace:
     test_class_coverage = process_namespace.test_class_coverage
 
 
-def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
+def retry_on_failure(
+    retries: "int | typing.Callable" = NO_RETRIES, interval: float = 0.1
+):
     """Decorator which runs a test function and retries N times before
     giving up and failing.
     """
@@ -1478,7 +1538,8 @@ def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
                     prefix = "\n" if attempt == 0 else ""
                     short_err = str(err).split("\n")[0]
                     print(  # noqa: T201
-                        f"{prefix}{short_err}, retrying"
+                        f"{prefix}{test_method.__qualname__}: {short_err},"
+                        " retrying"
                         f" {attempt + 1}/{retries} ...",
                         file=sys.stderr,
                     )
@@ -1490,6 +1551,7 @@ def retry_on_failure(retries: "int | typing.Callable" = NO_RETRIES):
                         self.setUp()
                     if hasattr(self, "setup_method"):
                         self.setup_method()
+                    time.sleep(interval)
 
             raise err
 
@@ -1553,7 +1615,6 @@ def skip_on_not_implemented(only_if: "bool | typing.Callable | None" = None):
 # ===================================================================
 
 
-# XXX: no longer used
 def get_free_port(host='127.0.0.1'):
     """Return an unused TCP port. Subject to race conditions."""
     with socket.socket() as sock:
@@ -1867,7 +1928,7 @@ class TypeHintsChecker:
         """Get the 'return' type hint for a psutil API function or
         method. Resolves annotation strings using a combined namespace
         of psutil globals (Any, Generator, Process, ...) and ntuple
-        types (scputimes, svmem, pmem, ...). Returns None if hints
+        types (scputimes, smem, pmem, ...). Returns None if hints
         cannot be resolved or there is no return annotation.
         """
         while hasattr(fun, 'func'):
@@ -1940,10 +2001,6 @@ check_fun_type_hints = TypeHintsChecker.check_fun_type_hints
 # ===================================================================
 
 
-def reload_module(module):
-    return importlib.reload(module)
-
-
 def import_module_by_path(path):
     name = os.path.splitext(os.path.basename(path))[0]
     spec = importlib.util.spec_from_file_location(name, path)
@@ -1971,6 +2028,13 @@ def is_namedtuple(x):
     if not isinstance(f, tuple):
         return False
     return all(isinstance(n, str) for n in f)
+
+
+def assert_ntuple_of_nums(nt, type_=float):
+    assert is_namedtuple(nt)
+    for n in nt:
+        assert isinstance(n, type_)
+        assert n >= 0
 
 
 if POSIX:

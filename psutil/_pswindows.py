@@ -20,6 +20,8 @@ from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import TimeoutExpired
+from ._common import cache_activate
+from ._common import cache_deactivate
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import debug
@@ -54,7 +56,7 @@ except ImportError as err:
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
-__extra__all__ = ["win_service_iter", "win_service_get", "AF_LINK"]
+__extra__all__ = ["win_service_iter", "win_service_get"]
 
 
 # =====================================================================
@@ -121,8 +123,8 @@ def getpagesize():
 # =====================================================================
 
 
-def virtual_memory():
-    """System virtual memory as a named tuple."""
+def memory_physical():
+    """System physical memory as a named tuple."""
     info = _psutil.GetPerformanceInfo()
     pagesize = info["PageSize"]
     total = info["PhysicalTotal"] * pagesize
@@ -132,11 +134,11 @@ def virtual_memory():
     free = avail
     used = total - avail
     percent = usage_percent((total - avail), total, round_=1)
-    return ntp.svmem(total, avail, percent, used, free, cached, wired)
+    return ntp.smem(total, avail, percent, used, free, cached, wired)
 
 
-def swap_memory():
-    """Swap system memory as a (total, used, free, sin, sout) tuple."""
+def memory_swap():
+    """Swap memory as a (total, used, free, percent, sin, sout) tuple."""
     info = _psutil.GetPerformanceInfo()
     pagesize = info["PageSize"]
     total_phys = info["PhysicalTotal"] * pagesize
@@ -645,12 +647,10 @@ class Process:
     # --- oneshot() stuff
 
     def oneshot_enter(self):
-        self._oneshot.cache_activate(self)
-        self.exe.cache_activate(self)
+        cache_activate(self)
 
     def oneshot_exit(self):
-        self._oneshot.cache_deactivate(self)
-        self.exe.cache_deactivate(self)
+        cache_deactivate(self)
 
     @memoize_when_activated
     def _oneshot(self):
@@ -825,6 +825,8 @@ class Process:
         if sig == signal.SIGTERM:
             _psutil.proc_kill(self.pid)
         elif sig in {signal.CTRL_C_EVENT, signal.CTRL_BREAK_EVENT}:
+            if self.pid == 0:
+                raise AccessDenied(self.pid, self._name)
             os.kill(self.pid, sig)
         else:
             msg = (

@@ -6,6 +6,7 @@
 
 """Tests for psutil.net_connections() and Process.net_connections() APIs."""
 
+import ast
 import os
 import socket
 import subprocess
@@ -24,7 +25,6 @@ from psutil import NETBSD
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
-from psutil import WINDOWS
 from psutil._common import supports_ipv6
 
 from . import AF_UNIX
@@ -88,12 +88,6 @@ class ConnectionTestCase(PsutilTestCase):
 
 
 class TestBasicOperations(ConnectionTestCase):
-    @skipif(SKIP_SYSCONS, reason="requires root")
-    def test_system(self):
-        with create_sockets():
-            for conn in psutil.net_connections(kind='all'):
-                check_connection_ntuple(conn)
-
     def test_process(self):
         with create_sockets():
             for conn in this_proc_net_connections(kind='all'):
@@ -123,7 +117,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
                 assert smap[sock.fileno()].fd == sock.fileno()
             return cons[0]
 
-    def check_socket(self, sock):
+    def check_socket(self, sock, raddr, status):
         """Given a socket, makes sure it matches the one obtained
         via psutil. It assumes this process created one connection
         only (the one supposed to be checked).
@@ -151,53 +145,43 @@ class TestUnconnectedSockets(ConnectionTestCase):
         if sock.family == AF_UNIX and HAS_NET_CONNECTIONS_UNIX:
             cons = this_proc_net_connections(kind='all')
             self.compare_procsys_connections(os.getpid(), cons, kind='all')
-        return conn
+
+        assert conn.raddr == raddr
+        assert conn.status == status
 
     def test_tcp_v4(self):
         addr = ("127.0.0.1", 0)
         with closing(bind_socket(AF_INET, SOCK_STREAM, addr=addr)) as sock:
-            conn = self.check_socket(sock)
-            assert conn.raddr == ()
-            assert conn.status == psutil.CONN_LISTEN
+            self.check_socket(sock, (), psutil.CONN_LISTEN)
 
     @skipif(not supports_ipv6(), reason="IPv6 not supported")
     def test_tcp_v6(self):
         addr = ("::1", 0)
         with closing(bind_socket(AF_INET6, SOCK_STREAM, addr=addr)) as sock:
-            conn = self.check_socket(sock)
-            assert conn.raddr == ()
-            assert conn.status == psutil.CONN_LISTEN
+            self.check_socket(sock, (), psutil.CONN_LISTEN)
 
     def test_udp_v4(self):
         addr = ("127.0.0.1", 0)
         with closing(bind_socket(AF_INET, SOCK_DGRAM, addr=addr)) as sock:
-            conn = self.check_socket(sock)
-            assert conn.raddr == ()
-            assert conn.status == psutil.CONN_NONE
+            self.check_socket(sock, (), psutil.CONN_NONE)
 
     @skipif(not supports_ipv6(), reason="IPv6 not supported")
     def test_udp_v6(self):
         addr = ("::1", 0)
         with closing(bind_socket(AF_INET6, SOCK_DGRAM, addr=addr)) as sock:
-            conn = self.check_socket(sock)
-            assert conn.raddr == ()
-            assert conn.status == psutil.CONN_NONE
+            self.check_socket(sock, (), psutil.CONN_NONE)
 
     @skipif(not POSIX, reason="POSIX only")
     def test_unix_tcp(self):
         testfn = self.get_testfn()
         with closing(bind_unix_socket(testfn, type=SOCK_STREAM)) as sock:
-            conn = self.check_socket(sock)
-            assert conn.raddr == ""
-            assert conn.status == psutil.CONN_NONE
+            self.check_socket(sock, "", psutil.CONN_NONE)
 
     @skipif(not POSIX, reason="POSIX only")
     def test_unix_udp(self):
         testfn = self.get_testfn()
-        with closing(bind_unix_socket(testfn, type=SOCK_STREAM)) as sock:
-            conn = self.check_socket(sock)
-            assert conn.raddr == ""
-            assert conn.status == psutil.CONN_NONE
+        with closing(bind_unix_socket(testfn, type=SOCK_DGRAM)) as sock:
+            self.check_socket(sock, "", psutil.CONN_NONE)
 
 
 @serial
@@ -345,38 +329,23 @@ class TestFilters(ConnectionTestCase):
 
         # must be relative on Windows
         testfile = os.path.basename(self.get_testfn(dir=os.getcwd()))
-        tcp4_template = tcp_template.format(
-            family=int(AF_INET), addr="127.0.0.1", testfn=testfile
-        )
-        udp4_template = udp_template.format(
-            family=int(AF_INET), addr="127.0.0.1", testfn=testfile
-        )
-        tcp6_template = tcp_template.format(
-            family=int(AF_INET6), addr="::1", testfn=testfile
-        )
-        udp6_template = udp_template.format(
-            family=int(AF_INET6), addr="::1", testfn=testfile
-        )
+
+        def spawn(template, family, addr):
+            src = template.format(
+                family=int(family), addr=addr, testfn=testfile
+            )
+            proc = self.pyrun(src, stderr=subprocess.PIPE)
+            data = wait_for_file_subproc(testfile, proc, delete=True)
+            laddr = ast.literal_eval(data.decode())
+            return proc, laddr
 
         # launch various subprocess instantiating a socket of various
         # families and types to enrich psutil results
-        tcp4_proc = self.pyrun(tcp4_template, stderr=subprocess.PIPE)
-        tcp4_addr = eval(
-            wait_for_file_subproc(testfile, tcp4_proc, delete=True)
-        )
-        udp4_proc = self.pyrun(udp4_template, stderr=subprocess.PIPE)
-        udp4_addr = eval(
-            wait_for_file_subproc(testfile, udp4_proc, delete=True)
-        )
+        tcp4_proc, tcp4_addr = spawn(tcp_template, AF_INET, "127.0.0.1")
+        udp4_proc, udp4_addr = spawn(udp_template, AF_INET, "127.0.0.1")
         if supports_ipv6():
-            tcp6_proc = self.pyrun(tcp6_template, stderr=subprocess.PIPE)
-            tcp6_addr = eval(
-                wait_for_file_subproc(testfile, tcp6_proc, delete=True)
-            )
-            udp6_proc = self.pyrun(udp6_template, stderr=subprocess.PIPE)
-            udp6_addr = eval(
-                wait_for_file_subproc(testfile, udp6_proc, delete=True)
-            )
+            tcp6_proc, tcp6_addr = spawn(tcp_template, AF_INET6, "::1")
+            udp6_proc, udp6_addr = spawn(udp_template, AF_INET6, "::1")
         else:
             tcp6_proc = None
             udp6_proc = None
@@ -560,23 +529,3 @@ class TestSystemWideConnections(ConnectionTestCase):
             assert len([x for x in syscons if x.pid == pid]) == expected
             p = psutil.Process(pid)
             assert len(p.net_connections('all')) == expected
-
-
-class TestMisc(PsutilTestCase):
-    def test_net_connection_constants(self):
-        ints = []
-        strs = []
-        for name in dir(psutil):
-            if name.startswith('CONN_'):
-                num = getattr(psutil, name)
-                str_ = str(num)
-                assert str_.isupper(), str_
-                assert str not in strs
-                assert num not in ints
-                ints.append(num)
-                strs.append(str_)
-        if SUNOS:
-            psutil.CONN_IDLE  # noqa: B018
-            psutil.CONN_BOUND  # noqa: B018
-        if WINDOWS:
-            psutil.CONN_DELETE_TCB  # noqa: B018

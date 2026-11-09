@@ -51,10 +51,10 @@ psutil_sys_vminfo(vm_statistics64_t vmstat) {
 }
 
 
-// Return system virtual memory stats. See:
+// Return system physical memory stats. See:
 // https://opensource.apple.com/source/system_cmds/system_cmds-790/vm_stat.tproj/vm_stat.c.auto.html
 PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
+psutil_memory_physical(PyObject *self, PyObject *args) {
     uint64_t total;
     unsigned long long active, inactive, wired, free, _speculative;
     unsigned long long available, used;
@@ -88,13 +88,13 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     // CLI utility.
     free -= _speculative;
 
-    if (!(pydict_add(dict, "total", "K", (unsigned long long)total)
-          | pydict_add(dict, "available", "K", available)
-          | pydict_add(dict, "used", "K", used)
-          | pydict_add(dict, "free", "K", free)
-          | pydict_add(dict, "active", "K", active)
-          | pydict_add(dict, "inactive", "K", inactive)
-          | pydict_add(dict, "wired", "K", wired)))
+    if (!pydict_add(dict, "total", "K", (unsigned long long)total)
+        || !pydict_add(dict, "available", "K", available)
+        || !pydict_add(dict, "used", "K", used)
+        || !pydict_add(dict, "free", "K", free)
+        || !pydict_add(dict, "active", "K", active)
+        || !pydict_add(dict, "inactive", "K", inactive)
+        || !pydict_add(dict, "wired", "K", wired))
         goto error;
 
     return dict;
@@ -106,7 +106,7 @@ error:
 
 
 PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
+psutil_memory_swap(PyObject *self, PyObject *args) {
     struct xsw_usage totals;
     vm_statistics64_data_t vmstat;
     long pagesize = psutil_getpagesize();

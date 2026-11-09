@@ -13,7 +13,7 @@
 
 
 PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
+psutil_memory_swap(PyObject *self, PyObject *args) {
     // XXX (arghhh!)
     // total/free swap mem: commented out as for some reason I can't
     // manage to get the same results shown by "swap -l", despite the
@@ -73,7 +73,6 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     kstat_ctl_t *kc;
     kstat_t *k;
     cpu_stat_t *cpu;
-    int cpu_count = 0;
     int flag = 0;
     uint_t sin = 0;
     uint_t sout = 0;
@@ -96,7 +95,6 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
             sin += cpu->cpu_vminfo.pgswapin;  // num pages swapped in
             sout += cpu->cpu_vminfo.pgswapout;  // num pages swapped out
         }
-        cpu_count += 1;
         k = k->ks_next;
     }
     kstat_close(kc);

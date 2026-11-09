@@ -13,15 +13,16 @@
     <br/>
 
     <div align="center">
-      <a href="https://clickpy.clickhouse.com/dashboard/psutil"><img src="https://static.pepy.tech/badge/psutil/month" alt="Downloads"></a>
+      <a href="https://clickpy.clickhouse.com/dashboard/psutil"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fsql-clickhouse.clickhouse.com%2F%3Fuser%3Dplay%26query%3DWITH%2B%2528SELECT%2Bmax%2528date%2529%2BFROM%2Bpypi.pypi_downloads_per_day%2BWHERE%2Bproject%253D%2527psutil%2527%2529%2BAS%2Bm%2BSELECT%2Bconcat%2528toString%2528round%2528sum%2528count%2529%2B%252F%2B1e6%2529%2529%252C%2B%2527M%2527%2529%2BAS%2Bn%2BFROM%2Bpypi.pypi_downloads_per_day%2BWHERE%2Bproject%253D%2527psutil%2527%2BAND%2Bdate%2B%253E%2Bm%2B-%2BtoIntervalMonth%25281%2529%2BAND%2Bdate%2B%253C%253D%2Bm%2BFORMAT%2BJSONEachRow&query=%24.n&label=downloads%2Fmonth&color=blue&cacheSeconds=86400" alt="Downloads"></a>
 
       <a href="https://repology.org/metapackage/python:psutil/versions"><img src="https://repology.org/badge/tiny-repos/python:psutil.svg" alt="Binary packages"></a>
 
       <a href="https://pypi.org/project/psutil"><img src="https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=yellowgreen" alt="Latest version"></a>
+
     </div>
 
     <div align="center">
-      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Atests"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/tests.yml.svg?label=Linux%2C%20macOS%2C%20Win" alt="Linux, macOS, Windows"></a>
+      <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Atests"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/tests.yml.svg?label=Linux%2C%20Windows%2C%20macOS" alt="Linux, Windows, macOS"></a>
 
       <a href="https://github.com/giampaolo/psutil/actions?query=workflow%3Absd"><img src="https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=BSD" alt="FreeBSD, NetBSD, OpenBSD"></a>
 
@@ -53,7 +54,7 @@ Adoption
 
 psutil is among the
 `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__ most-downloaded
-packages on PyPI, with **390+ million** downloads per month and **780,000+**
+packages on PyPI, with **320+ million** downloads per month and **790,000+**
 `GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__
 using it. See also `adoptions <https://psutil.io/adoption/>`__ and
 `alternatives <https://psutil.io/alternatives/>`__.
@@ -120,9 +121,9 @@ For the full API with more examples, see the
 
 .. code-block:: python
 
-    >>> psutil.virtual_memory()
-    svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, ...)
-    >>> psutil.swap_memory()
+    >>> psutil.memory_physical()
+    smem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, ...)
+    >>> psutil.memory_swap()
     sswap(total=2097147904, used=296128512, free=1801019392, percent=14.1, sin=304193536, sout=677842944)
 
 **Disks**
@@ -140,8 +141,8 @@ For the full API with more examples, see the
 .. code-block:: python
 
     >>> psutil.net_io_counters(pernic=True)
-    {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, ...),
-     'lo': netio(bytes_sent=2838627, bytes_recv=2838627, ...)}
+    {'eth0': snetio(bytes_sent=485291293, bytes_recv=6004858642, ...),
+     'lo': snetio(bytes_sent=2838627, bytes_recv=2838627, ...)}
     >>> psutil.net_connections(kind='tcp')
     [sconn(fd=115, family=2, type=1, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED', pid=1254),
      ...]
@@ -175,7 +176,7 @@ For the full API with more examples, see the
     [popenfile(path='/home/giampaolo/monit.py', fd=3, position=0, mode='r', flags=32768)]
     >>>
     >>> for p in psutil.process_iter(['pid', 'name']):
-    ...     print(p.pid, p.name())
+    ...     print(p.snapshot.pid, p.snapshot.name)
     ...
     1 systemd
     2 kthreadd

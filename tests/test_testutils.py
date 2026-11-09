@@ -26,6 +26,7 @@ from psutil._common import supports_ipv6
 from . import HAS_NET_CONNECTIONS_UNIX
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
+from . import PYTHON_SLEEP_CODE
 from . import PsutilTestCase
 from . import bind_socket
 from . import bind_unix_socket
@@ -312,7 +313,7 @@ class TestProcessUtils(PsutilTestCase):
         cmd = [
             PYTHON_EXE,
             "-c",
-            "import time; [time.sleep(0.1) for x in range(100)];",
+            PYTHON_SLEEP_CODE,
         ]
         p = psutil.Popen(
             cmd,
@@ -326,7 +327,7 @@ class TestProcessUtils(PsutilTestCase):
         # by PID
         pid = self.spawn_subproc().pid
         terminate(pid)
-        self.assert_pid_gone(p.pid)
+        self.assert_pid_gone(pid)
         terminate(pid)
         # zombie
         if POSIX:
@@ -339,7 +340,7 @@ class TestProcessUtils(PsutilTestCase):
 
 @serial
 class TestNetUtils(PsutilTestCase):
-    def bind_socket(self):
+    def test_bind_socket(self):
         port = get_free_port()
         with bind_socket(addr=('', port)) as s:
             assert s.getsockname()[1] == port
