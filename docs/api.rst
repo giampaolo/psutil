@@ -1562,7 +1562,9 @@ Exceptions
       ``0`` on Windows and macOS).
     - :field:`iowait`: (Linux) time spent waiting for blocking I/O to complete.
       (:term:`iowait`). Excluded from :field:`user` and :field:`system` times
-      count (because the CPU is idle).
+      count (because the CPU is idle). Always ``0`` unless delay accounting is
+      enabled (``sysctl kernel.task_delayacct=1``), which is off by default
+      since Linux 5.14.
 
     .. code-block:: pycon
 
