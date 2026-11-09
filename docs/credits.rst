@@ -125,6 +125,7 @@ Code contributors by year
 * :user:`Karl Hill <karlhillx>` - :gh:`2857`
 * :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`
 * :user:`Marcel Telka <mtelka>` - :gh:`2687`
+* :user:`Markus Frei <markuslf>` - :gh:`3002`
 * :user:`Omprakash Chauhan <omprakash2929>` - :gh:`2655`
 * :user:`Raj Sharma <raj3458>` - :gh:`3084`
 * :user:`Robert Kirkman <robertkirkman>` - :gh:`2611`

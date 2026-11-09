@@ -331,6 +331,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   (``fixed``, ``cdrom``, ...) for volume mount points.
 - :gh:`2941`: :func:`net_io_counters` raised :exc:`RuntimeError` if a NIC was
   disabled or unplugged mid-call. Now it's skipped.
+- :gh:`3002`: :func:`disk_io_counters` :field:`read_time` and
+  :field:`write_time` were in seconds instead of milliseconds.
 - :gh:`3016`: :meth:`Process.send_signal` with ``CTRL_C_EVENT`` or
   ``CTRL_BREAK_EVENT`` on PID 0 delivered the event to every process on the
   caller's console, the caller included. It now raises :exc:`AccessDenied`.
