@@ -577,6 +577,8 @@ class TestBytes2Human(PsutilTestCase):
         assert psutil.bytes2human(100001221) == "95.4M"
         assert psutil.bytes2human(1048575) == "1.0M"
         assert psutil.bytes2human(1099511627776) == "1.0T"
+        assert psutil.bytes2human(-1048575) == "-1.0M"
+        assert psutil.bytes2human(2**90) == "1024.0Y"
 
 
 # ===================================================================
