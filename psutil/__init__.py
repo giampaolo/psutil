@@ -2429,9 +2429,17 @@ def memory_swap() -> sswap:
     return _psplatform.memory_swap()
 
 
-# Soft deprecated aliases.
-virtual_memory = memory_physical
-swap_memory = memory_swap
+# soft deprecated aliases
+
+
+def virtual_memory() -> smem:
+    """SOFT-DEPRECATED alias for memory_physical()."""
+    return memory_physical()
+
+
+def swap_memory() -> sswap:
+    """SOFT-DEPRECATED alias for memory_swap()."""
+    return memory_swap()
 
 
 # =====================================================================

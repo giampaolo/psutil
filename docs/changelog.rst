@@ -130,7 +130,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2947`: psutil now emits a :exc:`RuntimeWarning` when it returns
   incomplete or approximated results (e.g. a failed sanity check on kernel
   data). Before, these were only visible with :envvar:`PSUTIL_DEBUG`.
-- :gh:`XXXX`: :meth:`Process.connections` now raises :exc:`FutureWarning`, and
+- :gh:`3113`: :meth:`Process.connections` now raises :exc:`FutureWarning`, and
   will be removed in 9.0. See
   :ref:`migration guide <migration-8.0-connections>`.
 

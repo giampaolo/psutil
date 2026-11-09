@@ -530,8 +530,10 @@ class TestMemoryAPIs(PsutilTestCase):
         assert mem.sout >= 0, mem
 
     def test_aliases(self):
-        assert psutil.virtual_memory is psutil.memory_physical
-        assert psutil.swap_memory is psutil.memory_swap
+        assert (
+            psutil.virtual_memory()._fields == psutil.memory_physical()._fields
+        )
+        assert psutil.swap_memory()._fields == psutil.memory_swap()._fields
         for name in (
             "memory_physical",
             "memory_swap",
