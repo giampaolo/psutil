@@ -196,8 +196,8 @@ CPU
   - :field:`interrupts`: number of
     :term:`hardware interrupts <hardware interrupt>`.
   - :field:`soft_interrupts`: number of
-    :term:`soft interrupts <soft interrupt>`; always set to ``0`` on Windows
-    and SunOS.
+    :term:`soft interrupts <soft interrupt>`. On Windows these are deferred
+    procedure calls (DPCs). Always set to ``0`` on SunOS.
   - :field:`syscalls`: number of system calls; always set to ``0`` on Linux.
 
   .. code-block:: pycon
@@ -205,6 +205,9 @@ CPU
      >>> import psutil
      >>> psutil.cpu_stats()
      scpustats(ctx_switches=20455687, interrupts=6598984, soft_interrupts=2134212, syscalls=0)
+
+  .. versionchanged:: 8.0.0
+     Windows: :field:`soft_interrupts` is no longer always ``0``.
 
 .. function:: cpu_freq(percpu=False)
 

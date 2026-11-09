@@ -61,6 +61,8 @@ Changelog
   no longer set to ``0``.
 - :gh:`3023`, [FreeBSD], [OpenBSD]: :func:`net_io_counters` :field:`dropout` is
   no longer always ``0``.
+- :gh:`3119`, [Windows]: :func:`cpu_stats` :field:`soft_interrupts` is no
+  longer always ``0``. It's the number of deferred procedure calls (DPCs).
 - :gh:`2977`: new :func:`bytes2human` function, converting bytes to a
   human-readable string (e.g. ``9.8K``).
 - :gh:`1109`, [Linux]: :meth:`Process.memory_extras` returns a new

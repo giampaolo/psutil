@@ -241,9 +241,9 @@ def cpu_count_cores():
 
 def cpu_stats():
     """Return CPU statistics."""
-    ctx_switches, interrupts, _dpcs, syscalls = _psutil.cpu_stats()
-    soft_interrupts = 0
-    return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
+    ctx_switches, interrupts, dpcs, syscalls = _psutil.cpu_stats()
+    # DPCs are the Windows equivalent of soft interrupts
+    return ntp.scpustats(ctx_switches, interrupts, dpcs, syscalls)
 
 
 def cpu_freq():
