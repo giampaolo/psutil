@@ -147,13 +147,13 @@ class TestMemorySwap(MacosTestCase):
 
     @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_sin(self):
-        vmstat_val = vm_stat("Pageins")
+        vmstat_val = vm_stat("Swapins")
         psutil_val = psutil.memory_swap().sin
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
     @retry_on_failure(interval=VM_STAT_RETRY_INTERVAL)
     def test_sout(self):
-        vmstat_val = vm_stat("Pageout")
+        vmstat_val = vm_stat("Swapouts")
         psutil_val = psutil.memory_swap().sout
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
