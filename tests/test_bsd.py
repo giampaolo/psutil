@@ -12,6 +12,7 @@
 import datetime
 import os
 import re
+import resource
 import time
 from unittest import mock
 
@@ -23,6 +24,7 @@ from psutil import OPENBSD
 from psutil import _psutil
 
 from . import HAS_BATTERY
+from . import PYTHON_EXE
 from . import TOLERANCE_SYS_MEM
 from . import PsutilTestCase
 from . import df
@@ -130,6 +132,16 @@ class TestProcessAPIs(BSDTestCase):
         _parent, zombie = self.spawn_zombie()
         with pytest.raises(psutil.ZombieProcess):
             zombie.environ()
+
+    @skipif(not (OPENBSD or NETBSD), reason="NETBSD / OPENBSD only")
+    def test_cpu_times_children(self):
+        sh([PYTHON_EXE, "-c", "for x in range(3_000_000): pass"])
+        ru = resource.getrusage(resource.RUSAGE_CHILDREN)
+        times = psutil.Process().cpu_times()
+        assert times.children_user == pytest.approx(
+            ru.ru_utime + ru.ru_stime, abs=0.1
+        )
+        assert times.children_system == 0
 
 
 class TestVmstat(BSDTestCase):

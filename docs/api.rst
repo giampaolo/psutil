@@ -1545,8 +1545,9 @@ Exceptions
       refers to the current process, this matches
       :attr:`threading.Thread.native_id`, and can be used to reference
       individual Python threads in your app.
-    - :field:`user_time`: time spent in user mode.
-    - :field:`system_time`: time spent in kernel mode.
+    - :field:`user_time`: time spent in user mode. On NetBSD this is user +
+      system time, since NetBSD doesn't keep them separate.
+    - :field:`system_time`: time spent in kernel mode (always ``0`` on NetBSD).
 
   .. method:: cpu_times()
 
@@ -1557,9 +1558,10 @@ Exceptions
     - :field:`user`: time spent in user mode.
     - :field:`system`: time spent in kernel mode.
     - :field:`children_user`: user time of all child processes (always ``0`` on
-      Windows and macOS).
+      Windows and macOS). On OpenBSD and NetBSD this is user + system time,
+      since they don't keep them separate.
     - :field:`children_system`: system time of all child processes (always
-      ``0`` on Windows and macOS).
+      ``0`` on Windows, macOS, OpenBSD and NetBSD).
     - :field:`iowait`: (Linux) time spent waiting for blocking I/O to complete.
       (:term:`iowait`). Excluded from :field:`user` and :field:`system` times
       count (because the CPU is idle). Always ``0`` unless delay accounting is
