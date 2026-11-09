@@ -373,6 +373,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`3115`: :func:`cpu_stats` returned memory page counts instead of CPU
   statistics. All fields are now ``0``, since macOS doesn't keep these
   counters.
+- :gh:`3117`: :func:`memory_swap` :field:`sin` and :field:`sout` counted all
+  page-ins and page-outs, including file-backed ones, instead of swap-ins and
+  swap-outs.
 
 **Bug fixes: BSD**
 

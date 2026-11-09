@@ -125,8 +125,8 @@ psutil_memory_swap(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "total", "K", (unsigned long long)totals.xsu_total)) goto error;
     if (!pydict_add(dict, "used", "K", (unsigned long long)totals.xsu_used)) goto error;
     if (!pydict_add(dict, "free", "K", (unsigned long long)totals.xsu_avail)) goto error;
-    if (!pydict_add(dict, "sin", "K", (unsigned long long)vmstat.pageins * pagesize)) goto error;
-    if (!pydict_add(dict, "sout", "K", (unsigned long long)vmstat.pageouts * pagesize)) goto error;
+    if (!pydict_add(dict, "sin", "K", (unsigned long long)vmstat.swapins * pagesize)) goto error;
+    if (!pydict_add(dict, "sout", "K", (unsigned long long)vmstat.swapouts * pagesize)) goto error;
     // clang-format on
 
     return dict;
