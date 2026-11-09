@@ -129,6 +129,7 @@ psutil_posix_add_constants(PyObject *mod) {
     // Linux specific
 
 #ifdef RLIMIT_LOCKS
+    // no effect since Linux 2.4.25; kept for compat, undocumented
     PSUTIL_ADD_INT(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS);
 #endif
 #ifdef RLIMIT_MSGQUEUE
