@@ -127,7 +127,7 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
 // `init_loadavg_counter()` must be called first to engage the
 // mechanism that records load values.
 PyObject *
-psutil_get_loadavg(PyObject *self, PyObject *args) {
+psutil_getloadavg(PyObject *self, PyObject *args) {
     MUTEX_LOCK(&mutex);
     double load_avg_1m_l = load_avg_1m;
     double load_avg_5m_l = load_avg_5m;

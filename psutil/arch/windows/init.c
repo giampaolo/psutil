@@ -36,7 +36,7 @@ _WTSQuerySessionInformationW WTSQuerySessionInformationW = NULL;
 // Convert a NTSTATUS value to a Win32 error code and set the proper
 // Python exception.
 PVOID
-psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall) {
+psutil_oserror_ntstatus(NTSTATUS status, const char *syscall) {
     ULONG err;
     char fullmsg[1024];
 
@@ -104,7 +104,7 @@ load_dll_func(LPCSTR libname, LPCSTR apiname) {
 // since the UNIX epoch, that is the time 00:00:00 UTC on 1 January
 // 1970.
 static double
-_to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
+to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
     ULONGLONG ret;
 
     // 100 nanosecond intervals since January 1, 1601.
@@ -118,16 +118,16 @@ _to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
 
 
 double
-psutil_FiletimeToUnixTime(FILETIME ft) {
-    return _to_unix_time(
+psutil_filetime_to_unix(FILETIME ft) {
+    return to_unix_time(
         (ULONGLONG)ft.dwHighDateTime, (ULONGLONG)ft.dwLowDateTime
     );
 }
 
 
 double
-psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
-    return _to_unix_time((ULONGLONG)li.HighPart, (ULONGLONG)li.LowPart);
+psutil_largeint_to_unix(LARGE_INTEGER li) {
+    return to_unix_time((ULONGLONG)li.HighPart, (ULONGLONG)li.LowPart);
 }
 
 
@@ -205,7 +205,7 @@ check_winver() {
     versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
     status = RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(status, "RtlGetVersion");
+        psutil_oserror_ntstatus(status, "RtlGetVersion");
         return -1;
     }
     maj = versionInfo.dwMajorVersion;

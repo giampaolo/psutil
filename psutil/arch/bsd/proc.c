@@ -263,7 +263,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
 #endif
     if (!kd) {
-        convert_kvm_err("kvm_openfiles", errbuf);
+        psutil_convert_kvm_err("kvm_openfiles", errbuf);
         return NULL;
     }
 

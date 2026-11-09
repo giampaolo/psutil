@@ -528,7 +528,7 @@ class Process:
         for tid in tids:
             tid = int(tid)
             try:
-                utime, stime = _psutil.query_process_thread(
+                utime, stime = _psutil.proc_query_thread(
                     self.pid, tid, procfs_path
                 )
             except OSError as err:

@@ -14,7 +14,7 @@ extern uint64_t PSUTIL_HW_TBFREQUENCY;
 
 int psutil_setup_osx(void);
 int _psutil_pids(pid_t **pids_array, int *pids_count);
-int is_zombie(size_t pid);
+int psutil_is_zombie(size_t pid);
 
 int psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp);
 int psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax);

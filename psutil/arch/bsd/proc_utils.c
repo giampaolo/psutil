@@ -103,7 +103,7 @@ kinfo_getfile(pid_t pid, int *cnt) {
 
 
 int
-is_zombie(size_t pid) {
+psutil_is_zombie(size_t pid) {
 #ifdef PSUTIL_NETBSD
     struct kinfo_proc2 kp;
 #else
