@@ -1584,7 +1584,7 @@ class Process:
         _check_conn_kind(kind)
         return self._proc.net_connections(kind)
 
-    @_common.deprecated_method(replacement="net_connections")
+    @_common.deprecated_method(replacement="net_connections", removed_in="9.0")
     def connections(self, kind="inet") -> list[pconn]:
         return self.net_connections(kind=kind)
 

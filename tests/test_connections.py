@@ -99,6 +99,10 @@ class TestBasicOperations(ConnectionTestCase):
         with pytest.raises(ValueError):
             psutil.net_connections(kind='???')
 
+    def test_connections_deprecated(self):
+        with pytest.warns(FutureWarning, match="psutil 9.0"):
+            psutil.Process().connections()
+
 
 @serial
 class TestUnconnectedSockets(ConnectionTestCase):

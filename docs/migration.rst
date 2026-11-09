@@ -196,6 +196,16 @@ working. Only code inspecting :func:`repr` or :class:`type` needs updating.
 (:field:`uss`, plus :field:`pss` and :field:`swap` on Linux) and adds a new
 :field:`shared` field.
 
+.. _migration-8.0-connections:
+
+:meth:`~Process.connections` raises :exc:`FutureWarning`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:meth:`Process.connections`, deprecated since 6.0, now raises
+:exc:`FutureWarning` instead of :exc:`DeprecationWarning`, so it's shown by
+default. It will be removed in 9.0. Use :meth:`Process.net_connections` instead
+(see :ref:`migration-6.0`).
+
 .. _migration-8.0-memory-extras:
 
 New :meth:`~Process.memory_extras` method

@@ -2062,7 +2062,8 @@ Exceptions
     Same as :meth:`net_connections` (deprecated).
 
     .. deprecated:: 6.0.0
-       use :meth:`net_connections` instead.
+       use :meth:`net_connections` instead. It raises :exc:`FutureWarning`
+       since 8.0.0, and will be removed in 9.0.
 
   .. method:: is_running()
 
