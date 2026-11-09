@@ -453,7 +453,7 @@ error:
 
 
 static int
-psutil_GetProcWsetInformation(
+get_proc_wset_info(
     DWORD pid, HANDLE hProcess, PMEMORY_WORKING_SET_INFORMATION *wSetInfo
 ) {
     NTSTATUS status;
@@ -528,7 +528,7 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
     if (hProcess == NULL)
         return NULL;
 
-    if (psutil_GetProcWsetInformation(pid, hProcess, &wsInfo) != 0) {
+    if (get_proc_wset_info(pid, hProcess, &wsInfo) != 0) {
         CloseHandle(hProcess);
         return NULL;
     }

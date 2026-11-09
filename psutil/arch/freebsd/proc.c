@@ -15,7 +15,7 @@
 
 // remove spaces from string
 static void
-psutil_remove_spaces(char *str) {
+remove_spaces(char *str) {
     char *p1 = str;
     char *p2 = str;
     do
@@ -306,7 +306,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             ptrwidth,
             (uintmax_t)kve->kve_end
         );
-        psutil_remove_spaces(addr);
+        remove_spaces(addr);
         str_append(
             perms,
             sizeof(perms),

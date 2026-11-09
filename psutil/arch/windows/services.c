@@ -17,7 +17,7 @@
 
 
 static SC_HANDLE
-psutil_get_service_handler(
+get_service_handler(
     const wchar_t *service_name, DWORD scm_access, DWORD access
 ) {
     SC_HANDLE sc = NULL;
@@ -49,7 +49,7 @@ psutil_get_service_handler(
 // helper: parse args, convert to wchar, and open service
 // returns NULL on error. On success, fills *service_name_out.
 static SC_HANDLE
-psutil_get_service_from_args(
+get_service_from_args(
     PyObject *args, DWORD scm_access, DWORD access, wchar_t **service_name_out
 ) {
     PyObject *py_service_name = NULL;
@@ -66,7 +66,7 @@ psutil_get_service_from_args(
         return NULL;
     }
 
-    hService = psutil_get_service_handler(service_name, scm_access, access);
+    hService = get_service_handler(service_name, scm_access, access);
     if (hService == NULL) {
         PyMem_Free(service_name);
         return NULL;
@@ -241,7 +241,7 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     PyObject *py_unicode_binpath = NULL;
     PyObject *py_unicode_username = NULL;
 
-    hService = psutil_get_service_from_args(
+    hService = get_service_from_args(
         args, SC_MANAGER_ENUMERATE_SERVICE, SERVICE_QUERY_CONFIG, &service_name
     );
     if (hService == NULL)
@@ -338,7 +338,7 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
     SERVICE_STATUS_PROCESS *ssp = NULL;
     PyObject *py_tuple = NULL;
 
-    hService = psutil_get_service_from_args(
+    hService = get_service_from_args(
         args, SC_MANAGER_ENUMERATE_SERVICE, SERVICE_QUERY_STATUS, &service_name
     );
     if (hService == NULL)
@@ -409,7 +409,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     wchar_t *service_name = NULL;
     PyObject *py_retstr = NULL;
 
-    hService = psutil_get_service_from_args(
+    hService = get_service_from_args(
         args, SC_MANAGER_ENUMERATE_SERVICE, SERVICE_QUERY_CONFIG, &service_name
     );
     if (hService == NULL)
@@ -494,7 +494,7 @@ psutil_winservice_start(PyObject *self, PyObject *args) {
     SC_HANDLE hService = NULL;
     wchar_t *service_name = NULL;
 
-    hService = psutil_get_service_from_args(
+    hService = get_service_from_args(
         args, SC_MANAGER_ALL_ACCESS, SERVICE_START, &service_name
     );
     if (hService == NULL)
@@ -531,7 +531,7 @@ psutil_winservice_stop(PyObject *self, PyObject *args) {
     SC_HANDLE hService = NULL;
     SERVICE_STATUS ssp;
 
-    hService = psutil_get_service_from_args(
+    hService = get_service_from_args(
         args, SC_MANAGER_ALL_ACCESS, SERVICE_STOP, &service_name
     );
     if (hService == NULL)

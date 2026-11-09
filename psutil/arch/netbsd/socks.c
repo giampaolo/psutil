@@ -42,14 +42,14 @@ SLIST_HEAD(kpcbhead, kpcb) kpcbhead = SLIST_HEAD_INITIALIZER(kpcbhead);
 
 // Initialize kinfo_file results list.
 static void
-psutil_kiflist_init(void) {
+kiflist_init(void) {
     SLIST_INIT(&kihead);
 }
 
 
 // Clear kinfo_file results list.
 static void
-psutil_kiflist_clear(void) {
+kiflist_clear(void) {
     while (!SLIST_EMPTY(&kihead)) {
         struct kif *kif = SLIST_FIRST(&kihead);
         SLIST_REMOVE_HEAD(&kihead, kifs);
@@ -62,14 +62,14 @@ psutil_kiflist_clear(void) {
 
 // Initialize kinof_pcb result list.
 static void
-psutil_kpcblist_init(void) {
+kpcblist_init(void) {
     SLIST_INIT(&kpcbhead);
 }
 
 
 // Clear kinof_pcb result list.
 static void
-psutil_kpcblist_clear(void) {
+kpcblist_clear(void) {
     while (!SLIST_EMPTY(&kpcbhead)) {
         struct kpcb *kpcb = SLIST_FIRST(&kpcbhead);
         SLIST_REMOVE_HEAD(&kpcbhead, kpcbs);
@@ -82,7 +82,7 @@ psutil_kpcblist_clear(void) {
 
 // Get all open files including socket.
 static int
-psutil_get_files(void) {
+collect_open_files(void) {
     size_t len;
     size_t j;
     int mib[6];
@@ -159,7 +159,7 @@ error:
 
 // Get open sockets.
 static int
-psutil_get_sockets(const char *name) {
+get_sockets(const char *name) {
     size_t namelen;
     int mib[8];
     struct kinfo_pcb *pcb = NULL;
@@ -236,79 +236,79 @@ error:
 
 // Collect open file and connections.
 static int
-psutil_get_info(char *kind) {
+collect_socket_pcbs(char *kind) {
     if (strcmp(kind, "inet") == 0) {
-        if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+        if (get_sockets("net.inet.tcp.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+        if (get_sockets("net.inet.udp.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+        if (get_sockets("net.inet6.tcp6.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+        if (get_sockets("net.inet6.udp6.pcblist") != 0)
             return -1;
     }
     else if (strcmp(kind, "inet4") == 0) {
-        if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+        if (get_sockets("net.inet.tcp.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+        if (get_sockets("net.inet.udp.pcblist") != 0)
             return -1;
     }
     else if (strcmp(kind, "inet6") == 0) {
-        if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+        if (get_sockets("net.inet6.tcp6.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+        if (get_sockets("net.inet6.udp6.pcblist") != 0)
             return -1;
     }
     else if (strcmp(kind, "tcp") == 0) {
-        if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+        if (get_sockets("net.inet.tcp.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+        if (get_sockets("net.inet6.tcp6.pcblist") != 0)
             return -1;
     }
     else if (strcmp(kind, "tcp4") == 0) {
-        if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+        if (get_sockets("net.inet.tcp.pcblist") != 0)
             return -1;
     }
     else if (strcmp(kind, "tcp6") == 0) {
-        if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+        if (get_sockets("net.inet6.tcp6.pcblist") != 0)
             return -1;
     }
     else if (strcmp(kind, "udp") == 0) {
-        if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+        if (get_sockets("net.inet.udp.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+        if (get_sockets("net.inet6.udp6.pcblist") != 0)
             return -1;
     }
     else if (strcmp(kind, "udp4") == 0) {
-        if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+        if (get_sockets("net.inet.udp.pcblist") != 0)
             return -1;
     }
     else if (strcmp(kind, "udp6") == 0) {
-        if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+        if (get_sockets("net.inet6.udp6.pcblist") != 0)
             return -1;
     }
     else if (strcmp(kind, "unix") == 0) {
-        if (psutil_get_sockets("net.local.stream.pcblist") != 0)
+        if (get_sockets("net.local.stream.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.local.seqpacket.pcblist") != 0)
+        if (get_sockets("net.local.seqpacket.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.local.dgram.pcblist") != 0)
+        if (get_sockets("net.local.dgram.pcblist") != 0)
             return -1;
     }
     else if (strcmp(kind, "all") == 0) {
-        if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+        if (get_sockets("net.inet.tcp.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+        if (get_sockets("net.inet.udp.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+        if (get_sockets("net.inet6.tcp6.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+        if (get_sockets("net.inet6.udp6.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.local.stream.pcblist") != 0)
+        if (get_sockets("net.local.stream.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.local.seqpacket.pcblist") != 0)
+        if (get_sockets("net.local.seqpacket.pcblist") != 0)
             return -1;
-        if (psutil_get_sockets("net.local.dgram.pcblist") != 0)
+        if (get_sockets("net.local.dgram.pcblist") != 0)
             return -1;
     }
     else {
@@ -342,12 +342,12 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    psutil_kiflist_init();
-    psutil_kpcblist_init();
+    kiflist_init();
+    kpcblist_init();
 
-    if (psutil_get_files() != 0)
+    if (collect_open_files() != 0)
         goto error;
-    if (psutil_get_info(kind) != 0)
+    if (collect_socket_pcbs(kind) != 0)
         goto error;
 
     struct kif *k;
@@ -457,13 +457,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         }
     }
 
-    psutil_kiflist_clear();
-    psutil_kpcblist_clear();
+    kiflist_clear();
+    kpcblist_clear();
     return py_retlist;
 
 error:
-    psutil_kiflist_clear();
-    psutil_kpcblist_clear();
+    kiflist_clear();
+    kpcblist_clear();
     Py_DECREF(py_retlist);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);

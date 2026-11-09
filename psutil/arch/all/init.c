@@ -46,7 +46,7 @@ psutil_setup(void) {
 // module. PyModule_AddObject() steals a ref on success only, so INCREF
 // first and drop it again on failure.
 static int
-_psutil_add_exception(
+_add_exception(
     PyObject *mod, const char *name, const char *qualname, PyObject **dst
 ) {
     if (*dst == NULL) {
@@ -67,11 +67,11 @@ _psutil_add_exception(
 int
 psutil_add_exceptions(PyObject *mod) {
 #ifdef PSUTIL_WINDOWS
-    if (_psutil_add_exception(
+    if (_add_exception(
             mod, "TimeoutExpired", "_psutil.TimeoutExpired", &TimeoutExpired
         ))
         return -1;
-    if (_psutil_add_exception(
+    if (_add_exception(
             mod,
             "TimeoutAbandoned",
             "_psutil.TimeoutAbandoned",
@@ -79,7 +79,7 @@ psutil_add_exceptions(PyObject *mod) {
         ))
         return -1;
 #elif defined(PSUTIL_POSIX)
-    if (_psutil_add_exception(
+    if (_add_exception(
             mod,
             "ZombieProcessError",
             "_psutil.ZombieProcessError",

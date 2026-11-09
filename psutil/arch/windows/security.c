@@ -16,7 +16,7 @@
 // Enable or disable `Privilege` on `hToken`. Return 0 on success, else
 // the Win32 error code.
 static DWORD
-psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
+set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
     TOKEN_PRIVILEGES tp;
     LUID luid;
     // Zeroed because AdjustTokenPrivileges() leaves Privileges[0]
@@ -73,7 +73,7 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
 // Return the token of the current process, or NULL, in which case
 // `err` is set to the Win32 error code.
 static HANDLE
-psutil_get_thisproc_token(DWORD *err) {
+get_thisproc_token(DWORD *err) {
     HANDLE hToken = NULL;
     HANDLE me = GetCurrentProcess();
 
@@ -132,16 +132,16 @@ psutil_set_se_debug() {
     HANDLE hToken;
     DWORD err = 0;
 
-    if ((hToken = psutil_get_thisproc_token(&err)) == NULL) {
+    if ((hToken = get_thisproc_token(&err)) == NULL) {
         sedebug_warn(err);
         return 0;
     }
 
-    err = psutil_set_privilege(hToken, SE_DEBUG_NAME, TRUE);
+    err = set_privilege(hToken, SE_DEBUG_NAME, TRUE);
     if (err != 0)
         sedebug_warn(err);
 
-    RevertToSelf();  // in case psutil_get_thisproc_token() impersonated
+    RevertToSelf();  // in case get_thisproc_token() impersonated
     CloseHandle(hToken);
     return 0;
 }

@@ -19,7 +19,7 @@
 
 
 static int
-psutil_sys_vminfo(vm_statistics64_t vmstat) {
+sys_vminfo(vm_statistics64_t vmstat) {
     kern_return_t ret;
     integer_t buf[HOST_INFO_MAX];
     mach_msg_type_number_t count = HOST_INFO_MAX;
@@ -69,7 +69,7 @@ psutil_memory_physical(PyObject *self, PyObject *args) {
     // This is also available as sysctlbyname("hw.memsize").
     if (psutil_sysctl(mib, 2, &total, sizeof(total)) != 0)
         goto error;
-    if (psutil_sys_vminfo(&vm) != 0)
+    if (sys_vminfo(&vm) != 0)
         goto error;
 
     active = (unsigned long long)vm.active_count * pagesize;
@@ -118,7 +118,7 @@ psutil_memory_swap(PyObject *self, PyObject *args) {
 
     if (psutil_sysctl(mib, 2, &totals, sizeof(totals)) != 0)
         goto error;
-    if (psutil_sys_vminfo(&vmstat) != 0)
+    if (sys_vminfo(&vmstat) != 0)
         goto error;
 
     // clang-format off

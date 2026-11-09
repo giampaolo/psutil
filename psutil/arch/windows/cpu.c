@@ -14,7 +14,7 @@
 // Return the number of logical, active CPUs. Return 0 if undetermined.
 // See discussion at: https://bugs.python.org/issue33166#msg314631
 static unsigned int
-psutil_get_num_cpus(int fail_on_err) {
+get_num_cpus(int fail_on_err) {
     unsigned int ncpus;
 
     ncpus = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
@@ -67,7 +67,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         return NULL;
 
     // retrieves number of processors
-    ncpus = psutil_get_num_cpus(1);
+    ncpus = get_num_cpus(1);
     if (ncpus == 0)
         goto error;
 
@@ -140,7 +140,7 @@ PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     unsigned int ncpus;
 
-    ncpus = psutil_get_num_cpus(0);
+    ncpus = get_num_cpus(0);
     if (ncpus != 0)
         return Py_BuildValue("I", ncpus);
     else
@@ -239,7 +239,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     ULONG syscalls;
 
     // retrieves number of processors
-    ncpus = psutil_get_num_cpus(1);
+    ncpus = get_num_cpus(1);
     if (ncpus == 0)
         goto error;
 
@@ -352,7 +352,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     unsigned int ncpus;
 
     // Get the number of CPUs.
-    ncpus = psutil_get_num_cpus(1);
+    ncpus = get_num_cpus(1);
     if (ncpus == 0)
         return NULL;
 

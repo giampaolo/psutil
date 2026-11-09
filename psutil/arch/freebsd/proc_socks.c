@@ -24,7 +24,7 @@
 
 // The tcplist fetching and walking is borrowed from netstat/inet.c.
 static char *
-psutil_fetch_tcplist(void) {
+fetch_tcplist(void) {
     char *buf;
     size_t len;
 
@@ -49,7 +49,7 @@ psutil_fetch_tcplist(void) {
 
 
 static int
-psutil_sockaddr_port(int family, struct sockaddr_storage *ss) {
+sockaddr_port(int family, struct sockaddr_storage *ss) {
     struct sockaddr_in6 *sin6;
     struct sockaddr_in *sin;
 
@@ -65,7 +65,7 @@ psutil_sockaddr_port(int family, struct sockaddr_storage *ss) {
 
 
 static void *
-psutil_sockaddr_addr(int family, struct sockaddr_storage *ss) {
+sockaddr_addr(int family, struct sockaddr_storage *ss) {
     struct sockaddr_in6 *sin6;
     struct sockaddr_in *sin;
 
@@ -81,7 +81,7 @@ psutil_sockaddr_addr(int family, struct sockaddr_storage *ss) {
 
 
 static socklen_t
-psutil_sockaddr_addrlen(int family) {
+sockaddr_addrlen(int family) {
     if (family == AF_INET)
         return (sizeof(struct in_addr));
     else
@@ -90,17 +90,13 @@ psutil_sockaddr_addrlen(int family) {
 
 
 static int
-psutil_sockaddr_matches(
+sockaddr_matches(
     int family, int port, void *pcb_addr, struct sockaddr_storage *ss
 ) {
-    if (psutil_sockaddr_port(family, ss) != port)
+    if (sockaddr_port(family, ss) != port)
         return (0);
     return (
-        memcmp(
-            psutil_sockaddr_addr(family, ss),
-            pcb_addr,
-            psutil_sockaddr_addrlen(family)
-        )
+        memcmp(sockaddr_addr(family, ss), pcb_addr, sockaddr_addrlen(family))
         == 0
     );
 }
@@ -108,12 +104,12 @@ psutil_sockaddr_matches(
 
 #if __FreeBSD_version >= 1200026
 static struct xtcpcb *
-psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
+search_tcplist(char *buf, struct kinfo_file *kif) {
     struct xtcpcb *tp;
     struct xinpcb *inp;
 #else
 static struct tcpcb *
-psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
+search_tcplist(char *buf, struct kinfo_file *kif) {
     struct tcpcb *tp;
     struct inpcb *inp;
 #endif
@@ -141,7 +137,7 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
             continue;
 
         if (kif->kf_sock_domain == AF_INET) {
-            if (!psutil_sockaddr_matches(
+            if (!sockaddr_matches(
                     AF_INET,
                     inp->inp_lport,
                     &inp->inp_laddr,
@@ -153,7 +149,7 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
                 ))
 #endif
                 continue;
-            if (!psutil_sockaddr_matches(
+            if (!sockaddr_matches(
                     AF_INET,
                     inp->inp_fport,
                     &inp->inp_faddr,
@@ -167,7 +163,7 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
                 continue;
         }
         else {
-            if (!psutil_sockaddr_matches(
+            if (!sockaddr_matches(
                     AF_INET6,
                     inp->inp_lport,
                     &inp->in6p_laddr,
@@ -179,7 +175,7 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
                 ))
 #endif
                 continue;
-            if (!psutil_sockaddr_matches(
+            if (!sockaddr_matches(
                     AF_INET6,
                     inp->inp_fport,
                     &inp->in6p_faddr,
@@ -239,7 +235,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    tcplist = psutil_fetch_tcplist();
+    tcplist = fetch_tcplist();
     if (tcplist == NULL) {
         psutil_oserror();
         goto error;
@@ -273,7 +269,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 // fill status
                 state = PSUTIL_CONN_NONE;
                 if (kif->kf_sock_type == SOCK_STREAM) {
-                    tcp = psutil_search_tcplist(tcplist, kif);
+                    tcp = search_tcplist(tcplist, kif);
                     if (tcp != NULL)
                         state = (int)tcp->t_state;
                 }
@@ -281,7 +277,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 // build addr and port
                 inet_ntop(
                     kif->kf_sock_domain,
-                    psutil_sockaddr_addr(
+                    sockaddr_addr(
                         kif->kf_sock_domain,
 #if __FreeBSD_version < 1200031
                         &kif->kf_sa_local
@@ -295,7 +291,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 );
                 inet_ntop(
                     kif->kf_sock_domain,
-                    psutil_sockaddr_addr(
+                    sockaddr_addr(
                         kif->kf_sock_domain,
 #if __FreeBSD_version < 1200031
                         &kif->kf_sa_peer
@@ -307,7 +303,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                     rip,
                     sizeof(rip)
                 );
-                lport = htons(psutil_sockaddr_port(
+                lport = htons(sockaddr_port(
                     kif->kf_sock_domain,
 #if __FreeBSD_version < 1200031
                     &kif->kf_sa_local
@@ -316,7 +312,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                     &kif->kf_un.kf_sock.kf_sa_local
                 ));
 #endif
-                rport = htons(psutil_sockaddr_port(
+                rport = htons(sockaddr_port(
                     kif->kf_sock_domain,
 #if __FreeBSD_version < 1200031
                     &kif->kf_sa_peer

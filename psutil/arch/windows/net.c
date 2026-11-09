@@ -31,7 +31,7 @@
 
 
 static PIP_ADAPTER_ADDRESSES
-psutil_get_nic_addresses(ULONG flags) {
+get_nic_addresses(ULONG flags) {
     // A 15KB buffer is recommended by MSDN as it's usually big enough
     // to make GetAdaptersAddresses() succeed on the first call, saving
     // an extra (expensive) syscall to determine the required size.
@@ -93,7 +93,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
-    pAddresses = psutil_get_nic_addresses(GAA_FLAGS_SKIP_UNICAST);
+    pAddresses = get_nic_addresses(GAA_FLAGS_SKIP_UNICAST);
     if (pAddresses == NULL)
         goto error;
 
@@ -192,7 +192,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    pAddresses = psutil_get_nic_addresses(GAA_FLAGS);
+    pAddresses = get_nic_addresses(GAA_FLAGS);
     if (pAddresses == NULL)
         goto error;
     pCurrAddresses = pAddresses;
@@ -450,7 +450,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
 
-    pAddresses = psutil_get_nic_addresses(GAA_FLAGS_SKIP_UNICAST);
+    pAddresses = get_nic_addresses(GAA_FLAGS_SKIP_UNICAST);
     if (pAddresses == NULL)
         goto error;
 

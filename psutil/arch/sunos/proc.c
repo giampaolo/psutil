@@ -14,7 +14,7 @@
 
 // Read a file content and fills a C structure with it.
 static int
-psutil_file_to_struct(char *path, void *fstruct, size_t size) {
+file_to_struct(char *path, void *fstruct, size_t size) {
     int fd;
     ssize_t nbytes;
 
@@ -54,7 +54,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
         return NULL;
 
     str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
-    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
         "ikkdiiilIIII",
@@ -94,7 +94,7 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
-    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
     py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
@@ -191,7 +191,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
         return PyErr_NoMemory();
 
     str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
-    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!file_to_struct(path, (void *)&info, sizeof(info)))
         goto error;
 
     if (!info.pr_envp) {
@@ -252,7 +252,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     str_format(path, sizeof(path), "%s/%i/status", procfs_path, pid);
-    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     // results are more precise than os.times()
     return Py_BuildValue(
@@ -351,7 +351,7 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     str_format(path, sizeof(path), "%s/%i/cred", procfs_path, pid);
-    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
         "IIIIII",
@@ -375,7 +375,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     str_format(path, sizeof(path), "%s/%i/usage", procfs_path, pid);
-    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("kk", info.pr_vctx, info.pr_ictx);
 }
@@ -391,7 +391,7 @@ psutil_proc_page_faults(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     str_format(path, sizeof(path), "%s/%i/usage", procfs_path, pid);
-    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("(kk)", info.pr_minf, info.pr_majf);
 }
@@ -418,7 +418,7 @@ proc_io_counters(PyObject* self, PyObject* args) {
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     str_format(path, sizeof(path), "%s/%i/usage", procfs_path, pid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (! file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
     // On Solaris we only have 'pr_ioch' which accounts for bytes read
@@ -448,7 +448,7 @@ psutil_proc_query_thread(PyObject *self, PyObject *args) {
     str_format(
         path, sizeof(path), "%s/%i/lwp/%i/lwpstatus", procfs_path, pid, tid
     );
-    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
         "dd", PSUTIL_TV2DOUBLE(info.pr_utime), PSUTIL_TV2DOUBLE(info.pr_stime)
@@ -483,7 +483,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         goto error;
 
     str_format(path, sizeof(path), "%s/%i/status", procfs_path, pid);
-    if (!psutil_file_to_struct(path, (void *)&status, sizeof(status)))
+    if (!file_to_struct(path, (void *)&status, sizeof(status)))
         goto error;
 
     str_format(path, sizeof(path), "%s/%i/xmap", procfs_path, pid);

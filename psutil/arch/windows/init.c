@@ -14,7 +14,7 @@
 SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 
-// Declared extern in ntextapi.h, assigned by psutil_loadlibs() below.
+// Declared extern in ntextapi.h, assigned by load_libs() below.
 _NtQueryInformationProcess NtQueryInformationProcess = NULL;
 _NtQueryObject NtQueryObject = NULL;
 _NtQuerySystemInformation NtQuerySystemInformation = NULL;
@@ -137,7 +137,7 @@ psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
 
 
 static int
-psutil_loadlibs() {
+load_libs() {
     // clang-format off
     // --- Mandatory. ntdll is loaded in every process, so
     // GetModuleHandle is enough.
@@ -197,7 +197,7 @@ psutil_loadlibs() {
 
 
 static int
-psutil_check_winver() {
+check_winver() {
     RTL_OSVERSIONINFOEXW versionInfo;
     NTSTATUS status;
     ULONG maj;
@@ -229,9 +229,9 @@ psutil_check_winver() {
 // Called on module import.
 int
 psutil_setup_windows(void) {
-    if (psutil_loadlibs() != 0)
+    if (load_libs() != 0)
         return -1;
-    if (psutil_check_winver() != 0)
+    if (check_winver() != 0)
         return -1;
     GetSystemInfo(&PSUTIL_SYSTEM_INFO);
     InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);

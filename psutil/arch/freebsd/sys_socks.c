@@ -27,7 +27,7 @@
 
 
 static int
-psutil_populate_xfiles(struct xfile **psutil_xfiles, int *psutil_nxfiles) {
+populate_xfiles(struct xfile **psutil_xfiles, int *psutil_nxfiles) {
     struct xfile *new_psutil_xfiles;
     size_t len = sizeof(struct xfile);
 
@@ -54,7 +54,7 @@ psutil_populate_xfiles(struct xfile **psutil_xfiles, int *psutil_nxfiles) {
 
 
 static struct xfile *
-psutil_get_file_from_sock(
+get_file_from_sock(
     kvaddr_t sock, struct xfile *psutil_xfiles, int psutil_nxfiles
 ) {
     struct xfile *xf;
@@ -71,7 +71,7 @@ psutil_get_file_from_sock(
 // Reference:
 // https://github.com/freebsd/freebsd/blob/master/usr.bin/sockstat/sockstat.c
 static int
-psutil_gather_inet(
+gather_inet(
     int proto,
     const psutil_conn_filters *filters,
     PyObject *py_retlist,
@@ -183,9 +183,7 @@ psutil_gather_inet(
 
         char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
 
-        xf = psutil_get_file_from_sock(
-            so->xso_so, psutil_xfiles, psutil_nxfiles
-        );
+        xf = get_file_from_sock(so->xso_so, psutil_xfiles, psutil_nxfiles);
         if (xf == NULL)
             continue;
         lport = ntohs(inp->inp_lport);
@@ -242,7 +240,7 @@ error:
 
 
 static int
-psutil_gather_unix(
+gather_unix(
     int proto,
     PyObject *py_retlist,
     struct xfile *psutil_xfiles,
@@ -307,7 +305,7 @@ psutil_gather_unix(
         if (xup->xu_len != sizeof *xup)
             goto error;
 
-        xf = psutil_get_file_from_sock(
+        xf = get_file_from_sock(
             xup->xu_socket.xso_so, psutil_xfiles, psutil_nxfiles
         );
         if (xf == NULL)
@@ -376,12 +374,12 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    if (psutil_populate_xfiles(&psutil_xfiles, &psutil_nxfiles) != 0)
+    if (populate_xfiles(&psutil_xfiles, &psutil_nxfiles) != 0)
         goto error_free_psutil_xfiles;
 
     // TCP
     if (filters.tcp) {
-        if (psutil_gather_inet(
+        if (gather_inet(
                 IPPROTO_TCP,
                 &filters,
                 py_retlist,
@@ -395,7 +393,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     }
     // UDP
     if (filters.udp) {
-        if (psutil_gather_inet(
+        if (gather_inet(
                 IPPROTO_UDP,
                 &filters,
                 py_retlist,
@@ -409,14 +407,10 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     }
     // UNIX
     if (filters.unix_) {
-        if (psutil_gather_unix(
-                SOCK_STREAM, py_retlist, psutil_xfiles, psutil_nxfiles
-            )
+        if (gather_unix(SOCK_STREAM, py_retlist, psutil_xfiles, psutil_nxfiles)
             != 0)
             goto error_free_psutil_xfiles;
-        if (psutil_gather_unix(
-                SOCK_DGRAM, py_retlist, psutil_xfiles, psutil_nxfiles
-            )
+        if (gather_unix(SOCK_DGRAM, py_retlist, psutil_xfiles, psutil_nxfiles)
             != 0)
             goto error_free_psutil_xfiles;
     }

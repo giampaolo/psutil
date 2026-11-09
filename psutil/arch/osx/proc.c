@@ -240,7 +240,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 // Return true if the given virtual address on the given architecture
 // is in the shared VM region.
 static bool
-psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
+in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
     mach_vm_address_t base;
     mach_vm_address_t size;
 
@@ -346,7 +346,7 @@ typedef struct {
 
 
 static int
-psutil_oinfo_add(
+oinfo_add(
     psutil_oinfo_slot **tab,
     size_t *cap,
     size_t *len,
@@ -462,7 +462,7 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
         }
         nregions += 1;
 
-        if (!(psutil_in_shared_region(ri.pri_address, cpu_type)
+        if (!(in_shared_region(ri.pri_address, cpu_type)
               && ri.pri_share_mode != SM_PRIVATE))
         {
             switch (ri.pri_share_mode) {
@@ -481,7 +481,7 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
                         // only have one reference.
                         private_pages += ri.pri_shared_pages_resident;
                     }
-                    else if (psutil_oinfo_add(
+                    else if (oinfo_add(
                                  &oinfo,
                                  &oinfo_cap,
                                  &oinfo_len,
@@ -497,7 +497,7 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
                     }
                     break;
                 case SM_SHARED:
-                    if (psutil_oinfo_add(
+                    if (oinfo_add(
                             &oinfo,
                             &oinfo_cap,
                             &oinfo_len,
