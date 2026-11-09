@@ -633,7 +633,7 @@ def bytes2human(n):
         if abs(n) >= prefix[symbol]:
             value = float(n) / prefix[symbol]
             return f"{value:.1f}{symbol}"
-    return f"{float(n):.1f}{symbols[0]}"
+    return f"{int(n)}{symbols[0]}"
 
 
 def decode(s):

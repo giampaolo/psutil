@@ -571,8 +571,8 @@ class TestCommonModule(PsutilTestCase):
 class TestBytes2Human(PsutilTestCase):
 
     def test_basic(self):
-        assert psutil.bytes2human(0) == "0.0B"
-        assert psutil.bytes2human(1000) == "1000.0B"
+        assert psutil.bytes2human(0) == "0B"
+        assert psutil.bytes2human(1000) == "1000B"
         assert psutil.bytes2human(10000) == "9.8K"
         assert psutil.bytes2human(100001221) == "95.4M"
         assert psutil.bytes2human(1099511627776) == "1.0T"
