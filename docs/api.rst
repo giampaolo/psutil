@@ -306,7 +306,8 @@ Memory
     :field:`buffers` and :field:`cached` are aliases.
   - :field:`cached` *(Linux, BSD, Windows)*: RAM used by the kernel to cache
     file contents (data read from or written to disk). On OpenBSD
-    :field:`buffers` and :field:`cached` are aliases. See :term:`page cache`.
+    :field:`buffers` and :field:`cached` are aliases. Always 0 on FreeBSD. See
+    :term:`page cache`.
   - :field:`shared` *(Linux, BSD)*: :term:`shared memory` accessible by
     multiple processes simultaneously, such as in-memory ``tmpfs`` and POSIX
     shared memory objects (``shm_open``). On Linux this corresponds to
@@ -342,12 +343,12 @@ Memory
        - ``MemAvailable``
        - ``inactive + free``
        - ``PhysicalAvailable``
-       - ``inactive + cached + free``
+       - ``inactive + free``
      * - used
        - ``total - available``
        - ``active + wired``
        - ``total - available``
-       - ``active + wired + cached``
+       - ``active + wired``
      * - free
        - ``MemFree``
        - ``free - speculative``
@@ -372,7 +373,7 @@ Memory
        - ``Cached + SReclaimable``
        -
        - ``SystemCache``
-       - ``sysctl() vm.stats.vm.v_cache_count``
+       - always 0
      * - shared
        - ``Shmem``
        -

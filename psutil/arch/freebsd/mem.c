@@ -30,7 +30,7 @@ PyObject *
 psutil_memory_physical(PyObject *self, PyObject *args) {
     unsigned long _total;
     long _buffers;
-    unsigned int _active, _inactive, _wired, _cached, _free;
+    unsigned int _active, _inactive, _wired, _free;
     unsigned long long total, buffers, active, inactive, wired, cached, free;
     unsigned long long avail, used, shared;
     double percent;
@@ -56,12 +56,6 @@ psutil_memory_physical(PyObject *self, PyObject *args) {
     if (sbn("vfs.bufspace", &_buffers, sizeof(_buffers)) != 0)
         goto error;
 
-    // Optional; ignore error if not avail
-    if (sbn("vm.stats.vm.v_cache_count", &_cached, sizeof(_cached)) != 0) {
-        PyErr_Clear();
-        _cached = 0;
-    }
-
     if (psutil_sysctl(mib, 2, &vm, sizeof(vm)) != 0)
         goto error;
 
@@ -71,7 +65,8 @@ psutil_memory_physical(PyObject *self, PyObject *args) {
     active = (unsigned long long)_active * pagesize;
     inactive = (unsigned long long)_inactive * pagesize;
     wired = (unsigned long long)_wired * pagesize;
-    cached = (unsigned long long)_cached * pagesize;
+    // no cache queue since FreeBSD 12
+    cached = 0;
     shared = (unsigned long long)(vm.t_vmshr + vm.t_rmshr) * pagesize;
 
     // matches freebsd-memory CLI:
@@ -79,8 +74,8 @@ psutil_memory_physical(PyObject *self, PyObject *args) {
     // * https://www.cyberciti.biz/files/scripts/freebsd-memory.pl.txt
     // matches zabbix:
     // * https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/freebsd/memory.c#L143
-    avail = (inactive + cached + free);
-    used = (active + wired + cached);
+    avail = (inactive + free);
+    used = (active + wired);
     percent = psutil_usage_percent((double)(total - avail), (double)total, 1);
 
     if (!pydict_add(dict, "total", "K", total)

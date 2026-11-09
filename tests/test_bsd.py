@@ -457,11 +457,6 @@ class TestFreeBSDMemory(FreeBSDTestCase):
         assert abs(psutil.memory_physical().wired - syst) < TOLERANCE_SYS_MEM
 
     @retry_on_failure
-    def test_mem_cached(self):
-        syst = sysctl("vm.stats.vm.v_cache_count") * PAGESIZE
-        assert abs(psutil.memory_physical().cached - syst) < TOLERANCE_SYS_MEM
-
-    @retry_on_failure
     def test_mem_free(self):
         syst = sysctl("vm.stats.vm.v_free_count") * PAGESIZE
         assert abs(psutil.memory_physical().free - syst) < TOLERANCE_SYS_MEM
