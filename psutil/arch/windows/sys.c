@@ -41,7 +41,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
         SystemTimeOfDayInformation, &info, sizeof(info), NULL
     );
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
+        psutil_oserror_ntstatus(
             status, "NtQuerySystemInformation(SystemTimeOfDayInformation)"
         );
         return NULL;

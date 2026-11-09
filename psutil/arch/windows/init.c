@@ -36,7 +36,7 @@ _WTSQuerySessionInformationW WTSQuerySessionInformationW = NULL;
 // Convert a NTSTATUS value to a Win32 error code and set the proper
 // Python exception.
 PVOID
-psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall) {
+psutil_oserror_ntstatus(NTSTATUS status, const char *syscall) {
     ULONG err;
     char fullmsg[1024];
 
@@ -205,7 +205,7 @@ check_winver() {
     versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
     status = RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(status, "RtlGetVersion");
+        psutil_oserror_ntstatus(status, "RtlGetVersion");
         return -1;
     }
     maj = versionInfo.dwMajorVersion;

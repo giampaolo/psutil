@@ -171,7 +171,7 @@ psutil_raise_for_nt_status(DWORD pid, NTSTATUS status, const char *syscall) {
         // report the original NTSTATUS failure instead
         PyErr_Clear();
     }
-    return psutil_SetFromNTStatusErr(status, syscall);
+    return psutil_oserror_ntstatus(status, syscall);
 }
 
 
@@ -213,7 +213,7 @@ psutil_proc_table(PVOID *retBuffer) {
     }
 
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
+        psutil_oserror_ntstatus(
             status, "NtQuerySystemInformation(SystemProcessInformation)"
         );
         free(buffer);

@@ -110,7 +110,7 @@ get_proc_data(DWORD pid, enum peb_kind kind, WCHAR **pdata, SIZE_T *psize) {
     );
 
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
+        psutil_oserror_ntstatus(
             status, "NtQueryInformationProcess(ProcessWow64Information)"
         );
         goto error;
@@ -178,7 +178,7 @@ get_proc_data(DWORD pid, enum peb_kind kind, WCHAR **pdata, SIZE_T *psize) {
         );
 
         if (!NT_SUCCESS(status)) {
-            psutil_SetFromNTStatusErr(
+            psutil_oserror_ntstatus(
                 status, "NtQueryInformationProcess(ProcessBasicInformation)"
             );
             goto error;
@@ -283,7 +283,7 @@ get_cmdline_nopeb(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     if (status != STATUS_BUFFER_OVERFLOW && status != STATUS_BUFFER_TOO_SMALL
         && status != STATUS_INFO_LENGTH_MISMATCH)
     {
-        psutil_SetFromNTStatusErr(
+        psutil_oserror_ntstatus(
             status, "NtQueryInformationProcess(ProcessCommandLineInformation)"
         );
         goto error;
@@ -301,7 +301,7 @@ get_cmdline_nopeb(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
         hProcess, ProcessCommandLineInformation, buffer, bufLen, &bufLen
     );
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
+        psutil_oserror_ntstatus(
             status, "NtQueryInformationProcess(ProcessCommandLineInformation)"
         );
         goto error;

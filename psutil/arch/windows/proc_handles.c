@@ -155,7 +155,7 @@ get_file_type_index(ULONG *indexOut) {
     } while (--attempts);
 
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(status, "NtQueryObject");
+        psutil_oserror_ntstatus(status, "NtQueryObject");
         if (typesInfo != NULL)
             FREE(typesInfo);
         return -1;
@@ -215,7 +215,7 @@ enum_process_handles(
     } while (--attempts);
 
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(status, "NtQueryInformationProcess");
+        psutil_oserror_ntstatus(status, "NtQueryInformationProcess");
         if (buffer != NULL)
             FREE(buffer);
         return -1;
@@ -445,7 +445,7 @@ worker_get_filename(
     } while (--attempts);
 
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(status, "NtQueryObject");
+        psutil_oserror_ntstatus(status, "NtQueryObject");
         if (name != NULL)
             FREE(name);
         return -1;

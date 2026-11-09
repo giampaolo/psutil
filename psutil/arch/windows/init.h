@@ -36,7 +36,7 @@ extern CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 double psutil_FiletimeToUnixTime(FILETIME ft);
 double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);
 int psutil_setup_windows(void);
-PVOID psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall);
+PVOID psutil_oserror_ntstatus(NTSTATUS status, const char *syscall);
 
 extern PyObject *TimeoutExpired;
 extern PyObject *TimeoutAbandoned;

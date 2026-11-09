@@ -89,7 +89,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         &retlen
     );
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
+        psutil_oserror_ntstatus(
             status,
             "NtQuerySystemInformation(SystemProcessorPerformanceInformation)"
         );
@@ -258,7 +258,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         NULL
     );
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
+        psutil_oserror_ntstatus(
             status, "NtQuerySystemInformation(SystemPerformanceInformation)"
         );
         goto error;
@@ -280,7 +280,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         &retlen
     );
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
+        psutil_oserror_ntstatus(
             status, "NtQuerySystemInformation(SystemInterruptInformation)"
         );
         goto error;
@@ -309,7 +309,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         &retlen
     );
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
+        psutil_oserror_ntstatus(
             status,
             "NtQuerySystemInformation(SystemProcessorPerformanceInformation)"
         );
@@ -367,7 +367,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     // Syscall.
     ret = CallNtPowerInformation(ProcessorInformation, NULL, 0, pBuffer, size);
     if (!NT_SUCCESS(ret)) {
-        psutil_SetFromNTStatusErr(ret, "CallNtPowerInformation");
+        psutil_oserror_ntstatus(ret, "CallNtPowerInformation");
         goto error;
     }
 

@@ -583,7 +583,7 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
 
     if (!NT_SUCCESS(status)) {
         CloseHandle(hProcess);
-        return psutil_SetFromNTStatusErr(status, "NtSuspend|ResumeProcess");
+        return psutil_oserror_ntstatus(status, "NtSuspend|ResumeProcess");
     }
 
     CloseHandle(hProcess);
@@ -889,7 +889,7 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
 
     CloseHandle(hProcess);
     if (!NT_SUCCESS(status))
-        return psutil_SetFromNTStatusErr(status, "NtQueryInformationProcess");
+        return psutil_oserror_ntstatus(status, "NtQueryInformationProcess");
     return Py_BuildValue("i", IoPriority);
 }
 
@@ -915,7 +915,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 
     CloseHandle(hProcess);
     if (!NT_SUCCESS(status))
-        return psutil_SetFromNTStatusErr(status, "NtSetInformationProcess");
+        return psutil_oserror_ntstatus(status, "NtSetInformationProcess");
     Py_RETURN_NONE;
 }
 
@@ -1144,7 +1144,7 @@ psutil_proc_ppid(PyObject *self, PyObject *args) {
     );
     CloseHandle(hProcess);
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
+        psutil_oserror_ntstatus(
             status, "NtQueryInformationProcess(ProcessBasicInformation)"
         );
         return NULL;
