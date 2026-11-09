@@ -12,7 +12,7 @@
 
 
 void
-convert_kvm_err(const char *syscall, char *errbuf) {
+psutil_convert_kvm_err(const char *syscall, char *errbuf) {
     char fullmsg[512];
 
     str_format(

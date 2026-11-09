@@ -33,7 +33,7 @@ struct kinfo_file *kinfo_getfile(pid_t pid, int *cnt);
 #endif
 
 int psutil_kinfo_proc(pid_t pid, void *proc);
-void convert_kvm_err(const char *syscall, char *errbuf);
+void psutil_convert_kvm_err(const char *syscall, char *errbuf);
 int psutil_is_zombie(size_t pid);
 
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);

@@ -90,7 +90,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
         Py_END_ALLOW_THREADS
         if (!kd) {
-            convert_kvm_err("kvm_openfiles()", errbuf);
+            psutil_convert_kvm_err("kvm_openfiles()", errbuf);
             goto error;
         }
     }
