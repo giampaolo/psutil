@@ -23,8 +23,8 @@
 #define TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
 // Read a file content and fills a C structure with it.
-int
-psutil_file_to_struct(char *path, void *fstruct, size_t size) {
+static int
+file_to_struct(char *path, void *fstruct, size_t size) {
     int fd;
     size_t nbytes;
     fd = open(path, O_RDONLY);
@@ -40,7 +40,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     }
     if (nbytes != size) {
         close(fd);
-        psutil_runtime_error("psutil_file_to_struct() size mismatch");
+        psutil_runtime_error("file_to_struct() size mismatch");
         return 0;
     }
     close(fd);
@@ -110,7 +110,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
         return NULL;
 
     str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
-    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
     if (info.pr_nlwp == 0 && info.pr_lwp.pr_lwpid == 0) {
@@ -125,7 +125,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
     }
     else {
         str_format(path, sizeof(path), "%s/%i/status", procfs_path, pid);
-        if (!psutil_file_to_struct(path, (void *)&status, sizeof(status)))
+        if (!file_to_struct(path, (void *)&status, sizeof(status)))
             return NULL;
     }
 
@@ -153,7 +153,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
-    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
     return PyUnicode_DecodeFSDefaultAndSize(info.pr_fname, PRFNSZ);
@@ -383,7 +383,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     str_format(path, sizeof(path), "%s/%i/status", procfs_path, pid);
-    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     // results are more precise than os.times()
     return Py_BuildValue(
@@ -407,7 +407,7 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     str_format(path, sizeof(path), "%s/%i/cred", procfs_path, pid);
-    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
         "KKKKKK",

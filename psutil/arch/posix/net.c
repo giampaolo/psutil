@@ -48,8 +48,8 @@
 
 // Translate a sockaddr struct into a Python string.
 // Return None if address family is not AF_INET* or AF_PACKET.
-PyObject *
-psutil_convert_ipaddr(struct sockaddr *addr, int family) {
+static PyObject *
+convert_ipaddr(struct sockaddr *addr, int family) {
     char buf[NI_MAXHOST];
     int err;
     int addrlen;
@@ -150,7 +150,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
         family = ifa->ifa_addr->sa_family;
 
-        py_address = psutil_convert_ipaddr(ifa->ifa_addr, family);
+        py_address = convert_ipaddr(ifa->ifa_addr, family);
         if (py_address == Py_None) {  // virtual NIC
             Py_CLEAR(py_address);
             goto append_none;
@@ -158,17 +158,17 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
         if (py_address == NULL)
             goto error;
 
-        py_netmask = psutil_convert_ipaddr(ifa->ifa_netmask, family);
+        py_netmask = convert_ipaddr(ifa->ifa_netmask, family);
         if (py_netmask == NULL)
             goto error;
 
         if (ifa->ifa_flags & IFF_BROADCAST) {
-            py_broadcast = psutil_convert_ipaddr(ifa->ifa_broadaddr, family);
+            py_broadcast = convert_ipaddr(ifa->ifa_broadaddr, family);
             Py_INCREF(Py_None);
             py_ptp = Py_None;
         }
         else if (ifa->ifa_flags & IFF_POINTOPOINT) {
-            py_ptp = psutil_convert_ipaddr(ifa->ifa_dstaddr, family);
+            py_ptp = convert_ipaddr(ifa->ifa_dstaddr, family);
             Py_INCREF(Py_None);
             py_broadcast = Py_None;
         }
@@ -502,8 +502,8 @@ error:
 // net_if_stats() macOS/BSD implementation.
 #ifdef PSUTIL_HAS_NET_IF_DUPLEX_SPEED
 
-int
-psutil_get_nic_speed(int ifm_active) {
+static int
+get_nic_speed(int ifm_active) {
     // Determine NIC speed. Taken from:
     // http://www.i-scream.org/libstatgrab/
     // Assuming only ETHER devices
@@ -674,7 +674,7 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
         duplex = 0;
     }
     else {
-        speed = psutil_get_nic_speed(ifmed.ifm_active);
+        speed = get_nic_speed(ifmed.ifm_active);
         if ((ifmed.ifm_active | IFM_FDX) == ifmed.ifm_active)
             duplex = 2;
         else if ((ifmed.ifm_active | IFM_HDX) == ifmed.ifm_active)

@@ -43,8 +43,8 @@ double load_avg_15m = 0;
 // clang-format on
 
 
-VOID CALLBACK
-LoadAvgCallback(PVOID hCounter, BOOLEAN timedOut) {
+static VOID CALLBACK
+loadavg_callback(PVOID hCounter, BOOLEAN timedOut) {
     PDH_FMT_COUNTERVALUE displayValue;
     double currentLoad;
     PDH_STATUS err;
@@ -108,7 +108,7 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
     ret = RegisterWaitForSingleObject(
         &waitHandle,
         event,
-        (WAITORTIMERCALLBACK)LoadAvgCallback,
+        (WAITORTIMERCALLBACK)loadavg_callback,
         (PVOID)hCounter,
         INFINITE,
         WT_EXECUTEDEFAULT
