@@ -40,7 +40,7 @@ static PyMethodDef mod_methods[] = {
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS},
     {"proc_oneshot", psutil_proc_oneshot, METH_VARARGS},
     {"proc_page_faults", psutil_proc_page_faults, METH_VARARGS},
-    {"query_process_thread", psutil_proc_query_thread, METH_VARARGS},
+    {"proc_query_thread", psutil_proc_query_thread, METH_VARARGS},
 
     // --- system-related functions
     {"boot_time", psutil_boot_time, METH_VARARGS},
