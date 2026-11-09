@@ -118,7 +118,7 @@ _to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
 
 
 double
-psutil_FiletimeToUnixTime(FILETIME ft) {
+psutil_filetime_to_unix(FILETIME ft) {
     return _to_unix_time(
         (ULONGLONG)ft.dwHighDateTime, (ULONGLONG)ft.dwLowDateTime
     );

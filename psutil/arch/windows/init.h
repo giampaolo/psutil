@@ -33,7 +33,7 @@ extern CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 #define AF_INET6 23
 #endif
 
-double psutil_FiletimeToUnixTime(FILETIME ft);
+double psutil_filetime_to_unix(FILETIME ft);
 double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);
 int psutil_setup_windows(void);
 PVOID psutil_oserror_ntstatus(NTSTATUS status, const char *syscall);

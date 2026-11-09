@@ -289,7 +289,7 @@ psutil_proc_times(PyObject *self, PyObject *args) {
         (double)(ftUser.dwHighDateTime * HI_T + ftUser.dwLowDateTime * LO_T),
         (double)(ftKernel.dwHighDateTime * HI_T + ftKernel.dwLowDateTime * LO_T
         ),
-        psutil_FiletimeToUnixTime(ftCreate)
+        psutil_filetime_to_unix(ftCreate)
     );
 }
 
