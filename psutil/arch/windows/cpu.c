@@ -327,7 +327,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     free(InterruptInformation);
     free(sppi);
     return Py_BuildValue(
-        "kkkk", ctx_switches, interrupts, (unsigned long)dpcs, syscalls
+        "kkKk", ctx_switches, interrupts, (unsigned long long)dpcs, syscalls
     );
 
 error:

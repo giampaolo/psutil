@@ -177,9 +177,12 @@ class TestCpuStats(WindowsTestCase):
         psutil_value = psutil.cpu_stats().interrupts
         assert abs(psutil_value - wmi_value) < 1000
 
+    @retry_on_failure
     def test_soft_interrupts(self):
-        # Always 0 on Windows.
-        assert psutil.cpu_stats().soft_interrupts == 0
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Processor(Name="_Total")[0]
+        wmi_value = int(w.DPCsQueuedPersec)
+        psutil_value = psutil.cpu_stats().soft_interrupts
+        assert abs(psutil_value - wmi_value) < 1000
 
 
 class TestMemoryPhysical(WindowsTestCase):
