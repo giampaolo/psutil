@@ -76,7 +76,7 @@ PyObject *psutil_disk_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_disk_partitions(PyObject *self, PyObject *args);
 PyObject *psutil_disk_usage(PyObject *self, PyObject *args);
 PyObject *psutil_drive_devices(PyObject *self, PyObject *args);
-PyObject *psutil_get_loadavg();
+PyObject *psutil_getloadavg();
 PyObject *psutil_get_open_files(HANDLE hProcess);
 PyObject *psutil_getpagesize(PyObject *self, PyObject *args);
 PyObject *psutil_heap_info(PyObject *self, PyObject *args);

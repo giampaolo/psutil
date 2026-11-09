@@ -63,7 +63,7 @@ static PyMethodDef PsutilMethods[] = {
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
     {"disk_usage", psutil_disk_usage, METH_VARARGS},
     {"drive_devices", psutil_drive_devices, METH_NOARGS},
-    {"getloadavg", (PyCFunction)psutil_get_loadavg, METH_VARARGS},
+    {"getloadavg", (PyCFunction)psutil_getloadavg, METH_VARARGS},
     {"getpagesize", psutil_getpagesize, METH_VARARGS},
     {"swap_percent", psutil_swap_percent, METH_NOARGS},
     {"init_loadavg_counter",
