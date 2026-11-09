@@ -11,6 +11,8 @@
 #include <windows.h>
 #include <wchar.h>
 #include <ws2tcpip.h>
+#include <winioctl.h>
+#include <ntddndis.h>
 
 #include "../../arch/all/init.h"
 
@@ -371,12 +373,72 @@ error:
 }
 
 
+// MIB_IF_ROW2 has no duplex, so we ask the NDIS driver.
+static int
+get_nic_duplex(const char *adapter_name) {
+    char path[MAX_ADAPTER_NAME_LENGTH + 8];
+    HANDLE hDevice;
+    ULONG oid = OID_GEN_LINK_STATE;
+    NDIS_LINK_STATE link_state;
+    DWORD retlen = 0;
+    BOOL ok;
+
+    if (str_format(path, sizeof(path), "\\\\.\\%s", adapter_name) < 0)
+        return MediaDuplexStateUnknown;
+
+    hDevice = CreateFileA(
+        path,
+        0,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        NULL,
+        OPEN_EXISTING,
+        0,
+        NULL
+    );
+    if (hDevice == INVALID_HANDLE_VALUE) {
+        psutil_debug("CreateFile(%s) failed (err=%lu)", path, GetLastError());
+        return MediaDuplexStateUnknown;
+    }
+
+    ok = DeviceIoControl(
+        hDevice,
+        IOCTL_NDIS_QUERY_GLOBAL_STATS,
+        &oid,
+        sizeof(oid),
+        &link_state,
+        sizeof(link_state),
+        &retlen,
+        NULL
+    );
+    if (!ok) {
+        // Fails right for virtual NICs (e.g. loopback).
+        psutil_debug(
+            "DeviceIoControl(%s, OID_GEN_LINK_STATE) failed (err=%lu)",
+            path,
+            GetLastError()
+        );
+        CloseHandle(hDevice);
+        return MediaDuplexStateUnknown;
+    }
+    CloseHandle(hDevice);
+
+    if (retlen < RTL_SIZEOF_THROUGH_FIELD(NDIS_LINK_STATE, MediaDuplexState))
+        return MediaDuplexStateUnknown;
+    if (link_state.MediaDuplexState != MediaDuplexStateHalf
+        && link_state.MediaDuplexState != MediaDuplexStateFull)
+    {
+        return MediaDuplexStateUnknown;
+    }
+    return link_state.MediaDuplexState;
+}
+
+
 // Provides stats about NIC interfaces installed on the system.
-// TODO: get 'duplex' (currently it's hard coded to '2', aka 'full duplex')
 PyObject *
 psutil_net_if_stats(PyObject *self, PyObject *args) {
     MIB_IF_ROW2 ifRow;
     DWORD dwRetVal = 0;
+    int duplex;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
 
@@ -432,10 +494,14 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         }
         Py_INCREF(py_is_up);
 
+        Py_BEGIN_ALLOW_THREADS
+        duplex = get_nic_duplex(pCurrAddresses->AdapterName);
+        Py_END_ALLOW_THREADS
+
         py_ifc_info = Py_BuildValue(
             "(OiKk)",
             py_is_up,
-            2,  // duplex is hard coded to 'full'
+            duplex,
             ifRow.TransmitLinkSpeed / 1000000,  // bits/s, we want Mb/s
             ifRow.Mtu
         );
