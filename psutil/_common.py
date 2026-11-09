@@ -626,14 +626,16 @@ def bytes2human(n):
     '95.4M'
     """
     symbols = ('B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+    if abs(n) < 1024:
+        return f"{int(n)}{symbols[0]}"
     prefix = {}
     for i, s in enumerate(symbols[1:]):
         prefix[s] = 1 << (i + 1) * 10
-    for symbol in reversed(symbols[1:]):
-        if abs(n) >= prefix[symbol]:
-            value = float(n) / prefix[symbol]
+    for symbol in symbols[1:]:
+        value = float(n) / prefix[symbol]
+        # 1023.96K would print as 1024.0K
+        if abs(round(value, 1)) < 1024 or symbol == symbols[-1]:
             return f"{value:.1f}{symbol}"
-    return f"{int(n)}{symbols[0]}"
 
 
 def decode(s):
