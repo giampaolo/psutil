@@ -147,7 +147,8 @@ def memory_swap():
     # memory" (physical + virtual), thus subtract the physical part
     # from it to get the "total swap".
     total_system = info["CommitLimit"] * pagesize  # physical + swap
-    total = total_system - total_phys
+    # with no page file CommitLimit is a bit less than physical memory
+    total = max(total_system - total_phys, 0)
 
     # commit total is incremented immediately (decrementing free_system)
     # while the corresponding free physical value is not decremented until

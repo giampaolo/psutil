@@ -227,12 +227,26 @@ class TestMemorySwap(WindowsTestCase):
     def test_total(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
-            int(w.CommitLimit) - psutil.memory_physical().total
+            max(int(w.CommitLimit) - psutil.memory_physical().total, 0)
             == psutil.memory_swap().total
         )
         if psutil.memory_swap().total == 0:
             assert psutil.memory_swap().free == 0
             assert psutil.memory_swap().used == 0
+
+    def test_no_page_file(self):
+        info = _psutil.GetPerformanceInfo()
+        info["CommitLimit"] = info["PhysicalTotal"] - 1000
+        with mock.patch(
+            "psutil._psplatform._psutil.GetPerformanceInfo",
+            return_value=info,
+        ) as m:
+            swap = psutil.memory_swap()
+        assert m.called
+        assert swap.total == 0
+        assert swap.used == 0
+        assert swap.free == 0
+        assert swap.percent == 0
 
     def test_percent(self):
         if psutil.memory_swap().total > 0:

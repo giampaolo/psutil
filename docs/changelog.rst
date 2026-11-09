@@ -347,6 +347,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`3108`: :func:`disk_partitions` gave volumes mounted in a folder the
   :field:`device`, :field:`fstype` and :field:`opts` of the drive holding the
   folder.
+- :gh:`3118`: :func:`memory_swap` returned a negative :field:`total` and
+  :field:`free` on systems with no page file. They are now ``0``.
 
 **Bug fixes: macOS**
 
