@@ -2754,10 +2754,6 @@ conjunction with :meth:`Process.rlimit`.
 
 - Linux specific:
 
-  .. data:: RLIMIT_LOCKS
-
-    Max :manpage:`flock(2)` locks and leases. No effect since Linux 2.4.25.
-
   .. data:: RLIMIT_MSGQUEUE
 
     Max bytes of POSIX message queues for the user (:manpage:`mq_open(3)`).

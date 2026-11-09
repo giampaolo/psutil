@@ -617,7 +617,7 @@ def bcat(fname, fallback=_DEFAULT):
     return cat(fname, fallback=fallback, _open=open_binary)
 
 
-def bytes2human(n):
+def bytes2human(n: int) -> str:
     """Convert n bytes to a human-readable string.
 
     >>> bytes2human(10000)
@@ -628,14 +628,13 @@ def bytes2human(n):
     symbols = ('B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
     if abs(n) < 1024:
         return f"{int(n)}{symbols[0]}"
-    prefix = {}
-    for i, s in enumerate(symbols[1:]):
-        prefix[s] = 1 << (i + 1) * 10
-    for symbol in symbols[1:]:
-        value = float(n) / prefix[symbol]
+    value = float(n)
+    for symbol in symbols[1:-1]:
+        value /= 1024
         # 1023.96K would print as 1024.0K
-        if abs(round(value, 1)) < 1024 or symbol == symbols[-1]:
+        if abs(round(value, 1)) < 1024:
             return f"{value:.1f}{symbol}"
+    return f"{value / 1024:.1f}{symbols[-1]}"
 
 
 def decode(s):
