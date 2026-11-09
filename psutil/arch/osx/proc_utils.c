@@ -51,7 +51,7 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 
 // Return 1 if PID a zombie, else 0 (including on error).
 int
-is_zombie(size_t pid) {
+psutil_is_zombie(size_t pid) {
     struct kinfo_proc kp;
 
     if (psutil_get_kinfo_proc(pid, &kp) == -1) {
@@ -81,7 +81,7 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
             return -1;
         }
 
-        if (is_zombie(pid) == 1) {
+        if (psutil_is_zombie(pid) == 1) {
             PyErr_SetString(ZombieProcessError, "");
             return -1;
         }
