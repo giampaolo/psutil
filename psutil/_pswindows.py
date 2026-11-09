@@ -91,26 +91,35 @@ TCP_STATUSES = {
 # =====================================================================
 
 
-@functools.lru_cache(maxsize=512)
-def convert_dos_path(s):
+device_drives = {}
+
+
+def convert_dos_path(path):
     r"""Convert paths using native DOS format like:
         "\Device\HarddiskVolume1\Windows\systemew\file.txt" or
         "\??\C:\Windows\systemew\file.txt"
     into:
         "C:\Windows\systemew\file.txt".
     """
-    if s.startswith('\\\\'):
-        return s
-    rawdrive = '\\'.join(s.split('\\')[:3])
-    if rawdrive in {"\\??\\UNC", "\\Device\\Mup"}:
-        rawdrive = '\\'.join(s.split('\\')[:5])
-        driveletter = '\\\\' + '\\'.join(s.split('\\')[3:5])
-    elif rawdrive.startswith('\\??\\'):
-        driveletter = s.split('\\')[2]
-    else:
-        driveletter = _psutil.QueryDosDevice(rawdrive)
-    remainder = s[len(rawdrive) :]
-    return os.path.join(driveletter, remainder)
+    global device_drives
+
+    if path.startswith("\\??\\UNC\\"):
+        return "\\\\" + path[8:]
+    if path.startswith("\\Device\\Mup\\"):
+        return "\\\\" + path[12:]
+    if path.startswith("\\??\\"):
+        return path[4:]
+    if path.startswith("\\Device\\"):
+        device = "\\".join(path.split("\\", 3)[:3])
+        if device not in device_drives:
+            # rebuild, in case a drive was mounted in the meantime
+            drives = _psutil.drive_devices()
+            device_drives = {v: k for k, v in drives.items()}
+        drive = device_drives.get(device)
+        if drive is not None:
+            return drive + path[len(device) :]
+    # no drive letter (e.g. a VSS shadow copy)
+    return path
 
 
 @functools.lru_cache

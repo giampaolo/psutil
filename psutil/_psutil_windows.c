@@ -62,6 +62,7 @@ static PyMethodDef PsutilMethods[] = {
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
     {"disk_usage", psutil_disk_usage, METH_VARARGS},
+    {"drive_devices", psutil_drive_devices, METH_NOARGS},
     {"getloadavg", (PyCFunction)psutil_get_loadavg, METH_VARARGS},
     {"getpagesize", psutil_getpagesize, METH_VARARGS},
     {"swap_percent", psutil_swap_percent, METH_NOARGS},
@@ -91,7 +92,6 @@ static PyMethodDef PsutilMethods[] = {
 
     // --- direct Windows APIs
     {"GetPerformanceInfo", psutil_GetPerformanceInfo, METH_VARARGS},
-    {"QueryDosDevice", psutil_QueryDosDevice, METH_VARARGS},
 
     // --- others
     {"check_pid_range", psutil_check_pid_range, METH_VARARGS},

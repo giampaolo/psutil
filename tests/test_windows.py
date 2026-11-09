@@ -463,13 +463,23 @@ class TestOtherSystemAPIs(WindowsTestCase):
         # Mocked normalized NT path
         ntpath2 = '\\Device\\HarddiskVolume1\\Windows\\Temp'
 
-        devices = {devicepath: driveletter}
+        drives = {driveletter: devicepath}
 
         with mock.patch.object(
-            _psutil, 'QueryDosDevice', side_effect=devices.get
+            psutil._pswindows, 'device_drives', {}
+        ), mock.patch.object(
+            _psutil, 'drive_devices', return_value=drives
         ) as m:
             assert psutil._pswindows.convert_dos_path(ntpath1) == winpath
             assert psutil._pswindows.convert_dos_path(ntpath2) == winpath
+            assert m.called
+
+    def test_convert_dos_path_no_drive(self):
+        ntpath = '\\Device\\HarddiskVolumeShadowCopy1\\Windows\\Temp'
+        with mock.patch.object(
+            psutil._pswindows, 'device_drives', {}
+        ), mock.patch.object(_psutil, 'drive_devices', return_value={}) as m:
+            assert psutil._pswindows.convert_dos_path(ntpath) == ntpath
             assert m.called
 
     def test_convert_dos_path_unc(self):

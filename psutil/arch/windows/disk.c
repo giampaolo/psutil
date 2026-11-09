@@ -471,37 +471,55 @@ error:
 }
 
 
-// Accept a filename's drive in native  format like "\Device\HarddiskVolume1\"
-// and return the corresponding drive letter (e.g. "C:\\").
-// If no match is found return an empty string.
+// Return a {"C:": "\Device\HarddiskVolume1", ...} dict.
 PyObject *
-psutil_QueryDosDevice(PyObject *self, PyObject *args) {
-    PyObject *py_device_path;
-    PyObject *py_ret = NULL;
-    wchar_t *device_path;
-    wchar_t d = L'A';
+psutil_drive_devices(PyObject *self, PyObject *args) {
+    DWORD drives;
+    wchar_t drive[3] = L"A:";
+    wchar_t target[512];
+    PyObject *py_drive = NULL;
+    PyObject *py_target = NULL;
+    PyObject *py_retdict = PyDict_New();
 
-    if (!PyArg_ParseTuple(args, "U", &py_device_path))
+    if (py_retdict == NULL)
         return NULL;
 
-    device_path = PyUnicode_AsWideCharString(py_device_path, NULL);
-    if (device_path == NULL)
-        return NULL;
-
-    while (d <= L'Z') {
-        wchar_t szDeviceName[3] = {d, L':', L'\0'};
-        wchar_t szTarget[512] = {0};
-        if (QueryDosDeviceW(szDeviceName, szTarget, 511) != 0) {
-            if (wcscmp(device_path, szTarget) == 0) {
-                py_ret = PyUnicode_FromWideChar(
-                    szDeviceName, wcslen(szDeviceName)
-                );
-                PyMem_Free(device_path);
-                return py_ret;
-            }
-        }
-        d++;
+    drives = GetLogicalDrives();
+    if (drives == 0) {
+        psutil_oserror_wsyscall("GetLogicalDrives");
+        goto error;
     }
-    PyMem_Free(device_path);
-    return PyUnicode_FromString("");
+
+    for (int i = 0; i < 26; i++) {
+        if (!(drives & (1 << i)))
+            continue;
+        drive[0] = (wchar_t)(L'A' + i);
+        if (QueryDosDeviceW(drive, target, _ARRAYSIZE(target)) == 0) {
+            // drive may have been unmounted in the meantime
+            psutil_debug(
+                "QueryDosDeviceW(%c:) failed (err=%lu)",
+                'A' + i,
+                GetLastError()
+            );
+            continue;
+        }
+        py_drive = PyUnicode_FromWideChar(drive, -1);
+        if (py_drive == NULL)
+            goto error;
+        py_target = PyUnicode_FromWideChar(target, -1);
+        if (py_target == NULL)
+            goto error;
+        if (PyDict_SetItem(py_retdict, py_drive, py_target) != 0)
+            goto error;
+        Py_CLEAR(py_drive);
+        Py_CLEAR(py_target);
+    }
+
+    return py_retdict;
+
+error:
+    Py_XDECREF(py_drive);
+    Py_XDECREF(py_target);
+    Py_DECREF(py_retdict);
+    return NULL;
 }
