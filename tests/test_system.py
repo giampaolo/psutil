@@ -45,8 +45,10 @@ from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import MACOS_12PLUS
+from . import TOLERANCE_DISK_USAGE
 from . import UNICODE_SUFFIX
 from . import PsutilTestCase
+from . import assert_ntuple_of_nums
 from . import check_net_address
 from . import pytest
 from . import retry_on_failure
@@ -321,6 +323,12 @@ class TestProcessAPIs(PsutilTestCase):
             p.terminate()
         psutil.wait_procs(procs)
 
+    def test_pids(self):
+        pids = psutil.pids()
+        assert pids == sorted(set(pids))
+        assert all(isinstance(pid, int) for pid in pids)
+        assert os.getpid() in pids
+
     def test_pid_exists(self):
         sproc = self.spawn_subproc()
         assert psutil.pid_exists(sproc.pid)
@@ -346,7 +354,7 @@ class TestProcessAPIs(PsutilTestCase):
             assert not psutil.pid_exists(pid)
 
 
-class TestMiscAPIs(PsutilTestCase):
+class TestOtherSystemAPIs(PsutilTestCase):
     def test_boot_time(self):
         bt = psutil.boot_time()
         assert isinstance(bt, float)
@@ -373,22 +381,6 @@ class TestMiscAPIs(PsutilTestCase):
                     assert user.pid is None
                 else:
                     psutil.Process(user.pid)
-
-    @skipif(not HAS_HEAP_INFO, reason="not supported")
-    def test_heap_info(self):
-        m = psutil.heap_info()
-        assert m.heap_used > 0
-        if MACOS:
-            # macOS doesn't support it.
-            assert m.mmap_used == 0
-        else:
-            assert m.mmap_used >= 0
-        if WINDOWS:
-            assert m.heap_count >= 0
-
-    @skipif(not HAS_HEAP_INFO, reason="not supported")
-    def test_heap_trim(self):
-        psutil.heap_trim()
 
     def test_os_constants(self):
         names = [
@@ -440,9 +432,27 @@ class TestMiscAPIs(PsutilTestCase):
             assert not getattr(psutil, name), name
 
 
+class TestHeapAPIs(PsutilTestCase):
+    @skipif(not HAS_HEAP_INFO, reason="not supported")
+    def test_heap_info(self):
+        m = psutil.heap_info()
+        assert m.heap_used > 0
+        if MACOS:
+            # macOS doesn't support it.
+            assert m.mmap_used == 0
+        else:
+            assert m.mmap_used >= 0
+        if WINDOWS:
+            assert m.heap_count >= 0
+
+    @skipif(not HAS_HEAP_INFO, reason="not supported")
+    def test_heap_trim(self):
+        psutil.heap_trim()
+
+
 class TestMemoryAPIs(PsutilTestCase):
-    def test_virtual_memory(self):
-        mem = psutil.virtual_memory()
+    def test_memory_physical(self):
+        mem = psutil.memory_physical()
         assert mem.total > 0, mem
         assert mem.available > 0, mem
         assert 0 <= mem.percent <= 100, mem
@@ -460,8 +470,8 @@ class TestMemoryAPIs(PsutilTestCase):
                         f"{name!r} > total (total={mem.total}, {name}={value})"
                     )
 
-    def test_virtual_memory_fields_order(self):
-        mem = psutil.virtual_memory()
+    def test_memory_physical_fields_order(self):
+        mem = psutil.memory_physical()
         common = ("total", "available", "percent", "used", "free")
         assert mem._fields[:5] == common
         if LINUX:
@@ -496,8 +506,8 @@ class TestMemoryAPIs(PsutilTestCase):
         elif SUNOS or AIX:
             assert mem._fields[5:] == ()
 
-    def test_swap_memory(self):
-        mem = psutil.swap_memory()
+    def test_memory_swap(self):
+        mem = psutil.memory_swap()
         assert mem._fields == (
             'total',
             'used',
@@ -519,6 +529,19 @@ class TestMemoryAPIs(PsutilTestCase):
         assert mem.sin >= 0, mem
         assert mem.sout >= 0, mem
 
+    def test_aliases(self):
+        assert (
+            psutil.virtual_memory()._fields == psutil.memory_physical()._fields
+        )
+        assert psutil.swap_memory()._fields == psutil.memory_swap()._fields
+        for name in (
+            "memory_physical",
+            "memory_swap",
+            "virtual_memory",
+            "swap_memory",
+        ):
+            assert name in psutil.__all__
+
 
 class TestCpuAPIs(PsutilTestCase):
     def test_cpu_count_logical(self):
@@ -538,11 +561,8 @@ class TestCpuAPIs(PsutilTestCase):
         cores = psutil.cpu_count(logical=False)
         if cores is None:
             return pytest.skip("cpu_count_cores() is None")
-        if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista
-            assert cores is None
-        else:
-            assert cores >= 1
-            assert logical >= cores
+        assert cores >= 1
+        assert logical >= cores
 
     def test_cpu_count_none(self):
         # https://github.com/giampaolo/psutil/issues/1085
@@ -560,14 +580,8 @@ class TestCpuAPIs(PsutilTestCase):
 
     def test_cpu_times(self):
         # Check type, value >= 0, str().
-        total = 0
         times = psutil.cpu_times()
-        sum(times)
-        for cp_time in times:
-            assert isinstance(cp_time, float)
-            assert cp_time >= 0.0
-            total += cp_time
-        assert round(abs(total - sum(times)), 6) == 0
+        assert_ntuple_of_nums(times)
         str(times)
         # CPU times are always supposed to increase over time
         # or at least remain the same and that's because time
@@ -599,13 +613,7 @@ class TestCpuAPIs(PsutilTestCase):
     def test_per_cpu_times(self):
         # Check type, value >= 0, str().
         for times in psutil.cpu_times(percpu=True):
-            total = 0
-            sum(times)
-            for cp_time in times:
-                assert isinstance(cp_time, float)
-                assert cp_time >= 0.0
-                total += cp_time
-            assert round(abs(total - sum(times)), 6) == 0
+            assert_ntuple_of_nums(times)
             str(times)
         assert len(psutil.cpu_times(percpu=True)[0]) == len(
             psutil.cpu_times(percpu=False)
@@ -737,8 +745,8 @@ class TestCpuAPIs(PsutilTestCase):
         for name in infos._fields:
             value = getattr(infos, name)
             assert value >= 0
-            # on AIX, ctx_switches is always 0
-            if not AIX and name in {'ctx_switches', 'interrupts'}:
+            # always 0 on AIX (ctx_switches) and macOS
+            if not (AIX or MACOS) and name in {'ctx_switches', 'interrupts'}:
                 assert value > 0
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
@@ -746,10 +754,7 @@ class TestCpuAPIs(PsutilTestCase):
         def check_ls(ls):
             for nt in ls:
                 assert nt._fields == ('current', 'min', 'max')
-                for name in nt._fields:
-                    value = getattr(nt, name)
-                    assert isinstance(value, (int, float))
-                    assert value >= 0
+                assert_ntuple_of_nums(nt, type_=(int, float))
 
         ls = psutil.cpu_freq(percpu=True)
         if (FREEBSD or AARCH64) and not ls:
@@ -758,6 +763,7 @@ class TestCpuAPIs(PsutilTestCase):
             )
 
         assert ls, ls
+        check_ls(ls)
         check_ls([psutil.cpu_freq(percpu=False)])
 
         if LINUX:
@@ -798,12 +804,11 @@ class TestDiskAPIs(PsutilTestCase):
         assert 0 <= usage.percent <= 100, usage.percent
 
         shutil_usage = shutil.disk_usage(os.getcwd())
-        tolerance = 5 * 1024 * 1024  # 5MB
         assert usage.total == shutil_usage.total
-        assert abs(usage.free - shutil_usage.free) < tolerance
+        assert abs(usage.free - shutil_usage.free) < TOLERANCE_DISK_USAGE
         if not MACOS_12PLUS:
             # see https://github.com/giampaolo/psutil/issues/2147
-            assert abs(usage.used - shutil_usage.used) < tolerance
+            assert abs(usage.used - shutil_usage.used) < TOLERANCE_DISK_USAGE
 
         # if path does not exist FileNotFoundError is expected across
         # all platforms
@@ -830,9 +835,8 @@ class TestDiskAPIs(PsutilTestCase):
             assert isinstance(nt.fstype, str)
             assert isinstance(nt.opts, str)
 
-        # all = False
+        # all = False, can be empty (e.g. NFS or tmpfs root)
         ls = psutil.disk_partitions(all=False)
-        assert ls
         for disk in ls:
             check_ntuple(disk)
             if WINDOWS and 'cdrom' in disk.opts:
@@ -902,15 +906,12 @@ class TestDiskAPIs(PsutilTestCase):
                     assert nt[8] == nt.busy_time
                 elif FREEBSD:
                     assert nt[6] == nt.busy_time
-            for name in nt._fields:
-                assert getattr(nt, name) >= 0, nt
+            assert_ntuple_of_nums(nt, type_=int)
 
         ret = psutil.disk_io_counters(perdisk=False)
         assert ret is not None, "no disks on this system?"
         check_ntuple(ret)
         ret = psutil.disk_io_counters(perdisk=True)
-        # make sure there are no duplicates
-        assert len(ret) == len(set(ret))
         for key in ret:
             assert key, key
             check_ntuple(ret[key])
@@ -938,19 +939,12 @@ class TestNetAPIs(PsutilTestCase):
             assert nt[5] == nt.errout
             assert nt[6] == nt.dropin
             assert nt[7] == nt.dropout
-            assert nt.bytes_sent >= 0, nt
-            assert nt.bytes_recv >= 0, nt
-            assert nt.packets_sent >= 0, nt
-            assert nt.packets_recv >= 0, nt
-            assert nt.errin >= 0, nt
-            assert nt.errout >= 0, nt
-            assert nt.dropin >= 0, nt
-            assert nt.dropout >= 0, nt
+            assert_ntuple_of_nums(nt, type_=int)
 
         ret = psutil.net_io_counters(pernic=False)
         check_ntuple(ret)
         ret = psutil.net_io_counters(pernic=True)
-        assert ret != []
+        assert ret
         for key in ret:
             assert key
             assert isinstance(key, str)
@@ -1115,8 +1109,6 @@ class TestSensorsAPIs(PsutilTestCase):
             assert isinstance(name, str)
             for entry in entries:
                 assert isinstance(entry.label, str)
-                if entry.current is not None:
-                    assert entry.current >= 0
                 if entry.high is not None:
                     assert entry.high >= 0
                 if entry.critical is not None:

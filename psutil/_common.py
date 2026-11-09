@@ -428,22 +428,22 @@ def broadcast_addr(addr):
     return str(net.broadcast_address)
 
 
-def deprecated_method(replacement):
+def deprecated_method(replacement, removed_in):
     """A decorator which can be used to mark a method as deprecated
     'replacement' is the method name which will be called instead.
     """
 
     def outer(fun):
         msg = (
-            f"{fun.__name__}() is deprecated and will be removed; use"
-            f" {replacement}() instead"
+            f"{fun.__name__}() is deprecated and will be removed in psutil"
+            f" {removed_in}; use {replacement}() instead"
         )
         if fun.__doc__ is None:
             fun.__doc__ = msg
 
         @functools.wraps(fun)
         def inner(self, *args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            warnings.warn(msg, category=FutureWarning, stacklevel=2)
             return getattr(self, replacement)(*args, **kwargs)
 
         return inner
@@ -617,7 +617,7 @@ def bcat(fname, fallback=_DEFAULT):
     return cat(fname, fallback=fallback, _open=open_binary)
 
 
-def bytes2human(n):
+def bytes2human(n: int) -> str:
     """Convert n bytes to a human-readable string.
 
     >>> bytes2human(10000)
@@ -626,19 +626,15 @@ def bytes2human(n):
     '95.4M'
     """
     symbols = ('B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
-    prefix = {}
-    for i, s in enumerate(symbols[1:]):
-        prefix[s] = 1 << (i + 1) * 10
-    for symbol in reversed(symbols[1:]):
-        if abs(n) >= prefix[symbol]:
-            value = float(n) / prefix[symbol]
+    if abs(n) < 1024:
+        return f"{int(n)}{symbols[0]}"
+    value = float(n)
+    for symbol in symbols[1:-1]:
+        value /= 1024
+        # 1023.96K would print as 1024.0K
+        if abs(round(value, 1)) < 1024:
             return f"{value:.1f}{symbol}"
-    return f"{float(n):.1f}{symbols[0]}"
-
-
-def get_procfs_path():
-    """Return updated psutil.PROCFS_PATH constant."""
-    return sys.modules['psutil'].PROCFS_PATH
+    return f"{value / 1024:.1f}{symbols[-1]}"
 
 
 def decode(s):

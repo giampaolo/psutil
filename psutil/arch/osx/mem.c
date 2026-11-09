@@ -51,10 +51,10 @@ psutil_sys_vminfo(vm_statistics64_t vmstat) {
 }
 
 
-// Return system virtual memory stats. See:
+// Return system physical memory stats. See:
 // https://opensource.apple.com/source/system_cmds/system_cmds-790/vm_stat.tproj/vm_stat.c.auto.html
 PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
+psutil_memory_physical(PyObject *self, PyObject *args) {
     uint64_t total;
     unsigned long long active, inactive, wired, free, _speculative;
     unsigned long long available, used;
@@ -106,7 +106,7 @@ error:
 
 
 PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
+psutil_memory_swap(PyObject *self, PyObject *args) {
     struct xsw_usage totals;
     vm_statistics64_data_t vmstat;
     long pagesize = psutil_getpagesize();
@@ -125,8 +125,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "total", "K", (unsigned long long)totals.xsu_total)) goto error;
     if (!pydict_add(dict, "used", "K", (unsigned long long)totals.xsu_used)) goto error;
     if (!pydict_add(dict, "free", "K", (unsigned long long)totals.xsu_avail)) goto error;
-    if (!pydict_add(dict, "sin", "K", (unsigned long long)vmstat.pageins * pagesize)) goto error;
-    if (!pydict_add(dict, "sout", "K", (unsigned long long)vmstat.pageouts * pagesize)) goto error;
+    if (!pydict_add(dict, "sin", "K", (unsigned long long)vmstat.swapins * pagesize)) goto error;
+    if (!pydict_add(dict, "sout", "K", (unsigned long long)vmstat.swapouts * pagesize)) goto error;
     // clang-format on
 
     return dict;

@@ -104,12 +104,12 @@ if _TYPE_CHECKING:
     from ._ntuples import sdiskusage
     from ._ntuples import sfan
     from ._ntuples import shwtemp
+    from ._ntuples import smem
     from ._ntuples import snetio
     from ._ntuples import snicaddr
     from ._ntuples import snicstats
     from ._ntuples import sswap
     from ._ntuples import suser
-    from ._ntuples import svmem
     from ._pswindows import WindowsService
 
     # _export_enum() puts these in the module namespace at run time.
@@ -186,14 +186,9 @@ if _TYPE_CHECKING:
     RLIMIT_SIGPENDING: ProcessRlimit  # Linux
     RLIMIT_STACK: ProcessRlimit  # Linux, FreeBSD
     RLIMIT_SWAP: ProcessRlimit  # FreeBSD
-    RLIM_INFINITY: ProcessRlimit  # Linux, FreeBSD
 
 
 if LINUX:
-    # This is public API and it will be retrieved from _pslinux.py
-    # via sys.modules.
-    PROCFS_PATH = "/proc"
-
     from . import _pslinux as _psplatform
     from ._enums import ProcessIOPriority
     from ._enums import ProcessRlimit
@@ -215,16 +210,8 @@ elif BSD:
 elif SUNOS:
     from . import _pssunos as _psplatform
 
-    # This is public writable API which is read from _pslinux.py and
-    # _pssunos.py via sys.modules.
-    PROCFS_PATH = "/proc"
-
 elif AIX:
     from . import _psaix as _psplatform
-
-    # This is public API and it will be retrieved from _pslinux.py
-    # via sys.modules.
-    PROCFS_PATH = "/proc"
 
 else:  # pragma: no cover
     msg = f"platform {sys.platform} is not supported"
@@ -251,7 +238,8 @@ __all__ = [
 
     # functions
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
-    "virtual_memory", "swap_memory",                                # memory
+    "memory_physical", "memory_swap",                               # memory
+    "virtual_memory", "swap_memory",
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
     "cpu_stats", "getloadavg",  # "cpu_freq",
     "net_io_counters", "net_connections", "net_if_addrs",           # network
@@ -284,9 +272,16 @@ if LINUX or WINDOWS:
 if WINDOWS:
     _export_enum(ProcessPriority)
 if LINUX or FREEBSD:
+    import resource
+
     _export_enum(ProcessRlimit)
+    RLIM_INFINITY = resource.RLIM_INFINITY
+    __all__.append("RLIM_INFINITY")
+
 if LINUX or SUNOS or AIX:
-    __all__.append("PROCFS_PATH")
+    PROCFS_PATH = "/proc"
+    __all__.extend(["PROCFS_PATH", "set_procfs_path"])
+
 
 del _globals, _export_enum
 
@@ -1495,7 +1490,7 @@ class Process:
         value = getattr(metrics, memtype)
 
         # use cached value if available
-        total_phymem = _TOTAL_PHYMEM or virtual_memory().total
+        total_phymem = _TOTAL_PHYMEM or memory_physical().total
         if not total_phymem > 0:
             # we should never get here
             msg = (
@@ -1589,7 +1584,7 @@ class Process:
         _check_conn_kind(kind)
         return self._proc.net_connections(kind)
 
-    @_common.deprecated_method(replacement="net_connections")
+    @_common.deprecated_method(replacement="net_connections", removed_in="9.0")
     def connections(self, kind="inet") -> list[pconn]:
         return self.net_connections(kind=kind)
 
@@ -2056,11 +2051,6 @@ def cpu_count(logical: bool = True) -> int | None:
     (e.g. hyper thread CPUs are excluded).
 
     Return None if undetermined.
-
-    The return value is cached after first call.
-    If desired cache can be cleared like this:
-
-    >>> psutil.cpu_count.cache_clear()
     """
     if logical:
         ret = _psplatform.cpu_count_logical()
@@ -2384,7 +2374,7 @@ def getloadavg() -> tuple[float, float, float]:
 # =====================================================================
 
 
-def virtual_memory() -> svmem:
+def memory_physical() -> smem:
     """Return statistics about system memory usage as a named tuple.
 
     The fields vary by platform (see official doc), but the following
@@ -2417,13 +2407,13 @@ def virtual_memory() -> svmem:
     On Windows `available` and `free` are the same.
     """
     global _TOTAL_PHYMEM
-    ret = _psplatform.virtual_memory()
+    ret = _psplatform.memory_physical()
     # cached for later use in Process.memory_percent()
     _TOTAL_PHYMEM = ret.total
     return ret
 
 
-def swap_memory() -> sswap:
+def memory_swap() -> sswap:
     """Return system swap memory statistics as a named tuple including
     the following fields:
 
@@ -2436,7 +2426,20 @@ def swap_memory() -> sswap:
 
     `sin` and `sout` on Windows are meaningless and always set to 0.
     """
-    return _psplatform.swap_memory()
+    return _psplatform.memory_swap()
+
+
+# soft deprecated aliases
+
+
+def virtual_memory() -> smem:
+    """SOFT-DEPRECATED alias for memory_physical()."""
+    return memory_physical()
+
+
+def swap_memory() -> sswap:
+    """SOFT-DEPRECATED alias for memory_swap()."""
+    return memory_swap()
 
 
 # =====================================================================
@@ -2453,14 +2456,14 @@ def disk_usage(path: str) -> sdiskusage:
 
 
 def disk_partitions(all: bool = False) -> list[sdiskpart]:
-    """Return mounted partitions as a list of
-    (device, mountpoint, fstype, opts) named tuple.
+    """Return mounted filesystems as a list of
+    (device, mountpoint, fstype, opts) named tuple, one per mount.
 
     `opts` field is a raw string separated by commas indicating mount
     options which may vary depending on the platform.
 
-    If *all* parameter is False return physical devices only and ignore
-    all others.
+    If *all* parameter is False try to skip virtual filesystems such as
+    tmpfs and sysfs.
     """
     return _psplatform.disk_partitions(all)
 
@@ -2486,8 +2489,10 @@ def disk_io_counters(
      - read_merged_count (Linux): number of merged reads
      - write_merged_count (Linux): number of merged writes
 
-    If *perdisk* is True return the same information for every
-    physical disk as a dictionary with partition names as the keys.
+    If *perdisk* is True return the same information per device, as a
+    dictionary with device names as the keys. On Linux this includes
+    partitions and virtual devices (e.g. "sda1", "dm-0", "loop0"). On
+    Windows and macOS only whole disks.
 
     If *nowrap* is True (default), counters that overflow and wrap to
     zero are automatically adjusted so they never decrease (this can
@@ -2854,6 +2859,42 @@ if hasattr(_psplatform, "heap_info"):
 
 
 # =====================================================================
+# --- configuration
+# =====================================================================
+
+if LINUX or SUNOS or AIX:
+
+    def set_procfs_path(path: str) -> None:
+        """Set PROCFS_PATH, the path where the /proc filesystem is
+        mounted (e.g. "/host/proc" inside a container).
+
+        *path* must be an existing directory, else OSError is raised.
+        Prefer this over assigning PROCFS_PATH directly, as it also
+        resets internal caches that depend on it.
+        """
+        global PROCFS_PATH, _TOTAL_PHYMEM, _LOWEST_PID
+        path = os.fspath(path)  # accept a pathlib path
+        if not isinstance(path, str):
+            msg = f"path must be a str (got {type(path)})"
+            raise TypeError(msg)
+        os.scandir(path).close()  # raise if not an existing directory
+        # Store path as absolute in case it's relative (e.g. foo ->
+        # $cwd/foo), so that a later chdir() can't break reads. This
+        # also drops trailing slashes.
+        PROCFS_PATH = os.path.abspath(path)
+
+        # clear caches
+        _TOTAL_PHYMEM = None
+        _LOWEST_PID = None
+        process_iter.cache_clear()
+        _wrap_numbers.cache_clear()
+        _last_cpu_times.clear()
+        _last_per_cpu_times.clear()
+        _last_cpu_times_2.clear()
+        _last_per_cpu_times_2.clear()
+
+    if os.environ.get("PSUTIL_PROCFS_PATH"):
+        set_procfs_path(os.environ["PSUTIL_PROCFS_PATH"])
 
 
 def _set_debug(value):
@@ -2865,5 +2906,7 @@ def _set_debug(value):
     psutil._common.PSUTIL_DEBUG = bool(value)
     _psutil.set_debug(bool(value))
 
+
+# ---
 
 del memoize_when_activated

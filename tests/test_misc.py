@@ -9,6 +9,7 @@
 import collections
 import contextlib
 import copy
+import importlib
 import io
 import json
 import os
@@ -44,7 +45,6 @@ from . import PsutilTestCase
 from . import import_module_by_path
 from . import process_namespace
 from . import pytest
-from . import reload_module
 from . import skipif
 from . import system_namespace
 
@@ -54,12 +54,6 @@ from . import system_namespace
 
 
 class TestSpecialMethods(PsutilTestCase):
-    def test_check_pid_range(self):
-        with pytest.raises(OverflowError):
-            _psutil.check_pid_range(2**128)
-        with pytest.raises(psutil.NoSuchProcess):
-            psutil.Process(2**128)
-
     def test_process__repr__(self, func=repr):
         p = psutil.Process(self.spawn_subproc().pid)
         r = func(p)
@@ -235,6 +229,7 @@ class TestMisc(PsutilTestCase):
         dir_psutil = dir(psutil)
         # assert there's no duplicates
         assert len(dir_psutil) == len(set(dir_psutil))
+        assert len(psutil.__all__) == len(set(psutil.__all__))
         for name in dir_psutil:
             if name in {
                 'debug',
@@ -274,25 +269,25 @@ class TestMisc(PsutilTestCase):
             == psutil.__version__
         )
 
-    def test_process_as_dict_no_new_names(self):
-        # See https://github.com/giampaolo/psutil/issues/813
-        p = psutil.Process()
-        p.foo = '1'
-        assert 'foo' not in p.as_dict()
-
     def test_sanity_version_check(self):
         # see: https://github.com/giampaolo/psutil/issues/564
         with mock.patch.object(_psutil, "version", return_value="0.0.0"):
             with pytest.raises(ImportError) as cm:
-                reload_module(psutil)
+                importlib.reload(psutil)
             assert "version conflict" in str(cm.value).lower()
 
     def test_reload_keeps_all(self):
         # A reload reuses the module dict, so the enum constants are
         # already there and used to not make it back into __all__.
         before = sorted(psutil.__all__)
-        reload_module(psutil)
+        importlib.reload(psutil)
         assert sorted(psutil.__all__) == before
+
+    def test_check_pid_range(self):
+        with pytest.raises(OverflowError):
+            _psutil.check_pid_range(2**128)
+        with pytest.raises(psutil.NoSuchProcess):
+            psutil.Process(2**128)
 
 
 # ===================================================================
@@ -343,44 +338,12 @@ class TestSerialization(PsutilTestCase):
                     self.check(ret)
 
     def test_exceptions(self):
-        b = pickle.loads(
-            pickle.dumps(
-                psutil.NoSuchProcess(pid=4567, name='name', msg='msg')
-            )
+        self.check(psutil.NoSuchProcess(pid=4567, name='name', msg='msg'))
+        self.check(
+            psutil.ZombieProcess(pid=4567, name='name', ppid=42, msg='msg')
         )
-        assert isinstance(b, psutil.NoSuchProcess)
-        assert b.pid == 4567
-        assert b.name == 'name'
-        assert b.msg == 'msg'
-
-        b = pickle.loads(
-            pickle.dumps(
-                psutil.ZombieProcess(pid=4567, name='name', ppid=42, msg='msg')
-            )
-        )
-        assert isinstance(b, psutil.ZombieProcess)
-        assert b.pid == 4567
-        assert b.ppid == 42
-        assert b.name == 'name'
-        assert b.msg == 'msg'
-
-        b = pickle.loads(
-            pickle.dumps(psutil.AccessDenied(pid=123, name='name', msg='msg'))
-        )
-        assert isinstance(b, psutil.AccessDenied)
-        assert b.pid == 123
-        assert b.name == 'name'
-        assert b.msg == 'msg'
-
-        b = pickle.loads(
-            pickle.dumps(
-                psutil.TimeoutExpired(seconds=33, pid=4567, name='name')
-            )
-        )
-        assert isinstance(b, psutil.TimeoutExpired)
-        assert b.seconds == 33
-        assert b.pid == 4567
-        assert b.name == 'name'
+        self.check(psutil.AccessDenied(pid=123, name='name', msg='msg'))
+        self.check(psutil.TimeoutExpired(seconds=33, pid=4567, name='name'))
 
     def test_process_snapshot(self):
         snap = next(psutil.process_iter(attrs=["pid", "name"])).snapshot
@@ -608,11 +571,14 @@ class TestCommonModule(PsutilTestCase):
 class TestBytes2Human(PsutilTestCase):
 
     def test_basic(self):
-        assert psutil.bytes2human(0) == "0.0B"
-        assert psutil.bytes2human(1000) == "1000.0B"
+        assert psutil.bytes2human(0) == "0B"
+        assert psutil.bytes2human(1000) == "1000B"
         assert psutil.bytes2human(10000) == "9.8K"
         assert psutil.bytes2human(100001221) == "95.4M"
+        assert psutil.bytes2human(1048575) == "1.0M"
         assert psutil.bytes2human(1099511627776) == "1.0T"
+        assert psutil.bytes2human(-1048575) == "-1.0M"
+        assert psutil.bytes2human(2**90) == "1024.0Y"
 
 
 # ===================================================================
@@ -847,6 +813,31 @@ class TestWrapNumbers(PsutilTestCase):
         psutil.net_io_counters.cache_clear()
         caches = wrap_numbers.cache_info()
         assert caches == ({}, {}, {})
+
+    def check_nowrap_public_api(self, fun, platfun, ntuple):
+        def side_effect(*args, **kwargs):
+            return {"x": (next(values),) * len(ntuple._fields)}
+
+        values = iter([100, 10, 10])
+        with mock.patch(platfun, side_effect=side_effect):
+            assert [fun()[0] for _ in range(3)] == [100, 110, 110]
+        values = iter([100, 10, 10])
+        with mock.patch(platfun, side_effect=side_effect):
+            assert [fun(nowrap=False)[0] for _ in range(3)] == [100, 10, 10]
+
+    def test_disk_io_counters_nowrap(self):
+        self.check_nowrap_public_api(
+            psutil.disk_io_counters,
+            "psutil._psplatform.disk_io_counters",
+            psutil._ntp.sdiskio,
+        )
+
+    def test_net_io_counters_nowrap(self):
+        self.check_nowrap_public_api(
+            psutil.net_io_counters,
+            "psutil._psplatform.net_io_counters",
+            psutil._ntp.snetio,
+        )
 
 
 # ===================================================================

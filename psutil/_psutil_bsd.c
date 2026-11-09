@@ -55,11 +55,12 @@ static PyMethodDef mod_methods[] = {
     {"cpu_times", psutil_cpu_times, METH_VARARGS},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"memory_physical", psutil_memory_physical, METH_VARARGS},
+    {"memory_swap", psutil_memory_swap, METH_VARARGS},
     {"net_connections", psutil_net_connections, METH_VARARGS},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
     {"pids", psutil_pids, METH_VARARGS},
-    {"swap_mem", psutil_swap_mem, METH_VARARGS},
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
     {"heap_info", psutil_heap_info, METH_VARARGS},
     {"heap_trim", psutil_heap_trim, METH_VARARGS},
@@ -67,7 +68,6 @@ static PyMethodDef mod_methods[] = {
 #if defined(PSUTIL_OPENBSD)
     {"users", psutil_users, METH_VARARGS},
 #endif
-    {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD)
     {"cpu_freq", psutil_cpu_freq, METH_VARARGS},
 #endif

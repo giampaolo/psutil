@@ -32,7 +32,7 @@ from ._common import WINDOWS
 # ===================================================================
 
 
-# psutil.swap_memory()
+# psutil.memory_swap()
 class sswap(NamedTuple):
     total: int
     used: int
@@ -206,8 +206,8 @@ if LINUX or WINDOWS or MACOS or BSD:
             heap_count: int
 
 
-# psutil.virtual_memory()
-class svmem(NamedTuple):
+# psutil.memory_physical()
+class smem(NamedTuple):
     total: int
     available: int
     percent: float

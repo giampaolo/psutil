@@ -56,7 +56,7 @@ except ImportError as err:
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
-__extra__all__ = ["win_service_iter", "win_service_get", "AF_LINK"]
+__extra__all__ = ["win_service_iter", "win_service_get"]
 
 
 # =====================================================================
@@ -123,8 +123,8 @@ def getpagesize():
 # =====================================================================
 
 
-def virtual_memory():
-    """System virtual memory as a named tuple."""
+def memory_physical():
+    """System physical memory as a named tuple."""
     info = _psutil.GetPerformanceInfo()
     pagesize = info["PageSize"]
     total = info["PhysicalTotal"] * pagesize
@@ -134,10 +134,10 @@ def virtual_memory():
     free = avail
     used = total - avail
     percent = usage_percent((total - avail), total, round_=1)
-    return ntp.svmem(total, avail, percent, used, free, cached, wired)
+    return ntp.smem(total, avail, percent, used, free, cached, wired)
 
 
-def swap_memory():
+def memory_swap():
     """Swap memory as a (total, used, free, percent, sin, sout) tuple."""
     info = _psutil.GetPerformanceInfo()
     pagesize = info["PageSize"]
@@ -147,7 +147,8 @@ def swap_memory():
     # memory" (physical + virtual), thus subtract the physical part
     # from it to get the "total swap".
     total_system = info["CommitLimit"] * pagesize  # physical + swap
-    total = total_system - total_phys
+    # with no page file CommitLimit is a bit less than physical memory
+    total = max(total_system - total_phys, 0)
 
     # commit total is incremented immediately (decrementing free_system)
     # while the corresponding free physical value is not decremented until
@@ -240,9 +241,9 @@ def cpu_count_cores():
 
 def cpu_stats():
     """Return CPU statistics."""
-    ctx_switches, interrupts, _dpcs, syscalls = _psutil.cpu_stats()
-    soft_interrupts = 0
-    return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
+    ctx_switches, interrupts, dpcs, syscalls = _psutil.cpu_stats()
+    # DPCs are the Windows equivalent of soft interrupts
+    return ntp.scpustats(ctx_switches, interrupts, dpcs, syscalls)
 
 
 def cpu_freq():

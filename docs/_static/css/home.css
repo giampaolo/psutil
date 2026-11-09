@@ -270,7 +270,8 @@
     margin: 1em 0em 1.5em;
 }
 
-.home-page .home-section-label:has(+ .home-stats) {
+.home-page .home-section-label:has(+ .home-stats),
+.home-page .home-section-label:has(+ #sponsors) {
     margin-top: 4em;
 }
 
@@ -425,36 +426,12 @@
 /* ================================================================== */
 
 .home-page #sponsors {
-    margin: 1.5rem -56px 20px;
-    padding: 1.5rem 56px 2rem;
+    margin: 0 0 20px;
+    padding: 1.5rem 24px 1.5rem;
     background: #f8f9fa;
-    border-top: 1px solid var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
     text-align: center;
-}
-
-/* Full-bleed band: on mobile .main's side padding shrinks, so match
-   the pull-out to it or the band overflows and the page drags
-   sideways. */
-@media (max-width: 1024px) {
-    .home-page #sponsors {
-        margin-left: -16px;
-        margin-right: -16px;
-        padding-left: 16px;
-        padding-right: 16px;
-    }
-}
-
-@media (max-width: 600px) {
-    .home-page #sponsors {
-        margin-left: -12px;
-        margin-right: -12px;
-        padding-left: 12px;
-        padding-right: 12px;
-    }
-}
-
-.home-page #sponsors > .home-section-label {
-    margin-top: 1.2em;
 }
 
 [data-theme="dark"] .home-page #sponsors {
@@ -536,9 +513,20 @@ a.sponsor-cta:hover {
     margin: 0;
 }
 
-.home-page .home-quickstart .sd-tab-content {
-    padding: 0.5rem 0 0;
-    box-shadow: 0 -0.0625rem var(--border);
+/* louder than the docs default in tabs.css */
+.home-quickstart {
+    --sd-color-tabs-label-active: var(--links);
+    --sd-color-tabs-underline-active: var(--links);
+    --sd-fontsize-tabs-label: 1rem;
+}
+
+.home-quickstart .sd-tab-set > label {
+    padding: 1em 1.25em 0.5em;
+    margin-right: 0;
+}
+
+.home-quickstart .sd-tab-set > input:checked + label {
+    font-weight: 700;
 }
 
 /* "See more →" link below each tab's code block. */
@@ -563,25 +551,6 @@ a.sponsor-cta:hover {
 .home-quickstart .home-tab-more a:hover {
     color: var(--links);
     text-decoration: underline;
-}
-
-/* Inactive tabs: lighter than default so the current tab pops. */
-.home-quickstart .sd-tab-label {
-    color: var(--text-muted);
-    font-weight: 500;
-    transition: opacity 0.15s, color 0.15s;
-}
-
-.home-quickstart .sd-tab-label:hover {
-    opacity: 1;
-    color: var(--content-text);
-}
-
-/* Active tab: bolder weight + full opacity so it carries the page. */
-.home-quickstart input:checked + .sd-tab-label {
-    color: var(--links);
-    opacity: 1;
-    font-weight: 700;
 }
 
 /* ================================================================== */

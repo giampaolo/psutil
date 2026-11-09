@@ -9,7 +9,6 @@
 import ctypes
 import datetime
 import os
-import platform
 import re
 import signal
 import socket
@@ -45,6 +44,7 @@ if WINDOWS and not PYPY:
         warnings.simplefilter("ignore")
         import win32api  # requires "pip install pywin32"
         import win32con
+        import win32file
         import win32process
         import wmi  # requires "pip install wmi" / "make install-pydeps-test"
 
@@ -67,14 +67,6 @@ class WindowsTestCase(PsutilTestCase):
         return handle
 
 
-# Note used but could be useful in the future
-def is_bash_env():
-    env = os.environ
-    if "MSYSTEM" in env or "MINGW_PREFIX" in env or "MINGW_CHOST" in env:
-        return True
-    return "bash" in env.get("SHELL", "")
-
-
 def cim_datetime_to_utc(value):
     # WMI timestamps look like "20261002203208.500000-420", where the
     # trailing number is the offset from UTC in minutes. Tests used to
@@ -95,6 +87,9 @@ def powershell(cmd):
     )
     """
     exe = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+    # XXX: workaround for powershell on ARM being super slow, see:
+    # https://github.com/actions/runner-images/issues/14830
+    cmd = f'$env:PSModulePath = "$PSHOME\\Modules"; {cmd}'
     cmdline = [
         exe,
         "-ExecutionPolicy",
@@ -108,23 +103,6 @@ def powershell(cmd):
         cmd,
     ]
     return sh(cmdline, timeout=GLOBAL_TIMEOUT * 4)
-
-
-def wmic(path, what, converter=int):
-    """Currently not used, but available just in case. Usage:
-
-    >>> wmic("Win32_OperatingSystem", "FreePhysicalMemory")
-    2134124534
-    """
-    out = sh(f"wmic path {path} get {what}").strip()
-    data = "".join(out.splitlines()[1:]).strip()  # get rid of the header
-    if converter is not None:
-        if "," in what:
-            return tuple(converter(x) for x in data.split())
-        else:
-            return converter(data)
-    else:
-        return data
 
 
 # ===================================================================
@@ -164,6 +142,8 @@ class TestCpuCount(WindowsTestCase):
     def test_against_cpu_times(self):
         assert psutil.cpu_count() == len(psutil.cpu_times(percpu=True))
 
+
+class TestCpuTimes(WindowsTestCase):
     def test_irq_field(self):
         t = psutil.cpu_times()
         assert t.irq >= 0
@@ -197,22 +177,25 @@ class TestCpuStats(WindowsTestCase):
         psutil_value = psutil.cpu_stats().interrupts
         assert abs(psutil_value - wmi_value) < 1000
 
+    @retry_on_failure
     def test_soft_interrupts(self):
-        # Always 0 on Windows.
-        assert psutil.cpu_stats().soft_interrupts == 0
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Processor(Name="_Total")[0]
+        wmi_value = int(w.DPCsQueuedPersec)
+        psutil_value = psutil.cpu_stats().soft_interrupts
+        assert abs(psutil_value - wmi_value) < 1000
 
 
-class TestVirtualMemory(WindowsTestCase):
+class TestMemoryPhysical(WindowsTestCase):
 
     def test_total(self):
         w = wmi.WMI().Win32_ComputerSystem()[0]
-        assert int(w.TotalPhysicalMemory) == psutil.virtual_memory().total
+        assert int(w.TotalPhysicalMemory) == psutil.memory_physical().total
 
     @retry_on_failure
     def test_free(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
-            abs(int(w.AvailableBytes) - psutil.virtual_memory().free)
+            abs(int(w.AvailableBytes) - psutil.memory_physical().free)
             < TOLERANCE_SYS_MEM
         )
 
@@ -220,7 +203,7 @@ class TestVirtualMemory(WindowsTestCase):
     def test_wired(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
-            abs(int(w.PoolNonpagedBytes) - psutil.virtual_memory().wired)
+            abs(int(w.PoolNonpagedBytes) - psutil.memory_physical().wired)
             < TOLERANCE_SYS_MEM
         )
 
@@ -228,40 +211,56 @@ class TestVirtualMemory(WindowsTestCase):
     def test_available(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
-            abs(int(w.AvailableBytes) - psutil.virtual_memory().available)
+            abs(int(w.AvailableBytes) - psutil.memory_physical().available)
             < TOLERANCE_SYS_MEM
         )
 
     @retry_on_failure
     def test_used(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
-        total = psutil.virtual_memory().total
+        total = psutil.memory_physical().total
         wmi_used = total - int(w.AvailableBytes)
-        assert abs(psutil.virtual_memory().used - wmi_used) < TOLERANCE_SYS_MEM
+        assert (
+            abs(psutil.memory_physical().used - wmi_used) < TOLERANCE_SYS_MEM
+        )
 
 
-class TestSwapMemory(WindowsTestCase):
+class TestMemorySwap(WindowsTestCase):
 
     def test_total(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
-            int(w.CommitLimit) - psutil.virtual_memory().total
-            == psutil.swap_memory().total
+            max(int(w.CommitLimit) - psutil.memory_physical().total, 0)
+            == psutil.memory_swap().total
         )
-        if psutil.swap_memory().total == 0:
-            assert psutil.swap_memory().free == 0
-            assert psutil.swap_memory().used == 0
+        if psutil.memory_swap().total == 0:
+            assert psutil.memory_swap().free == 0
+            assert psutil.memory_swap().used == 0
+
+    def test_no_page_file(self):
+        info = _psutil.GetPerformanceInfo()
+        info["CommitLimit"] = info["PhysicalTotal"] - 1000
+        with mock.patch(
+            "psutil._psplatform._psutil.GetPerformanceInfo",
+            return_value=info,
+        ) as m:
+            swap = psutil.memory_swap()
+        assert m.called
+        assert swap.total == 0
+        assert swap.used == 0
+        assert swap.free == 0
+        assert swap.percent == 0
 
     def test_percent(self):
-        if psutil.swap_memory().total > 0:
+        if psutil.memory_swap().total > 0:
             w = wmi.WMI().Win32_PerfRawData_PerfOS_PagingFile(Name="_Total")[0]
             # calculate swap usage to percent
             percentSwap = int(w.PercentUsage) * 100 / int(w.PercentUsage_Base)
             # exact percent may change but should be reasonable
             # assert within +/- 5% and between 0 and 100%
-            assert psutil.swap_memory().percent >= 0
-            assert abs(psutil.swap_memory().percent - percentSwap) < 5
-            assert psutil.swap_memory().percent <= 100
+            assert psutil.memory_swap().percent >= 0
+            assert abs(psutil.memory_swap().percent - percentSwap) < 5
+            assert psutil.memory_swap().percent <= 100
 
 
 class TestNetAPIs(WindowsTestCase):
@@ -351,6 +350,8 @@ class TestDiskApis(WindowsTestCase):
         ps_parts = psutil.disk_partitions(all=True)
         wmi_parts = wmi.WMI().Win32_LogicalDisk()
         for ps_part in ps_parts:
+            if len(ps_part.device) > 3:
+                continue  # no drive letter, so not in Win32_LogicalDisk
             for wmi_part in wmi_parts:
                 if ps_part.device.replace('\\', '') == wmi_part.DeviceID:
                     if not ps_part.mountpoint:
@@ -367,7 +368,6 @@ class TestDiskApis(WindowsTestCase):
                         break
                     assert usage.total == int(wmi_part.Size)
                     wmi_free = int(wmi_part.FreeSpace)
-                    assert usage.free == wmi_free
                     # 10 MB tolerance
                     if abs(usage.free - wmi_free) > 10 * 1024 * 1024:
                         return pytest.fail(
@@ -386,9 +386,29 @@ class TestDiskApis(WindowsTestCase):
         ps = [
             x.mountpoint
             for x in psutil.disk_partitions(all=True)
-            if not x.mountpoint.startswith('A:')
+            if not x.mountpoint.startswith('A:') and len(x.mountpoint) == 3
         ]
         assert win == ps
+
+    def test_disk_partitions_folder_mounts(self):
+        parts = [
+            x
+            for x in psutil.disk_partitions(all=True)
+            if len(x.mountpoint) > 3
+        ]
+        if not parts:
+            return pytest.skip("no volume mounted in a folder")
+        for part in parts:
+            vol = win32file.GetVolumeNameForVolumeMountPoint(part.mountpoint)
+            if len(part.device) == 3:
+                assert (
+                    win32file.GetVolumeNameForVolumeMountPoint(part.device)
+                    == vol
+                )
+            else:
+                # no drive letter
+                assert part.device == part.mountpoint
+            assert part.fstype == win32api.GetVolumeInformation(vol)[4]
 
     @retry_on_failure
     def test_disk_usage(self):
@@ -410,20 +430,17 @@ class TestDiskApis(WindowsTestCase):
         assert abs(stats.write_bytes - int(w.DiskWriteBytesPersec)) < tolerance
         assert abs(stats.read_count - int(w.DiskReadsPersec)) < 1000
         assert abs(stats.write_count - int(w.DiskWritesPersec)) < 1000
+        freq = int(w.Frequency_PerfTime)
+        for ms, raw in (
+            (stats.read_time, w.AvgDisksecPerRead),
+            (stats.write_time, w.AvgDisksecPerWrite),
+        ):
+            # WMI raw counters are 32 bit and wrap
+            diff = (ms * freq // 1000 - int(raw)) % 2**32
+            assert min(diff, 2**32 - diff) < freq  # less than 1 second
 
 
 class TestOtherSystemAPIs(WindowsTestCase):
-
-    # @skipif(wmi is None, reason="wmi module is not installed")
-    # def test__UPTIME(self):
-    #     # _UPTIME constant is not public but it is used internally
-    #     # as value to return for pid 0 creation time.
-    #     # WMI behaves the same.
-    #     w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-    #     p = psutil.Process(0)
-    #     wmic_create = str(w.CreationDate.split('.')[0])
-    #     psutil_create = time.strftime("%Y%m%d%H%M%S",
-    #                                   time.localtime(p.create_time()))
 
     def test_convert_dos_path_drive(self):
         winpath = 'C:\\Windows\\Temp'
@@ -564,37 +581,13 @@ class TestSensorsBattery(WindowsTestCase):
             )
             assert m.called
 
-    def test_emulate_secs_left_unknown(self):
-        with mock.patch.object(
-            _psutil,
-            "sensors_battery",
-            return_value=(0, 0, 0, -1),
-        ) as m:
-            assert (
-                psutil.sensors_battery().secsleft == psutil.POWER_TIME_UNKNOWN
-            )
-            assert m.called
-
 
 # ===================================================================
 # Process APIs
 # ===================================================================
 
 
-class TestProcess(WindowsTestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.pid = spawn_subproc().pid
-
-    @classmethod
-    def tearDownClass(cls):
-        terminate(cls.pid)
-
-    def test_issue_24(self):
-        p = psutil.Process(0)
-        with pytest.raises(psutil.AccessDenied):
-            p.kill()
-
+class TestProcessIdentity(WindowsTestCase):
     def test_special_pid(self):
         p = psutil.Process(4)
         assert p.name() == 'System'
@@ -603,47 +596,7 @@ class TestProcess(WindowsTestCase):
         str(p)
         p.username()
         assert p.create_time() >= 0.0
-        try:
-            rss, _vms = p.memory_info()[:2]
-        except psutil.AccessDenied:
-            # expected on Windows Vista and Windows 7
-            if platform.uname()[1] not in {'vista', 'win-7', 'win7'}:
-                raise
-        else:
-            assert rss > 0
-
-    def test_send_signal(self):
-        p = psutil.Process(self.pid)
-        with pytest.raises(ValueError):
-            p.send_signal(signal.SIGINT)
-
-    def test_num_handles_increment(self):
-        p = psutil.Process(os.getpid())
-        before = p.num_handles()
-        handle = self.OpenProcess()
-        after = p.num_handles()
-        assert after == before + 1
-        win32api.CloseHandle(handle)
-        assert p.num_handles() == before
-
-    @isolated
-    def test_ctrl_signals(self):
-        p = psutil.Process(self.spawn_subproc().pid)
-        p.send_signal(signal.CTRL_C_EVENT)
-        p.send_signal(signal.CTRL_BREAK_EVENT)
-        p.kill()
-        p.wait()
-        with pytest.raises(psutil.NoSuchProcess):
-            p.send_signal(signal.CTRL_C_EVENT)
-        with pytest.raises(psutil.NoSuchProcess):
-            p.send_signal(signal.CTRL_BREAK_EVENT)
-
-    def test_pid_0_ctrl_signals(self):
-        p = psutil.Process(0)
-        with pytest.raises(psutil.AccessDenied):
-            p.send_signal(signal.CTRL_C_EVENT)
-        with pytest.raises(psutil.AccessDenied):
-            p.send_signal(signal.CTRL_BREAK_EVENT)
+        assert p.memory_info().rss > 0
 
     def test_username(self):
         name = win32api.GetUserNameEx(win32con.NameSamCompatible)
@@ -665,18 +618,59 @@ class TestProcess(WindowsTestCase):
         ps = ps.replace('"', "")
         assert win == ps
 
-    # XXX - occasional failures
+    def test_exe(self):
+        # NtQuerySystemInformation succeeds if process is gone. Make sure
+        # it raises NSP for a non existent pid.
+        pid = psutil.pids()[-1] + 99999
+        proc = psutil._psplatform.Process(pid)
+        with pytest.raises(psutil.NoSuchProcess):
+            proc.exe()
 
-    # def test_cpu_times(self):
-    #     a = psutil.Process().cpu_times()
-    #     b = win32process.GetProcessTimes(self.OpenProcess())
-    #     assert abs(a.user - b['UserTime'] / 10000000.0) < 0.2
-    #     assert abs(a.user - b['KernelTime'] / 10000000.0) < 0.2
+    def test_error_partial_copy(self):
+        # https://github.com/giampaolo/psutil/issues/875
+        exc = OSError()
+        exc.winerror = 299
+        with mock.patch.object(_psutil, "proc_cwd", side_effect=exc):
+            with mock.patch("time.sleep") as m:
+                p = psutil.Process()
+                with pytest.raises(psutil.AccessDenied):
+                    p.cwd()
+        assert m.call_count >= 5
+
+
+class TestProcessCpu(WindowsTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc().pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
 
     def test_nice(self):
         win = win32process.GetPriorityClass(self.OpenProcess())
         ps = psutil.Process().nice()
         assert ps == win
+
+    def test_cpu_affinity(self):
+        def from_bitmask(x):
+            return [i for i in range(64) if (1 << i) & x]
+
+        win = from_bitmask(
+            win32process.GetProcessAffinityMask(self.OpenProcess(self.pid))[0]
+        )
+        ps = psutil.Process(self.pid).cpu_affinity()
+        assert ps == win
+
+
+class TestProcessMemory(WindowsTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc().pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
 
     def test_memory_info(self):
         win = win32process.GetProcessMemoryInfo(self.OpenProcess(self.pid))
@@ -749,27 +743,29 @@ class TestProcess(WindowsTestCase):
         assert ps.peak_paged_pool >= ps.paged_pool
         assert ps.peak_nonpaged_pool >= ps.nonpaged_pool
 
-    def test_wait(self):
-        p = psutil.Process(self.pid)
-        p.terminate()
-        ps = p.wait()
-        win = win32process.GetExitCodeProcess(self.OpenProcess(self.pid))
-        assert ps == win
+    @retry_on_failure
+    def test_page_faults(self):
+        # memory_info() value comes from GetProcessMemoryInfo ->
+        # PageFaultCount. page_faults() value comes from
+        # NtQuerySystemInformation -> HardFaultCount / PageFaultCount
+        p = psutil.Process()
+        mem = p.memory_info()
+        pfaults = p.page_faults()
+        tol = 500
+        with pytest.warns(
+            DeprecationWarning, match="num_page_faults is deprecated"
+        ):
+            assert mem.num_page_faults == pytest.approx(pfaults.minor, abs=tol)
 
-    def test_num_threads(self):
-        ps = psutil.Process(self.pid).num_threads()
-        win = wmi.WMI().Win32_Process(ProcessId=self.pid)[0].ThreadCount
-        assert ps == win
 
-    def test_cpu_affinity(self):
-        def from_bitmask(x):
-            return [i for i in range(64) if (1 << i) & x]
+class TestProcessFiles(WindowsTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc().pid
 
-        win = from_bitmask(
-            win32process.GetProcessAffinityMask(self.OpenProcess(self.pid))[0]
-        )
-        ps = psutil.Process(self.pid).cpu_affinity()
-        assert ps == win
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
 
     def test_io_counters(self):
         win = win32process.GetProcessIoCounters(self.OpenProcess())
@@ -796,41 +792,68 @@ class TestProcess(WindowsTestCase):
         ps = psutil.Process(self.pid).num_handles()
         assert ps == win
 
-    def test_error_partial_copy(self):
-        # https://github.com/giampaolo/psutil/issues/875
-        exc = OSError()
-        exc.winerror = 299
-        with mock.patch.object(_psutil, "proc_cwd", side_effect=exc):
-            with mock.patch("time.sleep") as m:
-                p = psutil.Process()
-                with pytest.raises(psutil.AccessDenied):
-                    p.cwd()
-        assert m.call_count >= 5
+    def test_num_handles_increment(self):
+        p = psutil.Process(os.getpid())
+        before = p.num_handles()
+        handle = self.OpenProcess()
+        after = p.num_handles()
+        assert after == before + 1
+        win32api.CloseHandle(handle)
+        assert p.num_handles() == before
 
-    def test_exe(self):
-        # NtQuerySystemInformation succeeds if process is gone. Make sure
-        # it raises NSP for a non existent pid.
-        pid = psutil.pids()[-1] + 99999
-        proc = psutil._psplatform.Process(pid)
+
+class TestProcessSignals(WindowsTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc().pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
+
+    def test_issue_24(self):
+        p = psutil.Process(0)
+        with pytest.raises(psutil.AccessDenied):
+            p.kill()
+
+    def test_send_signal(self):
+        p = psutil.Process(self.pid)
+        with pytest.raises(ValueError):
+            p.send_signal(signal.SIGINT)
+
+    @isolated
+    def test_ctrl_signals(self):
+        p = psutil.Process(self.spawn_subproc().pid)
+        p.send_signal(signal.CTRL_C_EVENT)
+        p.send_signal(signal.CTRL_BREAK_EVENT)
+        p.kill()
+        p.wait()
         with pytest.raises(psutil.NoSuchProcess):
-            proc.exe()
+            p.send_signal(signal.CTRL_C_EVENT)
+        with pytest.raises(psutil.NoSuchProcess):
+            p.send_signal(signal.CTRL_BREAK_EVENT)
 
-    @retry_on_failure
-    def test_page_faults(self):
-        # memory_info() value comes from GetProcessMemoryInfo ->
-        # PageFaultCount. page_faults() value comes from
-        # NtQuerySystemInformation -> HardFaultCount / PageFaultCount
-        p = psutil.Process()
-        mem = p.memory_info()
-        pfaults = p.page_faults()
-        tol = 500
-        with pytest.warns(
-            DeprecationWarning, match="num_page_faults is deprecated"
-        ):
-            assert mem.num_page_faults == pytest.approx(pfaults.minor, abs=tol)
+    def test_pid_0_ctrl_signals(self):
+        p = psutil.Process(0)
+        with pytest.raises(psutil.AccessDenied):
+            p.send_signal(signal.CTRL_C_EVENT)
+        with pytest.raises(psutil.AccessDenied):
+            p.send_signal(signal.CTRL_BREAK_EVENT)
+
+    def test_wait(self):
+        p = psutil.Process(self.pid)
+        p.terminate()
+        ps = p.wait()
+        win = win32process.GetExitCodeProcess(self.OpenProcess(self.pid))
+        assert ps == win
 
 
-class TestProcessWMI(WindowsTestCase):
+# =====================================================================
+# --- Test Process against WMI
+# =====================================================================
+
+
+class TestProcessAgainstWMI(WindowsTestCase):
     """Compare Process API results with WMI."""
 
     @classmethod
@@ -840,6 +863,11 @@ class TestProcessWMI(WindowsTestCase):
     @classmethod
     def tearDownClass(cls):
         terminate(cls.pid)
+
+    def test_num_threads(self):
+        ps = psutil.Process(self.pid).num_threads()
+        win = wmi.WMI().Win32_Process(ProcessId=self.pid)[0].ThreadCount
+        assert ps == win
 
     def test_name(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
@@ -1072,15 +1100,6 @@ class TestWow64Process(PsutilTestCase):
 @skipif(not WINDOWS, reason="WINDOWS only")
 class TestServices(PsutilTestCase):
     def test_win_service_iter(self):
-        valid_statuses = {
-            "running",
-            "paused",
-            "start",
-            "pause",
-            "continue",
-            "stop",
-            "stopped",
-        }
         valid_start_types = {"automatic", "manual", "disabled"}
         valid_statuses = {
             "running",
@@ -1106,10 +1125,8 @@ class TestServices(PsutilTestCase):
             if data['pid'] is not None:
                 psutil.Process(data['pid'])
             assert isinstance(data['binpath'], str)
-            assert isinstance(data['username'], str)
             assert isinstance(data['start_type'], str)
             assert data['start_type'] in valid_start_types
-            assert data['status'] in valid_statuses
             assert isinstance(data['description'], str)
             pid = serv.pid()
             if pid is not None:

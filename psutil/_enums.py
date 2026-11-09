@@ -54,7 +54,7 @@ else:
 class ProcessStatus(StrEnum):
     STATUS_DEAD = "dead"
     STATUS_DISK_SLEEP = "disk-sleep"
-    STATUS_IDLE = "idle"  # Linux, macOS, FreeBSD
+    STATUS_IDLE = "idle"  # Linux, macOS, FreeBSD, OpenBSD, NetBSD, SunOS, AIX
     STATUS_LOCKED = "locked"  # FreeBSD
     STATUS_PARKED = "parked"  # Linux
     STATUS_RUNNING = "running"
@@ -62,9 +62,9 @@ class ProcessStatus(StrEnum):
     STATUS_STOPPED = "stopped"
     STATUS_SUSPENDED = "suspended"  # NetBSD
     STATUS_TRACING_STOP = "tracing-stop"
-    STATUS_WAITING = "waiting"  # FreeBSD
-    STATUS_WAKE_KILL = "wake-kill"
-    STATUS_WAKING = "waking"
+    STATUS_WAITING = "waiting"  # FreeBSD, SunOS
+    STATUS_WAKE_KILL = "wake-kill"  # never reported; undocumented
+    STATUS_WAKING = "waking"  # OpenBSD, NetBSD
     STATUS_ZOMBIE = "zombie"
 
 
@@ -140,6 +140,6 @@ if LINUX or FREEBSD:
         (
             (name, getattr(_psutil, name))
             for name in dir(_psutil)
-            if name.startswith("RLIM") and name.isupper()
+            if name.startswith("RLIMIT_") and name.isupper()
         ),
     )
