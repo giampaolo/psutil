@@ -104,7 +104,7 @@ load_dll_func(LPCSTR libname, LPCSTR apiname) {
 // since the UNIX epoch, that is the time 00:00:00 UTC on 1 January
 // 1970.
 static double
-_to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
+to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
     ULONGLONG ret;
 
     // 100 nanosecond intervals since January 1, 1601.
@@ -119,7 +119,7 @@ _to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
 
 double
 psutil_filetime_to_unix(FILETIME ft) {
-    return _to_unix_time(
+    return to_unix_time(
         (ULONGLONG)ft.dwHighDateTime, (ULONGLONG)ft.dwLowDateTime
     );
 }
@@ -127,7 +127,7 @@ psutil_filetime_to_unix(FILETIME ft) {
 
 double
 psutil_largeint_to_unix(LARGE_INTEGER li) {
-    return _to_unix_time((ULONGLONG)li.HighPart, (ULONGLONG)li.LowPart);
+    return to_unix_time((ULONGLONG)li.HighPart, (ULONGLONG)li.LowPart);
 }
 
 
