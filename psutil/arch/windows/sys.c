@@ -48,7 +48,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     }
     // Both BootTime and SleepTimeBias are in 100-ns units.
     boot.QuadPart = info.BootTime.QuadPart - (LONGLONG)info.SleepTimeBias;
-    return Py_BuildValue("d", psutil_LargeIntegerToUnixTime(boot));
+    return Py_BuildValue("d", psutil_largeint_to_unix(boot));
 }
 
 
@@ -187,7 +187,7 @@ psutil_users(PyObject *self, PyObject *args) {
                 "OOd",
                 py_username,
                 py_address,
-                psutil_LargeIntegerToUnixTime(wts_info->ConnectTime)
+                psutil_largeint_to_unix(wts_info->ConnectTime)
             ))
         {
             goto error;

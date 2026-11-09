@@ -34,7 +34,7 @@ extern CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 #endif
 
 double psutil_filetime_to_unix(FILETIME ft);
-double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);
+double psutil_largeint_to_unix(LARGE_INTEGER li);
 int psutil_setup_windows(void);
 PVOID psutil_oserror_ntstatus(NTSTATUS status, const char *syscall);
 

@@ -88,7 +88,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
         create_time = 0;
     }
     else {
-        create_time = psutil_LargeIntegerToUnixTime(proc->CreateTime);
+        create_time = psutil_largeint_to_unix(proc->CreateTime);
     }
 
     // clang-format off

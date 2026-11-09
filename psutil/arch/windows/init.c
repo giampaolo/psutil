@@ -126,7 +126,7 @@ psutil_filetime_to_unix(FILETIME ft) {
 
 
 double
-psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
+psutil_largeint_to_unix(LARGE_INTEGER li) {
     return _to_unix_time((ULONGLONG)li.HighPart, (ULONGLONG)li.LowPart);
 }
 
