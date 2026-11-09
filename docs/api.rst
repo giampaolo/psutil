@@ -429,7 +429,8 @@ Memory
 
   * :field:`total`: total swap space. On Windows this is derived as
     ``CommitLimit - PhysicalTotal``, representing virtual memory backed by the
-    page file rather than the raw page-file size.
+    page file rather than the raw page-file size. It's ``0`` if there's no page
+    file.
   * :field:`used`: swap space currently in use.
   * :field:`free`: swap space not in use (``total - used``).
   * :field:`percent`: swap usage as a percentage, calculated as
