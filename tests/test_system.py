@@ -745,8 +745,8 @@ class TestCpuAPIs(PsutilTestCase):
         for name in infos._fields:
             value = getattr(infos, name)
             assert value >= 0
-            # on AIX, ctx_switches is always 0
-            if not AIX and name in {'ctx_switches', 'interrupts'}:
+            # always 0 on AIX (ctx_switches) and macOS
+            if not (AIX or MACOS) and name in {'ctx_switches', 'interrupts'}:
                 assert value > 0
 
     @skipif(not HAS_CPU_FREQ, reason="not supported")
