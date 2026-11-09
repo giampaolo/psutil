@@ -1686,15 +1686,16 @@ Exceptions
       :term:`memory-mapped files <mapped memory>`). Counted even if no other
       process is currently mapping it. Matches ``top``'s SHR column.
 
-    - :field:`text` *(Linux, BSD)*: aka TRS (Text Resident Set). Resident
-      memory devoted to executable code. This memory is read-only and typically
-      shared across all processes running the same binary. Matches ``top``'s
-      CODE column.
+    - :field:`text` *(Linux, BSD)*: aka TRS (Text Resident Set). Virtual size
+      of the executable's code, not counting shared libraries. Despite the
+      name, it's not how much of it is in RAM. This memory is read-only and
+      typically shared across all processes running the same binary. Matches
+      ``top``'s CODE column.
 
-    - :field:`data` *(Linux, BSD)*: aka DRS (Data Resident Set). On Linux this
-      covers the data **and** stack segments combined (from
-      :proc:`/proc/pid/statm`). On BSD it covers the data segment only (see
-      :field:`stack`). Matches ``top``'s DATA column.
+    - :field:`data` *(Linux, BSD)*: aka DRS (Data Resident Set). Also a virtual
+      size, like :field:`text`. On Linux this covers the data **and** stack
+      segments combined (from :proc:`/proc/pid/statm`). On BSD it covers the
+      data segment only (see :field:`stack`). Matches ``top``'s DATA column.
 
     - :field:`stack` *(BSD)*: size of the process stack segment. Reported
       separately from :field:`data` (unlike Linux where both are combined).
