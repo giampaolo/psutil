@@ -2592,16 +2592,9 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
    The process is about to disappear (final state before it is gone).
 
-.. data:: STATUS_WAKE_KILL
-
-   (Linux only) A variant of :data:`STATUS_DISK_SLEEP` where the process can be
-   awakened by ``SIGKILL``. Used for tasks which might otherwise remain blocked
-   indefinitely, e.g. unresponsive network filesystems such as NFS, as in
-   ``open("/mnt/nfs_hung/file").read()``.
-
 .. data:: STATUS_WAKING
 
-   (Linux, OpenBSD, NetBSD) A transient state right before the process becomes
+   (OpenBSD, NetBSD) A transient state right before the process becomes
    runnable (:data:`STATUS_RUNNING`).
 
 .. data:: STATUS_PARKED

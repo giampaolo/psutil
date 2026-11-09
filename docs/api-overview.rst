@@ -340,7 +340,7 @@ Process tree
     >>>
     >>> p.children(recursive=True)
     [psutil.Process(pid=29835, name='python3', status=<ProcessStatus.STATUS_SLEEPING: 'sleeping'>, started='11:45:38'),
-     psutil.Process(pid=29836, name='python3', status=<ProcessStatus.STATUS_WAKING: 'waking'>, started='11:43:39')]
+     psutil.Process(pid=29836, name='python3', status=<ProcessStatus.STATUS_RUNNING: 'running'>, started='11:43:39')]
     >>>
 
 Credentials
