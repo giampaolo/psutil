@@ -342,6 +342,16 @@ class TestNetAPIs(WindowsTestCase):
             ps_names & wmi_names
         ), f"no common entries in {ps_names}, {wmi_names}"
 
+    def test_net_if_stats_duplex(self):
+        w = wmi.WMI(namespace="root/StandardCimv2")
+        full = {x.Name for x in w.MSFT_NetAdapter() if x.FullDuplex}
+        stats = psutil.net_if_stats()
+        names = full & set(stats)
+        if not names:
+            return pytest.skip("no full duplex NIC")
+        for name in names:
+            assert stats[name].duplex == psutil.NIC_DUPLEX_FULL
+
 
 class TestDiskApis(WindowsTestCase):
 

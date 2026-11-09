@@ -63,6 +63,8 @@ Changelog
   no longer always ``0``.
 - :gh:`3119`, [Windows]: :func:`cpu_stats` :field:`soft_interrupts` is no
   longer always ``0``. It's the number of deferred procedure calls (DPCs).
+- :gh:`3120`, [Windows]: :func:`net_if_stats` :field:`duplex` is no longer
+  always :data:`NIC_DUPLEX_FULL`. It's now read from the NIC driver.
 - :gh:`2977`: new :func:`bytes2human` function, converting bytes to a
   human-readable string (e.g. ``9.8K``).
 - :gh:`1109`, [Linux]: :meth:`Process.memory_extras` returns a new
