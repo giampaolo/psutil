@@ -439,6 +439,11 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   kernel), even though :func:`pids` lists it.
 - :gh:`3072`, [OpenBSD]: :func:`users` could return trailing garbage in
   :field:`name`, :field:`terminal` or :field:`host`.
+- :gh:`3116`, [OpenBSD], [NetBSD]: :meth:`Process.cpu_times` returned the
+  children's user + system time in both :field:`children_user` and
+  :field:`children_system`, counting it twice. Same for :meth:`Process.threads`
+  :field:`user_time` and :field:`system_time` on NetBSD. The total now goes in
+  the user field, and the system field is ``0``.
 
 **Bug fixes: POSIX**
 

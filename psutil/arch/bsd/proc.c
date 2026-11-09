@@ -131,10 +131,10 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     create_time = PSUTIL_KPT2DOUBLE(kp.p_ustart);
     user_time = PSUTIL_KPT2DOUBLE(kp.p_uutime);
     sys_time = PSUTIL_KPT2DOUBLE(kp.p_ustime);
-    // OpenBSD and NetBSD provide children user + system times summed
-    // together (no distinction).
+    // OpenBSD and NetBSD only provide children user + system times
+    // summed together
     ch_user_time = PSUTIL_KPT2DOUBLE(kp.p_uctime);
-    ch_sys_time = ch_user_time;
+    ch_sys_time = 0;
 #endif
 
 #ifdef PSUTIL_FREEBSD
