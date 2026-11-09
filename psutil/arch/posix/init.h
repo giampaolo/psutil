@@ -48,7 +48,6 @@ PyObject *psutil_raise_for_pid(pid_t pid, char *msg);
 
 // --- Python wrappers
 
-PyObject *psutil_getpagesize_pywrapper(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_addrs(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_flags(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_is_running(PyObject *self, PyObject *args);
