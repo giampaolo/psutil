@@ -530,6 +530,10 @@ class Process:
         return ntp.pctxsw(*_psutil.proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
+    def page_faults(self):
+        return ntp.ppagefaults(*_psutil.proc_page_faults(self.pid))
+
+    @wrap_exceptions
     def wait(self, timeout=None):
         return _psposix.wait_pid(self.pid, timeout)
 

@@ -50,6 +50,7 @@ static PyMethodDef mod_methods[] = {
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS},
 #endif
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS},
+    {"proc_page_faults", psutil_proc_page_faults, METH_VARARGS},
 
     // --- system-related functions
     {"boot_time", psutil_boot_time, METH_VARARGS},

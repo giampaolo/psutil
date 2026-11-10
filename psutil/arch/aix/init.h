@@ -36,4 +36,5 @@ PyObject *psutil_proc_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_proc_name(PyObject *self, PyObject *args);
 PyObject *psutil_proc_num_ctx_switches(PyObject *self, PyObject *args);
 PyObject *psutil_proc_oneshot(PyObject *self, PyObject *args);
+PyObject *psutil_proc_page_faults(PyObject *self, PyObject *args);
 PyObject *psutil_proc_threads(PyObject *self, PyObject *args);

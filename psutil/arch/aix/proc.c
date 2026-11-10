@@ -455,3 +455,37 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     free(processes);
     return psutil_oserror_nsp("psutil_read_process_table (no PID found)");
 }
+
+
+PyObject *
+psutil_proc_page_faults(PyObject *self, PyObject *args) {
+    PyObject *py_tuple = NULL;
+    pid32_t requested_pid;
+    pid32_t pid = 0;
+    int np = 0;
+    struct procentry64 *processes = (struct procentry64 *)NULL;
+    struct procentry64 *p;
+
+    if (!PyArg_ParseTuple(args, "i", &requested_pid))
+        return NULL;
+
+    processes = psutil_read_process_table(&np);
+    if (!processes)
+        return NULL;
+
+    for (p = processes; np > 0; np--, p++) {
+        pid = p->pi_pid;
+        if (requested_pid != pid)
+            continue;
+        py_tuple = Py_BuildValue(
+            "LL",
+            (long long)p->pi_minflt,  // minor
+            (long long)p->pi_majflt  // major
+        );
+        free(processes);
+        return py_tuple;
+    }
+
+    free(processes);
+    return psutil_oserror_nsp("psutil_read_process_table (no PID found)");
+}
