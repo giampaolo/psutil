@@ -1447,7 +1447,11 @@ class Process:
         if hasattr(self, "memory_footprint"):
             fp = self.memory_footprint()
             names = _ntp.pfullmem._fields[len(basic_mem) :]
-            return _ntp.pfullmem(*basic_mem, *[getattr(fp, x) for x in names])
+            ret = _ntp.pfullmem(*basic_mem, *[getattr(fp, x) for x in names])
+            if WINDOWS:
+                # keep the old field names working
+                ret._deprecated = basic_mem._deprecated
+            return ret
         return basic_mem
 
     def memory_percent(self, memtype: str = "rss") -> float:

@@ -422,7 +422,12 @@ if LINUX:
         locked: int
 
     # psutil.Process().memory_full_info()
-    pfullmem = namedtuple("pfullmem", pmem._fields + ("uss", "pss", "swap"))
+    class pfullmem(
+        namedtuple("pfullmem", pmem._fields + ("uss", "pss", "swap"))
+    ):
+        __slots__ = ()
+        lib = pmem.lib
+        dirty = pmem.dirty
 
 elif WINDOWS:
 
@@ -464,7 +469,10 @@ elif WINDOWS:
         peak_nonpaged_pool: int
 
     # psutil.Process.memory_full_info()
-    pfullmem = namedtuple("pfullmem", pmem._fields + ("uss",))
+    class pfullmem(  # noqa: SLOT002
+        namedtuple("pfullmem", pmem._fields + ("uss",))
+    ):
+        __getattr__ = pmem.__getattr__
 
 elif MACOS:
 

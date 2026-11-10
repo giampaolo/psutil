@@ -2237,6 +2237,14 @@ class TestProcessMemory(LinuxTestCase):
         after = psutil.Process().memory_extras().locked
         assert after - base == size
 
+    def test_memory_full_info_deprecated_fields(self):
+        with pytest.warns(DeprecationWarning):
+            mem = psutil.Process().memory_full_info()
+        with pytest.warns(DeprecationWarning, match="'lib' field"):
+            assert mem.lib == 0
+        with pytest.warns(DeprecationWarning, match="'dirty' field"):
+            assert mem.dirty == 0
+
     def test_memory_footprint_shared_self_mappings(self):
         # A page mapped twice by the same process counts as shared,
         # even with no other process involved.

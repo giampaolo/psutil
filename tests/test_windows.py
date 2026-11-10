@@ -702,6 +702,15 @@ class TestProcessMemory(WindowsTestCase):
         with pytest.warns(DeprecationWarning):
             assert ps.num_page_faults == win["PageFaultCount"]
 
+    def test_memory_full_info_deprecated_fields(self):
+        p = psutil.Process(self.pid)
+        with pytest.warns(DeprecationWarning):
+            mem = p.memory_full_info()
+        with pytest.warns(DeprecationWarning, match="wset is deprecated"):
+            assert mem.wset == mem.rss
+        with pytest.warns(DeprecationWarning, match="private is deprecated"):
+            assert mem.private == mem.vms
+
     def test_memory_info_deprecated_fields(self):
         win = win32process.GetProcessMemoryInfo(self.OpenProcess(self.pid))
         ps = psutil.Process(self.pid).memory_info()
