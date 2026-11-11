@@ -20,10 +20,13 @@ Python
      - not tested on CI
    * - Free-threaded Python
      - yes
-     - ``cp314t`` wheels are published
+     - ``cp314t`` wheels are published, plus ``abi3t`` ones for 3.15+
    * - Stable ABI (abi3)
      - yes
      - ``cp38-abi3`` wheels support CPython 3.8+
+   * - Stable ABI for free-threaded Python (abi3t)
+     - yes
+     - ``cp315-abi3.abi3t`` wheels support free-threaded CPython 3.15+
    * - Inline type hints
      - yes
      -

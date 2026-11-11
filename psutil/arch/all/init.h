@@ -7,6 +7,15 @@
 // Global names shared by all platforms.
 
 #include <Python.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#if defined(PSUTIL_POSIX)
+#include <unistd.h>
+#endif
+#if defined(Py_TARGET_ABI3T) && defined(PSUTIL_POSIX)
+#include <pthread.h>
+#endif
 
 // We do this so that all .c files have to include only one header
 // (ourselves, init.h).
@@ -41,13 +50,24 @@ extern int PSUTIL_DEBUG;
 extern int PSUTIL_CONN_NONE;
 extern int PSUTIL_TESTING;
 
-#ifdef Py_GIL_DISABLED
+#if !defined(Py_GIL_DISABLED)
+    #define UTXENT_MUTEX_LOCK()
+    #define UTXENT_MUTEX_UNLOCK()
+#elif !defined(Py_TARGET_ABI3T)
     extern PyMutex utxent_lock;
     #define UTXENT_MUTEX_LOCK() PyMutex_Lock(&utxent_lock)
     #define UTXENT_MUTEX_UNLOCK() PyMutex_Unlock(&utxent_lock)
-#else
-    #define UTXENT_MUTEX_LOCK()
-    #define UTXENT_MUTEX_UNLOCK()
+#elif defined(PSUTIL_POSIX)
+    // PyMutex is not in the limited API. Unlike PyMutex, a pthread
+    // mutex must be waited on with the thread state detached.
+    extern pthread_mutex_t utxent_lock;
+    #define UTXENT_MUTEX_LOCK()               \
+        do {                                  \
+            Py_BEGIN_ALLOW_THREADS            \
+            pthread_mutex_lock(&utxent_lock); \
+            Py_END_ALLOW_THREADS              \
+        } while (0)
+    #define UTXENT_MUTEX_UNLOCK() pthread_mutex_unlock(&utxent_lock)
 #endif
 // clang-format on
 
@@ -161,9 +181,15 @@ int pylist_append_obj(PyObject *list, PyObject *obj);
 int psutil_badargs(const char *funcname);
 int psutil_setup(void);
 int psutil_add_exceptions(PyObject *mod);
+#ifdef Py_TARGET_ABI3T
+PySlot *psutil_mod_export(
+    const char *name, PyMethodDef *methods, int (*exec)(PyObject *)
+);
+#else
 PyObject *psutil_mod_init(
     const char *name, PyMethodDef *methods, int (*exec)(PyObject *)
 );
+#endif
 double psutil_usage_percent(double used, double total, int round_);
 
 // ====================================================================

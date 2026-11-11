@@ -32,7 +32,12 @@ double load_avg_5m = 0;
 double load_avg_15m = 0;
 
 // clang-format off
-#ifdef Py_GIL_DISABLED
+#if defined(Py_TARGET_ABI3T)
+    // PyMutex is not in the limited API
+    static SRWLOCK mutex = SRWLOCK_INIT;
+    #define MUTEX_LOCK(m) AcquireSRWLockExclusive(m)
+    #define MUTEX_UNLOCK(m) ReleaseSRWLockExclusive(m)
+#elif defined(Py_GIL_DISABLED)
     static PyMutex mutex;
     #define MUTEX_LOCK(m) PyMutex_Lock(m)
     #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)

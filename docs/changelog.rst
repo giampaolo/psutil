@@ -181,6 +181,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`2915`, :label:`breaking`: stop publishing wheels for free-threaded
   CPython 3.13 (``cp313t``), which was experimental. Only ``cp314t`` wheels are
   published.
+- :gh:`2837`: publish ``abi3t`` wheels (:pep:`803`) for free-threaded CPython
+  3.15. A single ``cp315-abi3.abi3t`` wheel per platform also covers later
+  free-threaded versions.
 - :gh:`2976`, [Linux]: publish ppc64le and s390x wheels.
 - :gh:`2576`: the C extension modules now use PEP 489 multi-phase
   initialization.
