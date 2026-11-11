@@ -819,8 +819,7 @@ Sensors
   an empty dict is returned. Each entry includes:
 
   - :field:`label`: string label for the sensor, if available, else ``""``.
-  - :field:`current`: current temperature reading (changing), or ``None`` if
-    unavailable.
+  - :field:`current`: current temperature reading (changing).
   - :field:`high`: sensor-specified high temperature threshold (fixed), or
     ``None`` if unavailable. Typically indicates when hardware may start
     throttling to reduce heat.

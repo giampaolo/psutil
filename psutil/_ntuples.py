@@ -179,7 +179,7 @@ class scpufreq(NamedTuple):
 # psutil.sensors_temperatures()
 class shwtemp(NamedTuple):
     label: str
-    current: float | None
+    current: float
     high: float | None
     critical: float | None
 

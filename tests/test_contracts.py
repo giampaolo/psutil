@@ -441,7 +441,7 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(name, str)
             for unit in units:
                 assert isinstance(unit.label, str)
-                assert isinstance(unit.current, (float, int, type(None)))
+                assert isinstance(unit.current, int)
 
     @skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     def test_sensors_temperatures(self):
@@ -450,9 +450,9 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(name, str)
             for unit in units:
                 assert isinstance(unit.label, str)
-                assert isinstance(unit.current, (float, int, type(None)))
-                assert isinstance(unit.high, (float, int, type(None)))
-                assert isinstance(unit.critical, (float, int, type(None)))
+                assert isinstance(unit.current, float)
+                assert isinstance(unit.high, (float, type(None)))
+                assert isinstance(unit.critical, (float, type(None)))
 
     def test_boot_time(self):
         # Duplicate of test_system.py. Keep it anyway.
