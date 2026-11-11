@@ -319,10 +319,10 @@ if LINUX or MACOS or WINDOWS:
 
     class pfootprint(NamedTuple):
         uss: int
+        shared: int
         if LINUX:
             pss: int
             swap: int
-        shared: int
 
 
 # psutil.Process.net_connections()

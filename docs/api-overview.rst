@@ -411,7 +411,7 @@ Memory
     0.78
     >>>
     >>> p.memory_footprint()  # "real" USS memory usage
-    pfootprint(uss=2355200, pss=2483712, swap=0)
+    pfootprint(uss=2355200, shared=1564672, pss=2483712, swap=0)
     >>>
     >>> p.memory_maps()
     pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so',

@@ -2040,7 +2040,7 @@ class Process:
                 return self._parse_smaps()
 
             uss, pss, swap, shared = fetch()
-            return ntp.pfootprint(uss, pss, swap, shared)
+            return ntp.pfootprint(uss, shared, pss, swap)
 
     if HAS_PROC_SMAPS:
 

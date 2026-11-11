@@ -1832,7 +1832,7 @@ Exceptions
 
   .. method:: memory_footprint()
 
-    Return :field:`uss`, :field:`pss`, :field:`swap` and :field:`shared` memory
+    Return :field:`uss`, :field:`shared`, :field:`pss` and :field:`swap` memory
     metrics. These give a more accurate picture of actual memory consumption
     than :meth:`memory_info`. It walks the full process address space, so it is
     slower than :meth:`memory_info` and may require higher privileges.
@@ -1840,13 +1840,6 @@ Exceptions
     - :field:`uss` *(Linux, macOS, Windows)*: aka :term:`USS`; the
       :term:`private memory` of the process, which would be freed if the
       process were terminated right now.
-
-    - :field:`pss` *(Linux)*: aka :term:`PSS`; shared memory divided evenly
-      among the processes sharing it. I.e. if a process has 10 MBs all to
-      itself, and 10 MBs shared with another process, its PSS will be 15 MBs.
-
-    - :field:`swap` *(Linux)*: process memory currently in
-      :term:`swap <swap memory>`, counted per-mapping.
 
     - :field:`shared` *(Linux, macOS, Windows)*: resident memory shared with
       other processes. On Linux this counts pages mapped more than once,
@@ -1858,6 +1851,13 @@ Exceptions
       RSHRD. On Windows it counts working set pages shared with at least
       another process.
 
+    - :field:`pss` *(Linux)*: aka :term:`PSS`; shared memory divided evenly
+      among the processes sharing it. I.e. if a process has 10 MBs all to
+      itself, and 10 MBs shared with another process, its PSS will be 15 MBs.
+
+    - :field:`swap` *(Linux)*: process memory currently in
+      :term:`swap <swap memory>`, counted per-mapping.
+
     Example on Linux:
 
     .. code-block:: pycon
@@ -1865,7 +1865,7 @@ Exceptions
        >>> import psutil
        >>> p = psutil.Process()
        >>> p.memory_footprint()
-       pfootprint(uss=6545408, pss=6872064, swap=0, shared=4341760)
+       pfootprint(uss=6545408, shared=4341760, pss=6872064, swap=0)
 
     .. seealso::
       - :src:`scripts/procsmem.py`
