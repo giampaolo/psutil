@@ -823,7 +823,7 @@ class Process:
         else:
             for addr, perm, path, rss in raw:
                 path = convert_dos_path(path)
-                addr = hex(addr)
+                addr = f"{addr:x}-{addr + rss:x}"
                 yield (addr, perm, path, rss)
 
     @wrap_exceptions
