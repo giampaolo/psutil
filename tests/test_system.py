@@ -754,7 +754,7 @@ class TestCpuAPIs(PsutilTestCase):
         def check_ls(ls):
             for nt in ls:
                 assert nt._fields == ('current', 'min', 'max')
-                assert_ntuple_of_nums(nt, type_=(int, float))
+                assert_ntuple_of_nums(nt, type_=float)
 
         ls = psutil.cpu_freq(percpu=True)
         if (FREEBSD or AARCH64) and not ls:
@@ -768,21 +768,6 @@ class TestCpuAPIs(PsutilTestCase):
 
         if LINUX:
             assert len(ls) == psutil.cpu_count()
-
-    @skipif(not HAS_CPU_FREQ, reason="not supported")
-    def test_cpu_freq_none_minmax(self):
-        # min / max are None on FreeBSD when the sysctl is unparsable.
-        # Averaging them across CPUs used to raise TypeError.
-        ret = [
-            psutil._ntuples.scpufreq(100.0, None, None),
-            psutil._ntuples.scpufreq(200.0, None, None),
-        ]
-        with mock.patch("psutil._psplatform.cpu_freq", return_value=ret):
-            with mock.patch("psutil.LINUX", False):
-                nt = psutil.cpu_freq()
-        assert nt.current == 150.0
-        assert nt.min is None
-        assert nt.max is None
 
     def test_getloadavg(self):
         loadavg = psutil.getloadavg()

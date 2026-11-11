@@ -382,7 +382,7 @@ class TestSystemAPITypes(PsutilTestCase):
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
             return pytest.skip("cpu_freq() returns None")
-        assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int))
+        assert_ntuple_of_nums(psutil.cpu_freq())
 
     def test_disk_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.

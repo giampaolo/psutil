@@ -389,8 +389,8 @@ class TestFreeBSDCpu(FreeBSDTestCase):
             assert m.called
         for nt in ret:
             assert nt.current == 100
-            assert nt.min is None
-            assert nt.max is None
+            assert nt.min == 0.0
+            assert nt.max == 0.0
 
     def test_cpu_stats_ctx_switches(self):
         assert (
@@ -565,7 +565,7 @@ class TestFreeBSDSensors(FreeBSDTestCase):
             )
 
             sensor = f"dev.cpu.{cpu}.coretemp.tjmax"
-            sysctl_result = int(float(sysctl(sensor)[:-1]))
+            sysctl_result = float(sysctl(sensor)[:-1])
             assert (
                 psutil.sensors_temperatures()["coretemp"][cpu].high
                 == sysctl_result

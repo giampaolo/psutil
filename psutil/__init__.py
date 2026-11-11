@@ -2357,25 +2357,13 @@ if hasattr(_psplatform, "cpu_freq"):
                 return ret[0]
             else:
                 currs, mins, maxs = 0.0, 0.0, 0.0
-                set_none = False
                 for cpu in ret:
                     currs += cpu.current
-                    # On FreeBSD min/max are None if the sysctl value
-                    # can't be parsed.
-                    if cpu.min is None or cpu.max is None:
-                        set_none = True
-                        continue
                     mins += cpu.min
                     maxs += cpu.max
-
                 current = currs / num_cpus
-
-                if set_none:
-                    min_ = max_ = None
-                else:
-                    min_ = mins / num_cpus
-                    max_ = maxs / num_cpus
-
+                min_ = mins / num_cpus
+                max_ = maxs / num_cpus
                 return _ntp.scpufreq(current, min_, max_)
 
     __all__.append("cpu_freq")
