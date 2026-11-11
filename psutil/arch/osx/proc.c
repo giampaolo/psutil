@@ -277,7 +277,7 @@ psutil_proc_memory_extras(PyObject *self, PyObject *args) {
 #else
     pid_t pid;
     uint64_t phys_footprint = 0;
-    uint64_t peak_footprint = 0;
+    uint64_t peak_phys_footprint = 0;
     int fetched = 0;
     struct rusage_info_v0 ri0;
 #ifdef RUSAGE_INFO_V4
@@ -291,10 +291,10 @@ psutil_proc_memory_extras(PyObject *self, PyObject *args) {
 #ifdef RUSAGE_INFO_V4
     // ri_lifetime_max_phys_footprint requires RUSAGE_INFO_V4 (macOS
     // 10.13). Before that only phys_footprint is available and
-    // peak_footprint stays 0.
+    // peak_phys_footprint stays 0.
     if (proc_pid_rusage(pid, RUSAGE_INFO_V4, (rusage_info_t *)&ri4) == 0) {
         phys_footprint = ri4.ri_phys_footprint;
-        peak_footprint = ri4.ri_lifetime_max_phys_footprint;
+        peak_phys_footprint = ri4.ri_lifetime_max_phys_footprint;
         fetched = 1;
     }
     else if (errno != EINVAL) {
@@ -320,7 +320,7 @@ psutil_proc_memory_extras(PyObject *self, PyObject *args) {
 
     // clang-format off
     if (!pydict_add(dict, "phys_footprint", "K", (unsigned long long)phys_footprint)) goto error;
-    if (!pydict_add(dict, "peak_footprint", "K", (unsigned long long)peak_footprint)) goto error;
+    if (!pydict_add(dict, "peak_phys_footprint", "K", (unsigned long long)peak_phys_footprint)) goto error;
     // clang-format on
 
     return dict;

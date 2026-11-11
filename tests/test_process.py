@@ -934,9 +934,9 @@ class TestProcessMemory(PsutilTestCase):
             assert mem.peak_rss >= info.rss
             assert mem.peak_vms >= info.vms
         elif MACOS:
-            # peak_footprint is 0 on macOS < 10.13 (no RUSAGE_INFO_V4)
-            if mem.peak_footprint != 0:
-                assert mem.peak_footprint >= mem.phys_footprint
+            # peak_phys_footprint is 0 on macOS < 10.13 (no RUSAGE_INFO_V4)
+            if mem.peak_phys_footprint != 0:
+                assert mem.peak_phys_footprint >= mem.phys_footprint
         elif WINDOWS:
             assert mem.peak_virtual >= mem.virtual
             assert mem.peak_paged_pool >= mem.paged_pool
@@ -956,7 +956,7 @@ class TestProcessMemory(PsutilTestCase):
                 "locked",
             )
         elif MACOS:
-            assert mem._fields == ("phys_footprint", "peak_footprint")
+            assert mem._fields == ("phys_footprint", "peak_phys_footprint")
         elif WINDOWS:
             assert mem._fields == (
                 "virtual",

@@ -484,7 +484,7 @@ elif MACOS:
     # psutil.Process.memory_extras()
     class pmem_extras(NamedTuple):
         phys_footprint: int
-        peak_footprint: int
+        peak_phys_footprint: int
 
     # psutil.Process.memory_full_info()
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss",))

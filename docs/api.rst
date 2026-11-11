@@ -1752,23 +1752,23 @@ Exceptions
     Return extra platform-specific memory metrics, complementing
     :meth:`memory_info` (all values in bytes).
 
-    +-------------+----------------+--------------------+
-    | Linux       | macOS          | Windows            |
-    +=============+================+====================+
-    | peak_rss    | phys_footprint | virtual            |
-    +-------------+----------------+--------------------+
-    | peak_vms    | peak_footprint | peak_virtual       |
-    +-------------+----------------+--------------------+
-    | rss_anon    |                | paged_pool         |
-    +-------------+----------------+--------------------+
-    | rss_file    |                | nonpaged_pool      |
-    +-------------+----------------+--------------------+
-    | rss_shmem   |                | peak_paged_pool    |
-    +-------------+----------------+--------------------+
-    | swap_anon   |                | peak_nonpaged_pool |
-    +-------------+----------------+--------------------+
-    | locked      |                |                    |
-    +-------------+----------------+--------------------+
+    +-------------+---------------------+--------------------+
+    | Linux       | macOS               | Windows            |
+    +=============+=====================+====================+
+    | peak_rss    | phys_footprint      | virtual            |
+    +-------------+---------------------+--------------------+
+    | peak_vms    | peak_phys_footprint | peak_virtual       |
+    +-------------+---------------------+--------------------+
+    | rss_anon    |                     | paged_pool         |
+    +-------------+---------------------+--------------------+
+    | rss_file    |                     | nonpaged_pool      |
+    +-------------+---------------------+--------------------+
+    | rss_shmem   |                     | peak_paged_pool    |
+    +-------------+---------------------+--------------------+
+    | swap_anon   |                     | peak_nonpaged_pool |
+    +-------------+---------------------+--------------------+
+    | locked      |                     |                    |
+    +-------------+---------------------+--------------------+
 
     Linux:
 
@@ -1795,8 +1795,8 @@ Exceptions
     - :field:`phys_footprint`: memory footprint attributed to the process,
       including compressed memory. This corresponds to the main memory usage
       reported by macOS Activity Monitor. Prefer it over :field:`rss`.
-    - :field:`peak_footprint`: the highest :field:`phys_footprint` reached over
-      the process lifetime. Set to 0 on macOS < 10.13.
+    - :field:`peak_phys_footprint`: the highest :field:`phys_footprint` reached
+      over the process lifetime. Set to 0 on macOS < 10.13.
 
     Windows (see `PROCESS_MEMORY_COUNTERS_EX`_):
 

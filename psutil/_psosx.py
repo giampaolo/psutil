@@ -407,7 +407,7 @@ class Process:
     @wrap_exceptions
     def memory_extras(self):
         d = _psutil.proc_memory_extras(self.pid)
-        return ntp.pmem_extras(d["phys_footprint"], d["peak_footprint"])
+        return ntp.pmem_extras(d["phys_footprint"], d["peak_phys_footprint"])
 
     @wrap_exceptions
     def memory_footprint(self):
