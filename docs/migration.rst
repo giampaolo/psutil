@@ -31,6 +31,7 @@ Key breaking changes in 8.0:
   deprecated.
 - New :func:`set_procfs_path` function to relocate ``/proc``. Use this instead
   of setting :data:`PROCFS_PATH`.
+- ``psutil.OSX`` removed: use :data:`MACOS`.
 - Python 3.6 and 3.7 dropped.
 - Windows < 10 dropped.
 - macOS 10.7 and 10.8 dropped.
@@ -239,6 +240,22 @@ stale. Use :func:`set_procfs_path` instead:
 
 The :envvar:`PSUTIL_PROCFS_PATH` environment variable does the same from
 outside the process.
+
+``psutil.OSX`` removed
+^^^^^^^^^^^^^^^^^^^^^
+
+The ``psutil.OSX`` constant, deprecated since 5.4.7 in 2018, was removed. Use
+:data:`MACOS` instead.
+
+.. code-block:: python
+
+  # before
+  if psutil.OSX:
+      ...
+
+  # after
+  if psutil.MACOS:
+      ...
 
 Python 3.6 and 3.7 dropped
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

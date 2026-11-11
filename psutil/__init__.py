@@ -49,7 +49,6 @@ from ._common import LINUX
 from ._common import MACOS
 from ._common import NETBSD
 from ._common import OPENBSD
-from ._common import OSX  # deprecated alias
 from ._common import POSIX
 from ._common import SUNOS
 from ._common import WINDOWS
@@ -230,7 +229,7 @@ __all__ = [
 
     "AF_LINK",
 
-    "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "MACOS", "OSX", "POSIX",
+    "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "MACOS", "POSIX",
     "SUNOS", "WINDOWS", "AIX",
 
     # classes
@@ -584,7 +583,7 @@ class Process:
             # https://github.com/giampaolo/psutil/issues/2366#issuecomment-2381646555
             self._create_time = self._proc.create_time(fast_only=True)
             return (self.pid, self._create_time)
-        elif LINUX or NETBSD or OSX:
+        elif LINUX or NETBSD or MACOS:
             # Use 'monotonic' process starttime since boot to form unique
             # process identity, since it is stable over changes to system
             # time.
