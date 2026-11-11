@@ -59,7 +59,7 @@ def main():
     # OS
     if psutil.LINUX and shutil.which("lsb_release"):
         info['OS'] = sh('lsb_release -d -s')
-    elif psutil.OSX:
+    elif psutil.MACOS:
         info['OS'] = f"Darwin {platform.mac_ver()[0]}"
     elif psutil.WINDOWS:
         info['OS'] = "Windows " + ' '.join(map(str, platform.win32_ver()))

@@ -37,7 +37,7 @@ _DEFAULT = object()
 # fmt: off
 __all__ = [
     # OS constants
-    'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'MACOS', 'OSX', 'POSIX',
+    'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'MACOS', 'POSIX',
     'SUNOS', 'WINDOWS',
     # other constants
     'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
@@ -62,7 +62,6 @@ POSIX = os.name == "posix"
 WINDOWS = os.name == "nt"
 LINUX = sys.platform.startswith(("linux", "android"))
 MACOS = sys.platform.startswith("darwin")
-OSX = MACOS  # deprecated alias
 FREEBSD = sys.platform.startswith(("freebsd", "midnightbsd"))
 OPENBSD = sys.platform.startswith("openbsd")
 NETBSD = sys.platform.startswith("netbsd")
