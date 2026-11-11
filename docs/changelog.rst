@@ -127,7 +127,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   places, like the other ``*_percent`` APIs.
 - :gh:`3123`: :meth:`Process.memory_percent` raises :exc:`UserWarning` if
   *memtype* is not physical memory (e.g. ``"vms"``, ``"swap"``).
-- :gh:`XXXX`, :label:`breaking`: removed the ``psutil.OSX`` constant,
+- :gh:`3124`, :label:`breaking`: removed the ``psutil.OSX`` constant,
   deprecated since 5.4.7. Use :data:`MACOS` instead.
 - :gh:`2754`: :func:`sensors_battery` :field:`percent` is now a ``float`` on
   all systems, not only Linux.
