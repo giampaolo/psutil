@@ -667,7 +667,7 @@ class TestProcessCpu(PsutilTestCase):
             assert p.ionice().ioclass == psutil.IOPRIO_HIGH
         # errs
         with pytest.raises(
-            TypeError, match="value argument not accepted on Windows"
+            TypeError, match="value must be 0 or None on Windows"
         ):
             p.ionice(psutil.IOPRIO_NORMAL, value=1)
         with pytest.raises(ValueError, match="is not a valid priority"):
