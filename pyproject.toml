@@ -273,7 +273,6 @@ exclude = [
     "tests/",
 ]
 ignore_decorators = [
-    "@_common.deprecated_method",
     "@atexit.register",
     "@pytest.fixture",
 ]

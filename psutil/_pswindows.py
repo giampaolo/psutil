@@ -768,7 +768,7 @@ class Process:
             peak_rss=d["PeakWorkingSetSize"],
             peak_vms=d["PeakPagefileUsage"],
             _deprecated={
-                # old aliases
+                # DEPRECATED: old aliases
                 "wset": d["WorkingSetSize"],  # 'rss'
                 "peak_wset": d["PeakWorkingSetSize"],  # 'peak_rss'
                 "pagefile": d["PrivateUsage"],  # 'vms'

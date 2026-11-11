@@ -42,7 +42,7 @@ __all__ = [
     # other constants
     'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
     # utility functions
-    'conn_tmap', 'deprecated_method', 'isfile_strict',
+    'conn_tmap', 'isfile_strict',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
     'open_text', 'open_binary', 'cat', 'bcat',
@@ -425,29 +425,6 @@ def broadcast_addr(addr):
     if net.prefixlen == net.max_prefixlen:
         return None
     return str(net.broadcast_address)
-
-
-def deprecated_method(replacement, removed_in):
-    """A decorator which can be used to mark a method as deprecated
-    'replacement' is the method name which will be called instead.
-    """
-
-    def outer(fun):
-        msg = (
-            f"{fun.__name__}() is deprecated and will be removed in psutil"
-            f" {removed_in}; use {replacement}() instead"
-        )
-        if fun.__doc__ is None:
-            fun.__doc__ = msg
-
-        @functools.wraps(fun)
-        def inner(self, *args, **kwargs):
-            warnings.warn(msg, category=FutureWarning, stacklevel=2)
-            return getattr(self, replacement)(*args, **kwargs)
-
-        return inner
-
-    return outer
 
 
 class _WrapNumbers:

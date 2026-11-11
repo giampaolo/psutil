@@ -697,6 +697,7 @@ class Process:
         """
         return self._snapshot
 
+    # DEPRECATED
     @property
     def info(self) -> dict[str, Any]:
         """The attributes collected by `process_iter(attrs=...)` as a
@@ -714,6 +715,7 @@ class Process:
             self._info = self._snapshot.as_dict()
         return self._info
 
+    # DEPRECATED
     @info.setter
     def info(self, value: dict[str, Any]) -> None:
         msg = "setting Process.info is deprecated"
@@ -1603,8 +1605,13 @@ class Process:
         return self._proc.net_connections(kind)
 
     # DEPRECATED
-    @_common.deprecated_method(replacement="net_connections", removed_in="9.0")
     def connections(self, kind="inet") -> list[pconn]:
+        """DEPRECATED in 6.0.0. Use `net_connections()` instead."""
+        msg = (
+            "connections() is deprecated and will be removed in psutil 9.0;"
+            " use net_connections() instead"
+        )
+        warnings.warn(msg, FutureWarning, stacklevel=2)
         return self.net_connections(kind=kind)
 
     # --- signals
@@ -1904,7 +1911,7 @@ def process_iter(
         pmap.pop(pid, None)
 
     if attrs is not None:
-        if attrs == []:  # deprecated in 8.0.0
+        if attrs == []:  # DEPRECATED
             msg = (
                 "process_iter(attrs=[]) is deprecated; use "
                 "process_iter(attrs=Process.attrs) to retrieve all attributes"
@@ -2448,14 +2455,13 @@ def memory_swap() -> sswap:
     return _psplatform.memory_swap()
 
 
-# soft deprecated aliases
-
-
+# DEPRECATED (soft)
 def virtual_memory() -> smem:
     """SOFT-DEPRECATED alias for memory_physical()."""
     return memory_physical()
 
 
+# DEPRECATED (soft)
 def swap_memory() -> sswap:
     """SOFT-DEPRECATED alias for memory_swap()."""
     return memory_swap()
