@@ -681,8 +681,6 @@ class Process:
     @wrap_exceptions
     def cwd(self):
         """Return process current working directory."""
-        # sometimes we get an empty string, in which case we turn
-        # it into None
         if OPENBSD and self.pid == 0:
             return ""  # ...else it would raise EINVAL
         return _psutil.proc_cwd(self.pid)
