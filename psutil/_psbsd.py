@@ -7,7 +7,6 @@
 import errno
 import functools
 from collections import defaultdict
-from collections import namedtuple
 
 from . import _ntuples as ntp
 from . import _psposix
@@ -686,13 +685,6 @@ class Process:
         if OPENBSD and self.pid == 0:
             return ""  # ...else it would raise EINVAL
         return _psutil.proc_cwd(self.pid)
-
-    nt_mmap_grouped = namedtuple(
-        'mmap', 'path rss, private, ref_count, shadow_count'
-    )
-    nt_mmap_ext = namedtuple(
-        'mmap', 'addr, perms path rss, private, ref_count, shadow_count'
-    )
 
     @wrap_exceptions
     def open_files(self):

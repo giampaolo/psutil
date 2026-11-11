@@ -10,7 +10,6 @@ import os
 import socket
 import subprocess
 import sys
-from collections import namedtuple
 from socket import AF_INET
 
 import psutil
@@ -650,9 +649,6 @@ class Process:
                 [ntp.pconn(*conn) for conn in self._get_unix_sockets(self.pid)]
             )
         return ret
-
-    nt_mmap_grouped = namedtuple('mmap', 'path rss anon locked')
-    nt_mmap_ext = namedtuple('mmap', 'addr perms path rss anon locked')
 
     @wrap_exceptions
     def memory_maps(self):
