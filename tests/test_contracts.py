@@ -84,6 +84,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             "STATUS_WAITING",
             "STATUS_SUSPENDED",
             "STATUS_PARKED",
+            "STATUS_UNKNOWN",
         )
         self.check_constants(names, True)
         assert sorted(ProcessStatus.__members__.keys()) == sorted(names)
@@ -104,6 +105,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             (psutil.STATUS_WAITING, "waiting"),
             (psutil.STATUS_SUSPENDED, "suspended"),
             (psutil.STATUS_PARKED, "parked"),
+            (psutil.STATUS_UNKNOWN, "unknown"),
         )
         for en, str_ in mapping:
             assert en == str_

@@ -62,6 +62,7 @@ class ProcessStatus(StrEnum):
     STATUS_STOPPED = "stopped"
     STATUS_SUSPENDED = "suspended"  # NetBSD
     STATUS_TRACING_STOP = "tracing-stop"
+    STATUS_UNKNOWN = "unknown"
     STATUS_WAITING = "waiting"  # FreeBSD, SunOS
     STATUS_WAKE_KILL = "wake-kill"  # never reported; undocumented
     STATUS_WAKING = "waking"  # OpenBSD, NetBSD

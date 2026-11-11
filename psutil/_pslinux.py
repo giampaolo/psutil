@@ -2292,8 +2292,11 @@ class Process:
     def status(self):
         letter = self._parse_stat_file()['status']
         letter = letter.decode()
-        # XXX is '?' legit? (we're not supposed to return it anyway)
-        return PROC_STATUSES.get(letter, '?')
+        try:
+            return PROC_STATUSES[letter]
+        except KeyError:
+            debug(f"unknown process status {letter!r}")
+            return ProcessStatus.STATUS_UNKNOWN
 
     @wrap_exceptions
     def open_files(self):

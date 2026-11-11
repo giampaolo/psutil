@@ -25,6 +25,7 @@ from ._common import cache_activate
 from ._common import cache_deactivate
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
+from ._common import debug
 from ._common import memoize_when_activated
 from ._common import usage_percent
 from ._enums import ConnectionStatus
@@ -491,8 +492,11 @@ class Process:
     @wrap_exceptions
     def status(self):
         code = self._proc_oneshot()[proc_info_map['status']]
-        # XXX is '?' legit? (we're not supposed to return it anyway)
-        return PROC_STATUSES.get(code, '?')
+        try:
+            return PROC_STATUSES[code]
+        except KeyError:
+            debug(f"unknown process status {code!r}")
+            return ProcessStatus.STATUS_UNKNOWN
 
     def open_files(self):
         # TODO rewrite without using procfiles (stat /proc/pid/fd/* and then

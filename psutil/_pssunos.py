@@ -516,8 +516,11 @@ class Process:
     @wrap_exceptions
     def status(self):
         code = self._oneshot()[proc_info_map['status']]
-        # XXX is '?' legit? (we're not supposed to return it anyway)
-        return PROC_STATUSES.get(code, '?')
+        try:
+            return PROC_STATUSES[code]
+        except KeyError:
+            debug(f"unknown process status {code!r}")
+            return ProcessStatus.STATUS_UNKNOWN
 
     @wrap_exceptions
     def threads(self):

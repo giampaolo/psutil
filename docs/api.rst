@@ -2642,6 +2642,12 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
    (NetBSD only) The process has been explicitly paused, similar to the stopped
    state but managed by the NetBSD scheduler.
 
+.. data:: STATUS_UNKNOWN
+
+   The kernel reported a state psutil does not know about.
+
+   .. versionadded:: 8.0.0
+
 .. _const-proc-prio:
 
 Process priority constants

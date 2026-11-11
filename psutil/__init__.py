@@ -122,6 +122,7 @@ if _TYPE_CHECKING:
     STATUS_STOPPED: ProcessStatus
     STATUS_SUSPENDED: ProcessStatus
     STATUS_TRACING_STOP: ProcessStatus
+    STATUS_UNKNOWN: ProcessStatus
     STATUS_WAITING: ProcessStatus
     STATUS_WAKE_KILL: ProcessStatus
     STATUS_WAKING: ProcessStatus
@@ -400,7 +401,7 @@ class ProcessSnapshot:
     page_faults: ppagefaults
     pid: int
     ppid: int
-    status: ProcessStatus | str
+    status: ProcessStatus
     terminal: str | None
     threads: list[pthread]
     uids: puids
@@ -997,7 +998,7 @@ class Process:
         """The command line this process has been called with."""
         return self._proc.cmdline()
 
-    def status(self) -> ProcessStatus | str:
+    def status(self) -> ProcessStatus:
         """The process current status as a `STATUS_` constant."""
         try:
             return self._proc.status()

@@ -332,7 +332,7 @@ class TestFetchAllProcesses(PsutilTestCase):
     def status(self, ret, info):
         assert isinstance(ret, psutil.ProcessStatus)
         assert ret, ret
-        assert ret != '?'  # XXX
+        assert ret != psutil.STATUS_UNKNOWN
         assert ret in VALID_PROC_STATUSES
 
     def io_counters(self, ret, info):

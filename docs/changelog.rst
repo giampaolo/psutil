@@ -106,6 +106,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   The top-level constants (e.g. :data:`STATUS_RUNNING`) remain the primary API,
   and are now aliases of the enum members. See
   :ref:`migration guide <migration-8.0-enums>`.
+- :gh:`2753`: new :data:`STATUS_UNKNOWN` constant. :meth:`Process.status`
+  returns it instead of ``"?"`` when the kernel reports a state psutil does not
+  know about.
 - :gh:`1946`: add inline type hints to all public APIs. mypy still relies on
   the ``types-psutil`` stubs.
 - :gh:`2751`: named tuples are now :class:`typing.NamedTuple` classes with type

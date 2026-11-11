@@ -2527,6 +2527,14 @@ class TestProcessProcfsParsing(LinuxTestCase):
             p = psutil.Process()
             assert p._proc._get_eligible_cpus() == [0, 1, 2, 3, 8]
 
+    def test_status_unknown(self):
+        p = psutil.Process()
+        with mock.patch(
+            "psutil._pslinux.Process._parse_stat_file",
+            return_value={"status": b"@"},
+        ):
+            assert p.status() == psutil.STATUS_UNKNOWN
+
 
 class TestProcessAgainstStatus(LinuxTestCase):
     """/proc/pid/stat and /proc/pid/status have many values in common.
