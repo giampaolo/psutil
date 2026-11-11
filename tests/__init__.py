@@ -1827,6 +1827,13 @@ def check_connection_ntuple(conn):
     check_status(conn)
 
 
+# e.g. stdin is a socket, and pytest keeps a dup of it
+INHERITED_UNIX_FDS = set()
+if HAS_NET_CONNECTIONS_UNIX:
+    cons = psutil.Process().net_connections(kind="unix")
+    INHERITED_UNIX_FDS.update(x.fd for x in cons)
+
+
 def filter_proc_net_connections(cons):
     """Our process may start with some open UNIX sockets which are not
     initialized by us, invalidating unit tests.
@@ -1834,6 +1841,9 @@ def filter_proc_net_connections(cons):
     new = []
     for conn in cons:
         if POSIX and conn.family == socket.AF_UNIX:
+            if conn.fd in INHERITED_UNIX_FDS:
+                debug(f"skipping {conn}")
+                continue
             if MACOS and "/syslog" in conn.raddr:
                 debug(f"skipping {conn}")
                 continue

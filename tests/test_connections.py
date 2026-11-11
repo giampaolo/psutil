@@ -81,7 +81,10 @@ class ConnectionTestCase(PsutilTestCase):
             else:
                 raise
         # Filter for this proc PID and exclude PIDs from the tuple.
-        sys_cons = [c[:-1] for c in sys_cons if c.pid == pid]
+        sys_cons = [c for c in sys_cons if c.pid == pid]
+        if pid == os.getpid():
+            sys_cons = filter_proc_net_connections(sys_cons)
+        sys_cons = [c[:-1] for c in sys_cons]
         sys_cons.sort()
         proc_cons.sort()
         assert proc_cons == sys_cons
