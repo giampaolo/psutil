@@ -1495,6 +1495,11 @@ Exceptions
     - :field:`read_bytes`: bytes read (always ``0`` on BSD).
     - :field:`write_bytes`: bytes written (always ``0`` on BSD).
 
+    .. note::
+      (BSD) :field:`read_count` and :field:`write_count` are the number of
+      block I/O operations (``ru_inblock`` and ``ru_oublock`` of
+      :manpage:`getrusage(2)`), not syscalls.
+
     Linux specific:
 
     - :field:`read_chars` *(Linux)*: bytes read via ``read()`` and ``pread()``
