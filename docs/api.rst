@@ -1422,11 +1422,11 @@ Exceptions
   .. method:: ionice(ioclass=None, value=None)
 
     Get or set process :term:`I/O niceness <ionice>` (priority). Called with no
-    arguments (get), returns a ``(ioclass, value)`` named tuple on Linux or an
-    *ioclass* integer on Windows. Called with *ioclass* (one of the
-    :ref:`IOPRIO_* <const-proc-ioprio>` constants), sets the I/O priority. On
-    Linux, an additional *value* ranging from ``0`` to ``7`` can be specified
-    to further adjust the priority level specified by *ioclass*.
+    arguments (get), returns a ``(ioclass, value)`` named tuple. Called with
+    *ioclass* (one of the :ref:`IOPRIO_* <const-proc-ioprio>` constants), sets
+    the I/O priority. On Linux, an additional *value* ranging from ``0`` to
+    ``7`` can be specified to further adjust the priority level specified by
+    *ioclass*. On Windows :field:`value` is always ``0``.
 
     .. code-block:: pycon
 
@@ -1448,6 +1448,10 @@ Exceptions
     .. versionchanged:: 8.0.0
        *ioclass* is now a :class:`ProcessIOPriority` enum member. See
        :ref:`migration guide <migration-8.0>`.
+
+    .. versionchanged:: 8.0.0
+       Windows: return a ``(ioclass, value)`` named tuple instead of an
+       integer. See :ref:`migration guide <migration-8.0-ionice>`.
 
   .. method:: rlimit(resource, limits=None)
 

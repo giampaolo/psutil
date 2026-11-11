@@ -986,13 +986,12 @@ class Process:
     @wrap_exceptions
     def ionice_get(self):
         ret = _psutil.proc_io_priority_get(self.pid)
-        ret = ProcessIOPriority(ret)
-        return ret
+        return ntp.pionice(ProcessIOPriority(ret), 0)
 
     @wrap_exceptions
     def ionice_set(self, ioclass, value):
         if value:
-            msg = "value argument not accepted on Windows"
+            msg = f"value must be 0 or None on Windows, got {value!r}"
             raise TypeError(msg)
         if ioclass not in tuple(ProcessIOPriority):
             msg = f"{ioclass} is not a valid priority"
