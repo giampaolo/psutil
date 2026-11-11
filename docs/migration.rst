@@ -114,6 +114,16 @@ no plans to remove them, so existing code keeps working.
 :meth:`Process.ctx_switches` instead. :meth:`Process.as_dict` now returns a
 ``ctx_switches`` key.
 
+.. code-block:: python
+
+  # before
+  p.num_ctx_switches()
+  p.as_dict()["num_ctx_switches"]
+
+  # after
+  p.ctx_switches()
+  p.as_dict()["ctx_switches"]
+
 .. _migration-8.0-snapshot:
 
 :attr:`Process.info` is deprecated
