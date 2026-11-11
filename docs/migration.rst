@@ -22,6 +22,8 @@ Key breaking changes in 8.0:
   :meth:`Process.memory_footprint`.
 - :func:`virtual_memory` and :func:`swap_memory` are soft deprecated: use
   :func:`memory_physical` and :func:`memory_swap`. No warning is raised.
+- :meth:`Process.num_ctx_switches` is deprecated: use
+  :meth:`Process.ctx_switches`.
 - New :meth:`Process.memory_extras` method, returning extra platform-specific
   memory metrics.
 - New :attr:`Process.attrs`: :class:`frozenset` of valid attribute names;
@@ -102,6 +104,15 @@ no plans to remove them, so existing code keeps working.
   # after
   psutil.memory_physical()
   psutil.memory_swap()
+
+.. _migration-8.0-ctx-switches:
+
+:meth:`Process.num_ctx_switches` is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:meth:`Process.num_ctx_switches` is deprecated. Use
+:meth:`Process.ctx_switches` instead. :meth:`Process.as_dict` now returns a
+``ctx_switches`` key.
 
 .. _migration-8.0-snapshot:
 

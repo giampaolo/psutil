@@ -217,8 +217,8 @@ def run(pid, verbose=False):
 
     if 'io_counters' in pinfo:
         print_('I/O', str_ntuple(pinfo['io_counters'], convert_bytes=True))
-    if 'num_ctx_switches' in pinfo:
-        print_("ctx-switches", str_ntuple(pinfo['num_ctx_switches']))
+    if 'ctx_switches' in pinfo:
+        print_("ctx-switches", str_ntuple(pinfo['ctx_switches']))
     if pinfo['children']:
         template = "{:<6} {}"
         print_("children", template.format("PID", "NAME"))

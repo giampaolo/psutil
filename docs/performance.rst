@@ -116,7 +116,7 @@ Linux
     :meth:`~Process.status`, :meth:`~Process.terminal`
 
 *   :meth:`~Process.gids`, :meth:`~Process.memory_extras`,
-    :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_threads`,
+    :meth:`~Process.ctx_switches`, :meth:`~Process.num_threads`,
     :meth:`~Process.uids`
 
 *   :meth:`~Process.memory_footprint`, :meth:`~Process.memory_maps`
@@ -128,7 +128,7 @@ Windows
 
 *  :meth:`~Process.cpu_times`, :meth:`~Process.io_counters`,
    :meth:`~Process.memory_info`, :meth:`~Process.memory_extras`,
-   :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_handles`,
+   :meth:`~Process.ctx_switches`, :meth:`~Process.num_handles`,
    :meth:`~Process.num_threads`, :meth:`~Process.page_faults`,
    :meth:`~Process.status`
 
@@ -143,7 +143,7 @@ macOS
 """""
 
 *  :meth:`~Process.cpu_times`, :meth:`~Process.memory_info`,
-   :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_threads`,
+   :meth:`~Process.ctx_switches`, :meth:`~Process.num_threads`,
    :meth:`~Process.page_faults`
 
 *  :meth:`~Process.create_time`, :meth:`~Process.gids`, :meth:`~Process.name`,
@@ -158,10 +158,9 @@ BSD
 *  :meth:`~Process.cpu_num`, :meth:`~Process.cpu_times`,
    :meth:`~Process.create_time`, :meth:`~Process.gids`,
    :meth:`~Process.io_counters`, :meth:`~Process.memory_info`,
-   :meth:`~Process.name`, :meth:`~Process.nice`,
-   :meth:`~Process.num_ctx_switches`, :meth:`~Process.page_faults`,
-   :meth:`~Process.ppid`, :meth:`~Process.status`, :meth:`~Process.terminal`,
-   :meth:`~Process.uids`
+   :meth:`~Process.name`, :meth:`~Process.nice`, :meth:`~Process.ctx_switches`,
+   :meth:`~Process.page_faults`, :meth:`~Process.ppid`,
+   :meth:`~Process.status`, :meth:`~Process.terminal`, :meth:`~Process.uids`
 
 *Speedup: +2.7×*
 
@@ -182,12 +181,12 @@ on Linux:
     cpu_num
     cpu_percent
     cpu_times
+    ctx_switches
     gids
     memory_extras
     memory_info
     memory_percent
     name
-    num_ctx_switches
     num_threads
     page_faults
     parent
@@ -265,7 +264,7 @@ Linux:
   threads                          300      0.00278
   num_threads                      300      0.00278
   gids                             300      0.00296
-  num_ctx_switches                 300      0.00299
+  ctx_switches                     300      0.00299
   uids                             300      0.00311
   cpu_percent                      300      0.00346
   net_connections                  300      0.00373

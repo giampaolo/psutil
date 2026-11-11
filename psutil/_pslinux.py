@@ -2128,9 +2128,7 @@ class Process:
         )
 
     @wrap_exceptions
-    def num_ctx_switches(
-        self, _ctxsw_re=re.compile(br'ctxt_switches:\t(\d+)')
-    ):
+    def ctx_switches(self, _ctxsw_re=re.compile(br'ctxt_switches:\t(\d+)')):
         data = self._read_status_file()
         ctxsw = _ctxsw_re.findall(data)
         if not ctxsw:

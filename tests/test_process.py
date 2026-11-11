@@ -881,13 +881,27 @@ class TestProcessCpu(PsutilTestCase):
             p.cpu_affinity(combo)
             assert sorted(p.cpu_affinity()) == sorted(combo)
 
-    @skip_on_not_implemented(only_if=LINUX)
-    def test_num_ctx_switches(self):
+    def test_num_ctx_switches_alias(self):
         p = psutil.Process()
-        before = sum(p.num_ctx_switches())
+        with pytest.warns(DeprecationWarning):
+            ret = p.num_ctx_switches()
+        assert ret._fields == p.ctx_switches()._fields
+        # not returned by default
+        d = p.as_dict()
+        assert 'ctx_switches' in d
+        assert 'num_ctx_switches' not in d
+        # but explicitly requesting it should work
+        with pytest.warns(DeprecationWarning):
+            d = p.as_dict(attrs=['num_ctx_switches'])
+        assert 'num_ctx_switches' in d
+
+    @skip_on_not_implemented(only_if=LINUX)
+    def test_ctx_switches(self):
+        p = psutil.Process()
+        before = sum(p.ctx_switches())
         for _ in range(2):
             time.sleep(0.05)  # this shall ensure a context switch happens
-            after = sum(p.num_ctx_switches())
+            after = sum(p.ctx_switches())
             if after > before:
                 return None
         return pytest.fail(

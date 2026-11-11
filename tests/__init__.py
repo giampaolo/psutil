@@ -1058,7 +1058,7 @@ serial = pytest.mark.xdist_group(name="serial")
 # process. They need a quiet, non-xdist environment, because
 # they measure noisy per-process or system counters.
 # - CPU counters compared vs getrusage / vmstat / WMI: cpu_stats(),
-#   Process.num_ctx_switches(), Process.page_faults()
+#   Process.ctx_switches(), Process.page_faults()
 # - per-process counts other tests can move: Process.num_threads(),
 #   Process.num_fds(), Process.threads(), heap_info()
 isolated = pytest.mark.isolated
@@ -1336,7 +1336,7 @@ class process_namespace:
         ('name', (), {}),
         ('net_connections', (), {'kind': 'all'}),
         ('nice', (), {}),
-        ('num_ctx_switches', (), {}),
+        ('ctx_switches', (), {}),
         ('num_threads', (), {}),
         ('open_files', (), {}),
         ('page_faults', (), {}),

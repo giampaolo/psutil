@@ -386,7 +386,7 @@ CPU / scheduling
      -
      -
      -
-   * - :meth:`p.num_ctx_switches() <Process.num_ctx_switches>`
+   * - :meth:`p.ctx_switches() <Process.ctx_switches>`
      - ``pidstat -w -p PID``
      -
      - ``procstat -r PID``

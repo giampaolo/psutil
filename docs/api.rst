@@ -1512,7 +1512,7 @@ Exceptions
 
     .. availability:: Linux, Windows, BSD, AIX
 
-  .. method:: num_ctx_switches()
+  .. method:: ctx_switches()
 
     The number of :term:`context switches <context switch>` performed by this
     process as a ``(voluntary, involuntary)`` named tuple
@@ -1522,6 +1522,15 @@ Exceptions
       (Windows, macOS) :field:`involuntary` value is always set to 0, while
       :field:`voluntary` value reflects the total number of context switches
       (voluntary + involuntary). This is a limitation of the OS.
+
+    .. versionadded:: 8.0.0
+
+  .. method:: num_ctx_switches()
+
+    Same as :meth:`ctx_switches` (deprecated).
+
+    .. deprecated:: 8.0.0
+       use :meth:`ctx_switches` instead.
 
   .. method:: num_fds()
 

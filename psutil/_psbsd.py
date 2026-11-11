@@ -599,7 +599,7 @@ class Process:
             return len(self.threads())
 
     @wrap_exceptions
-    def num_ctx_switches(self):
+    def ctx_switches(self):
         d = self.oneshot()
         return ntp.pctxsw(d["ctx_switches_vol"], d["ctx_switches_unvol"])
 

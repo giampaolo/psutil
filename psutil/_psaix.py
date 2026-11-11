@@ -526,7 +526,7 @@ class Process:
         return len(os.listdir(f"{self._procfs_path}/{self.pid}/fd"))
 
     @wrap_exceptions
-    def num_ctx_switches(self):
+    def ctx_switches(self):
         return ntp.pctxsw(*_psutil.proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions

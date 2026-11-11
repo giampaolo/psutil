@@ -43,7 +43,7 @@ if psutil.LINUX:
         'gids',
         'memory_extras',
         'name',
-        'num_ctx_switches',
+        'ctx_switches',
         'num_threads',
         'page_faults',
         'ppid',
@@ -58,7 +58,7 @@ elif psutil.BSD:
         'io_counters',
         'memory_info',
         'name',
-        'num_ctx_switches',
+        'ctx_switches',
         'ppid',
         'status',
         'terminal',
@@ -86,7 +86,7 @@ elif psutil.MACOS:
         'gids',
         'memory_info',
         'name',
-        'num_ctx_switches',
+        'ctx_switches',
         'num_threads',
         'ppid',
         'terminal',
@@ -94,7 +94,7 @@ elif psutil.MACOS:
     ]
 elif psutil.WINDOWS:
     NAMES += [
-        'num_ctx_switches',
+        'ctx_switches',
         'num_threads',
         # dual implementation, called in case of AccessDenied
         'num_handles',

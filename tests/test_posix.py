@@ -354,17 +354,17 @@ class TestProcessCpu(PosixTestCase):
 
     @isolated
     @retry_on_failure
-    def test_num_ctx_switches(self):
+    def test_ctx_switches(self):
         # getrusage() keeps counting threads which already exited, and
         # /proc/pid/status only sees the live ones, so the totals drift
         # apart for good. Compare how much each grows instead.
         p = psutil.Process()
         ru1 = resource.getrusage(resource.RUSAGE_SELF)
-        cws1 = p.num_ctx_switches()
+        cws1 = p.ctx_switches()
         for _ in range(100):
             time.sleep(0.001)  # each sleep blocks, hence a switch
         ru2 = resource.getrusage(resource.RUSAGE_SELF)
-        cws2 = p.num_ctx_switches()
+        cws2 = p.ctx_switches()
 
         tol = 50
         if MACOS:
