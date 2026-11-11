@@ -565,7 +565,7 @@ class TestFreeBSDSensors(FreeBSDTestCase):
             )
 
             sensor = f"dev.cpu.{cpu}.coretemp.tjmax"
-            sysctl_result = int(float(sysctl(sensor)[:-1]))
+            sysctl_result = float(sysctl(sensor)[:-1])
             assert (
                 psutil.sensors_temperatures()["coretemp"][cpu].high
                 == sysctl_result

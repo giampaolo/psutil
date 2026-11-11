@@ -16,7 +16,7 @@
 #include "../../arch/all/init.h"
 
 
-#define DECIKELVIN_2_CELSIUS(t) (t - 2731) / 10
+#define DECIKELVIN_2_CELSIUS(t) (((t) - 2731) / 10.0)
 
 
 PyObject *
@@ -58,15 +58,15 @@ psutil_sensors_cpu_temperature(PyObject *self, PyObject *args) {
     str_format(sensor, sizeof(sensor), "dev.cpu.%d.temperature", core);
     if (psutil_sysctlbyname(sensor, &current, size) != 0)
         goto error;
-    current = DECIKELVIN_2_CELSIUS(current);
 
     // Return -273 in case of failure.
     str_format(sensor, sizeof(sensor), "dev.cpu.%d.coretemp.tjmax", core);
     if (psutil_sysctlbyname(sensor, &tjmax, size) != 0)
         tjmax = 0;
-    tjmax = DECIKELVIN_2_CELSIUS(tjmax);
 
-    return Py_BuildValue("ii", current, tjmax);
+    return Py_BuildValue(
+        "dd", DECIKELVIN_2_CELSIUS(current), DECIKELVIN_2_CELSIUS(tjmax)
+    );
 
 error:
     if (errno == ENOENT)
