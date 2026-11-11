@@ -1930,7 +1930,7 @@ Exceptions
     numeric fields summed. If *grouped* is ``False``, each region is listed
     individually; the tuple also includes *addr* (address range, e.g.
     ``"7f1c2a000000-7f1c2a021000"``) and *perms* (permission string, e.g.,
-    ``"r-xp"``).
+    ``"r-xp"`` on Linux and Solaris, ``"r-x"`` on FreeBSD and Windows).
 
     +---------------+---------+--------------+-----------+
     | Linux         | Windows | FreeBSD      | Solaris   |

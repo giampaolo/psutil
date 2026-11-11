@@ -1024,24 +1024,20 @@ psutil_proc_num_handles(PyObject *self, PyObject *args) {
 static char *
 get_region_protection_string(ULONG protection) {
     switch (protection & 0xff) {
-        case PAGE_NOACCESS:
-            return "";
         case PAGE_READONLY:
-            return "r";
+            return "r--";
         case PAGE_READWRITE:
-            return "rw";
         case PAGE_WRITECOPY:
-            return "wc";
+            return "rw-";
         case PAGE_EXECUTE:
-            return "x";
+            return "--x";
         case PAGE_EXECUTE_READ:
-            return "xr";
+            return "r-x";
         case PAGE_EXECUTE_READWRITE:
-            return "xrw";
         case PAGE_EXECUTE_WRITECOPY:
-            return "xwc";
+            return "rwx";
         default:
-            return "?";
+            return "---";
     }
 }
 

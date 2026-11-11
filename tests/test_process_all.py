@@ -479,8 +479,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                 elif fname == 'addr':
                     assert re.match(r"^[0-9a-f]+-[0-9a-f]+$", value)
                 elif fname == 'perms':
-                    if not WINDOWS:
-                        assert value, repr(value)
+                    assert re.match(r"^[r-][w-][x-]", value)
                 else:
                     assert isinstance(value, int)
                     assert value >= 0
