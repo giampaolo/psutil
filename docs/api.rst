@@ -2551,12 +2551,6 @@ platform, ``False`` otherwise.
 .. data:: OPENBSD
 .. data:: SUNOS
 .. data:: AIX
-.. data:: OSX
-
-  Alias for :data:`MACOS`, retained for backward compatibility.
-
-  .. deprecated:: 5.4.7
-     use :data:`MACOS` instead.
 
 .. _const-pstatus:
 

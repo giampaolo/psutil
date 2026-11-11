@@ -125,8 +125,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   wheels were already dropped in 7.1.2 (:gh:`2657`).
 - :gh:`2992`: :meth:`Process.memory_percent` is now rounded to 2 decimal
   places, like the other ``*_percent`` APIs.
-- :gh:`XXXX`: :meth:`Process.memory_percent` raises :exc:`UserWarning` if
+- :gh:`3123`: :meth:`Process.memory_percent` raises :exc:`UserWarning` if
   *memtype* is not physical memory (e.g. ``"vms"``, ``"swap"``).
+- :gh:`3124`, :label:`breaking`: removed the ``psutil.OSX`` constant,
+  deprecated since 5.4.7. Use :data:`MACOS` instead.
 - :gh:`2754`: :func:`sensors_battery` :field:`percent` is now a ``float`` on
   all systems, not only Linux.
 - :gh:`2799`: :meth:`Process.as_dict` now returns a dict with keys sorted
@@ -1555,7 +1557,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 **API changes**
 
-- :gh:`1286`, [macOS]: :data:`OSX` constant is now deprecated in favor of new
+- :gh:`1286`, [macOS]: ``OSX`` constant is now deprecated in favor of new
   :data:`MACOS`.
 - :gh:`1321`, [Linux]: :func:`disk_io_counters` falls back to ``/sys/block`` if
   :proc:`/proc/diskstats` is not available.
