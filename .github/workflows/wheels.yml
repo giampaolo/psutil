@@ -35,14 +35,15 @@ jobs:
     strategy:
       fail-fast: false
       # We produce an abi3 wheel which works from Python 3.8 onwards. We
-      # generate it on Python 3.14, which is faster.
+      # generate it on Python 3.14, which is faster. Same for the abi3t
+      # wheel built on 3.15t, which works from free-threaded 3.15 onwards.
       matrix:
         include:
           # manylinux and musllinux share a runner, so give them a lane each
           # instead of building one set after the other.
-          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp314{,t}-manylinux*", tag: manylinux }
+          - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp31{4,4t,5t}-manylinux*", tag: manylinux }
           - { os: ubuntu-latest, osname: linux, arch: x86_64, build: "cp314-musllinux*", tag: musllinux }
-          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp314{,t}-manylinux*", tag: manylinux }
+          - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp31{4,4t,5t}-manylinux*", tag: manylinux }
           - { os: ubuntu-24.04-arm, osname: linux, arch: aarch64, build: "cp314-musllinux*", tag: musllinux }
           - { os: ubuntu-latest, osname: linux, arch: ppc64le, build: "cp314-manylinux*", tag: abi3, qemu: ppc64le }
           - { os: ubuntu-latest, osname: linux, arch: s390x, build: "cp314-manylinux*", tag: abi3, qemu: s390x }
@@ -50,11 +51,14 @@ jobs:
           # (faster).
           - { os: macos-15, osname: macos, arch: "arm64 x86_64", archname: both, build: "cp314-*", tag: abi3 }
           - { os: macos-15, osname: macos, arch: "arm64 x86_64", archname: both, build: "cp314t-*", tag: cp314t }
+          - { os: macos-15, osname: macos, arch: "arm64 x86_64", archname: both, build: "cp315t-*", tag: abi3t }
           # Same idea for Windows.
           - { os: windows-2025, osname: win, arch: AMD64, build: "cp314-*", tag: abi3 }
           - { os: windows-2025, osname: win, arch: AMD64, build: "cp314t-*", tag: cp314t }
+          - { os: windows-2025, osname: win, arch: AMD64, build: "cp315t-*", tag: abi3t }
           - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp314-*", tag: abi3 }
           - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp314t-*", tag: cp314t }
+          - { os: windows-11-arm, osname: win, arch: ARM64, build: "cp315t-*", tag: abi3t }
     steps:
       - uses: actions/checkout@v7
 
