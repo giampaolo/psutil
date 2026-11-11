@@ -125,6 +125,8 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   wheels were already dropped in 7.1.2 (:gh:`2657`).
 - :gh:`2992`: :meth:`Process.memory_percent` is now rounded to 2 decimal
   places, like the other ``*_percent`` APIs.
+- :gh:`XXXX`: :meth:`Process.memory_percent` raises :exc:`UserWarning` if
+  *memtype* is not physical memory (e.g. ``"vms"``, ``"swap"``).
 - :gh:`2754`: :func:`sensors_battery` :field:`percent` is now a ``float`` on
   all systems, not only Linux.
 - :gh:`2799`: :meth:`Process.as_dict` now returns a dict with keys sorted

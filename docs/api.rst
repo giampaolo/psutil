@@ -1886,10 +1886,14 @@ Exceptions
 
     *memtype* selects which memory field to use and can be any attribute from
     :meth:`memory_info`, :meth:`memory_extras`, or :meth:`memory_footprint`
-    (default is ``"rss"``). The divisor is always total physical memory,
-    regardless of *memtype*. The result is rounded to 2 decimal places.
+    (default is ``"rss"``), looked up in this order. The divisor is always
+    total physical memory, so fields which are not physical memory (e.g.
+    :field:`vms`, :field:`swap`) raise :exc:`UserWarning`. The result is
+    rounded to 2 decimal places.
 
-    .. versionchanged:: 8.0.0 the result is rounded to 2 decimal places.
+    .. versionchanged:: 8.0.0
+       the result is rounded to 2 decimal places; a :exc:`UserWarning` raised
+       for fields which are not physical memory.
 
   .. method:: memory_maps(grouped=True)
 
