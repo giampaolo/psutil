@@ -287,7 +287,7 @@ def users():
     rawlist = _psutil.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
-        nt = ntp.suser(user, tty, hostname, tstamp, pid)
+        nt = ntp.suser(user, tty, hostname or None, tstamp, pid)
         retlist.append(nt)
     return retlist
 

@@ -371,8 +371,8 @@ class TestOtherSystemAPIs(PsutilTestCase):
                 assert user.name
                 assert isinstance(user.name, str)
                 assert isinstance(user.terminal, (str, type(None)))
-                if user.host is not None:
-                    assert isinstance(user.host, (str, type(None)))
+                assert isinstance(user.host, (str, type(None)))
+                assert user.host != ""
                 user.terminal  # noqa: B018
                 user.host  # noqa: B018
                 assert user.started > 0.0

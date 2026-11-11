@@ -929,7 +929,8 @@ Other system info
   - :field:`terminal`: the tty or pseudo-tty associated with the user, if any,
     else ``None``.
   - :field:`host`: the host name associated with the entry, if any (for
-    example, the remote host in an SSH session), else ``None``.
+    example, the remote host in an SSH session), else ``None``. For a graphical
+    session it may be an X display name like ``":0"``.
   - :field:`started`: the creation time as a floating point number expressed in
     seconds since the epoch.
   - :field:`pid`: the PID of the login process (like sshd for remote logins,
@@ -939,8 +940,12 @@ Other system info
 
      >>> import psutil
      >>> psutil.users()
-     [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0, pid=1352),
-      suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
+     [suser(name='giampaolo', terminal='tty1', host=None, started=1340737536.0, pid=1352),
+      suser(name='giampaolo', terminal='pts/3', host='10.0.0.5', started=1340737792.0, pid=1788)]
+
+  .. versionchanged:: 8.0.0
+     :field:`host` is ``None`` instead of ``"localhost"`` when the OS records
+     no host. See :ref:`migration guide <migration-8.0-users-host>`.
 
   .. note::
     On UNIX this reads the ``utmp`` database, and returns an empty list if

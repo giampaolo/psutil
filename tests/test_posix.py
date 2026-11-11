@@ -538,6 +538,22 @@ class TestSystemAPIs(PosixTestCase):
             if user.pid is not None:
                 assert user.pid > 0
 
+    @skipif(not LINUX, reason="LINUX only")
+    @skipif(is_busybox("who"), reason="busybox who has no -u option")
+    @skipif(NO_UTMP, reason="no /var/run/utmp file")
+    @retry_on_failure
+    def test_users_host(self):
+        out = who()
+        if not out.strip():
+            return pytest.skip("no users on this system")
+        hosts = []
+        for line in out.splitlines():
+            m = re.search(r"\((.+)\)$", line)
+            hosts.append(m.group(1) if m else None)
+        assert sorted(hosts, key=str) == sorted(
+            [u.host for u in psutil.users()], key=str
+        )
+
     @skipif(is_busybox("who"), reason="busybox who has no -u option")
     @skipif(NO_UTMP, reason="no /var/run/utmp file")
     @retry_on_failure

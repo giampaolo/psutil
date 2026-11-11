@@ -126,6 +126,10 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   64-bit processes: :meth:`Process.cwd` raises :exc:`AccessDenied`
   (:meth:`Process.cmdline` and :meth:`Process.environ` are unaffected). 32-bit
   wheels were already dropped in 7.1.2 (:gh:`2657`).
+- :gh:`XXXX`, :label:`breaking`: :func:`users` :field:`host` is ``None``
+  instead of ``"localhost"`` when the OS records no host, and X display names
+  (``":0"``) are no longer turned into ``"localhost"``. See
+  :ref:`migration guide <migration-8.0-users-host>`.
 - :gh:`3126`, :label:`breaking`: :meth:`Process.num_ctx_switches` renamed to
   :meth:`Process.ctx_switches`. The old name is deprecated. See
   :ref:`migration guide <migration-8.0-ctx-switches>`.

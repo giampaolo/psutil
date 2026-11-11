@@ -242,8 +242,8 @@ Other system info
     >>> import psutil
     >>>
     >>> psutil.users()
-    [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0, pid=1352),
-     suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
+    [suser(name='giampaolo', terminal='tty1', host=None, started=1340737536.0, pid=1352),
+     suser(name='giampaolo', terminal='pts/3', host='10.0.0.5', started=1340737792.0, pid=1788)]
     >>>
     >>> psutil.boot_time()
     1365519115.0

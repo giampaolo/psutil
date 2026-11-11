@@ -2027,12 +2027,6 @@ class TestOtherSystemAPIs(LinuxTestCase):
                 psutil._pslinux.boot_time()
             assert m.called
 
-    def test_users(self):
-        # Make sure the C extension converts ':0' and ':0.0' to
-        # 'localhost'.
-        for user in psutil.users():
-            assert user.host not in {":0", ":0.0"}
-
 
 # =====================================================================
 # --- test process
