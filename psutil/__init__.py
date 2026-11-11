@@ -1479,6 +1479,12 @@ class Process:
                 f" {tuple(valid_types)!r}"
             )
             raise ValueError(msg)
+        if memtype in {
+            "vms", "peak_vms", "swap", "swap_anon", "text", "data",
+            "stack", "virtual", "peak_virtual",
+        }:  # fmt: skip
+            msg = f"memtype {memtype!r} is not physical memory"
+            warnings.warn(msg, UserWarning, stacklevel=2)
 
         if memtype in _ntp.pmem._fields:
             fun = self.memory_info

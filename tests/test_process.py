@@ -1089,6 +1089,8 @@ class TestProcessMemory(PsutilTestCase):
         assert val == round(val, 2)
         with pytest.raises(ValueError):
             p.memory_percent(memtype="?!?")
+        with pytest.warns(UserWarning, match="not physical memory"):
+            p.memory_percent(memtype="vms")
         if HAS_PROC_MEMORY_FOOTPRINT:
             assert p.memory_percent(memtype='uss') >= 0
 
