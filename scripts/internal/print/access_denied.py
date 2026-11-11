@@ -15,7 +15,7 @@ uids                 0        0.0%   SUCCESS
 cmdline              0        0.0%   SUCCESS
 create_time          0        0.0%   SUCCESS
 status               0        0.0%   SUCCESS
-num_ctx_switches     0        0.0%   SUCCESS
+ctx_switches         0        0.0%   SUCCESS
 username             0        0.0%   SUCCESS
 ionice               0        0.0%   SUCCESS
 memory_percent       0        0.0%   SUCCESS

@@ -1070,7 +1070,7 @@ class Process:
             raise
 
     @wrap_exceptions
-    def num_ctx_switches(self):
+    def ctx_switches(self):
         ctx_switches = self._oneshot()["ctx_switches"]
         # only voluntary ctx switches are supported
         return ntp.pctxsw(ctx_switches, 0)

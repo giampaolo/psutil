@@ -317,7 +317,7 @@ Identity
     True
     >>>
     >>> p.as_dict()
-    {'num_ctx_switches': pctxsw(voluntary=63, involuntary=1),
+    {'ctx_switches': pctxsw(voluntary=63, involuntary=1),
      'pid': 5457,
      'status': <ProcessStatus.STATUS_RUNNING: 'running'>,
      ...}
@@ -374,7 +374,7 @@ CPU / scheduling
     >>> p.cpu_num()
     1
     >>>
-    >>> p.num_ctx_switches()
+    >>> p.ctx_switches()
     pctxsw(voluntary=78, involuntary=19)
     >>>
     >>> p.nice()

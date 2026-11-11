@@ -378,6 +378,7 @@ class ProcessSnapshot:
     cpu_percent: float
     cpu_times: pcputimes
     create_time: float
+    ctx_switches: pctxsw
     cwd: str
     environ: dict[str, str]
     exe: str
@@ -392,7 +393,6 @@ class ProcessSnapshot:
     name: str
     net_connections: list[pconn]
     nice: int
-    num_ctx_switches: pctxsw
     num_fds: int
     num_handles: int
     num_threads: int
@@ -793,7 +793,7 @@ class Process:
         valid_names = self.attrs
         # Deprecated attrs: not returned by default but still accepted if
         # explicitly requested.
-        deprecated_names = {"memory_full_info"}
+        deprecated_names = {"memory_full_info", "num_ctx_switches"}
 
         if attrs is not None:
             if not isinstance(attrs, (list, tuple, set, frozenset)):
@@ -1185,11 +1185,18 @@ class Process:
             """
             return self._proc.num_handles()
 
-    def num_ctx_switches(self) -> pctxsw:
+    def ctx_switches(self) -> pctxsw:
         """Return the number of voluntary and involuntary context
         switches performed by this process.
         """
-        return self._proc.num_ctx_switches()
+        return self._proc.ctx_switches()
+
+    # DEPRECATED
+    def num_ctx_switches(self) -> pctxsw:
+        """DEPRECATED in 8.0.0. Use `ctx_switches()` instead."""
+        msg = "num_ctx_switches() is deprecated; use ctx_switches() instead"
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        return self.ctx_switches()
 
     def num_threads(self) -> int:
         """Return the number of threads used by this process."""
@@ -1593,6 +1600,7 @@ class Process:
         _check_conn_kind(kind)
         return self._proc.net_connections(kind)
 
+    # DEPRECATED
     @_common.deprecated_method(replacement="net_connections", removed_in="9.0")
     def connections(self, kind="inet") -> list[pconn]:
         return self.net_connections(kind=kind)
@@ -1736,8 +1744,8 @@ Process.attrs = frozenset(
     x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'connections', 'memory_full_info', 'oneshot', 'attrs', 'snapshot',
-      'info'}
+      'connections', 'memory_full_info', 'num_ctx_switches', 'oneshot',
+      'attrs', 'snapshot', 'info'}
 )
 # fmt: on
 

@@ -145,8 +145,8 @@ class TestProcess(MemoryLeakTestCase):
     def test_num_fds(self):
         self.execute(self.proc.num_fds)
 
-    def test_num_ctx_switches(self):
-        self.execute(self.proc.num_ctx_switches)
+    def test_ctx_switches(self):
+        self.execute(self.proc.ctx_switches)
 
     @skip_on_access_denied(only_if=OPENBSD)
     def test_threads(self):

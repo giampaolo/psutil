@@ -433,7 +433,7 @@ class Process:
         return ctime
 
     @wrap_exceptions
-    def num_ctx_switches(self):
+    def ctx_switches(self):
         # Unvoluntary value seems not to be available;
         # getrusage() numbers seems to confirm this theory.
         # We set it to 0.

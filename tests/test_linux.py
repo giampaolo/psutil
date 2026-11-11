@@ -2508,8 +2508,8 @@ class TestProcessProcfsParsing(LinuxTestCase):
             nonvoluntary_ctxt_switches:\t13""").encode()
         with mock_open_content({f"/proc/{os.getpid()}/status": content}):
             p = psutil.Process()
-            assert p.num_ctx_switches().voluntary == 12
-            assert p.num_ctx_switches().involuntary == 13
+            assert p.ctx_switches().voluntary == 12
+            assert p.ctx_switches().involuntary == 13
             assert p.num_threads() == 66
             uids = p.uids()
             assert uids.real == 1000
@@ -2583,11 +2583,11 @@ class TestProcessAgainstStatus(LinuxTestCase):
         assert self.proc.gids() == value
 
     @retry_on_failure
-    def test_num_ctx_switches(self):
+    def test_ctx_switches(self):
         value = self.read_status_file("voluntary_ctxt_switches:")
-        assert self.proc.num_ctx_switches().voluntary == value
+        assert self.proc.ctx_switches().voluntary == value
         value = self.read_status_file("nonvoluntary_ctxt_switches:")
-        assert self.proc.num_ctx_switches().involuntary == value
+        assert self.proc.ctx_switches().involuntary == value
 
     def test_cpu_affinity(self):
         value = self.read_status_file("Cpus_allowed_list:")

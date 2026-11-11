@@ -59,7 +59,7 @@ cpu_times                        300      0.00272
 threads                          300      0.00278
 num_threads                      300      0.00278
 gids                             300      0.00296
-num_ctx_switches                 300      0.00299
+ctx_switches                     300      0.00299
 uids                             300      0.00311
 cpu_percent                      300      0.00346
 net_connections                  300      0.00373

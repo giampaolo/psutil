@@ -310,12 +310,12 @@ class TestFreeBSDProcess(FreeBSDTestCase):
             line = line.lower().strip()
             if ' voluntary context' in line:
                 pstat_value = int(line.split()[-1])
-                psutil_value = p.num_ctx_switches().voluntary
+                psutil_value = p.ctx_switches().voluntary
                 assert pstat_value == psutil_value
                 tested.append(None)
             elif ' involuntary context' in line:
                 pstat_value = int(line.split()[-1])
-                psutil_value = p.num_ctx_switches().involuntary
+                psutil_value = p.ctx_switches().involuntary
                 assert pstat_value == psutil_value
                 tested.append(None)
         if len(tested) != 2:

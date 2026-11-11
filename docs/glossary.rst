@@ -60,7 +60,7 @@ Glossary
 
       Occurs when the CPU stops executing one process or thread for another.
       Frequent switching can indicate high system
-      load or thread contention. See :meth:`Process.num_ctx_switches`
+      load or thread contention. See :meth:`Process.ctx_switches`
       and :func:`cpu_stats` (:field:`ctx_switches` field).
       A :field:`voluntary` context switch occurs when a process gives up the
       CPU, usually because it's waiting for something (I/O, a sleep, a mutex
@@ -76,7 +76,7 @@ Glossary
       A field whose value only increases over time (since boot or process
       creation) and never resets. Examples include :func:`cpu_times`,
       :func:`disk_io_counters`, :func:`net_io_counters`,
-      :meth:`Process.io_counters`, and :meth:`Process.num_ctx_switches`.
+      :meth:`Process.io_counters`, and :meth:`Process.ctx_switches`.
       The raw value is rarely useful on its own; divide the delta between
       two samples by the elapsed time to get a meaningful rate (e.g.
       bytes per second, context switches per second).

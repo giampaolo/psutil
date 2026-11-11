@@ -506,7 +506,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             assert ret in priorities
             assert isinstance(ret, enum.IntEnum)
 
-    def num_ctx_switches(self, ret, info):
+    def ctx_switches(self, ret, info):
         assert_ntuple_of_nums(ret, type_=int)
 
     def rlimit(self, ret, info):
