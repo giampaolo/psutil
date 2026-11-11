@@ -273,7 +273,7 @@ class TestFreeBSDProcess(FreeBSDTestCase):
             fields = line.split()
             _, start, stop, _perms, res = fields[:5]
             map = maps.pop()
-            assert f"{start}-{stop}" == map.addr
+            assert f"{int(start, 16):x}-{int(stop, 16):x}" == map.addr
             assert int(res) * PAGESIZE == map.rss
             if not map.path.startswith('['):
                 assert fields[10] == map.path

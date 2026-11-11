@@ -483,6 +483,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`3131`, [FreeBSD], [Windows]: :meth:`Process.memory_maps` :field:`addr`
   is now a ``"start-end"`` hex range with no ``0x`` prefix, as on Linux. On
   Windows it used to be the start address only.
+- :gh:`3132`, [Windows]: :meth:`Process.memory_maps` :field:`perms` is now a 3
+  characters ``"rwx"`` string (e.g. ``"r-x"``), as on FreeBSD. It used to be
+  ``"xr"``, ``"rw"``, ``"wc"``, etc.
 - :gh:`3130`, [BSD]: :meth:`Process.io_counters` :field:`read_bytes` and
   :field:`write_bytes` were ``-1`` instead of ``0``.
 
