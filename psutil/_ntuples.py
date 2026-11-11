@@ -172,8 +172,8 @@ class scpustats(NamedTuple):
 # psutil.cpu_freq()
 class scpufreq(NamedTuple):
     current: float
-    min: float | None
-    max: float | None
+    min: float
+    max: float
 
 
 # psutil.sensors_temperatures()
