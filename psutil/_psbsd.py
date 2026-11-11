@@ -676,7 +676,7 @@ class Process:
     @wrap_exceptions
     def io_counters(self):
         d = self.oneshot()
-        return ntp.pio(d["read_io_count"], d["write_io_count"], -1, -1)
+        return ntp.pio(d["read_io_count"], d["write_io_count"], 0, 0)
 
     @wrap_exceptions
     def cwd(self):
