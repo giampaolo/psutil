@@ -338,8 +338,7 @@ class TestFetchAllProcesses(PsutilTestCase):
     def io_counters(self, ret, info):
         for field in ret:
             assert isinstance(field, int)
-            if field != -1:
-                assert field >= 0
+            assert field >= 0
 
     def ionice(self, ret, info):
         assert is_namedtuple(ret)

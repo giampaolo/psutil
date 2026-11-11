@@ -1492,8 +1492,13 @@ Exceptions
       :manpage:`pread(2)`).
     - :field:`write_count`: number of write syscalls (e.g.,
       :manpage:`write(2)`, :manpage:`pwrite(2)`).
-    - :field:`read_bytes`: bytes read (``-1`` on BSD).
-    - :field:`write_bytes`: bytes written (``-1`` on BSD).
+    - :field:`read_bytes`: bytes read (always ``0`` on BSD).
+    - :field:`write_bytes`: bytes written (always ``0`` on BSD).
+
+    .. note::
+      (BSD) :field:`read_count` and :field:`write_count` are the number of
+      block I/O operations (``ru_inblock`` and ``ru_oublock`` of
+      :manpage:`getrusage(2)`), not syscalls.
 
     Linux specific:
 
@@ -1519,6 +1524,10 @@ Exceptions
        pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0, read_chars=769931, write_chars=203)
 
     .. availability:: Linux, Windows, BSD, AIX
+
+    .. versionchanged:: 8.0.0
+       :field:`read_bytes` and :field:`write_bytes` are ``0`` instead of ``-1``
+       on BSD.
 
   .. method:: ctx_switches()
 
