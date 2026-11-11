@@ -138,11 +138,9 @@ tuple, like on Linux. :field:`value` is always ``0``.
 
   # before
   p.ionice() == psutil.IOPRIO_NORMAL
-  int(p.ionice())
 
   # after
   p.ionice().ioclass == psutil.IOPRIO_NORMAL
-  int(p.ionice().ioclass)
 
 .. _migration-8.0-snapshot:
 

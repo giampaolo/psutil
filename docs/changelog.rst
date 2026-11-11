@@ -126,7 +126,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`3126`, :label:`breaking`: :meth:`Process.num_ctx_switches` renamed to
   :meth:`Process.ctx_switches`. The old name is deprecated. See
   :ref:`migration guide <migration-8.0-ctx-switches>`.
-- :gh:`XXXX`, [Windows], :label:`breaking`: :meth:`Process.ionice` returns a
+- :gh:`3127`, [Windows], :label:`breaking`: :meth:`Process.ionice` returns a
   ``(ioclass, value)`` named tuple instead of an integer, like on Linux. See
   :ref:`migration guide <migration-8.0-ionice>`.
 - :gh:`2992`: :meth:`Process.memory_percent` is now rounded to 2 decimal
