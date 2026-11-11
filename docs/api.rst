@@ -1928,8 +1928,9 @@ Exceptions
 
     If *grouped* is ``True``, regions with the same *path* are merged and their
     numeric fields summed. If *grouped* is ``False``, each region is listed
-    individually; the tuple also includes *addr* (address range) and *perms*
-    (permission string, e.g., ``"r-xp"``).
+    individually; the tuple also includes *addr* (address range, e.g.
+    ``"7f1c2a000000-7f1c2a021000"``) and *perms* (permission string, e.g.,
+    ``"r-xp"``).
 
     +---------------+---------+--------------+-----------+
     | Linux         | Windows | FreeBSD      | Solaris   |

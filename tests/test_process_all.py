@@ -12,6 +12,7 @@ import collections
 import enum
 import errno
 import os
+import re
 import stat
 import time
 import traceback
@@ -476,7 +477,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                     # '/foo/bar (deleted)'
                     # assert os.path.exists(nt.path), nt.path
                 elif fname == 'addr':
-                    assert value, repr(value)
+                    assert re.match(r"^[0-9a-f]+-[0-9a-f]+$", value)
                 elif fname == 'perms':
                     if not WINDOWS:
                         assert value, repr(value)

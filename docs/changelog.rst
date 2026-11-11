@@ -480,6 +480,9 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   ``None`` instead of ``0.0`` when they could not be determined.
 - :gh:`3128`, [FreeBSD]: :func:`sensors_temperatures` values were ``int``
   instead of ``float``.
+- :gh:`3131`, [FreeBSD], [Windows]: :meth:`Process.memory_maps` :field:`addr`
+  is now a ``"start-end"`` hex range with no ``0x`` prefix, as on Linux. On
+  Windows it used to be the start address only.
 - :gh:`3130`, [BSD]: :meth:`Process.io_counters` :field:`read_bytes` and
   :field:`write_bytes` were ``-1`` instead of ``0``.
 

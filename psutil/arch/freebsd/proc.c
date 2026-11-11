@@ -13,18 +13,6 @@
 #include "../../arch/all/init.h"
 
 
-// remove spaces from string
-static void
-remove_spaces(char *str) {
-    char *p1 = str;
-    char *p2 = str;
-    do
-        while (*p2 == ' ')
-            p2++;
-    while ((*p1++ = *p2++));
-}
-
-
 PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -266,7 +254,6 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     // Return a list of tuples for every process memory maps.
     // 'procstat' cmdline utility has been used as an example.
     pid_t pid;
-    int ptrwidth;
     int i, cnt;
     char addr[1000];
     char perms[4];
@@ -275,7 +262,6 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     struct kinfo_proc kp;
     struct kinfo_vmentry *freep = NULL;
     struct kinfo_vmentry *kve;
-    ptrwidth = 2 * sizeof(void *);
     long pagesize = psutil_getpagesize();
     PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -300,13 +286,10 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         str_format(
             addr,
             sizeof(addr),
-            "%#*jx-%#*jx",
-            ptrwidth,
+            "%jx-%jx",
             (uintmax_t)kve->kve_start,
-            ptrwidth,
             (uintmax_t)kve->kve_end
         );
-        remove_spaces(addr);
         str_append(
             perms,
             sizeof(perms),
