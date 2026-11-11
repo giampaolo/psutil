@@ -14,8 +14,10 @@ int PSUTIL_DEBUG = 0;
 int PSUTIL_TESTING = 0;
 int PSUTIL_CONN_NONE = 128;
 
-#ifdef Py_GIL_DISABLED
+#if defined(Py_GIL_DISABLED) && !defined(Py_TARGET_ABI3T)
 PyMutex utxent_lock = {0};
+#elif defined(Py_TARGET_ABI3T) && defined(PSUTIL_POSIX)
+pthread_mutex_t utxent_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 
