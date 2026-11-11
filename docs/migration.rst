@@ -242,7 +242,7 @@ The :envvar:`PSUTIL_PROCFS_PATH` environment variable does the same from
 outside the process.
 
 ``psutil.OSX`` removed
-^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
 The ``psutil.OSX`` constant, deprecated since 5.4.7 in 2018, was removed. Use
 :data:`MACOS` instead.

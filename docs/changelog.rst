@@ -2195,7 +2195,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`753`, [Linux], [macOS], [Windows]: process :term:`USS` and :term:`PSS`
   (Linux) "real" memory stats.
 - :gh:`755`: :meth:`Process.memory_percent` ``memtype`` parameter.
-- :gh:`760`: expose OS constants (:data:`LINUX`, :data:`OSX`, etc.)
+- :gh:`760`: expose OS constants (:data:`LINUX`, ``OSX``, etc.)
 - :gh:`756`, [Linux]: :func:`disk_io_counters` returns 2 new fields:
   :field:`read_merged_count` and :field:`write_merged_count`.
 
