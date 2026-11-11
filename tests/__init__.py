@@ -1318,6 +1318,7 @@ class process_namespace:
         ('info', (), {}),  # deprecated
         ('is_running', (), {}),
         ('memory_full_info', (), {}),  # deprecated
+        ('num_ctx_switches', (), {}),  # deprecated
         ('oneshot', (), {}),
         ('parent', (), {}),
         ('parents', (), {}),
