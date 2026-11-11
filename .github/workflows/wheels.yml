@@ -93,7 +93,7 @@ jobs:
       # every lane, which takes ~18 secs instead of ~5.
       - name: Build wheels
         shell: bash
-        run: uvx --from 'cibuildwheel==4.1.1' cibuildwheel --output-dir wheelhouse
+        run: uvx --from 'cibuildwheel==4.3.5' cibuildwheel --output-dir wheelhouse
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "${{ matrix.build }}"
