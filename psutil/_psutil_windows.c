@@ -174,6 +174,14 @@ PyMODEXPORT_FUNC
 PyModExport__psutil(void) {
     return psutil_mod_export("_psutil", PsutilMethods, psutil_exec);
 }
+
+// XXX: unused. setuptools <= 84.2.1 tells MSVC to export it, see
+// https://github.com/pypa/distutils/issues/387
+PyMODINIT_FUNC
+PyInit__psutil(void) {
+    PyErr_SetString(PyExc_SystemError, "PyInit__psutil is a stub");
+    return NULL;
+}
 #else
 PyMODINIT_FUNC
 PyInit__psutil(void) {
