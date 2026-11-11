@@ -373,7 +373,7 @@ def users():
         user, tty, hostname, tstamp, pid = item
         if tty == '~':
             continue  # reboot or shutdown
-        nt = ntp.suser(user, tty or None, hostname, tstamp, pid)
+        nt = ntp.suser(user, tty or None, hostname or None, tstamp, pid)
         retlist.append(nt)
     return retlist
 

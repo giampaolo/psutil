@@ -268,7 +268,6 @@ def users():
     """Return currently connected users as a list of named tuples."""
     retlist = []
     rawlist = _psutil.users()
-    localhost = (':0.0', ':0')
     for item in rawlist:
         user, tty, hostname, tstamp, user_process, pid = item
         # note: the underlying C function includes entries about
@@ -276,9 +275,7 @@ def users():
         # to use them in the future.
         if not user_process:
             continue
-        if hostname in localhost:
-            hostname = 'localhost'
-        nt = ntp.suser(user, tty, hostname, tstamp, pid)
+        nt = ntp.suser(user, tty, hostname or None, tstamp, pid)
         retlist.append(nt)
     return retlist
 

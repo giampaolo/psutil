@@ -142,6 +142,23 @@ tuple, like on Linux. :field:`value` is always ``0``.
   # after
   p.ionice().ioclass == psutil.IOPRIO_NORMAL
 
+.. _migration-8.0-users-host:
+
+:func:`users` no longer reports ``"localhost"``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The :field:`host` field of :func:`users` used to be ``"localhost"`` when the OS
+recorded no host, or an X display name (``":0"``, ``":0.0"``). It is now
+``None`` in the first case, and the display name as is in the second.
+
+.. code-block:: python
+
+  # before
+  local = [u for u in psutil.users() if u.host == "localhost"]
+
+  # after
+  local = [u for u in psutil.users() if not u.host or u.host.startswith(":")]
+
 .. _migration-8.0-snapshot:
 
 :attr:`Process.info` is deprecated
