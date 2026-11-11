@@ -24,6 +24,8 @@ Key breaking changes in 8.0:
   :func:`memory_physical` and :func:`memory_swap`. No warning is raised.
 - :meth:`Process.num_ctx_switches` is deprecated: use
   :meth:`Process.ctx_switches`.
+- :meth:`Process.ionice` on Windows returns a ``(ioclass, value)`` named tuple
+  instead of an integer.
 - New :meth:`Process.memory_extras` method, returning extra platform-specific
   memory metrics.
 - New :attr:`Process.attrs`: :class:`frozenset` of valid attribute names;
@@ -123,6 +125,24 @@ no plans to remove them, so existing code keeps working.
   # after
   p.ctx_switches()
   p.as_dict()["ctx_switches"]
+
+.. _migration-8.0-ionice:
+
+:meth:`Process.ionice` returns a named tuple on Windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+On Windows :meth:`Process.ionice` now returns a ``(ioclass, value)`` named
+tuple, like on Linux. :field:`value` is always ``0``.
+
+.. code-block:: python
+
+  # before
+  p.ionice() == psutil.IOPRIO_NORMAL
+  int(p.ionice())
+
+  # after
+  p.ionice().ioclass == psutil.IOPRIO_NORMAL
+  int(p.ionice().ioclass)
 
 .. _migration-8.0-snapshot:
 

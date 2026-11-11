@@ -342,21 +342,20 @@ class TestFetchAllProcesses(PsutilTestCase):
                 assert field >= 0
 
     def ionice(self, ret, info):
-        if LINUX:
-            assert isinstance(ret.ioclass, psutil.ProcessIOPriority)
-            assert isinstance(ret.value, int)
-            assert ret.ioclass >= 0
-            assert ret.value >= 0
-        else:  # Windows, Cygwin
+        assert is_namedtuple(ret)
+        assert isinstance(ret.ioclass, psutil.ProcessIOPriority)
+        assert isinstance(ret.value, int)
+        assert ret.ioclass >= 0
+        assert ret.value >= 0
+        if not LINUX:  # Windows, Cygwin
             choices = [
                 psutil.IOPRIO_VERYLOW,
                 psutil.IOPRIO_LOW,
                 psutil.IOPRIO_NORMAL,
                 psutil.IOPRIO_HIGH,
             ]
-            assert isinstance(ret, psutil.ProcessIOPriority)
-            assert ret >= 0
-            assert ret in choices
+            assert ret.ioclass in choices
+            assert ret.value == 0
 
     def num_threads(self, ret, info):
         assert isinstance(ret, int)

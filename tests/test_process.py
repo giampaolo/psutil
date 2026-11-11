@@ -649,21 +649,22 @@ class TestProcessCpu(PsutilTestCase):
     def test_ionice_win(self):
         p = psutil.Process()
         if not CI_TESTING:
-            assert p.ionice() == psutil.IOPRIO_NORMAL
+            assert p.ionice().ioclass == psutil.IOPRIO_NORMAL
         init = p.ionice()
-        self.addCleanup(p.ionice, init)
+        assert init.value == 0
+        self.addCleanup(p.ionice, init.ioclass)
 
         # base
         p.ionice(psutil.IOPRIO_VERYLOW)
-        assert p.ionice() == psutil.IOPRIO_VERYLOW
+        assert p.ionice().ioclass == psutil.IOPRIO_VERYLOW
         p.ionice(psutil.IOPRIO_LOW)
-        assert p.ionice() == psutil.IOPRIO_LOW
+        assert p.ionice().ioclass == psutil.IOPRIO_LOW
         try:
             p.ionice(psutil.IOPRIO_HIGH)
         except psutil.AccessDenied:
             pass
         else:
-            assert p.ionice() == psutil.IOPRIO_HIGH
+            assert p.ionice().ioclass == psutil.IOPRIO_HIGH
         # errs
         with pytest.raises(
             TypeError, match="value argument not accepted on Windows"

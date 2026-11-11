@@ -201,13 +201,10 @@ def run(pid, verbose=False):
         except psutil.Error:
             pass
         else:
-            if psutil.WINDOWS:
-                print_("ionice", ionice)
-            else:
-                print_(
-                    "ionice",
-                    f"class={ionice.ioclass}, value={ionice.value}",
-                )
+            print_(
+                "ionice",
+                f"class={ionice.ioclass}, value={ionice.value}",
+            )
 
     print_('num-threads', pinfo['num_threads'])
     if psutil.POSIX:

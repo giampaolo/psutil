@@ -384,7 +384,7 @@ class ProcessSnapshot:
     exe: str
     gids: pgids
     io_counters: pio
-    ionice: pionice | ProcessIOPriority
+    ionice: pionice
     memory_extras: pmem_extras
     memory_footprint: pfootprint
     memory_info: pmem
@@ -1089,15 +1089,16 @@ class Process:
 
         def ionice(
             self, ioclass: int | None = None, value: int | None = None
-        ) -> pionice | ProcessIOPriority | None:
-            """Get or set process I/O niceness (priority).
+        ) -> pionice | None:
+            """Get or set process I/O niceness (priority). If called
+            with no arguments return a `(ioclass, value)` named tuple.
 
             On Linux *ioclass* is one of the `IOPRIO_CLASS_*` constants.
             *value* is a number which goes from 0 to 7. The higher the
             value, the lower the I/O priority of the process.
 
             On Windows only *ioclass* is used and it can be set to
-            one of the `IOPRIO_*` constants.
+            one of the `IOPRIO_*` constants. *value* is always 0.
 
             Availability: Linux, Windows
             """

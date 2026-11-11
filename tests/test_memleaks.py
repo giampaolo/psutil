@@ -115,7 +115,7 @@ class TestProcess(MemoryLeakTestCase):
     @skipif(not HAS_PROC_IONICE, reason="not supported")
     def test_ionice_set(self):
         if WINDOWS:
-            value = thisproc.ionice()
+            value = thisproc.ionice().ioclass
             self.execute(lambda: self.proc.ionice(value))
         else:
             self.execute(lambda: self.proc.ionice(psutil.IOPRIO_CLASS_NONE))
