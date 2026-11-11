@@ -471,6 +471,10 @@ table.sponsor-table td {
     border: none;
 }
 
+table.sponsor-table td {
+    padding: 10px clamp(8px, 2vw, 28px);
+}
+
 .sponsor-cta-wrap {
     text-align: center;
     margin-top: 1em;

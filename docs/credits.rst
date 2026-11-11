@@ -32,7 +32,7 @@ Companies:
 * `Apivoid`_ *(sponsor)*
 * `Canonical Juju`_
 * `Canonical Launchpad`_
-* `Canonical`_
+* `Canonical`_ *(sponsor)*
 * `Codecov`_
 * `Indeed Engineering`_
 * `Kubernetes`_

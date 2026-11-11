@@ -91,6 +91,9 @@ Sponsors
         <td align="center" style="vertical-align: middle;">
           <a href="https://www.apivoid.com/"><img width="130" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-apivoid.svg" class="sponsor-logo"></a>
         </td>
+        <td align="center" style="vertical-align: middle;">
+          <a href="https://canonical.com/"><img width="165" src="https://raw.githubusercontent.com/giampaolo/psutil/refs/heads/master/docs/_static/images/logo-canonical.svg" class="sponsor-logo"></a>
+        </td>
       </tr>
     </table>
 
