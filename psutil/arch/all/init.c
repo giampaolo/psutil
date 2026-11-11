@@ -93,6 +93,26 @@ psutil_add_exceptions(PyObject *mod) {
 }
 
 
+#ifdef Py_TARGET_ABI3T
+PyABIInfo_VAR(abi_info);
+
+// PyModuleDef can't be used with abi3t. The module is described by
+// a slots array instead.
+PySlot *
+psutil_mod_export(
+    const char *name, PyMethodDef *methods, int (*exec)(PyObject *)
+) {
+    static PySlot slots[6];
+
+    slots[0] = (PySlot)PySlot_STATIC_DATA(Py_mod_abi, &abi_info);
+    slots[1] = (PySlot)PySlot_STATIC_DATA(Py_mod_name, (void *)name);
+    slots[2] = (PySlot)PySlot_STATIC_DATA(Py_mod_methods, methods);
+    slots[3] = (PySlot)PySlot_FUNC(Py_mod_exec, exec);
+    slots[4] = (PySlot)PySlot_DATA(Py_mod_gil, Py_MOD_GIL_NOT_USED);
+    slots[5] = (PySlot)PySlot_END;
+    return slots;
+}
+#else
 // Initialize the Python C extension module.
 PyObject *
 psutil_mod_init(
@@ -116,3 +136,4 @@ psutil_mod_init(
     def.m_methods = methods;
     return PyModuleDef_Init(&def);
 }
+#endif

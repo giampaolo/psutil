@@ -106,7 +106,14 @@ psutil_exec(PyObject *mod) {
     return 0;
 }
 
+#ifdef Py_TARGET_ABI3T
+PyMODEXPORT_FUNC
+PyModExport__psutil(void) {
+    return psutil_mod_export("_psutil", mod_methods, psutil_exec);
+}
+#else
 PyMODINIT_FUNC
 PyInit__psutil(void) {
     return psutil_mod_init("_psutil", mod_methods, psutil_exec);
 }
+#endif

@@ -78,11 +78,20 @@ macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 # run on. Py_LIMITED_API lets us create a single wheel which works with
 # multiple python versions, including unreleased ones.
 MIN_PY_VERSION = (3, 8)
+# Same, for free-threaded builds (abi3t, PEP 803).
+MIN_PY_VERSION_FT = (3, 15)
 
 abi3_platform = MACOS or LINUX or WINDOWS  # the ones we ship wheels for
-if CPYTHON and abi3_platform and not Py_GIL_DISABLED:
-    _abi3_tag = "cp{}{}".format(*MIN_PY_VERSION)
-    _hexversion = "0x{:02x}{:02x}0000".format(*MIN_PY_VERSION)
+if Py_GIL_DISABLED:
+    _abi3_version = MIN_PY_VERSION_FT
+    abi3_available = sys.version_info >= MIN_PY_VERSION_FT
+else:
+    _abi3_version = MIN_PY_VERSION
+    abi3_available = True
+
+if CPYTHON and abi3_platform and abi3_available:
+    _abi3_tag = "cp{}{}".format(*_abi3_version)
+    _hexversion = "0x{:02x}{:02x}0000".format(*_abi3_version)
     py_limited_api = {"py_limited_api": True}
     options = {"bdist_wheel": {"py_limited_api": _abi3_tag}}
     macros.append(('Py_LIMITED_API', _hexversion))
