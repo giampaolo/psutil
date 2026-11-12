@@ -392,6 +392,11 @@ class TestFreeBSDCpu(FreeBSDTestCase):
             assert nt.min == 0.0
             assert nt.max == 0.0
 
+    def test_cpu_freq_none_cpu_count(self):
+        with mock.patch("psutil._psbsd.cpu_count_logical", return_value=None):
+            assert psutil._psbsd.cpu_freq() == []
+            assert psutil.cpu_freq() is None
+
     def test_cpu_stats_ctx_switches(self):
         assert (
             abs(
@@ -570,6 +575,11 @@ class TestFreeBSDSensors(FreeBSDTestCase):
                 psutil.sensors_temperatures()["coretemp"][cpu].high
                 == sysctl_result
             )
+
+    def test_sensors_temperatures_none_cpu_count(self):
+        with mock.patch("psutil._psbsd.cpu_count_logical", return_value=None):
+            assert psutil._psbsd.sensors_temperatures() == {}
+            assert psutil.sensors_temperatures() == {}
 
 
 class TestFreeBSDOtherSystemAPIs(FreeBSDTestCase):
