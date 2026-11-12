@@ -468,12 +468,15 @@ def main():
         python_requires=">={}.{}".format(*MIN_PY_VERSION),
         # https://docs.pypi.org/project_metadata/
         project_urls={
-            'Homepage': 'https://github.com/giampaolo/psutil',
+            'Homepage': 'https://psutil.io/',
             'Source': 'https://github.com/giampaolo/psutil',
             'Issues': 'https://github.com/giampaolo/psutil/issues',
+            'Forum': 'https://github.com/giampaolo/psutil/discussions',
             'Documentation': 'https://psutil.io/',
             'Changelog': 'https://psutil.io/changelog/',
+            'Blog': 'https://psutil.io/blog/',
             'Funding': 'https://github.com/sponsors/giampaolo',
+            'Security': 'https://github.com/giampaolo/psutil/security/policy',
         },
         # https://pypi.org/classifiers/
         classifiers=[

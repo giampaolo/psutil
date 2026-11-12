@@ -6,6 +6,16 @@ This section answers common questions and pitfalls when using psutil.
 General
 -------
 
+.. _faq_support:
+
+Where can I ask a question?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+On the `forum <https://github.com/giampaolo/psutil/discussions>`__ (GitHub
+Discussions), in the Q&A category. The
+`issue tracker <https://github.com/giampaolo/psutil/issues>`__ is for bugs and
+enhancement proposals only.
+
 .. _faq_named_tuple_unpacking:
 
 Why should I avoid positional unpacking of named tuples?

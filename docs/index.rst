@@ -297,8 +297,9 @@
    :titlesonly:
    :caption: Project
 
-   Blog <blog>
    Changelog <changelog>
+   Blog <blog>
+   Forum <https://github.com/giampaolo/psutil/discussions>
    Timeline <timeline>
    Development guide <devguide>
    General index <genindex>

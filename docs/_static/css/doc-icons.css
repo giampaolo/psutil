@@ -107,6 +107,10 @@ body[data-page^="blog/"] .left-sidebar li.toctree-l1 > a[href$="../"] {
     --doc-icon: "\f09e";
 }
 
+a[href$="psutil/discussions"] {
+    --doc-icon: "\f086";
+}
+
 a[href*="changelog/"],
 ul.search > li:has(> a[href*="changelog/"]),
 body[data-page="changelog"] .left-sidebar a.current {

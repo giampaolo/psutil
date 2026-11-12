@@ -7,6 +7,7 @@
         <p align="center">Process and System Utilities for Python</p>
         <a href="https://psutil.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://psutil.io/blog/"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://github.com/giampaolo/psutil/discussions"><b>Forum</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://psutil.io/adoption/"><b>Who uses psutil</b></a>&nbsp;&nbsp;&nbsp;
     </div>
 

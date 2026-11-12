@@ -19,7 +19,7 @@
 - The issue tracker is for reporting problems or proposing enhancements related
   to the **program code**.
 - Please do not open issues **asking for support**. Instead, use the forum at:
-  https://groups.google.com/g/psutil.
+  https://github.com/giampaolo/psutil/discussions/.
 - Before submitting a new issue, **search** if there are existing issues for
   the same topic.
 - **Be clear** in describing what the problem is, and fill in the default issue
