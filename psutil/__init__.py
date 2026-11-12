@@ -326,7 +326,7 @@ if int(__version__.replace('.', '')) != getattr(_psutil, 'version', None):
 
 
 if hasattr(_psplatform, 'ppid_map'):
-    # Faster version (Windows and Linux).
+    # Faster version (Windows, Linux and macOS).
     _ppid_map = _psplatform.ppid_map
 else:  # pragma: no cover
 

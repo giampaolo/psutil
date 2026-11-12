@@ -6,6 +6,7 @@
 
 """macOS specific tests."""
 
+import os
 import re
 import time
 
@@ -65,6 +66,15 @@ class TestProcess(MacosTestCase):
     @classmethod
     def tearDownClass(cls):
         terminate(cls.pid)
+
+    def test_ppid_map(self):
+        # ppid_map() reads the process table once and ppid() reads one
+        # kinfo_proc per PID. They must report the same parent.
+        ppid_map = psutil._psplatform.ppid_map()
+        assert ppid_map[self.pid] == os.getpid()
+        proc = psutil.Process()
+        for ancestor in [proc, *proc.parents()]:
+            assert ppid_map[ancestor.pid] == ancestor.ppid()
 
     def test_create_time(self):
         output = sh(f"ps -o lstart -p {self.pid}")
