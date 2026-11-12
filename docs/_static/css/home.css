@@ -475,6 +475,44 @@ table.sponsor-table td {
     padding: 10px clamp(8px, 2vw, 28px);
 }
 
+/* two logos per row on phones */
+@media (max-width: 600px) {
+    .home-page #sponsors {
+        padding: 1.25rem 16px;
+    }
+
+    table.sponsor-table,
+    table.sponsor-table tbody {
+        display: block;
+    }
+
+    table.sponsor-table {
+        margin: 0 auto;
+        padding: 0;
+    }
+
+    table.sponsor-table tr {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+    }
+
+    table.sponsor-table td {
+        flex: 0 0 50%;
+        box-sizing: border-box;
+        padding: 14px 12px;
+    }
+
+    .sponsor-table svg {
+        max-width: 120px;
+    }
+
+    .sponsor-cta-wrap {
+        margin-top: 0.75em;
+    }
+}
+
 .sponsor-cta-wrap {
     text-align: center;
     margin-top: 1em;
