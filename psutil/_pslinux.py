@@ -259,6 +259,9 @@ def memory_physical():
     mems = {}
     with open_binary(f"{psutil.PROCFS_PATH}/meminfo") as f:
         for line in f:
+            # Some LXC containers pad meminfo with NUL bytes (see #2319).
+            if not line.rstrip(b'\x00'):
+                continue
             key, value = line.split(b':', 1)
             mems[key + b':'] = int(value.split()[0]) * 1024
 
@@ -379,6 +382,8 @@ def memory_swap():
     mems = {}
     with open_binary(f"{psutil.PROCFS_PATH}/meminfo") as f:
         for line in f:
+            if not line.rstrip(b'\x00'):
+                continue
             # Note: some fields (e.g. "ShadowCallStack:10373888 kB")
             # may not have a space after the colon, see:
             # https://github.com/giampaolo/psutil/issues/2809
