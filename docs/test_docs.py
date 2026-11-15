@@ -524,7 +524,7 @@ class TestPrevNext:
         # blog (ablog) and genindex don't get Sphinx's prev/next;
         # conf.py fills them in from the root toctree order.
         expected = {
-            "blog.html": {"credits": "prev", "changelog": "next"},
+            "blog.html": {"changelog": "prev", "timeline": "next"},
             "devguide.html": {"timeline": "prev", "genindex": "next"},
             "genindex.html": {"devguide": "prev"},
         }

@@ -11,6 +11,7 @@ import sphinxext.opengraph
 
 BLOG_DESCRIPTION = "Psutil blog: releases, deep dives, war stories"
 HOME_OG_TITLE = "psutil: Process and System Utilities for Python"
+HOME_OG_IMAGE = "_static/images/social-preview.png"
 DESCRIPTION_OVERRIDE = {}
 
 STATIC_DESCRIPTIONS = {
@@ -68,6 +69,18 @@ def set_og_type_article(app, pagename, templatename, context, doctree):
             meta = {}
             context["meta"] = meta
         meta["og:type"] = "article"
+
+
+def set_home_og_image(app, pagename, templatename, context, doctree):
+    # The generated social card for the home page just says "Home".
+    if pagename != app.config.master_doc:
+        return
+    meta = context.get("meta")
+    if meta is None:
+        meta = {}
+        context["meta"] = meta
+    meta["og:image"] = HOME_OG_IMAGE
+    meta["og:image:alt"] = "psutil logo"
 
 
 def blog_index_meta(app, pagename):
@@ -132,6 +145,10 @@ def finalize_head(app, pagename, templatename, context, doctree):
             r"\g<1>" + html.escape(HOME_OG_TITLE, quote=True) + r"\g<2>",
             deduped,
         )
+        # only emitted along with the generated card
+        deduped += (
+            '<meta name="twitter:card" content="summary_large_image" />\n'
+        )
     if deduped != tags:
         context["metatags"] = deduped
 
@@ -142,6 +159,7 @@ def setup(app):
     # priority < 500 ensures we run before sphinxext-opengraph.
     app.connect("html-page-context", capture_post_summary, priority=300)
     app.connect("html-page-context", set_og_type_article, priority=400)
+    app.connect("html-page-context", set_home_og_image, priority=400)
     app.connect("html-page-context", emit_blog_index_meta)
     app.connect("html-page-context", finalize_head, priority=600)
     return {
