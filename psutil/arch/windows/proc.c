@@ -88,7 +88,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
         create_time = 0;
     }
     else {
-        create_time = psutil_LargeIntegerToUnixTime(proc->CreateTime);
+        create_time = psutil_largeint_to_unix(proc->CreateTime);
     }
 
     // clang-format off
@@ -289,7 +289,7 @@ psutil_proc_times(PyObject *self, PyObject *args) {
         (double)(ftUser.dwHighDateTime * HI_T + ftUser.dwLowDateTime * LO_T),
         (double)(ftKernel.dwHighDateTime * HI_T + ftKernel.dwLowDateTime * LO_T
         ),
-        psutil_FiletimeToUnixTime(ftCreate)
+        psutil_filetime_to_unix(ftCreate)
     );
 }
 
@@ -453,7 +453,7 @@ error:
 
 
 static int
-psutil_GetProcWsetInformation(
+get_proc_wset_info(
     DWORD pid, HANDLE hProcess, PMEMORY_WORKING_SET_INFORMATION *wSetInfo
 ) {
     NTSTATUS status;
@@ -528,7 +528,7 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
     if (hProcess == NULL)
         return NULL;
 
-    if (psutil_GetProcWsetInformation(pid, hProcess, &wsInfo) != 0) {
+    if (get_proc_wset_info(pid, hProcess, &wsInfo) != 0) {
         CloseHandle(hProcess);
         return NULL;
     }
@@ -583,7 +583,7 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
 
     if (!NT_SUCCESS(status)) {
         CloseHandle(hProcess);
-        return psutil_SetFromNTStatusErr(status, "NtSuspend|ResumeProcess");
+        return psutil_oserror_ntstatus(status, "NtSuspend|ResumeProcess");
     }
 
     CloseHandle(hProcess);
@@ -889,7 +889,7 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
 
     CloseHandle(hProcess);
     if (!NT_SUCCESS(status))
-        return psutil_SetFromNTStatusErr(status, "NtQueryInformationProcess");
+        return psutil_oserror_ntstatus(status, "NtQueryInformationProcess");
     return Py_BuildValue("i", IoPriority);
 }
 
@@ -915,7 +915,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 
     CloseHandle(hProcess);
     if (!NT_SUCCESS(status))
-        return psutil_SetFromNTStatusErr(status, "NtSetInformationProcess");
+        return psutil_oserror_ntstatus(status, "NtSetInformationProcess");
     Py_RETURN_NONE;
 }
 
@@ -1024,24 +1024,20 @@ psutil_proc_num_handles(PyObject *self, PyObject *args) {
 static char *
 get_region_protection_string(ULONG protection) {
     switch (protection & 0xff) {
-        case PAGE_NOACCESS:
-            return "";
         case PAGE_READONLY:
-            return "r";
+            return "r--";
         case PAGE_READWRITE:
-            return "rw";
         case PAGE_WRITECOPY:
-            return "wc";
+            return "rw-";
         case PAGE_EXECUTE:
-            return "x";
+            return "--x";
         case PAGE_EXECUTE_READ:
-            return "xr";
+            return "r-x";
         case PAGE_EXECUTE_READWRITE:
-            return "xrw";
         case PAGE_EXECUTE_WRITECOPY:
-            return "xwc";
+            return "rwx";
         default:
-            return "?";
+            return "---";
     }
 }
 
@@ -1144,7 +1140,7 @@ psutil_proc_ppid(PyObject *self, PyObject *args) {
     );
     CloseHandle(hProcess);
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
+        psutil_oserror_ntstatus(
             status, "NtQueryInformationProcess(ProcessBasicInformation)"
         );
         return NULL;

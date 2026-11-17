@@ -33,8 +33,8 @@ struct kinfo_file *kinfo_getfile(pid_t pid, int *cnt);
 #endif
 
 int psutil_kinfo_proc(pid_t pid, void *proc);
-void convert_kvm_err(const char *syscall, char *errbuf);
-int is_zombie(size_t pid);
+void psutil_convert_kvm_err(const char *syscall, char *errbuf);
+int psutil_is_zombie(size_t pid);
 
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_count_logical(PyObject *self, PyObject *args);
@@ -48,5 +48,5 @@ PyObject *psutil_proc_name(PyObject *self, PyObject *args);
 PyObject *psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args);
 PyObject *psutil_proc_open_files(PyObject *self, PyObject *args);
 #if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-PyObject *psutil_swap_mem(PyObject *self, PyObject *args);
+PyObject *psutil_memory_swap(PyObject *self, PyObject *args);
 #endif

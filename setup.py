@@ -80,12 +80,17 @@ macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 MIN_PY_VERSION = (3, 8)
 
 abi3_platform = MACOS or LINUX or WINDOWS  # the ones we ship wheels for
-if CPYTHON and abi3_platform and not Py_GIL_DISABLED:
-    _abi3_tag = "cp{}{}".format(*MIN_PY_VERSION)
-    _hexversion = "0x{:02x}{:02x}0000".format(*MIN_PY_VERSION)
+if not Py_GIL_DISABLED:
+    abi3_tag, abi3_hex = "cp38", "0x03080000"
+elif sys.version_info >= (3, 15):
+    abi3_tag, abi3_hex = "cp315", "0x030f0000"  # abi3t, PEP 803
+else:
+    abi3_tag = None
+
+if CPYTHON and abi3_platform and abi3_tag:
     py_limited_api = {"py_limited_api": True}
-    options = {"bdist_wheel": {"py_limited_api": _abi3_tag}}
-    macros.append(('Py_LIMITED_API', _hexversion))
+    options = {"bdist_wheel": {"py_limited_api": abi3_tag}}
+    macros.append(('Py_LIMITED_API', abi3_hex))
 else:
     py_limited_api = {}
     options = {}
@@ -155,6 +160,46 @@ def unix_can_compile(c_code, extra_args=()):
         return ret == 0
 
 
+def get_extra_compile_args():
+    """Enable compiler warnings for all builds. PSUTIL_WERROR=1 makes
+    them fatal (Makefile does this), so CI catches new warnings without
+    breaking normal pip source installs.
+    """
+    if WINDOWS:
+        args = [
+            # /the highest useful warning level (/Wall is too noisy)
+            "/W4",
+            # disable unused "self" parameter
+            "/wd4100",
+        ]
+        if os.getenv("PSUTIL_WERROR"):
+            args.append("/WX")
+        return args
+    # Check flags individually, as some compilers (xlc, Sun cc) may
+    # not support all of them.
+    args = []
+    for flag in [
+        # unused vars, uninitialized use, wrong printf args, missing
+        # return, etc.
+        "-Wall",
+        # signed/unsigned compares, "size_t < 0" tests that can never
+        # be true, set but unused vars, empty bodies
+        "-Wextra",
+        # suppress warnings for unused C API "self" arg
+        "-Wno-unused-parameter",
+        # allow initializers like {0}
+        "-Wno-missing-field-initializers",
+    ]:
+        if unix_can_compile("int main(void) { return 0; }", [flag]):
+            args.append(flag)
+    if os.getenv("PSUTIL_WERROR"):
+        args.append("-Werror")
+    return args
+
+
+extra_compile_args = get_extra_compile_args()
+
+
 if WINDOWS:
 
     def get_winver():
@@ -198,7 +243,7 @@ if WINDOWS:
             "shell32",
             "ws2_32",
         ],
-        # extra_compile_args=["/W 4"],
+        extra_compile_args=extra_compile_args,
         # extra_link_args=["/DEBUG"],
         **py_limited_api,
     )
@@ -219,6 +264,7 @@ elif MACOS:
             '-framework',
             'IOKit',
         ],
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -235,6 +281,7 @@ elif FREEBSD:
         ),
         define_macros=macros,
         libraries=["devstat"],
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -251,6 +298,7 @@ elif OPENBSD:
         ),
         define_macros=macros,
         libraries=["kvm"],
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -267,6 +315,7 @@ elif NETBSD:
         ),
         define_macros=macros,
         libraries=["kvm", "jemalloc"],
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -284,6 +333,7 @@ elif LINUX:
             + glob.glob("psutil/arch/linux/*.c")
         ),
         define_macros=macros,
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -299,6 +349,7 @@ elif SUNOS:
         ),
         define_macros=macros,
         libraries=["kstat", "nsl", "socket"],
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -314,6 +365,7 @@ elif AIX:
         ),
         libraries=["perfstat"],
         define_macros=macros,
+        extra_compile_args=extra_compile_args,
         **py_limited_api,
     )
 
@@ -416,12 +468,15 @@ def main():
         python_requires=">={}.{}".format(*MIN_PY_VERSION),
         # https://docs.pypi.org/project_metadata/
         project_urls={
-            'Homepage': 'https://github.com/giampaolo/psutil',
+            'Homepage': 'https://psutil.io/',
             'Source': 'https://github.com/giampaolo/psutil',
             'Issues': 'https://github.com/giampaolo/psutil/issues',
+            'Forum': 'https://github.com/giampaolo/psutil/discussions',
             'Documentation': 'https://psutil.io/',
             'Changelog': 'https://psutil.io/changelog/',
+            'Blog': 'https://psutil.io/blog/',
             'Funding': 'https://github.com/sponsors/giampaolo',
+            'Security': 'https://github.com/giampaolo/psutil/security/policy',
         },
         # https://pypi.org/classifiers/
         classifiers=[

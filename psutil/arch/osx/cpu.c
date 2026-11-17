@@ -22,7 +22,6 @@
 #include <mach/mach_port.h>
 #include <mach/mach_vm.h>
 #include <sys/sysctl.h>
-#include <sys/vmmeter.h>
 #include <mach/mach.h>
 #if defined(__arm64__) || defined(__aarch64__)
 #include <CoreFoundation/CoreFoundation.h>
@@ -90,39 +89,6 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 }
 
 
-PyObject *
-psutil_cpu_stats(PyObject *self, PyObject *args) {
-    kern_return_t ret;
-    mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
-    mach_port_t mport = mach_host_self();
-    struct vmmeter vmstat;
-
-    if (mport == MACH_PORT_NULL) {
-        psutil_runtime_error("mach_host_self() returned MACH_PORT_NULL");
-        return NULL;
-    }
-
-    ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
-    mach_port_deallocate(mach_task_self(), mport);
-
-    if (ret != KERN_SUCCESS) {
-        psutil_runtime_error(
-            "host_statistics(HOST_VM_INFO) failed: %s", mach_error_string(ret)
-        );
-        return NULL;
-    }
-
-    return Py_BuildValue(
-        "IIIII",
-        vmstat.v_swtch,
-        vmstat.v_intr,
-        vmstat.v_soft,
-        vmstat.v_syscall,
-        vmstat.v_trap
-    );
-}
-
-
 #if defined(__arm64__) || defined(__aarch64__)
 
 // Helper to locate the 'pmgr' entry in AppleARMIODevice. Returns 0 on
@@ -131,7 +97,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 // Needed because on GitHub CI sometimes (but not all the times)
 // "AppleARMIODevice" is not available.
 static int
-psutil_find_pmgr_entry(io_registry_entry_t *out_entry) {
+find_pmgr_entry(io_registry_entry_t *out_entry) {
     kern_return_t status;
     io_iterator_t iter = IO_OBJECT_NULL;
     io_registry_entry_t entry = IO_OBJECT_NULL;
@@ -212,7 +178,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     // undeterminable, so return None (see #2382).
     // Walks the IOKit registry (mach IPC), so no GIL.
     Py_BEGIN_ALLOW_THREADS
-    found_pmgr = psutil_find_pmgr_entry(&entry);
+    found_pmgr = find_pmgr_entry(&entry);
     Py_END_ALLOW_THREADS
     if (!found_pmgr) {
         psutil_debug("'pmgr' entry not found in AppleARMIODevice");

@@ -152,13 +152,13 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     for (i = 0; i < nlwps; i++) {
         if (kl[i].l_stat == LSIDL || kl[i].l_stat == LSZOMB)
             continue;
-        // XXX: return 2 "user" times, no "system" time available
+        // l_rtime is user + system time summed together
         if (!pylist_append_fmt(
                 py_retlist,
                 "idd",
                 kl[i].l_lid,
                 PSUTIL_KPT2DOUBLE(kl[i].l_rtime),
-                PSUTIL_KPT2DOUBLE(kl[i].l_rtime)
+                0.0
             ))
         {
             goto error;
@@ -180,7 +180,6 @@ PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
     int mib[4];
-    int st;
     int attempt = 0;
     int max_attempts = 50;
     size_t len = 0;

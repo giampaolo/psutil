@@ -252,7 +252,7 @@ class TestHeap(HeapTestCase):
                 if LINUX:
                     # heap_used should not increase significantly
                     assert diff >= 0
-                    assert_within_percent(diff, 0, percent=5)
+                    assert diff <= size * 0.05
                 else:
                     # On BSD jemalloc allocates big memory both into
                     # heap_used and mmap_used.
@@ -275,13 +275,15 @@ class TestHeap(HeapTestCase):
 @isolated
 class TestHeapWindows(HeapTestCase):
 
-    @retry_on_failure
     def test_heap_used(self):
         """Test that HeapAlloc() without HeapFree() increases heap_used."""
         size = HEAP_SIZE
+        # The first HeapAlloc() / HeapFree() round leaves ~520 bytes
+        # on the heap, so get it out of the way first.
+        heap = GetProcessHeap()
+        HeapFree(heap, HeapAlloc(heap, size))
 
         mem1 = psutil.heap_info()
-        heap = GetProcessHeap()
         addr = HeapAlloc(heap, size)
         mem2 = psutil.heap_info()
 

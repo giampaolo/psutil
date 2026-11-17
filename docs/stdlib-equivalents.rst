@@ -172,7 +172,7 @@ CPU / scheduling
    * - :meth:`p.cpu_times() <Process.cpu_times>`
      - :func:`resource.getrusage`
      - ``ru_utime`` / ``ru_stime`` match; have higher precision.
-   * - :meth:`p.num_ctx_switches() <Process.num_ctx_switches>`
+   * - :meth:`p.ctx_switches() <Process.ctx_switches>`
      - :func:`resource.getrusage`
      - Current process only; psutil works for any PID.
    * - :meth:`p.nice() <Process.nice>`

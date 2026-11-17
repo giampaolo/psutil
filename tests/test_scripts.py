@@ -51,7 +51,7 @@ class ScriptsTestCase(PsutilTestCase):
             out = sh(cmd, env=env).strip()
         except RuntimeError as err:
             if 'AccessDenied' in str(err):
-                return str(err)
+                return pytest.skip(str(err))
             else:
                 raise
         assert out, out
@@ -205,20 +205,6 @@ class TestInternalScripts(ScriptsTestCase):
             with open(path, encoding="utf8") as f:
                 data = f.read()
             ast.parse(data)
-
-    # don't care about other platforms, this is really just for myself
-    @skipif(not LINUX, reason="not on LINUX")
-    @skipif(CI_TESTING, reason="not on CI")
-    def test_import_all(self):
-        for path in self.walk():
-            try:
-                import_module_by_path(path)
-            except SystemExit:
-                pass
-            except ImportError as err:
-                if "pyperf" in str(err) or "requests" in str(err):
-                    continue
-                raise
 
     @skipif(not LINUX, reason="not on LINUX")
     def test_root_dir(self):

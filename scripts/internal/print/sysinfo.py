@@ -59,7 +59,7 @@ def main():
     # OS
     if psutil.LINUX and shutil.which("lsb_release"):
         info['OS'] = sh('lsb_release -d -s')
-    elif psutil.OSX:
+    elif psutil.MACOS:
         info['OS'] = f"Darwin {platform.mac_ver()[0]}"
     elif psutil.WINDOWS:
         info['OS'] = "Windows " + ' '.join(map(str, platform.win32_ver()))
@@ -110,13 +110,13 @@ def main():
     info['loadavg'] = (
         f"{loadavg[0]:.1f}%, {loadavg[1]:.1f}%, {loadavg[2]:.1f}%"
     )
-    mem = psutil.virtual_memory()
+    mem = psutil.memory_physical()
     info['memory'] = "{}%%, used={}, total={}".format(
         int(mem.percent),
         bytes2human(mem.used),
         bytes2human(mem.total),
     )
-    swap = psutil.swap_memory()
+    swap = psutil.memory_swap()
     info['swap'] = "{}%%, used={}, total={}".format(
         int(swap.percent),
         bytes2human(swap.used),

@@ -115,7 +115,7 @@ class TestProcess(MemoryLeakTestCase):
     @skipif(not HAS_PROC_IONICE, reason="not supported")
     def test_ionice_set(self):
         if WINDOWS:
-            value = thisproc.ionice()
+            value = thisproc.ionice().ioclass
             self.execute(lambda: self.proc.ionice(value))
         else:
             self.execute(lambda: self.proc.ionice(psutil.IOPRIO_CLASS_NONE))
@@ -145,8 +145,8 @@ class TestProcess(MemoryLeakTestCase):
     def test_num_fds(self):
         self.execute(self.proc.num_fds)
 
-    def test_num_ctx_switches(self):
-        self.execute(self.proc.num_ctx_switches)
+    def test_ctx_switches(self):
+        self.execute(self.proc.ctx_switches)
 
     @skip_on_access_denied(only_if=OPENBSD)
     def test_threads(self):
@@ -340,13 +340,13 @@ class TestModuleFunctions(MemoryLeakTestCase):
 
     # --- mem
 
-    def test_virtual_memory(self):
-        self.execute(psutil.virtual_memory)
+    def test_memory_physical(self):
+        self.execute(psutil.memory_physical)
 
     # TODO: remove this skip when this gets fixed
     @skipif(SUNOS, reason="worthless on SUNOS (uses a subprocess)")
-    def test_swap_memory(self):
-        self.execute(psutil.swap_memory)
+    def test_memory_swap(self):
+        self.execute(psutil.memory_swap)
 
     def test_pid_exists(self):
         times = FEW_TIMES if POSIX else self.times
@@ -407,8 +407,7 @@ class TestModuleFunctions(MemoryLeakTestCase):
     @skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     @skipif(LINUX, reason="too slow on LINUX")
     def test_sensors_temperatures(self):
-        times = FEW_TIMES if LINUX else self.times
-        self.execute(psutil.sensors_temperatures, times=times)
+        self.execute(psutil.sensors_temperatures)
 
     @skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_sensors_fans(self):
@@ -519,7 +518,7 @@ def cext_has(name):
 
 
 class TestBadargs2(MemoryLeakTestCase):
-    """Like TestBadargsMemleaks, but for the error paths reached
+    """Like TestBadargs, but for the error paths reached
     *after* `PyArg_ParseTuple` succeeds, by passing an invalid arg like
     a negative PID, a bogus NIC name etc., making the C function fail
     deeper.

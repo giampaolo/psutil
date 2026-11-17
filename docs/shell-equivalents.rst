@@ -87,12 +87,12 @@ Memory
      - macOS
      - BSD
      - Windows
-   * - :func:`virtual_memory`
+   * - :func:`memory_physical`
      - ``free``, ``vmstat``, ``cat /proc/meminfo``
      - ``vm_stat``
      - ``vmstat -s``, ``sysctl vm.stats``
      - ``systeminfo``
-   * - :func:`swap_memory`
+   * - :func:`memory_swap`
      - ``free``, ``vmstat``, ``swapon``
      - ``sysctl vm.swapusage``
      - ``vmstat -s``, ``swapinfo``
@@ -386,7 +386,7 @@ CPU / scheduling
      -
      -
      -
-   * - :meth:`p.num_ctx_switches() <Process.num_ctx_switches>`
+   * - :meth:`p.ctx_switches() <Process.ctx_switches>`
      - ``pidstat -w -p PID``
      -
      - ``procstat -r PID``

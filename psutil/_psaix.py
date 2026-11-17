@@ -13,6 +13,8 @@ import re
 import subprocess
 import sys
 
+import psutil
+
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil
@@ -23,14 +25,14 @@ from ._common import cache_activate
 from ._common import cache_deactivate
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
-from ._common import get_procfs_path
+from ._common import debug
 from ._common import memoize_when_activated
 from ._common import usage_percent
 from ._enums import ConnectionStatus
 from ._enums import NicDuplex
 from ._enums import ProcessStatus
 
-__extra__all__ = ["PROCFS_PATH"]
+__extra__all__ = []
 
 
 # =====================================================================
@@ -85,15 +87,15 @@ proc_info_map = dict(
 # =====================================================================
 
 
-def virtual_memory():
-    total, avail, free, _pinned, inuse = _psutil.virtual_mem()
+def memory_physical():
+    total, avail, free, _pinned, inuse = _psutil.memory_physical()
     percent = usage_percent((total - avail), total, round_=1)
-    return ntp.svmem(total, avail, percent, inuse, free)
+    return ntp.smem(total, avail, percent, inuse, free)
 
 
-def swap_memory():
+def memory_swap():
     """Swap memory as a (total, used, free, percent, sin, sout) tuple."""
-    total, free, sin, sout = _psutil.swap_mem()
+    total, free, sin, sout = _psutil.memory_swap()
     used = total - free
     percent = usage_percent(used, total, round_=1)
     return ntp.sswap(total, used, free, percent, sin, sout)
@@ -266,7 +268,6 @@ def users():
     """Return currently connected users as a list of named tuples."""
     retlist = []
     rawlist = _psutil.users()
-    localhost = (':0.0', ':0')
     for item in rawlist:
         user, tty, hostname, tstamp, user_process, pid = item
         # note: the underlying C function includes entries about
@@ -274,9 +275,7 @@ def users():
         # to use them in the future.
         if not user_process:
             continue
-        if hostname in localhost:
-            hostname = 'localhost'
-        nt = ntp.suser(user, tty, hostname, tstamp, pid)
+        nt = ntp.suser(user, tty, hostname or None, tstamp, pid)
         retlist.append(nt)
     return retlist
 
@@ -288,12 +287,12 @@ def users():
 
 def pids():
     """Returns a list of PIDs currently running on the system."""
-    return [int(x) for x in os.listdir(get_procfs_path()) if x.isdigit()]
+    return [int(x) for x in os.listdir(psutil.PROCFS_PATH) if x.isdigit()]
 
 
 def pid_exists(pid):
     """Check for the existence of a unix pid."""
-    return os.path.exists(os.path.join(get_procfs_path(), str(pid), "psinfo"))
+    return os.path.exists(os.path.join(psutil.PROCFS_PATH, str(pid), "psinfo"))
 
 
 def wrap_exceptions(fun):
@@ -328,7 +327,7 @@ class Process:
         self.pid = pid
         self._name = None
         self._ppid = None
-        self._procfs_path = get_procfs_path()
+        self._procfs_path = psutil.PROCFS_PATH
 
     def oneshot_enter(self):
         cache_activate(self)
@@ -490,8 +489,11 @@ class Process:
     @wrap_exceptions
     def status(self):
         code = self._proc_oneshot()[proc_info_map['status']]
-        # XXX is '?' legit? (we're not supposed to return it anyway)
-        return PROC_STATUSES.get(code, '?')
+        try:
+            return PROC_STATUSES[code]
+        except KeyError:
+            debug(f"unknown process status {code!r}")
+            return ProcessStatus.STATUS_UNKNOWN
 
     def open_files(self):
         # TODO rewrite without using procfiles (stat /proc/pid/fd/* and then
@@ -525,8 +527,12 @@ class Process:
         return len(os.listdir(f"{self._procfs_path}/{self.pid}/fd"))
 
     @wrap_exceptions
-    def num_ctx_switches(self):
+    def ctx_switches(self):
         return ntp.pctxsw(*_psutil.proc_num_ctx_switches(self.pid))
+
+    @wrap_exceptions
+    def page_faults(self):
+        return ntp.ppagefaults(*_psutil.proc_page_faults(self.pid))
 
     @wrap_exceptions
     def wait(self, timeout=None):

@@ -20,7 +20,6 @@
 PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     pid_t pid;
-    int i;
     int cnt;
     int state;
     int lport;
@@ -32,9 +31,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     char errbuf[_POSIX2_LINE_MAX];
     kvm_t *kd = NULL;
 
-    struct kinfo_file *kif;
     struct kinfo_file *ikf;
-    struct in6_addr laddr6;
 
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_laddr = NULL;
@@ -59,7 +56,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
     Py_END_ALLOW_THREADS
     if (!kd) {
-        convert_kvm_err("kvm_openfiles", errbuf);
+        psutil_convert_kvm_err("kvm_openfiles", errbuf);
         goto error;
     }
 

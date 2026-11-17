@@ -35,6 +35,19 @@
         <i class="fa-brands fa-github" aria-hidden="true"></i>
         <span class="topbar-stars" data-repo="giampaolo/psutil"></span>
       </a>
+      {#- fill in the cached count before the first paint; github-meta.js
+          is deferred and refreshes it -#}
+      <script>
+        try {
+          const c = JSON.parse(sessionStorage.getItem("psutil-gh-meta") || "null");
+          if (c && c.stars) {
+            document.querySelector(".topbar-stars").textContent = c.stars;
+          }
+        }
+        catch (e) {
+          // storage disabled or bad JSON: github-meta.js fetches it
+        }
+      </script>
       {%- if versions %}
       <details class="topbar-versions" id="version-selector"
                data-version-page="{% if pagename != root_doc and pagename != '404' %}{{ pagename }}{% endif %}">

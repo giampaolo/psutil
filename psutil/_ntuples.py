@@ -32,7 +32,7 @@ from ._common import WINDOWS
 # ===================================================================
 
 
-# psutil.swap_memory()
+# psutil.memory_swap()
 class sswap(NamedTuple):
     total: int
     used: int
@@ -153,6 +153,7 @@ class scputimes(NamedTuple):
         irq: float
         dpc: float
 
+        # DEPRECATED
         @property
         def interrupt(self):
             msg = "'interrupt' field is deprecated, use 'irq' instead"
@@ -171,14 +172,14 @@ class scpustats(NamedTuple):
 # psutil.cpu_freq()
 class scpufreq(NamedTuple):
     current: float
-    min: float | None
-    max: float | None
+    min: float
+    max: float
 
 
 # psutil.sensors_temperatures()
 class shwtemp(NamedTuple):
     label: str
-    current: float | None
+    current: float
     high: float | None
     critical: float | None
 
@@ -206,8 +207,8 @@ if LINUX or WINDOWS or MACOS or BSD:
             heap_count: int
 
 
-# psutil.virtual_memory()
-class svmem(NamedTuple):
+# psutil.memory_physical()
+class smem(NamedTuple):
     total: int
     available: int
     percent: float
@@ -319,10 +320,10 @@ if LINUX or MACOS or WINDOWS:
 
     class pfootprint(NamedTuple):
         uss: int
+        shared: int
         if LINUX:
             pss: int
             swap: int
-        shared: int
 
 
 # psutil.Process.net_connections()
@@ -397,6 +398,7 @@ if LINUX:
         text: int
         data: int
 
+        # DEPRECATED
         @property
         def lib(self):
             # It has always been 0 since Linux 2.6.
@@ -404,6 +406,7 @@ if LINUX:
             warnings.warn(msg, DeprecationWarning, stacklevel=2)
             return 0
 
+        # DEPRECATED
         @property
         def dirty(self):
             # It has always been 0 since Linux 2.6.
@@ -421,8 +424,13 @@ if LINUX:
         swap_anon: int
         locked: int
 
-    # psutil.Process().memory_full_info()
-    pfullmem = namedtuple("pfullmem", pmem._fields + ("uss", "pss", "swap"))
+    # psutil.Process().memory_full_info() (DEPRECATED)
+    class pfullmem(
+        namedtuple("pfullmem", pmem._fields + ("uss", "pss", "swap"))
+    ):
+        __slots__ = ()
+        lib = pmem.lib
+        dirty = pmem.dirty
 
 elif WINDOWS:
 
@@ -436,7 +444,8 @@ elif WINDOWS:
             return inst
 
         def __getattr__(self, name):
-            depr = self.__dict__["_deprecated"]
+            depr = self.__dict__.get("_deprecated", {})
+            # DEPRECATED
             if name in depr:
                 msg = f"pmem.{name} is deprecated"
                 if name in {
@@ -463,8 +472,11 @@ elif WINDOWS:
         peak_paged_pool: int
         peak_nonpaged_pool: int
 
-    # psutil.Process.memory_full_info()
-    pfullmem = namedtuple("pfullmem", pmem._fields + ("uss",))
+    # psutil.Process.memory_full_info() (DEPRECATED)
+    class pfullmem(  # noqa: SLOT002
+        namedtuple("pfullmem", pmem._fields + ("uss",))
+    ):
+        __getattr__ = pmem.__getattr__
 
 elif MACOS:
 
@@ -476,9 +488,9 @@ elif MACOS:
     # psutil.Process.memory_extras()
     class pmem_extras(NamedTuple):
         phys_footprint: int
-        peak_footprint: int
+        peak_phys_footprint: int
 
-    # psutil.Process.memory_full_info()
+    # psutil.Process.memory_full_info() (DEPRECATED)
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss",))
 
 elif BSD:
@@ -492,7 +504,7 @@ elif BSD:
         stack: int
         peak_rss: int
 
-    # psutil.Process.memory_full_info()
+    # psutil.Process.memory_full_info() (DEPRECATED)
     pfullmem = pmem
 
 elif SUNOS or AIX:
@@ -502,5 +514,5 @@ elif SUNOS or AIX:
         rss: int
         vms: int
 
-    # psutil.Process.memory_full_info()
+    # psutil.Process.memory_full_info() (DEPRECATED)
     pfullmem = pmem

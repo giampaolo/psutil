@@ -14,7 +14,7 @@
 SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 
-// Declared extern in ntextapi.h, assigned by psutil_loadlibs() below.
+// Declared extern in ntextapi.h, assigned by load_libs() below.
 _NtQueryInformationProcess NtQueryInformationProcess = NULL;
 _NtQueryObject NtQueryObject = NULL;
 _NtQuerySystemInformation NtQuerySystemInformation = NULL;
@@ -36,7 +36,7 @@ _WTSQuerySessionInformationW WTSQuerySessionInformationW = NULL;
 // Convert a NTSTATUS value to a Win32 error code and set the proper
 // Python exception.
 PVOID
-psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall) {
+psutil_oserror_ntstatus(NTSTATUS status, const char *syscall) {
     ULONG err;
     char fullmsg[1024];
 
@@ -50,8 +50,8 @@ psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall) {
 
 
 // A wrapper around GetModuleHandle and GetProcAddress.
-PVOID
-psutil_GetProcAddress(LPCSTR libname, LPCSTR apiname) {
+static FARPROC
+get_dll_func(LPCSTR libname, LPCSTR apiname) {
     HMODULE mod;
     FARPROC addr;
 
@@ -72,8 +72,8 @@ psutil_GetProcAddress(LPCSTR libname, LPCSTR apiname) {
 
 
 // A wrapper around LoadLibrary and GetProcAddress.
-PVOID
-psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR apiname) {
+static FARPROC
+load_dll_func(LPCSTR libname, LPCSTR apiname) {
     HMODULE mod;
     FARPROC addr;
 
@@ -104,7 +104,7 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR apiname) {
 // since the UNIX epoch, that is the time 00:00:00 UTC on 1 January
 // 1970.
 static double
-_to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
+to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
     ULONGLONG ret;
 
     // 100 nanosecond intervals since January 1, 1601.
@@ -118,16 +118,16 @@ _to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
 
 
 double
-psutil_FiletimeToUnixTime(FILETIME ft) {
-    return _to_unix_time(
+psutil_filetime_to_unix(FILETIME ft) {
+    return to_unix_time(
         (ULONGLONG)ft.dwHighDateTime, (ULONGLONG)ft.dwLowDateTime
     );
 }
 
 
 double
-psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
-    return _to_unix_time((ULONGLONG)li.HighPart, (ULONGLONG)li.LowPart);
+psutil_largeint_to_unix(LARGE_INTEGER li) {
+    return to_unix_time((ULONGLONG)li.HighPart, (ULONGLONG)li.LowPart);
 }
 
 
@@ -137,59 +137,57 @@ psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
 
 
 static int
-psutil_loadlibs() {
+load_libs() {
+    // clang-format off
     // --- Mandatory. ntdll is loaded in every process, so
     // GetModuleHandle is enough.
-    NtQuerySystemInformation = psutil_GetProcAddress(
-        "ntdll.dll", "NtQuerySystemInformation"
-    );
+    NtQuerySystemInformation = (_NtQuerySystemInformation)
+        get_dll_func("ntdll.dll", "NtQuerySystemInformation");
     if (!NtQuerySystemInformation)
         return -1;
-    NtQueryInformationProcess = psutil_GetProcAddress(
-        "ntdll.dll", "NtQueryInformationProcess"
-    );
+    NtQueryInformationProcess = (_NtQueryInformationProcess)
+        get_dll_func("ntdll.dll", "NtQueryInformationProcess");
     if (!NtQueryInformationProcess)
         return -1;
-    NtSetInformationProcess = psutil_GetProcAddress(
-        "ntdll.dll", "NtSetInformationProcess"
-    );
+    NtSetInformationProcess = (_NtSetInformationProcess)
+        get_dll_func("ntdll.dll", "NtSetInformationProcess");
     if (!NtSetInformationProcess)
         return -1;
-    NtQueryObject = psutil_GetProcAddress("ntdll.dll", "NtQueryObject");
+    NtQueryObject = (_NtQueryObject)
+        get_dll_func("ntdll.dll", "NtQueryObject");
     if (!NtQueryObject)
         return -1;
-    RtlGetVersion = psutil_GetProcAddress("ntdll.dll", "RtlGetVersion");
+    RtlGetVersion = (_RtlGetVersion)
+        get_dll_func("ntdll.dll", "RtlGetVersion");
     if (!RtlGetVersion)
         return -1;
-    NtSuspendProcess = psutil_GetProcAddress("ntdll.dll", "NtSuspendProcess");
+    NtSuspendProcess = (_NtSuspendProcess)
+        get_dll_func("ntdll.dll", "NtSuspendProcess");
     if (!NtSuspendProcess)
         return -1;
-    NtResumeProcess = psutil_GetProcAddress("ntdll.dll", "NtResumeProcess");
+    NtResumeProcess = (_NtResumeProcess)
+        get_dll_func("ntdll.dll", "NtResumeProcess");
     if (!NtResumeProcess)
         return -1;
-    NtQueryVirtualMemory = psutil_GetProcAddress(
-        "ntdll.dll", "NtQueryVirtualMemory"
-    );
+    NtQueryVirtualMemory = (_NtQueryVirtualMemory)
+        get_dll_func("ntdll.dll", "NtQueryVirtualMemory");
     if (!NtQueryVirtualMemory)
         return -1;
-    RtlNtStatusToDosErrorNoTeb = psutil_GetProcAddress(
-        "ntdll.dll", "RtlNtStatusToDosErrorNoTeb"
-    );
+    RtlNtStatusToDosErrorNoTeb = (_RtlNtStatusToDosErrorNoTeb)
+        get_dll_func("ntdll.dll", "RtlNtStatusToDosErrorNoTeb");
     if (!RtlNtStatusToDosErrorNoTeb)
         return -1;
 
     // --- Optional
 
     // minimum requirements: Windows Server Core
-    WTSEnumerateSessionsW = psutil_GetProcAddressFromLib(
-        "wtsapi32.dll", "WTSEnumerateSessionsW"
-    );
-    WTSQuerySessionInformationW = psutil_GetProcAddressFromLib(
-        "wtsapi32.dll", "WTSQuerySessionInformationW"
-    );
-    WTSFreeMemory = psutil_GetProcAddressFromLib(
-        "wtsapi32.dll", "WTSFreeMemory"
-    );
+    WTSEnumerateSessionsW = (_WTSEnumerateSessionsW)
+        load_dll_func("wtsapi32.dll", "WTSEnumerateSessionsW");
+    WTSQuerySessionInformationW = (_WTSQuerySessionInformationW)
+        load_dll_func("wtsapi32.dll", "WTSQuerySessionInformationW");
+    WTSFreeMemory = (_WTSFreeMemory)
+        load_dll_func("wtsapi32.dll", "WTSFreeMemory");
+    // clang-format on
 
     PyErr_Clear();
     return 0;
@@ -197,7 +195,7 @@ psutil_loadlibs() {
 
 
 static int
-psutil_check_winver() {
+check_winver() {
     RTL_OSVERSIONINFOEXW versionInfo;
     NTSTATUS status;
     ULONG maj;
@@ -207,7 +205,7 @@ psutil_check_winver() {
     versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
     status = RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(status, "RtlGetVersion");
+        psutil_oserror_ntstatus(status, "RtlGetVersion");
         return -1;
     }
     maj = versionInfo.dwMajorVersion;
@@ -229,9 +227,9 @@ psutil_check_winver() {
 // Called on module import.
 int
 psutil_setup_windows(void) {
-    if (psutil_loadlibs() != 0)
+    if (load_libs() != 0)
         return -1;
-    if (psutil_check_winver() != 0)
+    if (check_winver() != 0)
         return -1;
     GetSystemInfo(&PSUTIL_SYSTEM_INFO);
     InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);

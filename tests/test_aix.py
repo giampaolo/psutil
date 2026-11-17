@@ -19,7 +19,11 @@ from . import skipif
 
 
 @skipif(not AIX, reason="AIX only")
-class AIXSpecificTestCase(PsutilTestCase):
+class AIXTestCase(PsutilTestCase):
+    pass
+
+
+class TestAIXSystem(AIXTestCase):
     def test_users(self):
         for user in psutil.users():
             assert isinstance(user.name, str)
@@ -28,7 +32,9 @@ class AIXSpecificTestCase(PsutilTestCase):
             assert isinstance(user.started, float)
             assert isinstance(user.pid, int)
 
-    def test_virtual_memory(self):
+
+class TestAIXMemory(AIXTestCase):
+    def test_memory_physical(self):
         out = sh('/usr/bin/svmon -O unit=KB')
         re_pattern = r"memory\s*"
         for field in [
@@ -51,7 +57,7 @@ class AIXSpecificTestCase(PsutilTestCase):
         used = int(matchobj.group("inuse")) * KB
         free = int(matchobj.group("free")) * KB
 
-        psutil_result = psutil.virtual_memory()
+        psutil_result = psutil.memory_physical()
 
         # TOLERANCE_SYS_MEM is not enough. For some reason we're seeing
         # differences of ~1.2 MB. 2 MB is still a good tolerance when
@@ -62,7 +68,7 @@ class AIXSpecificTestCase(PsutilTestCase):
         assert abs(psutil_result.available - available) < TOLERANCE_SYS_MEM
         assert abs(psutil_result.free - free) < TOLERANCE_SYS_MEM
 
-    def test_swap_memory(self):
+    def test_memory_swap(self):
         out = sh('/usr/sbin/lsps -a')
         # From the man page, "The size is given in megabytes" so we assume
         # we'll always have 'MB' in the result
@@ -80,11 +86,13 @@ class AIXSpecificTestCase(PsutilTestCase):
 
         total_mb = int(matchobj.group("size"))
         MB = 1024**2
-        psutil_result = psutil.swap_memory()
+        psutil_result = psutil.memory_swap()
         # we divide our result by MB instead of multiplying the lsps value by
         # MB because lsps may round down, so we round down too
         assert int(psutil_result.total / MB) == total_mb
 
+
+class TestAIXCpu(AIXTestCase):
     def test_cpu_stats(self):
         out = sh('/usr/bin/mpstat -a')
 
@@ -144,6 +152,8 @@ class AIXSpecificTestCase(PsutilTestCase):
         psutil_lcpu = psutil.cpu_count(logical=True)
         assert mpstat_lcpu == psutil_lcpu
 
+
+class TestAIXNetwork(AIXTestCase):
     def test_net_if_addrs_names(self):
         out = sh('/etc/ifconfig -l')
         ifconfig_names = set(out.split())

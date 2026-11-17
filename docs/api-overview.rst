@@ -74,19 +74,19 @@ Memory
 
     >>> import psutil
     >>>
-    >>> psutil.virtual_memory()
-    svmem(total=10367352832,
-          available=6472179712,
-          percent=37.6,
-          used=8186245120,
-          free=2181107712,
-          active=4748992512,
-          inactive=2758115328,
-          buffers=790724608,
-          cached=3500347392,
-          shared=787554304)
+    >>> psutil.memory_physical()
+    smem(total=10367352832,
+         available=6472179712,
+         percent=37.6,
+         used=8186245120,
+         free=2181107712,
+         active=4748992512,
+         inactive=2758115328,
+         buffers=790724608,
+         cached=3500347392,
+         shared=787554304)
     >>>
-    >>> psutil.swap_memory()
+    >>> psutil.memory_swap()
     sswap(total=2097147904,
           used=296128512,
           free=1801019392,
@@ -242,8 +242,8 @@ Other system info
     >>> import psutil
     >>>
     >>> psutil.users()
-    [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0, pid=1352),
-     suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
+    [suser(name='giampaolo', terminal='tty1', host=None, started=1340737536.0, pid=1352),
+     suser(name='giampaolo', terminal='pts/3', host='10.0.0.5', started=1340737792.0, pid=1788)]
     >>>
     >>> psutil.boot_time()
     1365519115.0
@@ -317,7 +317,7 @@ Identity
     True
     >>>
     >>> p.as_dict()
-    {'num_ctx_switches': pctxsw(voluntary=63, involuntary=1),
+    {'ctx_switches': pctxsw(voluntary=63, involuntary=1),
      'pid': 5457,
      'status': <ProcessStatus.STATUS_RUNNING: 'running'>,
      ...}
@@ -340,7 +340,7 @@ Process tree
     >>>
     >>> p.children(recursive=True)
     [psutil.Process(pid=29835, name='python3', status=<ProcessStatus.STATUS_SLEEPING: 'sleeping'>, started='11:45:38'),
-     psutil.Process(pid=29836, name='python3', status=<ProcessStatus.STATUS_WAKING: 'waking'>, started='11:43:39')]
+     psutil.Process(pid=29836, name='python3', status=<ProcessStatus.STATUS_RUNNING: 'running'>, started='11:43:39')]
     >>>
 
 Credentials
@@ -374,7 +374,7 @@ CPU / scheduling
     >>> p.cpu_num()
     1
     >>>
-    >>> p.num_ctx_switches()
+    >>> p.ctx_switches()
     pctxsw(voluntary=78, involuntary=19)
     >>>
     >>> p.nice()
@@ -411,7 +411,7 @@ Memory
     0.78
     >>>
     >>> p.memory_footprint()  # "real" USS memory usage
-    pfootprint(uss=2355200, pss=2483712, swap=0)
+    pfootprint(uss=2355200, shared=1564672, pss=2483712, swap=0)
     >>>
     >>> p.memory_maps()
     pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so',

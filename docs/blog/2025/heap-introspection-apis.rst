@@ -44,8 +44,8 @@ in:
 psutil's new functions let you query the allocator (e.g. glibc) directly,
 returning low-level metrics from the platform's native heap.
 
-heap_info(): direct allocator statistics
-----------------------------------------
+:func:`heap_info`: direct allocator statistics
+----------------------------------------------
 
 :func:`psutil.heap_info` exposes the following metrics:
 
@@ -89,8 +89,8 @@ Reference for what contributes to each field:
      - ``HeapCreate()`` without ``HeapDestroy()``
      - :field:`heap_count`
 
-heap_trim(): returning unused heap memory
------------------------------------------
+:func:`heap_trim`: returning unused heap memory
+-----------------------------------------------
 
 :func:`psutil.heap_trim` provides a cross-platform way to request that the
 underlying allocator free any unused memory it's holding in the heap (typically

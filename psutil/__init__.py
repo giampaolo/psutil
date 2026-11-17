@@ -49,7 +49,6 @@ from ._common import LINUX
 from ._common import MACOS
 from ._common import NETBSD
 from ._common import OPENBSD
-from ._common import OSX  # deprecated alias
 from ._common import POSIX
 from ._common import SUNOS
 from ._common import WINDOWS
@@ -104,12 +103,12 @@ if _TYPE_CHECKING:
     from ._ntuples import sdiskusage
     from ._ntuples import sfan
     from ._ntuples import shwtemp
+    from ._ntuples import smem
     from ._ntuples import snetio
     from ._ntuples import snicaddr
     from ._ntuples import snicstats
     from ._ntuples import sswap
     from ._ntuples import suser
-    from ._ntuples import svmem
     from ._pswindows import WindowsService
 
     # _export_enum() puts these in the module namespace at run time.
@@ -123,6 +122,7 @@ if _TYPE_CHECKING:
     STATUS_STOPPED: ProcessStatus
     STATUS_SUSPENDED: ProcessStatus
     STATUS_TRACING_STOP: ProcessStatus
+    STATUS_UNKNOWN: ProcessStatus
     STATUS_WAITING: ProcessStatus
     STATUS_WAKE_KILL: ProcessStatus
     STATUS_WAKING: ProcessStatus
@@ -186,14 +186,9 @@ if _TYPE_CHECKING:
     RLIMIT_SIGPENDING: ProcessRlimit  # Linux
     RLIMIT_STACK: ProcessRlimit  # Linux, FreeBSD
     RLIMIT_SWAP: ProcessRlimit  # FreeBSD
-    RLIM_INFINITY: ProcessRlimit  # Linux, FreeBSD
 
 
 if LINUX:
-    # This is public API and it will be retrieved from _pslinux.py
-    # via sys.modules.
-    PROCFS_PATH = "/proc"
-
     from . import _pslinux as _psplatform
     from ._enums import ProcessIOPriority
     from ._enums import ProcessRlimit
@@ -215,16 +210,8 @@ elif BSD:
 elif SUNOS:
     from . import _pssunos as _psplatform
 
-    # This is public writable API which is read from _pslinux.py and
-    # _pssunos.py via sys.modules.
-    PROCFS_PATH = "/proc"
-
 elif AIX:
     from . import _psaix as _psplatform
-
-    # This is public API and it will be retrieved from _pslinux.py
-    # via sys.modules.
-    PROCFS_PATH = "/proc"
 
 else:  # pragma: no cover
     msg = f"platform {sys.platform} is not supported"
@@ -243,7 +230,7 @@ __all__ = [
 
     "AF_LINK",
 
-    "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "MACOS", "OSX", "POSIX",
+    "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "MACOS", "POSIX",
     "SUNOS", "WINDOWS", "AIX",
 
     # classes
@@ -251,7 +238,8 @@ __all__ = [
 
     # functions
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
-    "virtual_memory", "swap_memory",                                # memory
+    "memory_physical", "memory_swap",                               # memory
+    "virtual_memory", "swap_memory",
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
     "cpu_stats", "getloadavg",  # "cpu_freq",
     "net_io_counters", "net_connections", "net_if_addrs",           # network
@@ -284,9 +272,16 @@ if LINUX or WINDOWS:
 if WINDOWS:
     _export_enum(ProcessPriority)
 if LINUX or FREEBSD:
+    import resource
+
     _export_enum(ProcessRlimit)
+    RLIM_INFINITY = resource.RLIM_INFINITY
+    __all__.append("RLIM_INFINITY")
+
 if LINUX or SUNOS or AIX:
-    __all__.append("PROCFS_PATH")
+    PROCFS_PATH = "/proc"
+    __all__.extend(["PROCFS_PATH", "set_procfs_path"])
+
 
 del _globals, _export_enum
 
@@ -384,12 +379,13 @@ class ProcessSnapshot:
     cpu_percent: float
     cpu_times: pcputimes
     create_time: float
+    ctx_switches: pctxsw
     cwd: str
     environ: dict[str, str]
     exe: str
     gids: pgids
     io_counters: pio
-    ionice: pionice | ProcessIOPriority
+    ionice: pionice
     memory_extras: pmem_extras
     memory_footprint: pfootprint
     memory_info: pmem
@@ -398,7 +394,6 @@ class ProcessSnapshot:
     name: str
     net_connections: list[pconn]
     nice: int
-    num_ctx_switches: pctxsw
     num_fds: int
     num_handles: int
     num_threads: int
@@ -406,7 +401,7 @@ class ProcessSnapshot:
     page_faults: ppagefaults
     pid: int
     ppid: int
-    status: ProcessStatus | str
+    status: ProcessStatus
     terminal: str | None
     threads: list[pthread]
     uids: puids
@@ -589,7 +584,7 @@ class Process:
             # https://github.com/giampaolo/psutil/issues/2366#issuecomment-2381646555
             self._create_time = self._proc.create_time(fast_only=True)
             return (self.pid, self._create_time)
-        elif LINUX or NETBSD or OSX:
+        elif LINUX or NETBSD or MACOS:
             # Use 'monotonic' process starttime since boot to form unique
             # process identity, since it is stable over changes to system
             # time.
@@ -702,6 +697,7 @@ class Process:
         """
         return self._snapshot
 
+    # DEPRECATED
     @property
     def info(self) -> dict[str, Any]:
         """The attributes collected by `process_iter(attrs=...)` as a
@@ -719,6 +715,7 @@ class Process:
             self._info = self._snapshot.as_dict()
         return self._info
 
+    # DEPRECATED
     @info.setter
     def info(self, value: dict[str, Any]) -> None:
         msg = "setting Process.info is deprecated"
@@ -799,7 +796,7 @@ class Process:
         valid_names = self.attrs
         # Deprecated attrs: not returned by default but still accepted if
         # explicitly requested.
-        deprecated_names = {"memory_full_info"}
+        deprecated_names = {"memory_full_info", "num_ctx_switches"}
 
         if attrs is not None:
             if not isinstance(attrs, (list, tuple, set, frozenset)):
@@ -1003,7 +1000,7 @@ class Process:
         """The command line this process has been called with."""
         return self._proc.cmdline()
 
-    def status(self) -> ProcessStatus | str:
+    def status(self) -> ProcessStatus:
         """The process current status as a `STATUS_` constant."""
         try:
             return self._proc.status()
@@ -1095,15 +1092,16 @@ class Process:
 
         def ionice(
             self, ioclass: int | None = None, value: int | None = None
-        ) -> pionice | ProcessIOPriority | None:
-            """Get or set process I/O niceness (priority).
+        ) -> pionice | None:
+            """Get or set process I/O niceness (priority). If called
+            with no arguments return a `(ioclass, value)` named tuple.
 
             On Linux *ioclass* is one of the `IOPRIO_CLASS_*` constants.
             *value* is a number which goes from 0 to 7. The higher the
             value, the lower the I/O priority of the process.
 
             On Windows only *ioclass* is used and it can be set to
-            one of the `IOPRIO_*` constants.
+            one of the `IOPRIO_*` constants. *value* is always 0.
 
             Availability: Linux, Windows
             """
@@ -1191,11 +1189,18 @@ class Process:
             """
             return self._proc.num_handles()
 
-    def num_ctx_switches(self) -> pctxsw:
+    def ctx_switches(self) -> pctxsw:
         """Return the number of voluntary and involuntary context
         switches performed by this process.
         """
-        return self._proc.num_ctx_switches()
+        return self._proc.ctx_switches()
+
+    # DEPRECATED
+    def num_ctx_switches(self) -> pctxsw:
+        """DEPRECATED in 8.0.0. Use `ctx_switches()` instead."""
+        msg = "num_ctx_switches() is deprecated; use ctx_switches() instead"
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        return self.ctx_switches()
 
     def num_threads(self) -> int:
         """Return the number of threads used by this process."""
@@ -1452,8 +1457,12 @@ class Process:
         if hasattr(self, "memory_footprint"):
             fp = self.memory_footprint()
             names = _ntp.pfullmem._fields[len(basic_mem) :]
-            return _ntp.pfullmem(*basic_mem, *[getattr(fp, x) for x in names])
-        return _ntp.pfullmem(*basic_mem)
+            ret = _ntp.pfullmem(*basic_mem, *[getattr(fp, x) for x in names])
+            if WINDOWS:
+                # keep the old field names working
+                ret._deprecated = basic_mem._deprecated
+            return ret
+        return basic_mem
 
     def memory_percent(self, memtype: str = "rss") -> float:
         """Compare process memory to total physical system memory and
@@ -1480,6 +1489,12 @@ class Process:
                 f" {tuple(valid_types)!r}"
             )
             raise ValueError(msg)
+        if memtype in {
+            "vms", "peak_vms", "swap", "swap_anon", "text", "data",
+            "stack", "virtual", "peak_virtual",
+        }:  # fmt: skip
+            msg = f"memtype {memtype!r} is not physical memory"
+            warnings.warn(msg, UserWarning, stacklevel=2)
 
         if memtype in _ntp.pmem._fields:
             fun = self.memory_info
@@ -1495,7 +1510,7 @@ class Process:
         value = getattr(metrics, memtype)
 
         # use cached value if available
-        total_phymem = _TOTAL_PHYMEM or virtual_memory().total
+        total_phymem = _TOTAL_PHYMEM or memory_physical().total
         if not total_phymem > 0:
             # we should never get here
             msg = (
@@ -1589,8 +1604,14 @@ class Process:
         _check_conn_kind(kind)
         return self._proc.net_connections(kind)
 
-    @_common.deprecated_method(replacement="net_connections")
+    # DEPRECATED
     def connections(self, kind="inet") -> list[pconn]:
+        """DEPRECATED in 6.0.0. Use `net_connections()` instead."""
+        msg = (
+            "connections() is deprecated and will be removed in psutil 9.0;"
+            " use net_connections() instead"
+        )
+        warnings.warn(msg, FutureWarning, stacklevel=2)
         return self.net_connections(kind=kind)
 
     # --- signals
@@ -1732,8 +1753,8 @@ Process.attrs = frozenset(
     x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'connections', 'memory_full_info', 'oneshot', 'attrs', 'snapshot',
-      'info'}
+      'connections', 'memory_full_info', 'num_ctx_switches', 'oneshot',
+      'attrs', 'snapshot', 'info'}
 )
 # fmt: on
 
@@ -1890,7 +1911,7 @@ def process_iter(
         pmap.pop(pid, None)
 
     if attrs is not None:
-        if attrs == []:  # deprecated in 8.0.0
+        if attrs == []:  # DEPRECATED
             msg = (
                 "process_iter(attrs=[]) is deprecated; use "
                 "process_iter(attrs=Process.attrs) to retrieve all attributes"
@@ -2056,11 +2077,6 @@ def cpu_count(logical: bool = True) -> int | None:
     (e.g. hyper thread CPUs are excluded).
 
     Return None if undetermined.
-
-    The return value is cached after first call.
-    If desired cache can be cleared like this:
-
-    >>> psutil.cpu_count.cache_clear()
     """
     if logical:
         ret = _psplatform.cpu_count_logical()
@@ -2341,25 +2357,13 @@ if hasattr(_psplatform, "cpu_freq"):
                 return ret[0]
             else:
                 currs, mins, maxs = 0.0, 0.0, 0.0
-                set_none = False
                 for cpu in ret:
                     currs += cpu.current
-                    # On FreeBSD min/max are None if the sysctl value
-                    # can't be parsed.
-                    if cpu.min is None or cpu.max is None:
-                        set_none = True
-                        continue
                     mins += cpu.min
                     maxs += cpu.max
-
                 current = currs / num_cpus
-
-                if set_none:
-                    min_ = max_ = None
-                else:
-                    min_ = mins / num_cpus
-                    max_ = maxs / num_cpus
-
+                min_ = mins / num_cpus
+                max_ = maxs / num_cpus
                 return _ntp.scpufreq(current, min_, max_)
 
     __all__.append("cpu_freq")
@@ -2384,7 +2388,7 @@ def getloadavg() -> tuple[float, float, float]:
 # =====================================================================
 
 
-def virtual_memory() -> svmem:
+def memory_physical() -> smem:
     """Return statistics about system memory usage as a named tuple.
 
     The fields vary by platform (see official doc), but the following
@@ -2417,13 +2421,13 @@ def virtual_memory() -> svmem:
     On Windows `available` and `free` are the same.
     """
     global _TOTAL_PHYMEM
-    ret = _psplatform.virtual_memory()
+    ret = _psplatform.memory_physical()
     # cached for later use in Process.memory_percent()
     _TOTAL_PHYMEM = ret.total
     return ret
 
 
-def swap_memory() -> sswap:
+def memory_swap() -> sswap:
     """Return system swap memory statistics as a named tuple including
     the following fields:
 
@@ -2436,7 +2440,19 @@ def swap_memory() -> sswap:
 
     `sin` and `sout` on Windows are meaningless and always set to 0.
     """
-    return _psplatform.swap_memory()
+    return _psplatform.memory_swap()
+
+
+# DEPRECATED (soft)
+def virtual_memory() -> smem:
+    """SOFT-DEPRECATED alias for memory_physical()."""
+    return memory_physical()
+
+
+# DEPRECATED (soft)
+def swap_memory() -> sswap:
+    """SOFT-DEPRECATED alias for memory_swap()."""
+    return memory_swap()
 
 
 # =====================================================================
@@ -2453,14 +2469,14 @@ def disk_usage(path: str) -> sdiskusage:
 
 
 def disk_partitions(all: bool = False) -> list[sdiskpart]:
-    """Return mounted partitions as a list of
-    (device, mountpoint, fstype, opts) named tuple.
+    """Return mounted filesystems as a list of
+    (device, mountpoint, fstype, opts) named tuple, one per mount.
 
     `opts` field is a raw string separated by commas indicating mount
     options which may vary depending on the platform.
 
-    If *all* parameter is False return physical devices only and ignore
-    all others.
+    If *all* parameter is False try to skip virtual filesystems such as
+    tmpfs and sysfs.
     """
     return _psplatform.disk_partitions(all)
 
@@ -2486,8 +2502,10 @@ def disk_io_counters(
      - read_merged_count (Linux): number of merged reads
      - write_merged_count (Linux): number of merged writes
 
-    If *perdisk* is True return the same information for every
-    physical disk as a dictionary with partition names as the keys.
+    If *perdisk* is True return the same information per device, as a
+    dictionary with device names as the keys. On Linux this includes
+    partitions and virtual devices (e.g. "sda1", "dm-0", "loop0"). On
+    Windows and macOS only whole disks.
 
     If *nowrap* is True (default), counters that overflow and wrap to
     zero are automatically adjusted so they never decrease (this can
@@ -2854,6 +2872,42 @@ if hasattr(_psplatform, "heap_info"):
 
 
 # =====================================================================
+# --- configuration
+# =====================================================================
+
+if LINUX or SUNOS or AIX:
+
+    def set_procfs_path(path: str) -> None:
+        """Set PROCFS_PATH, the path where the /proc filesystem is
+        mounted (e.g. "/host/proc" inside a container).
+
+        *path* must be an existing directory, else OSError is raised.
+        Prefer this over assigning PROCFS_PATH directly, as it also
+        resets internal caches that depend on it.
+        """
+        global PROCFS_PATH, _TOTAL_PHYMEM, _LOWEST_PID
+        path = os.fspath(path)  # accept a pathlib path
+        if not isinstance(path, str):
+            msg = f"path must be a str (got {type(path)})"
+            raise TypeError(msg)
+        os.scandir(path).close()  # raise if not an existing directory
+        # Store path as absolute in case it's relative (e.g. foo ->
+        # $cwd/foo), so that a later chdir() can't break reads. This
+        # also drops trailing slashes.
+        PROCFS_PATH = os.path.abspath(path)
+
+        # clear caches
+        _TOTAL_PHYMEM = None
+        _LOWEST_PID = None
+        process_iter.cache_clear()
+        _wrap_numbers.cache_clear()
+        _last_cpu_times.clear()
+        _last_per_cpu_times.clear()
+        _last_cpu_times_2.clear()
+        _last_per_cpu_times_2.clear()
+
+    if os.environ.get("PSUTIL_PROCFS_PATH"):
+        set_procfs_path(os.environ["PSUTIL_PROCFS_PATH"])
 
 
 def _set_debug(value):
@@ -2865,5 +2919,7 @@ def _set_debug(value):
     psutil._common.PSUTIL_DEBUG = bool(value)
     _psutil.set_debug(bool(value))
 
+
+# ---
 
 del memoize_when_activated

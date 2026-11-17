@@ -5,8 +5,8 @@ This page describes how to use psutil efficiently.
 
 .. _perf-oneshot:
 
-Use oneshot() when reading multiple process attributes
-------------------------------------------------------
+Use :meth:`~Process.oneshot` when reading multiple process attributes
+---------------------------------------------------------------------
 
 If you're dealing with a single :class:`Process` instance and need to retrieve
 multiple process attributes, use :meth:`Process.oneshot`. Each method call
@@ -45,8 +45,8 @@ process, use :meth:`Process.oneshot`.
 
 .. _perf-process-iter:
 
-Use process_iter() with an attrs list
---------------------------------------
+Use :func:`process_iter` with an ``attrs`` list
+-----------------------------------------------
 
 If you iterate over multiple PIDs, always use :func:`process_iter`. It accepts
 an ``attrs`` argument that pre-fetches only the requested attributes in a
@@ -90,8 +90,8 @@ slow ones (see :ref:`perf-api-speed` table below):
 
 .. _perf-oneshot-methods:
 
-Methods sped up by oneshot()
-----------------------------
+Methods sped up by :meth:`~Process.oneshot`
+-------------------------------------------
 
 Here's a list of method groups for each platform which can benefit from
 :meth:`Process.oneshot`. Methods in each group (in the same comma-separated
@@ -116,7 +116,7 @@ Linux
     :meth:`~Process.status`, :meth:`~Process.terminal`
 
 *   :meth:`~Process.gids`, :meth:`~Process.memory_extras`,
-    :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_threads`,
+    :meth:`~Process.ctx_switches`, :meth:`~Process.num_threads`,
     :meth:`~Process.uids`
 
 *   :meth:`~Process.memory_footprint`, :meth:`~Process.memory_maps`
@@ -128,7 +128,7 @@ Windows
 
 *  :meth:`~Process.cpu_times`, :meth:`~Process.io_counters`,
    :meth:`~Process.memory_info`, :meth:`~Process.memory_extras`,
-   :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_handles`,
+   :meth:`~Process.ctx_switches`, :meth:`~Process.num_handles`,
    :meth:`~Process.num_threads`, :meth:`~Process.page_faults`,
    :meth:`~Process.status`
 
@@ -143,7 +143,7 @@ macOS
 """""
 
 *  :meth:`~Process.cpu_times`, :meth:`~Process.memory_info`,
-   :meth:`~Process.num_ctx_switches`, :meth:`~Process.num_threads`,
+   :meth:`~Process.ctx_switches`, :meth:`~Process.num_threads`,
    :meth:`~Process.page_faults`
 
 *  :meth:`~Process.create_time`, :meth:`~Process.gids`, :meth:`~Process.name`,
@@ -158,23 +158,22 @@ BSD
 *  :meth:`~Process.cpu_num`, :meth:`~Process.cpu_times`,
    :meth:`~Process.create_time`, :meth:`~Process.gids`,
    :meth:`~Process.io_counters`, :meth:`~Process.memory_info`,
-   :meth:`~Process.name`, :meth:`~Process.nice`,
-   :meth:`~Process.num_ctx_switches`, :meth:`~Process.page_faults`,
-   :meth:`~Process.ppid`, :meth:`~Process.status`, :meth:`~Process.terminal`,
-   :meth:`~Process.uids`
+   :meth:`~Process.name`, :meth:`~Process.nice`, :meth:`~Process.ctx_switches`,
+   :meth:`~Process.page_faults`, :meth:`~Process.ppid`,
+   :meth:`~Process.status`, :meth:`~Process.terminal`, :meth:`~Process.uids`
 
 *Speedup: +2.7×*
 
 .. _perf-oneshot-bench:
 
-Measuring oneshot() speedup
----------------------------
+Measuring :meth:`~Process.oneshot` speedup
+------------------------------------------
 
 :src:`scripts/internal/bench_oneshot.py` measures :meth:`Process.oneshot`
 speedup. It also shows which APIs share the same internal kernel routines. E.g.
 on Linux:
 
-.. code-block:: none
+.. code-block:: console
 
   $ python3 scripts/internal/bench_oneshot.py --times 10000
   17 methods pre-fetched by oneshot() on platform 'linux' (10,000 times, psutil 8.0.0):
@@ -182,12 +181,12 @@ on Linux:
     cpu_num
     cpu_percent
     cpu_times
+    ctx_switches
     gids
     memory_extras
     memory_info
     memory_percent
     name
-    num_ctx_switches
     num_threads
     page_faults
     parent
@@ -210,7 +209,7 @@ Measuring APIs speed
 call. This helps you understand which operations are more expensive. E.g. on
 Linux:
 
-.. code-block:: none
+.. code-block:: console
 
   $ python3 scripts/internal/print/api_speed.py
   SYSTEM APIS                NUM CALLS      SECONDS
@@ -227,11 +226,11 @@ Linux:
   boot_time                        300      0.00700
   cpu_percent                      300      0.00766
   net_if_stats                     300      0.00783
-  virtual_memory                   300      0.00834
+  memory_physical                  300      0.00834
   cpu_times_percent                300      0.00885
   net_if_addrs                     300      0.01157
   cpu_stats                        300      0.01208
-  swap_memory                      300      0.01558
+  memory_swap                      300      0.01558
   disk_partitions                  300      0.01664
   disk_io_counters                 300      0.02204
   sensors_battery                  300      0.02995
@@ -265,7 +264,7 @@ Linux:
   threads                          300      0.00278
   num_threads                      300      0.00278
   gids                             300      0.00296
-  num_ctx_switches                 300      0.00299
+  ctx_switches                     300      0.00299
   uids                             300      0.00311
   cpu_percent                      300      0.00346
   net_connections                  300      0.00373

@@ -4,12 +4,6 @@ A collection of ideas and notes about stuff to implement in future versions.
 
 (the "too late" section)
 
-- `PROCFS_PATH` should have been `set_procfs_path()`.
-
-- `virtual_memory()` should have been `memory_virtual()`.
-
-- `swap_memory()` should have been `memory_swap()`.
-
 - Named tuples are problematic. Positional unpacking of named tuples could be
   deprecated. Return frozen dataclasses (with a common base class) instead of
   `typing.NamedTuple`. The base class would keep `_fields`, `_asdict()` and

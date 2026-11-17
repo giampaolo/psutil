@@ -14,8 +14,10 @@ int PSUTIL_DEBUG = 0;
 int PSUTIL_TESTING = 0;
 int PSUTIL_CONN_NONE = 128;
 
-#ifdef Py_GIL_DISABLED
+#if defined(Py_GIL_DISABLED) && !defined(Py_TARGET_ABI3T)
 PyMutex utxent_lock = {0};
+#elif defined(Py_TARGET_ABI3T) && defined(PSUTIL_POSIX)
+pthread_mutex_t utxent_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 
@@ -46,7 +48,7 @@ psutil_setup(void) {
 // module. PyModule_AddObject() steals a ref on success only, so INCREF
 // first and drop it again on failure.
 static int
-_psutil_add_exception(
+_add_exception(
     PyObject *mod, const char *name, const char *qualname, PyObject **dst
 ) {
     if (*dst == NULL) {
@@ -67,11 +69,11 @@ _psutil_add_exception(
 int
 psutil_add_exceptions(PyObject *mod) {
 #ifdef PSUTIL_WINDOWS
-    if (_psutil_add_exception(
+    if (_add_exception(
             mod, "TimeoutExpired", "_psutil.TimeoutExpired", &TimeoutExpired
         ))
         return -1;
-    if (_psutil_add_exception(
+    if (_add_exception(
             mod,
             "TimeoutAbandoned",
             "_psutil.TimeoutAbandoned",
@@ -79,7 +81,7 @@ psutil_add_exceptions(PyObject *mod) {
         ))
         return -1;
 #elif defined(PSUTIL_POSIX)
-    if (_psutil_add_exception(
+    if (_add_exception(
             mod,
             "ZombieProcessError",
             "_psutil.ZombieProcessError",
@@ -91,6 +93,26 @@ psutil_add_exceptions(PyObject *mod) {
 }
 
 
+#ifdef Py_TARGET_ABI3T
+PyABIInfo_VAR(abi_info);
+
+// PyModuleDef can't be used with abi3t. The module is described by
+// a slots array instead.
+PySlot *
+psutil_mod_export(
+    const char *name, PyMethodDef *methods, int (*exec)(PyObject *)
+) {
+    static PySlot slots[6];
+
+    slots[0] = (PySlot)PySlot_STATIC_DATA(Py_mod_abi, &abi_info);
+    slots[1] = (PySlot)PySlot_STATIC_DATA(Py_mod_name, (void *)name);
+    slots[2] = (PySlot)PySlot_STATIC_DATA(Py_mod_methods, methods);
+    slots[3] = (PySlot)PySlot_FUNC(Py_mod_exec, exec);
+    slots[4] = (PySlot)PySlot_DATA(Py_mod_gil, Py_MOD_GIL_NOT_USED);
+    slots[5] = (PySlot)PySlot_END;
+    return slots;
+}
+#else
 // Initialize the Python C extension module.
 PyObject *
 psutil_mod_init(
@@ -98,7 +120,7 @@ psutil_mod_init(
 ) {
     static PyModuleDef_Slot slots[] = {
         {Py_mod_exec, NULL},  // platform exec, filled below
-#ifdef Py_mod_gil
+#ifdef Py_MOD_GIL_NOT_USED
         {Py_mod_gil, Py_MOD_GIL_NOT_USED},
 #endif
         {0, NULL}
@@ -114,3 +136,4 @@ psutil_mod_init(
     def.m_methods = methods;
     return PyModuleDef_Init(&def);
 }
+#endif

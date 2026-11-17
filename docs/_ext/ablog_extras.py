@@ -14,6 +14,12 @@ def merge_ablog_posts(app, env, docnames, other):
     if hasattr(other, "ablog_posts"):
         if not hasattr(env, "ablog_posts"):
             env.ablog_posts = {}
+        # Speedup: post doctrees reference the worker env via
+        # settings.env, which would end up in environment.pickle once
+        # per worker
+        for posts in other.ablog_posts.values():
+            for post in posts:
+                post["doctree"].document.settings.env = env
         env.ablog_posts.update(other.ablog_posts)
 
 

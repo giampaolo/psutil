@@ -62,12 +62,11 @@ static PyMethodDef PsutilMethods[] = {
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
     {"disk_usage", psutil_disk_usage, METH_VARARGS},
-    {"getloadavg", (PyCFunction)psutil_get_loadavg, METH_VARARGS},
+    {"drive_devices", psutil_drive_devices, METH_NOARGS},
+    {"getloadavg", psutil_getloadavg, METH_VARARGS},
     {"getpagesize", psutil_getpagesize, METH_VARARGS},
     {"swap_percent", psutil_swap_percent, METH_NOARGS},
-    {"init_loadavg_counter",
-     (PyCFunction)psutil_init_loadavg_counter,
-     METH_NOARGS},
+    {"init_loadavg_counter", psutil_init_loadavg_counter, METH_NOARGS},
     {"heap_info", psutil_heap_info, METH_VARARGS},
     {"heap_trim", psutil_heap_trim, METH_VARARGS},
     {"net_connections", psutil_net_connections, METH_VARARGS},
@@ -91,7 +90,6 @@ static PyMethodDef PsutilMethods[] = {
 
     // --- direct Windows APIs
     {"GetPerformanceInfo", psutil_GetPerformanceInfo, METH_VARARGS},
-    {"QueryDosDevice", psutil_QueryDosDevice, METH_VARARGS},
 
     // --- others
     {"check_pid_range", psutil_check_pid_range, METH_VARARGS},
@@ -134,7 +132,6 @@ psutil_add_constants(PyObject *mod) {
     PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_FIN_WAIT2", MIB_TCP_STATE_FIN_WAIT2);
     PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_LAST_ACK", MIB_TCP_STATE_LAST_ACK);
     PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_TIME_WAIT", MIB_TCP_STATE_TIME_WAIT);
-    PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_TIME_WAIT", MIB_TCP_STATE_TIME_WAIT);
     PSUTIL_ADD_INT(mod, "MIB_TCP_STATE_DELETE_TCB", MIB_TCP_STATE_DELETE_TCB);
     PSUTIL_ADD_INT(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
@@ -172,7 +169,22 @@ psutil_exec(PyObject *mod) {
     return 0;
 }
 
+#ifdef Py_TARGET_ABI3T
+PyMODEXPORT_FUNC
+PyModExport__psutil(void) {
+    return psutil_mod_export("_psutil", PsutilMethods, psutil_exec);
+}
+
+// XXX: unused. setuptools <= 84.2.1 tells MSVC to export it, see
+// https://github.com/pypa/distutils/issues/387
+PyMODINIT_FUNC
+PyInit__psutil(void) {
+    PyErr_SetString(PyExc_SystemError, "PyInit__psutil is a stub");
+    return NULL;
+}
+#else
 PyMODINIT_FUNC
 PyInit__psutil(void) {
     return psutil_mod_init("_psutil", PsutilMethods, psutil_exec);
 }
+#endif

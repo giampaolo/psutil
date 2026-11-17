@@ -28,7 +28,7 @@
 
 
 static PVOID
-__GetExtendedTcpTable(ULONG family) {
+get_tcp_table(ULONG family) {
     DWORD err;
     PVOID table;
     ULONG size;
@@ -88,7 +88,7 @@ __GetExtendedTcpTable(ULONG family) {
 
 
 static PVOID
-__GetExtendedUdpTable(ULONG family) {
+get_udp_table(ULONG family) {
     DWORD err;
     PVOID table;
     ULONG size;
@@ -197,7 +197,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
 
-        table = __GetExtendedTcpTable(AF_INET);
+        table = get_tcp_table(AF_INET);
         if (table == NULL)
             goto error;
         tcp4Table = table;
@@ -279,7 +279,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
 
-        table = __GetExtendedTcpTable(AF_INET6);
+        table = get_tcp_table(AF_INET6);
         if (table == NULL)
             goto error;
         tcp6Table = table;
@@ -361,7 +361,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     if (filters.udp && filters.v4) {
         table = NULL;
         py_addr_tuple_local = NULL;
-        table = __GetExtendedUdpTable(AF_INET);
+        table = get_udp_table(AF_INET);
         if (table == NULL)
             goto error;
         udp4Table = table;
@@ -418,7 +418,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     if (filters.udp && filters.v6) {
         table = NULL;
         py_addr_tuple_local = NULL;
-        table = __GetExtendedUdpTable(AF_INET6);
+        table = get_udp_table(AF_INET6);
         if (table == NULL)
             goto error;
         udp6Table = table;

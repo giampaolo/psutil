@@ -25,8 +25,8 @@ Back then I didn't know any C (and I'm still a terrible C developer), so he was
 crucial in developing the initial psutil skeleton, including macOS and Windows
 support. Needless to say that this release builds on that work.
 
-net_if_addrs()
---------------
+:func:`net_if_addrs`
+--------------------
 
 We're now able to list network interface addresses similarly to the
 ``ifconfig`` command on UNIX:
@@ -62,8 +62,8 @@ to see how this is implemented, here's the code for POSIX and Windows:
 * `POSIX <https://github.com/giampaolo/psutil/blob/39161251010503d6b087807c473f4fb648dfcbce/psutil/_psutil_posix.c#L151>`__
 * `Windows <https://github.com/giampaolo/psutil/blob/39161251010503d6b087807c473f4fb648dfcbce/psutil/_psutil_windows.c#L2907>`__
 
-net_if_stats()
---------------
+:func:`net_if_stats`
+--------------------
 
 This new function returns information about network interface cards:
 

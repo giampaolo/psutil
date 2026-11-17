@@ -69,18 +69,18 @@ PROC_STATUSES = {
 # =====================================================================
 
 
-def virtual_memory():
-    """System virtual memory as a named tuple."""
-    d = _psutil.virtual_mem()
+def memory_physical():
+    """System physical memory as a named tuple."""
+    d = _psutil.memory_physical()
     d["percent"] = usage_percent(
         (d["total"] - d["available"]), d["total"], round_=1
     )
-    return ntp.svmem(**d)
+    return ntp.smem(**d)
 
 
-def swap_memory():
+def memory_swap():
     """Swap memory as a (total, used, free, percent, sin, sout) tuple."""
-    d = _psutil.swap_mem()
+    d = _psutil.memory_swap()
     d["percent"] = usage_percent(d["used"], d["total"], round_=1)
     return ntp.sswap(**d)
 
@@ -122,10 +122,8 @@ def cpu_count_cores():
 
 
 def cpu_stats():
-    ctx_switches, interrupts, soft_interrupts, syscalls, _traps = (
-        _psutil.cpu_stats()
-    )
-    return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
+    # macOS doesn't keep these counters
+    return ntp.scpustats(0, 0, 0, 0)
 
 
 def cpu_freq():
@@ -409,7 +407,7 @@ class Process:
     @wrap_exceptions
     def memory_extras(self):
         d = _psutil.proc_memory_extras(self.pid)
-        return ntp.pmem_extras(d["phys_footprint"], d["peak_footprint"])
+        return ntp.pmem_extras(d["phys_footprint"], d["peak_phys_footprint"])
 
     @wrap_exceptions
     def memory_footprint(self):
@@ -435,7 +433,7 @@ class Process:
         return ctime
 
     @wrap_exceptions
-    def num_ctx_switches(self):
+    def ctx_switches(self):
         # Unvoluntary value seems not to be available;
         # getrusage() numbers seems to confirm this theory.
         # We set it to 0.
@@ -492,8 +490,11 @@ class Process:
     @wrap_exceptions
     def status(self):
         code = self._oneshot_kinfo()["status"]
-        # XXX is '?' legit? (we're not supposed to return it anyway)
-        return PROC_STATUSES.get(code, '?')
+        try:
+            return PROC_STATUSES[code]
+        except KeyError:
+            debug(f"unknown process status {code!r}")
+            return ProcessStatus.STATUS_UNKNOWN
 
     @wrap_exceptions
     def threads(self):

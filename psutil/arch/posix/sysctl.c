@@ -161,7 +161,7 @@ psutil_sysctlbyname(const char *name, void *buf, size_t buflen) {
             len,
             buflen
         );
-        psutil_runtime_error(errbuf);
+        psutil_runtime_error("%s", errbuf);
         return -1;
     }
 

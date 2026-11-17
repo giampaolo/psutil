@@ -196,8 +196,8 @@ CPU
   - :field:`interrupts`: number of
     :term:`hardware interrupts <hardware interrupt>`.
   - :field:`soft_interrupts`: number of
-    :term:`soft interrupts <soft interrupt>`; always set to ``0`` on Windows
-    and SunOS.
+    :term:`soft interrupts <soft interrupt>`. On Windows these are deferred
+    procedure calls (DPCs). Always set to ``0`` on SunOS.
   - :field:`syscalls`: number of system calls; always set to ``0`` on Linux.
 
   .. code-block:: pycon
@@ -205,6 +205,9 @@ CPU
      >>> import psutil
      >>> psutil.cpu_stats()
      scpustats(ctx_switches=20455687, interrupts=6598984, soft_interrupts=2134212, syscalls=0)
+
+  .. versionchanged:: 8.0.0
+     Windows: :field:`soft_interrupts` is no longer always ``0``.
 
 .. function:: cpu_freq(percpu=False)
 
@@ -271,10 +274,10 @@ CPU
 Memory
 ^^^^^^
 
-.. function:: virtual_memory()
+.. function:: memory_physical()
 
-  Return statistics about system memory usage. All values are expressed in
-  bytes.
+  Return statistics about system memory (RAM) usage. All values are expressed
+  in bytes.
 
   - :field:`total`: total physical RAM.
   - :field:`available`: memory that can be given instantly to processes without
@@ -303,7 +306,8 @@ Memory
     :field:`buffers` and :field:`cached` are aliases.
   - :field:`cached` *(Linux, BSD, Windows)*: RAM used by the kernel to cache
     file contents (data read from or written to disk). On OpenBSD
-    :field:`buffers` and :field:`cached` are aliases. See :term:`page cache`.
+    :field:`buffers` and :field:`cached` are aliases. Always 0 on FreeBSD. See
+    :term:`page cache`.
   - :field:`shared` *(Linux, BSD)*: :term:`shared memory` accessible by
     multiple processes simultaneously, such as in-memory ``tmpfs`` and POSIX
     shared memory objects (``shm_open``). On Linux this corresponds to
@@ -339,12 +343,12 @@ Memory
        - ``MemAvailable``
        - ``inactive + free``
        - ``PhysicalAvailable``
-       - ``inactive + cached + free``
+       - ``inactive + free``
      * - used
        - ``total - available``
        - ``active + wired``
        - ``total - available``
-       - ``active + wired + cached``
+       - ``active + wired``
      * - free
        - ``MemFree``
        - ``free - speculative``
@@ -369,7 +373,7 @@ Memory
        - ``Cached + SReclaimable``
        -
        - ``SystemCache``
-       - ``sysctl() vm.stats.vm.v_cache_count``
+       - always 0
      * - shared
        - ``Shmem``
        -
@@ -391,9 +395,9 @@ Memory
   .. code-block:: pycon
 
      >>> import psutil
-     >>> mem = psutil.virtual_memory()
+     >>> mem = psutil.memory_physical()
      >>> mem
-     svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304, slab=199348224)
+     smem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304, slab=199348224)
      >>>
      >>> THRESHOLD = 500 * 1024 * 1024  # 500MB
      >>> if mem.available <= THRESHOLD:
@@ -418,19 +422,19 @@ Memory
 
   .. seealso::
     - :src:`scripts/meminfo.py`
-    - :ref:`faq_virtual_memory_available`
+    - :ref:`faq_memory_physical_available`
     - :ref:`faq_used_plus_free`
 
-  .. versionchanged:: 8.0.0
-     Windows: added :field:`cached` and :field:`wired` fields.
+  .. versionadded:: 8.0.0
 
-.. function:: swap_memory()
+.. function:: memory_swap()
 
   Return system :term:`swap memory` statistics:
 
   * :field:`total`: total swap space. On Windows this is derived as
     ``CommitLimit - PhysicalTotal``, representing virtual memory backed by the
-    page file rather than the raw page-file size.
+    page file rather than the raw page-file size. It's ``0`` if there's no page
+    file.
   * :field:`used`: swap space currently in use.
   * :field:`free`: swap space not in use (``total - used``).
   * :field:`percent`: swap usage as a percentage, calculated as
@@ -449,38 +453,62 @@ Memory
   .. code-block:: pycon
 
      >>> import psutil
-     >>> psutil.swap_memory()
+     >>> psutil.memory_swap()
      sswap(total=2097147904, used=886620160, free=1210527744, percent=42.3, sin=1050411008, sout=1906720768)
 
   .. seealso::
     - :src:`scripts/meminfo.py`
     - :ref:`Swap activity recipe <recipe_swap_activity>`
 
+  .. versionadded:: 8.0.0
+
+.. function:: virtual_memory()
+
+  Same as :func:`memory_physical` (soft deprecated).
+
+  .. versionchanged:: 8.0.0
+     Windows: added :field:`cached` and :field:`wired` fields.
+
+  .. soft-deprecated:: 8.0.0
+     use :func:`memory_physical` instead. No warning is raised and there are no
+     plans to remove it. See
+     :ref:`migration guide <migration-8.0-memory-names>`.
+
+.. function:: swap_memory()
+
+  Same as :func:`memory_swap` (soft deprecated).
+
   .. versionchanged:: 8.0.0
      OpenBSD: :field:`sin` / :field:`sout` are no longer set to ``0``.
+
+  .. soft-deprecated:: 8.0.0
+     use :func:`memory_swap` instead. No warning is raised and there are no
+     plans to remove it. See
+     :ref:`migration guide <migration-8.0-memory-names>`.
 
 Disks
 ^^^^^
 
 .. function:: disk_partitions(all=False)
 
-  Return mounted disk partitions as a list. This is similar to the ``df``
-  command on UNIX. When *all* is ``False``, virtual/pseudo filesystems (tmpfs,
-  sysfs, devtmpfs, cgroup, etc.) are excluded, keeping only physical devices
-  (e.g., hard disks, CD-ROM drives, USB keys). The filtering logic varies by
-  platform: on Linux, it checks :proc:`/proc/filesystems` for ``nodev``-flagged
-  types (ZFS is always included); on macOS, it checks whether the device path
-  exists; on SunOS and AIX, it excludes filesystems with zero total size. On
-  BSD, *all* is ignored and all partitions are always returned.
+  Return mounted filesystems as a list, one entry per mount. Despite the name,
+  these are mounts, not partitions: a partition that isn't mounted is not
+  listed, and a filesystem mounted in two places (e.g. a bind mount) is listed
+  twice. This is similar to the ``mount`` command on UNIX.
+
+  When *all* is ``False``, psutil tries to skip virtual filesystems such as
+  tmpfs and sysfs. On BSD, *all* is ignored.
 
   * :field:`device`: the device path (e.g. "/dev/hda1"). On Windows this is the
-    drive letter (e.g. "C:\\").
+    volume's drive letter (e.g. "C:\\"), or the folder it is mounted in if it
+    has none.
   * :field:`mountpoint`: the mount point path (e.g. "/"). On Windows this is
-    the drive letter (e.g. "C:\\").
-  * :field:`fstype`: the partition filesystem (e.g. "ext3" on UNIX or "NTFS" on
+    the drive letter (e.g. "C:\\"), or the folder the volume is mounted in
+    (e.g. "C:\\mnt\\data\\").
+  * :field:`fstype`: the filesystem type (e.g. "ext3" on UNIX or "NTFS" on
     Windows).
-  * :field:`opts`: a comma-separated string indicating different mount options
-    for the drive/partition. Platform-dependent.
+  * :field:`opts`: a comma-separated string indicating different mount options.
+    Platform-dependent.
 
   .. code-block:: pycon
 
@@ -546,8 +574,10 @@ Disks
   - :field:`write_merged_count` (*Linux*): number of merged writes (see
     `iostats doc`_).
 
-  If *perdisk* is ``True``, return the same information for every physical disk
-  as a dictionary with partition names as the keys.
+  If *perdisk* is ``True``, return the same information per device, as a
+  dictionary with device names as the keys. On Linux this includes partitions
+  and virtual devices (e.g. ``sda1``, ``dm-0``, ``loop0``); on Windows and
+  macOS only whole disks.
 
   If *nowrap* is ``True`` (default), counters that overflow and wrap to zero
   are automatically adjusted so they never decrease (this can happen on very
@@ -789,8 +819,7 @@ Sensors
   an empty dict is returned. Each entry includes:
 
   - :field:`label`: string label for the sensor, if available, else ``""``.
-  - :field:`current`: current temperature reading (changing), or ``None`` if
-    unavailable.
+  - :field:`current`: current temperature reading (changing).
   - :field:`high`: sensor-specified high temperature threshold (fixed), or
     ``None`` if unavailable. Typically indicates when hardware may start
     throttling to reduce heat.
@@ -899,7 +928,8 @@ Other system info
   - :field:`terminal`: the tty or pseudo-tty associated with the user, if any,
     else ``None``.
   - :field:`host`: the host name associated with the entry, if any (for
-    example, the remote host in an SSH session), else ``None``.
+    example, the remote host in an SSH session), else ``None``. For a graphical
+    session it may be an X display name like ``":0"``.
   - :field:`started`: the creation time as a floating point number expressed in
     seconds since the epoch.
   - :field:`pid`: the PID of the login process (like sshd for remote logins,
@@ -909,15 +939,17 @@ Other system info
 
      >>> import psutil
      >>> psutil.users()
-     [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0, pid=1352),
-      suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
+     [suser(name='giampaolo', terminal='tty1', host=None, started=1340737536.0, pid=1352),
+      suser(name='giampaolo', terminal='pts/3', host='10.0.0.5', started=1340737792.0, pid=1788)]
+
+  .. versionchanged:: 8.0.0
+     :field:`host` is ``None`` instead of ``"localhost"`` when the OS records
+     no host. See :ref:`migration guide <migration-8.0-users-host>`.
 
   .. note::
     On UNIX this reads the ``utmp`` database, and returns an empty list if
     nothing maintains it, e.g. on musl libc (Alpine Linux), which doesn't
     implement it. ``who`` is empty too in that case.
-
--------------------------------------------------------------------------------
 
 Processes
 ---------
@@ -1079,14 +1111,14 @@ Exceptions
   .. seealso::
     - :ref:`faq_access_denied`
 
-.. exception:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
+.. exception:: TimeoutExpired(seconds, pid=None, name=None)
 
   Raised by :meth:`Process.wait` method if timeout expires and the process is
   still alive. *name* attribute is set if :meth:`Process.name` was previously
   called.
 
-Process class
-^^^^^^^^^^^^^
+:class:`Process` class
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. class:: Process(pid=None)
 
@@ -1343,7 +1375,7 @@ Process class
     process as a named tuple. This is the same as :func:`os.getresuid`, but can
     be used for any process PID.
 
-    .. availability:: UNIX
+    .. availability:: POSIX
 
   .. method:: gids()
 
@@ -1351,14 +1383,14 @@ Process class
     process as a named tuple. This is the same as :func:`os.getresgid`, but can
     be used for any process PID.
 
-    .. availability:: UNIX
+    .. availability:: POSIX
 
   .. method:: terminal()
 
     The terminal associated with this process, if any, else ``None``. This is
     similar to ``tty`` command but can be used for any process PID.
 
-    .. availability:: UNIX
+    .. availability:: POSIX
 
   .. method:: nice(value=None)
 
@@ -1394,11 +1426,11 @@ Process class
   .. method:: ionice(ioclass=None, value=None)
 
     Get or set process :term:`I/O niceness <ionice>` (priority). Called with no
-    arguments (get), returns a ``(ioclass, value)`` named tuple on Linux or an
-    *ioclass* integer on Windows. Called with *ioclass* (one of the
-    :ref:`IOPRIO_* <const-proc-ioprio>` constants), sets the I/O priority. On
-    Linux, an additional *value* ranging from ``0`` to ``7`` can be specified
-    to further adjust the priority level specified by *ioclass*.
+    arguments (get), returns a ``(ioclass, value)`` named tuple. Called with
+    *ioclass* (one of the :ref:`IOPRIO_* <const-proc-ioprio>` constants), sets
+    the I/O priority. On Linux, an additional *value* ranging from ``0`` to
+    ``7`` can be specified to further adjust the priority level specified by
+    *ioclass*. On Windows :field:`value` is always ``0``.
 
     .. code-block:: pycon
 
@@ -1421,14 +1453,18 @@ Process class
        *ioclass* is now a :class:`ProcessIOPriority` enum member. See
        :ref:`migration guide <migration-8.0>`.
 
+    .. versionchanged:: 8.0.0
+       Windows: return a ``(ioclass, value)`` named tuple instead of an
+       integer. See :ref:`migration guide <migration-8.0-ionice>`.
+
   .. method:: rlimit(resource, limits=None)
 
     Get or set process :term:`resource limits <resource limit>`. *resource*
     must be one of the :ref:`RLIMIT_* <const-proc-rlimit>` constants. *limits*
     is an optional ``(soft, hard)`` tuple. If provided, the method sets the
-    limits; if omitted, it returns the current ``(soft, hard)`` tuple. This is
-    the same as stdlib :func:`resource.getrlimit` and
-    :func:`resource.setrlimit`, but can be used for any process PID.
+    limits. If omitted, it returns the current ``(soft, hard)`` tuple. Same as
+    stdlib :func:`resource.prlimit`, which is Linux only; psutil also supports
+    FreeBSD.
 
     .. code-block:: pycon
 
@@ -1456,8 +1492,13 @@ Process class
       :manpage:`pread(2)`).
     - :field:`write_count`: number of write syscalls (e.g.,
       :manpage:`write(2)`, :manpage:`pwrite(2)`).
-    - :field:`read_bytes`: bytes read (``-1`` on BSD).
-    - :field:`write_bytes`: bytes written (``-1`` on BSD).
+    - :field:`read_bytes`: bytes read (always ``0`` on BSD).
+    - :field:`write_bytes`: bytes written (always ``0`` on BSD).
+
+    .. note::
+      (BSD) :field:`read_count` and :field:`write_count` are the number of
+      block I/O operations (``ru_inblock`` and ``ru_oublock`` of
+      :manpage:`getrusage(2)`), not syscalls.
 
     Linux specific:
 
@@ -1484,7 +1525,11 @@ Process class
 
     .. availability:: Linux, Windows, BSD, AIX
 
-  .. method:: num_ctx_switches()
+    .. versionchanged:: 8.0.0
+       :field:`read_bytes` and :field:`write_bytes` are ``0`` instead of ``-1``
+       on BSD.
+
+  .. method:: ctx_switches()
 
     The number of :term:`context switches <context switch>` performed by this
     process as a ``(voluntary, involuntary)`` named tuple
@@ -1495,12 +1540,21 @@ Process class
       :field:`voluntary` value reflects the total number of context switches
       (voluntary + involuntary). This is a limitation of the OS.
 
+    .. versionadded:: 8.0.0
+
+  .. method:: num_ctx_switches()
+
+    Same as :meth:`ctx_switches` (deprecated).
+
+    .. deprecated:: 8.0.0
+       use :meth:`ctx_switches` instead.
+
   .. method:: num_fds()
 
     The number of :term:`file descriptors <file descriptor>` currently opened
     by this process (non cumulative).
 
-    .. availability:: UNIX
+    .. availability:: POSIX
 
   .. method:: num_handles()
 
@@ -1522,8 +1576,9 @@ Process class
       refers to the current process, this matches
       :attr:`threading.Thread.native_id`, and can be used to reference
       individual Python threads in your app.
-    - :field:`user_time`: time spent in user mode.
-    - :field:`system_time`: time spent in kernel mode.
+    - :field:`user_time`: time spent in user mode. On NetBSD this is user +
+      system time, since NetBSD doesn't keep them separate.
+    - :field:`system_time`: time spent in kernel mode (always ``0`` on NetBSD).
 
   .. method:: cpu_times()
 
@@ -1534,12 +1589,15 @@ Process class
     - :field:`user`: time spent in user mode.
     - :field:`system`: time spent in kernel mode.
     - :field:`children_user`: user time of all child processes (always ``0`` on
-      Windows and macOS).
+      Windows and macOS). On OpenBSD and NetBSD this is user + system time,
+      since they don't keep them separate.
     - :field:`children_system`: system time of all child processes (always
-      ``0`` on Windows and macOS).
+      ``0`` on Windows, macOS, OpenBSD and NetBSD).
     - :field:`iowait`: (Linux) time spent waiting for blocking I/O to complete.
       (:term:`iowait`). Excluded from :field:`user` and :field:`system` times
-      count (because the CPU is idle).
+      count (because the CPU is idle). Always ``0`` unless delay accounting is
+      enabled (``sysctl kernel.task_delayacct=1``), which is off by default
+      since Linux 5.14.
 
     .. code-block:: pycon
 
@@ -1661,15 +1719,16 @@ Process class
       :term:`memory-mapped files <mapped memory>`). Counted even if no other
       process is currently mapping it. Matches ``top``'s SHR column.
 
-    - :field:`text` *(Linux, BSD)*: aka TRS (Text Resident Set). Resident
-      memory devoted to executable code. This memory is read-only and typically
-      shared across all processes running the same binary. Matches ``top``'s
-      CODE column.
+    - :field:`text` *(Linux, BSD)*: aka TRS (Text Resident Set). Virtual size
+      of the executable's code, not counting shared libraries. Despite the
+      name, it's not how much of it is in RAM. This memory is read-only and
+      typically shared across all processes running the same binary. Matches
+      ``top``'s CODE column.
 
-    - :field:`data` *(Linux, BSD)*: aka DRS (Data Resident Set). On Linux this
-      covers the data **and** stack segments combined (from
-      :proc:`/proc/pid/statm`). On BSD it covers the data segment only (see
-      :field:`stack`). Matches ``top``'s DATA column.
+    - :field:`data` *(Linux, BSD)*: aka DRS (Data Resident Set). Also a virtual
+      size, like :field:`text`. On Linux this covers the data **and** stack
+      segments combined (from :proc:`/proc/pid/statm`). On BSD it covers the
+      data segment only (see :field:`stack`). Matches ``top``'s DATA column.
 
     - :field:`stack` *(BSD)*: size of the process stack segment. Reported
       separately from :field:`data` (unlike Linux where both are combined).
@@ -1719,23 +1778,23 @@ Process class
     Return extra platform-specific memory metrics, complementing
     :meth:`memory_info` (all values in bytes).
 
-    +-------------+----------------+--------------------+
-    | Linux       | macOS          | Windows            |
-    +=============+================+====================+
-    | peak_rss    | phys_footprint | virtual            |
-    +-------------+----------------+--------------------+
-    | peak_vms    | peak_footprint | peak_virtual       |
-    +-------------+----------------+--------------------+
-    | rss_anon    |                | paged_pool         |
-    +-------------+----------------+--------------------+
-    | rss_file    |                | nonpaged_pool      |
-    +-------------+----------------+--------------------+
-    | rss_shmem   |                | peak_paged_pool    |
-    +-------------+----------------+--------------------+
-    | swap_anon   |                | peak_nonpaged_pool |
-    +-------------+----------------+--------------------+
-    | locked      |                |                    |
-    +-------------+----------------+--------------------+
+    +-------------+---------------------+--------------------+
+    | Linux       | macOS               | Windows            |
+    +=============+=====================+====================+
+    | peak_rss    | phys_footprint      | virtual            |
+    +-------------+---------------------+--------------------+
+    | peak_vms    | peak_phys_footprint | peak_virtual       |
+    +-------------+---------------------+--------------------+
+    | rss_anon    |                     | paged_pool         |
+    +-------------+---------------------+--------------------+
+    | rss_file    |                     | nonpaged_pool      |
+    +-------------+---------------------+--------------------+
+    | rss_shmem   |                     | peak_paged_pool    |
+    +-------------+---------------------+--------------------+
+    | swap_anon   |                     | peak_nonpaged_pool |
+    +-------------+---------------------+--------------------+
+    | locked      |                     |                    |
+    +-------------+---------------------+--------------------+
 
     Linux:
 
@@ -1762,8 +1821,8 @@ Process class
     - :field:`phys_footprint`: memory footprint attributed to the process,
       including compressed memory. This corresponds to the main memory usage
       reported by macOS Activity Monitor. Prefer it over :field:`rss`.
-    - :field:`peak_footprint`: the highest :field:`phys_footprint` reached over
-      the process lifetime. Set to 0 on macOS < 10.13.
+    - :field:`peak_phys_footprint`: the highest :field:`phys_footprint` reached
+      over the process lifetime. Set to 0 on macOS < 10.13.
 
     Windows (see `PROCESS_MEMORY_COUNTERS_EX`_):
 
@@ -1786,7 +1845,7 @@ Process class
 
   .. method:: memory_footprint()
 
-    Return :field:`uss`, :field:`pss`, :field:`swap` and :field:`shared` memory
+    Return :field:`uss`, :field:`shared`, :field:`pss` and :field:`swap` memory
     metrics. These give a more accurate picture of actual memory consumption
     than :meth:`memory_info`. It walks the full process address space, so it is
     slower than :meth:`memory_info` and may require higher privileges.
@@ -1794,13 +1853,6 @@ Process class
     - :field:`uss` *(Linux, macOS, Windows)*: aka :term:`USS`; the
       :term:`private memory` of the process, which would be freed if the
       process were terminated right now.
-
-    - :field:`pss` *(Linux)*: aka :term:`PSS`; shared memory divided evenly
-      among the processes sharing it. I.e. if a process has 10 MBs all to
-      itself, and 10 MBs shared with another process, its PSS will be 15 MBs.
-
-    - :field:`swap` *(Linux)*: process memory currently in
-      :term:`swap <swap memory>`, counted per-mapping.
 
     - :field:`shared` *(Linux, macOS, Windows)*: resident memory shared with
       other processes. On Linux this counts pages mapped more than once,
@@ -1812,6 +1864,13 @@ Process class
       RSHRD. On Windows it counts working set pages shared with at least
       another process.
 
+    - :field:`pss` *(Linux)*: aka :term:`PSS`; shared memory divided evenly
+      among the processes sharing it. I.e. if a process has 10 MBs all to
+      itself, and 10 MBs shared with another process, its PSS will be 15 MBs.
+
+    - :field:`swap` *(Linux)*: process memory currently in
+      :term:`swap <swap memory>`, counted per-mapping.
+
     Example on Linux:
 
     .. code-block:: pycon
@@ -1819,7 +1878,7 @@ Process class
        >>> import psutil
        >>> p = psutil.Process()
        >>> p.memory_footprint()
-       pfootprint(uss=6545408, pss=6872064, swap=0, shared=4341760)
+       pfootprint(uss=6545408, shared=4341760, pss=6872064, swap=0)
 
     .. seealso::
       - :src:`scripts/procsmem.py`
@@ -1849,14 +1908,18 @@ Process class
 
     .. code-block:: python
 
-       Process().memory_info().rss / virtual_memory().total * 100
+       Process().memory_info().rss / memory_physical().total * 100
 
     *memtype* selects which memory field to use and can be any attribute from
     :meth:`memory_info`, :meth:`memory_extras`, or :meth:`memory_footprint`
-    (default is ``"rss"``). The divisor is always total physical memory,
-    regardless of *memtype*. The result is rounded to 2 decimal places.
+    (default is ``"rss"``), looked up in this order. The divisor is always
+    total physical memory, so fields which are not physical memory (e.g.
+    :field:`vms`, :field:`swap`) raise :exc:`UserWarning`. The result is
+    rounded to 2 decimal places.
 
-    .. versionchanged:: 8.0.0 the result is rounded to 2 decimal places.
+    .. versionchanged:: 8.0.0
+       the result is rounded to 2 decimal places; a :exc:`UserWarning` raised
+       for fields which are not physical memory.
 
   .. method:: memory_maps(grouped=True)
 
@@ -1865,8 +1928,9 @@ Process class
 
     If *grouped* is ``True``, regions with the same *path* are merged and their
     numeric fields summed. If *grouped* is ``False``, each region is listed
-    individually; the tuple also includes *addr* (address range) and *perms*
-    (permission string, e.g., ``"r-xp"``).
+    individually; the tuple also includes *addr* (address range, e.g.
+    ``"7f1c2a000000-7f1c2a021000"``) and *perms* (permission string, e.g.,
+    ``"r-xp"`` on Linux and Solaris, ``"r-x"`` on FreeBSD and Windows).
 
     +---------------+---------+--------------+-----------+
     | Linux         | Windows | FreeBSD      | Solaris   |
@@ -2039,7 +2103,8 @@ Process class
     Same as :meth:`net_connections` (deprecated).
 
     .. deprecated:: 6.0.0
-       use :meth:`net_connections` instead.
+       use :meth:`net_connections` instead. It raises :exc:`FutureWarning`
+       since 8.0.0, and will be removed in 9.0.
 
   .. method:: is_running()
 
@@ -2174,8 +2239,8 @@ Process class
 
 -------------------------------------------------------------------------------
 
-Popen class
-^^^^^^^^^^^
+:class:`Popen` class
+^^^^^^^^^^^^^^^^^^^^
 
 .. class:: Popen(*args, **kwargs)
 
@@ -2205,8 +2270,8 @@ Popen class
 
 -------------------------------------------------------------------------------
 
-ProcessSnapshot class
-^^^^^^^^^^^^^^^^^^^^^
+:class:`ProcessSnapshot` class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. class:: ProcessSnapshot
 
@@ -2243,17 +2308,15 @@ ProcessSnapshot class
 
   .. versionadded:: 8.0.0
 
--------------------------------------------------------------------------------
-
 C heap introspection
 --------------------
 
 The following functions provide direct access to the platform's native
 :term:`heap` allocator (such as glibc's ``malloc`` on Linux or ``jemalloc`` on
-BSD). They are low-level interfaces intended for detecting memory leaks in C
-extensions, which are usually not revealed via standard :term:`RSS` /
-:term:`VMS` metrics. These functions do not reflect Python object memory; they
-operate solely on allocations made in C via :manpage:`malloc(3)`,
+FreeBSD and NetBSD). They are low-level interfaces intended for detecting
+memory leaks in C extensions, which are usually not revealed via standard
+:term:`RSS` / :term:`VMS` metrics. These functions do not reflect Python object
+memory; they operate solely on allocations made in C via :manpage:`malloc(3)`,
 :manpage:`free(3)`, and related calls.
 
 The general idea behind these functions is straightforward: capture the state
@@ -2331,8 +2394,6 @@ that Python's memory tracking misses.
   .. availability:: Linux with glibc, Windows, macOS, FreeBSD, NetBSD
 
   .. versionadded:: 7.2.0
-
--------------------------------------------------------------------------------
 
 Windows services
 ----------------
@@ -2423,8 +2484,6 @@ Windows services
 
   .. availability:: Windows
 
--------------------------------------------------------------------------------
-
 Constants
 ---------
 
@@ -2502,21 +2561,23 @@ Operating system constants
 platform, ``False`` otherwise.
 
 .. data:: POSIX
+
+  ``True`` on all supported platforms except Windows. Throughout this
+  documentation, "Availability: POSIX" refers to these platforms.
+
+.. data:: BSD
+
+  ``True`` on FreeBSD, NetBSD, and OpenBSD. Throughout this documentation,
+  "Availability: BSD" refers to these platforms.
+
 .. data:: LINUX
 .. data:: WINDOWS
 .. data:: MACOS
 .. data:: FREEBSD
 .. data:: NETBSD
 .. data:: OPENBSD
-.. data:: BSD
 .. data:: SUNOS
 .. data:: AIX
-.. data:: OSX
-
-  Alias for :data:`MACOS`.
-
-  .. deprecated:: 5.4.7
-     use :data:`MACOS` instead.
 
 .. _const-pstatus:
 
@@ -2564,17 +2625,10 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
    The process is about to disappear (final state before it is gone).
 
-.. data:: STATUS_WAKE_KILL
-
-   (Linux only) A variant of :data:`STATUS_DISK_SLEEP` where the process can be
-   awakened by ``SIGKILL``. Used for tasks which might otherwise remain blocked
-   indefinitely, e.g. unresponsive network filesystems such as NFS, as in
-   ``open("/mnt/nfs_hung/file").read()``.
-
 .. data:: STATUS_WAKING
 
-   (Linux only) A transient state right before the process becomes runnable
-   (:data:`STATUS_RUNNING`).
+   (OpenBSD, NetBSD) A transient state right before the process becomes
+   runnable (:data:`STATUS_RUNNING`).
 
 .. data:: STATUS_PARKED
 
@@ -2584,7 +2638,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_IDLE
 
-   (Linux, macOS, FreeBSD) A sleep for kernel threads waiting for work.
+   (Linux, macOS, FreeBSD, OpenBSD, NetBSD, Solaris, AIX) A sleep for kernel
+   threads waiting for work.
 
 .. data:: STATUS_LOCKED
 
@@ -2593,13 +2648,19 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_WAITING
 
-   (FreeBSD only) The process is waiting in a kernel sleep queue for a specific
-   system event to occur.
+   (FreeBSD, Solaris) The process is waiting in a kernel sleep queue for a
+   specific system event to occur.
 
 .. data:: STATUS_SUSPENDED
 
    (NetBSD only) The process has been explicitly paused, similar to the stopped
    state but managed by the NetBSD scheduler.
+
+.. data:: STATUS_UNKNOWN
+
+   The kernel reported a state psutil does not know about.
+
+   .. versionadded:: 8.0.0
 
 .. _const-proc-prio:
 
@@ -2669,9 +2730,8 @@ can be used in conjunction with :meth:`Process.ionice` (*ioclass* argument).
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Constants for getting or setting process resource limits, to be used in in
-conjunction with :meth:`Process.rlimit`. The meaning of each constant is
-explained in :func:`resource.getrlimit` documentation.
+Constants for getting or setting process resource limits, to be used in
+conjunction with :meth:`Process.rlimit`.
 
 .. availability:: Linux, FreeBSD
 
@@ -2681,41 +2741,97 @@ explained in :func:`resource.getrlimit` documentation.
 
 - Linux / FreeBSD:
 
-  .. data:: RLIM_INFINITY
   .. data:: RLIMIT_AS
+
+    Max virtual memory in bytes. Past it, allocations fail with
+    :exc:`MemoryError`.
+
   .. data:: RLIMIT_CORE
+
+    Max core dump size in bytes. Past it, the dump is truncated. 0 disables
+    core dumps.
+
   .. data:: RLIMIT_CPU
+
+    Max CPU time in seconds. Past it, the process receives ``SIGXCPU`` signal.
+
   .. data:: RLIMIT_DATA
+
+    Max heap size in bytes. Past it, allocations fail with :exc:`MemoryError`.
+
   .. data:: RLIMIT_FSIZE
+
+    Max size of the files the process can write, in bytes. Past it, the process
+    receives ``SIGXFSZ`` signal.
+
   .. data:: RLIMIT_MEMLOCK
+
+    Max memory in bytes locked into RAM via :manpage:`mlock(2)`.
+
   .. data:: RLIMIT_NOFILE
+
+    Max open file descriptors. Past it, opening one fails with ``EMFILE`` ("Too
+    many open files").
+
   .. data:: RLIMIT_NPROC
+
+    Max processes (threads on Linux) for the user. Past it, :manpage:`fork(2)`
+    fails with ``EAGAIN``.
+
   .. data:: RLIMIT_RSS
+
+    Max resident memory in bytes. Ignored on Linux.
+
   .. data:: RLIMIT_STACK
+
+    Max stack size in bytes. Past it, the process crashes with ``SIGSEGV``.
 
 - Linux specific:
 
-  .. data:: RLIMIT_LOCKS
   .. data:: RLIMIT_MSGQUEUE
+
+    Max bytes of POSIX message queues for the user (:manpage:`mq_open(3)`).
+
   .. data:: RLIMIT_NICE
+
+    How low the process can set its nice value.
+
   .. data:: RLIMIT_RTPRIO
+
+    Max real-time priority the process can set.
+
   .. data:: RLIMIT_RTTIME
+
+    Max CPU time in microseconds a real-time process can use without blocking.
+
   .. data:: RLIMIT_SIGPENDING
+
+    Max queued signals for the user.
 
 - FreeBSD specific:
 
   .. data:: RLIMIT_SWAP
 
+    Max swap in bytes for the user.
+
     .. versionadded:: 5.7.3
 
-
   .. data:: RLIMIT_SBSIZE
+
+    Max socket buffer memory in bytes for the user.
 
     .. versionadded:: 5.7.3
 
   .. data:: RLIMIT_NPTS
 
+    Max pseudo-terminals for the user.
+
     .. versionadded:: 5.7.3
+
+.. data:: RLIM_INFINITY
+
+  The value meaning "no limit", returned or passed as the *soft* or *hard*
+  value of :meth:`Process.rlimit`. Same as :data:`resource.RLIM_INFINITY`.
 
 .. _const-conn:
 
@@ -2774,26 +2890,6 @@ Hardware constants
   Whether the remaining time of a battery cannot be determined or is unlimited.
   May be assigned to :func:`psutil.sensors_battery`'s :field:`secsleft` field.
 
-Other constants
-^^^^^^^^^^^^^^^
-
-.. _const-procfs_path:
-
-.. data:: PROCFS_PATH
-
-  The path of the ``/proc`` filesystem on Linux, Solaris and AIX (defaults to
-  ``'/proc'``). You may want to re-set this constant right after importing
-  psutil in case ``/proc`` is mounted elsewhere, or if you want to retrieve
-  information about Linux containers such as Docker, Heroku or LXC (see
-  `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`_
-  for more info).
-
-  It must be noted that this trick works only for APIs which rely on ``/proc``
-  filesystem (e.g. memory-related APIs and many (but not all) :class:`Process`
-  class methods).
-
-  .. availability:: Linux, SunOS, AIX
-
 Utilities
 ---------
 
@@ -2823,6 +2919,35 @@ Utilities
      >>> if psutil.version_info >= (4, 5):
      ...    pass
 
+Configuration
+-------------
+
+.. function:: set_procfs_path(path)
+
+  Set the path where ``/proc`` is mounted, typically when you want to read the
+  host's ``/proc`` from inside a container such as Docker. Only the APIs that
+  read ``/proc`` are affected (e.g. memory APIs and many :class:`Process`
+  methods). *path* must be an existing directory. This also resets internal
+  caches that depend on ``/proc``. :class:`Process` instances created before
+  the call keep reading the old path.
+
+  .. availability:: Linux, SunOS, AIX
+
+  .. versionadded:: 8.0.0
+
+.. _const-procfs_path:
+
+.. data:: PROCFS_PATH
+
+  The current ``/proc`` path. Defaults to ``'/proc'``, or to
+  :envvar:`PSUTIL_PROCFS_PATH` when set. Treat it as read-only, and use
+  :func:`set_procfs_path` to change it.
+
+  .. availability:: Linux, SunOS, AIX
+
+  .. versionchanged:: 8.0.0
+     the :envvar:`PSUTIL_PROCFS_PATH` environment variable is honored.
+
 Environment variables
 ---------------------
 
@@ -2836,7 +2961,15 @@ Environment variables
 
   .. code-block:: bash
 
-     $ PSUTIL_DEBUG=1 python3 script.py
+     PSUTIL_DEBUG=1 python3 script.py
+
+.. envvar:: PSUTIL_PROCFS_PATH
+
+  If set, psutil uses it as :data:`PROCFS_PATH` instead of ``'/proc'``. It is
+  read once at import time and must be an existing directory. To change the
+  path later, use :func:`set_procfs_path`.
+
+  .. versionadded:: 8.0.0
 
 .. envvar:: PSUTIL_BUILD_JOBS
 
@@ -2846,7 +2979,7 @@ Environment variables
 
   .. code-block:: bash
 
-     $ PSUTIL_BUILD_JOBS=1 python3 -m pip install --no-binary=psutil psutil
+     PSUTIL_BUILD_JOBS=1 python3 -m pip install --no-binary=psutil psutil
 
   .. versionadded:: 8.0.0
 

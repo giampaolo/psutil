@@ -12,13 +12,9 @@ created. Replies to common mistakes. Labelling is
 import functools
 import json
 import os
-import pathlib
 from pprint import pprint as pp
 
-from github import Github
-
-ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
-MAINTAINERS = {"giampaolo"}
+import ghlib
 
 # --- replies
 
@@ -36,13 +32,7 @@ This is an auto-generated response.
 
 
 def is_pr(issue):
-    return issue.pull_request is not None
-
-
-def get_repo():
-    repo = os.environ['GITHUB_REPOSITORY']
-    token = os.environ['GITHUB_TOKEN']
-    return Github(token).get_repo(repo)
+    return "pull_request" in issue
 
 
 # --- event utils
@@ -70,7 +60,7 @@ def get_issue():
         num = data['issue']['number']
     except KeyError:
         num = data['pull_request']['number']
-    return get_repo().get_issue(number=num)
+    return ghlib.request(f"/repos/{ghlib.REPO}/issues/{num}")
 
 
 # --- actions
@@ -84,25 +74,27 @@ def log(msg):
 
 
 def on_new_pr(issue):
-    if issue.user.login in MAINTAINERS:
+    if issue["user"]["login"] in ghlib.MAINTAINERS:
         return
-    pr = get_repo().get_pull(issue.number)
-    files = [x.filename for x in pr.get_files()]
+    path = f"/repos/{ghlib.REPO}/pulls/{issue['number']}/files"
+    files = [x["filename"] for x in ghlib.request_all(path)]
 
     # changelog.rst / credits.rst are maintainer-owned; ask to drop them.
     owned = ("docs/changelog.rst", "docs/credits.rst")
     if any(f in files for f in owned):
         log("PR edits maintainer-owned changelog/credits files")
-        issue.create_comment(REPLY_MAINTAINER_OWNED_FILES)
+        path = f"/repos/{ghlib.REPO}/issues/{issue['number']}/comments"
+        ghlib.request(path, {"body": REPLY_MAINTAINER_OWNED_FILES})
 
 
 def main():
+    ghlib.load_token()
     issue = get_issue()
     stype = "PR" if is_pr(issue) else "issue"
-    log(f"running issue bot for {stype} {issue!r}")
+    log(f"running issue bot for {stype} #{issue['number']}")
 
     if is_event_new_pr():
-        log(f"created new PR {issue}")
+        log(f"created new PR #{issue['number']}")
         on_new_pr(issue)
     else:
         log("unhandled event")

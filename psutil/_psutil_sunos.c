@@ -40,7 +40,7 @@ static PyMethodDef mod_methods[] = {
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS},
     {"proc_oneshot", psutil_proc_oneshot, METH_VARARGS},
     {"proc_page_faults", psutil_proc_page_faults, METH_VARARGS},
-    {"query_process_thread", psutil_proc_query_thread, METH_VARARGS},
+    {"proc_query_thread", psutil_proc_query_thread, METH_VARARGS},
 
     // --- system-related functions
     {"boot_time", psutil_boot_time, METH_VARARGS},
@@ -48,11 +48,11 @@ static PyMethodDef mod_methods[] = {
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"memory_swap", psutil_memory_swap, METH_VARARGS},
     {"net_connections", psutil_net_connections, METH_VARARGS},
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
-    {"swap_mem", psutil_swap_mem, METH_VARARGS},
 
     // --- others
     {"check_pid_range", psutil_check_pid_range, METH_VARARGS},

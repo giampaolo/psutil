@@ -51,7 +51,6 @@ PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int mib[3];
     int ncpu;
-    size_t len;
     int i;
     PyObject *py_retlist = PyList_New(0);
 
@@ -107,9 +106,9 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     return Py_BuildValue(
         "IIIIIII",
         uv.swtch,  // ctx switches
-        uv.intrs,  // interrupts - XXX always 0, will be determined via /proc
+        uv.intrs,  // interrupts
         uv.softs,  // soft interrupts
-        uv.syscalls,  // syscalls - XXX always 0
+        uv.syscalls,  // syscalls
         uv.traps,  // traps
         uv.faults,  // faults
         uv.forks  // forks

@@ -590,7 +590,7 @@ typedef struct _PEB {
 // ================================================================
 // Functions loaded at runtime.
 // ================================================================
-// The pointers live in init.c; psutil_loadlibs() assigns them on
+// The pointers live in init.c; load_libs() assigns them on
 // module import.
 
 typedef NTSTATUS(NTAPI *_NtQueryInformationProcess)(

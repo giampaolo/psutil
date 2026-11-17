@@ -24,7 +24,7 @@ The numbers
 
 These are downloads per month:
 
-.. code-block:: none
+.. code-block:: console
 
    $ pypinfo --percent psutil pyversion
    Served from cache: False
@@ -98,7 +98,7 @@ is fetched from PyPI, it will emit an informative error message on
 ``pip install psutil``. The user trying to install psutil on Python 2.7 will
 see:
 
-.. code-block:: none
+.. code-block:: console
 
    $ pip2 install psutil
    As of version 7.0.0 psutil no longer supports Python 2.7.

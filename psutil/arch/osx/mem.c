@@ -19,7 +19,7 @@
 
 
 static int
-psutil_sys_vminfo(vm_statistics64_t vmstat) {
+sys_vminfo(vm_statistics64_t vmstat) {
     kern_return_t ret;
     integer_t buf[HOST_INFO_MAX];
     mach_msg_type_number_t count = HOST_INFO_MAX;
@@ -51,10 +51,10 @@ psutil_sys_vminfo(vm_statistics64_t vmstat) {
 }
 
 
-// Return system virtual memory stats. See:
+// Return system physical memory stats. See:
 // https://opensource.apple.com/source/system_cmds/system_cmds-790/vm_stat.tproj/vm_stat.c.auto.html
 PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
+psutil_memory_physical(PyObject *self, PyObject *args) {
     uint64_t total;
     unsigned long long active, inactive, wired, free, _speculative;
     unsigned long long available, used;
@@ -69,7 +69,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     // This is also available as sysctlbyname("hw.memsize").
     if (psutil_sysctl(mib, 2, &total, sizeof(total)) != 0)
         goto error;
-    if (psutil_sys_vminfo(&vm) != 0)
+    if (sys_vminfo(&vm) != 0)
         goto error;
 
     active = (unsigned long long)vm.active_count * pagesize;
@@ -88,13 +88,13 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     // CLI utility.
     free -= _speculative;
 
-    if (!(pydict_add(dict, "total", "K", (unsigned long long)total)
-          | pydict_add(dict, "available", "K", available)
-          | pydict_add(dict, "used", "K", used)
-          | pydict_add(dict, "free", "K", free)
-          | pydict_add(dict, "active", "K", active)
-          | pydict_add(dict, "inactive", "K", inactive)
-          | pydict_add(dict, "wired", "K", wired)))
+    if (!pydict_add(dict, "total", "K", (unsigned long long)total)
+        || !pydict_add(dict, "available", "K", available)
+        || !pydict_add(dict, "used", "K", used)
+        || !pydict_add(dict, "free", "K", free)
+        || !pydict_add(dict, "active", "K", active)
+        || !pydict_add(dict, "inactive", "K", inactive)
+        || !pydict_add(dict, "wired", "K", wired))
         goto error;
 
     return dict;
@@ -106,7 +106,7 @@ error:
 
 
 PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
+psutil_memory_swap(PyObject *self, PyObject *args) {
     struct xsw_usage totals;
     vm_statistics64_data_t vmstat;
     long pagesize = psutil_getpagesize();
@@ -118,15 +118,15 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     if (psutil_sysctl(mib, 2, &totals, sizeof(totals)) != 0)
         goto error;
-    if (psutil_sys_vminfo(&vmstat) != 0)
+    if (sys_vminfo(&vmstat) != 0)
         goto error;
 
     // clang-format off
     if (!pydict_add(dict, "total", "K", (unsigned long long)totals.xsu_total)) goto error;
     if (!pydict_add(dict, "used", "K", (unsigned long long)totals.xsu_used)) goto error;
     if (!pydict_add(dict, "free", "K", (unsigned long long)totals.xsu_avail)) goto error;
-    if (!pydict_add(dict, "sin", "K", (unsigned long long)vmstat.pageins * pagesize)) goto error;
-    if (!pydict_add(dict, "sout", "K", (unsigned long long)vmstat.pageouts * pagesize)) goto error;
+    if (!pydict_add(dict, "sin", "K", (unsigned long long)vmstat.swapins * pagesize)) goto error;
+    if (!pydict_add(dict, "sout", "K", (unsigned long long)vmstat.swapouts * pagesize)) goto error;
     // clang-format on
 
     return dict;

@@ -33,12 +33,10 @@ extern CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 #define AF_INET6 23
 #endif
 
-double psutil_FiletimeToUnixTime(FILETIME ft);
-double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);
+double psutil_filetime_to_unix(FILETIME ft);
+double psutil_largeint_to_unix(LARGE_INTEGER li);
 int psutil_setup_windows(void);
-PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
-PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
-PVOID psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall);
+PVOID psutil_oserror_ntstatus(NTSTATUS status, const char *syscall);
 
 extern PyObject *TimeoutExpired;
 extern PyObject *TimeoutAbandoned;
@@ -77,12 +75,13 @@ PyObject *psutil_cpu_times(PyObject *self, PyObject *args);
 PyObject *psutil_disk_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_disk_partitions(PyObject *self, PyObject *args);
 PyObject *psutil_disk_usage(PyObject *self, PyObject *args);
-PyObject *psutil_get_loadavg();
+PyObject *psutil_drive_devices(PyObject *self, PyObject *args);
+PyObject *psutil_getloadavg(PyObject *self, PyObject *args);
 PyObject *psutil_get_open_files(HANDLE hProcess);
 PyObject *psutil_getpagesize(PyObject *self, PyObject *args);
 PyObject *psutil_heap_info(PyObject *self, PyObject *args);
 PyObject *psutil_heap_trim(PyObject *self, PyObject *args);
-PyObject *psutil_init_loadavg_counter();
+PyObject *psutil_init_loadavg_counter(PyObject *self, PyObject *args);
 PyObject *psutil_net_connections(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_addrs(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_stats(PyObject *self, PyObject *args);
@@ -115,7 +114,6 @@ PyObject *psutil_proc_threads(PyObject *self, PyObject *args);
 PyObject *psutil_proc_times(PyObject *self, PyObject *args);
 PyObject *psutil_proc_username(PyObject *self, PyObject *args);
 PyObject *psutil_proc_wait(PyObject *self, PyObject *args);
-PyObject *psutil_QueryDosDevice(PyObject *self, PyObject *args);
 PyObject *psutil_sensors_battery(PyObject *self, PyObject *args);
 PyObject *psutil_swap_percent(PyObject *self, PyObject *args);
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);

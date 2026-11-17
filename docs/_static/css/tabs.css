@@ -1,0 +1,29 @@
+/*
+ * psutil-sphinx-theme: sphinx-design tabs (install page, home page).
+ */
+
+:root {
+    --sd-color-tabs-label-active: var(--content-text);
+    --sd-color-tabs-label-hover: var(--content-text);
+    --sd-color-tabs-label-inactive: var(--text-muted);
+    --sd-color-tabs-underline-active: var(--content-text);
+    --sd-color-tabs-underline-hover: var(--border);
+    --sd-fontsize-tabs-label: 0.95rem;
+}
+
+/* underline as wide as the text */
+.sd-tab-set > label {
+    padding: 0.4em 0 0.5em;
+    margin-right: 1.6em;
+    font-weight: 500;
+}
+
+.sd-tab-set > input:checked + label {
+    font-weight: 600;
+}
+
+/* drop the bottom rule, it reads as a section break */
+.sd-tab-content {
+    padding: 0.5rem 0 0;
+    box-shadow: 0 -0.0625rem var(--border);
+}

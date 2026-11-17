@@ -23,7 +23,7 @@
 //   https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/openbsd/memory.c
 
 PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
+psutil_memory_physical(PyObject *self, PyObject *args) {
     int64_t _total;
     unsigned long long free, active, inactive, wired, cached, shared;
     unsigned long long total, avail, used, buffers;
@@ -103,17 +103,17 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 
     percent = psutil_usage_percent((double)(total - avail), (double)total, 1);
 
-    if (!(pydict_add(dict, "total", "K", total)
-          | pydict_add(dict, "available", "K", avail)
-          | pydict_add(dict, "percent", "d", percent)
-          | pydict_add(dict, "used", "K", used)
-          | pydict_add(dict, "free", "K", free)
-          | pydict_add(dict, "active", "K", active)
-          | pydict_add(dict, "inactive", "K", inactive)
-          | pydict_add(dict, "buffers", "K", buffers)
-          | pydict_add(dict, "cached", "K", cached)
-          | pydict_add(dict, "shared", "K", shared)
-          | pydict_add(dict, "wired", "K", wired)))
+    if (!pydict_add(dict, "total", "K", total)
+        || !pydict_add(dict, "available", "K", avail)
+        || !pydict_add(dict, "percent", "d", percent)
+        || !pydict_add(dict, "used", "K", used)
+        || !pydict_add(dict, "free", "K", free)
+        || !pydict_add(dict, "active", "K", active)
+        || !pydict_add(dict, "inactive", "K", inactive)
+        || !pydict_add(dict, "buffers", "K", buffers)
+        || !pydict_add(dict, "cached", "K", cached)
+        || !pydict_add(dict, "shared", "K", shared)
+        || !pydict_add(dict, "wired", "K", wired))
         goto error;
 
     return dict;

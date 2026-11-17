@@ -65,8 +65,8 @@ Renamed module functions
 They were the only module-level functions with a ``get_`` prefix. None of the
 others had one.
 
-Renamed Process class methods
------------------------------
+Renamed :class:`Process` class methods
+--------------------------------------
 
 All methods lost their ``get_`` and ``set_`` prefixes. A single method can now
 be used for both getting and setting (if a value is passed). Assuming
@@ -222,7 +222,7 @@ instead of the deprecated API, as long as you start the interpreter with the
 `silenced in Python 2.7 <http://bugs.python.org/issue7319>`__ (IMHO, from a
 developer standpoint this was a bad decision).
 
-::
+.. code-block:: pycon
 
     giampaolo@ubuntu:/tmp$ python -Wd
     Python 2.7.3 (default, Sep 26 2013, 20:03:06)

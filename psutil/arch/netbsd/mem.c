@@ -9,7 +9,7 @@
 // psutil/arch/netbsd/specific.c in 2023 (and was moved in there previously
 // already) from cset 84219ad. For reference, here's the git history with
 // original(ish) implementations:
-// - virtual memory: 0749a69c01b374ca3e2180aaafc3c95e3b2d91b9 (Oct 2016)
+// - physical memory: 0749a69c01b374ca3e2180aaafc3c95e3b2d91b9 (Oct 2016)
 // - swap memory: 312442ad2a5b5d0c608476c5ab3e267735c3bc59 (Jan 2016)
 
 #include <Python.h>
@@ -23,7 +23,7 @@
 
 
 PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
+psutil_memory_physical(PyObject *self, PyObject *args) {
     struct uvmexp_sysctl uv;
     struct vmtotal vmdata;
     int uvmexp_mib[] = {CTL_VM, VM_UVMEXP2};
@@ -72,17 +72,17 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     avail = total - used;
     percent = psutil_usage_percent((double)(total - avail), (double)total, 1);
 
-    if (!(pydict_add(dict, "total", "K", total)
-          | pydict_add(dict, "available", "K", avail)
-          | pydict_add(dict, "percent", "d", percent)
-          | pydict_add(dict, "used", "K", used)
-          | pydict_add(dict, "free", "K", free)
-          | pydict_add(dict, "active", "K", active)
-          | pydict_add(dict, "inactive", "K", inactive)
-          | pydict_add(dict, "buffers", "K", buffers)
-          | pydict_add(dict, "wired", "K", wired)
-          | pydict_add(dict, "cached", "K", cached)
-          | pydict_add(dict, "shared", "K", shared)))
+    if (!pydict_add(dict, "total", "K", total)
+        || !pydict_add(dict, "available", "K", avail)
+        || !pydict_add(dict, "percent", "d", percent)
+        || !pydict_add(dict, "used", "K", used)
+        || !pydict_add(dict, "free", "K", free)
+        || !pydict_add(dict, "active", "K", active)
+        || !pydict_add(dict, "inactive", "K", inactive)
+        || !pydict_add(dict, "buffers", "K", buffers)
+        || !pydict_add(dict, "wired", "K", wired)
+        || !pydict_add(dict, "cached", "K", cached)
+        || !pydict_add(dict, "shared", "K", shared))
         goto error;
 
     return dict;

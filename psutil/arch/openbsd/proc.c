@@ -90,7 +90,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
         Py_END_ALLOW_THREADS
         if (!kd) {
-            convert_kvm_err("kvm_openfiles()", errbuf);
+            psutil_convert_kvm_err("kvm_openfiles()", errbuf);
             goto error;
         }
     }
@@ -193,6 +193,10 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         if (errno == ENOENT) {
             psutil_debug("sysctl(KERN_PROC_CWD) -> ENOENT converted to ''");
             return PyUnicode_FromString("");
+        }
+        // EINVAL means a system process or one that is exiting.
+        else if (errno == EINVAL && !(kp.p_psflags & PS_SYSTEM)) {
+            return psutil_oserror_nsp("sysctl(KERN_PROC_CWD) -> EINVAL");
         }
         else {
             psutil_oserror();

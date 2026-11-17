@@ -32,7 +32,12 @@ double load_avg_5m = 0;
 double load_avg_15m = 0;
 
 // clang-format off
-#ifdef Py_GIL_DISABLED
+#if defined(Py_TARGET_ABI3T)
+    // PyMutex is not in the limited API
+    static SRWLOCK mutex = SRWLOCK_INIT;
+    #define MUTEX_LOCK(m) AcquireSRWLockExclusive(m)
+    #define MUTEX_UNLOCK(m) ReleaseSRWLockExclusive(m)
+#elif defined(Py_GIL_DISABLED)
     static PyMutex mutex;
     #define MUTEX_LOCK(m) PyMutex_Lock(m)
     #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)
@@ -43,8 +48,8 @@ double load_avg_15m = 0;
 // clang-format on
 
 
-VOID CALLBACK
-LoadAvgCallback(PVOID hCounter, BOOLEAN timedOut) {
+static VOID CALLBACK
+loadavg_callback(PVOID hCounter, BOOLEAN timedOut) {
     PDH_FMT_COUNTERVALUE displayValue;
     double currentLoad;
     PDH_STATUS err;
@@ -108,7 +113,7 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
     ret = RegisterWaitForSingleObject(
         &waitHandle,
         event,
-        (WAITORTIMERCALLBACK)LoadAvgCallback,
+        (WAITORTIMERCALLBACK)loadavg_callback,
         (PVOID)hCounter,
         INFINITE,
         WT_EXECUTEDEFAULT
@@ -127,7 +132,7 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
 // `init_loadavg_counter()` must be called first to engage the
 // mechanism that records load values.
 PyObject *
-psutil_get_loadavg(PyObject *self, PyObject *args) {
+psutil_getloadavg(PyObject *self, PyObject *args) {
     MUTEX_LOCK(&mutex);
     double load_avg_1m_l = load_avg_1m;
     double load_avg_5m_l = load_avg_5m;

@@ -47,7 +47,7 @@ Build, setup and test
 
 - To run a specific test:
 
-  .. code-block:: none
+  .. code-block:: bash
 
      make test ARGS=tests/test_system.py
 
@@ -60,7 +60,7 @@ Build, setup and test
 - To target a specific Python version, pass ``PYTHON`` to every step, so that
   the extension is built by the same interpreter that runs the tests:
 
-  .. code-block:: none
+  .. code-block:: bash
 
      make install-pydeps-dev PYTHON=python3.13
      make build PYTHON=python3.13
@@ -91,7 +91,7 @@ conditions that are ignored instead of causing a crash. Unit tests
 automatically run with debug mode enabled. To enable debug mode in UNIX (or on
 Windows + Bash):
 
-.. code-block:: none
+.. code-block:: console
 
   $ PSUTIL_DEBUG=1 python3 test_script.py
   psutil-debug [psutil/_psutil_linux.c:150]> setmntent() failed (ignored)
@@ -109,8 +109,8 @@ Coding style
 All style and formatting checks are enforced locally on each ``git commit`` and
 via a GitHub Actions pipeline.
 
-- Python: follows `PEP-8`_, formatted and linted with ``black`` and ``ruff``.
-- C: generally follows `PEP-7`_, formatted with ``clang-format``.
+- Python: follows :pep:`8`, formatted and linted with ``black`` and ``ruff``.
+- C: generally follows :pep:`7`, formatted with ``clang-format``.
 - Other files (``.rst``, ``.toml``, ``.md``, ``.yml``): validated by linters.
 
 The pipeline re-runs all checks for consistency (``make lint-all``).
@@ -145,7 +145,7 @@ platform-specific layers. Linux is used here as an example:
 
 Where things live:
 
-.. code-block:: bash
+.. code-block:: text
 
    psutil/__init__.py                   # Public API ("import psutil")
    psutil/_common.py                    # Generic utilities
@@ -216,6 +216,4 @@ For project maintainers:
 - Git tags use the ``vX.Y.Z`` format (e.g. ``v7.2.2``).
 - The version string is defined in :src:`psutil/__init__.py` (``__version__``).
 
-.. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/
-.. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/
 .. _`PyPI`: https://pypi.org/project/psutil/

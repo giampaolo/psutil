@@ -63,8 +63,7 @@ Second question was what to do in case the string cannot be correctly decoded
 (because invalid, corrupted or whatever). On Python 3 + UNIX the natural choice
 was ``'surrogateescape'``, which is also the default for
 :c:func:`PyUnicode_DecodeFSDefault`. On Windows the default is
-``'surrogatepass'`` (Python 3.6) or ``'replace'`` as per
-`PEP 529 <https://www.python.org/dev/peps/pep-0529/>`__.
+``'surrogatepass'`` (Python 3.6) or ``'replace'`` as per :pep:`529`.
 
 And here come the troubles: Python 2 is different. To correctly handle all
 kinds of strings on Python 2 we should return ``unicode`` instead of ``str``,

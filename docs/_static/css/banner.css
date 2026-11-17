@@ -6,6 +6,8 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
+    box-sizing: border-box;
+    min-height: 40px;
     padding: 9px 44px 9px 14px;
     position: relative;
     background: #fff8e1;
@@ -14,6 +16,14 @@
     font-size: 0.88rem;
     line-height: 1.45;
     text-align: center;
+}
+
+@media (max-width: 600px) {
+    .site-banner {
+        padding: 5px 40px 5px 12px;
+        font-size: 0.78rem;
+        line-height: 1.35;
+    }
 }
 
 html.site-banner-dismissed .site-banner {

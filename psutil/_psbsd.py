@@ -107,16 +107,16 @@ HAS_PROC_NUM_THREADS = hasattr(_psutil, "proc_num_threads")
 # =====================================================================
 
 
-def virtual_memory():
-    d = _psutil.virtual_mem()
-    return ntp.svmem(**d)
+def memory_physical():
+    d = _psutil.memory_physical()
+    return ntp.smem(**d)
 
 
-def swap_memory():
+def memory_swap():
     """System swap memory as a (total, used, free, percent, sin, sout)
     named tuple.
     """
-    d = _psutil.swap_mem()
+    d = _psutil.memory_swap()
     return ntp.sswap(**d)
 
 
@@ -194,17 +194,21 @@ if FREEBSD:
                 current, available_freq = _psutil.cpu_freq(cpu)
             except NotImplementedError:
                 continue
-            min_freq = max_freq = None
+            min_freq = max_freq = 0.0
             if available_freq:
                 try:
-                    min_freq = int(available_freq.split(" ")[-1].split("/")[0])
+                    min_freq = float(
+                        available_freq.split(" ")[-1].split("/")[0]
+                    )
                 except (IndexError, ValueError):
-                    min_freq = None
+                    pass
                 try:
-                    max_freq = int(available_freq.split(" ")[0].split("/")[0])
+                    max_freq = float(
+                        available_freq.split(" ")[0].split("/")[0]
+                    )
                 except (IndexError, ValueError):
-                    max_freq = None
-            ret.append(ntp.scpufreq(current, min_freq, max_freq))
+                    pass
+            ret.append(ntp.scpufreq(float(current), min_freq, max_freq))
         return ret
 
 elif OPENBSD:
@@ -369,7 +373,7 @@ def users():
         user, tty, hostname, tstamp, pid = item
         if tty == '~':
             continue  # reboot or shutdown
-        nt = ntp.suser(user, tty or None, hostname, tstamp, pid)
+        nt = ntp.suser(user, tty or None, hostname or None, tstamp, pid)
         retlist.append(nt)
     return retlist
 
@@ -599,7 +603,7 @@ class Process:
             return len(self.threads())
 
     @wrap_exceptions
-    def num_ctx_switches(self):
+    def ctx_switches(self):
         d = self.oneshot()
         return ntp.pctxsw(d["ctx_switches_vol"], d["ctx_switches_unvol"])
 
@@ -663,19 +667,20 @@ class Process:
     @wrap_exceptions
     def status(self):
         code = self.oneshot()["status"]
-        # XXX is '?' legit? (we're not supposed to return it anyway)
-        return PROC_STATUSES.get(code, '?')
+        try:
+            return PROC_STATUSES[code]
+        except KeyError:
+            debug(f"unknown process status {code!r}")
+            return ProcessStatus.STATUS_UNKNOWN
 
     @wrap_exceptions
     def io_counters(self):
         d = self.oneshot()
-        return ntp.pio(d["read_io_count"], d["write_io_count"], -1, -1)
+        return ntp.pio(d["read_io_count"], d["write_io_count"], 0, 0)
 
     @wrap_exceptions
     def cwd(self):
         """Return process current working directory."""
-        # sometimes we get an empty string, in which case we turn
-        # it into None
         if OPENBSD and self.pid == 0:
             return ""  # ...else it would raise EINVAL
         return _psutil.proc_cwd(self.pid)

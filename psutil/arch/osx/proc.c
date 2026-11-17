@@ -240,7 +240,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 // Return true if the given virtual address on the given architecture
 // is in the shared VM region.
 static bool
-psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
+in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
     mach_vm_address_t base;
     mach_vm_address_t size;
 
@@ -277,7 +277,7 @@ psutil_proc_memory_extras(PyObject *self, PyObject *args) {
 #else
     pid_t pid;
     uint64_t phys_footprint = 0;
-    uint64_t peak_footprint = 0;
+    uint64_t peak_phys_footprint = 0;
     int fetched = 0;
     struct rusage_info_v0 ri0;
 #ifdef RUSAGE_INFO_V4
@@ -291,10 +291,10 @@ psutil_proc_memory_extras(PyObject *self, PyObject *args) {
 #ifdef RUSAGE_INFO_V4
     // ri_lifetime_max_phys_footprint requires RUSAGE_INFO_V4 (macOS
     // 10.13). Before that only phys_footprint is available and
-    // peak_footprint stays 0.
+    // peak_phys_footprint stays 0.
     if (proc_pid_rusage(pid, RUSAGE_INFO_V4, (rusage_info_t *)&ri4) == 0) {
         phys_footprint = ri4.ri_phys_footprint;
-        peak_footprint = ri4.ri_lifetime_max_phys_footprint;
+        peak_phys_footprint = ri4.ri_lifetime_max_phys_footprint;
         fetched = 1;
     }
     else if (errno != EINVAL) {
@@ -320,7 +320,7 @@ psutil_proc_memory_extras(PyObject *self, PyObject *args) {
 
     // clang-format off
     if (!pydict_add(dict, "phys_footprint", "K", (unsigned long long)phys_footprint)) goto error;
-    if (!pydict_add(dict, "peak_footprint", "K", (unsigned long long)peak_footprint)) goto error;
+    if (!pydict_add(dict, "peak_phys_footprint", "K", (unsigned long long)peak_phys_footprint)) goto error;
     // clang-format on
 
     return dict;
@@ -346,7 +346,7 @@ typedef struct {
 
 
 static int
-psutil_oinfo_add(
+oinfo_add(
     psutil_oinfo_slot **tab,
     size_t *cap,
     size_t *len,
@@ -462,7 +462,7 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
         }
         nregions += 1;
 
-        if (!(psutil_in_shared_region(ri.pri_address, cpu_type)
+        if (!(in_shared_region(ri.pri_address, cpu_type)
               && ri.pri_share_mode != SM_PRIVATE))
         {
             switch (ri.pri_share_mode) {
@@ -481,7 +481,7 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
                         // only have one reference.
                         private_pages += ri.pri_shared_pages_resident;
                     }
-                    else if (psutil_oinfo_add(
+                    else if (oinfo_add(
                                  &oinfo,
                                  &oinfo_cap,
                                  &oinfo_len,
@@ -497,7 +497,7 @@ psutil_proc_memory_footprint(PyObject *self, PyObject *args) {
                     }
                     break;
                 case SM_SHARED:
-                    if (psutil_oinfo_add(
+                    if (oinfo_add(
                             &oinfo,
                             &oinfo_cap,
                             &oinfo_len,

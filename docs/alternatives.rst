@@ -11,8 +11,8 @@ Python standard library
 .. seealso::
    :doc:`stdlib-equivalents` for a detailed function-by-function comparison.
 
-os module
-^^^^^^^^^
+:mod:`os` module
+^^^^^^^^^^^^^^^^
 
 The :mod:`os` module provides a handful of process-related functions:
 :func:`os.getpid`, :func:`os.getppid`, :func:`os.getuid`, :func:`os.cpu_count`,
@@ -31,8 +31,8 @@ unmodified on every supported platform. Beyond portability, it also exposes the
 same information for *any* process (not just the current one), and returns
 structured named tuples instead of raw values.
 
-resource module
-^^^^^^^^^^^^^^^
+:mod:`resource` module
+^^^^^^^^^^^^^^^^^^^^^^
 
 :mod:`resource` (UNIX only) lets you read and set resource limits
 (``RLIMIT_*``) and get basic usage counters (user/system time, page faults, I/O
@@ -43,8 +43,8 @@ It is the right tool when you specifically want to enforce or inspect
 psutil's :meth:`Process.rlimit` exposes the same interface but extends it to
 all processes, not just the caller.
 
-subprocess module
-^^^^^^^^^^^^^^^^^
+:mod:`subprocess` module
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Calling tools like ``ps``, ``top``, ``netstat``, ``vmstat`` via
 :mod:`subprocess` and parsing their output is fragile: output formats differ
@@ -52,8 +52,8 @@ across OS versions and locales, parsing is error-prone, and spawning a
 subprocess per sample is slow. psutil reads the same kernel data sources
 directly without spawning any external processes.
 
-platform module
-^^^^^^^^^^^^^^^
+:mod:`platform` module
+^^^^^^^^^^^^^^^^^^^^^^
 
 :mod:`platform` provides information about the OS and Python runtime, such as
 OS name, kernel version, architecture, and machine type. It is useful for

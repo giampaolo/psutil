@@ -1,7 +1,7 @@
 /* Blog comments (giscus), below the prev/next nav. */
 
 .comments {
-    margin-top: 2em;
+    margin-top: 3rem;
     padding-top: 1em;
     border-top: 1px solid var(--border);
 }

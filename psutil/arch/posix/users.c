@@ -59,21 +59,10 @@ psutil_users(PyObject *self, PyObject *args) {
         if (!py_tty)
             goto error;
 
+        // ut_host might not be null-terminated if the hostname is
+        // very long
         host_len = strnlen(ut->ut_host, sizeof(ut->ut_host));
-        if (host_len == 0 || (strcmp(ut->ut_host, ":0") == 0)
-            || (strcmp(ut->ut_host, ":0.0") == 0))
-        {
-            py_hostname = PyUnicode_DecodeFSDefault("localhost");
-        }
-        else {
-            // ut_host might not be null-terminated if the hostname is
-            // very long, so we do it. The extra byte is for the
-            // terminator, since host_len can be sizeof(ut_host).
-            char hostbuf[sizeof(ut->ut_host) + 1];
-            memcpy(hostbuf, ut->ut_host, host_len);
-            hostbuf[host_len] = '\0';
-            py_hostname = PyUnicode_DecodeFSDefault(hostbuf);
-        }
+        py_hostname = PyUnicode_DecodeFSDefaultAndSize(ut->ut_host, host_len);
         if (!py_hostname)
             goto error;
 

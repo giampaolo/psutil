@@ -28,7 +28,7 @@ To measure pytest's startup time, let's run a very `simple
 test <https://github.com/giampaolo/psutil/blob/265fcf94a5da4260beb514653a2124915bf2a4f2/psutil/tests/test_misc.py#L232-L236>`__
 where execution time itself is negligible:
 
-.. code-block:: text
+.. code-block:: console
 
    $ time python3 -m pytest psutil/tests/test_misc.py::TestMisc::test_version
    1 passed in 0.05s
@@ -37,7 +37,7 @@ where execution time itself is negligible:
 Almost half a second, which is excessive for something I run repeatedly during
 development. For comparison, the same test under :mod:`unittest`:
 
-.. code-block:: text
+.. code-block:: console
 
    $ time python3 -m unittest psutil.tests.test_misc.TestMisc.test_version
    Ran 1 test in 0.000s
@@ -51,7 +51,7 @@ Where is time being spent?
 A significant portion of pytest's overhead comes from import time, and there's
 not much one can do about it:
 
-.. code-block:: text
+.. code-block:: console
 
    $ time python3 -c "import pytest"
    real    0m0,151s
@@ -69,7 +69,7 @@ After some research, I discovered that pytest automatically loads all plugins
 installed on the system, even if they aren't used. Here's how to list them
 (output is cut):
 
-.. code-block:: text
+.. code-block:: console
 
    $ pytest --trace-config --collect-only
    ...
@@ -108,7 +108,7 @@ I can see that the following plugins disappeared:
 
 Now let's run the test again with ``PYTEST_DISABLE_PLUGIN_AUTOLOAD``:
 
-.. code-block:: text
+.. code-block:: console
 
    $ time PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest psutil/tests/test_misc.py::TestMisc::test_version
    1 passed in 0.05s
@@ -119,7 +119,7 @@ selectively enable only the plugins we actually use, via ``-p``. psutil uses
 ``pytest-instafail`` and ``pytest-subtests`` (we'll deal with ``pytest-xdist``
 later):
 
-.. code-block:: text
+.. code-block:: console
 
    $ time PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -p instafail -p subtests ...
    real    0m0,320s
@@ -127,7 +127,7 @@ later):
 Time went back up to 0.320s. Quite a slowdown, but still better than the
 original 0.427s. Adding ``pytest-xdist``:
 
-.. code-block:: text
+.. code-block:: console
 
    $ time PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -p instafail -p subtests -p xdist ...
    real    0m0,369s
@@ -175,9 +175,9 @@ this, I implemented the following solution in ``psutil/tests/__init__.py``:
 With this in place the warning disappears when running tests serially. To run
 tests in parallel, we'll manually enable ``xdist``:
 
-.. code-block:: text
+.. code-block:: bash
 
-   $ python3 -m pytest -p xdist -n auto --dist loadgroup
+   python3 -m pytest -p xdist -n auto --dist loadgroup
 
 Optimizing test collection time
 -------------------------------

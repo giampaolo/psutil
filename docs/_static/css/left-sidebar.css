@@ -2,8 +2,11 @@
     position: sticky;
     top: var(--header-height);
     align-self: start;
-    height: calc(100vh - var(--header-height));
+    height: calc(100dvh - var(--header-height));
     overflow-y: auto;
+    /* last item clears the browser's link-preview popup */
+    padding-bottom: 48px;
+    box-sizing: border-box;
     background: var(--bg-sidebar);
     color: var(--sidebar-fg);
 }
@@ -44,10 +47,6 @@
     text-decoration: none;
 }
 
-.left-sidebar li.toctree-l1 > a {
-    text-transform: capitalize;
-}
-
 .left-sidebar a:hover {
     background: rgba(255, 255, 255, 0.04);
 }
@@ -81,7 +80,7 @@
         z-index: 90;
         width: var(--left-sidebar-width);
         max-width: 85vw;
-        height: calc(100vh - var(--header-height));
+        height: calc(100dvh - var(--header-height));
         transform: translateX(-100%);
         transition: transform 0.2s ease;
     }

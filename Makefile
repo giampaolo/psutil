@@ -15,7 +15,7 @@ PYTHON = python3
 ARGS =
 FILES =
 
-PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PSUTIL_WERROR=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
 DPRINT = ~/.dprint/bin/dprint
 DPRINT_FILES = '*.md' '*.json' '*.jsonc' '*.yml' '*.yaml' '*.js' '*.css' '.clang-format'
@@ -117,7 +117,7 @@ RUN_TEST_MEMLEAKS = PYTHONMALLOC=malloc $(RUN_TEST) -k test_memleaks.py
 # --- main
 
 test:  ## Run all tests (except memleak tests).
-	# To run a specific test do `make test ARGS=tests/test_process.py::TestProcess::test_cmdline`
+	# To run a specific test do `make test ARGS=tests/test_process.py::TestProcessIdentity::test_cmdline`
 	$(RUN_TEST) $(ARGS)
 
 test-parallel:  ## Run all tests (except memleak tests) in parallel.
@@ -175,7 +175,7 @@ test-posix:  ## POSIX specific tests.
 	$(RUN_TEST) -k "test_posix.py or posix_ or Posix" $(ARGS)
 
 test-platform:  ## Run specific platform tests only.
-	$(RUN_TEST) -k test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py $(ARGS)
+	$(RUN_TEST) -k test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "MACOS", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0].replace("macos", "osx"))'`.py $(ARGS)
 
 # --- special
 
@@ -284,7 +284,7 @@ ci-install:  ## Install deps and build on GitHub CI.
 	$(MAKE) install-sysdeps
 	# Editable install: it builds in-place, and having psutil already
 	# installed stops pip from pulling it from PyPI for psleak.
-	$(INSTALL_PYDEPS) --editable .
+	$(PYTHON_ENV_VARS) $(INSTALL_PYDEPS) --editable .
 	$(MAKE) install-pydeps-test
 	$(MAKE) print-sysinfo
 	# Warm pywin32's gen_py cache: concurrent first imports of wmi in

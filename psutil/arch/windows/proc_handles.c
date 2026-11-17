@@ -155,7 +155,7 @@ get_file_type_index(ULONG *indexOut) {
     } while (--attempts);
 
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(status, "NtQueryObject");
+        psutil_oserror_ntstatus(status, "NtQueryObject");
         if (typesInfo != NULL)
             FREE(typesInfo);
         return -1;
@@ -215,7 +215,7 @@ enum_process_handles(
     } while (--attempts);
 
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(status, "NtQueryInformationProcess");
+        psutil_oserror_ntstatus(status, "NtQueryInformationProcess");
         if (buffer != NULL)
             FREE(buffer);
         return -1;
@@ -350,7 +350,7 @@ worker_destroy(Worker *w) {
 // the worker is killed and hFile is closed (or leaked if the kill
 // fails); either way the caller must not touch hFile. *workerRef is
 // reset to NULL; the next call creates a new worker.
-static DWORD
+static int
 worker_get_filename(
     Worker **workerRef, HANDLE hFile, PUNICODE_STRING *nameOut
 ) {
@@ -445,7 +445,7 @@ worker_get_filename(
     } while (--attempts);
 
     if (!NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(status, "NtQueryObject");
+        psutil_oserror_ntstatus(status, "NtQueryObject");
         if (name != NULL)
             FREE(name);
         return -1;
@@ -465,7 +465,7 @@ psutil_get_open_files(HANDLE hProcess) {
     ULONG_PTR i = 0;
     ULONG fileTypeIndex = 0;
     BOOLEAN errorOccurred = FALSE;
-    DWORD dwRet;
+    int ret;
     PyObject *py_retlist = PyList_New(0);
 
     if (!py_retlist)
@@ -496,14 +496,14 @@ psutil_get_open_files(HANDLE hProcess) {
             continue;
         }
 
-        dwRet = worker_get_filename(&worker, hFile, &fileName);
-        if (dwRet == WAIT_TIMEOUT) {
+        ret = worker_get_filename(&worker, hFile, &fileName);
+        if (ret == WAIT_TIMEOUT) {
             // Already closed (or deliberately leaked) along with the
             // killed worker; skip this handle.
             hFile = NULL;
             continue;
         }
-        if (dwRet != 0)
+        if (ret != 0)
             goto error;
 
         if ((fileName != NULL) && (fileName->Length > 0)) {

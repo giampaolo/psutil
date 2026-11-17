@@ -77,13 +77,11 @@ This also multiplies CI jobs and slows down the test matrix (see
 `build.yml <https://github.com/giampaolo/psutil/blob/7dfd0ed34fe70ffd879ae62d21aabd4a8ed06d6f/.github/workflows/build.yml>`__).
 A true universal wheel would greatly reduce this overhead, allowing a single
 wheel to support multiple Python versions and platforms. Hopefully, Python 3.15
-will simplify this process. Two competing proposals,
-`PEP 803 <https://www.python.org/dev/peps/pep-0803/>`__ and
-`PEP 809 <https://www.python.org/dev/peps/pep-0809/>`__, aim to standardize
-wheel naming and metadata to allow producing a single wheel that covers
-multiple Python versions. That would drastically reduce distribution complexity
-for library authors, and it's fair to say it's essential for free-threaded
-CPython to truly succeed.
+will simplify this process. Two competing proposals, :pep:`803` and :pep:`809`,
+aim to standardize wheel naming and metadata to allow producing a single wheel
+that covers multiple Python versions. That would drastically reduce
+distribution complexity for library authors, and it's fair to say it's
+essential for free-threaded CPython to truly succeed.
 
 How to install free-threaded psutil
 -----------------------------------

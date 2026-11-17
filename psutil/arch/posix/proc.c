@@ -21,7 +21,7 @@ psutil_proc_is_zombie(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    if (is_zombie(pid) == 1)
+    if (psutil_is_zombie(pid) == 1)
         Py_RETURN_TRUE;
     else
         Py_RETURN_FALSE;
@@ -40,7 +40,7 @@ psutil_raise_for_pid(pid_t pid, char *syscall) {
     else if (psutil_pid_exists(pid) == 0)
         psutil_oserror_nsp(syscall);
 #if defined(PSUTIL_OSX) || defined(PSUTIL_BSD)
-    else if (is_zombie(pid))
+    else if (psutil_is_zombie(pid))
         PyErr_SetString(ZombieProcessError, "");
 #endif
     else

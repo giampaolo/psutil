@@ -14,7 +14,7 @@
 
 
 PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
+psutil_memory_physical(PyObject *self, PyObject *args) {
     int rc;
     long pagesize = psutil_getpagesize();
     perfstat_memory_total_t memory;
@@ -39,7 +39,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 
 
 PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
+psutil_memory_swap(PyObject *self, PyObject *args) {
     int rc;
     long pagesize = psutil_getpagesize();
     perfstat_memory_total_t memory;

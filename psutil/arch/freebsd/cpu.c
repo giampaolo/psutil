@@ -22,7 +22,6 @@
 
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    int maxcpus;
     int mib[2];
     int ncpu;
     size_t size;
@@ -81,8 +80,13 @@ PyObject *
 psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     int num;
 
-    if (psutil_sysctlbyname("kern.smp.cores", &num, sizeof(num)) != 0)
+    if (psutil_sysctlbyname("kern.smp.cores", &num, sizeof(num)) != 0) {
+        // Not available (e.g. kernel built without SMP). Mimic
+        // os.cpu_count() and return None.
+        psutil_debug("sysctlbyname('kern.smp.cores') failed; returning None");
+        PyErr_Clear();
         Py_RETURN_NONE;
+    }
     return Py_BuildValue("i", num);
 }
 

@@ -37,15 +37,15 @@ psutil_getpagesize(void) {
 
 
 // Exposed so we can test it against Python's stdlib.
-PyObject *
-psutil_getpagesize_pywrapper(PyObject *self, PyObject *args) {
+static PyObject *
+getpagesize_pywrapper(PyObject *self, PyObject *args) {
     return Py_BuildValue("l", psutil_getpagesize());
 }
 
 
 // POSIX-only methods.
 static PyMethodDef posix_methods[] = {
-    {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS},
+    {"getpagesize", getpagesize_pywrapper, METH_VARARGS},
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS},
     {"net_if_flags", psutil_net_if_flags, METH_VARARGS},
     {"net_if_is_running", psutil_net_if_is_running, METH_VARARGS},
@@ -95,8 +95,6 @@ psutil_posix_add_constants(PyObject *mod) {
 #endif
 
 #if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
-    PyObject *v;
-
 #ifdef RLIMIT_AS
     PSUTIL_ADD_INT(mod, "RLIMIT_AS", RLIMIT_AS);
 #endif
@@ -131,6 +129,7 @@ psutil_posix_add_constants(PyObject *mod) {
     // Linux specific
 
 #ifdef RLIMIT_LOCKS
+    // no effect since Linux 2.4.25; kept for compat, undocumented
     PSUTIL_ADD_INT(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS);
 #endif
 #ifdef RLIMIT_MSGQUEUE
@@ -160,20 +159,6 @@ psutil_posix_add_constants(PyObject *mod) {
 #ifdef RLIMIT_NPTS
     PSUTIL_ADD_INT(mod, "RLIMIT_NPTS", RLIMIT_NPTS);
 #endif
-
-#if defined(HAVE_LONG_LONG)
-    if (sizeof(RLIM_INFINITY) > sizeof(long)) {
-        v = PyLong_FromLongLong((PY_LONG_LONG)RLIM_INFINITY);
-    }
-    else
-#endif
-    {
-        v = PyLong_FromLong((long)RLIM_INFINITY);
-    }
-    if (v) {
-        if (PyModule_AddObject(mod, "RLIM_INFINITY", v))
-            return -1;
-    }
 #endif  // defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
 
     return 0;

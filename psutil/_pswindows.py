@@ -56,7 +56,7 @@ except ImportError as err:
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
-__extra__all__ = ["win_service_iter", "win_service_get", "AF_LINK"]
+__extra__all__ = ["win_service_iter", "win_service_get"]
 
 
 # =====================================================================
@@ -91,26 +91,35 @@ TCP_STATUSES = {
 # =====================================================================
 
 
-@functools.lru_cache(maxsize=512)
-def convert_dos_path(s):
+device_drives = {}
+
+
+def convert_dos_path(path):
     r"""Convert paths using native DOS format like:
         "\Device\HarddiskVolume1\Windows\systemew\file.txt" or
         "\??\C:\Windows\systemew\file.txt"
     into:
         "C:\Windows\systemew\file.txt".
     """
-    if s.startswith('\\\\'):
-        return s
-    rawdrive = '\\'.join(s.split('\\')[:3])
-    if rawdrive in {"\\??\\UNC", "\\Device\\Mup"}:
-        rawdrive = '\\'.join(s.split('\\')[:5])
-        driveletter = '\\\\' + '\\'.join(s.split('\\')[3:5])
-    elif rawdrive.startswith('\\??\\'):
-        driveletter = s.split('\\')[2]
-    else:
-        driveletter = _psutil.QueryDosDevice(rawdrive)
-    remainder = s[len(rawdrive) :]
-    return os.path.join(driveletter, remainder)
+    global device_drives
+
+    if path.startswith("\\??\\UNC\\"):
+        return "\\\\" + path[8:]
+    if path.startswith("\\Device\\Mup\\"):
+        return "\\\\" + path[12:]
+    if path.startswith("\\??\\"):
+        return path[4:]
+    if path.startswith("\\Device\\"):
+        device = "\\".join(path.split("\\", 3)[:3])
+        if device not in device_drives:
+            # rebuild, in case a drive was mounted in the meantime
+            drives = _psutil.drive_devices()
+            device_drives = {v: k for k, v in drives.items()}
+        drive = device_drives.get(device)
+        if drive is not None:
+            return drive + path[len(device) :]
+    # no drive letter (e.g. a VSS shadow copy)
+    return path
 
 
 @functools.lru_cache
@@ -123,8 +132,8 @@ def getpagesize():
 # =====================================================================
 
 
-def virtual_memory():
-    """System virtual memory as a named tuple."""
+def memory_physical():
+    """System physical memory as a named tuple."""
     info = _psutil.GetPerformanceInfo()
     pagesize = info["PageSize"]
     total = info["PhysicalTotal"] * pagesize
@@ -134,10 +143,10 @@ def virtual_memory():
     free = avail
     used = total - avail
     percent = usage_percent((total - avail), total, round_=1)
-    return ntp.svmem(total, avail, percent, used, free, cached, wired)
+    return ntp.smem(total, avail, percent, used, free, cached, wired)
 
 
-def swap_memory():
+def memory_swap():
     """Swap memory as a (total, used, free, percent, sin, sout) tuple."""
     info = _psutil.GetPerformanceInfo()
     pagesize = info["PageSize"]
@@ -147,7 +156,8 @@ def swap_memory():
     # memory" (physical + virtual), thus subtract the physical part
     # from it to get the "total swap".
     total_system = info["CommitLimit"] * pagesize  # physical + swap
-    total = total_system - total_phys
+    # with no page file CommitLimit is a bit less than physical memory
+    total = max(total_system - total_phys, 0)
 
     # commit total is incremented immediately (decrementing free_system)
     # while the corresponding free physical value is not decremented until
@@ -240,9 +250,9 @@ def cpu_count_cores():
 
 def cpu_stats():
     """Return CPU statistics."""
-    ctx_switches, interrupts, _dpcs, syscalls = _psutil.cpu_stats()
-    soft_interrupts = 0
-    return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
+    ctx_switches, interrupts, dpcs, syscalls = _psutil.cpu_stats()
+    # DPCs are the Windows equivalent of soft interrupts
+    return ntp.scpustats(ctx_switches, interrupts, dpcs, syscalls)
 
 
 def cpu_freq():
@@ -758,7 +768,7 @@ class Process:
             peak_rss=d["PeakWorkingSetSize"],
             peak_vms=d["PeakPagefileUsage"],
             _deprecated={
-                # old aliases
+                # DEPRECATED: old aliases
                 "wset": d["WorkingSetSize"],  # 'rss'
                 "peak_wset": d["PeakWorkingSetSize"],  # 'peak_rss'
                 "pagefile": d["PrivateUsage"],  # 'vms'
@@ -813,7 +823,7 @@ class Process:
         else:
             for addr, perm, path, rss in raw:
                 path = convert_dos_path(path)
-                addr = hex(addr)
+                addr = f"{addr:x}-{addr + rss:x}"
                 yield (addr, perm, path, rss)
 
     @wrap_exceptions
@@ -976,13 +986,12 @@ class Process:
     @wrap_exceptions
     def ionice_get(self):
         ret = _psutil.proc_io_priority_get(self.pid)
-        ret = ProcessIOPriority(ret)
-        return ret
+        return ntp.pionice(ProcessIOPriority(ret), 0)
 
     @wrap_exceptions
     def ionice_set(self, ioclass, value):
         if value:
-            msg = "value argument not accepted on Windows"
+            msg = f"value must be 0 or None on Windows, got {value!r}"
             raise TypeError(msg)
         if ioclass not in tuple(ProcessIOPriority):
             msg = f"{ioclass} is not a valid priority"
@@ -1060,7 +1069,7 @@ class Process:
             raise
 
     @wrap_exceptions
-    def num_ctx_switches(self):
+    def ctx_switches(self):
         ctx_switches = self._oneshot()["ctx_switches"]
         # only voluntary ctx switches are supported
         return ntp.pctxsw(ctx_switches, 0)
