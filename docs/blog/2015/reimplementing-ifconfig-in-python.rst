@@ -53,7 +53,7 @@ We're now able to list network interface addresses similarly to the
                         netmask=None,
                         broadcast='00:00:00:00:00:00')]}
 
-This is limited to ``AF_INET`` (IPv4), ``AF_INET6`` (IPv6) and ``AF_LINK``
+This is limited to ``AF_INET`` (IPv4), ``AF_INET6`` (IPv6) and :data:`AF_LINK`
 (Ethernet) address families. If you want something more powerful (e.g.
 ``AF_BLUETOOTH``) you can take a look at the
 `netifaces <https://pypi.python.org/pypi/netifaces/>`__ extension. If you want

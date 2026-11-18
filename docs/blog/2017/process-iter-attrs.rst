@@ -68,8 +68,8 @@ Performance
 -----------
 
 Beyond the syntactic win, the new syntax is also faster than calling individual
-methods in a loop. ``process_iter(attrs=[...])`` is equivalent to using
-:meth:`Process.oneshot` on each process (see
+methods in a loop. :func:`process_iter(attrs=[...]) <process_iter>` is
+equivalent to using :meth:`Process.oneshot` on each process (see
 :doc:`One shot, twice as fast </blog/2016/500-is-twice-as-fast>` for how that
 works): attributes that share a syscall or a ``/proc`` file are fetched
 together instead of re-read on every method call, which is a lot faster.

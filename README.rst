@@ -55,7 +55,7 @@ Adoption
 
 psutil is among the
 `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__ most-downloaded
-packages on PyPI, with **370+ million** downloads per month and **800,000+**
+packages on PyPI, with **400+ million** downloads per month and **800,000+**
 `GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__
 using it. See also `adoptions <https://psutil.io/adoption/>`__ and
 `alternatives <https://psutil.io/alternatives/>`__.

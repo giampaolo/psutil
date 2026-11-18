@@ -39,7 +39,7 @@ in:
 -  Python's :mod:`gc` stats.
 -  :term:`RSS`, :term:`VMS` or :term:`USS` due to allocator caching, especially
    for small objects. This can happen, for example, when you forget to
-   ``Py_DECREF`` a Python object.
+   :c:func:`Py_DECREF <Py_DECREF>` a Python object.
 
 psutil's new functions let you query the allocator (e.g. glibc) directly,
 returning low-level metrics from the platform's native heap.
@@ -175,10 +175,10 @@ Psleak is now part of the psutil test suite. All psutil APIs are tested (see
 making it a de facto **regression-testing tool**.
 
 It's worth noting that without inspecting heap metrics, missing calls in the C
-code such as ``Py_CLEAR`` and ``Py_DECREF`` often go unnoticed, because they
-don't affect :term:`RSS`, :term:`VMS`, and :term:`USS`. I confirmed this by
-commenting them out. Monitoring the :term:`heap` is therefore essential to
-reliably detect memory leaks in Python C extensions.
+code such as :c:func:`Py_CLEAR` and :c:func:`Py_DECREF` often go unnoticed,
+because they don't affect :term:`RSS`, :term:`VMS`, and :term:`USS`. I
+confirmed this by commenting them out. Monitoring the :term:`heap` is therefore
+essential to reliably detect memory leaks in Python C extensions.
 
 Under the hood
 --------------
