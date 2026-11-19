@@ -35,7 +35,7 @@ find_uv() {
         UV=$(command -v uv)
     else
         UV=$("$PYTHON" -c \
-            'from uv import find_uv_bin; print(find_uv_bin())' 2>/dev/null) || UV=
+            'from uv import find_uv_bin; print(find_uv_bin())' 2> /dev/null) || UV=
     fi
 }
 

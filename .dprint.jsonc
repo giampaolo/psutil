@@ -42,6 +42,12 @@
             "**/*.css",
         ],
     },
+    "shfmt": {
+        "useTabs": false,
+        "indentWidth": 4,
+        "switchCaseIndent": true,
+        "spaceRedirects": true,
+    },
     "excludes": [
         "**/*-lock.json",
         "docs/_static/css/code.css",
@@ -56,5 +62,6 @@
         "npm:dprint-plugin-yaml@0.6.0",
         "npm:@dprint/typescript@0.101.0",
         "npm:dprint-plugin-malva@0.16.1",
+        "npm:@dprint/shfmt@0.2.0",
     ],
 }

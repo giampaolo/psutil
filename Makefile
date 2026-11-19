@@ -18,7 +18,7 @@ FILES =
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PSUTIL_WERROR=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
 DPRINT = ~/.dprint/bin/dprint
-DPRINT_FILES = '*.md' '*.json' '*.jsonc' '*.yml' '*.yaml' '*.js' '*.css' '.clang-format'
+DPRINT_FILES = '*.md' '*.json' '*.jsonc' '*.yml' '*.yaml' '*.js' '*.css' '*.sh' '.clang-format'
 INSTALL_PYDEPS = PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh
 
 # `make` called with no args is like `make help`
@@ -211,7 +211,7 @@ black:  ## Run black formatter.
 lint-c:  ## Run C linter.
 	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format --dry-run --Werror {}
 
-dprint:  ## Run linter for .md / .json / .yml / .js / .css files.
+dprint:  ## Run linter for .md / .json / .yml / .js / .css / .sh files.
 	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) check --allow-no-files
 
 lint-rst:  ## Run linter for .rst files.
@@ -222,6 +222,9 @@ lint-rst:  ## Run linter for .rst files.
 lint-toml:  ## Run linter for pyproject.toml.
 	@$(call _ls,'*.toml') | xargs toml-sort --check
 
+lint-sh:  ## Run linter for .sh files.
+	@$(call _ls,'*.sh') | xargs shellcheck -f gcc
+
 lint-all:  ## Run all linters in parallel
 	$(MAKE) -j \
 		black \
@@ -229,7 +232,8 @@ lint-all:  ## Run all linters in parallel
 		lint-c \
 		dprint \
 		lint-rst \
-		lint-toml
+		lint-toml \
+		lint-sh
 
 # --- not mandatory linters (just run from time to time)
 
@@ -258,7 +262,7 @@ fix-toml:  ## Fix pyproject.toml
 fix-rst:  ## Re-wrap .rst files.
 	@$(call _ls,'*.rst') | xargs rstwrap
 
-fix-dprint:  ## Reformat .md / .json / .yml / .js / .css files.
+fix-dprint:  ## Reformat .md / .json / .yml / .js / .css / .sh files.
 	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) fmt --allow-no-files
 
 fix-all:  ## Run all code fixers.
@@ -278,6 +282,7 @@ ci-lint:  ## Run all linters on GitHub CI.
 	test -x $(DPRINT) || curl -fsSL https://dprint.dev/install.sh | sh
 	$(DPRINT) --version
 	clang-format --version
+	shellcheck --version
 	$(MAKE) lint-all
 
 ci-install:  ## Install deps and build on GitHub CI.

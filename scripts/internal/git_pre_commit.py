@@ -65,12 +65,13 @@ def git_commit_files():
     c = [f for f in out if f.endswith((".c", ".h"))]
     rst = [f for f in out if f.endswith(".rst")]
     toml = [f for f in out if f.endswith(".toml")]
+    shell = [f for f in out if f.endswith(".sh")]
     # dprint skips the files it has no plugin for
     other = [f for f in out if f not in py + c + rst + toml]
     new_rm_mv = sh(
         ["git", "diff", "--name-only", "--diff-filter=ADR", "--cached"]
     ).split()
-    return py, c, rst, toml, other, new_rm_mv
+    return py, c, rst, toml, shell, other, new_rm_mv
 
 
 def lint_manifest():
@@ -94,7 +95,7 @@ def run_make(target, files):
 
 
 def main():
-    py, c, rst, toml, other, new_rm_mv = git_commit_files()
+    py, c, rst, toml, shell, other, new_rm_mv = git_commit_files()
     if py:
         run_make("black", py)
         run_make("ruff", py)
@@ -104,6 +105,8 @@ def main():
         run_make("lint-rst", rst)
     if toml:
         run_make("lint-toml", toml)
+    if shell:
+        run_make("lint-sh", shell)
     if other:
         run_make("dprint", other)
     if new_rm_mv:
