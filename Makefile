@@ -13,7 +13,7 @@
 # Configurable
 PYTHON = python3
 ARGS =
-FILES =
+STAGED =
 
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PSUTIL_WERROR=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
@@ -27,7 +27,7 @@ INSTALL_PYDEPS = PYTHON=$(PYTHON) ./scripts/internal/install-pydeps.sh
 .PHONY: build test
 
 # install git hook (skipped in worktrees, where .git is a file)
-_ := $(shell test -d .git && mkdir -p .git/hooks/ && ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit)
+_ := $(shell test -d .git && mkdir -p .git/hooks/ && ln -sf ../../scripts/internal/git_pre_commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit)
 
 # ===================================================================
 # Install
@@ -198,32 +198,38 @@ coverage:  ## Run test coverage.
 # Linters
 # ===================================================================
 
-# Return a shell pipeline that outputs one file per line. Uses
-# $(FILES) if set, else "git ls-files" with given pattern(s).
-_ls = $(if $(FILES), printf '%s\n' $(FILES), git ls-files $(1)) | sed 's/.*/"&"/'
+# Usage: $(call _ls,'*.c' '*.h'). List the tracked files matching the
+# given glob(s), quoted for xargs. With STAGED=1 (set by the git hook)
+# list only the staged ones, minus deletions.
+_git_files = git $(if $(STAGED),diff --cached --name-only --diff-filter=d,ls-files)
+_ls = $(_git_files) -- $(1) | sed 's/.*/"&"/'
 
 ruff:  ## Run ruff linter.
-	@$(call _ls,'*.py') | xargs $(PYTHON) -m ruff check --output-format=concise
+	@$(call _ls,'*.py') | xargs -r $(PYTHON) -m ruff check --output-format=concise
 
 black:  ## Run black formatter.
-	@$(call _ls,'*.py') | xargs $(PYTHON) -m black --check --safe
+	@$(call _ls,'*.py') | xargs -r $(PYTHON) -m black --check --safe
 
 lint-c:  ## Run C linter.
-	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format --dry-run --Werror {}
+	@$(call _ls,'*.c' '*.h') | xargs -r -P0 -I{} clang-format --dry-run --Werror {}
 
 dprint:  ## Run linter for .md / .json / .yml / .js / .css / .sh files.
-	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) check --allow-no-files
+	@$(call _ls,$(DPRINT_FILES)) | xargs -r $(DPRINT) check --allow-no-files
 
 lint-rst:  ## Run linter for .rst files.
-	@$(call _ls,'*.rst') | xargs $(PYTHON) scripts/internal/docs/rst_unused_targets.py
-	@$(call _ls,'*.rst') | xargs sphinx-lint --enable all --disable line-too-long
-	@$(call _ls,'*.rst') | xargs rstwrap --check
+	@$(call _ls,'*.rst') | xargs -r $(PYTHON) scripts/internal/docs/rst_unused_targets.py
+	@$(call _ls,'*.rst') | xargs -r sphinx-lint --enable all --disable line-too-long
+	@$(call _ls,'*.rst') | xargs -r rstwrap --check
 
 lint-toml:  ## Run linter for pyproject.toml.
-	@$(call _ls,'*.toml') | xargs toml-sort --check
+	@$(call _ls,'*.toml') | xargs -r toml-sort --check
 
 lint-sh:  ## Run linter for .sh files.
-	@$(call _ls,'*.sh') | xargs shellcheck -f gcc
+	@$(call _ls,'*.sh') | xargs -r shellcheck -f gcc
+
+lint-manifest:  ## Check that MANIFEST.in is up to date.
+	@$(PYTHON) scripts/internal/generate_manifest.py | diff -q - MANIFEST.in > /dev/null || \
+		{ echo "MANIFEST.in is outdated. Run 'make generate-manifest'."; exit 1; }
 
 lint-all:  ## Run all linters in parallel
 	$(MAKE) -j \
@@ -233,37 +239,38 @@ lint-all:  ## Run all linters in parallel
 		dprint \
 		lint-rst \
 		lint-toml \
-		lint-sh
+		lint-sh \
+		lint-manifest
 
 # --- not mandatory linters (just run from time to time)
 
 pylint:  ## Python pylint
-	@$(call _ls,'*.py') | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=0 $(ARGS)
+	@$(call _ls,'*.py') | xargs -r $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=0 $(ARGS)
 
 vulture:  ## Find unused code
-	@$(call _ls,'*.py') | xargs $(PYTHON) -m vulture $(ARGS)
+	@$(call _ls,'*.py') | xargs -r $(PYTHON) -m vulture $(ARGS)
 
 # ===================================================================
 # Fixers
 # ===================================================================
 
 fix-black:  ## Reformat python code with black.
-	@$(call _ls,'*.py') | xargs $(PYTHON) -m black
+	@$(call _ls,'*.py') | xargs -r $(PYTHON) -m black
 
 fix-ruff:  ## Fix ruff errors.
-	@$(call _ls,'*.py') | xargs $(PYTHON) -m ruff check --fix --output-format=concise $(ARGS)
+	@$(call _ls,'*.py') | xargs -r $(PYTHON) -m ruff check --fix --output-format=concise $(ARGS)
 
 fix-c:  ## Reformat C code with clang-format.
-	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format -i {}  # parallel exec
+	@$(call _ls,'*.c' '*.h') | xargs -r -P0 -I{} clang-format -i {}  # parallel exec
 
 fix-toml:  ## Fix pyproject.toml
-	@$(call _ls,'*.toml') | xargs toml-sort
+	@$(call _ls,'*.toml') | xargs -r toml-sort
 
 fix-rst:  ## Re-wrap .rst files.
-	@$(call _ls,'*.rst') | xargs rstwrap
+	@$(call _ls,'*.rst') | xargs -r rstwrap
 
 fix-dprint:  ## Reformat .md / .json / .yml / .js / .css / .sh files.
-	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) fmt --allow-no-files
+	@$(call _ls,$(DPRINT_FILES)) | xargs -r $(DPRINT) fmt --allow-no-files
 
 fix-all:  ## Run all code fixers.
 	$(MAKE) fix-ruff
