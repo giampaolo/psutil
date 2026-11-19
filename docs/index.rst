@@ -281,7 +281,7 @@
    Stdlib equivalents <stdlib-equivalents>
    Glossary <glossary>
    Platform support <platform>
-   Migration <migration>
+   Migration <migration/index>
 
 .. toctree::
    :maxdepth: 2

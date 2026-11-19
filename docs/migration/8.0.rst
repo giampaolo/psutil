@@ -1,0 +1,413 @@
+.. _migration-8.0:
+
+Migrating to 8.0
+================
+
+8.0 is a major breaking release, which reorganized the process memory APIs and
+renamed several functions for the sake of consistency. Most of the old names
+still work as deprecated aliases.
+
+Breaking changes
+----------------
+
+.. important::
+
+  Do not rely on positional unpacking of named tuples, since fields can be
+  added or reordered. Use attribute access (see
+  :ref:`faq_named_tuple_unpacking`).
+
+.. _migration-8.0-cpu-times:
+
+:func:`cpu_times` field order changed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:field:`user`, :field:`system` and :field:`idle` are now the first 3 fields on
+all platforms. On Linux, macOS and BSD positional access silently returns the
+wrong field.
+
+.. code-block:: python
+
+  # old
+  user, nice, system, idle = psutil.cpu_times()[:4]  # wrong field
+
+  # new
+  t = psutil.cpu_times()
+  user, system, idle = t.user, t.system, t.idle
+
+.. _migration-8.0-memory-info:
+
+:meth:`Process.memory_info` fields changed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Positional unpacking breaks on Linux, macOS, Windows and BSD.
+
+.. tab-set::
+
+   .. tab-item:: Linux
+
+      :field:`lib` and :field:`dirty` are no longer returned (always 0 since
+      Linux 2.6).
+
+      .. code-block:: python
+
+        # old (ValueError)
+        rss, vms, shared, text, lib, data, dirty = p.memory_info()
+        p.memory_info().dirty  # DeprecationWarning
+
+        # new
+        m = p.memory_info()
+        m.rss, m.vms, m.shared, m.text, m.data
+
+   .. tab-item:: macOS
+
+      :field:`pfaults` and :field:`pageins` were removed with no aliases. Use
+      :meth:`Process.page_faults`.
+
+      .. code-block:: python
+
+        # old
+        m = p.memory_info()
+        m.pfaults, m.pageins  # AttributeError
+
+        # new
+        f = p.page_faults()
+        f.minor + f.major, f.major
+
+   .. tab-item:: Windows
+
+      The working set and pagefile fields were renamed to :field:`rss` and
+      :field:`vms`. The ``*_pool`` fields moved to
+      :meth:`Process.memory_extras`, and :field:`num_page_faults` to
+      :meth:`Process.page_faults`.
+
+      .. code-block:: python
+
+        # old (DeprecationWarning)
+        m = p.memory_info()
+        m.wset, m.peak_wset
+        m.pagefile, m.private, m.peak_pagefile
+        m.paged_pool
+        m.num_page_faults
+
+        # new
+        m = p.memory_info()
+        m.rss, m.peak_rss
+        m.vms, m.vms, m.peak_vms
+        p.memory_extras().paged_pool
+        sum(p.page_faults())
+
+   .. tab-item:: BSD
+
+      New :field:`peak_rss` field.
+
+      .. code-block:: python
+
+        # old
+        rss, vms, text, data, stack = p.memory_info()  # ValueError
+
+        # new
+        m = p.memory_info()
+        m.rss, m.vms, m.text, m.data, m.stack
+
+.. _migration-8.0-virtual-memory:
+
+:func:`virtual_memory` has two new fields on Windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:field:`cached` and :field:`wired` were added, so positional unpacking no
+longer works.
+
+.. code-block:: python
+
+  # old (ValueError)
+  total, available, percent, used, free = psutil.virtual_memory()
+
+  # new
+  m = psutil.virtual_memory()
+  m.total, m.available, m.percent, m.used, m.free
+
+.. _migration-8.0-ionice:
+
+:meth:`Process.ionice` returns a named tuple on Windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It used to return an integer. It now returns ``(ioclass, value)`` like on
+Linux, with :field:`value` always ``0``.
+
+.. code-block:: python
+
+  # old
+  p.ionice() == psutil.IOPRIO_NORMAL  # always False
+
+  # new
+  p.ionice().ioclass == psutil.IOPRIO_NORMAL
+
+.. _migration-8.0-users-host:
+
+:func:`users` no longer reports ``"localhost"``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The :field:`host` field used to be ``"localhost"`` both when the OS recorded no
+host and for an X display (``":0"``). It is now ``None`` in the first case and
+the display name in the second.
+
+.. code-block:: python
+
+  # old: now always empty
+  local = [u for u in psutil.users() if u.host == "localhost"]
+
+  # new
+  local = [u for u in psutil.users() if not u.host or u.host.startswith(":")]
+
+``psutil.OSX`` removed
+^^^^^^^^^^^^^^^^^^^^^^
+
+Deprecated since 5.4.7. Use :data:`MACOS` instead.
+
+.. code-block:: python
+
+  # old
+  if psutil.OSX:  # AttributeError
+      ...
+
+  # new
+  if psutil.MACOS:
+      ...
+
+Deprecations
+------------
+
+.. _migration-8.0-memory-names:
+
+:func:`virtual_memory` and :func:`swap_memory` are soft deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use :func:`memory_physical` and :func:`memory_swap` instead. The old names keep
+working as :term:`soft deprecated` aliases, with no warning and no current
+plans to remove them.
+
+.. code-block:: python
+
+  # old
+  psutil.virtual_memory()
+  psutil.swap_memory()
+
+  # new
+  psutil.memory_physical()
+  psutil.memory_swap()
+
+.. _migration-8.0-memory-full-info:
+
+:meth:`Process.memory_full_info` is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use :meth:`Process.memory_footprint` for :field:`uss`, :field:`pss` and
+:field:`swap`, and :meth:`Process.memory_info` for :field:`rss`, :field:`vms`
+and the rest. :meth:`Process.memory_footprint` is not available on BSD, SunOS
+and AIX.
+
+.. code-block:: python
+
+  # old
+  m = p.memory_full_info()  # DeprecationWarning
+  m.rss, m.uss
+
+  # new
+  p.memory_info().rss
+  p.memory_footprint().uss
+
+.. _migration-8.0-ctx-switches:
+
+:meth:`Process.num_ctx_switches` is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use :meth:`Process.ctx_switches` instead. :meth:`Process.as_dict` now returns a
+``ctx_switches`` key.
+
+.. code-block:: python
+
+  # old
+  p.num_ctx_switches()  # DeprecationWarning
+  p.as_dict()["num_ctx_switches"]  # KeyError
+
+  # new
+  p.ctx_switches()
+  p.as_dict()["ctx_switches"]
+
+.. _migration-8.0-snapshot:
+
+:attr:`Process.info` is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use :attr:`Process.snapshot` instead:
+
+.. code-block:: python
+
+  # old
+  for p in psutil.process_iter(["name", "username"]):
+      print(p.info["name"], p.info["username"])  # DeprecationWarning
+
+  # new
+  for p in psutil.process_iter(["name", "username"]):
+      print(p.snapshot.name, p.snapshot.username)
+
+.. _migration-8.0-attrs:
+
+``process_iter(attrs=[])`` is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use the new :attr:`Process.attrs` instead of an empty list meaning "all". It's
+a :class:`frozenset` of the attribute names accepted by :meth:`Process.as_dict`
+and :func:`process_iter`.
+
+.. code-block:: python
+
+  # old
+  psutil.process_iter(attrs=[])  # DeprecationWarning
+  attrs = list(psutil.Process().as_dict().keys())
+
+  # new
+  psutil.process_iter(attrs=psutil.Process.attrs)
+  attrs = psutil.Process.attrs
+
+  # new (all except net_connections)
+  psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
+
+.. _migration-8.0-cpu-times-irq:
+
+:func:`cpu_times` :field:`interrupt` renamed to :field:`irq` on Windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The old name still works but raises :exc:`DeprecationWarning`.
+
+.. code-block:: python
+
+  # old
+  psutil.cpu_times().interrupt  # DeprecationWarning
+
+  # new
+  psutil.cpu_times().irq
+
+.. _migration-8.0-connections:
+
+:meth:`Process.connections` raises :exc:`FutureWarning`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use :meth:`Process.net_connections` instead. The old name, deprecated since 6.0
+(see :ref:`migration-6.0`), is now reported by default and will be removed in
+9.0.
+
+.. code-block:: python
+
+  # old
+  p.connections()  # FutureWarning
+
+  # new
+  p.net_connections()
+
+New APIs
+--------
+
+.. _migration-8.0-memory-extras:
+
+New :meth:`Process.memory_extras` method
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It returns the platform-specific memory metrics which
+:meth:`Process.memory_info` doesn't.
+
+- Linux: :field:`peak_rss`, :field:`peak_vms`, :field:`rss_anon`,
+  :field:`rss_file`, :field:`rss_shmem`, :field:`swap_anon`, :field:`locked`.
+- macOS: :field:`phys_footprint`, :field:`peak_phys_footprint`.
+- Windows: :field:`virtual`, :field:`peak_virtual`, :field:`paged_pool`,
+  :field:`nonpaged_pool`, :field:`peak_paged_pool`,
+  :field:`peak_nonpaged_pool`.
+
+.. _migration-8.0-procfs-path:
+
+New :func:`set_procfs_path` function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use it instead of assigning :data:`PROCFS_PATH`, which still works but leaves
+internal caches stale. The :envvar:`PSUTIL_PROCFS_PATH` environment variable
+does the same from outside the process.
+
+.. code-block:: python
+
+  # old
+  psutil.PROCFS_PATH = "/host/proc"
+
+  # new
+  psutil.set_procfs_path("/host/proc")
+
+.. _migration-8.0-enums:
+
+New enum classes for constants
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+They subclass ``str`` / ``int``, so existing comparisons keep working.
+
+.. code-block:: python
+
+  # old
+  p.status()            # 'running'
+  conn.status           # 'LISTEN'
+  psutil.RLIMIT_NOFILE  # 7
+
+  # new
+  p.status()            # <ProcessStatus.STATUS_RUNNING: 'running'>
+  conn.status           # <ConnectionStatus.CONN_LISTEN: 'LISTEN'>
+  psutil.RLIMIT_NOFILE  # <ProcessRlimit.RLIMIT_NOFILE: 7>
+
+Dropped platforms
+-----------------
+
+Python 3.6 and 3.7 dropped
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The last supporting release is 7.2.x:
+
+.. code-block:: bash
+
+  pip install "psutil==7.2.*"
+
+.. _migration-8.0-windows:
+
+Windows < 10 dropped
+^^^^^^^^^^^^^^^^^^^^^
+
+The minimum version is now Windows 10 / Windows Server 2016.
+
+macOS 10.7 and 10.8 dropped
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The minimum version is now macOS 10.9.
+
+PyPy < 7.3.14 dropped on Windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The last supporting release is 7.2.x.
+
+Other changes
+-------------
+
+.. _migration-8.0-git-tags:
+
+Git tags renamed
+^^^^^^^^^^^^^^^^^
+
+From ``release-X.Y.Z`` to ``vX.Y.Z``. The old tags are still there.
+
+.. code-block:: bash
+
+  # old
+  pip install git+https://github.com/giampaolo/psutil@release-7.2.2
+
+  # new
+  pip install git+https://github.com/giampaolo/psutil@v7.2.2
+
+``cp313t`` wheels no longer published
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Free-threaded CPython 3.13 was experimental. Only ``cp314t`` wheels are
+published.

@@ -1,0 +1,21 @@
+/* release cards on the migration index */
+
+body[data-page="migration/index"] .sd-card .sd-card-title {
+    font-size: 1.6rem;
+    line-height: 1.2;
+}
+
+body[data-page="migration/index"] .sd-card {
+    border-color: var(--table-border);
+    background-color: var(--table-row-even);
+}
+
+body[data-page="migration/index"] .sd-card-hover:hover {
+    border-color: var(--text-muted);
+}
+
+/* line up with the text and the table below */
+body[data-page="migration/index"] .sd-container-fluid {
+    padding-left: 0;
+    padding-right: 0;
+}

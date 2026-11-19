@@ -102,7 +102,8 @@
 
 {# Pages that don't get a right-side TOC. The article column expands
    to fill the row. #}
-{% set _no_toc_pages = ['index', 'search', 'genindex', 'adoption'] %}
+{% set _no_toc_pages = ['index', 'search', 'genindex', 'adoption',
+                        'migration/index'] %}
 {% set _has_toc = pagename not in _no_toc_pages %}
 
 {% block content %}

@@ -330,13 +330,14 @@ def setup(app):
 
     # ablog's blog page and genindex don't get Sphinx's prev/next, and
     # devguide has no next because genindex isn't a real document.
+    # Top-level pages also skip nested ones (migration/8.0 etc.).
     def set_prev_next(app, pagename, templatename, context, doctree):
         order = app.env.toctree_includes.get(app.config.root_doc, [])
         if pagename not in order:
             return
         i = order.index(pagename)
         for key, j in (("prev", i - 1), ("next", i + 1)):
-            if context.get(key) or not 0 <= j < len(order):
+            if not 0 <= j < len(order):
                 continue
             doc = order[j]
             title = (

@@ -1422,8 +1422,8 @@ Exceptions
     and :func:`os.setpriority` (see :bpo:`10784`).
 
     .. versionchanged:: 8.0.0
-       on Windows, the return value is now a :class:`ProcessPriority` enum
-       member. See :ref:`migration guide <migration-8.0-enums>`.
+       on Windows, the enum class of the return value was renamed from
+       ``Priority`` to :class:`ProcessPriority`.
 
   .. method:: ionice(ioclass=None, value=None)
 
@@ -1452,8 +1452,8 @@ Exceptions
        Windows: accept new :data:`IOPRIO_* <psutil.IOPRIO_VERYLOW>` constants.
 
     .. versionchanged:: 8.0.0
-       *ioclass* is now a :class:`ProcessIOPriority` enum member. See
-       :ref:`migration guide <migration-8.0-enums>`.
+       the enum class of *ioclass* was renamed from ``IOPriority`` to
+       :class:`ProcessIOPriority`.
 
     .. versionchanged:: 8.0.0
        Windows: return a ``(ioclass, value)`` named tuple instead of an
@@ -2724,8 +2724,8 @@ can be used in conjunction with :meth:`Process.ionice` (*ioclass* argument).
   .. data:: IOPRIO_HIGH
 
 .. versionchanged:: 8.0.0
-   constants are now :class:`ProcessIOPriority` enum members. See
-   :ref:`migration guide <migration-8.0-enums>`.
+   the enum class of these constants was renamed from ``IOPriority`` to
+   :class:`ProcessIOPriority`.
 
 .. _const-proc-rlimit:
 

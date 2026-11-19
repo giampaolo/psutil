@@ -24,6 +24,6 @@
 
 /* drop the bottom rule, it reads as a section break */
 .sd-tab-content {
-    padding: 0.5rem 0 0;
+    padding: 1.1rem 0 0;
     box-shadow: 0 -0.0625rem var(--border);
 }

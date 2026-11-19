@@ -1,0 +1,27 @@
+.. _migration-7.0:
+
+Migrating to 7.0
+================
+
+``Process.memory_info_ex()`` removed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Deprecated since 4.0. Use :meth:`Process.memory_info` instead, which returns
+the same fields.
+
+.. code-block:: python
+
+  # old
+  p.memory_info_ex()  # AttributeError
+
+  # new
+  p.memory_info()
+
+Python 2.7 dropped
+^^^^^^^^^^^^^^^^^^
+
+The last supporting release is 6.1.x. See :doc:`/blog/2025/drop-py27`.
+
+.. code-block:: bash
+
+  pip2 install "psutil==6.1.*"

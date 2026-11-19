@@ -47,7 +47,8 @@ Changelog
   mean "retrieve all attributes" is deprecated. See
   :ref:`migration guide <migration-8.0-attrs>`.
 - :gh:`2776`, [Windows], :label:`breaking`: :func:`virtual_memory` now includes
-  :field:`cached` and :field:`wired` fields.
+  :field:`cached` and :field:`wired` fields. See
+  :ref:`migration guide <migration-8.0-virtual-memory>`.
 - :gh:`3052`: new :attr:`Process.snapshot` attribute, a read-only
   :class:`ProcessSnapshot` exposing the attributes collected by
   :func:`process_iter` (``p.snapshot.name`` instead of ``p.info["name"]``).
@@ -91,16 +92,16 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   new :meth:`Process.memory_footprint` instead. See
   :ref:`migration guide <migration-8.0-memory-full-info>`.
 
-- :label:`breaking`: :meth:`Process.memory_info` named tuple changed on all
-  platforms: fields were added, removed and renamed. Most old names still work
-  but raise :exc:`DeprecationWarning`; on macOS :field:`pfaults` and
-  :field:`pageins` were removed with **no backward-compatible aliases**, use
-  :meth:`Process.page_faults` instead. See
-  :ref:`migration guide <migration-8.0-memory-info>`.
+- :label:`breaking`: :meth:`Process.memory_info` named tuple changed on Linux,
+  macOS, Windows and BSD: fields were added, removed and renamed. Most old
+  names still work but raise :exc:`DeprecationWarning`; on macOS
+  :field:`pfaults` and :field:`pageins` were removed with
+  **no backward-compatible aliases**, use :meth:`Process.page_faults` instead.
+  See :ref:`migration guide <migration-8.0-memory-info>`.
 
 **Type hints and enums**
 
-- :gh:`2753`, :label:`breaking`: new enum classes (:class:`ProcessStatus`,
+- :gh:`2753`: new enum classes (:class:`ProcessStatus`,
   :class:`ConnectionStatus`, :class:`ProcessIOPriority`,
   :class:`ProcessPriority`, :class:`ProcessRlimit`) grouping related constants.
   The top-level constants (e.g. :data:`STATUS_RUNNING`) remain the primary API,
@@ -218,7 +219,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   :doc:`/api-overview <api-overview>`, :doc:`/credits <credits>` (:gh:`2764`),
   :doc:`/faq <faq>` (:gh:`2769`), :doc:`/funding <funding>` (:gh:`2797`),
   :ref:`/genindex <genindex>` (:gh:`2808`), :doc:`/glossary <glossary>`
-  (:gh:`2774`), :doc:`/install <install>`, :doc:`/migration <migration>`
+  (:gh:`2774`), :doc:`/install <install>`, :doc:`/migration <migration/index>`
   (:gh:`2771`), :doc:`/performance <performance>` (:gh:`2787`),
   :doc:`/platform <platform>`, :doc:`/recipes <recipes>` (:gh:`2761`),
   :doc:`/shell-equivalents <shell-equivalents>` (:gh:`2768`),
@@ -710,7 +711,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 - :gh:`2490`, :label:`breaking`: remove long deprecated
   ``Process.memory_info_ex()`` (deprecated since 4.0.0). Use
-  :meth:`Process.memory_full_info` instead.
+  :meth:`Process.memory_info` instead.
 
 **Dropped support**
 
@@ -2227,6 +2228,16 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 - :gh:`760`: expose OS constants (:data:`LINUX`, ``OSX``, etc.)
 - :gh:`756`, [Linux]: :func:`disk_io_counters` returns 2 new fields:
   :field:`read_merged_count` and :field:`write_merged_count`.
+
+**API changes**
+
+- :gh:`757`, [Linux], [Windows], [BSD], :label:`breaking`:
+  :meth:`Process.memory_info` now also returns the platform-specific fields
+  previously provided by ``Process.memory_info_ex()``. It used to return
+  :field:`rss` and :field:`vms` only, so positional unpacking
+  (``rss, vms = p.memory_info()``) no longer works.
+- :gh:`757`: ``Process.memory_info_ex()`` is deprecated in favor of
+  :meth:`Process.memory_info`.
 
 **Build and packaging**
 

@@ -68,7 +68,7 @@ body[data-page="platform"] .left-sidebar a.current {
 
 a[href*="migration/"],
 ul.search > li:has(> a[href*="migration/"]),
-body[data-page="migration"] .left-sidebar a.current {
+body[data-page^="migration/"] .left-sidebar li.current > a {
     --doc-icon: "\f362";
 }
 

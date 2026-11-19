@@ -773,7 +773,7 @@ class Process:
                 "peak_wset": d["PeakWorkingSetSize"],  # 'peak_rss'
                 "pagefile": d["PrivateUsage"],  # 'vms'
                 "private": d["PrivateUsage"],  # 'vms'
-                "peak_pagefile": d["PeakPagefileUsage"],  # 'vms'
+                "peak_pagefile": d["PeakPagefileUsage"],  # 'peak_vms'
                 # fields which were moved to memory_extras()
                 "paged_pool": d["QuotaPagedPoolUsage"],
                 "nonpaged_pool": d["QuotaNonPagedPoolUsage"],

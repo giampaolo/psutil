@@ -1,0 +1,57 @@
+.. _migration-6.0:
+
+Migrating to 6.0
+================
+
+Breaking changes
+----------------
+
+:func:`disk_partitions` lost two fields
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The :field:`maxfile` and :field:`maxpath` fields were removed, so positional
+unpacking no longer works.
+
+.. code-block:: python
+
+  # old (ValueError)
+  device, mountpoint, fstype, opts, maxfile, maxpath = part
+
+  # new
+  device, mountpoint, fstype, opts = (
+      part.device, part.mountpoint, part.fstype, part.opts
+  )
+
+:func:`process_iter` no longer checks for PID reuse
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This makes it ~20× faster. If you relied on that check, call
+:meth:`Process.is_running` yourself.
+
+.. code-block:: python
+
+  # old
+  for p in psutil.process_iter():
+      print(p.pid)
+
+  # new
+  for p in psutil.process_iter():
+      if p.is_running():
+          print(p.pid)
+
+Deprecations
+------------
+
+:meth:`Process.connections` renamed to :meth:`Process.net_connections`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The old name still works but raises :exc:`DeprecationWarning`. It will be
+removed in 9.0.
+
+.. code-block:: python
+
+  # old
+  p.connections(kind="tcp")  # DeprecationWarning
+
+  # new
+  p.net_connections(kind="tcp")
