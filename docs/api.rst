@@ -85,13 +85,14 @@ CPU
 
   .. versionchanged:: 8.0.0
      Windows: :field:`interrupt` field was renamed to :field:`irq`;
-     :field:`interrupt` still works but raises :exc:`DeprecationWarning`.
+     :field:`interrupt` still works but raises :exc:`DeprecationWarning`. See
+     :ref:`migration guide <migration-8.0-cpu-times-irq>`.
 
   .. versionchanged:: 8.0.0
      field order was standardized: :field:`user`, :field:`system`,
      :field:`idle` are now always the first three fields. Previously on Linux,
      macOS, and BSD the first three were :field:`user`, :field:`nice`,
-     :field:`system`. See :ref:`migration guide <migration-8.0>`.
+     :field:`system`. See :ref:`migration guide <migration-8.0-cpu-times>`.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
@@ -464,7 +465,7 @@ Memory
 
 .. function:: virtual_memory()
 
-  Same as :func:`memory_physical` (soft deprecated).
+  Same as :func:`memory_physical` (:term:`soft deprecated`).
 
   .. versionchanged:: 8.0.0
      Windows: added :field:`cached` and :field:`wired` fields.
@@ -476,7 +477,7 @@ Memory
 
 .. function:: swap_memory()
 
-  Same as :func:`memory_swap` (soft deprecated).
+  Same as :func:`memory_swap` (:term:`soft deprecated`).
 
   .. versionchanged:: 8.0.0
      OpenBSD: :field:`sin` / :field:`sout` are no longer set to ``0``.
@@ -742,7 +743,8 @@ Network
 
   .. versionchanged:: 8.0.0
      :field:`status` field is now a :class:`ConnectionStatus` enum member
-     instead of a plain ``str``. See :ref:`migration guide <migration-8.0>`.
+     instead of a plain ``str``. See
+     :ref:`migration guide <migration-8.0-enums>`.
 
 .. function:: net_if_addrs()
 
@@ -1353,7 +1355,7 @@ Exceptions
 
     .. versionchanged:: 8.0.0
        return value is now a :class:`ProcessStatus` enum member instead of a
-       plain ``str``. See :ref:`migration guide <migration-8.0>`.
+       plain ``str``. See :ref:`migration guide <migration-8.0-enums>`.
 
   .. method:: cwd()
 
@@ -1421,7 +1423,7 @@ Exceptions
 
     .. versionchanged:: 8.0.0
        on Windows, the return value is now a :class:`ProcessPriority` enum
-       member. See :ref:`migration guide <migration-8.0>`.
+       member. See :ref:`migration guide <migration-8.0-enums>`.
 
   .. method:: ionice(ioclass=None, value=None)
 
@@ -1451,7 +1453,7 @@ Exceptions
 
     .. versionchanged:: 8.0.0
        *ioclass* is now a :class:`ProcessIOPriority` enum member. See
-       :ref:`migration guide <migration-8.0>`.
+       :ref:`migration guide <migration-8.0-enums>`.
 
     .. versionchanged:: 8.0.0
        Windows: return a ``(ioclass, value)`` named tuple instead of an
@@ -1756,7 +1758,7 @@ Exceptions
       - :ref:`faq_memory_footprint`
       - :ref:`faq_memory_shared`
 
-    .. versionchanged:: 8.0.0 (see :ref:`migration guide <migration-8.0>`)
+    .. versionchanged:: 8.0.0 (see :ref:`migration guide <migration-8.0-memory-info>`)
 
        - *Linux*: :field:`lib` and :field:`dirty` removed (always 0 since Linux
          2.6). Deprecated aliases returning 0 and emitting
@@ -1899,7 +1901,7 @@ Exceptions
 
     .. deprecated:: 8.0.0
        use :meth:`memory_footprint` instead. See
-       :ref:`migration guide <migration-8.0>`.
+       :ref:`migration guide <migration-8.0-memory-full-info>`.
 
   .. method:: memory_percent(memtype="rss")
 
@@ -2588,7 +2590,7 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. versionchanged:: 8.0.0
    constants are now :class:`ProcessStatus` enum members (were plain strings).
-   See :ref:`migration guide <migration-8.0>`.
+   See :ref:`migration guide <migration-8.0-enums>`.
 
 .. data:: STATUS_RUNNING
 
@@ -2675,7 +2677,7 @@ priority.
 
 .. versionchanged:: 8.0.0
    constants are now :class:`ProcessPriority` enum members (were plain
-   integers). See :ref:`migration guide <migration-8.0>`.
+   integers). See :ref:`migration guide <migration-8.0-enums>`.
 
 .. _const-prio:
 
@@ -2723,7 +2725,7 @@ can be used in conjunction with :meth:`Process.ionice` (*ioclass* argument).
 
 .. versionchanged:: 8.0.0
    constants are now :class:`ProcessIOPriority` enum members. See
-   :ref:`migration guide <migration-8.0>`.
+   :ref:`migration guide <migration-8.0-enums>`.
 
 .. _const-proc-rlimit:
 
@@ -2737,7 +2739,7 @@ conjunction with :meth:`Process.rlimit`.
 
 .. versionchanged:: 8.0.0
    these constants are now :class:`ProcessRlimit` enum members (were plain
-   integers). See :ref:`migration guide <migration-8.0>`.
+   integers). See :ref:`migration guide <migration-8.0-enums>`.
 
 - Linux / FreeBSD:
 
@@ -2844,7 +2846,7 @@ Returned by :meth:`Process.net_connections` and :func:`psutil.net_connections`
 
 .. versionchanged:: 8.0.0
    constants are now :class:`ConnectionStatus` enum members (were plain
-   strings). See :ref:`migration guide <migration-8.0>`.
+   strings). See :ref:`migration guide <migration-8.0-enums>`.
 
 .. data:: CONN_ESTABLISHED
 .. data:: CONN_SYN_SENT

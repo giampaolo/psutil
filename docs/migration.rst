@@ -20,8 +20,8 @@ Key breaking changes in 8.0:
 - Some return types are now enums instead of strings.
 - :meth:`Process.memory_full_info` is deprecated: use
   :meth:`Process.memory_footprint`.
-- :func:`virtual_memory` and :func:`swap_memory` are soft deprecated: use
-  :func:`memory_physical` and :func:`memory_swap`. No warning is raised.
+- :func:`virtual_memory` and :func:`swap_memory` are :term:`soft deprecated`:
+  use :func:`memory_physical` and :func:`memory_swap`. No warning is raised.
 - :meth:`Process.num_ctx_switches` is deprecated: use
   :meth:`Process.ctx_switches`.
 - :meth:`Process.ionice` on Windows returns a ``(ioclass, value)`` named tuple
@@ -43,59 +43,68 @@ Key breaking changes in 8.0:
 .. important::
 
   Do not rely on positional unpacking of named tuples. Always use attribute
-  access (e.g. ``t.rss``).
+  access (e.g. ``t.rss``). Named tuples can grow new fields, e.g.
+  :func:`virtual_memory` gained :field:`cached` and :field:`wired` on Windows.
 
-.. _migration-8.0-namedtuples:
+.. _migration-8.0-cpu-times:
 
-Named tuple field order changed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:func:`cpu_times` field order changed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- :func:`cpu_times`: :field:`user`, :field:`system`, :field:`idle` fields
-  changed order on Linux, macOS and BSD. They are now always the first 3 fields
-  on all platforms, with platform-specific fields (e.g. :field:`nice`)
-  following. Positional access (e.g. ``cpu_times()[3]``) silently returns the
-  wrong field.
+:field:`user`, :field:`system` and :field:`idle` are now the first 3 fields on
+all platforms, followed by the platform-specific ones (e.g. :field:`nice`).
+Positional access silently returns the wrong field on Linux, macOS and BSD.
 
-  .. code-block:: python
+.. code-block:: python
 
-    # before
-    user, nice, system, idle = psutil.cpu_times()
+  # before
+  user, nice, system, idle = psutil.cpu_times()[:4]
 
-    # after
-    t = psutil.cpu_times()
-    user, system, idle = t.user, t.system, t.idle
+  # after
+  t = psutil.cpu_times()
+  user, system, idle = t.user, t.system, t.idle
 
-- :meth:`Process.memory_info`: the returned named tuple changed size and field
-  order.
+.. _migration-8.0-memory-info:
 
-  - Linux: :field:`lib` and :field:`dirty` fields removed (they were always 0
-    since Linux 2.6). Aliases returning 0 and emitting
-    :exc:`DeprecationWarning` are kept.
-  - macOS: :field:`pfaults` and :field:`pageins` removed with **no aliases**.
-    Use :meth:`Process.page_faults` instead.
-  - Windows: old fields were renamed: :field:`wset` → :field:`rss`,
-    :field:`peak_wset` → :field:`peak_rss`, :field:`pagefile` and
-    :field:`private` → :field:`vms`, :field:`peak_pagefile` →
-    :field:`peak_vms`, :field:`num_page_faults` → :meth:`Process.page_faults`.
-    The old names still work but raise :exc:`DeprecationWarning`.
-    :field:`paged_pool`, :field:`nonpaged_pool`, :field:`peak_paged_pool`,
-    :field:`peak_nonpaged_pool` moved to :meth:`Process.memory_extras`.
-  - BSD: a new :field:`peak_rss` field was added.
+:meth:`Process.memory_info` fields changed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired`
-  fields were added.
+The returned named tuple changed size and field order. Unless noted, old names
+still work but raise :exc:`DeprecationWarning`.
+
+- Linux: :field:`lib` and :field:`dirty` removed (always 0 since Linux 2.6).
+- macOS: :field:`pfaults` and :field:`pageins` removed with **no aliases**. Use
+  :meth:`Process.page_faults`.
+- Windows renamed fields: :field:`wset` → :field:`rss`, :field:`peak_wset` →
+  :field:`peak_rss`, :field:`pagefile` and :field:`private` → :field:`vms`,
+  :field:`peak_pagefile` → :field:`peak_vms`, :field:`num_page_faults` →
+  :meth:`Process.page_faults`. The ``*_pool`` fields moved to
+  :meth:`Process.memory_extras`.
+- BSD: new :field:`peak_rss` field.
+
+.. code-block:: python
+
+  # before
+  rss, vms, shared, text, lib, data, dirty = p.memory_info()  # Linux
+  p.memory_info().pageins  # macOS
+  p.memory_info().wset  # Windows
+  p.memory_info().paged_pool  # Windows
+
+  # after
+  m = p.memory_info()  # Linux
+  rss, vms, shared, text, data = m.rss, m.vms, m.shared, m.text, m.data
+  p.page_faults().major  # macOS
+  p.memory_info().rss  # Windows
+  p.memory_extras().paged_pool  # Windows
 
 .. _migration-8.0-memory-names:
 
 :func:`virtual_memory` and :func:`swap_memory` are soft deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:func:`virtual_memory` and :func:`swap_memory` are turned into
-:term:`soft deprecated` aliases in favor of :func:`memory_physical` and
-:func:`memory_swap`.
-
-The old functions don't raise :exc:`DeprecationWarning` (for now) and there are
-no plans to remove them, so existing code keeps working.
+They are now :term:`soft deprecated` aliases of :func:`memory_physical` and
+:func:`memory_swap`. No warning is raised and there are no plans to remove
+them.
 
 .. code-block:: python
 
@@ -112,8 +121,7 @@ no plans to remove them, so existing code keeps working.
 :meth:`Process.num_ctx_switches` is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`Process.num_ctx_switches` is deprecated. Use
-:meth:`Process.ctx_switches` instead. :meth:`Process.as_dict` now returns a
+Use :meth:`Process.ctx_switches` instead. :meth:`Process.as_dict` now returns a
 ``ctx_switches`` key.
 
 .. code-block:: python
@@ -147,9 +155,9 @@ tuple, like on Linux. :field:`value` is always ``0``.
 :func:`users` no longer reports ``"localhost"``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :field:`host` field of :func:`users` used to be ``"localhost"`` when the OS
-recorded no host, or an X display name (``":0"``, ``":0.0"``). It is now
-``None`` in the first case, and the display name as is in the second.
+The :field:`host` field used to be ``"localhost"`` both when the OS recorded no
+host and for an X display (``":0"``). It is now ``None`` in the first case and
+the display name in the second.
 
 .. code-block:: python
 
@@ -164,37 +172,29 @@ recorded no host, or an X display name (``":0"``, ``":0.0"``). It is now
 :attr:`Process.info` is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The attributes collected by :func:`process_iter(attrs=...) <process_iter>` are
-now exposed as a read-only :class:`ProcessSnapshot` via
-:attr:`Process.snapshot`, with one attribute per requested name. The ``info``
-dict is deprecated and still works, but raises :exc:`DeprecationWarning`.
-
-Before:
+The attributes collected by :func:`process_iter` are now exposed via
+:attr:`Process.snapshot`, a read-only :class:`ProcessSnapshot`. The ``info``
+dict still works but raises :exc:`DeprecationWarning`. An attribute which was
+not requested raises :exc:`AttributeError` instead of :exc:`KeyError`. If you
+need a dict use :meth:`p.snapshot.as_dict() <ProcessSnapshot.as_dict>`.
 
 .. code-block:: python
 
+  # before
   for p in psutil.process_iter(["name", "username"]):
       print(p.info["name"], p.info["username"])
 
-After:
-
-.. code-block:: python
-
+  # after
   for p in psutil.process_iter(["name", "username"]):
       print(p.snapshot.name, p.snapshot.username)
-
-Accessing an attribute that was not requested raises :exc:`AttributeError`
-instead of :exc:`KeyError`. If you need a dict, use
-:meth:`p.snapshot.as_dict() <ProcessSnapshot.as_dict>`.
 
 .. _migration-8.0-attrs:
 
 New :attr:`Process.attrs` class attribute
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:attr:`Process.attrs` is a new :class:`frozenset` containing the valid
-attribute names accepted by :meth:`Process.as_dict` and :func:`process_iter`.
-It avoids creating a throwaway process just to discover them:
+It's a :class:`frozenset` of the attribute names accepted by
+:meth:`Process.as_dict` and :func:`process_iter`:
 
 .. code-block:: python
 
@@ -204,32 +204,41 @@ It avoids creating a throwaway process just to discover them:
   # after
   attrs = psutil.Process.attrs
 
-It also makes it easy to pass all or a subset of attributes.
-``process_iter(attrs=[])`` (empty list meaning "all") is now deprecated; use
-:attr:`Process.attrs` instead:
+``process_iter(attrs=[])`` (empty list meaning "all") is deprecated in favor of
+:attr:`Process.attrs`:
 
 .. code-block:: python
 
-  # all attrs
-  psutil.process_iter(attrs=psutil.Process.attrs)
+  # before
+  psutil.process_iter(attrs=[])
 
+  # after
+  psutil.process_iter(attrs=psutil.Process.attrs)
   # all except connections
   psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
+
+.. _migration-8.0-cpu-times-irq:
 
 :func:`cpu_times` :field:`interrupt` renamed to :field:`irq` on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :field:`interrupt` field of :func:`cpu_times` on Windows was renamed to
-:field:`irq` to match Linux and BSD. The old name still works but raises
-:exc:`DeprecationWarning`.
+The old name still works but raises :exc:`DeprecationWarning`.
+
+.. code-block:: python
+
+  # before
+  psutil.cpu_times().interrupt
+
+  # after
+  psutil.cpu_times().irq
 
 .. _migration-8.0-enums:
 
 Constants and fields are now enums
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-These now yield enum members instead of plain ``str`` / ``int``, and the
-matching module constants are members of the same enums:
+These now return enum members instead of plain ``str`` / ``int``. The matching
+module constants are members of the same enums:
 
 - :meth:`Process.status` → :class:`ProcessStatus`
 - :field:`status` field of :meth:`Process.net_connections` and
@@ -239,37 +248,55 @@ matching module constants are members of the same enums:
 - :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>` of :meth:`Process.rlimit` →
   :class:`ProcessRlimit`
 
-They subclass :class:`enum.StrEnum` / :class:`enum.IntEnum`, so they compare
-equal to the values they replace: ``p.status() == psutil.STATUS_RUNNING`` keeps
-working. Only code inspecting :func:`repr` or :class:`type` needs updating.
+They subclass :class:`enum.StrEnum` / :class:`enum.IntEnum`, so comparisons
+keep working. Only code inspecting :func:`repr` or :class:`type` needs
+updating.
+
+.. code-block:: python
+
+  # before
+  p.status()  # 'running'
+
+  # after
+  p.status()  # <ProcessStatus.STATUS_RUNNING: 'running'>
 
 .. _migration-8.0-memory-full-info:
 
-:meth:`~Process.memory_full_info` is deprecated
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:meth:`Process.memory_full_info` is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`Process.memory_full_info` is deprecated. Use
-:meth:`Process.memory_footprint` instead; it returns the footprint fields
-(:field:`uss`, plus :field:`pss` and :field:`swap` on Linux) and adds a new
-:field:`shared` field.
+Use :meth:`Process.memory_footprint` instead. It returns :field:`uss` (plus
+:field:`pss` and :field:`swap` on Linux) and a new :field:`shared` field, but
+not the :meth:`Process.memory_info` fields (:field:`rss`, :field:`vms`, etc.).
+:meth:`Process.memory_footprint` is only available on Linux, macOS and Windows.
+On the other platforms use :meth:`Process.memory_info`.
+
+.. code-block:: python
+
+  # before
+  m = p.memory_full_info()
+  m.rss, m.uss
+
+  # after
+  p.memory_info().rss
+  p.memory_footprint().uss
 
 .. _migration-8.0-connections:
 
-:meth:`~Process.connections` raises :exc:`FutureWarning`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:meth:`Process.connections` raises :exc:`FutureWarning`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`Process.connections`, deprecated since 6.0, now raises
-:exc:`FutureWarning` instead of :exc:`DeprecationWarning`, so it's shown by
-default. It will be removed in 9.0. Use :meth:`Process.net_connections` instead
-(see :ref:`migration-6.0`).
+Deprecated since 6.0, it now raises :exc:`FutureWarning` instead of
+:exc:`DeprecationWarning`, so it's shown by default. It will be removed in 9.0.
+Use :meth:`Process.net_connections` (see :ref:`migration-6.0`).
 
 .. _migration-8.0-memory-extras:
 
-New :meth:`~Process.memory_extras` method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+New :meth:`Process.memory_extras` method
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-8.0 introduces a new :meth:`Process.memory_extras` method, returning extra
-platform-specific memory metrics which complement :meth:`Process.memory_info`:
+Extra platform-specific memory metrics which complement
+:meth:`Process.memory_info`:
 
 - Linux: :field:`peak_rss`, :field:`peak_vms`, :field:`rss_anon`,
   :field:`rss_file`, :field:`rss_shmem`, :field:`swap_anon`, :field:`locked`.
@@ -316,27 +343,37 @@ The ``psutil.OSX`` constant, deprecated since 5.4.7 in 2018, was removed. Use
 Python 3.6 and 3.7 dropped
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The minimum version is now Python 3.8.
+The minimum version is now Python 3.8. The last release supporting Python 3.6
+and 3.7 is psutil 7.2.x:
+
+.. code-block:: bash
+
+  pip install "psutil==7.2.*"
 
 .. _migration-8.0-windows:
 
 Windows < 10 dropped
 ^^^^^^^^^^^^^^^^^^^^^
 
-Support for Windows Vista, 7, 8, 8.1 and their server counterparts (Server 2008
-to 2012 R2) was removed. The minimum version is now Windows 10 / Windows Server
-2016. The last release supporting older versions is the 7.2.x series. See
-:gh:`2893`.
+The minimum version is now Windows 10 / Windows Server 2016. Windows Vista, 7,
+8, 8.1 and their server counterparts (Server 2008 to 2012 R2) are no longer
+supported. See :gh:`2893`.
 
 .. _migration-8.0-git-tags:
 
 Git tags renamed
 ^^^^^^^^^^^^^^^^^
 
-Git tags were renamed from ``release-X.Y.Z`` to ``vX.Y.Z`` (e.g.
-``release-7.2.2`` → ``v7.2.2``). Old tags remain for backward compatibility. If
-your scripts or URLs reference psutil tags, update them to the new format. See
-:gh:`2788`.
+Git tags were renamed from ``release-X.Y.Z`` to ``vX.Y.Z``. Old tags remain for
+backward compatibility. See :gh:`2788`.
+
+.. code-block:: bash
+
+  # before
+  pip install git+https://github.com/giampaolo/psutil@release-7.2.2
+
+  # after
+  pip install git+https://github.com/giampaolo/psutil@v7.2.2
 
 .. _migration-7.0:
 

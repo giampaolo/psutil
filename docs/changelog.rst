@@ -96,7 +96,7 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
   but raise :exc:`DeprecationWarning`; on macOS :field:`pfaults` and
   :field:`pageins` were removed with **no backward-compatible aliases**, use
   :meth:`Process.page_faults` instead. See
-  :ref:`migration guide <migration-8.0-namedtuples>`.
+  :ref:`migration guide <migration-8.0-memory-info>`.
 
 **Type hints and enums**
 
@@ -118,10 +118,11 @@ Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2733`,
 
 - :gh:`2747`, :label:`breaking`: the :func:`cpu_times` field order is now the
   same on all platforms, starting with :field:`user`, :field:`system`,
-  :field:`idle`. See :ref:`migration guide <migration-8.0-namedtuples>`.
+  :field:`idle`. See :ref:`migration guide <migration-8.0-cpu-times>`.
 - :gh:`2772`, [Windows], :label:`breaking`: :func:`cpu_times`
   :field:`interrupt` field renamed to :field:`irq`, as on Linux and BSD.
-  :field:`interrupt` still works but raises :exc:`DeprecationWarning`.
+  :field:`interrupt` still works but raises :exc:`DeprecationWarning`. See
+  :ref:`migration guide <migration-8.0-cpu-times-irq>`.
 - :gh:`2889`, [Windows], :label:`breaking`: 32-bit psutil can no longer inspect
   64-bit processes: :meth:`Process.cwd` raises :exc:`AccessDenied`
   (:meth:`Process.cmdline` and :meth:`Process.environ` are unaffected). 32-bit
