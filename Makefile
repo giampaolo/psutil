@@ -200,7 +200,7 @@ coverage:  ## Run test coverage.
 
 # Return a shell pipeline that outputs one file per line. Uses
 # $(FILES) if set, else "git ls-files" with given pattern(s).
-_ls = $(if $(FILES), printf '%s\n' $(FILES), git ls-files $(1))
+_ls = $(if $(FILES), printf '%s\n' $(FILES), git ls-files $(1)) | sed 's/.*/"&"/'
 
 ruff:  ## Run ruff linter.
 	@$(call _ls,'*.py') | xargs $(PYTHON) -m ruff check --output-format=concise
