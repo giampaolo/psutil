@@ -212,7 +212,7 @@ lint-c:  ## Run C linter.
 	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format --dry-run --Werror {}
 
 dprint:  ## Run linter for .md / .json / .yml / .js / .css files.
-	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) check
+	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) check --allow-no-files
 
 lint-rst:  ## Run linter for .rst files.
 	@$(call _ls,'*.rst') | xargs $(PYTHON) scripts/internal/docs/rst_unused_targets.py
@@ -259,7 +259,7 @@ fix-rst:  ## Re-wrap .rst files.
 	@$(call _ls,'*.rst') | xargs rstwrap
 
 fix-dprint:  ## Reformat .md / .json / .yml / .js / .css files.
-	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) fmt
+	@$(call _ls,$(DPRINT_FILES)) | xargs $(DPRINT) fmt --allow-no-files
 
 fix-all:  ## Run all code fixers.
 	$(MAKE) fix-ruff
