@@ -304,6 +304,7 @@ def pids():
 
 
 pid_exists = _psposix.pid_exists
+ppid_map = _psutil.ppid_map  # used internally by Process.children()
 
 
 def wrap_exceptions(fun):

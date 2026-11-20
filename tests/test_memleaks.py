@@ -373,6 +373,9 @@ class TestModuleFunctions(MemoryLeakTestCase):
     def test_pids(self):
         self.execute(psutil.pids)
 
+    def test_ppid_map(self):
+        self.execute(psutil._ppid_map)
+
     # --- net
 
     @skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
