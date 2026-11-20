@@ -59,6 +59,7 @@ static PyMethodDef mod_methods[] = {
     {"memory_physical", psutil_memory_physical, METH_VARARGS},
     {"memory_swap", psutil_memory_swap, METH_VARARGS},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
+    {"users", psutil_users, METH_VARARGS},
 #if defined(CURR_VERSION_NETINTERFACE) && CURR_VERSION_NETINTERFACE >= 3
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
 #endif

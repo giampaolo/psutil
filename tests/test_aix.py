@@ -23,6 +23,16 @@ class AIXTestCase(PsutilTestCase):
     pass
 
 
+class TestAIXSystem(AIXTestCase):
+    def test_users(self):
+        for user in psutil.users():
+            assert isinstance(user.name, str)
+            assert isinstance(user.terminal, str)
+            assert isinstance(user.host, (str, type(None)))
+            assert isinstance(user.started, float)
+            assert isinstance(user.pid, int)
+
+
 class TestAIXMemory(AIXTestCase):
     def test_memory_physical(self):
         out = sh('/usr/bin/svmon -O unit=KB')
