@@ -573,6 +573,29 @@ class TestMemoryPhysicalMocks(LinuxTestCase):
             assert mem.slab == 22 * 1024
             assert mem.available == 3 * 1024
 
+    def test_memory_physical_null_padding(self):
+        content = textwrap.dedent("""\
+            MemTotal:              100 kB
+            MemFree:               2 kB
+            MemAvailable:          3 kB
+            Buffers:               4 kB
+            Cached:                5 kB
+            Active:                6 kB
+            Inactive:              7 kB
+            Shmem:                 8 kB
+            Slab:                  9 kB
+            """).encode()
+        with mock_open_content({"/proc/meminfo": content}):
+            expected = psutil.memory_physical()
+        with mock_open_content({"/proc/meminfo": content + b'\x00' * 4096}):
+            assert psutil.memory_physical() == expected
+
+    def test_malformed_meminfo(self):
+        for fun in (psutil.memory_physical, psutil.memory_swap):
+            with mock_open_content({"/proc/meminfo": b'\x00invalid'}):
+                with pytest.raises(ValueError):
+                    fun()
+
     def test_memory_physical_no_space_after_colon(self):
         """Some Linux meminfo fields may not have a space after the colon:
         https://github.com/torvalds/linux/blob/8356a5a3b078ca89c526dd6d71e9a76fec571c37/fs/proc/meminfo.c#L113-L116
@@ -693,6 +716,19 @@ class TestMemorySwap(LinuxTestCase):
         with mock_open_content({"/proc/meminfo": b""}) as m:
             psutil.memory_swap()
             assert m.called
+
+    def test_null_padding(self):
+        content = b'SwapTotal: 100 kB\nSwapFree: 40 kB\n'
+        vmstat = b'pswpin 2\npswpout 3\n'
+        with mock_open_content(
+            {"/proc/meminfo": content, "/proc/vmstat": vmstat}
+        ):
+            expected = psutil.memory_swap()
+        with mock_open_content({
+            "/proc/meminfo": content + b'\x00' * 4096,
+            "/proc/vmstat": vmstat,
+        }):
+            assert psutil.memory_swap() == expected
 
     def test_no_space_after_colon(self):
         # Some Linux meminfo fields may not have a space after the
