@@ -67,6 +67,10 @@ CPU
     (DPCs); DPCs are interrupts that run at a lower priority than standard
     interrupts.
 
+  .. note::
+     On Windows :field:`irq` and :field:`dpc` time is already included in
+     :field:`system` time.
+
   When *percpu* is ``True`` return a list for each :term:`logical CPU` on the
   system. The list is ordered by CPU index. The order of the list is consistent
   across calls.

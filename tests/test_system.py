@@ -699,6 +699,16 @@ class TestCpuAPIs(PsutilTestCase):
         with pytest.raises(ValueError):
             psutil.cpu_percent(interval=-1, percpu=True)
 
+    @skipif(not WINDOWS, reason="Windows only")
+    def test_cpu_busy_time_double_counting(self):
+        # On Windows "system" time already includes interrupt and DPC
+        # time, so those fields must not be added to the busy time again.
+        # https://github.com/giampaolo/psutil/issues/3092
+        times = psutil._ntp.scputimes(
+            user=1.0, system=2.0, idle=7.0, irq=3.0, dpc=4.0
+        )
+        assert psutil._cpu_busy_time(times) == 3.0
+
     def test_cpu_times_percent(self):
         last = psutil.cpu_times_percent(interval=0.001)
         for _ in range(100):
