@@ -593,7 +593,7 @@ class TestAtomFeed:
         needle = 'type="application/atom+xml"'
         for html in all_html_pages():
             with subtests.test(page=html.relative_to(HTML_DIR)):
-                head = html.read_text()[:8192]
+                head = html.read_text().split("</head>", 1)[0]
                 assert head.count(needle) == 1
 
 
@@ -606,8 +606,8 @@ class TestOpenGraph:
             if rst.name == "blog.rst":
                 continue
             rel = rst.relative_to(DOCS)
-            if rel.name == "index.rst" and rel.parent == pathlib.Path("."):
-                html_path = HTML_DIR / "index.html"
+            if rel.name == "index.rst":
+                html_path = HTML_DIR / rel.parent / "index.html"
             else:
                 html_path = HTML_DIR / rel.with_suffix("") / "index.html"
             html = html_path.read_text()
